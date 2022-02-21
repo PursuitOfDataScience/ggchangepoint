@@ -13,20 +13,23 @@
 #'
 #' @param data A vector.
 #' @param change_in Choice of \code{mean_var}, \code{mean}, \code{var}, and
-#' \code{cpt_np}. Each choice corresponds to \code{cpt.meanvar()},
-#' \code{cpt.mean()}, \code{cpt.var()} and \code{cpt.np()} respectively. The
-#' default is \code{mean_var}.
+#'   \code{cpt_np}. Each choice corresponds to \code{cpt.meanvar()},
+#'   \code{cpt.mean()}, \code{cpt.var()} and \code{cpt.np()} respectively. The
+#'   default is \code{mean_var}.
 #' @param cp_method A wide range of choices (i.e., \code{AMOC}, \code{PELT},
-#' \code{SegNeigh} or \code{BinSeg}). Please note when \code{change_in} is
-#' \code{cpt_np}, \code{PELT} is the only option.
+#'   \code{SegNeigh} or \code{BinSeg}). Please note when \code{change_in} is
+#'   \code{cpt_np}, \code{PELT} is the only option.
 #' @param ... Extra arguments for each \code{cpt} function mentioned in the
-#' \code{change_in} section.
+#'   \code{change_in} section.
 #'
 #' @return A tibble includes which point(s) is/are the changepoint along with
-#' raw changepoint value corresponding to that changepoint.
+#'   raw changepoint value corresponding to that changepoint.
 #' @import changepoint
 #' @import changepoint.np
 #' @import tibble
+#' @import Rdpack
+#' @references
+#' \insertRef{killick2014changepoint}{ggchangepoint}
 #' @export
 #'
 #' @examples
@@ -77,20 +80,26 @@ cpt_wrapper <- function(data,
 
 
 
-#' Changepoint plot
+#' Plot for the changepoint package
+#'
+#' The plot for changepoints detected by the changepoint package is a line plot
+#' for the raw data and the vertical lines representing each changepoint. The
+#' x-axis is the row number of the raw data in the original data vector. The
+#' plot inherits ggplot2, meaning users can add ggplot2 functions on top the
+#' changepoint plot for customization.
 #'
 #' @inheritParams  cpt_wrapper
 #' @param cptline_alpha The value of alpha for the vertical changepoint line(s),
-#' default is 1, meaning no transparency.
+#'   default is 1, meaning no transparency.
 #' @param cptline_color The color for the vertical changepoint line(s), default
-#' is \code{blue}.
+#'   is \code{blue}.
 #' @param cptline_type The linetype for the vertical changepoint line(s),
-#' default is \code{solid}.
+#'   default is \code{solid}.
 #' @param cptline_size The size for the vertical changepoint line(s), default is
-#' \code{0.5}.
+#'   \code{0.5}.
 #'
 #' @return A line plot with data points along with the vertical lines
-#' representing changepoints.
+#'   representing changepoints.
 #' @export
 #' @import ggplot2
 #' @import dplyr

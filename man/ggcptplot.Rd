@@ -2,7 +2,7 @@
 % Please edit documentation in R/changepoint.R
 \name{ggcptplot}
 \alias{ggcptplot}
-\title{Changepoint plot}
+\title{Plot for the changepoint package}
 \usage{
 ggcptplot(
   data,
@@ -44,10 +44,14 @@ default is \code{solid}.}
 }
 \value{
 A line plot with data points along with the vertical lines
-representing changepoints.
+  representing changepoints.
 }
 \description{
-Changepoint plot
+The plot for changepoints detected by the changepoint package is a line plot
+for the raw data and the vertical lines representing each changepoint. The
+x-axis is the row number of the raw data in the original data vector. The
+plot inherits ggplot2, meaning users can add ggplot2 functions on top the
+changepoint plot for customization.
 }
 \examples{
 ggcptplot(c(rnorm(100,0,1),rnorm(100,0,10)))

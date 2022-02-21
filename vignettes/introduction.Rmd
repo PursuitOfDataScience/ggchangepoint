@@ -1,0 +1,203 @@
+---
+title: "Introduction to ggchangepoint"
+author: "Youzhi Yu"
+date: "`r Sys.Date()`"
+bibliography: vignette_reference.bib
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Introduction to ggchangepoint}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  fig.width = 8, 
+  fig.height = 5,
+  message = FALSE,
+  warning = FALSE,
+  comment = "#>"
+)
+```
+
+There are a number of changepoint detection packages in R. These packages have various APIs and sometimes it is difficult to compare the changepoints detected by various packages on the same data. Moreover, visualizing these changepoints along with the raw data is not supported by ggplot2. What the ggchangepoint package does is it combines a few functions from several changepoint packages together and offers ggplot2 style changepoint plots.
+
+In this introduction, all the data sets used are the same as @killick2014changepoint starting from the Section 4.1, and all the variables are defined the same as the reference. Instead of following the authors' code, we use ggchangepoint to carry out all the analysis, and users can make reasonable comparisons. 
+
+```{r setup}
+library(ggchangepoint)
+library(ggplot2)
+theme_set(theme_light())
+```
+
+
+### Changes in mean
+
+```{r}
+set.seed(10)
+m.data <- c(rnorm(100, 0, 1), 
+            rnorm(100, 1, 1), 
+            rnorm(100, 0, 1),
+            rnorm(100, 0.2, 1))
+```
+
+Using `PELT` as the changepoint method:
+
+```{r}
+m.pelt <- cpt_wrapper(m.data, change_in = "mean", cp_method = "PELT")
+
+m.pelt 
+```
+
+```{r}
+ggcptplot(m.data, change_in = "mean", cp_method = "PELT") +
+  labs(title = "Changes in mean (PELT)")
+```
+
+Using `BinSeg` as the changepoint method:
+
+```{r}
+m.binseg <- cpt_wrapper(m.data, change_in = "mean", cp_method = "BinSeg")
+
+m.binseg
+```
+
+```{r}
+ggcptplot(m.data, change_in = "mean", cp_method = "BinSeg") +
+  labs(title = "Changes in mean (BinSeg)")
+```
+
+`PELT` with `penalty = "Manual"`:
+
+```{r}
+m.pm <- cpt_wrapper(m.data, 
+                    change_in = "mean", 
+                    penalty = "Manual", 
+                    pen.value = "1.5 * log(n)")
+
+m.pm
+```
+
+
+```{r}
+ggcptplot(m.data, 
+          change_in = "mean", 
+          penalty = "Manual", 
+          pen.value = "1.5 * log(n)",
+          cptline_color = "red",
+          cptline_size = 2) +
+  labs(title = "Changes in mean (PELT with Manual penalty)")
+```
+
+`BinSeg` with `penalty = "Manual"`:
+
+```{r}
+m.bsm <- cpt_wrapper(m.data, 
+                     change_in = "mean", 
+                     cp_method = "BinSeg",
+                     penalty = "Manual", 
+                     pen.value = "1.5 * log(n)")
+
+m.bsm
+```
+```{r}
+ggcptplot(m.data, 
+          change_in = "mean", 
+          cp_method = "BinSeg",
+          penalty = "Manual", 
+          pen.value = "1.5 * log(n)",
+          cptline_size = 2) +
+  labs(title = "Changes in mean (BinSeg with Manual penalty)")
+```
+
+Since @killick2014changepoint used a data set from @lai2005comparative about genomic hy-
+bridization (aCGH). Here we also use the data set.
+
+```{r}
+data("Lai2005fig4", package = "changepoint")
+
+cpt_wrapper(Lai2005fig4$GBM29, change_in = "mean")
+```
+
+And we can quickly visualize it:
+
+```{r}
+ggcptplot(Lai2005fig4$GBM29, change_in = "mean") +
+  labs(title = "GBM29 Changes in mean (PELT)")
+```
+
+Here we can also use `ecp_wrapper()` to carry out the similar task on the data:
+
+```{r}
+set.seed(2022)
+ecp_wrapper(Lai2005fig4$GBM29)
+```
+
+```{r}
+set.seed(2022)
+ggecpplot(Lai2005fig4$GBM29) +
+  labs(title = "GBM29 Changes using the ecp package")
+```
+
+We can use ggcptplot to detect and visualize changepoints by using different functions. Otherwise, various packages need to be used. 
+
+### Changes in variance
+
+@killick2014changepoint used the Irish wind speeds data set, which has previously been analyzed by @haslett1989space and @gneiting2006geostatistical.
+
+```{r}
+data("wind", package = "gstat")
+```
+
+
+```{r}
+wind.bs <- cpt_wrapper(diff(wind[, 11]), change_in = "var", cp_method = "BinSeg")
+
+wind.bs
+```
+
+```{r}
+ggcptplot(diff(wind[, 11]), change_in = "var", cp_method = "BinSeg")
+```
+
+There is only one changepoint in the data.
+
+### Changes in mean and variance
+
+Since `cpt.meanvar()` is the default setting of `cpt_wrapper()`. There will be no extra specification in the `change_in` argument.
+
+```{r}
+data("discoveries", package = "datasets")
+```
+
+```{r}
+dis.pelt <- cpt_wrapper(discoveries, test.stat = "Poisson")
+
+dis.pelt
+```
+
+```{r}
+ggcptplot(discoveries, test.stat = "Poisson",
+          cptline_color = "red",
+          cptline_size = 2) +
+  ggtitle("Discoveries dataset with identified changepoints (PELT)")
+```
+
+```{r}
+ggcptplot(discoveries, test.stat = "Poisson",
+          cp_method = "BinSeg",
+          cptline_color = "red",
+          cptline_size = 2) +
+  ggtitle("Discoveries dataset with identified changepoints (BinSeg)")
+```
+
+
+
+### References
+
+
+
+
+
+

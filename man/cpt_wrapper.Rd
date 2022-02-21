@@ -23,7 +23,7 @@ default is \code{mean_var}.}
 }
 \value{
 A tibble includes which point(s) is/are the changepoint along with
-raw changepoint value corresponding to that changepoint.
+  raw changepoint value corresponding to that changepoint.
 }
 \description{
 This function wraps a number of \code{cpt} functions from the changepoint
@@ -42,4 +42,7 @@ set.seed(2022)
 cpt_wrapper(c(rnorm(100,0,1),rnorm(100,0,10)))
 cpt_wrapper(c(rnorm(100,0,1),rnorm(100,10,1)))
 
+}
+\references{
+\insertRef{killick2014changepoint}{ggchangepoint}
 }
