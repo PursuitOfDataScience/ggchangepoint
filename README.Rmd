@@ -59,16 +59,16 @@ data <- data.frame(x = c(rnorm(100, 0, 1),
                          rnorm(100, 10, 5)))
 ```
 
-### `ecp_wrapper()`
+### `cpt_wrapper()`
 
-The function `ecp_wrapper()` is a function that extracts the changepoint detected by `cpt.mean()`, `cpt.var()`, `cpt.meanvar()` from the changepoint package and `cpt.np()` from
+The function `cpt_wrapper()` is a function that extracts the changepoints detected by `cpt.mean()`, `cpt.var()`, `cpt.meanvar()` from the changepoint package and `cpt.np()` from
 the changepoint.np package. It returns to the user a tibble with the changepoint positions and the changepoint raw values provided by the user.
 
 ```{r}
-ecp_wrapper(data$x)
+cpt_wrapper(data$x)
 ```
 
-By default, `ecp_wrapper()` takes `cpt.meanvar()` with `PELT` as the changepoint method, but users can change the changepoint function and method. For details, please type `?ecp_wrapper` at the console. 
+By default, `cpt_wrapper()` takes `cpt.meanvar()` with `PELT` as the changepoint method, but users can change the changepoint function and method. For details, please type `?ecp_wrapper` at the console. 
 
 ### `ggcptplot()`
 

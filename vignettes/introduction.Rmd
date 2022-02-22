@@ -21,7 +21,7 @@ knitr::opts_chunk$set(
 )
 ```
 
-There are a number of changepoint detection packages in R. These packages have various APIs and sometimes it is difficult to compare the changepoints detected by various packages on the same data. Moreover, visualizing these changepoints along with the raw data is not supported by ggplot2. What the ggchangepoint package does is it combines a few functions from several changepoint packages together and offers ggplot2 style changepoint plots.
+There are a number of changepoint detection packages in R. These packages have various APIs and sometimes it is difficult to compare the changepoints detected by various packages on the same data. Moreover, visualizing these changepoints along with the raw data is not connected to ggplot2. What the ggchangepoint package does is it combines a few functions from several changepoint packages together and offers the ggplot2 style changepoint plots.
 
 In this introduction, all the data sets used are the same as @killick2014changepoint starting from the Section 4.1, and all the variables are defined the same as the reference. Instead of following the authors' code, we use ggchangepoint to carry out all the analysis, and users can make reasonable comparisons. 
 
@@ -112,7 +112,7 @@ ggcptplot(m.data,
 ```
 
 Since @killick2014changepoint used a data set from @lai2005comparative about genomic hy-
-bridization (aCGH). Here we also use the data set.
+bridization (aCGH). Here we also use the data set:
 
 ```{r}
 data("Lai2005fig4", package = "changepoint")
@@ -127,7 +127,7 @@ ggcptplot(Lai2005fig4$GBM29, change_in = "mean") +
   labs(title = "GBM29 Changes in mean (PELT)")
 ```
 
-Here we can also use `ecp_wrapper()` to carry out the similar task on the data:
+We can also use `ecp_wrapper()` to carry out the similar task on the data:
 
 ```{r}
 set.seed(2022)
@@ -140,11 +140,11 @@ ggecpplot(Lai2005fig4$GBM29) +
   labs(title = "GBM29 Changes using the ecp package")
 ```
 
-We can use ggcptplot to detect and visualize changepoints by using different functions. Otherwise, various packages need to be used. 
+We can use `ggcptplot()` to detect and visualize changepoints detected by various functions. Otherwise, various packages need to be used. 
 
 ### Changes in variance
 
-@killick2014changepoint used the Irish wind speeds data set, which has previously been analyzed by @haslett1989space and @gneiting2006geostatistical.
+@killick2014changepoint referenced the Irish wind speeds data set, which has previously been analyzed by @haslett1989space and @gneiting2006geostatistical. It is a data set from the gstat package.
 
 ```{r}
 data("wind", package = "gstat")
@@ -161,7 +161,7 @@ wind.bs
 ggcptplot(diff(wind[, 11]), change_in = "var", cp_method = "BinSeg")
 ```
 
-There is only one changepoint in the data.
+There is only one changepoint detected in the data.
 
 ### Changes in mean and variance
 
@@ -181,7 +181,7 @@ dis.pelt
 ggcptplot(discoveries, test.stat = "Poisson",
           cptline_color = "red",
           cptline_size = 2) +
-  ggtitle("Discoveries dataset with identified changepoints (PELT)")
+  ggtitle("The Discoveries dataset with identified changepoints (PELT)")
 ```
 
 ```{r}
@@ -189,7 +189,7 @@ ggcptplot(discoveries, test.stat = "Poisson",
           cp_method = "BinSeg",
           cptline_color = "red",
           cptline_size = 2) +
-  ggtitle("Discoveries dataset with identified changepoints (BinSeg)")
+  ggtitle("The Discoveries dataset with identified changepoints (BinSeg)")
 ```
 
 

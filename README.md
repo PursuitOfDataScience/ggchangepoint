@@ -49,24 +49,24 @@ data <- data.frame(x = c(rnorm(100, 0, 1),
                          rnorm(100, 10, 5)))
 ```
 
-### `ecp_wrapper()`
+### `cpt_wrapper()`
 
-The function `ecp_wrapper()` is a function that extracts the changepoint
-detected by `cpt.mean()`, `cpt.var()`, `cpt.meanvar()` from the
-changepoint package and `cpt.np()` from the changepoint.np package. It
-returns to the user a tibble with the changepoint positions and the
+The function `cpt_wrapper()` is a function that extracts the
+changepoints detected by `cpt.mean()`, `cpt.var()`, `cpt.meanvar()` from
+the changepoint package and `cpt.np()` from the changepoint.np package.
+It returns to the user a tibble with the changepoint positions and the
 changepoint raw values provided by the user.
 
 ``` r
-ecp_wrapper(data$x)
+cpt_wrapper(data$x)
 #> # A tibble: 2 x 2
 #>      cp cp_value
-#>   <dbl>    <dbl>
-#> 1   102    -12.2
-#> 2   198     13.1
+#>   <int>    <dbl>
+#> 1   100    0.467
+#> 2   199   -1.68
 ```
 
-By default, `ecp_wrapper()` takes `cpt.meanvar()` with `PELT` as the
+By default, `cpt_wrapper()` takes `cpt.meanvar()` with `PELT` as the
 changepoint method, but users can change the changepoint function and
 method. For details, please type `?ecp_wrapper` at the console.
 
@@ -108,11 +108,12 @@ the ecp package, and the arguments the function are different as well.
 
 ``` r
 ecp_wrapper(data$x, min_size = 10)
-#> # A tibble: 2 x 2
+#> # A tibble: 3 x 2
 #>      cp cp_value
 #>   <dbl>    <dbl>
 #> 1   102    -12.2
-#> 2   198     13.1
+#> 2   152    -12.4
+#> 3   198     13.1
 ```
 
 ### `ggecpplot()`
