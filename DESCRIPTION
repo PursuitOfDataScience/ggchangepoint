@@ -32,3 +32,5 @@ Suggests:
     gstat,
     datasets
 VignetteBuilder: knitr
+URL: https://pursuitofdatascience.github.io/ggchangepoint/
+BugReports: https://github.com/PursuitOfDataScience/ggchangepoint/issues

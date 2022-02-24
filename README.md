@@ -6,6 +6,10 @@
 <!-- badges: start -->
 
 [![R-CMD-check](https://github.com/PursuitOfDataScience/ggchangepoint/workflows/R-CMD-check/badge.svg)](https://github.com/PursuitOfDataScience/ggchangepoint/actions)
+[![CRAN
+status](https://www.r-pkg.org/badges/version/ggchangepoint)](https://CRAN.R-project.org/package=ggchangepoint)
+[![Lifecycle:
+experimental](https://img.shields.io/badge/lifecycle-experimental-orange.svg)](https://lifecycle.r-lib.org/articles/stages.html#experimental)
 <!-- badges: end -->
 
 The goal of ggchangepoint is to offer the tidyverse style on the
