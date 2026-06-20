@@ -1,0 +1,226 @@
+---
+title: "Comparing changepoint methods with ggchangepoint"
+output: rmarkdown::html_vignette
+bibliography: vignette_reference.bib
+vignette: >
+  %\VignetteIndexEntry{Comparing changepoint methods with ggchangepoint}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 6
+)
+library(ggchangepoint)
+library(ggplot2)
+theme_set(theme_light())
+
+# `fpop` lives in Suggests; fall back to core engines when it is unavailable
+# so the vignette builds in any environment.
+has_fpop <- requireNamespace("fpop", quietly = TRUE)
+cmp_methods <- if (has_fpop) c("pelt", "binseg", "fpop") else c("pelt", "binseg", "amoc")
+```
+
+## Introduction
+
+The companion vignette `vignette("introduction", package = "ggchangepoint")`
+provides a comprehensive overview of ggchangepoint's design, API, and supported
+methods. This vignette focuses on **method comparison**---the problem of
+running multiple detectors on the same data, comparing their outputs, and
+measuring their accuracy when ground truth is known.
+
+## Problem setup
+
+Let $y_{1:n}$ be an ordered sequence. A segmentation with $m$ changepoints is
+an ordered set $\tau_{0:m+1}$ with $0=\tau_0<\tau_1<\dots<\tau_m<\tau_{m+1}=n$,
+partitioning the data into $m+1$ contiguous segments. Within each segment the
+data are governed by a parameter $\theta_j$ (e.g. mean, variance, or
+distribution) that changes at each $\tau_j$ [@truong2020selective].
+
+Most offline methods minimise a penalised cost
+
+$$ \sum_{j=1}^{m+1} \mathcal{C}(y_{(\tau_{j-1}+1):\tau_j}) + \beta f(m), $$
+
+where $\mathcal{C}(\cdot)$ is a segment cost (typically $-2 \times$ maximised
+log-likelihood) and $\beta f(m)$ guards against over-segmentation [@yao1988estimating].
+The choice of penalty $\beta$ is the central challenge of the field.
+
+## Taxonomy of methods in v0.2.0
+
+The methods available through `cpt_detect()` in this release fall into three
+broad families:
+
+| Family | Methods | Approach |
+|--------|---------|----------|
+| Exact / pruned optimal partitioning | PELT, BinSeg, SegNeigh, AMOC, FPOP, gfpop | Dynamic programming with pruning [@killick2012pelt; @maidstone2017optimal; @hocking2020gfpop] |
+| Randomised and multiscale search | WBS, WBS2, NOT, MOSUM, IDetect, TGUH | Random intervals or moving windows [@fryzlewicz2014wild; @fryzlewicz2020detecting; @baranowski2019narrowest; @eichinger2018mosum; @anastasiou2022idetect; @fryzlewicz2022tail] |
+| Nonparametric / distribution-free | NP (changepoint.np), ECP (ecp) | Empirical distribution or energy distance [@haynes2017computationally; @james2014ecp] |
+
+The `ggcpt_compare()` function runs multiple methods on the same series and
+arranges the results. It respects the `future::plan()` for optional parallel
+execution when many methods are compared.
+
+## Comparing methods on a simulated series
+
+Generate a three-regime series with changes in mean and variance:
+
+```{r}
+set.seed(2022)
+x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1), rnorm(100, 5, 2))
+```
+
+The faceted layout shows each method in its own panel, with x-axes aligned:
+
+```{r fig-1}
+ggcpt_compare(x, methods = cmp_methods, layout = "facet")
+```
+
+The overlay layout draws all changepoints on a single panel, colour-coded:
+
+```{r fig-2}
+ggcpt_compare(x, methods = cmp_methods, layout = "overlay")
+```
+
+For a numeric summary, `ggcpt_compare_table()` returns a tidy tibble:
+
+```{r}
+ggcpt_compare_table(x, methods = cmp_methods)
+```
+
+## Accuracy metrics
+
+When true changepoint locations are known, `cpt_metrics()` provides a standard
+suite of accuracy measures [@truong2020selective; @van2020evaluation]:
+
+```{r}
+truth <- c(100, 200)
+
+# PELT
+res_pelt <- cpt_detect(x, method = "pelt", change_in = "meanvar")
+generics::tidy(res_pelt)$cp
+
+# Metrics for BinSeg
+res_binseg <- cpt_detect(x, method = "binseg", change_in = "meanvar")
+cpt_metrics(generics::tidy(res_binseg)$cp, truth, n = length(x))
+```
+
+### Visual evaluation
+
+`ggcpt_eval()` overlays predictions and ground truth, colouring true positives,
+false positives, and misses within a tolerance margin:
+
+```{r fig-3}
+ggcpt_eval(pred = c(100), truth = c(100, 200), data_vec = x)
+```
+
+## Evaluation study on canonical signals
+
+We now conduct a systematic comparison across the five built-in test signals
+[@donoho1994ideal], using a tolerance margin of 5 observations.
+
+```{r eval-study}
+set.seed(42)
+signals <- list(
+  blocks = signal_blocks(512),
+  fms    = signal_fms(512),
+  mix    = signal_mix(512),
+  teeth  = signal_teeth(512),
+  stairs = signal_stairs(512)
+)
+methods <- c("pelt", "binseg", "fpop", "wbs", "not")
+margin <- 5
+
+results <- do.call(rbind, lapply(names(signals), function(nm) {
+  sig <- signals[[nm]]
+  truth <- attr(sig, "true_changepoints")
+  do.call(rbind, lapply(methods, function(m) {
+    res <- tryCatch(
+      cpt_detect(sig$value, method = m, change_in = "mean"),
+      error = function(e) NULL
+    )
+    if (is.null(res)) return(NULL)
+    pred <- generics::tidy(res)$cp
+    met <- cpt_metrics(pred, truth, n = length(sig$value), margin = margin)
+    data.frame(signal = nm, method = m, met)
+  }))
+}))
+results[, c("signal", "method", "precision", "recall", "f1", "covering",
+            "hausdorff")]
+```
+
+The table shows how different methods perform across signal types. PELT and
+FPOP, as exact methods, generally have strong performance, while WBS and NOT
+can detect small or short features that the exact methods miss at the default
+penalty setting---but may also over-segment.
+
+### Interpreting the metrics
+
+- **Precision / Recall / F1**: standard classification measures with a margin
+  of tolerance.
+- **Covering**: the average Jaccard overlap between true and predicted segments
+  [@van2020evaluation].
+- **Hausdorff distance**: worst-case localisation error between predicted and
+  true changepoint sets.
+
+## Full workflow: simulate, detect, evaluate
+
+A complete reproducible workflow combining the simulator, detection, and
+evaluation:
+
+```{r}
+set.seed(1)
+dat <- cpt_simulate(200, changepoints = c(60, 120),
+                    change_in = "mean", params = c(0, 8, 3), sd = 1)
+truth <- attr(dat, "true_changepoints")
+
+res <- cpt_detect(dat$value, method = "pelt", change_in = "mean")
+pred <- generics::tidy(res)$cp
+
+cpt_metrics(pred, truth, n = length(dat$value))
+```
+
+## Multi-annotator evaluation
+
+When multiple ground-truth annotations are available---as in the Turing Change
+Point Dataset [@van2020evaluation]---use `cpt_metrics_annotated()` to average
+metrics across annotators:
+
+```{r}
+cpt_metrics_annotated(pred = c(100, 200),
+                      annotations = list(c(100, 200), c(105, 198)),
+                      n = 300)
+```
+
+## Parallel comparison (optional)
+
+If the `future` and `future.apply` packages are installed, `ggcpt_compare()`
+and the evaluation loop can run methods in parallel by setting a
+`future::plan()`:
+
+```{r eval=FALSE}
+future::plan(future::multisession, workers = 2)
+ggcpt_compare(x, methods = c("pelt", "binseg", "wbs", "fpop", "not"),
+              seed = 1)
+```
+
+Parallel execution is reproducible: when a `seed` is supplied, the detectors
+are fanned out over parallel-safe L'Ecuyer-CMRG random streams, so the result
+is identical regardless of worker count or backend.
+
+## See also
+
+- `vignette("introduction", package = "ggchangepoint")` for a comprehensive
+  walkthrough of the package API and supported methods.
+- The R package references for the individual detection engines: **changepoint**
+  [@killick2014changepoint], **wbs** [@fryzlewicz2014wild], **not**
+  [@baranowski2019narrowest], **mosum** [@eichinger2018mosum], **fpop**
+  [@maidstone2017optimal], **IDetect** [@anastasiou2022idetect],
+  **breakfast** [@fryzlewicz2020detecting; @fryzlewicz2022tail],
+  **gfpop** [@hocking2020gfpop], **changepoint.np**
+  [@haynes2017computationally], and **ecp** [@james2014ecp].
+
+## References

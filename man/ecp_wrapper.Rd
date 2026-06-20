@@ -4,10 +4,11 @@
 \alias{ecp_wrapper}
 \title{ecp wrapper}
 \usage{
-ecp_wrapper(data, algorithm = "divisive", min_size = 2, ...)
+ecp_wrapper(data, algorithm = "divisive", min_size = 2, seed = NULL, ...)
 }
 \arguments{
-\item{data}{A vector.}
+\item{data}{A numeric vector (for univariate) or matrix/data.frame (for
+multivariate).}
 
 \item{algorithm}{Either \code{divisive} or \code{agglo}. \code{divisive} is
 the default.}
@@ -16,20 +17,26 @@ the default.}
 default is 2. This argument is only applied when \code{algorithm =
 "divisive"}.}
 
+\item{seed}{Optional. A seed for reproducibility of the stochastic
+permutation test.}
+
 \item{...}{Extra arguments to pass on either from \code{e.divisive()} or
 \code{e.agglo()}.}
 }
 \value{
 A tibble includes which point(s) is/are the changepoint along with
-  raw changepoint value corresponding to that changepoint.
+  raw changepoint value corresponding to that changepoint. Changepoint
+  locations follow the \code{ecp} package convention: the first index of the
+  right segment. When no changepoint is found, an empty tibble is returned
+  (0 rows).
 }
 \description{
 The ecp package provides a non-parametric way to detect changepoints. Unlike
 the changepoint package, it does not assume raw data to have any formal
 distribution. This wrapper function wraps two functions from the ecp package,
 i.e., \code{e.divisive()} and \code{e.agglo()}. Users can use either function
-by switching the \code{algorithm} argument. Before using the wrapper function
-, seed should be set for the sake of reproducibility.
+by switching the \code{algorithm} argument. Before using the wrapper function,
+seed should be set for the sake of reproducibility.
 }
 \examples{
 set.seed(2022)

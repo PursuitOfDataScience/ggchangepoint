@@ -23,8 +23,68 @@ navbar:
     menu:
     - text: Introduction to ggchangepoint
       href: articles/introduction.html
+    - text: Comparing changepoint methods
+      href: articles/comparison.html
   - text: News
     href: news/index.html
   right:
   - icon: fa-github fa-lg
     href: https://github.com/PursuitOfDataScience/ggchangepoint
+
+reference:
+- title: Core API
+  contents:
+  - cpt_detect
+  - cpt_penalty
+  - new_ggcpt
+  - is_ggcpt
+- title: Existing wrappers
+  contents:
+  - cpt_wrapper
+  - ecp_wrapper
+- title: New wrappers
+  contents:
+  - fpop_wrapper
+  - gfpop_wrapper
+  - wbs_wrapper
+  - wbs2_wrapper
+  - not_wrapper
+  - mosum_wrapper
+  - idetect_wrapper
+  - tguh_wrapper
+- title: broom methods
+  contents:
+  - tidy.ggcpt
+  - glance.ggcpt
+  - augment.ggcpt
+- title: Theming and helpers
+  contents:
+  - theme_ggcpt
+  - annotate_segments
+- title: Visualization
+  contents:
+  - autoplot.ggcpt
+  - ggcptplot
+  - ggecpplot
+  - geom_changepoint
+  - geom_cpt_segment
+  - geom_cpt_ci
+  - stat_changepoint
+- title: Method comparison
+  contents:
+  - ggcpt_compare
+  - ggcpt_compare_table
+- title: Evaluation
+  contents:
+  - cpt_metrics
+  - cpt_metrics_annotated
+  - ggcpt_eval
+- title: Simulation and data
+  contents:
+  - cpt_simulate
+  - rcpt
+  - signal_blocks
+  - signal_fms
+  - signal_mix
+  - signal_teeth
+  - signal_stairs

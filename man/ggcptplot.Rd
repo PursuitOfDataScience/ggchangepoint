@@ -12,20 +12,24 @@ ggcptplot(
   cptline_alpha = 1,
   cptline_color = "blue",
   cptline_type = "solid",
-  cptline_size = 0.5
+  cptline_linewidth = 0.5,
+  cptline_size = lifecycle::deprecated(),
+  index = NULL,
+  show_points = NULL,
+  show_line = TRUE
 )
 }
 \arguments{
-\item{data}{A vector.}
+\item{data}{A numeric vector.}
 
 \item{change_in}{Choice of \code{mean_var}, \code{mean}, \code{var}, and
-\code{cpt_np}. Each choice corresponds to \code{cpt.meanvar()},
-\code{cpt.mean()}, \code{cpt.var()} and \code{cpt.np()} respectively. The
-default is \code{mean_var}.}
+\code{np} (or \code{cpt_np} for backward compatibility). Each choice
+corresponds to \code{cpt.meanvar()}, \code{cpt.mean()}, \code{cpt.var()}
+and \code{cpt.np()} respectively. The default is \code{mean_var}.}
 
 \item{cp_method}{A wide range of choices (i.e., \code{AMOC}, \code{PELT},
 \code{SegNeigh} or \code{BinSeg}). Please note when \code{change_in} is
-\code{cpt_np}, \code{PELT} is the only option.}
+\code{np} or \code{cpt_np}, \code{PELT} is the only option.}
 
 \item{...}{Extra arguments for each \code{cpt} function mentioned in the
 \code{change_in} section.}
@@ -39,8 +43,18 @@ is \code{blue}.}
 \item{cptline_type}{The linetype for the vertical changepoint line(s),
 default is \code{solid}.}
 
-\item{cptline_size}{The size for the vertical changepoint line(s), default is
-\code{0.5}.}
+\item{cptline_linewidth}{The linewidth for the vertical changepoint line(s),
+default is \code{0.5}.}
+
+\item{cptline_size}{Deprecated. Use \code{cptline_linewidth} instead.}
+
+\item{index}{Optional. A vector of x-axis labels (e.g. dates) of the same
+length as \code{data}.}
+
+\item{show_points}{Logical. Whether to draw data points. Defaults to
+\code{TRUE} when \code{length(data) <= 500}, \code{FALSE} otherwise.}
+
+\item{show_line}{Logical. Whether to draw the line. Defaults to \code{TRUE}.}
 }
 \value{
 A line plot with data points along with the vertical lines

@@ -12,11 +12,16 @@ ggecpplot(
   cptline_alpha = 1,
   cptline_color = "blue",
   cptline_type = "solid",
-  cptline_size = 0.5
+  cptline_linewidth = 0.5,
+  cptline_size = lifecycle::deprecated(),
+  index = NULL,
+  show_points = NULL,
+  show_line = TRUE
 )
 }
 \arguments{
-\item{data}{A vector.}
+\item{data}{A numeric vector (for univariate) or matrix/data.frame (for
+multivariate).}
 
 \item{algorithm}{Either \code{divisive} or \code{agglo}. \code{divisive} is
 the default.}
@@ -37,8 +42,18 @@ is \code{blue}.}
 \item{cptline_type}{The linetype for the vertical changepoint line(s),
 default is \code{solid}.}
 
-\item{cptline_size}{The size for the vertical changepoint line(s), default is
-\code{0.5}.}
+\item{cptline_linewidth}{The linewidth for the vertical changepoint line(s),
+default is \code{0.5}.}
+
+\item{cptline_size}{Deprecated. Use \code{cptline_linewidth} instead.}
+
+\item{index}{Optional. A vector of x-axis labels (e.g. dates) of the same
+length as \code{data}.}
+
+\item{show_points}{Logical. Whether to draw data points. Defaults to
+\code{TRUE} when \code{length(data) <= 500}, \code{FALSE} otherwise.}
+
+\item{show_line}{Logical. Whether to draw the line. Defaults to \code{TRUE}.}
 }
 \value{
 A line plot with data points along with the vertical lines
@@ -53,5 +68,6 @@ for customization.
 }
 \examples{
 ggecpplot(c(rnorm(100,0,1),rnorm(100,0,10)))
-ggecpplot(c(rnorm(100,0,1),rnorm(100,0,10)))
+ggecpplot(c(rnorm(100,0,1),rnorm(100,10,1)))
+
 }

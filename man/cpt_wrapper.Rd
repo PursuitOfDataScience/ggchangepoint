@@ -7,35 +7,38 @@
 cpt_wrapper(data, change_in = "mean_var", cp_method = "PELT", ...)
 }
 \arguments{
-\item{data}{A vector.}
+\item{data}{A numeric vector.}
 
 \item{change_in}{Choice of \code{mean_var}, \code{mean}, \code{var}, and
-\code{cpt_np}. Each choice corresponds to \code{cpt.meanvar()},
-\code{cpt.mean()}, \code{cpt.var()} and \code{cpt.np()} respectively. The
-default is \code{mean_var}.}
+\code{np} (or \code{cpt_np} for backward compatibility). Each choice
+corresponds to \code{cpt.meanvar()}, \code{cpt.mean()}, \code{cpt.var()}
+and \code{cpt.np()} respectively. The default is \code{mean_var}.}
 
 \item{cp_method}{A wide range of choices (i.e., \code{AMOC}, \code{PELT},
 \code{SegNeigh} or \code{BinSeg}). Please note when \code{change_in} is
-\code{cpt_np}, \code{PELT} is the only option.}
+\code{np} or \code{cpt_np}, \code{PELT} is the only option.}
 
 \item{...}{Extra arguments for each \code{cpt} function mentioned in the
 \code{change_in} section.}
 }
 \value{
-A tibble includes which point(s) is/are the changepoint along with
-  raw changepoint value corresponding to that changepoint.
+A tibble including which point(s) is/are the changepoint along with
+  raw changepoint value corresponding to that changepoint. Changepoint
+  locations follow the convention of the \code{changepoint} package: the
+  last index of the left segment.
 }
 \description{
 This function wraps a number of \code{cpt} functions from the changepoint
 package and the \code{cpt.np()} function from the changepoint.np package.
 It is handy that users can use this function to get the same changepoint
 results as these functions output individually. Moreover, it returns a tibble
-that inherits the tidyverse sytle. Functions from the changepoint package do
+that inherits the tidyverse style. Functions from the changepoint package do
 require data normality assumption by default, yet changepoint.np is a
 non-parametric way to detect changepoints and let data speak by itself.
-If user sets \code{change_in} as \code{cpt_np}, a seed should be set before
-using the function for the sake of reproducibility. For more details on the
-changepoint and changepoint.np packages, please refer to their documentation.
+If user sets \code{change_in} as \code{np} (or \code{cpt_np}), a seed should
+be set before using the function for the sake of reproducibility. For more
+details on the changepoint and changepoint.np packages, please refer to
+their documentation.
 }
 \examples{
 set.seed(2022)

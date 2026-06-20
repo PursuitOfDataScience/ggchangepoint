@@ -1,7 +1,7 @@
 Package: ggchangepoint
 Type: Package
 Title: Combines Changepoint Analysis with 'ggplot2'
-Version: 0.1.0
+Version: 0.2.0
 Authors@R: 
     c(person(given = "Youzhi",
              family = "Yu",
@@ -12,25 +12,44 @@ Description: R provides fantastic tools for changepoint
     not have the 'ggplot2' style. This tool, however, 
     combines 'changepoint', 'changepoint.np' and 'ecp'
     together, and uses 'ggplot2' to visualize changepoints.
+    Version 0.2.0 adds a unified 'ggcpt' S3 result class,
+    'broom'-style tidy/glance/augment methods, 'autoplot()',
+    new geoms ('geom_changepoint()', 'geom_cpt_segment()',
+    'geom_cpt_ci()', 'stat_changepoint()'), a unified
+    'cpt_detect()' dispatcher, first-wave wrappers for
+    WBS/WBS2, NOT, MOSUM, FPOP, a method comparison module,
+    accuracy metrics, data simulation, canonical test signals,
+    and hardening of the existing functions (no-change bug fix,
+    'size' to 'linewidth' migration, 'match.arg()' validation).
 License: GPL (>= 3)
 Encoding: UTF-8
-LazyData: true
-Imports: 
+Imports:
     changepoint,
     changepoint.np,
     dplyr,
     ecp,
-    ggplot2,
+    generics,
+    ggplot2 (>= 3.4.0),
+    lifecycle,
     Rdpack,
     tibble,
     utils
 RdMacros: Rdpack
-RoxygenNote: 7.1.2
-Suggests: 
+RoxygenNote: 7.3.2
+Suggests:
     rmarkdown,
     knitr,
-    gstat,
-    datasets
+    testthat (>= 3.0.0),
+    wbs,
+    breakfast,
+    not,
+    mosum,
+    fpop,
+    IDetect,
+    gfpop,
+    vdiffr,
+    future,
+    future.apply
 VignetteBuilder: knitr
 URL: https://pursuitofdatascience.github.io/ggchangepoint/
 BugReports: https://github.com/PursuitOfDataScience/ggchangepoint/issues
