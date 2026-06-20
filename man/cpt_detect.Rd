@@ -12,7 +12,7 @@ cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
 \item{method}{Detection method. One of \code{"pelt"}, \code{"binseg"},
 \code{"segneigh"}, \code{"amoc"}, \code{"fpop"}, \code{"wbs"},
 \code{"wbs2"}, \code{"not"}, \code{"mosum"}, \code{"idetect"},
-\code{"tguh"}, \code{"smuce"}, \code{"hsmuce"}, \code{"gfpop"},
+\code{"tguh"}, \code{"smuce"}, \code{"hsmuce"},
 \code{"np"}, \code{"ecp"}, \code{"kcp"}, \code{"cpm"},
 \code{"robust"}, \code{"decafs"}, \code{"sn"}, \code{"inspect"},
 \code{"sbs"}, \code{"bcp"}, \code{"bocpd"}, \code{"strucchange"},
@@ -25,8 +25,8 @@ Defaults to \code{"mean"}.}
 \item{penalty}{Penalty type or value. Either a character string
 (\code{"MBIC"}, \code{"BIC"}, \code{"AIC"}, \code{"Hannan-Quinn"})
 or a numeric penalty value. Defaults to \code{"MBIC"}. Numeric penalties
-are honoured by the functional-pruning methods (\code{fpop},
-\code{gfpop}); the \code{changepoint}-based methods expect one of the
+are honoured by the functional-pruning method (\code{fpop});
+the \code{changepoint}-based methods expect one of the
 character options.}
 
 \item{...}{Additional arguments passed to the specific wrapper.}

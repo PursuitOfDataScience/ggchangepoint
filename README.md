@@ -97,7 +97,7 @@ Visualise with `autoplot()`:
 autoplot(res)
 ```
 
-<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-6-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%" />
 
 ## Unified detection across engines
 
@@ -154,7 +154,7 @@ cpt_detect(x, method = "fpop", change_in = "mean")
 ggcpt_compare(x, methods = c("pelt", "binseg", "fpop", "wbs"))
 ```
 
-<img src="man/figures/README-unnamed-chunk-8-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-8-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%" />
 
 For a numeric summary, use `ggcpt_compare_table()`:
 
@@ -209,7 +209,7 @@ cpt_wrapper(x)
 ggcptplot(x)
 ```
 
-<img src="man/figures/README-unnamed-chunk-12-1.png" width="100%" />
+<img src="man/figures/README-unnamed-chunk-12-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%" />
 
 ## Learn more
 

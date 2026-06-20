@@ -17,7 +17,8 @@ knitr::opts_chunk$set(
   fig.height = 5,
   message = FALSE,
   warning = FALSE,
-  comment = "#>"
+  comment = "#>",
+  fig.alt = "ggchangepoint plot of a time series with detected changepoints"
 )
 # The wrappers for the optional engines live in Suggests; gate the chunks that
 # need them so the vignette still builds when an engine is not installed.
@@ -56,7 +57,7 @@ PELT [@killick2012pelt], Binary Segmentation [@scott1974cluster;
 [@fryzlewicz2014wild] and **breakfast** packages implement Wild Binary
 Segmentation and its variants, while **not** [@baranowski2019narrowest],
 **mosum** [@eichinger2018mosum], **fpop** [@maidstone2017optimal],
-**gfpop** [@hocking2020gfpop], **IDetect** [@anastasiou2022idetect], and others
+**IDetect** [@anastasiou2022idetect], and others
 offer further specialised algorithms. On the nonparametric side,
 **changepoint.np** [@haynes2017computationally] and **ecp**
 [@james2014ecp; @matteson2014nonparametric] handle distributional changes.
@@ -184,7 +185,6 @@ The following detection methods are currently supported:
 | `segneigh`   | changepoint     | mean, var, meanvar              |
 | `amoc`       | changepoint     | mean, var, meanvar              |
 | `fpop`       | fpop            | mean                            |
-| `gfpop`      | gfpop           | mean, var, meanvar, slope       |
 | `wbs`        | wbs             | mean                            |
 | `wbs2`       | breakfast       | mean                            |
 | `not`        | not             | mean, var, meanvar              |
@@ -197,7 +197,7 @@ The following detection methods are currently supported:
 ## Penalty Specification
 
 For methods that support it (PELT, Binary Segmentation, Segmented Neighbourhood,
-AMOC, FPOP, gfpop), the penalty parameter can be controlled via `cpt_penalty()`
+AMOC, FPOP), the penalty parameter can be controlled via `cpt_penalty()`
 or the `penalty` argument. Penalties can be information criteria---`"BIC"`
 [@yao1988estimating], `"AIC"`---or user-specified numeric values:
 

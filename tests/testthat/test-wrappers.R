@@ -1,15 +1,3 @@
-test_that("gfpop_wrapper does not report the series endpoint as a changepoint", {
-  skip_if_not_installed("gfpop")
-  set.seed(2022)
-  x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
-  res <- gfpop_wrapper(x)
-  expect_s3_class(res, "ggcpt")
-  # The true change is at 100; n (=200) must never appear as a changepoint.
-  expect_false(200L %in% res$changepoints$cp)
-  expect_true(all(res$changepoints$cp < length(x)))
-  expect_true(100L %in% res$changepoints$cp)
-})
-
 test_that("idetect_wrapper reads the cpt field and finds an obvious shift", {
   skip_if_not_installed("IDetect")
   set.seed(2022)

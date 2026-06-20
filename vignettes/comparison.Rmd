@@ -13,7 +13,8 @@ knitr::opts_chunk$set(
   collapse = TRUE,
   comment = "#>",
   fig.width = 8,
-  fig.height = 6
+  fig.height = 6,
+  fig.alt = "ggchangepoint plot comparing changepoint detection methods on a time series"
 )
 library(ggchangepoint)
 library(ggplot2)
@@ -56,7 +57,7 @@ broad families:
 
 | Family | Methods | Approach |
 |--------|---------|----------|
-| Exact / pruned optimal partitioning | PELT, BinSeg, SegNeigh, AMOC, FPOP, gfpop | Dynamic programming with pruning [@killick2012pelt; @maidstone2017optimal; @hocking2020gfpop] |
+| Exact / pruned optimal partitioning | PELT, BinSeg, SegNeigh, AMOC, FPOP | Dynamic programming with pruning [@killick2012pelt; @maidstone2017optimal] |
 | Randomised and multiscale search | WBS, WBS2, NOT, MOSUM, IDetect, TGUH | Random intervals or moving windows [@fryzlewicz2014wild; @fryzlewicz2020detecting; @baranowski2019narrowest; @eichinger2018mosum; @anastasiou2022idetect; @fryzlewicz2022tail] |
 | Nonparametric / distribution-free | NP (changepoint.np), ECP (ecp) | Empirical distribution or energy distance [@haynes2017computationally; @james2014ecp] |
 
@@ -220,7 +221,7 @@ is identical regardless of worker count or backend.
   [@baranowski2019narrowest], **mosum** [@eichinger2018mosum], **fpop**
   [@maidstone2017optimal], **IDetect** [@anastasiou2022idetect],
   **breakfast** [@fryzlewicz2020detecting; @fryzlewicz2022tail],
-  **gfpop** [@hocking2020gfpop], **changepoint.np**
-  [@haynes2017computationally], and **ecp** [@james2014ecp].
+  **changepoint.np** [@haynes2017computationally], and
+  **ecp** [@james2014ecp].
 
 ## References

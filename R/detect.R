@@ -8,7 +8,7 @@
 #' @param method Detection method. One of \code{"pelt"}, \code{"binseg"},
 #'   \code{"segneigh"}, \code{"amoc"}, \code{"fpop"}, \code{"wbs"},
 #'   \code{"wbs2"}, \code{"not"}, \code{"mosum"}, \code{"idetect"},
-#'   \code{"tguh"}, \code{"smuce"}, \code{"hsmuce"}, \code{"gfpop"},
+#'   \code{"tguh"}, \code{"smuce"}, \code{"hsmuce"},
 #'   \code{"np"}, \code{"ecp"}, \code{"kcp"}, \code{"cpm"},
 #'   \code{"robust"}, \code{"decafs"}, \code{"sn"}, \code{"inspect"},
 #'   \code{"sbs"}, \code{"bcp"}, \code{"bocpd"}, \code{"strucchange"},
@@ -19,8 +19,8 @@
 #' @param penalty Penalty type or value. Either a character string
 #'   (\code{"MBIC"}, \code{"BIC"}, \code{"AIC"}, \code{"Hannan-Quinn"})
 #'   or a numeric penalty value. Defaults to \code{"MBIC"}. Numeric penalties
-#'   are honoured by the functional-pruning methods (\code{fpop},
-#'   \code{gfpop}); the \code{changepoint}-based methods expect one of the
+#'   are honoured by the functional-pruning method (\code{fpop});
+#'   the \code{changepoint}-based methods expect one of the
 #'   character options.
 #' @param ... Additional arguments passed to the specific wrapper.
 #'
@@ -41,7 +41,7 @@ cpt_detect <- function(x,
 
   method <- match.arg(method, c(
     "pelt", "binseg", "segneigh", "amoc", "fpop", "wbs", "wbs2",
-    "not", "mosum", "idetect", "tguh", "smuce", "hsmuce", "gfpop",
+    "not", "mosum", "idetect", "tguh", "smuce", "hsmuce",
     "np", "ecp", "kcp", "cpm", "robust", "decafs", "sn",
     "inspect", "sbs", "bcp", "bocpd", "strucchange", "segmented"
   ))
@@ -87,7 +87,6 @@ cpt_detect <- function(x,
 
   result <- switch(method,
     fpop     = fpop_wrapper(data_vec, penalty = pen_val, ...),
-    gfpop    = gfpop_wrapper(data_vec, ...),
     wbs      = wbs_wrapper(data_vec, ...),
     wbs2     = wbs2_wrapper(data_vec, ...),
     not      = not_wrapper(data_vec, ...),

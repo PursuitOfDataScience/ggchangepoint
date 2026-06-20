@@ -46,7 +46,6 @@ Suggests:
     mosum,
     fpop,
     IDetect,
-    gfpop,
     vdiffr,
     future,
     future.apply

@@ -4,7 +4,7 @@
 - New `ggcpt` S3 result class with `tidy()`, `glance()`, `augment()`, and `autoplot()` methods
 - New `cpt_detect()` unified dispatcher for all changepoint methods
 - New geoms: `geom_changepoint()`, `geom_cpt_segment()`, `geom_cpt_ci()`, `stat_changepoint()`
-- New first-wave wrappers: WBS/WBS2, NOT, MOSUM, FPOP, gfpop, Isolate-Detect, TGUH
+- New first-wave wrappers: WBS/WBS2, NOT, MOSUM, FPOP, Isolate-Detect, TGUH
 - New `ggcpt_compare()` and `ggcpt_compare_table()` for method comparison
 - New evaluation module: `cpt_metrics()`, `cpt_metrics_annotated()`, `ggcpt_eval()`
 - New simulator: `cpt_simulate()`/`rcpt()` and canonical test signals

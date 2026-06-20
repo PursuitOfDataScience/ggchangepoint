@@ -30,6 +30,7 @@ navbar:
   right:
   - icon: fa-github fa-lg
     href: https://github.com/PursuitOfDataScience/ggchangepoint
+    aria-label: GitHub repository
 
 reference:
 - title: Core API
@@ -38,6 +39,7 @@ reference:
   - cpt_penalty
   - new_ggcpt
   - is_ggcpt
+  - print.ggcpt
 - title: Existing wrappers
   contents:
   - cpt_wrapper
@@ -45,7 +47,6 @@ reference:
 - title: New wrappers
   contents:
   - fpop_wrapper
-  - gfpop_wrapper
   - wbs_wrapper
   - wbs2_wrapper
   - not_wrapper
