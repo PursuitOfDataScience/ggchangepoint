@@ -2,14 +2,19 @@
 % Please edit documentation in R/broom-methods.R
 \name{summary.ggcpt}
 \alias{summary.ggcpt}
+\alias{print.summary.ggcpt}
 \title{Summary of a ggcpt object}
 \usage{
 \method{summary}{ggcpt}(object, ...)
+
+\method{print}{summary.ggcpt}(x, ...)
 }
 \arguments{
 \item{object}{A \code{ggcpt} object.}
 
 \item{...}{Additional arguments (ignored).}
+
+\item{x}{A \code{summary.ggcpt} object (for \code{print()}).}
 }
 \value{
 A list with class \code{summary.ggcpt} containing the summary.

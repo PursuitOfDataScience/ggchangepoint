@@ -64,12 +64,8 @@ reference:
   - summary.ggcpt
 - title: Additional S3 methods
   contents:
-  - as_tibble.ggcpt
-  - as.data.frame.ggcpt
-  - format.ggcpt
-  - plot.ggcpt
+  - ggcpt_methods
   - print.ggcpt
-  - print.summary.ggcpt
 - title: Theming and helpers
   contents:
   - theme_ggcpt

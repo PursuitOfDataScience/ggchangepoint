@@ -138,6 +138,8 @@ summary.ggcpt <- function(object, ...) {
   )
 }
 
+#' @rdname summary.ggcpt
+#' @param x A \code{summary.ggcpt} object (for \code{print()}).
 #' @export
 print.summary.ggcpt <- function(x, ...) {
   cat("ggcpt Summary\n")
@@ -162,16 +164,39 @@ print.summary.ggcpt <- function(x, ...) {
   invisible(x)
 }
 
+#' Coerce, format, and plot ggcpt objects
+#'
+#' Convenience S3 methods for working with \code{ggcpt} objects: coerce the
+#' changepoints to a tibble or data frame, render a one-line summary string, or
+#' produce the default plot (a base-graphics fallback that delegates to
+#' \code{\link{autoplot.ggcpt}}).
+#'
+#' @param x A \code{ggcpt} object.
+#' @param row.names,optional Passed to \code{\link[base]{as.data.frame}}.
+#' @param .name_repair Passed to \code{\link[tibble]{as_tibble}}.
+#' @param ... Additional arguments passed to methods.
+#' @return \code{as_tibble()} and \code{as.data.frame()} return the changepoints
+#'   table; \code{format()} returns a length-one character string; \code{plot()}
+#'   returns a \code{ggplot} object.
+#' @name ggcpt_methods
+#' @examples
+#' set.seed(2022)
+#' res <- cpt_detect(c(rnorm(50), rnorm(50, 5)), method = "pelt")
+#' as_tibble(res)
+#' as.data.frame(res)
+#' format(res)
 #' @export
 as_tibble.ggcpt <- function(x, ..., .name_repair = NULL) {
   x$changepoints
 }
 
+#' @rdname ggcpt_methods
 #' @export
 as.data.frame.ggcpt <- function(x, row.names = NULL, optional = FALSE, ...) {
   as.data.frame(x$changepoints, row.names = row.names, optional = optional, ...)
 }
 
+#' @rdname ggcpt_methods
 #' @export
 format.ggcpt <- function(x, ...) {
   paste0(
@@ -181,6 +206,7 @@ format.ggcpt <- function(x, ...) {
   )
 }
 
+#' @rdname ggcpt_methods
 #' @exportS3Method base::plot
 plot.ggcpt <- function(x, ...) {
   autoplot.ggcpt(x, ...)
