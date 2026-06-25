@@ -25,18 +25,25 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
   truth <- sort(unique(as.integer(truth)))
   n <- as.integer(n)
 
-  # Precision / Recall / F1 with margin
+  # Precision / Recall / F1 with margin — one-to-one matching
+  # Each truth may be claimed by at most one prediction.
   tp <- 0
   matched_pred <- c()
   matched_truth <- c()
+  truth_available <- rep(TRUE, length(truth))
 
   for (p in pred) {
+    if (sum(truth_available) == 0) break
     dists <- abs(p - truth)
+    # Consider only unmatched truths
+    dists[!truth_available] <- Inf
     min_dist <- min(dists)
-    if (min_dist <= margin) {
+    if (is.finite(min_dist) && min_dist <= margin) {
+      j <- which.min(dists)
       tp <- tp + 1
       matched_pred <- c(matched_pred, p)
-      matched_truth <- c(matched_truth, truth[which.min(dists)])
+      matched_truth <- c(matched_truth, truth[j])
+      truth_available[j] <- FALSE  # remove from pool
     }
   }
 
@@ -145,12 +152,14 @@ ggcpt_eval <- function(pred, truth, data_vec, margin = 5) {
   # Classify predictions
   pred_class <- vapply(pred, function(p) {
     dists <- abs(p - truth)
+    if (length(dists) == 0) return("FP")
     if (min(dists) <= margin) "TP" else "FP"
   }, character(1))
 
   # Classify truths
   truth_class <- vapply(truth, function(t) {
     dists <- abs(t - pred)
+    if (length(dists) == 0) return("FN")
     if (min(dists) <= margin) "TP" else "FN"
   }, character(1))
 

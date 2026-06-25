@@ -9,14 +9,17 @@ cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
 \arguments{
 \item{x}{A numeric vector (the data series).}
 
-\item{method}{Detection method. One of \code{"pelt"}, \code{"binseg"},
-\code{"segneigh"}, \code{"amoc"}, \code{"fpop"}, \code{"wbs"},
-\code{"wbs2"}, \code{"not"}, \code{"mosum"}, \code{"idetect"},
-\code{"tguh"}, \code{"smuce"}, \code{"hsmuce"},
-\code{"np"}, \code{"ecp"}, \code{"kcp"}, \code{"cpm"},
-\code{"robust"}, \code{"decafs"}, \code{"sn"}, \code{"inspect"},
-\code{"sbs"}, \code{"bcp"}, \code{"bocpd"}, \code{"strucchange"},
-\code{"segmented"}. Defaults to \code{"pelt"}.}
+\item{method}{Detection method. See \code{\link{cpt_methods}()} for the
+complete table. Methods available in this release:
+\code{"pelt"}, \code{"binseg"}, \code{"segneigh"}, \code{"amoc"},
+\code{"np"}, \code{"ecp"}, \code{"fpop"}, \code{"wbs"}, \code{"wbs2"},
+\code{"not"}, \code{"mosum"}, \code{"idetect"}, \code{"tguh"}.
+Methods that ship with optional (\code{Suggests}) engine packages will
+prompt you to install them if missing. Planned methods — \code{"smuce"},
+\code{"hsmuce"}, \code{"kcp"}, \code{"cpm"}, \code{"robust"},
+\code{"decafs"}, \code{"sn"}, \code{"inspect"}, \code{"sbs"},
+\code{"bcp"}, \code{"bocpd"}, \code{"strucchange"}, \code{"segmented"} —
+are listed in \code{cpt_methods()} with their target release.}
 
 \item{change_in}{What to detect change in. One of \code{"mean"},
 \code{"var"}, \code{"meanvar"}, \code{"slope"}, \code{"distribution"}.

@@ -48,8 +48,8 @@ per segment.}
 \item{...}{Passed to \code{\link{cpt_simulate}}.}
 }
 \value{
-A tibble with columns \code{index} and \code{value}. The true
-  changepoints are stored in the \code{true_changepoints} attribute.
+A tibble with columns \code{index}, \code{value}, and \code{seg_id}.
+  The true changepoints are stored in the \code{true_changepoints} attribute.
 }
 \description{
 Creates a synthetic time series with known changepoints for testing and

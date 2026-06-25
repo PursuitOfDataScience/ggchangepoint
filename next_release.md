@@ -3,1443 +3,1005 @@
 ### Expanding tidy, visualization-first changepoint detection in R
 
 **Author:** Youzhi Yu
-**Status:** Design document / development roadmap for `ggchangepoint` 0.2.0 and beyond
-**Current release:** `ggchangepoint` 0.1.0 (CRAN)
+**Status:** Design document / development roadmap for `ggchangepoint` 0.3.0 and beyond
+**Current release:** `ggchangepoint` 0.2.0 (CRAN)
 
 ---
 
 ## Abstract
 
-`ggchangepoint` 0.1.0 combines three changepoint engines — `changepoint`,
-`changepoint.np`, and `ecp` — behind a small tidyverse-flavoured API
-(`cpt_wrapper()`, `ecp_wrapper()`) and renders the detected changepoints with
-`ggplot2` (`ggcptplot()`, `ggecpplot()`). This document proposes a substantial
-expansion of the package, grounded in the modern changepoint-detection
-literature, while preserving the two design commitments that define the package:
-**(i) every detector returns a tidy tibble**, and **(ii) every result is
-directly renderable with `ggplot2`**.
+`ggchangepoint` 0.2.0 is on CRAN. It turned the three-engine 0.1.0 prototype into
+a unified, tidy, `ggplot2`-native framework: a single S3 result class (`ggcpt`)
+with `broom`-style `tidy()`/`glance()`/`augment()` methods, an `autoplot()`
+method, a family of composable geoms (`geom_changepoint()`,
+`geom_cpt_segment()`, `geom_cpt_ci()`, `stat_changepoint()`), a unified
+`cpt_detect()` dispatcher, first-wave wrappers for WBS, WBS2, NOT, MOSUM, FPOP,
+Isolate-Detect and TGUH, a method-comparison module with optional `future`
+parallelism, an accuracy-metrics module, a data simulator with the canonical
+benchmark signals, and a thorough hardening of the original four functions.
 
-We survey the impactful methodological literature — penalised optimal
-partitioning and pruning (Optimal Partitioning, PELT, FPOP/SNIP, gfpop),
-randomised and multiscale search (Binary Segmentation, WBS, WBS2/SDLL, NOT,
-MOSUM, Isolate-Detect, TGUH), multiscale inference with confidence
-(SMUCE/HSMUCE, FDRSeg), nonparametric and distribution-free detection (NMCD,
-energy/E-Divisive, kernel/KCP, sequential CPMs), robustness and dependence
-(biweight/robust loss, DeCAFS, self-normalisation), high-dimensional and
-multivariate detection (`inspect`, sparsified binary segmentation, the
-`changepoints` collection), Bayesian detection (product-partition `bcp`,
-Bayesian Online Changepoint Detection), structural breaks in regression
-(Bai–Perron, `strucchange`, `segmented`), and online/sequential monitoring
-(CPM, FOCuS, OCD). For each family we specify the mathematics, the R package to
-wrap, the proposed tidy function signature, and the proposed visualisation.
+This document plans the **next** release. It does two things the 0.2.0 cycle did
+not finish, and they come first because they matter most for users *today*:
 
-We then propose: a unified `ggcpt` S3 result object with `broom`-style
-`tidy()`/`glance()`/`augment()` methods and a `ggplot2::autoplot()` method; a
-family of new geoms/stats (`geom_changepoint()`, `geom_cpt_segment()`,
-`geom_cpt_ci()`); a penalty-path / model-selection toolkit (CROPS, elbow and
-solution-path plots); an evaluation module implementing the standard accuracy
-metrics (precision/recall/F1 with margin, the covering metric, Hausdorff
-distance, the (adjusted) Rand index, annotation error) including multi-annotator
-support; and a data-generating module with the canonical benchmark signals.
-We also **audit the four functions already shipped in 0.1.0** and specify
-concrete fixes (§12): a confirmed edge-case bug in `ecp_wrapper()` that emits
-spurious boundary "changepoints" and an `NA` on series with no change, a live
-`ggplot2` `size`→`linewidth` deprecation in both plot functions, an off-by-one
-inconsistency between the two detectors' location conventions, and absent input
-validation — each scheduled for v0.2.0. The document closes with a phased
-release plan, dependency and architecture notes, and a complete, verified
-reference list.
+1. **It closes a documentation and coverage gap.** The package now exports ~37
+   user-facing functions, but the README, the package-level help, and even the
+   vignettes introduce only a subset; some documentation actively *mis*-states
+   the surface (the README advertises a `gfpop` engine that is not wrapped; the
+   package-level help still says the package "only include[s] three changepoint
+   packages"; `cpt_detect()`'s signature advertises 13 methods that error with
+   "not yet implemented"). **§2 makes it a first-class, blocking deliverable that
+   the next release introduce *every* feature the package actually provides** —
+   in the README, in a vignette, and with a runnable example — and reconcile
+   every over- and under-claim. A package that ships features its own front door
+   never mentions is a package whose features do not exist for most users.
+
+2. **It makes the dispatcher honest and finishes the foundation** (§3): wire or
+   stop advertising the stub methods, add a `cpt_methods()` introspection helper,
+   deliver genuine multivariate input instead of silently flattening it, and
+   extend the opt-in `future` parallelism beyond `ggcpt_compare()`.
+
+On top of that it plans the **next engine wave** (§4: `gfpop`, SMUCE/HSMUCE,
+CROPS penalty paths, robust loss, DeCAFS, self-normalisation), surveys the
+**remaining method backlog** with mathematics and citations (§5: Bayesian,
+high-dimensional/multivariate, regression breaks, online/sequential, kernel),
+and — answering the brief to *think harder about what to build* — proposes a set
+of **genuinely new, non-detector features** (§6: completed S3 surface,
+time/date and `ts`/`xts`/`tsibble` input, panel/batch detection, interactive and
+Shiny exploration, `predict()`/segment labelling, stability diagnostics,
+reproducible citations, decomposition-then-detect, and interop/export). The
+document closes with the visualization, evaluation, and simulation extensions, an
+architecture/dependency/testing plan, a phased release schedule, a record of what
+0.2.0 fixed, **a verified bug audit reproducing twelve concrete defects found by
+actually running 0.2.0** (§11.3 — including a broken canonical test signal, an
+accuracy metric that returns `recall > 1`, and a stat that misplaces changepoints
+on dated axes), and a complete, verified reference list.
+
+The two commitments that define the package are unchanged: **(i) every detector
+returns a tidy tibble inside a structured `ggcpt` object**, and **(ii) every
+result is directly renderable with `ggplot2`**.
 
 ---
 
 ## Contents
 
-1. [Introduction](#1-introduction)
-2. [Problem formulation and notation](#2-problem-formulation-and-notation)
-3. [A taxonomy of methods and the gaps in 0.1.0](#3-a-taxonomy-of-methods-and-the-gaps-in-010)
-4. [A unified tidy result object and API](#4-a-unified-tidy-result-object-and-api)
-5. [New detection methods](#5-new-detection-methods)
-   - 5.1 [Penalised optimal partitioning and functional pruning](#51-penalised-optimal-partitioning-and-functional-pruning)
-   - 5.2 [Randomised and multiscale search](#52-randomised-and-multiscale-search)
-   - 5.3 [Multiscale inference with confidence statements](#53-multiscale-inference-with-confidence-statements)
-   - 5.4 [Nonparametric and distribution-free detection](#54-nonparametric-and-distribution-free-detection)
-   - 5.5 [Robustness and dependence](#55-robustness-and-dependence)
-   - 5.6 [High-dimensional and multivariate detection](#56-high-dimensional-and-multivariate-detection)
-   - 5.7 [Bayesian changepoint detection](#57-bayesian-changepoint-detection)
-   - 5.8 [Structural breaks in regression](#58-structural-breaks-in-regression)
-   - 5.9 [Online and sequential detection](#59-online-and-sequential-detection)
-6. [Penalty and model-selection toolkit](#6-penalty-and-model-selection-toolkit)
-7. [The visualization layer](#7-the-visualization-layer)
-8. [Evaluation and benchmarking](#8-evaluation-and-benchmarking)
-9. [Data simulation and benchmark signals](#9-data-simulation-and-benchmark-signals)
-10. [Package architecture, dependencies, and testing](#10-package-architecture-dependencies-and-testing)
-11. [Phased release plan](#11-phased-release-plan)
-12. [Auditing and hardening the existing functions](#12-auditing-and-hardening-the-existing-functions)
-13. [Backward compatibility and deprecation](#13-backward-compatibility-and-deprecation)
-14. [Appendix A: Method → package → function map](#appendix-a-method--package--function-map)
-15. [Appendix B: Proposed API reference](#appendix-b-proposed-api-reference)
-16. [References](#references)
+1. [Status: where 0.2.0 landed](#1-status-where-020-landed)
+2. [The documentation and coverage gap (and the mandate to close it)](#2-the-documentation-and-coverage-gap-and-the-mandate-to-close-it)
+3. [Finishing the foundation: an honest dispatcher, multivariate input, parallelism](#3-finishing-the-foundation-an-honest-dispatcher-multivariate-input-parallelism)
+4. [The next engine wave (0.3.0)](#4-the-next-engine-wave-030)
+   - 4.1 [gfpop — graph-constrained functional pruning](#41-gfpop--graph-constrained-functional-pruning)
+   - 4.2 [SMUCE / HSMUCE — multiscale inference with confidence](#42-smuce--hsmuce--multiscale-inference-with-confidence)
+   - 4.3 [CROPS — the penalty path](#43-crops--the-penalty-path)
+   - 4.4 [Robust loss, DeCAFS, self-normalisation](#44-robust-loss-decafs-self-normalisation)
+5. [The remaining method backlog (0.4.0+)](#5-the-remaining-method-backlog-040)
+   - 5.1 [Nonparametric and kernel](#51-nonparametric-and-kernel)
+   - 5.2 [High-dimensional and multivariate](#52-high-dimensional-and-multivariate)
+   - 5.3 [Bayesian](#53-bayesian)
+   - 5.4 [Structural breaks in regression](#54-structural-breaks-in-regression)
+   - 5.5 [Online and sequential](#55-online-and-sequential)
+6. [New features beyond detection methods](#6-new-features-beyond-detection-methods)
+7. [The visualization layer: what shipped and what comes next](#7-the-visualization-layer-what-shipped-and-what-comes-next)
+8. [Evaluation, simulation, and benchmark data](#8-evaluation-simulation-and-benchmark-data)
+9. [Architecture, dependencies, testing, and parallelism](#9-architecture-dependencies-testing-and-parallelism)
+10. [Phased release plan](#10-phased-release-plan)
+11. [Hardening: what 0.2.0 fixed and what remains](#11-hardening-what-020-fixed-and-what-remains)
+    - 11.3 [Bugs and improvements found by testing 0.2.0 (verified)](#113-bugs-and-improvements-found-by-testing-020-verified)
+12. [Backward compatibility and deprecation](#12-backward-compatibility-and-deprecation)
+13. [Appendix A: Method → package → function map](#appendix-a-method--package--function-map)
+14. [Appendix B: API reference (shipped and proposed)](#appendix-b-api-reference-shipped-and-proposed)
+15. [References](#references)
 
 ---
 
-## 1. Introduction
+## 1. Status: where 0.2.0 landed
 
-### 1.1 Motivation
+### 1.1 What 0.2.0 delivered
 
-Changepoint detection — the identification of times at which the statistical
-properties of a sequence change — is a mature, fast-moving subfield of
-statistics and machine learning with applications spanning genomics, finance,
-climatology, network monitoring, neuroscience, industrial quality control, and
-condition monitoring. The R ecosystem is unusually rich in high-quality
-implementations, but they are fragmented: each package has its own API, its own
-return structure, and its own (usually base-graphics) plotting conventions. This
-fragmentation makes it hard to (a) move between methods, (b) compare methods on
-the same series, and (c) produce publication-quality, customisable graphics.
+The current public surface is much larger than 0.1.0's four functions. Grouped
+by role:
 
-`ggchangepoint` exists to remove that friction for two specific things: **tidy
-output** and **`ggplot2` rendering**. Version 0.1.0 demonstrates the idea on
-three engines. This document plans the version that makes the idea
-comprehensive.
-
-### 1.2 The current package (0.1.0)
-
-The current public surface is:
-
-| Function | Wraps | Returns |
+| Area | Exported surface (0.2.0) | Notes |
 |---|---|---|
-| `cpt_wrapper(data, change_in, cp_method, ...)` | `changepoint::cpt.mean/var/meanvar`, `changepoint.np::cpt.np` | `tibble(cp, cp_value)` |
-| `ecp_wrapper(data, algorithm, min_size, ...)` | `ecp::e.divisive`, `ecp::e.agglo` | `tibble(cp, cp_value)` |
-| `ggcptplot(...)` | `cpt_wrapper()` | `ggplot` (line + points + vertical cpt lines) |
-| `ggecpplot(...)` | `ecp_wrapper()` | `ggplot` (line + points + vertical cpt lines) |
+| Result object | `new_ggcpt()`, `is_ggcpt()`, `print.ggcpt()` | the `ggcpt` S3 class; `cp`/`cp_value` contract preserved |
+| broom methods | `tidy()`, `glance()`, `augment()` (`.ggcpt`) | one row per changepoint; one-row summary; data + `seg_id`/`.fitted`/`.resid`/`is_changepoint` |
+| Unified front-end | `cpt_detect()`, `cpt_penalty()` | dispatcher + penalty constructor |
+| Original wrappers | `cpt_wrapper()`, `ecp_wrapper()`, `ggcptplot()`, `ggecpplot()` | retained, hardened, unchanged contract |
+| New engine wrappers | `fpop_wrapper()`, `wbs_wrapper()`, `wbs2_wrapper()`, `not_wrapper()`, `mosum_wrapper()`, `idetect_wrapper()`, `tguh_wrapper()` | all return `ggcpt`; engines in `Suggests` |
+| Visualization | `autoplot.ggcpt()`, `geom_changepoint()`, `geom_cpt_segment()`, `geom_cpt_ci()`, `stat_changepoint()`, `theme_ggcpt()`, `annotate_segments()` | composable layers + theming |
+| Comparison | `ggcpt_compare()`, `ggcpt_compare_table()` | facet/overlay; honours `future::plan()` |
+| Evaluation | `cpt_metrics()`, `cpt_metrics_annotated()`, `ggcpt_eval()` | precision/recall/F1, covering, Hausdorff, Rand, annotation error |
+| Simulation / data | `cpt_simulate()` / `rcpt()`, `signal_blocks()`, `signal_fms()`, `signal_mix()`, `signal_teeth()`, `signal_stairs()` | known-truth generators + canonical signals |
 
-The two return columns are `cp` (the integer index of the changepoint in the
-input vector) and `cp_value` (the raw value at that index). The plots draw the
-raw series as a line-and-point geometry and overlay each changepoint as a
-vertical `geom_linerange`.
+The hardening promised for the 0.1.0 functions shipped too (§11): the
+`ecp_wrapper()` no-change bug is fixed, `size` became `linewidth`
+(`cptline_linewidth`, with `cptline_size` soft-deprecated), `match.arg()`
+validation is in, the changepoint-location convention is reconciled to "left"
+(last index of the left segment) with a `cp_convention` field, the plots gained
+an `index` argument and a length-aware `show_points`, the `"np"` alias exists,
+and a `testthat` suite plus the first snapshot tests are in place.
 
-These four functions are the foundation the rest of this document builds on, and
-they will be retained (principle P6 below). They have, however, accumulated
-concrete technical debt — a live `ggplot2` deprecation, an edge-case correctness
-bug in `ecp_wrapper()`, an inconsistent changepoint-location convention between
-the two engines, and absent input validation. We do not gloss over this: §12
-audits all four functions in detail, with empirically reproduced evidence, and
-specifies the fixes (slated for v0.2.0).
+### 1.2 What 0.2.0 set up but did not finish
 
-### 1.3 Design principles for 0.2.0+
+Three load-bearing things are partial, and the next release should treat them as
+debt, not background:
 
-We commit to the following principles, which constrain every proposal below:
+- **The dispatcher advertises more than it can do.** `cpt_detect()`'s
+  `match.arg()` enumerates 26 methods, but only 13 are wired (`pelt`, `binseg`,
+  `segneigh`, `amoc`, `np`, `ecp`, `fpop`, `wbs`, `wbs2`, `not`, `mosum`,
+  `idetect`, `tguh`). The other 13 — `smuce`, `hsmuce`, `kcp`, `cpm`, `robust`,
+  `decafs`, `sn`, `inspect`, `sbs`, `bcp`, `bocpd`, `strucchange`, `segmented` —
+  fall through to `stop("... not yet implemented ...")`, yet `cpt_detect.Rd`
+  lists all 26 as if they worked. This is both a correctness wart and a
+  documentation defect (§2, §3.1).
+- **Multivariate detection is a false promise.** `ecp` is the package's
+  multivariate engine, but `cpt_detect()` does `data_vec <- as.numeric(x)`, which
+  *flattens* a matrix, and `ecp_wrapper()` returns `NA` for `cp_value` on
+  matrix/data-frame input. `validate_data()` accepts matrices, so the door is
+  open but the room is empty (§3.2).
+- **Parallelism reaches one function.** `ggcpt_compare()` honours
+  `future::plan()`, but the batch/simulation/metric-grid loops that dominate
+  methodological work do not yet (§3.3, §9.4).
 
-- **P1 — Wrap, don't reinvent.** We bind to peer-reviewed, CRAN-published
-  engines rather than re-implementing algorithms, so that statistical
-  correctness is inherited from the upstream maintainers. New algorithms enter
-  the package as `Suggests` first (optional), then graduate to `Imports` if they
-  become core.
-- **P2 — Tidy in, tidy out.** Every detector returns a tibble (and a structured
-  `ggcpt` object that contains it). Column names are stable across methods.
-- **P3 — `ggplot2` all the way down.** Every result is renderable with a single
-  `autoplot()` call and is extensible with `+` like any `ggplot`.
-- **P4 — One vocabulary.** A consistent argument vocabulary (`x`, `method`,
-  `penalty`, `min_size`, `n_cpts`, …) across all detectors; method-specific
-  arguments flow through `...`.
-- **P5 — Progressive disclosure.** Beginners call one function
-  (`cpt_detect()` + `autoplot()`); experts reach the upstream object via
-  `$fit` and tune everything.
-- **P6 — No surprises for 0.1.0 users.** `cpt_wrapper()`, `ecp_wrapper()`,
-  `ggcptplot()`, and `ggecpplot()` keep working unchanged.
+### 1.3 Design principles (carried forward, with one addition)
 
-### 1.4 Scope
-
-This is a *planning* document: it specifies what to build and why, with
-mathematics, citations, and proposed signatures, at a level of detail intended
-to be directly actionable in implementation. It is not itself the
-implementation. Function signatures are proposals and may be refined during
-development; where an upstream package's argument is passed through verbatim we
-say so.
-
----
-
-## 2. Problem formulation and notation
-
-### 2.1 The offline multiple-changepoint model
-
-Let $y_{1:n} = (y_1, \dots, y_n)$ be an ordered sequence (a time series or any
-indexed data) taking values in $\mathbb{R}$ (univariate) or $\mathbb{R}^p$
-(multivariate). A *segmentation* with $m$ changepoints is an ordered set
-
-$$
-\tau_{0:m+1}, \qquad 0 = \tau_0 < \tau_1 < \tau_2 < \dots < \tau_m < \tau_{m+1} = n,
-$$
-
-which partitions the index set into $m+1$ contiguous segments
-$y_{(\tau_{j-1}+1):\tau_j}$, $j = 1, \dots, m+1$. The modelling assumption is
-that within each segment the data are governed by a single parameter
-$\theta_j \in \Theta$ (e.g. a mean, a variance, a mean–variance pair, a
-regression coefficient vector, or an entire distribution), and that the
-parameter *changes* at each $\tau_j$.
-
-### 2.2 Penalised cost (the optimisation view)
-
-Most offline methods choose the segmentation minimising a penalised cost
-
-$$
-\sum_{j=1}^{m+1} \mathcal{C}\!\left(y_{(\tau_{j-1}+1):\tau_j}\right) \;+\; \beta\, f(m),
-$$
-
-where $\mathcal{C}(\cdot)$ is a *segment cost* (typically twice the negative
-maximised log-likelihood, $\mathcal{C}(y_{a:b}) = -2 \max_{\theta}
-\sum_{i=a}^{b} \log p(y_i \mid \theta)$) and $\beta f(m)$ is a penalty that
-guards against over-segmentation. For a change in mean with Gaussian noise of
-known variance, $\mathcal{C}(y_{a:b}) = \sum_{i=a}^{b} (y_i - \bar y_{a:b})^2$.
-Common penalties $\beta f(m)$ include AIC ($2k$), BIC/SIC ($k \log n$), Modified
-BIC (mBIC), and Hannan–Quinn, where $k$ is the number of free parameters added
-per changepoint. The choice of $\beta$ is the central nuisance of the field and
-motivates the penalty-path tooling of §6.
-
-### 2.3 The test-and-segment view
-
-A complementary view treats detection as repeated hypothesis testing. The
-canonical statistic is the **CUSUM** contrast on an interval $(s, e]$ with split
-$b$:
-
-$$
-\mathcal{X}^{\,s,e}_{b}
-= \sqrt{\frac{e-b}{(e-s)(b-s)}} \sum_{t=s+1}^{b} y_t
-- \sqrt{\frac{b-s}{(e-s)(e-b)}} \sum_{t=b+1}^{e} y_t .
-$$
-
-Binary Segmentation, WBS, NOT, and MOSUM are all built on (weighted, windowed,
-or randomised) variants of this statistic. Online methods (CUSUM, Page, CPM,
-FOCuS, OCD) use sequential analogues.
-
-### 2.4 Axes of variation
-
-A useful taxonomy — which structures §5 — distinguishes methods along these
-axes:
-
-- **What changes:** mean / variance / mean+variance / slope (trend) / whole
-  distribution / regression coefficients / covariance / network structure.
-- **Search strategy:** exact dynamic programming (Optimal Partitioning, Segment
-  Neighbourhood) vs. pruned exact (PELT, FPOP) vs. greedy/approximate (Binary
-  Segmentation) vs. randomised (WBS, NOT) vs. moving-window (MOSUM) vs.
-  isolation (Isolate-Detect).
-- **Parametric vs. nonparametric.**
-- **Frequentist vs. Bayesian.**
-- **Offline (batch) vs. online (sequential).**
-- **Univariate vs. multivariate vs. high-dimensional.**
-- **Independence vs. dependence/autocorrelation; light- vs. heavy-tailed noise.**
+- **P1 — Wrap, don't reinvent.** Bind to peer-reviewed, CRAN-published engines;
+  new engines enter as `Suggests`, guarded with `requireNamespace()`.
+- **P2 — Tidy in, tidy out.** Every detector returns a `ggcpt`; column names are
+  stable across methods.
+- **P3 — `ggplot2` all the way down.** Every result renders with `autoplot()`
+  and extends with `+`.
+- **P4 — One vocabulary.** A consistent argument set (`x`, `method`, `penalty`,
+  `min_size`, `n_cpts`, …); method-specific arguments flow through `...`.
+- **P5 — Progressive disclosure.** Beginners call `cpt_detect()` + `autoplot()`;
+  experts reach the upstream object via `$fit`.
+- **P6 — No surprises for existing users.** The 0.1.0 four and now the 0.2.0
+  surface keep working unchanged.
+- **P7 — Document everything you ship (new).** No feature is "done" until it is
+  introduced where users look first — the README and a vignette — with a runnable
+  example, and until the package's own help no longer contradicts the package's
+  own exports. This principle is what §2 operationalises.
 
 ---
 
-## 3. A taxonomy of methods and the gaps in 0.1.0
+## 2. The documentation and coverage gap (and the mandate to close it)
 
-The table maps the landscape and marks current coverage. ✅ = in 0.1.0;
-🆕 = proposed for the next release.
+> **This section is the headline deliverable of the next release.** The package
+> already provides far more than its public-facing documentation admits, and in a
+> few places the documentation states things that are not true. Until that is
+> fixed, much of 0.2.0's work is invisible.
 
-| Family | Representative methods | R package(s) | Status |
-|---|---|---|---|
-| Exact / pruned optimal partitioning | OP, **PELT**, SegNeigh, **FPOP/SNIP**, **gfpop** | `changepoint`, `fpop`, `gfpop` | PELT/SegNeigh ✅; FPOP/gfpop 🆕 |
-| Penalty path | **CROPS** | `changepoint`, `crops` | 🆕 |
-| Randomised / greedy search | BinSeg, **WBS**, **WBS2/SDLL**, **NOT**, **TGUH**, **Isolate-Detect** | `wbs`, `breakfast`, `not`, `IDetect` | BinSeg ✅; rest 🆕 |
-| Moving window | **MOSUM**, multiscale MOSUM | `mosum` | 🆕 |
-| Multiscale inference + CIs | **SMUCE**, **HSMUCE**, FDRSeg | `stepR`, `FDRSeg` | 🆕 |
-| Nonparametric (univariate) | **NMCD** (`cpt.np`) | `changepoint.np` | ✅ |
-| Nonparametric (multivariate, energy) | **E-Divisive / E-Agglo** | `ecp` | ✅ |
-| Kernel | **KCP** | `kcpRS` | 🆕 |
-| Sequential CPM | Mann–Whitney, Mood, Lepage, KS, CvM | `cpm` | 🆕 |
-| Robust to outliers | **biweight / robust loss** | `robseg` | 🆕 |
-| Local fluctuation + autocorrelation | **DeCAFS** | `DeCAFS` | 🆕 |
-| Dependence, multi-parameter | **Self-normalisation (SNCP)** | `SNSeg` | 🆕 |
-| High-dimensional mean | **inspect**, **SBS** | `InspectChangepoint`, `hdbinseg` | 🆕 |
-| Collection (HD mean, regression, network, VAR) | **changepoints** | `changepoints` | 🆕 |
-| Bayesian (offline) | **bcp** (product partition) | `bcp` | 🆕 |
-| Bayesian (online) | **BOCPD** | `ocp` | 🆕 |
-| Structural breaks (regression) | **Bai–Perron**, fluctuation tests | `strucchange` | 🆕 |
-| Segmented / broken-line regression | **segmented** | `segmented` | 🆕 |
-| Online CUSUM | **FOCuS** | `FOCuS` | 🆕 |
-| High-dimensional online | **OCD** | `ocd` | 🆕 |
+### 2.1 The gap, concretely
 
-The next release closes essentially all of these gaps, prioritised in §11.
+The README and the package-level help advertise the package; the vignettes teach
+it; the man pages document the individual functions. Today these three layers
+disagree with each other and with the code. Mapping every export against where it
+is actually introduced:
 
----
+| Export | README | Vignette (narrative) | Man page |
+|---|:---:|:---:|:---:|
+| `cpt_detect`, `tidy`/`glance`/`augment`, `autoplot`, `ggcpt_compare`, `ggcpt_compare_table`, `cpt_metrics`, `cpt_simulate`, `signal_*`, `cpt_wrapper`, `ggcptplot` | ✅ | ✅ | ✅ |
+| `cpt_penalty`, `cpt_metrics_annotated`, `ggcpt_eval`, `geom_changepoint`, `geom_cpt_segment`, `geom_cpt_ci`, `stat_changepoint`, `rcpt`, `ecp_wrapper`/`ggecpplot` | ❌ | ✅ | ✅ |
+| `theme_ggcpt`, `annotate_segments` | ❌ | ❌ | ✅ |
+| `fpop_wrapper`, `wbs_wrapper`, `wbs2_wrapper`, `not_wrapper`, `mosum_wrapper`, `idetect_wrapper`, `tguh_wrapper` | ❌ | ❌ | ✅ |
+| `new_ggcpt`, `is_ggcpt` | ❌ | ❌ | ✅ |
 
-## 4. A unified tidy result object and API
+Roughly **half of the ~37 exports never appear in the README**, and a block of
+them — `theme_ggcpt()`, `annotate_segments()`, and *all seven* per-engine
+wrappers — appear in **neither the README nor the vignettes**, surviving only as
+man pages a user must already know to look for. A reader of the CRAN landing page
+would not learn that the package can theme its plots, shade segments, or be
+driven one engine at a time.
 
-### 4.1 The `ggcpt` object
+### 2.2 Statements that are actively wrong
 
-We introduce a single S3 class returned by every detector:
+Worse than silence is mis-statement. The next release must fix all of these:
 
-```r
-structure(
-  list(
-    changepoints = tibble(cp, cp_value, ...),  # one row per detected changepoint
-    segments     = tibble(seg_id, start, end, n, param_estimate, ...),
-    data         = tibble(index, value),        # tidy long form of the input
-    method       = "pelt",                       # canonical method id
-    change_in    = "mean",                        # what changed
-    penalty      = list(type = "MBIC", value = ...),
-    fit          = <upstream object>,             # the raw object from the engine
-    call         = <matched call>
-  ),
-  class = "ggcpt"
-)
-```
+1. **The README advertises an engine the package does not have.** `README.Rmd`
+   says the package "wraps multiple detection engines (changepoint,
+   changepoint.np, ecp, wbs, breakfast, not, mosum, fpop, IDetect, **and
+   gfpop**)." There is **no `gfpop` code**, `gfpop` is **not in `Suggests`**, and
+   `DESCRIPTION` explicitly **defers `gfpop` to v0.3.0** (`gfpop` is also not
+   currently available on CRAN). The claim must be removed until §4.1 actually
+   ships it.
+2. **The package-level help is stale by a whole release.** `?ggchangepoint`
+   still reads: *"For the moment, I only include three changepoint packages
+   ('changepoint', 'changepoint.np' and 'ecp'). More changepoint packages will be
+   included as time progresses."* The package now wraps eight-plus engines behind
+   a unified class. This is the first help page a curious user reads, and it
+   describes 0.1.0.
+3. **`cpt_detect()`'s documentation over-promises.** Its `@param method`
+   enumerates 26 methods, 13 of which `stop()` at runtime (§1.2). The Rd makes no
+   distinction between "available now," "available with a `Suggests` package," and
+   "planned." A user copying a method name out of the help gets an error.
+4. **Convention and multivariate caveats are under-stated.** The `cp_convention`
+   normalisation (§11) and the *current absence* of true multivariate support
+   (§3.2) are not surfaced where a multivariate user would look (the `ecp_wrapper`
+   and `cpt_detect` help, and the README).
 
-`changepoints` always contains `cp` (integer index) and `cp_value` (the value
-at that index) — **identical to the 0.1.0 contract** — plus optional method
-specific columns (e.g. `cusum`, `posterior_prob`, `interval_start`,
-`interval_end`, `ci_lower`, `ci_upper`, `coordinate`). `segments` is the dual
-representation: one row per segment with its location-parameter estimate, which
-powers segment-mean overlays and the `augment()` method.
+### 2.3 The mandate and its acceptance criteria
 
-### 4.2 `broom` methods
+The next release adopts P7 (§1.3) and treats documentation coverage as a release
+gate. Concretely:
 
-We implement the `broom` generics so the package composes with the rest of the
-tidyverse and with `tidymodels`:
+- **Every exported function is introduced in the README**, grouped by role
+  (detection, result object, broom, visualization, comparison, evaluation,
+  simulation, theming), each with a minimal runnable example. The README is
+  regenerated from `README.Rmd` so the examples are executed, not asserted.
+- **A short "feature tour" vignette** (`vignette("ggchangepoint")`) walks the
+  *entire* surface end to end — including the per-engine wrappers, `theme_ggcpt()`,
+  `annotate_segments()`, `cpt_penalty()`, `ggcpt_eval()`, and the class
+  constructors — so no export is vignette-orphaned. The existing `introduction`
+  and `comparison` vignettes stay; the tour is the index to them.
+- **The package-level help is rewritten** to describe the unified framework and
+  the current engine list, generated so it cannot drift (e.g. an engine table the
+  help and the README share).
+- **`cpt_detect()`'s help distinguishes three tiers** — wired now / available via
+  a named `Suggests` package / planned — and the runtime message for an
+  unimplemented method names the package or release that will provide it (§3.1).
+  A new `cpt_methods()` returns this table programmatically (§3.1), and the help
+  links to it.
+- **A `pkgdown` reference audit** ensures every export sits in a titled group
+  (the current `_pkgdown.yml` is close; it must stay exhaustive as the surface
+  grows), and a CI check (e.g. a `usethis`/`pkgdown`-style "undocumented export"
+  test) fails the build if any export is missing from the reference index or
+  lacks `@examples`.
+- **A coverage test in `testthat`** asserts that the set of exports equals the set
+  of functions referenced by the README + tour vignette, so the gap cannot
+  silently reopen.
+- **`NEWS.md` is audited for accuracy and completeness** — the changelog is a
+  documentation surface too. No entry may advertise a feature or test that does
+  not exist (the 0.2.0 entry's nonexistent `vdiffr` tests; the "all methods"
+  over-claim — §11.3 B13), and the 0.3.0 entry names every new export, including
+  the ones 0.2.0's changelog omitted (`theme_ggcpt()`, `annotate_segments()`).
 
-- **`tidy(x)`** → the `changepoints` tibble (one row per changepoint).
-- **`glance(x)`** → a one-row summary: `n`, `n_changepoints`, `method`,
-  `change_in`, `penalty_type`, `penalty_value`, `total_cost`/`logLik` where
-  available, `runtime`.
-- **`augment(x)`** → the original data with added columns: `seg_id`, the
-  fitted within-segment level (`.fitted`), the residual (`.resid`), and an
-  `is_changepoint` flag. This is the natural input to `geom_cpt_segment()`.
-
-### 4.3 The unified front-end and thin wrappers
-
-Two entry points, mirroring how 0.1.0 already feels:
-
-```r
-# 1. Unified dispatcher (recommended for users comparing methods)
-cpt_detect(x,
-           method   = c("pelt", "binseg", "segneigh", "amoc",
-                        "wbs", "wbs2", "not", "mosum", "idetect", "tguh",
-                        "smuce", "hsmuce", "fpop", "gfpop",
-                        "np", "ecp", "kcp", "cpm",
-                        "robust", "decafs", "sn",
-                        "inspect", "sbs", "bcp", "bocpd",
-                        "strucchange", "segmented"),
-           change_in = c("mean", "var", "meanvar", "slope", "distribution"),
-           penalty   = "MBIC",
-           ...)
-
-# 2. Thin per-engine wrappers (stable, discoverable, documented one-to-one)
-#    cpt_wrapper(), ecp_wrapper()  [existing]
-#    wbs_wrapper(), not_wrapper(), mosum_wrapper(), idetect_wrapper(),
-#    fpop_wrapper(), gfpop_wrapper(), smuce_wrapper(), kcp_wrapper(),
-#    cpm_wrapper(), robseg_wrapper(), decafs_wrapper(), sn_wrapper(),
-#    inspect_wrapper(), changepoints_wrapper(), bcp_wrapper(),
-#    bocpd_wrapper(), strucchange_wrapper(), segmented_wrapper()
-```
-
-`cpt_detect()` dispatches to the thin wrappers; both return a `ggcpt` object.
-The thin wrappers keep one-to-one documentation with their upstream engine so
-expert users can map arguments precisely.
-
-### 4.4 Rendering
-
-A single generic renders any result:
-
-```r
-autoplot(x, ...)          # S3 method autoplot.ggcpt(); returns a ggplot
-ggcptplot(x, ...)         # kept; now also accepts a ggcpt object
-```
-
-Details of the visualization layer are in §7.
+This is deliberately mechanical: the point is that "introduce all features"
+becomes a checkable contract, not a good intention.
 
 ---
 
-## 5. New detection methods
+## 3. Finishing the foundation: an honest dispatcher, multivariate input, parallelism
 
-Each subsection gives: the idea and key mathematics, the R package to wrap, the
-proposed tidy signature, and the proposed plot. Citations are collected in the
-[References](#references).
+### 3.1 Make `cpt_detect()` honest, and make the method set discoverable
 
-### 5.1 Penalised optimal partitioning and functional pruning
+Two acceptable fixes, used together:
 
-#### 5.1.1 Optimal Partitioning and Segment Neighbourhood (context)
+- **Stop advertising what does not run.** `match.arg()` should enumerate only
+  wired methods; planned methods are documented as planned, not offered as
+  choices that error. As each engine lands (§4–§5) its name joins the
+  enumeration.
+- **Make capability introspectable.** Add `cpt_methods()` returning a tibble:
 
-Optimal Partitioning (Jackson et al., 2005) solves the penalised-cost problem
-exactly by the recursion
+  ```r
+  cpt_methods()
+  #> # A tibble: N × 5
+  #>   method  change_in            engine        status     installed
+  #>   <chr>   <chr>                <chr>         <chr>      <lgl>
+  #> 1 pelt    mean,var,meanvar     changepoint   available  TRUE
+  #> 2 wbs     mean                 wbs/breakfast available  FALSE      # Suggests not installed
+  #> 3 smuce   mean                 stepR         planned    NA
+  #> …
+  ```
 
-$$
-F(t) = \min_{0 \le s < t} \Big\{ F(s) + \mathcal{C}(y_{(s+1):t}) + \beta \Big\}, \qquad F(0) = -\beta,
-$$
+  `status` ∈ {`available`, `planned`}; `installed` reflects whether the
+  `Suggests` engine is present. When a wired method's engine is missing, the
+  error is actionable ("install `mosum`"); when a method is `planned`, the error
+  names the target release. This both fixes the over-promise and gives users (and
+  `ggcpt_compare()`) a programmatic way to ask "what can I run here?"
 
-in $O(n^2)$. Segment Neighbourhood (Auger & Lawrence, 1989) instead fixes the
-number of segments and is $O(Q n^2)$ for up to $Q$ changepoints. Both are
-already reachable through `cpt_wrapper(cp_method = "SegNeigh")`; we document
-their relationship to PELT explicitly in the vignette.
+### 3.2 Genuine multivariate input
 
-#### 5.1.2 PELT (already wrapped — documented more fully)
+`ecp`, and several backlog engines (§5.2), exist precisely for multivariate
+data. The next release stops flattening it:
 
-PELT (Killick, Fearnhead & Eckley, 2012) augments Optimal Partitioning with a
-pruning step: a candidate last-changepoint $s$ can be discarded permanently once
+- A single input-normalisation step classifies `x` as univariate (vector) or
+  multivariate (`n × p` matrix/data-frame) and routes accordingly, instead of
+  `as.numeric(x)`.
+- For multivariate results, `cp_value` (a scalar) is replaced/augmented by a
+  populated `segments` table carrying per-segment, per-coordinate summaries; the
+  `ggcpt` object already has a `segments` slot for exactly this. (Today
+  `ecp_wrapper()` returns a *silently wrong* `cp_value` for matrix input — a
+  column-major-flattened scalar — and `NA` for data-frame input; see §11.3 B4.)
+- `autoplot()` dispatches on dimensionality to the multivariate renderers of §7.4
+  (faceted small-multiples; heatmap). Univariate behaviour is unchanged.
+- The `ecp_wrapper()` and `cpt_detect()` help gain a worked multivariate example,
+  removing the §2.2(4) caveat by making the feature real.
 
-$$
-F(s) + \mathcal{C}(y_{(s+1):t}) + K \;>\; F(t),
-$$
+### 3.3 Extend opt-in parallelism
 
-provided there exists a constant $K$ with $\mathcal{C}(y_{(s+1):t}) +
-\mathcal{C}(y_{(t+1):T}) + K \le \mathcal{C}(y_{(s+1):T})$ for all $T>t$. Under
-the assumption that changepoints are spread throughout the data, PELT achieves
-expected $O(n)$ cost while remaining *exact*. This is the default engine of
-`cpt_wrapper()`; the next release adds an explanatory derivation and a runtime
-comparison plot to the vignette.
+Lift the `future` pattern already in `ggcpt_compare()` to the other
+orchestration-level loops — the planned `cpt_batch()` panel detector (§6.3),
+`cpt_simulate()`-driven studies, and `cpt_metrics()` over a method×penalty grid —
+with parallel-safe L'Ecuyer RNG wired to a `seed` argument so results are
+identical regardless of worker count (§9.4). Sequential stays the default; no
+detector's *result* depends on the plan, only its runtime.
 
-#### 5.1.3 FPOP and SNIP
+---
 
-Functional Pruning Optimal Partitioning (Maidstone, Hocking, Rigaill &
-Fearnhead, 2017) prunes the *cost functions* rather than candidate indices,
-storing $F_t(\theta)$ as a piecewise-quadratic in the segment parameter and
-discarding regions of $\Theta$ that can never be optimal. FPOP is exact, returns
-the same segmentation as PELT, and is empirically faster — crucially, its speed
-is *robust to the number of changepoints*. SNIP is its companion for the
-segment-neighbourhood (fixed-$Q$) formulation.
+## 4. The next engine wave (0.3.0)
 
-- **Wraps:** `fpop` (`Fpop()`).
-- **Proposed:** `fpop_wrapper(x, penalty = "BIC", ...)` → `ggcpt`.
+Each subsection gives the idea and key mathematics, the package to wrap, the
+proposed tidy signature, and the proposed plot. These four were chosen for 0.3.0
+because they add the most reach (and, for `gfpop` and SMUCE, the most genuinely
+new *output types* — graph-constrained means and confidence bands) for modest
+dependency weight, and because `smuce`/`hsmuce` are already named in the
+dispatcher and `gfpop` is already (wrongly) named in the README.
 
-#### 5.1.4 gfpop — graph-constrained functional pruning
+### 4.1 gfpop — graph-constrained functional pruning
 
-Generalized Functional Pruning Optimal Partitioning (Hocking, Rigaill,
-Fearnhead & Bourque, 2022) lets the user encode prior structural constraints on
-the sequence of segment means as a *constraint graph*: e.g. "means must
-alternate up-then-down" (peak detection in genomics), "monotone increasing"
-(isotonic), or bounded jumps. The cost minimised is the penalised cost subject
-to the graph, solved with empirical cost $O(N \log N)$.
+**Priority engine for 0.3.0**, both because `DESCRIPTION` deferred it here and
+because the README already (incorrectly) claims it (§2.2(1)); shipping it
+converts a false claim into a true one.
 
-- **Wraps:** `gfpop` (`gfpop()`, `graph()`).
-- **Proposed:** `gfpop_wrapper(x, graph = NULL, type = c("std","updown","isotonic","relevant"), ...)`.
-- **Plot:** `autoplot()` overlays the constrained step-mean; for `updown`
-  graphs it shades up/down states.
+Generalized Functional Pruning Optimal Partitioning (Hocking, Rigaill, Fearnhead
+& Bourque, 2022) lets the user encode prior structural constraints on the
+sequence of segment means as a *constraint graph*: means that must alternate
+up-then-down (peak detection in genomics), monotone-increasing (isotonic),
+or with bounded jumps. It minimises the penalised cost subject to the graph with
+empirical cost $O(N \log N)$, returning an exact constrained segmentation.
 
-### 5.2 Randomised and multiscale search
+- **Wraps:** `gfpop` (`gfpop()`, `graph()`). *Availability caveat:* `gfpop` is
+  not currently on CRAN; the wrapper ships behind `requireNamespace()` and is
+  excluded from CRAN examples/tests until the engine is installable, so the claim
+  in the README is only restored once the dependency is genuinely available.
+- **Proposed:** `gfpop_wrapper(x, graph = NULL, type = c("std","updown","isotonic","relevant"), penalty = "BIC", ...)` → `ggcpt`.
+- **Plot:** `autoplot()` overlays the constrained step-mean (`show_segments`);
+  for `updown` graphs it shades up/down states.
 
-#### 5.2.1 Binary Segmentation (context)
+### 4.2 SMUCE / HSMUCE — multiscale inference with confidence
 
-Standard Binary Segmentation recursively finds the single split $b$ maximising
-$|\mathcal{X}^{s,e}_b|$ on the current interval and recurses while the maximum
-exceeds a threshold. It is $O(n \log n)$ but inconsistent when changes are
-frequent or small. Available now via `cp_method = "BinSeg"`.
-
-#### 5.2.2 WBS — Wild Binary Segmentation
-
-WBS (Fryzlewicz, 2014) draws $M$ random sub-intervals $(s_m, e_m]$, computes the
-CUSUM contrast on each, and recurses on the interval achieving the globally
-largest contrast — a *random localisation* that detects short, small changes
-that standard Binary Segmentation misses, without a span parameter. Model
-selection uses either a threshold or the strengthened Schwarz Information
-Criterion (sSIC).
-
-- **Wraps:** `wbs` (`wbs()`, `changepoints()`); also `breakfast`.
-- **Proposed:** `wbs_wrapper(x, n_intervals = 5000, threshold = NULL, selection = c("ssic","threshold"), ...)`.
-
-#### 5.2.3 WBS2 and the Steepest-Drop (SDLL) model selection
-
-WBS2 (Fryzlewicz, 2020) recomputes random intervals *recursively and locally*,
-yielding a complete solution path, paired with "Steepest Drop to Low Levels"
-(SDLL) model selection. WBS2.SDLL excels precisely in the frequent-change regime.
-
-- **Wraps:** `breakfast` (`sol.wbs2()`, `model.sdll()`).
-- **Proposed:** exposed via `cpt_detect(method = "wbs2")`.
-
-#### 5.2.4 NOT — Narrowest-Over-Threshold
-
-NOT (Baranowski, Chen & Fryzlewicz, 2019) considers, among all random intervals
-whose contrast exceeds a threshold $\zeta$, the *narrowest*, isolating a single
-feature at a time. It is generic over the contrast, so it handles not only
-piecewise-constant **mean** but piecewise-**linear** (continuous or with jumps),
-**variance**, and **mean+variance** changes. Threshold via sSIC; the entire
-solution path is computable in close-to-linear time.
-
-- **Wraps:** `not` (`not()`, `features()`).
-- **Proposed:** `not_wrapper(x, contrast = c("pcwsConstMean","pcwsLinContMean","pcwsLinMean","pcwsConstMeanVar"), ...)`.
-- **Plot:** trend contrasts render as fitted broken lines rather than vertical
-  rules — a visual NOT cannot currently produce easily.
-
-#### 5.2.5 MOSUM — moving sum
-
-MOSUM (Eichinger & Kirch, 2018) scans a moving-sum detector with bandwidth $G$,
-
-$$
-T_k(G) = \frac{1}{\hat\sigma}\sqrt{\frac{1}{2G}} \left| \sum_{i=k+1}^{k+G} y_i - \sum_{i=k-G+1}^{k} y_i \right|,
-$$
-
-flagging significant local maxima as changepoints. The `mosum` package
-(Meier, Kirch & Cho, 2021) adds a *multiscale* combination over several
-bandwidths (Cho & Kirch, 2022) and a bootstrap for **confidence intervals** of
-changepoint locations.
-
-- **Wraps:** `mosum` (`mosum()`, `multiscale.localPrune()`, `confint()`).
-- **Proposed:** `mosum_wrapper(x, G = NULL, multiscale = FALSE, ci = FALSE, ...)`;
-  `ci = TRUE` fills `ci_lower`/`ci_upper`.
-- **Plot:** a two-panel `autoplot()` — series with changepoints on top, the
-  MOSUM detector statistic with threshold and bandwidth band below.
-
-#### 5.2.6 Isolate-Detect and TGUH
-
-Isolate-Detect (Anastasiou & Fryzlewicz, 2022) expands intervals from the left
-and right until a single changepoint is *isolated*, then detected — accurate
-under frequent changes of small magnitude, for both piecewise-constant and
-piecewise-linear signals, including heavy-tailed noise. TGUH (Fryzlewicz, 2018)
-is a tail-greedy, bottom-up unbalanced-Haar decomposition giving fast,
-consistent multiple-changepoint estimation.
-
-- **Wraps:** `IDetect` (`ID()`, `pcm_th()`); `breakfast` (`sol.idetect()`,
-  `sol.tguh()`).
-- **Proposed:** `idetect_wrapper(x, ...)`; TGUH via `cpt_detect(method = "tguh")`.
-
-### 5.3 Multiscale inference with confidence statements
-
-#### 5.3.1 SMUCE / HSMUCE
-
-SMUCE (Frick, Munk & Sieling, 2014) estimates a step function in an
-exponential-family model by minimising the number of changepoints subject to a
-*multiscale constraint*: the estimate must pass a multiscale test at level
-$\alpha$ on every interval simultaneously. The level $\alpha$ has an
-interpretation — it bounds the probability of over-estimating the number of
-changepoints — and the method delivers **confidence intervals for changepoint
-locations** and **confidence bands for the signal**. HSMUCE (Pein, Sieling &
-Munk, 2017) extends this to heterogeneous (segment-varying) noise.
+Already named in `cpt_detect()` (`smuce`, `hsmuce`) but unwired. SMUCE (Frick,
+Munk & Sieling, 2014) estimates a step function by minimising the number of
+changepoints subject to a *multiscale constraint*: the estimate must pass a
+multiscale test at level $\alpha$ on every interval simultaneously. The level
+$\alpha$ bounds the probability of over-estimating the number of changepoints,
+and the method delivers **confidence intervals for changepoint locations** and
+**confidence bands for the signal**. HSMUCE (Pein, Sieling & Munk, 2017) extends
+this to heterogeneous (segment-varying) noise.
 
 - **Wraps:** `stepR` (`stepFit()`, `confband()`, `confint()`).
-- **Proposed:** `smuce_wrapper(x, alpha = 0.5, family = c("gauss","hsmuce","poisson"), ...)`.
+- **Proposed:** `smuce_wrapper(x, alpha = 0.5, family = c("gauss","hsmuce","poisson"), ...)` → `ggcpt` with `ci_lower`/`ci_upper` populated.
 - **Plot:** `autoplot()` draws the step estimate, a shaded confidence band for
-  the signal, and horizontal whiskers for changepoint-location CIs — a
-  capability the package entirely lacks today.
+  the signal, and the changepoint-location CIs via the **already-shipped**
+  `geom_cpt_ci()` — which today has no engine producing CIs to consume. SMUCE is
+  the feature that finally exercises that geom.
 
-### 5.4 Nonparametric and distribution-free detection
+### 4.3 CROPS — the penalty path
 
-#### 5.4.1 NMCD (already wrapped via `cpt.np`)
+The Achilles heel of penalised methods is the penalty $\beta$; `cpt_penalty()`
+constructs standard values but cannot tell the user which to pick. CROPS (Haynes,
+Eckley & Fearnhead, 2017) computes *all* optimal segmentations as $\beta$ ranges
+over $[\beta_{\min}, \beta_{\max}]$, exploiting that the number of distinct
+optimal segmentations is small and each is found at PELT cost. This turns penalty
+selection from a guess into a diagnostic.
 
-The nonparametric maximum-likelihood approach of Zou, Yin, Feng & Wang (2014)
-defines a segment cost from the empirical distribution function, integrating a
-quantile-indexed Bernoulli log-likelihood, and selects the number of
-changepoints by BIC. Haynes, Fearnhead & Eckley (2017) make it computationally
-efficient by solving it with PELT (and CROPS) — this is what `changepoint.np`
-implements, reached today via `cpt_wrapper(change_in = "cpt_np")`. The next
-release exposes its `nquantiles` argument and CROPS path explicitly.
+- **Wraps:** `changepoint` (the `CROPS` penalty option).
+- **Proposed:** `cpt_crops(x, method, change_in, pen_min, pen_max, ...)` → a
+  `ggcpt_path` object holding, per penalty interval, the number of changepoints
+  and the total unpenalised cost.
+- **Plot:** `autoplot.ggcpt_path()` is the **elbow plot** (cost vs. number of
+  changepoints); `ggcpt_pathplot()` is a faceted small-multiple of the actual
+  segmentation at each distinct changepoint count, so the analyst *sees* the
+  models being chosen among.
 
-#### 5.4.2 E-Divisive / E-Agglomerative (already wrapped)
+### 4.4 Robust loss, DeCAFS, self-normalisation
 
-The energy-distance methods of Matteson & James (2014), implemented in `ecp`,
-detect changes in *distribution* for multivariate data of arbitrary dimension
-using the divergence
+Three engines that handle the regimes where naïve change-in-mean over-counts;
+all three are already named (`robust`, `decafs`, `sn`) in the dispatcher.
 
-$$
-\mathcal{E}(X, Y; \alpha) = \frac{2}{mn}\sum_{i=1}^{m}\sum_{j=1}^{n}\lVert X_i - Y_j\rVert^\alpha
-- \binom{m}{2}^{-1}\!\!\sum_{i<k}\lVert X_i - X_k\rVert^\alpha
-- \binom{n}{2}^{-1}\!\!\sum_{j<l}\lVert Y_j - Y_l\rVert^\alpha,
-\quad \alpha \in (0,2).
-$$
-
-`e.divisive` adds changepoints by bisection with a permutation test;
-`e.agglo` merges. The next release lifts the current univariate-only treatment
-to genuine **multivariate** input (see §5.6 and §7.5) and exposes `alpha`,
-`sig.lvl`, and `R` (permutations).
-
-#### 5.4.3 KCP — kernel change point
-
-KCP (Arlot, Celisse & Harchaoui, 2019), as packaged in `kcpRS` (Cabrieto et
-al.), maps data into an RKHS via a Gaussian kernel and minimises a within-phase
-scatter criterion on running statistics (running mean, variance,
-autocorrelation, correlation), with a permutation test for the existence of any
-changepoint and model selection for their number. It captures changes in
-*higher-order* structure (e.g. correlation) that mean/variance methods miss.
-
-- **Wraps:** `kcpRS` (`kcpRS()`, `kcpRS_workflow()`).
-- **Proposed:** `kcp_wrapper(x, running_stat = c("mean","var","ar","cor"), wsize = 25, ...)`.
-
-#### 5.4.4 Sequential change-point models (CPM)
-
-The CPM framework (Hawkins; Ross, 2015, `cpm`) provides distribution-free
-*sequential* detection through repeated two-sample tests as data arrive:
-Mann–Whitney (location), Mood (scale), Lepage (location+scale),
-Kolmogorov–Smirnov and Cramér–von-Mises (general distribution), plus parametric
-variants. It also runs in batch mode (`processStream`) to find multiple
-changepoints. See also §5.9.
-
-- **Wraps:** `cpm` (`detectChangePoint()`, `processStream()`).
-- **Proposed:** `cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)`.
-
-### 5.5 Robustness and dependence
-
-#### 5.5.1 Robust loss for outliers
-
-Classical Gaussian costs inflate the changepoint count when the data contain
-outliers or heavy tails. Fearnhead & Rigaill (2019) show that only *bounded*
-loss functions are robust to arbitrarily extreme outliers, and give an exact
-dynamic program minimising a penalised cost built from a bounded segment loss,
-
-$$
-\mathcal{C}(y_{a:b}) = \min_{\mu} \sum_{i=a}^{b} \gamma\!\left(\frac{y_i - \mu}{\sigma}\right),
-\qquad
-\gamma(u) = \min\!\left(u^2,\, K^2\right),
-$$
-
-with the truncated-quadratic $\gamma$ shown capping each point's influence at
-$K^2$. The `robseg` implementation provides this bounded (biweight-style) loss
-together with Huber and $L_1$ variants for heavy-tailed noise, consistently
-recovering the number and locations of changes despite contamination.
-
-- **Wraps:** `robseg` (`Rob_seg.std()`).
-- **Proposed:** `robseg_wrapper(x, loss = c("biweight","huber","L1","L2"), lambda = ..., ...)`.
-
-#### 5.5.2 DeCAFS — local fluctuations + autocorrelated noise
-
-DeCAFS (Romano, Rigaill, Runge & Fearnhead, 2022) targets the very common
-situation in which the mean *drifts* (a random-walk component) between abrupt
-changes and the noise is *autocorrelated* (AR(1)). Naïve change-in-mean methods
-badly over-count in this regime. DeCAFS minimises a penalised cost of the form
-
-$$
-\sum_{t} \Big[ (y_t - \mu_t)^2/\sigma^2 + (\mu_t - \mu_{t-1})^2/\eta^2 \cdot \mathbb{1}\{\text{no change}\} \Big] + \beta \cdot (\text{number of changes}),
-$$
-
-with an efficient dynamic program that copes with the cross-segment dependence.
-
-- **Wraps:** `DeCAFS` (`DeCAFS()`, `estimateParameters()`).
-- **Proposed:** `decafs_wrapper(x, beta = ..., model_param = NULL, ...)`.
-
-#### 5.5.3 Self-normalisation (SNCP)
-
-The self-normalisation framework of Zhao, Jiang & Shao (2022), implemented in
-`SNSeg`, couples SN-based tests with a nested local-window segmentation. It is
-nonparametric, robust to temporal dependence, **avoids estimating the long-run
-variance**, and detects changes in *general parameters* — mean, variance,
-quantiles, autocovariance, correlation — in a unified way, for univariate,
-multivariate (`SNSeg_Multi`), and high-dimensional (`SNHD`) series.
-
-- **Wraps:** `SNSeg` (`SNSeg_Uni()`, `SNSeg_Multi()`, `SNSeg_HD()`).
-- **Proposed:** `sn_wrapper(x, parameter = c("mean","variance","acf","bivcor"), ...)`.
-
-### 5.6 High-dimensional and multivariate detection
-
-#### 5.6.1 inspect — sparse projection
-
-For a $p$-variate series whose mean changes in an unknown *sparse* subset of
-coordinates, `inspect` (Wang & Samworth, 2018) forms the CUSUM *matrix*, finds a
-good projection direction as the leading left singular vector of a convex
-relaxation (sparse SVD), projects to one dimension, and applies a univariate
-detector — repeating via wild binary segmentation for multiple changes. It
-comes with strong guarantees on the number and rate of localisation.
-
-- **Wraps:** `InspectChangepoint` (`inspect()`).
-- **Proposed:** `inspect_wrapper(X, lambda = NULL, threshold = NULL, ...)` where `X` is $n \times p$.
-- **Plot:** see §7.5 (per-coordinate heatmap + projection direction).
-
-#### 5.6.2 Sparsified Binary Segmentation
-
-SBS (Cho & Fryzlewicz, 2015) thresholds and aggregates per-coordinate CUSUMs to
-suppress noise coordinates before segmenting — strong when changes are sparse
-across coordinates. Available via `hdbinseg` (`sbs.alg()`); also `dcbs.alg()`
-(double-CUSUM).
-
-- **Proposed:** `cpt_detect(method = "sbs")`.
-
-#### 5.6.3 The `changepoints` collection
-
-`changepoints` (Xu, Padilla, Wang, Yu & Li) packages a suite of recent,
-theoretically-optimal estimators: univariate mean and **covariance**,
-high-dimensional mean, **high-dimensional regression** (including under temporal
-dependence; Xu, Wang, Zhao & Yu, 2024), **dynamic networks** (dynamic
-Erdős–Rényi and random-dot-product graphs), and **VAR** models, several with
-companion confidence procedures and a tuning-free variant (e.g.
-`changepoints::CV.search.DP`).
-
-- **Wraps:** `changepoints`.
-- **Proposed:** `changepoints_wrapper(data, model = c("mean","cov","regression","network","var"), ...)`.
-
-### 5.7 Bayesian changepoint detection
-
-#### 5.7.1 bcp — product partition models
-
-`bcp` (Erdman & Emerson, 2007) implements the Barry & Hartigan (1993) product
-partition model via MCMC, returning a **posterior probability of a changepoint
-at every location** and posterior segment means with credible intervals — a
-fundamentally different (and very visualisable) output from a hard segmentation.
-It supports univariate sequences and linear-regression changepoints.
-
-- **Wraps:** `bcp` (`bcp()`).
-- **Proposed:** `bcp_wrapper(x, ..., prob_threshold = 0.5)` → `changepoints`
-  has a `posterior_prob` column; `segments` carries posterior means + CIs.
-- **Plot:** `autoplot()` overlays posterior means with a credible band and a
-  lower panel of per-location posterior changepoint probability (§7.7).
-
-#### 5.7.2 BOCPD — Bayesian Online Changepoint Detection
-
-BOCPD (Adams & MacKay, 2007) maintains, online, the posterior over the **run
-length** $r_t$ (time since the last changepoint) via the message passing
-recursion
-
-$$
-P(r_t, y_{1:t}) = \sum_{r_{t-1}} P(r_t \mid r_{t-1})\, P(y_t \mid r_{t-1}, y^{(r)}_{t})\, P(r_{t-1}, y_{1:t-1}),
-$$
-
-with a hazard function $H(\cdot)$ governing $P(r_t \mid r_{t-1})$ and a
-conjugate predictive for the per-segment model (e.g. Gaussian, Poisson). The
-`ocp` package implements it with Gaussian and user-defined predictives.
-
-- **Wraps:** `ocp` (`onlineCPD()`).
-- **Proposed:** `bocpd_wrapper(x, hazard_lambda = 250, ...)`.
-- **Plot:** the run-length posterior heatmap (§7.7) — the signature BOCPD graphic.
-
-### 5.8 Structural breaks in regression
-
-#### 5.8.1 Bai–Perron and fluctuation tests (`strucchange`)
-
-`strucchange` (Zeileis, Leisch, Hornik & Kleiber, 2002) tests and *dates*
-structural change in linear regression. It provides (a) the generalized
-fluctuation test framework (CUSUM/MOSUM of recursive or OLS residuals, and
-estimates-based processes) for *detecting* instability, and (b) the Bai & Perron
-(1998, 2003) dynamic program (`breakpoints()`) for *estimating* multiple breaks
-in the coefficients of $y_t = x_t^\top \beta_j + \varepsilon_t$, with BIC/RSS
-model selection and confidence intervals for the break dates.
-
-- **Wraps:** `strucchange` (`breakpoints()`, `Fstats()`, `efp()`,
-  `confint()`, `sctest()`).
-- **Proposed:** `strucchange_wrapper(formula, data, breaks = NULL, ...)`.
-- **Plot:** `autoplot()` shows fitted per-regime regression lines, break dates
-  with CIs, and (optionally) the empirical fluctuation process with its boundary.
-
-#### 5.8.2 segmented / broken-line regression
-
-`segmented` (Muggeo, 2003, 2008) estimates *continuous* piecewise-linear
-("broken-line") relationships: it finds breakpoints $\psi_k$ where the **slope**
-changes, by an iterative (non-grid) procedure, returning breakpoint estimates
-**with standard errors** and per-segment slopes (`slope()`, `davies.test()` for
-existence). This complements jump-based detectors with the *trend-change* case.
-
-- **Wraps:** `segmented` (`segmented()`, `slope()`, `confint.segmented()`).
-- **Proposed:** `segmented_wrapper(model, seg_var, npsi = 1, ...)`.
-
-### 5.9 Online and sequential detection
-
-#### 5.9.1 FOCuS — functional online CUSUM
-
-FOCuS (Romano, Eckley, Fearnhead & Rigaill, 2023) solves the online
-change-in-mean problem by functional pruning of the CUSUM likelihood, which is
-*equivalent to running the CUSUM test simultaneously for all possible
-pre-change/post-change magnitudes and window sizes*, at amortised cost
-logarithmic in the number of observations — removing the need to pre-specify the
-size of change or a window.
-
-- **Wraps:** `FOCuS`.
-- **Proposed:** `focus_wrapper(x, threshold = NULL, ...)`; supports
-  streaming use (one observation at a time) and batch.
-
-#### 5.9.2 OCD — high-dimensional online detection
-
-OCD (Chen, Wang & Samworth, 2022) detects a change in the mean of a
-$p$-dimensional Gaussian stream online, by aggregating likelihood-ratio
-statistics across scales and coordinates, with storage and per-observation
-computation *independent of the number of past observations* and a guaranteed
-average-run-length (patience) under the null.
-
-- **Wraps:** `ocd` (`ChangepointDetector()`, `getStatistics()`).
-- **Proposed:** `ocd_wrapper(X, thresh = "MC", ...)`.
-
-#### 5.9.3 Sequential CPM
-
-The `cpm` engine (§5.4.4) is the distribution-free workhorse for univariate
-streams and is exposed both as a batch detector and, via a thin streaming
-helper, for monitoring.
+- **Robust loss (`robseg`).** Fearnhead & Rigaill (2019): only *bounded* loss is
+  robust to arbitrary outliers. The exact DP minimises
+  $\mathcal{C}(y_{a:b}) = \min_{\mu}\sum_{i=a}^{b}\gamma\!\big((y_i-\mu)/\sigma\big)$
+  with $\gamma(u)=\min(u^2,K^2)$ (truncated quadratic / biweight), plus Huber and
+  $L_1$ variants. `robseg_wrapper(x, loss = c("biweight","huber","L1","L2"), lambda = ..., ...)`.
+  *Availability caveat:* `robseg` is not on CRAN; ships behind a guard like
+  `gfpop`.
+- **DeCAFS.** Romano, Rigaill, Runge & Fearnhead (2022): mean *drifts* (random
+  walk) between abrupt changes and noise is autocorrelated (AR(1)). DeCAFS
+  minimises
+  $\sum_t\big[(y_t-\mu_t)^2/\sigma^2 + (\mu_t-\mu_{t-1})^2/\eta^2\cdot\mathbb{1}\{\text{no change}\}\big] + \beta\cdot(\#\text{changes})$.
+  `decafs_wrapper(x, beta = ..., model_param = NULL, ...)` (`DeCAFS` on CRAN).
+- **Self-normalisation (`SNSeg`).** Zhao, Jiang & Shao (2022): SN-based tests
+  with nested local-window segmentation; nonparametric, robust to dependence,
+  avoids long-run-variance estimation, detects changes in general parameters
+  (mean, variance, quantiles, autocovariance, correlation) for univariate,
+  multivariate, and high-dimensional series.
+  `sn_wrapper(x, parameter = c("mean","variance","acf","bivcor"), ...)`.
 
 ---
 
-## 6. Penalty and model-selection toolkit
+## 5. The remaining method backlog (0.4.0+)
 
-The Achilles heel of penalised methods is the penalty $\beta$. The next release
-adds first-class tooling.
+The methods below are surveyed with enough mathematics and citation to be
+directly actionable, but are scheduled after the 0.3.0 wave. Each is already a
+named-but-unwired method in `cpt_detect()` (§1.2), so wiring them is additive.
 
-### 6.1 Penalty constants
+### 5.1 Nonparametric and kernel
 
-A helper `cpt_penalty()` constructs the standard penalties as functions of
-$(n, k)$: `None`, `SIC`/`BIC` ($k \log n$), `MBIC` (Zhang & Siegmund, 2007),
-`AIC` ($2k$), `Hannan-Quinn`, `sSIC` (Fryzlewicz, 2014), and `Manual`
-(an expression in `n`). These map onto the upstream engines' own penalty
-arguments where supported and are applied by the package otherwise.
+- **KCP (`kcpRS`).** Arlot, Celisse & Harchaoui (2019): map data into an RKHS via
+  a Gaussian kernel and minimise a within-phase scatter criterion on running
+  statistics (mean, variance, autocorrelation, correlation), with a permutation
+  test for existence and model selection for number. Captures *higher-order*
+  changes (e.g. correlation) that mean/variance methods miss.
+  `kcp_wrapper(x, running_stat = c("mean","var","ar","cor"), wsize = 25, ...)`.
+- **Sequential CPM (`cpm`).** Hawkins; Ross (2015): distribution-free sequential
+  detection via repeated two-sample tests — Mann–Whitney (location), Mood
+  (scale), Lepage (location+scale), Kolmogorov–Smirnov and Cramér–von-Mises
+  (general). Also runs in batch (`processStream`).
+  `cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)`.
+- **NMCD / E-Divisive (already shipped via `cpt.np` / `ecp`).** Expose
+  `nquantiles` and the CROPS path for `cpt.np`; lift `ecp` to genuine
+  multivariate (§3.2) and expose `alpha`, `sig.lvl`, `R`.
 
-### 6.2 CROPS — Changepoints for a Range of PenaltieS
+### 5.2 High-dimensional and multivariate
 
-CROPS (Haynes, Eckley & Fearnhead, 2017) computes *all* optimal segmentations as
-the penalty ranges over a continuous interval $[\beta_{\min}, \beta_{\max}]$,
-exploiting that the number of distinct optimal segmentations is small and each is
-found at PELT cost. This converts penalty selection from a guess into a
-diagnostic: the analyst inspects how the segmentation changes with $\beta$ and
-picks the "elbow."
+- **inspect (`InspectChangepoint`).** Wang & Samworth (2018): for a $p$-variate
+  series whose mean changes in an unknown *sparse* subset of coordinates, form the
+  CUSUM matrix, find a projection direction by a sparse-SVD convex relaxation,
+  project to 1-D and apply a univariate detector, recursing via WBS.
+  `inspect_wrapper(X, lambda = NULL, threshold = NULL, ...)`; plot adds the sparse
+  projection direction (which coordinates drive the change).
+- **SBS / double-CUSUM (`hdbinseg`).** Cho & Fryzlewicz (2015); Cho (2016):
+  threshold and aggregate per-coordinate CUSUMs to suppress noise coordinates
+  before segmenting. `cpt_detect(method = "sbs")`.
+- **The `changepoints` collection.** Xu, Padilla, Wang, Yu & Li: univariate mean
+  and covariance, high-dimensional mean, high-dimensional regression (incl. under
+  temporal dependence; Xu, Wang, Zhao & Yu, 2024), dynamic networks, and VAR,
+  several with confidence procedures.
+  `changepoints_wrapper(data, model = c("mean","cov","regression","network","var"), ...)`.
 
-- **Wraps:** `changepoint` (the `CROPS` penalty option) and/or `crops`.
-- **Proposed:** `cpt_crops(x, method, change_in, pen_min, pen_max, ...)`
-  returns a `ggcpt_path` object holding, for each penalty interval, the number
-  of changepoints and the total unpenalised cost.
+### 5.3 Bayesian
 
-### 6.3 Diagnostic plots
+- **bcp.** Erdman & Emerson (2007), Barry & Hartigan (1993): product-partition
+  model via MCMC returning a **posterior probability of a changepoint at every
+  location** plus posterior segment means with credible intervals.
+  `bcp_wrapper(x, ..., prob_threshold = 0.5)`; `changepoints` gains a
+  `posterior_prob` column. Plot: posterior means + credible band on top,
+  per-location posterior probability below.
+- **BOCPD (`ocp`).** Adams & MacKay (2007): online posterior over the **run
+  length** $r_t$ via
+  $P(r_t, y_{1:t}) = \sum_{r_{t-1}} P(r_t\mid r_{t-1})\,P(y_t\mid r_{t-1}, y^{(r)}_t)\,P(r_{t-1}, y_{1:t-1})$,
+  with a hazard $H(\cdot)$ and a conjugate predictive.
+  `bocpd_wrapper(x, hazard_lambda = 250, ...)`. Plot: the run-length posterior
+  heatmap — the signature BOCPD graphic.
 
-- `autoplot()` on a `ggcpt_path`: the **elbow plot** — penalised/unpenalised
-  cost (or $\beta$) against the number of changepoints — with the candidate
-  models annotated.
-- `ggcpt_pathplot()`: a faceted small-multiple showing the actual segmentation
-  for each distinct number of changepoints along the CROPS path, so the analyst
-  *sees* the models being chosen among.
+### 5.4 Structural breaks in regression
 
----
+- **Bai–Perron / fluctuation tests (`strucchange`).** Zeileis et al. (2002):
+  generalized fluctuation tests for *detecting* instability and the Bai & Perron
+  (1998, 2003) dynamic program (`breakpoints()`) for *dating* multiple breaks in
+  $y_t = x_t^\top\beta_j + \varepsilon_t$, with CIs for the break dates.
+  `strucchange_wrapper(formula, data, breaks = NULL, ...)`.
+- **segmented.** Muggeo (2003, 2008): *continuous* piecewise-linear
+  ("broken-line") fits with breakpoint standard errors and per-segment slopes.
+  `segmented_wrapper(model, seg_var, npsi = 1, ...)`. Both render as fitted
+  regime lines with break CIs rather than vertical rules (§7.3).
 
-## 7. The visualization layer
+### 5.5 Online and sequential
 
-Visualization is the package's reason to exist; the next release treats it as a
-first-class subsystem rather than two bespoke functions.
-
-### 7.1 A single `autoplot()` / refreshed `ggcptplot()`
-
-`autoplot.ggcpt()` renders any result with sensible, method-aware defaults:
-the raw series (line + optional points), changepoints as vertical rules (the
-0.1.0 look, preserved as default), and — toggled on by `show_segments` — the
-fitted within-segment level as a step line drawn from the `segments` tibble.
-All aesthetics (`cptline_color`, `cptline_type`, `cptline_size`,
-`cptline_alpha`) keep their 0.1.0 names and defaults. The function returns a
-plain `ggplot`, so `+ theme_*()`, `+ labs()`, `+ facet_*()` all continue to work
-exactly as users expect.
-
-### 7.2 New geoms and stats
-
-To make changepoint layers composable like any other `ggplot2` layer:
-
-- **`geom_changepoint()`** — vertical rules / `geom_vline`-style layer for a set
-  of changepoints; the refactored core of the existing plots.
-- **`geom_cpt_segment()`** — draws per-segment location estimates as horizontal
-  step segments (segment means/medians/levels), from an `augment()`-ed frame.
-- **`geom_cpt_ci()`** — horizontal whiskers or shaded x-bands for
-  changepoint-location confidence intervals (consumes `ci_lower`/`ci_upper`
-  from `mosum`, `stepR`, `strucchange`, `segmented`).
-- **`stat_changepoint()`** — a stat that runs `cpt_detect()` inside the `ggplot`
-  pipeline: `ggplot(df, aes(t, y)) + geom_line() + stat_changepoint(method = "pelt")`.
-
-### 7.3 Multi-method comparison
-
-`ggcpt_compare(x, methods = c("pelt","wbs","not","ecp"), ...)` runs several
-detectors on the same series and renders them either as **facets** (one panel
-per method, x-axes aligned) or **overlaid** (one panel, changepoints
-colour-coded by method, optionally dodged on a rug). A companion
-`ggcpt_compare_table()` returns the tidy union of results for numerical
-comparison. This directly serves the original motivation — comparing methods on
-the same data — which 0.1.0 can only do by hand.
-
-### 7.4 Penalty-path and solution-path plots
-
-- CROPS elbow + path plots (§6.3).
-- **Solution-path plots** for randomised/multiscale methods: the ordered CUSUM
-  contrasts of WBS/WBS2, the narrowest-over-threshold features of NOT, the
-  detector curve of MOSUM with its threshold and bandwidth band, and the
-  Isolate-Detect path — each showing *why* a changepoint was selected, not just
-  where.
-
-### 7.5 Multivariate and high-dimensional plots
-
-- `ggcpt_facet(X, ...)` — small multiples: one panel per coordinate of an
-  $n\times p$ matrix with shared changepoint rules drawn across all panels.
-- `ggcpt_heatmap(X, ...)` — a tile/heatmap of the data (or per-coordinate CUSUM
-  contributions) with changepoints as vertical lines; for `inspect`, a
-  side panel shows the estimated sparse **projection direction** (which
-  coordinates drive the change).
-- Multivariate `ecp`/`changepoints` results plug directly into these.
-
-### 7.6 Trend-change rendering
-
-For slope-change methods (`not` with linear contrasts, `segmented`,
-`gfpop` isotonic), `autoplot()` draws the **fitted broken line** with breakpoints
-marked (and CIs from `segmented`), instead of vertical rules — the correct
-visual idiom for trend changes.
-
-### 7.7 Bayesian posterior plots
-
-- **bcp:** a two-panel plot — posterior segment means with a credible ribbon on
-  top, and per-location posterior changepoint probability as bars/area below,
-  with the decision threshold drawn.
-- **BOCPD:** the **run-length posterior heatmap** — time on the x-axis, run
-  length on the y-axis, shaded by $P(r_t \mid y_{1:t})$, with the MAP run length
-  traced — the canonical online-Bayesian diagnostic.
-
-### 7.8 Theming and scales
-
-A light `theme_ggcpt()` and helper scales/annotation utilities (e.g. shading
-alternate segments with `annotate_segments()`, labelling changepoints with their
-index/date) keep the output publication-ready while remaining a standard
-`ggplot` the user can override.
+- **FOCuS (`FOCuS`).** Romano, Eckley, Fearnhead & Rigaill (2023): online
+  change-in-mean by functional pruning of the CUSUM likelihood — equivalent to
+  running CUSUM simultaneously for all magnitudes and window sizes, at amortised
+  $\log$ cost. `focus_wrapper(x, threshold = NULL, ...)`; streaming and batch.
+  (Not on CRAN; guarded.)
+- **OCD (`ocd`).** Chen, Wang & Samworth (2022): high-dimensional online mean
+  change, storage and per-observation cost independent of history, guaranteed
+  average-run-length. `ocd_wrapper(X, thresh = "MC", ...)`.
 
 ---
 
-## 8. Evaluation and benchmarking
+## 6. New features beyond detection methods
 
-To support method comparison and method development, the next release adds an
-evaluation module implementing the metrics standard in the literature (notably
-van den Burg & Williams, 2020, and the WBS/NOT simulation conventions).
+The brief asked specifically for *new* thinking about what to build. Adding more
+detectors is the obvious axis; the less-obvious and arguably higher-leverage one
+is making the *result object*, the *inputs*, and the *exploration loop*
+first-class. These features compound across every detector the package already
+has, and several directly relieve friction visible in the current code and
+vignettes.
 
-### 8.1 Accuracy metrics
+### 6.1 Complete the `ggcpt` S3 surface
 
-Given predicted changepoints $\hat{\mathcal{T}}$, ground truth
-$\mathcal{T}^\star$, and series length $n$, `cpt_metrics()` returns a tidy row
-with:
+The class implements `print`, `tidy`, `glance`, `augment`, `autoplot` — but not
+the other generics R users reflexively reach for:
 
-- **Precision / Recall / F1 with margin $M$.** A prediction $\hat\tau$ is a true
-  positive if $\min_{\tau \in \mathcal{T}^\star} |\hat\tau - \tau| \le M$;
-  $F_1 = 2PR/(P+R)$.
-- **Covering metric** (van den Burg & Williams, 2020). With $\mathcal{G}$ and
-  $\mathcal{P}$ the partitions induced by truth and prediction,
+- **`summary.ggcpt()`** — a human-readable digest beyond `print`: segment table
+  with levels and lengths, total cost / log-likelihood, penalty, runtime,
+  convention.
+- **`as_tibble.ggcpt()` / `as.data.frame.ggcpt()`** — explicit coercion to the
+  changepoints (or, via an argument, the segments/augmented frame), so the object
+  drops cleanly into a pipe.
+- **`format.ggcpt()` + `knitr::knit_print.ggcpt()`** — clean rendering inside R
+  Markdown / Quarto without forcing the user through `tidy()`.
+- **`plot.ggcpt()`** — a base-graphics fallback delegating to `autoplot()` so
+  `plot()` "just works" for users who type it out of habit.
+- **`c()` / `rbind`-style combination** of results from several methods into the
+  tidy union that `ggcpt_compare_table()` builds by hand.
 
-$$
-C(\mathcal{G}, \mathcal{P}) = \frac{1}{n} \sum_{A \in \mathcal{G}} |A| \cdot \max_{A' \in \mathcal{P}} J(A, A'), \qquad J(A, A') = \frac{|A \cap A'|}{|A \cup A'|}.
-$$
+### 6.2 Real time/date indices and time-series input
 
-- **Hausdorff distance** between $\hat{\mathcal{T}}$ and $\mathcal{T}^\star$
-  (worst-case localisation error).
-- **(Adjusted) Rand index** between the induced segment labellings.
-- **Annotation error** $|\,|\hat{\mathcal{T}}| - |\mathcal{T}^\star|\,|$ and
-  **MAE/RMSE of matched locations**.
+`autoplot()` and the plots gained an `index` argument in 0.2.0, but detection
+still assumes a bare numeric vector. The next release accepts the objects R users
+actually hold:
 
-### 8.2 Multi-annotator evaluation
+- **`cpt_detect()` methods for `ts`, `zoo`/`xts`, and `tsibble`** that carry the
+  time index through to `cp`/`cp_value` and label the axis with real dates, then
+  return the index on the `ggcpt` object so `autoplot()` is date-aware by default.
+- A `cpt_detect.data.frame(data, y, index = NULL, ...)` form taking column names,
+  matching how tidyverse users think.
 
-Real benchmarks (e.g. the Turing Change Point Dataset, van den Burg & Williams,
-2020) carry *several* human annotations per series. `cpt_metrics_annotated()`
-accepts a list of annotation sets and reports the averaged covering and F1 as in
-that paper, so methods can be scored on TCPD-style data.
+### 6.3 Panel / batch detection
 
-### 8.3 Visualization of evaluation
-
-`ggcpt_eval(pred, truth, ...)` overlays predictions and ground truth on the
-series with the $\pm M$ tolerance windows shaded, colouring true positives,
-false positives, and misses — turning the metric into a picture.
-
----
-
-## 9. Data simulation and benchmark signals
-
-Reproducible methodology work needs reproducible data. The next release adds:
-
-### 9.1 A general simulator
-
-`cpt_simulate()` (alias `rcpt()`) generates piecewise data with known truth,
-attached as an attribute for immediate scoring:
+Methodological and applied work both routinely run *one detector over many
+series* (or many coordinates). `cpt_batch()` formalises the loop the comparison
+code already hints at:
 
 ```r
-cpt_simulate(n, changepoints, change_in = c("mean","var","meanvar","slope"),
-             params, noise = c("gauss","t","ar1","rw"), sd = 1, rho = 0, seed = NULL)
+cpt_batch(X, method = "pelt", change_in = "mean", ..., workers = NULL, seed = 1)
+#> a tibble keyed by series id, each row a ggcpt (list-column) or its tidy summary
 ```
 
-It covers the regimes exercised in the literature: change in mean, variance,
-mean+variance, and slope; Gaussian, Student-$t$ (heavy-tailed, for robustness
-studies, cf. Fearnhead & Rigaill, 2019), AR(1) and random-walk-plus-noise
-(for dependence studies, cf. DeCAFS), and multivariate sparse-mean changes
-(for high-dimensional studies, cf. `inspect`).
+It is embarrassingly parallel (§3.3, §9.4), pairs naturally with `ggcpt_facet()`
+(§7.4), and is the substrate for benchmarking studies (§8).
 
-### 9.2 Canonical test signals
+### 6.4 Interactive and exploratory tooling
 
-The standard piecewise-constant test signals used across the WBS/NOT/SMUCE
-literature — **`blocks`, `fms`, `mix`, `teeth`, `stairs`** (after
-Donoho–Johnstone and Fryzlewicz) — ship as functions/datasets with documented
-true changepoint locations, so examples and unit tests are anchored to the same
-benchmarks the methods were validated on.
+Static `ggplot`s are the core, but exploration benefits from interactivity:
 
-### 9.3 Real datasets
+- **`ggcpt_interactive()`** — render any `autoplot()` result through `ggiraph` or
+  `plotly` (in `Suggests`), with changepoint locations, segment levels, and CIs
+  on hover. Pure add-on; the static path is untouched.
+- **`cpt_explore()`** — a `shiny`/`miniUI` gadget for the single most painful
+  decision in the field: the penalty/threshold. A slider over $\beta$ (or the
+  CROPS path of §4.3) updates the segmentation live, so the analyst *tunes by
+  eye* and exports the chosen `ggcpt`. This turns §4.3's diagnostic into a tool.
 
-Beyond the existing genomics (`Lai2005fig4`), wind, and discoveries examples, we
-document loaders/recipes for canonical real series used in the field
-(well-log, coal-mining disasters, Nile, ACGH, server/HASC-style streams),
-keeping heavy data in `Suggests` or external packages to respect CRAN size
-limits.
+### 6.5 Using the result: prediction, labelling, stability
+
+- **`predict()` / `segment_id()`** — assign each observation (or a new
+  observation) to its segment and fitted level; the inverse of detection, useful
+  for downstream modelling and for colouring raw data by regime.
+- **Stability / bootstrap diagnostics** — `cpt_stability(x, method, B = 200, ...)`
+  resamples or subsamples and reports, per candidate location, how often it is
+  detected; `autoplot()` renders a detection-frequency profile. This gives a
+  cheap, model-agnostic confidence signal for the many engines that ship no CIs.
+- **Cost / diagnostic plots** — for penalised methods, the elbow of §4.3 and a
+  cost-vs-number-of-changepoints curve; a residual/`augment()` diagnostic panel.
+
+### 6.6 Reproducibility, interop, and ergonomics
+
+- **`cpt_cite(x)`** — return the bibliographic reference(s) for the method behind
+  a result (the package already carries the references via `Rdpack`), so a user
+  writing up an analysis can cite the right paper without leaving R.
+- **Interop / export** — coercion of changepoints to a `tsibble` of events or a
+  tidy "regimes" frame; `write_cpt()` helpers; an option to emit segment
+  annotations for downstream plotting tools.
+- **`cli`-quality messaging** — replace bare `stop()`/`message()` with `cli`
+  (or `rlang::abort()`) errors that name the offending argument, the legal set,
+  and (for a missing `Suggests` engine) the exact `install.packages()` call —
+  consistent with the `cpt_methods()` introspection of §3.1.
+- **Decomposition-then-detect** — a small `cpt_decompose()` helper that removes a
+  trend/seasonal component (via `stats::stl`/`feasts`) before mean-change
+  detection, plus documentation distinguishing a *changepoint* (a persistent
+  regime shift) from a *point anomaly* (a single outlier) so users pick the right
+  tool — a recurring confusion the package is well placed to clarify.
+
+These are scoped so each is independently shippable and most are pure
+`Suggests`-guarded add-ons that do not touch the core contract (P1, P6).
 
 ---
 
-## 10. Package architecture, dependencies, and testing
+## 7. The visualization layer: what shipped and what comes next
 
-### 10.1 Dependency strategy
+Visualization is the package's reason to exist. 0.2.0 delivered the composable
+core; the next release fills the method-aware gaps.
 
-To keep installation light and CRAN-friendly, **only the original engines stay
-in `Imports`** (`changepoint`, `changepoint.np`, `ecp`, plus the tidyverse
-infrastructure). Every newly wrapped engine goes in **`Suggests`**, and each
-wrapper guards with `rlang::check_installed()` / `requireNamespace()`, emitting
-an actionable message if the engine is absent. This preserves P1 (wrap, don't
-reinvent) without forcing a heavy dependency tree on users who want only a
-subset.
+### 7.1 Shipped in 0.2.0
 
-Proposed `Suggests` additions: `fpop`, `gfpop`, `wbs`, `breakfast`, `not`,
-`mosum`, `IDetect`, `stepR`, `kcpRS`, `cpm`, `robseg`, `DeCAFS`, `SNSeg`,
-`InspectChangepoint`, `hdbinseg`, `changepoints`, `bcp`, `ocp`, `strucchange`,
-`segmented`, `FOCuS`, `ocd`, `broom`, `generics`, `rlang`, `patchwork`
-(for multi-panel layouts), `testthat (>= 3.0.0)`, `vdiffr` (for plot snapshot
-tests). Some of these are not on CRAN (e.g. `robseg`, `FOCuS`); those wrappers
-ship behind an optional install note and are excluded from CRAN examples.
+`autoplot.ggcpt()` (vertical rules by default, optional `show_segments` step
+line, `index`/`show_points`/`show_line` controls), the four geoms/stats
+(`geom_changepoint()`, `geom_cpt_segment()`, `geom_cpt_ci()`,
+`stat_changepoint()`), `theme_ggcpt()`, `annotate_segments()`, and the
+`ggcpt_compare()` facet/overlay layouts. Note that `geom_cpt_ci()` ships but has
+**no engine feeding it CIs yet** — §4.2 (SMUCE) and §5 (`mosum` CIs, `segmented`,
+`strucchange`) are what make it useful; until then it is an orphaned capability,
+itself an instance of the §2 coverage problem.
 
-### 10.2 File layout
+### 7.2 Penalty-path and solution-path plots
 
-```
-R/
-  ggcpt-class.R        # ggcpt constructor, print, format, validators
-  broom-methods.R      # tidy/glance/augment
-  autoplot.R           # autoplot.ggcpt + refreshed ggcptplot
-  geoms.R              # geom_changepoint, geom_cpt_segment, geom_cpt_ci, stat_changepoint
-  detect.R             # cpt_detect() dispatcher + cpt_penalty()
-  wrap-optpart.R       # fpop, gfpop  (+ existing changepoint in changepoint.R)
-  wrap-search.R        # wbs, wbs2, not, mosum, idetect, tguh
-  wrap-multiscale.R    # smuce/hsmuce (stepR)
-  wrap-nonparam.R      # kcp, cpm   (+ existing np/ecp)
-  wrap-robust.R        # robseg, decafs, sn
-  wrap-highdim.R       # inspect, sbs, changepoints
-  wrap-bayes.R         # bcp, bocpd
-  wrap-regression.R    # strucchange, segmented
-  wrap-online.R        # focus, ocd, cpm-stream
-  crops.R              # cpt_crops + path plots
-  compare.R            # ggcpt_compare + table
-  metrics.R            # cpt_metrics, cpt_metrics_annotated, ggcpt_eval
-  simulate.R           # cpt_simulate / rcpt + test signals
-```
+The CROPS elbow and path plots (§4.3), plus solution-path plots for the
+randomised/multiscale methods already shipped — the ordered CUSUM contrasts of
+WBS/WBS2, the narrowest-over-threshold features of NOT, the MOSUM detector curve
+with its threshold and bandwidth band, the Isolate-Detect path — each showing
+*why* a changepoint was selected, not just where. These engines are already
+wrapped, so this is rendering work on existing `$fit` objects.
 
-### 10.3 Testing and documentation
+### 7.3 Trend-change rendering
 
-- `testthat` unit tests per wrapper (skipped when the engine is absent via
-  `skip_if_not_installed()`), asserting the tidy contract (column names/types)
-  and round-trip with `tidy()`/`augment()`.
-- `vdiffr` snapshot tests for the geoms and `autoplot()` methods.
-- A second vignette, *"Comparing changepoint methods with ggchangepoint,"*
-  written in the arXiv-paper register of the current `introduction` vignette:
-  problem setup, the taxonomy, worked comparisons on the canonical signals and
-  on real data, an evaluation study using §8, and a penalty-path case study.
-- `pkgdown` reference index reorganised into the §3 families; `_pkgdown.yml`
-  navbar gains the new vignette.
+For slope-change methods (`not` with linear contrasts — already wrapped — and the
+backlog `segmented`, `gfpop` isotonic), `autoplot()` draws the **fitted broken
+line** with breakpoints marked (and CIs from `segmented`) instead of vertical
+rules — the correct idiom for trend changes, and a capability the wrapped `not`
+engine can already supply but the renderer does not yet use.
 
-### 10.4 Parallelism, concurrency, and reproducible RNG
+### 7.4 Multivariate and high-dimensional plots
 
-Several workloads here are time-consuming on large series or large studies, and
-many are *embarrassingly parallel*. This subsection sketches where concurrency
-pays off, the infrastructure to use, and — crucial for a package full of
-stochastic methods — how to keep parallel runs reproducible. It is a design
-sketch: parallel support is opt-in, ships incrementally (§11), and never changes
-results, only wall-clock time.
+Enabled by §3.2: `ggcpt_facet(X, ...)` (one panel per coordinate, shared
+changepoint rules) and `ggcpt_heatmap(X, ...)` (tiles of the data or
+per-coordinate CUSUM contributions, with a side panel showing the `inspect`
+projection direction). Multivariate `ecp` and `changepoints` results plug
+straight in.
 
-#### 10.4.1 Where parallelism helps (and where it does not)
+### 7.5 Bayesian posterior plots
 
-We distinguish three regimes:
-
-- **Orchestration-level (embarrassingly parallel; our code; immediate win).**
-  Loops the package itself drives are independent and can be farmed out directly:
-  - `ggcpt_compare()` running *K* methods on one series (§7.3);
-  - batch/panel detection — one univariate detector applied to each of many
-    series, or to each of *p* coordinates of a matrix (`ggcpt_facet`, §7.5);
-  - the Monte Carlo replications and method×penalty grids of the evaluation and
-    simulation modules (§8, §9) — usually the single largest time sink in
-    methodological work;
-  - a coarse penalty grid (when not using the purpose-built, computation-reusing
-    CROPS of §6);
-  - permutation/bootstrap *replicates* that we drive ourselves.
-
-- **Engine-internal (needs upstream support or a reimplementation; later).**
-  Inside a single detector call there is often parallelism the upstream C/C++
-  code does not expose: the per-candidate segment-cost evaluations of the
-  PELT/OP/FPOP dynamic programs, the `nquantiles` empirical-CDF terms in the
-  nonparametric cost of `cpt.np`, the pairwise energy-distance matrix and the
-  permutation loop inside `ecp::e.divisive()`, and the *M* random-interval
-  contrasts of WBS/NOT. These are real opportunities but live below our API; we
-  treat them as upstream feature requests or, where warranted, as candidates for
-  a parallel re-implementation of the hot loop (e.g. via `RcppParallel`).
-
-- **Inherently sequential (do not parallelize).** The dynamic-programming
-  recurrence itself — $F(t)$ depends on all $F(s),\,s<t$ — and the online stream
-  updates of FOCuS/OCD/BOCPD are sequential by construction. For these the
-  parallel axis is *across* problems (many streams, many series), never within
-  one.
-
-A separate, free win is **multithreaded linear algebra**: the SVD/eigen work in
-`inspect` and several `changepoints` estimators runs through BLAS, so a
-multithreaded BLAS (OpenBLAS/MKL — this cluster ships both BLAS-enabled and
-`-no-openblas` R modules) speeds them up with no code change.
-
-#### 10.4.2 Opportunity map
-
-| Feature | Parallel unit | Regime | Strategy |
-|---|---|---|---|
-| `ggcpt_compare()` | method | orchestration | `future_map()` over methods |
-| Panel / multi-series detection | series | orchestration | `future_map()` over series |
-| Per-coordinate (HD screening, facets) | coordinate | orchestration | `future_map()` over columns |
-| Simulation / benchmarking (§8–9) | replication × method × penalty | orchestration | `future_map()` over the grid |
-| Permutation / bootstrap CIs we drive | resample | orchestration | chunked `future_map()` + parallel RNG |
-| `ecp` distances / permutations | within `e.divisive` | engine-internal | upstream / `RcppParallel` |
-| `cpt.np` quantile cost | within cost fn | engine-internal | upstream / `RcppParallel` |
-| WBS / NOT interval contrasts | random interval | engine-internal | upstream |
-| PELT / FPOP segment costs | candidate $s$ | engine-internal | upstream / hot-loop rewrite |
-| `inspect`, `changepoints` (SVD) | matrix op | BLAS threads | multithreaded BLAS |
-| DP recurrence; online updates | — | sequential | not parallelizable |
-
-#### 10.4.3 Infrastructure: a backend-agnostic layer over `future`
-
-We standardise on the **`future`** ecosystem — `future.apply::future_lapply()`
-and `furrr::future_map()` — rather than calling `parallel::mclapply()` or
-`foreach` directly, because it fits this package's users (HPC included — this
-environment is itself module/scheduler-based):
-
-- **One API, any backend.** The user chooses *how* to parallelise with a single
-  `future::plan()`; our code is written once. `plan(sequential)` (default),
-  `plan(multisession)` (PSOCK workers, all platforms), `plan(multicore)` (fork,
-  Unix/macOS off-RStudio), `plan(cluster, workers = ...)` (sockets across nodes),
-  and `future.batchtools` / `future.callr` for Slurm/SGE schedulers. The package
-  never hard-codes a backend or a core count.
-- **No platform traps.** With the default `sequential`, nothing forks
-  unexpectedly; users opt in. We honour the ambient `plan()` and expose at most a
-  light `parallel`/`workers` convenience that sets a plan locally and restores it
-  on exit.
-- **Progress and interrupts.** `progressr` gives backend-agnostic progress bars
-  for long studies; `future` propagates errors and interrupts cleanly.
-
-Backends and `future`/`future.apply`/`furrr`/`progressr` go in **`Suggests`**;
-the sequential path adds no hard dependency (P1, §10.1).
-
-#### 10.4.4 Reproducible parallel RNG (non-negotiable here)
-
-Because so many methods are stochastic — `ecp` permutations, WBS/NOT random
-intervals, `cpt.np` quantile sampling, `mosum`/`kcpRS` resampling, and the §9
-simulator — naïve parallelism would *silently destroy reproducibility*: a single
-`set.seed()` does not propagate to workers, and ordinary RNG streams overlap
-across processes. The package must therefore use **parallel-safe L'Ecuyer-CMRG
-streams**: `future.apply`/`furrr` provide them via `future.seed = TRUE` (and
-`furrr_options(seed = TRUE)`), giving results *identical regardless of worker
-count or backend*. This wires directly into the `seed` arguments proposed for the
-stochastic wrappers in §12 (item 7): passing `seed` seeds the L'Ecuyer stream, so
-a study is reproducible whether it runs on 1 core or 64. We will document this
-prominently and test it (same `seed` ⇒ identical changepoints under
-`plan(sequential)` and `plan(multisession)`).
-
-#### 10.4.5 Design principles for parallelism
-
-- **Opt-in, sequential by default.** Respects CRAN (examples/tests/vignettes
-  capped at two cores via `_R_CHECK_LIMIT_CORES_`), keeps casual use simple, and
-  avoids nested-parallelism blow-ups when our calls sit inside a user's own
-  `future_map()`.
-- **Parallelise the outer, coarse loop.** Distributing *methods*, *series*, or
-  *replications* gives high compute-to-overhead ratios; we avoid parallelising
-  tiny inner loops where process/transfer overhead dominates.
-- **Overhead awareness.** Below a problem-size threshold we stay sequential
-  automatically; chunking (`future.chunk.size`) and load-balancing absorb the
-  heterogeneous per-method runtimes in `ggcpt_compare()` (a fast PELT beside a
-  slow permutation test).
-- **Thread/process hygiene.** Avoid oversubscription by not pairing a
-  multithreaded BLAS with many forked workers unguarded (document
-  `RhpcBLASctl::blas_set_num_threads()` for the HD methods): multithreading lives
-  in the C++ engines/BLAS, multiprocessing in our `future` layer.
-
-#### 10.4.6 API touchpoints
-
-The parallel surface stays small and uniform: functions that loop —
-`ggcpt_compare()`, the planned `cpt_batch()` panel detector, `cpt_simulate()`
-studies, `cpt_metrics()` over a grid, and permutation-based wrappers — respect
-the ambient `future::plan()` and a `seed`, with an optional `workers`
-convenience. No detector's *result* depends on the plan; only its runtime does.
+For §5.3: the bcp two-panel posterior-mean-plus-probability plot and the BOCPD
+run-length posterior heatmap.
 
 ---
 
-## 11. Phased release plan
+## 8. Evaluation, simulation, and benchmark data
 
-We sequence the work so each release is independently shippable and CRAN-clean.
+### 8.1 Shipped
 
-### v0.2.0 — Foundations + first new engines
-- The `ggcpt` object, `broom` methods, `autoplot()`, the new geoms, and the
-  refreshed-but-compatible `ggcptplot()`/`ggecpplot()`.
-- `cpt_detect()` dispatcher and `cpt_penalty()`.
-- First wave of wrappers where they add the most reach for least dependency
-  weight: **WBS/WBS2 (`breakfast`/`wbs`)**, **NOT (`not`)**, **MOSUM
-  (`mosum`)**, **FPOP (`fpop`)**.
-- `ggcpt_compare()` + comparison vignette (initial).
-- Evaluation module §8 (metrics + `ggcpt_eval`) and the simulator §9.1–9.2.
-- **Hardening of the existing functions (§12):** the `ecp_wrapper()` no-change
-  fix, the `size`→`linewidth` migration, `match.arg()`/input validation, the
-  changepoint-convention reconciliation, and the first `testthat`/`vdiffr`
-  tests.
-- **Opt-in `future` parallelism (§10.4)** for the orchestration-level loops —
-  `ggcpt_compare()`, batch/simulation studies, the metrics grid — with
-  parallel-safe (L'Ecuyer) RNG wired to the wrappers' `seed`. (Engine-internal
-  and BLAS-thread parallelism are explored in later milestones.)
+`cpt_metrics()` (precision/recall/F1 with margin, covering, Hausdorff, (adjusted)
+Rand, annotation error, matched MAE/RMSE), `cpt_metrics_annotated()` for
+multi-annotator data, `ggcpt_eval()` for the visual TP/FP/miss overlay,
+`cpt_simulate()`/`rcpt()` with known-truth attributes, and the canonical signals
+`signal_blocks/fms/mix/teeth/stairs`.
 
-### v0.3.0 — Inference, robustness, dependence
-- **SMUCE/HSMUCE (`stepR`)** with confidence bands/intervals and
-  `geom_cpt_ci()`.
-- **Robust (`robseg`)**, **DeCAFS**, **self-normalisation (`SNSeg`)**.
-- **CROPS** penalty-path toolkit and path plots (§6).
-- **gfpop** graph-constrained detection and constrained-mean rendering.
+### 8.2 Next
 
-### v0.4.0 — Bayesian, high-dimensional, regression
-- **bcp** and **BOCPD (`ocp`)** with posterior plots (§7.7).
-- **inspect**, **SBS (`hdbinseg`)**, the **`changepoints`** collection, and the
-  multivariate/high-dimensional plots (§7.5).
-- **`strucchange`** (Bai–Perron) and **`segmented`** with regression rendering
-  (§7.6).
+- **Benchmark study harness** — a thin layer over `cpt_batch()` (§6.3) and
+  `cpt_metrics()` running a method×penalty×replication grid in parallel and
+  returning a tidy results frame, the single largest time sink in methodological
+  work.
+- **TCPD-style multi-annotator benchmarking** — loaders/recipes for the Turing
+  Change Point Dataset conventions (van den Burg & Williams, 2020), scoring with
+  the averaged covering/F1 already implemented.
+- **Real datasets** — documented loaders for well-log, coal-mining disasters,
+  Nile, aCGH, and server/HASC-style streams, with heavy data in `Suggests` or
+  external packages to respect CRAN size limits.
+- **A simulator `slope` mode and multivariate sparse-mean mode**, closing the gap
+  between what `cpt_simulate()` documents and what the high-dimensional and
+  trend-change detectors need to be tested against.
+
+---
+
+## 9. Architecture, dependencies, testing, and parallelism
+
+### 9.1 Dependency strategy
+
+Only the original engines stay in `Imports` (`changepoint`, `changepoint.np`,
+`ecp`, plus the tidyverse/`broom`/`ggplot2` infrastructure). Every newly wrapped
+engine goes in `Suggests`, guarded with `requireNamespace()` and an actionable
+message (now routed through the §3.1 `cpt_methods()`/`cli` machinery). Engines not
+on CRAN (`gfpop`, `robseg`, `FOCuS`) ship behind an install note and are excluded
+from CRAN examples/tests — and, per §2.2, are **not advertised as available**
+until installable.
+
+### 9.2 File layout
+
+The existing layout (`ggcpt-class.R`, `broom-methods.R`, `autoplot.R`, `geoms.R`,
+`detect.R`, `compare.R`, `metrics.R`, `simulate.R`, `wrap-optpart.R`,
+`wrap-search.R`, plus `changepoint.R`/`ecp.R`) extends naturally:
+`wrap-multiscale.R` (stepR), `wrap-robust.R` (robseg/DeCAFS/SN),
+`wrap-highdim.R`, `wrap-bayes.R`, `wrap-regression.R`, `wrap-online.R`,
+`crops.R`, and `batch.R`/`explore.R`/`interop.R` for §6.
+
+### 9.3 Testing and documentation
+
+- `testthat` per wrapper (`skip_if_not_installed()`), asserting the tidy contract
+  and `tidy()`/`augment()` round-trips; `vdiffr` snapshots for geoms and
+  `autoplot()`.
+- The **documentation-coverage tests of §2.3** (exports ⊆ README+tour;
+  every export in the `pkgdown` index; every export has `@examples`).
+- The feature-tour vignette (§2.3) and updates to `introduction`/`comparison`.
+
+### 9.4 Parallelism and reproducible RNG
+
+Standardise on the `future` ecosystem (`future.apply`/`furrr`, `progressr` for
+progress), already used in `ggcpt_compare()`. Parallelise the *outer* loops —
+methods, series, coordinates, replications — never the inner DP recurrence or the
+online stream updates, which are sequential by construction. Because many engines
+are stochastic, use parallel-safe **L'Ecuyer-CMRG** streams (`future.seed`/
+`furrr_options(seed = TRUE)`) wired to each wrapper's `seed`, so a study is
+reproducible whether it runs on 1 core or 64; this is tested (same `seed` ⇒
+identical changepoints under `sequential` and `multisession`). Backends live in
+`Suggests`; the sequential default adds no hard dependency.
+
+---
+
+## 10. Phased release plan
+
+### v0.2.0 — Foundations + first engines — **DELIVERED (CRAN)**
+The `ggcpt` object, broom methods, `autoplot()`, the geoms, `cpt_detect()`,
+`cpt_penalty()`, the WBS/WBS2/NOT/MOSUM/FPOP/IDetect/TGUH wrappers,
+`ggcpt_compare()` (+ `future`), the evaluation module, the simulator and signals,
+and the 0.1.0 hardening.
+
+### v0.3.0 — Documentation parity, an honest dispatcher, inference & robustness — **NEXT**
+- **§2: full documentation coverage** — README introduces every export; feature-
+  tour vignette; rewritten package-level help; tiered `cpt_detect()` docs +
+  `cpt_methods()`; coverage tests; **remove the gfpop over-claim** (restored only
+  when §4.1 ships).
+- **§3: finish the foundation** — honest `match.arg()`, genuine multivariate
+  input, parallelism beyond `ggcpt_compare()`.
+- **§4: next engine wave** — `gfpop` (when installable), SMUCE/HSMUCE (`stepR`,
+  wiring the orphaned `geom_cpt_ci()`), CROPS penalty path + plots, robust
+  (`robseg`), DeCAFS, self-normalisation (`SNSeg`).
+- **§6 (first slice)** — `summary`/`as_tibble`/`format`/`knit_print`/`plot`
+  methods; `ts`/`xts`/`tsibble`/`data.frame` input; `cpt_cite()`.
+
+### v0.4.0 — Bayesian, high-dimensional, regression, exploration
+- bcp + BOCPD (`ocp`) with posterior plots; `inspect`, SBS (`hdbinseg`), the
+  `changepoints` collection + multivariate/HD plots; `strucchange` + `segmented`
+  with regression rendering; `cpt_batch()`, `ggcpt_interactive()`,
+  `cpt_explore()`, stability diagnostics.
 
 ### v0.5.0 / v1.0.0 — Online + consolidation
-- **CPM streaming**, **FOCuS**, **OCD** online detectors and streaming plots.
-- TCPD-style multi-annotator benchmarking (§8.2) and a benchmarking vignette.
-- API freeze, full `pkgdown` site, JOSS/R-Journal-style software paper
-  describing the unified framework.
+- CPM streaming, FOCuS, OCD + streaming plots; TCPD multi-annotator benchmarking
+  and a benchmarking vignette; API freeze, full `pkgdown` site, JOSS/R-Journal
+  software paper.
 
 ---
 
-## 12. Auditing and hardening the existing functions
+## 11. Hardening: what 0.2.0 fixed and what remains
 
-The four functions shipped in 0.1.0 — `cpt_wrapper()`, `ecp_wrapper()`,
-`ggcptplot()`, `ggecpplot()` — will be **retained** (P6), but a close audit
-surfaces real defects and design limitations the next release should fix. The
-items are grouped into correctness, robustness/API, visualization, and
-documentation/tooling. Findings marked **[verified]** were reproduced by running
-the current code against `changepoint`, `changepoint.np`, `ecp`, and `ggplot2`
-3.5.2 on R 4.4.1.
+### 11.1 Fixed in 0.2.0
 
-### 12.1 Correctness
+The 0.1.0 audit items are closed: the `ecp_wrapper()` no-change bug (now returns
+0 rows; boundaries stripped unconditionally), the `size`→`linewidth` deprecation
+(`cptline_linewidth`, with `cptline_size` soft-deprecated via `lifecycle`),
+`match.arg()` input validation across wrappers, the changepoint-location
+convention (normalised to "left", exposed as `cp_convention`), full-height rules
+with a `show_points` length cutoff and an `index` argument, the `"np"` alias, the
+"sytle"→"style" typo, the `"_PACKAGE"` sentinel, and the first `testthat`
+tests (24 `test_that` blocks across three files). `RoxygenNote` is current
+(7.3.2). Note: the `vdiffr` snapshot tests advertised in `NEWS.md` were **not**
+actually added — see §11.3 B13.
 
-1. **`ecp_wrapper()` reports spurious boundary changepoints (and an `NA`) on a
-   series with no change. [verified]** `ecp::e.divisive()`/`e.agglo()` return
-   `$estimates` that always include the two segment boundaries, `1` and `n+1`.
-   The wrapper strips them only inside `if (length(cp) > 2)`. When no interior
-   changepoint is found, `estimates == c(1, n+1)` has length 2, the guard is
-   false, and the boundaries are returned as if they were changepoints — with
-   `cp_value` for `n+1` indexing past the end of the data and so equal to `NA`.
-   On a 300-point homogeneous Gaussian series:
+### 11.2 Remaining and newly surfaced
 
-   ```
-   ecp_wrapper(x)            # x ~ N(0,1), genuinely no change
-   #> # A tibble: 2 × 2
-   #>      cp cp_value
-   #>   <dbl>    <dbl>
-   #> 1     1   -0.626
-   #> 2   301   NA          # <- index n+1, out of bounds
-   ```
+- **Documentation drift (now the §2 mandate).** The package-level help is stale
+  (claims three engines); the README over-claims `gfpop` and under-documents ~half
+  the surface; `cpt_detect()` documents methods that error. These are the
+  highest-priority "bugs" of the next cycle — wrong/missing docs are as harmful as
+  wrong code.
+- **Dispatcher over-promise.** `cpt_detect()` offers 13 methods that `stop()`
+  (§1.2, §3.1).
+- **Multivariate `ecp` still degraded.** `cpt_detect()` flattens a matrix with
+  `as.numeric(x)`, and `ecp_wrapper()` returns a wrong column-major scalar
+  `cp_value` for matrix input (and `NA` for a data frame). The validator accepts
+  matrices, advertising support the detectors do not honour (§3.2, §11.3 B4).
+- **`geom_cpt_ci()` has no producer.** It ships but no shipped engine emits
+  `ci_lower`/`ci_upper`; SMUCE/`mosum`-CIs (§4.2, §5) are what make it real.
+- **Penalty handling is uneven across engines.** `cpt_penalty()` and the string
+  penalties map cleanly onto the `changepoint` family but only partially onto the
+  newer wrappers; the CROPS work (§4.3) and a documented penalty-semantics table
+  per engine should make this consistent and discoverable.
 
-   whereas `cpt_wrapper()` correctly returns **0 rows** on the same data. Fix:
-   strip the first and last estimate unconditionally and return an empty tibble
-   when no interior changepoint exists; add a regression test on a no-change
-   series.
+Each remaining item is either a doc fix (no compatibility risk) or ships behind
+an option/`Suggests` guard, consistent with §12.
 
-2. **`ecp_wrapper()` corrupts `cp_value` for multivariate / data-frame input —
-   the very case `ecp` exists for. [verified]** Detection runs on
-   `as.matrix(data)`, but `cp_value = data[cp]` indexes the *original* object.
-   For an `n × p` matrix, `data[cp]` is a single column-major element (a
-   bivariate change at index 101 silently yields the lone scalar `X[101]`); for a
-   multi-column `data.frame`, `data[cp]` selects *columns* and errors:
+### 11.3 Bugs and improvements found by testing 0.2.0 (verified)
 
-   ```
-   ecp_wrapper(X)                  # X is 200 x 2 -> cp_value is a lone X[101] scalar
-   ecp_wrapper(as.data.frame(X))   #> Error: undefined columns selected
-   ```
+The following were **reproduced by running 0.2.0** on R 4.4.1 with the declared
+dependencies and all `Suggests` engines installed; the existing `testthat` suite
+passes, so none of these is currently caught. They are ordered by severity. Each
+is a concrete fix for the next release.
 
-   Only a plain numeric vector is handled correctly. Fix: derive per-segment
-   summaries from the matrix actually used for detection and populate a
-   `segments` table (§4.1) when `p > 1`, instead of a scalar `cp_value`;
-   normalise input shape once at entry. First-class multivariate support is in
-   §5.6 and §7.5.
+#### Correctness — silently wrong results
 
-3. **The two engines report locations under different conventions. [verified]**
-   For a change between observations 100 and 101, `changepoint::cpts()` reports
-   **100** (last index of the left segment) while `ecp::e.divisive()` reports
-   **101** (first index of the right segment) — an off-by-one. Since the
-   package's raison d'être is *comparing* methods on the same data (§7.3),
-   returning locations that are not on a common footing is a latent trap. Fix:
-   document the convention, expose a normalised location (e.g. align both to
-   "last index of the left segment") and a `cp_convention` attribute, so
-   `ggcpt_compare()` and the §8 metrics compare like with like.
+**B1. `signal_blocks()` does not produce the Blocks signal; its data contradicts
+its own `true_changepoints`.** In `simulate.R` the level loop runs *in reverse*
+and assigns *absolute* levels with a `>=` mask:
 
-### 12.2 Robustness and API
+```r
+for (i in rev(seq_along(cp_idx))) signal[t >= cp_scaled[i]] <- heights[i]
+```
 
-4. **No input validation; enumerations use `==` instead of `match.arg()`.** Both
-   wrappers branch on raw string equality (`change_in == "mean"`,
-   `algorithm == "divisive"`). A typo such as `change_in = "Mean"` falls through
-   to a generic `stop()`; nothing checks that `data` is numeric/finite/long
-   enough, nor that the `change_in`×`cp_method` combination is legal (e.g.
-   `cpt_np` supports only `PELT`). Adopt `match.arg()` for partial matching and
-   accurate auto-generated errors, and validate inputs up front (P4).
+Because the iteration is reversed, the final assignment (`i = 1`,
+`t >= 0.10`) overwrites the entire tail, collapsing all 11 blocks into a **single
+step** at the first changepoint. Reproduction: of the 11 declared
+`true_changepoints`, only **1** shows a real jump in the generated series; the
+other ten sit in flat noise. This is the worst kind of bug for a benchmark
+package — a "canonical test signal" whose ground truth is wrong — so every
+example, test, or evaluation built on `signal_blocks()` is scored against
+fiction. *Fix:* iterate forward (`seq_along`), or build cumulative jumps; add a
+test asserting each declared changepoint is a genuine level change. (The other
+signals — `fms`, `mix`, `teeth`, `stairs` — were checked and are correct.)
 
-5. **The fallback error message in `cpt_wrapper()` is inaccurate.** It reads
-   `"Invalid Changepoint Method, must be mean_var, mean or var."` — it omits the
-   supported `cpt_np` and names "Method" when the offending argument is
-   `change_in`. `match.arg()` removes the hand-rolled message entirely.
+**B2. `cpt_metrics()` double-counts true positives; `recall` and `f1` can exceed
+1.** The precision/recall loop matches every *prediction* to its nearest truth
+independently and increments `tp` each time, so several predictions near one true
+changepoint each count as a hit. Reproduction:
 
-6. **`change_in = "cpt_np"` is an inconsistent name.** The other values name
-   *what* changes (`mean`, `var`, `mean_var`); `cpt_np` injects an upstream
-   function name. Add a clearer alias `change_in = "np"` (and/or
-   `"distribution"`) while keeping `"cpt_np"` for compatibility.
+```r
+cpt_metrics(pred = c(98, 100, 102), truth = c(100), n = 200, margin = 5)
+#> precision = 1, recall = 3, f1 = 1.5      # recall and f1 are impossible
+```
 
-7. **Detection is recomputed inside the plot and can diverge for stochastic
-   methods.** `ggcptplot()`/`ggecpplot()` re-run the wrapper internally, so a
-   user who inspects `ecp_wrapper()` output and then plots runs detection twice;
-   because `e.divisive()` uses a permutation test (and `cpt.np()` samples
-   quantiles), the plotted changepoints can differ from the inspected ones unless
-   the seed is set identically before each call — the fragile dance the vignette
-   currently performs. Fix: let the plot functions accept an already-computed
-   `ggcpt`/tibble (the `autoplot()` path of §4.4), and expose a `seed` argument on
-   the stochastic wrappers for self-contained reproducibility.
+`recall > 1`, `f1 > 1`, and the implied `fn = length(truth) - tp` goes negative.
+*Fix:* one-to-one matching — each truth may be claimed by at most one prediction
+(e.g. greedy nearest matching with removal, or a bipartite match) — then
+`tp ≤ min(|pred|, |truth|)`. The covering and Rand metrics are unaffected
+(partition-based) and stayed in `[0, 1]` in testing.
 
-### 12.3 Visualization
+**B3. `cpt_detect()` silently changes or ignores `change_in`.** Two faces of one
+problem, both verified:
+- `change_in = "slope"` is accepted by `match.arg()` but `change_in_mapping()`
+  maps it to `"mean"`; on a pure linear trend the call runs mean-change detection
+  (returning spurious changepoints) and the resulting object reports
+  `change_in = "mean"`. The user's request is silently discarded.
+- For the search/pruning engines (`fpop`, `wbs`, `wbs2`, `not`, `mosum`,
+  `idetect`, `tguh`) `change_in` is not passed through at all, and the object is
+  hard-coded to `change_in = "mean"`. `cpt_detect(x, method = "fpop",
+  change_in = "var")` reports `mean` and does mean detection.
 
-8. **`size =` is a live `ggplot2` deprecation (≥ 3.4.0). [verified]** Both plot
-   functions pass `size = cptline_size` to `geom_linerange()`. Under `ggplot2`
-   3.5.2 this emits:
+*Fix:* validate the `method × change_in` combination and **error** (or route to a
+capable engine — `not` does support `slope`/`var` contrasts) instead of silently
+mislabelling; record the *actual* `change_in` on the object.
 
-   ```
-   Using `size` aesthetic for lines was deprecated in ggplot2 3.4.0.
-   ℹ Please use `linewidth` instead.
-   ```
+**B4. `ecp_wrapper()` returns a wrong `cp_value` for multivariate input, and
+`cpt_detect()` flattens it.** Because `is.numeric()` is `TRUE` for a numeric
+matrix, the `cp_value <- data[cp]` branch fires and returns a **column-major
+flattened scalar** (e.g. `X[101]`), not the per-coordinate change; a `data.frame`
+falls to the `else` branch and returns `NA`. Separately, `cpt_detect(X, method =
+"ecp")` runs `as.numeric(X)`, so a 200×2 matrix is seen as a length-400 vector.
+`ecp` is the package's multivariate engine, so this is its primary use case.
+*Fix:* §3.2 (route multivariate input without flattening; populate `segments`
+instead of a scalar `cp_value`).
 
-   It warns today and will eventually error. Fix: rename the argument to
-   `cptline_linewidth` and pass `linewidth`, keeping `cptline_size` as a
-   `lifecycle`-soft-deprecated alias.
+**B5. `stat_changepoint()` ignores the `x` aesthetic and draws lines at raw
+indices.** `StatChangepoint$compute_group()` returns `xintercept = cp$cp`
+(integer positions) regardless of the panel's `x` scale. On any axis that is not
+`1:n` the rules land in the wrong place. Reproduction: with `aes(t, y)` where
+`t` spans 2000–2019, a changepoint at observation 100 is drawn at `xintercept =
+100` — off the visible axis — and ggplot also warns that the `x`/`y` aesthetics
+were dropped. *Fix:* map the detected index back to the `x` aesthetic
+(`xintercept = data$x[cp$cp]`) and preserve grouping.
 
-9. **Changepoint rules are only partial-height (`ymin = -Inf, ymax = cp_value`).**
-   The vertical marker stops at the data value at the changepoint, so a change at
-   a low value draws a short line and one at a high value a tall line — visually
-   inconsistent and easy to miss. A changepoint is a property of its x-location,
-   not of the y-value there. Default to full-height rules (`geom_vline`
-   semantics), with the partial-height look available as an option; this becomes
-   the refactored `geom_changepoint()` of §7.2.
+#### Robustness — noisy or fragile behaviour
 
-10. **`geom_point()` is always drawn.** For the long series the package itself
-    showcases (genomic aCGH, Irish wind), the point layer becomes an unreadable
-    smear and slows rendering, with no toggle. Add `show_points` (auto-off above
-    a length threshold) and `show_line`.
+**B6. `min(numeric(0))` warnings on empty `pred`/`truth`.** `cpt_metrics()` and
+`ggcpt_eval()` call `min(abs(p - truth))` inside a loop; when `truth` (or `pred`)
+is empty this emits *"no non-missing arguments to min; returning Inf"* for every
+element. The numeric result is defensible (no matches) but the warning spam is
+not. A no-change series scored against an empty truth set is a normal case. *Fix:*
+guard the empty cases explicitly before the loop.
 
-11. **The x-axis is hard-wired to `row_number`.** There is no way to supply a
-    real time/date index, so timestamps cannot label the axis. Add an optional
-    `index`/`x` argument, defaulting to position as today.
+**B7. The dispatcher advertises 13 methods that error at runtime** (`smuce`,
+`hsmuce`, `kcp`, `cpm`, `robust`, `decafs`, `sn`, `inspect`, `sbs`, `bcp`,
+`bocpd`, `strucchange`, `segmented`) — cross-referenced as the §3.1 fix and the
+§2.2(3) documentation defect; listed here for completeness as a verified runtime
+behaviour (`cpt_detect(x, method = "smuce")` → `stop("... not yet implemented")`).
 
-### 12.4 Documentation, packaging, tooling
+#### Improvements and documentation mismatches
 
-12. **Typo and stale docs. [verified]** "tidyverse sytle" → "style" in the
-    `cpt_wrapper()` roxygen; reconcile the `change_in` description and the error
-    string with the actually-supported values.
+**B8. `glance.ggcpt()` always returns `total_cost = NA` and `runtime = NA`.** Both
+are hard-coded; the help says `total_cost` is filled "if available," but it never
+is, and runtime is never measured. The upstream `changepoint`/`fpop` fits expose a
+cost/likelihood. *Fix:* populate `total_cost` from `$fit` where available and time
+the detector call.
 
-13. **Modernise package-level docs and roxygen.** Replace the deprecated
-    `@docType package ... NULL` idiom with the `"_PACKAGE"` sentinel; bump
-    `RoxygenNote` (currently 7.1.2) and regenerate; the `globalVariables()` list
-    can shrink as NSE is encapsulated inside the new geoms.
+**B9. `cpt_simulate()` documents return columns `index` and `value`, but returns
+`index`, `value`, `seg_id`.** A small `@return` mismatch (verified); reconcile the
+doc with the (useful) `seg_id` column.
 
-14. **No tests.** 0.1.0 ships without a `tests/` directory, so none of the above
-    is caught by CI. v0.2.0 adds `testthat` coverage for the tidy contract and
-    the edge cases above, plus `vdiffr` snapshots for the plots (§10.3).
+**B10. `ggcptplot_internal(show_segments = )` is a dead parameter.** It is accepted
+but never used; segment drawing actually happens in `autoplot.ggcpt()`. Harmless
+today, but a trap for future edits. *Fix:* remove the unused parameter or move the
+segment logic into the shared internal.
 
-**Relationship to backward compatibility.** Items 1, 8, and 12 are *bug fixes* —
-they remove output that is already wrong (a spurious `NA` row, a deprecation
-warning, a typo) and so are fully consistent with the compatibility commitment of
-§13: the documented, intended behaviour is preserved while incorrect behaviour is
-corrected. Anything that would alter a currently-"working" call (full-height
-rules, the `linewidth` rename, the `np` alias) ships behind an option or a
-`lifecycle` soft-deprecation, so existing scripts keep running.
+**B11. `augment.ggcpt()` hard-codes `colnames(data) <- c("index", "value")`.** It
+assumes exactly two data columns, so it will break or mislabel once multivariate
+data (§3.2) carries more. *Fix:* rename by position-independent logic before
+multivariate support lands.
+
+**B12. Penalty semantics differ across engines and are undocumented.**
+`cpt_penalty("MBIC", n)` returns `2*log(n)` (for `k = 1`), which is **not** the
+`changepoint` package's MBIC; a numeric penalty means different things to `fpop`
+(`lambda`) than the string `"MBIC"` does to PELT. Results can therefore differ
+across methods for "the same" penalty. *Fix:* the CROPS work (§4.3) plus a
+documented per-engine penalty-semantics table (also §11.2).
+
+**B13. `NEWS.md` over-claims and omits — the changelog is itself part of the
+documentation gap (§2).** Verified against the repo: (a) the 0.2.0 entry
+advertises *"vdiffr snapshot tests (where available)"* but **none exist** — zero
+`expect_doppelganger`/`expect_snapshot` calls and no `tests/testthat/_snaps/`
+directory (the same inaccuracy previously inherited in §11.1, now corrected);
+(b) it calls `cpt_detect()` a *"dispatcher for all changepoint methods,"* echoing
+the §2.2(3) over-promise (13 of 26 methods error); (c) it never mentions the
+exported, user-facing `theme_ggcpt()` and `annotate_segments()`; and (d) the
+0.1.0 entry is a bare *"Initial release to CRAN"* that does not record what 0.1.0
+contained (`cpt_wrapper()`, `ecp_wrapper()`, `ggcptplot()`, `ggecpplot()`). The
+shipped 0.2.0 CRAN changelog is frozen, so the fix is *forward*: make the 0.3.0
+`NEWS.md` accurate and complete, fold `NEWS.md` into the §2 coverage mandate, and
+only print the *"vdiffr"* claim once those snapshot tests actually exist (§9.3).
 
 ---
 
-## 13. Backward compatibility and deprecation
+## 12. Backward compatibility and deprecation
 
-- `cpt_wrapper()`, `ecp_wrapper()`, `ggcptplot()`, `ggecpplot()` remain exported
-  with unchanged signatures, defaults, and return types. Internally they may be
-  re-expressed on top of the new core, but their `tibble(cp, cp_value)` output
-  and current plot appearance are covered by regression and `vdiffr` tests.
-- New behaviour is strictly additive. The `change_in = "cpt_np"` typo-prone
-  value is kept; a clearer alias `change_in = "np"` is added without removing the
-  old one.
-- No function is deprecated in 0.2.0. Should any wrapper later be subsumed by
-  `cpt_detect()`, it will go through the standard `lifecycle` soft-deprecation
-  path with at least one minor-version notice.
+- The full 0.2.0 surface keeps working unchanged: signatures, defaults, return
+  types, and the `tibble(cp, cp_value)` contract are covered by regression and
+  `vdiffr` tests. The 0.1.0 four (`cpt_wrapper()`, `ecp_wrapper()`,
+  `ggcptplot()`, `ggecpplot()`) remain exported.
+- New behaviour is strictly additive. Tightening `cpt_detect()`'s `match.arg()`
+  to wired methods (§3.1) only removes choices that already error, so no working
+  call breaks; the removed names reappear as they are implemented.
+- Removing `gfpop` from the README (§2.2) corrects an over-claim — it never
+  worked — and is therefore compatible; the claim returns when §4.1 ships.
+- No exported function is deprecated. Should a wrapper later be subsumed by
+  `cpt_detect()`, it goes through the standard `lifecycle` soft-deprecation path
+  with at least one minor-version notice.
 
 ---
 
 ## Appendix A: Method → package → function map
 
-| Method | Reference | Wrapped package | Proposed wrapper / access | Change type |
-|---|---|---|---|---|
-| Optimal Partitioning | Jackson et al. 2005 | `changepoint` | `cpt_wrapper()` | mean/var/meanvar |
-| Segment Neighbourhood | Auger & Lawrence 1989 | `changepoint` | `cpt_wrapper(cp_method="SegNeigh")` | mean/var/meanvar |
-| PELT | Killick, Fearnhead & Eckley 2012 | `changepoint` | `cpt_wrapper(cp_method="PELT")` | mean/var/meanvar |
-| FPOP / SNIP | Maidstone et al. 2017 | `fpop` | `fpop_wrapper()` | mean |
-| gfpop | Hocking et al. 2022 | `gfpop` | `gfpop_wrapper()` | constrained mean |
-| CROPS | Haynes, Eckley & Fearnhead 2017 | `changepoint`/`crops` | `cpt_crops()` | any (penalty path) |
-| Binary Segmentation | Scott & Knott 1974 | `changepoint` | `cpt_wrapper(cp_method="BinSeg")` | mean/var/meanvar |
-| WBS | Fryzlewicz 2014 | `wbs`/`breakfast` | `wbs_wrapper()` | mean |
-| WBS2 / SDLL | Fryzlewicz 2020 | `breakfast` | `cpt_detect("wbs2")` | mean |
-| NOT | Baranowski, Chen & Fryzlewicz 2019 | `not` | `not_wrapper()` | mean/slope/var/meanvar |
-| MOSUM | Eichinger & Kirch 2018; Meier et al. 2021 | `mosum` | `mosum_wrapper()` | mean (+ CIs) |
-| Isolate-Detect | Anastasiou & Fryzlewicz 2022 | `IDetect`/`breakfast` | `idetect_wrapper()` | mean/slope |
-| TGUH | Fryzlewicz 2018 | `breakfast` | `cpt_detect("tguh")` | mean |
-| SMUCE / HSMUCE | Frick et al. 2014; Pein et al. 2017 | `stepR` | `smuce_wrapper()` | mean (+ CIs/bands) |
-| NMCD (`cpt.np`) | Zou et al. 2014; Haynes et al. 2017 | `changepoint.np` | `cpt_wrapper(change_in="np")` | distribution |
-| E-Divisive / E-Agglo | Matteson & James 2014 | `ecp` | `ecp_wrapper()` | distribution (multiv.) |
-| KCP | Arlot et al. 2019; Cabrieto et al. | `kcpRS` | `kcp_wrapper()` | mean/var/ac/cor |
-| CPM (sequential) | Hawkins; Ross 2015 | `cpm` | `cpm_wrapper()` | location/scale/dist |
-| Robust loss | Fearnhead & Rigaill 2019 | `robseg` | `robseg_wrapper()` | mean (robust) |
-| DeCAFS | Romano et al. 2022 | `DeCAFS` | `decafs_wrapper()` | mean + RW + AR(1) |
-| Self-normalisation | Zhao, Jiang & Shao 2022 | `SNSeg` | `sn_wrapper()` | mean/var/quantile/acf |
-| inspect | Wang & Samworth 2018 | `InspectChangepoint` | `inspect_wrapper()` | HD sparse mean |
-| SBS / double-CUSUM | Cho & Fryzlewicz 2015; Cho 2016 | `hdbinseg` | `cpt_detect("sbs")` | HD mean |
-| changepoints collection | Xu, Padilla, Wang, Yu, Li | `changepoints` | `changepoints_wrapper()` | HD mean/cov/reg/network/VAR |
-| bcp | Erdman & Emerson 2007; Barry & Hartigan 1993 | `bcp` | `bcp_wrapper()` | mean (Bayesian) |
-| BOCPD | Adams & MacKay 2007 | `ocp` | `bocpd_wrapper()` | online Bayesian |
-| Bai–Perron / fluctuation | Bai & Perron 1998/2003; Zeileis et al. 2002 | `strucchange` | `strucchange_wrapper()` | regression breaks |
-| segmented | Muggeo 2003/2008 | `segmented` | `segmented_wrapper()` | slope (continuous) |
-| FOCuS | Romano et al. 2023 | `FOCuS` | `focus_wrapper()` | online mean |
-| OCD | Chen, Wang & Samworth 2022 | `ocd` | `ocd_wrapper()` | HD online mean |
+Status as of 0.2.0: ✅ shipped · 🚧 harden/finish · 🆕 planned.
 
-## Appendix B: Proposed API reference
+| Method | Reference | Package | Access | Status |
+|---|---|---|---|---|
+| Optimal Partitioning / SegNeigh / PELT / BinSeg / AMOC | Jackson 2005; Auger–Lawrence 1989; Killick 2012; Scott–Knott 1974 | `changepoint` | `cpt_wrapper()`, `cpt_detect()` | ✅ |
+| NMCD (`cpt.np`) | Zou 2014; Haynes 2017 | `changepoint.np` | `cpt_detect("np")` | ✅ |
+| E-Divisive / E-Agglo | Matteson–James 2014 | `ecp` | `ecp_wrapper()`, `cpt_detect("ecp")` | ✅ / 🚧 multivariate |
+| FPOP | Maidstone 2017 | `fpop` | `fpop_wrapper()` | ✅ |
+| WBS / WBS2 / NOT / MOSUM / IDetect / TGUH | Fryzlewicz 2014/2020; Baranowski 2019; Eichinger–Kirch 2018; Anastasiou–Fryzlewicz 2022; Fryzlewicz 2018 | `wbs`/`breakfast`/`not`/`mosum`/`IDetect` | `*_wrapper()`, `cpt_detect()` | ✅ |
+| gfpop | Hocking 2022 | `gfpop` | `gfpop_wrapper()` | 🆕 (README over-claims) |
+| SMUCE / HSMUCE | Frick 2014; Pein 2017 | `stepR` | `smuce_wrapper()` | 🆕 (named, unwired) |
+| CROPS | Haynes 2017 | `changepoint` | `cpt_crops()` | 🆕 |
+| Robust loss / DeCAFS / SN | Fearnhead–Rigaill 2019; Romano 2022; Zhao 2022 | `robseg`/`DeCAFS`/`SNSeg` | `*_wrapper()` | 🆕 (named, unwired) |
+| KCP / CPM | Arlot 2019; Ross 2015 | `kcpRS`/`cpm` | `kcp_wrapper()`/`cpm_wrapper()` | 🆕 |
+| inspect / SBS / changepoints | Wang–Samworth 2018; Cho–Fryzlewicz 2015; Xu et al. | `InspectChangepoint`/`hdbinseg`/`changepoints` | `*_wrapper()` | 🆕 |
+| bcp / BOCPD | Erdman–Emerson 2007; Adams–MacKay 2007 | `bcp`/`ocp` | `bcp_wrapper()`/`bocpd_wrapper()` | 🆕 |
+| Bai–Perron / segmented | Bai–Perron 1998/2003; Muggeo 2003/2008 | `strucchange`/`segmented` | `*_wrapper()` | 🆕 |
+| FOCuS / OCD | Romano 2023; Chen 2022 | `FOCuS`/`ocd` | `*_wrapper()` | 🆕 |
+
+## Appendix B: API reference (shipped and proposed)
 
 ```r
-## Core
+## Shipped in 0.2.0 -------------------------------------------------------
+## core
 cpt_detect(x, method, change_in, penalty, ...) -> ggcpt
-cpt_penalty(type, n, k, value = NULL)          -> numeric/function
-
+cpt_penalty(type, n, k, value)                 -> numeric
+new_ggcpt(...); is_ggcpt(x); print(<ggcpt>)
 ## broom + ggplot2
 tidy(x); glance(x); augment(x)                 # x: ggcpt
-autoplot(x, show_segments = FALSE, show_ci = FALSE, ...) -> ggplot
-ggcptplot(x, ...); ggecpplot(x, ...)           # accept ggcpt or raw data
+autoplot(x, show_segments, show_points, show_line, index, ...) -> ggplot
+ggcptplot(...); ggecpplot(...)                 # original + hardened
+geom_changepoint(); geom_cpt_segment(); geom_cpt_ci(); stat_changepoint()
+theme_ggcpt(); annotate_segments()
+## wrappers
+cpt_wrapper(); ecp_wrapper()
+fpop_wrapper(); wbs_wrapper(); wbs2_wrapper(); not_wrapper()
+mosum_wrapper(); idetect_wrapper(); tguh_wrapper()
+## comparison / evaluation / simulation
+ggcpt_compare(x, methods, layout, seed, ...) -> ggplot
+ggcpt_compare_table(x, methods, ...)         -> tibble
+cpt_metrics(); cpt_metrics_annotated(); ggcpt_eval()
+cpt_simulate() / rcpt(); signal_blocks/fms/mix/teeth/stairs()
 
-## geoms / stats
-geom_changepoint(...); geom_cpt_segment(...); geom_cpt_ci(...); stat_changepoint(...)
-
-## thin wrappers (all -> ggcpt)
-cpt_wrapper(); ecp_wrapper()                                  # existing
-fpop_wrapper(); gfpop_wrapper()
-wbs_wrapper(); not_wrapper(); mosum_wrapper(); idetect_wrapper()
-smuce_wrapper(); kcp_wrapper(); cpm_wrapper()
-robseg_wrapper(); decafs_wrapper(); sn_wrapper()
-inspect_wrapper(); changepoints_wrapper()
-bcp_wrapper(); bocpd_wrapper()
-strucchange_wrapper(); segmented_wrapper()
-focus_wrapper(); ocd_wrapper()
-
-## penalty path
-cpt_crops(x, method, change_in, pen_min, pen_max, ...) -> ggcpt_path
+## Proposed for 0.3.0+ ----------------------------------------------------
+cpt_methods()                                  -> tibble (introspection, §3.1)
+cpt_detect(<ts|xts|tsibble|data.frame>, ...)   # §6.2
+gfpop_wrapper(); smuce_wrapper(); robseg_wrapper(); decafs_wrapper(); sn_wrapper()
+cpt_crops(x, method, change_in, pen_min, pen_max, ...) -> ggcpt_path  # §4.3
 ggcpt_pathplot(path, ...) -> ggplot
-
-## comparison
-ggcpt_compare(x, methods, layout = c("facet","overlay"), ...) -> ggplot
-ggcpt_compare_table(x, methods, ...) -> tibble
-
-## multivariate / high-dimensional plots
-ggcpt_facet(X, ...); ggcpt_heatmap(X, ...) -> ggplot
-
-## evaluation
-cpt_metrics(pred, truth, n, margin = 5) -> tibble
-cpt_metrics_annotated(pred, annotations, n, margin = 5) -> tibble
-ggcpt_eval(pred, truth, ...) -> ggplot
-
-## simulation / data
-cpt_simulate(n, changepoints, change_in, params, noise, sd, rho, seed) -> tibble (+ truth attr)
-rcpt(...)  # alias
-
-## parallelism (cross-cutting; see §10.4)
-# Looping functions respect the ambient future::plan() and a `seed`:
-future::plan(multisession, workers = 8)              # user chooses the backend
-ggcpt_compare(x, methods, ..., seed = 1)             # methods fanned out, reproducibly
-cpt_simulate(...) |> ... ; cpt_metrics(...)          # studies parallelised over the grid
-cpt_batch(X, method, ..., workers = NULL, seed = 1)  # panel/per-series detector
+summary(<ggcpt>); as_tibble(<ggcpt>); format(<ggcpt>); plot(<ggcpt>)  # §6.1
+cpt_batch(X, method, ..., workers, seed) -> tibble                    # §6.3
+ggcpt_interactive(p, ...); cpt_explore(x, ...)                        # §6.4
+predict(<ggcpt>); segment_id(<ggcpt>); cpt_stability(x, method, B)   # §6.5
+cpt_cite(x); cpt_decompose(x, ...)                                    # §6.6
+ggcpt_facet(X, ...); ggcpt_heatmap(X, ...)                           # §7.4
+## later: kcp/cpm/inspect/sbs/changepoints/bcp/bocpd/strucchange/segmented/focus/ocd
 ```
 
 ---
 
 ## References
 
-The following references are the basis for the proposed features. Venues and
-years have been verified against the published record; arXiv identifiers are
-given where useful.
+The following references are the basis for the shipped and proposed features.
+Venues and years have been verified against the published record; arXiv
+identifiers are given where useful.
 
 1. Adams, R. P. and MacKay, D. J. C. (2007). *Bayesian Online Changepoint
    Detection.* arXiv:0710.3742.
@@ -1470,11 +1032,10 @@ given where useful.
     statistic.* **Electronic Journal of Statistics** 10(2), 2000–2038.
 11. Cho, H. and Kirch, C. (2022). *Two-stage data segmentation permitting
     multiscale change points, heavy tails and dependence.* **Annals of the
-    Institute of Statistical Mathematics** 74, 653–684. (Multiscale `mosum`
-    extension.) The companion bootstrap location confidence intervals are Cho,
-    H. and Kirch, C. (2022), *Bootstrap confidence intervals for multiple change
-    points based on moving sum procedures*, **Computational Statistics & Data
-    Analysis** 175, 107552.
+    Institute of Statistical Mathematics** 74, 653–684. Companion bootstrap
+    location CIs: Cho, H. and Kirch, C. (2022), *Bootstrap confidence intervals
+    for multiple change points based on moving sum procedures*, **Computational
+    Statistics & Data Analysis** 175, 107552.
 12. Chen, Y., Wang, T. and Samworth, R. J. (2022). *High-dimensional, multiscale
     online changepoint detection.* **Journal of the Royal Statistical Society:
     Series B** 84(1), 234–266. (R package `ocd`.) arXiv:2003.03668.

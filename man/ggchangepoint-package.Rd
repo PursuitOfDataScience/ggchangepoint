@@ -6,14 +6,38 @@
 \alias{ggchangepoint-package}
 \title{\code{ggchangepoint} package}
 \description{
-Combines Changepoint Analysis with 'ggplot2'.
+Unified tidy changepoint detection with \code{ggplot2} visualisation.
 }
 \details{
-ggchangepoint tries to offer several changepoint R packages in a tidy
-format and output the ggplot2 plots so that the tidyverse users can gain some
-familiarity to work with the changepoint analysis. For the moment, I only
-include three changepoint packages ('changepoint', 'changepoint.np' and 'ecp'
-). More changepoint packages will be included as time progresses.
+\code{ggchangepoint} provides a consistent S3 result class (\code{ggcpt})
+for changepoint detection results, \code{broom}-style methods
+(\code{tidy()}, \code{glance()}, \code{augment()}), \code{ggplot2}
+integration via \code{autoplot()} and composable geoms
+(\code{geom_changepoint()}, \code{geom_cpt_segment()},
+\code{geom_cpt_ci()}, \code{stat_changepoint()}), and a unified dispatcher
+\code{cpt_detect()} that supports multiple engines.
+
+**Detection engines.** The package currently wraps 13 methods behind the
+unified \code{cpt_detect()} front-end:
+\itemize{
+  \item \strong{changepoint:} PELT, BINSEG, SEGNEIGH, AMOC (mean, var, meanvar)
+  \item \strong{changepoint.np:} NP (non-parametric, distribution-free)
+  \item \strong{ecp:} E-Divisive, E-Agglo (multivariate, non-parametric)
+  \item \strong{fpop:} FPOP (functional pruning optimal partitioning)
+  \item \strong{wbs:} Wild Binary Segmentation
+  \item \strong{breakfast:} WBS2, TGUH
+  \item \strong{not:} Narrowest-Over-Threshold (mean, var, slope contrasts)
+  \item \strong{mosum:} Moving Sum
+  \item \strong{IDetect:} Isolate-Detect
+}
+Additional engines are planned (see \code{cpt_methods()} for the full table).
+
+**Key features.** Every detector returns a \code{ggcpt} object with a stable
+\code{tibble(cp, cp_value)} contract. Visualise any result directly with
+\code{autoplot()}. Compare methods with \code{ggcpt_compare()} and
+\code{ggcpt_compare_table()}. Evaluate accuracy with \code{cpt_metrics()}
+and \code{ggcpt_eval()}. Generate synthetic data with known ground truth
+via \code{cpt_simulate()} and the built-in canonical test signals.
 }
 \seealso{
 Useful links:

@@ -1,14 +1,17 @@
 ## Submission
 
-This is a minor-version update (0.1.0 -> 0.2.0) of an existing CRAN package.
+This is a minor-version update (0.2.0 -> 0.3.0) of an existing CRAN package.
 
-It adds a unified `ggcpt` S3 result class with `broom`-style
-`tidy()`/`glance()`/`augment()` and `ggplot2::autoplot()` methods, a
-`cpt_detect()` dispatcher, new wrappers for several optional engines, a method
-comparison module, accuracy metrics, and a data simulator. The four functions
-from 0.1.0 keep their signatures and behaviour. A confirmed edge-case bug in
-`ecp_wrapper()` (spurious boundary changepoints on a no-change series) and the
-`ggplot2` `size` -> `linewidth` deprecation are fixed.
+It closes the documentation-coverage gap from the previous cycle (every export is
+now introduced in the README and a feature-tour vignette, and the package-level
+help describes the current engine list), makes the `cpt_detect()` dispatcher
+honest (it advertises only wired methods and adds a `cpt_methods()` introspection
+helper), completes the `ggcpt` S3 surface (`summary()`, `as_tibble()`,
+`as.data.frame()`, `format()`, `plot()`), and fixes a set of correctness issues
+found by testing (a corrupted `signal_blocks()` test signal, `cpt_metrics()`
+recall/F1 exceeding 1, `ecp_wrapper()` returning a wrong value on multivariate
+input, and `stat_changepoint()` ignoring the x aesthetic). The 0.1.0/0.2.0
+function signatures and behaviour are unchanged.
 
 ## Test environments
 

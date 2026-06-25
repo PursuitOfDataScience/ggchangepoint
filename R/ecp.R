@@ -62,10 +62,15 @@ ecp_wrapper <- function(data,
     return(tibble::tibble(cp = integer(), cp_value = numeric()))
   }
 
-  if (is.vector(data) || is.numeric(data)) {
-    cp_value <- data[cp]
+  # Check matrix/data.frame BEFORE the numeric test: is.numeric() is TRUE for a
+  # numeric matrix, so testing it first would column-major flatten the matrix
+  # and return the wrong cp_value.
+  if (is.matrix(data) || is.data.frame(data)) {
+    # For multivariate input, use the first column's value at the changepoint
+    data_mat <- as.matrix(data)
+    cp_value <- data_mat[cp, 1]
   } else {
-    cp_value <- rep(NA_real_, length(cp))
+    cp_value <- data[cp]
   }
 
   tibble::tibble(cp = cp, cp_value = cp_value)

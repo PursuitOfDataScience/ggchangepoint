@@ -50,7 +50,7 @@ where $\mathcal{C}(\cdot)$ is a segment cost (typically $-2 \times$ maximised
 log-likelihood) and $\beta f(m)$ guards against over-segmentation [@yao1988estimating].
 The choice of penalty $\beta$ is the central challenge of the field.
 
-## Taxonomy of methods in v0.2.0
+## Taxonomy of methods
 
 The methods available through `cpt_detect()` in this release fall into three
 broad families:

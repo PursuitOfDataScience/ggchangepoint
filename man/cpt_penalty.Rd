@@ -25,6 +25,31 @@ A numeric penalty value.
 Helper to construct standard penalty values for use with changepoint
 detection methods. Returns a numeric penalty value.
 }
+\section{Penalty semantics across engines}{
+
+The same penalty name may be interpreted differently by different engines:
+\itemize{
+  \item \strong{changepoint-based methods} (PELT, BinSeg, SegNeigh, AMOC):
+    accept character penalties (\code{"MBIC"}, \code{"BIC"}, \code{"AIC"},
+    \code{"Hannan-Quinn"}, \code{"None"}) and pass them to the upstream
+    \pkg{changepoint} package. These methods do \emph{not} accept raw numeric
+    penalty values.
+  \item \strong{Functional-pruning methods} (\code{fpop}): accept numeric
+    penalties only. When a character penalty is supplied via
+    \code{cpt_detect()}, it is resolved to a numeric value using
+    \code{cpt_penalty()} before dispatch.
+  \item \strong{Search-based methods} (WBS, WBS2, NOT, MOSUM, IDetect,
+    TGUH): use internal model-selection criteria (e.g., sSIC, threshold)
+    and generally \emph{ignore} the \code{penalty} argument. Specify
+    thresholds via the wrapper's own arguments.
+  \item \strong{\code{MBIC}} in \code{cpt_penalty()} uses the
+    Zhang-Siegmund (2007) formula \eqn{0.5(k+1)\log n + \log{n \choose k}},
+    which differs from the \pkg{changepoint} package's MBIC. Use the
+    character \code{"MBIC"} with \pkg{changepoint}-based methods to get
+    the engine's native MBIC.
+}
+}
+
 \examples{
 cpt_penalty("BIC", n = 100)
 cpt_penalty("AIC", n = 100)

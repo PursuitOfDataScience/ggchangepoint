@@ -14,7 +14,8 @@ new_ggcpt(
   penalty = list(type = NA_character_, value = NA_real_),
   fit = NULL,
   call = NULL,
-  cp_convention = "left"
+  cp_convention = "left",
+  runtime = NA_real_
 )
 }
 \arguments{
@@ -39,6 +40,9 @@ new_ggcpt(
 locations: \code{"left"} (last index of left segment, used by
 \code{changepoint}) or \code{"right"} (first index of right segment, used
 by \code{ecp}). Defaults to \code{"left"}.}
+
+\item{runtime}{Numeric. Elapsed detection time in seconds, if measured.
+Defaults to \code{NA}.}
 }
 \value{
 An object of class \code{ggcpt}.

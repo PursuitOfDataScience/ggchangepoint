@@ -46,7 +46,8 @@ autoplot.ggcpt <- function(object,
     index = object$data$index,
     show_points = show_points,
     show_line = show_line,
-    show_segments = show_segments
+    show_segments = show_segments,
+    ...
   )
 
   if (isTRUE(show_segments) && nrow(object$segments) > 0) {

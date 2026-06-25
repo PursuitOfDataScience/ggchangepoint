@@ -7,6 +7,7 @@
 \alias{glance}
 \alias{augment}
 \alias{autoplot}
+\alias{as_tibble}
 \title{Objects exported from other packages}
 \keyword{internal}
 \description{
@@ -17,5 +18,7 @@ below to see their documentation.
   \item{generics}{\code{\link[generics]{augment}}, \code{\link[generics]{glance}}, \code{\link[generics]{tidy}}}
 
   \item{ggplot2}{\code{\link[ggplot2]{autoplot}}}
+
+  \item{tibble}{\code{\link[tibble]{as_tibble}}}
 }}
 

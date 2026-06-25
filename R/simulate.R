@@ -20,8 +20,8 @@
 #' @param rho AR(1) autocorrelation parameter. Defaults to 0.
 #' @param seed Optional seed for reproducibility.
 #'
-#' @return A tibble with columns \code{index} and \code{value}. The true
-#'   changepoints are stored in the \code{true_changepoints} attribute.
+#' @return A tibble with columns \code{index}, \code{value}, and \code{seg_id}.
+#'   The true changepoints are stored in the \code{true_changepoints} attribute.
 #' @export
 #'
 #' @examples
@@ -155,9 +155,15 @@ signal_blocks <- function(n = 2048, seed = NULL) {
   cp_idx <- as.integer(round(cp_scaled * n))
   cp_idx <- cp_idx[cp_idx > 0 & cp_idx < n]
 
+  # Segment-based assignment: each segment gets its absolute level.
+  # The segment before the first changepoint has level 0.
+  seg_starts <- c(1L, cp_idx + 1L)
+  seg_ends <- c(cp_idx, n)
+  segment_levels <- c(0, heights)
+
   signal <- rep(0, n)
-  for (i in rev(seq_along(cp_idx))) {
-    signal[t >= cp_scaled[i]] <- heights[i]
+  for (i in seq_along(seg_starts)) {
+    signal[seg_starts[i]:seg_ends[i]] <- segment_levels[i]
   }
 
   # Add noise

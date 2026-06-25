@@ -130,8 +130,12 @@ StatChangepoint <- ggplot2::ggproto("StatChangepoint", ggplot2::Stat,
     if (nrow(cp) == 0) {
       return(data.frame())
     }
+    # Map index positions to actual x-axis values
+    x_vals <- data$x
+    cp_idx <- cp$cp
+    cp_idx <- cp_idx[cp_idx >= 1 & cp_idx <= length(x_vals)]
     data.frame(
-      xintercept = cp$cp
+      xintercept = x_vals[cp_idx]
     )
   }
 )

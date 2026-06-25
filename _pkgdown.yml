@@ -25,6 +25,8 @@ navbar:
       href: articles/introduction.html
     - text: Comparing changepoint methods
       href: articles/comparison.html
+    - text: Feature tour
+      href: articles/ggchangepoint.html
   - text: News
     href: news/index.html
   right:
@@ -36,6 +38,7 @@ reference:
 - title: Core API
   contents:
   - cpt_detect
+  - cpt_methods
   - cpt_penalty
   - new_ggcpt
   - is_ggcpt
@@ -58,6 +61,15 @@ reference:
   - tidy.ggcpt
   - glance.ggcpt
   - augment.ggcpt
+  - summary.ggcpt
+- title: Additional S3 methods
+  contents:
+  - as_tibble.ggcpt
+  - as.data.frame.ggcpt
+  - format.ggcpt
+  - plot.ggcpt
+  - print.ggcpt
+  - print.summary.ggcpt
 - title: Theming and helpers
   contents:
   - theme_ggcpt

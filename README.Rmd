@@ -28,9 +28,10 @@ knitr::opts_chunk$set(
 
 ggchangepoint provides a unified tidy interface to changepoint analysis in R. It wraps
 multiple detection engines (changepoint, changepoint.np, ecp, wbs, breakfast, not, mosum,
-fpop, IDetect, and gfpop) behind a consistent S3 result class (`ggcpt`) with `broom`-style
+fpop, IDetect) behind a consistent S3 result class (`ggcpt`) with `broom`-style
 methods (`tidy()`, `glance()`, `augment()`), `ggplot2` integration via `autoplot()` and
-custom geoms, and a full method-comparison, evaluation, and simulation toolkit.
+custom geoms, and a full method-comparison, evaluation, simulation, and visualisation
+toolkit.
 
 The engines beyond `changepoint`, `changepoint.np`, and `ecp` are optional
 (`Suggests`); install the ones you need. The original 0.1.0 functions
@@ -97,6 +98,13 @@ cpt_detect(x, method = "wbs", change_in = "mean")
 cpt_detect(x, method = "fpop", change_in = "mean")
 ```
 
+Use `cpt_methods()` to see all available and planned methods with their engine
+packages and installation status:
+
+```{r}
+cpt_methods()
+```
+
 ## Compare methods
 
 ```{r}
@@ -125,8 +133,101 @@ dat <- cpt_simulate(200, changepoints = c(100), change_in = "mean",
 attributes(dat)$true_changepoints
 ```
 
-Built-in test signals include `signal_blocks()`, `signal_fms()`, `signal_mix()`,
-`signal_teeth()`, and `signal_stairs()`.
+An alias `rcpt()` is provided for compatibility. Built-in test signals include
+`signal_blocks()`, `signal_fms()`, `signal_mix()`, `signal_teeth()`,
+and `signal_stairs()`.
+
+## Penalty configuration
+
+Use `cpt_penalty()` to construct penalty values for use with detection methods:
+
+```{r}
+cpt_penalty("BIC", n = 200)
+cpt_penalty("AIC", n = 200)
+cpt_penalty("Manual", value = 10)
+```
+
+## Direct engine wrappers
+
+For fine-grained control, each detection engine has its own wrapper that returns
+a `ggcpt` object directly:
+
+```{r}
+fpop_wrapper(x, penalty = 2 * log(200))
+wbs_wrapper(x, n_intervals = 2000)
+wbs2_wrapper(x)
+not_wrapper(x, contrast = "pcwsConstMean")
+mosum_wrapper(x)
+idetect_wrapper(x)
+tguh_wrapper(x)
+```
+
+## Custom geoms, stats, and theming
+
+The package provides composable ggplot2 layers for changepoint visualisation:
+
+```{r, eval = FALSE}
+library(ggplot2)
+
+# Use geom_changepoint as a standalone layer
+cp_tbl <- tidy(cpt_detect(x, method = "pelt", change_in = "mean"))
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  geom_changepoint(data = cp_tbl, aes(xintercept = cp), color = "red") +
+  theme_ggcpt()
+
+# Use stat_changepoint to compute and draw changepoints in one step
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  stat_changepoint(method = "pelt", color = "red")
+
+# Shade alternating segments between changepoints
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  annotate_segments(cp = cp_tbl$cp, n = length(x))
+
+# Highlight segments with geom_cpt_segment
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  geom_cpt_segment(data = cp_tbl, aes(xintercept = cp), color = "blue")
+
+# Draw confidence intervals with geom_cpt_ci (when the engine provides them)
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  geom_cpt_ci(data = cp_tbl, aes(xintercept = cp, ymin = lower, ymax = upper))
+```
+
+## Evaluation metrics with annotation
+
+When multiple annotation sets are available, use `cpt_metrics_annotated()` and
+visualise with `ggcpt_eval()`:
+
+```{r}
+cpt_metrics_annotated(c(100), list(c(100), c(101), c(99)), n = 200, margin = 5)
+```
+
+## Class constructors
+
+Advanced users can construct `ggcpt` objects directly or test for the class:
+
+```{r, eval = FALSE}
+new_ggcpt(
+  changepoints = tibble::tibble(cp = 100L, cp_value = 5.0),
+  data = tibble::tibble(index = 1:200, value = rnorm(200)),
+  method = "manual"
+)
+is_ggcpt(x)
+```
+
+## Original ecp wrapper
+
+The `ecp_wrapper()` and its plotting function `ggecpplot()` provide direct
+access to the ecp engine:
+
+```{r, eval = FALSE}
+ecp_wrapper(x, algorithm = "divisive")
+ggecpplot(x, algorithm = "divisive")
+```
 
 ## Original wrappers (0.1.0 API)
 
@@ -138,9 +239,23 @@ cpt_wrapper(x)
 ggcptplot(x)
 ```
 
+## Additional S3 methods
+
+The `ggcpt` class also provides:
+
+```{r}
+res <- cpt_detect(x, method = "pelt", change_in = "mean")
+summary(res)          # human-readable digest
+as_tibble(res)        # tibble of changepoints
+as.data.frame(res)    # data frame of changepoints
+format(res)           # one-line summary string
+plot(res)             # base-graphics fallback (delegates to autoplot)
+```
+
 ## Learn more
 
 See the vignettes for a comprehensive walkthrough:
 
+- `vignette("ggchangepoint", package = "ggchangepoint")` — feature tour
 - `vignette("introduction", package = "ggchangepoint")`
 - `vignette("comparison", package = "ggchangepoint")`
