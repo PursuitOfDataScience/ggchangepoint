@@ -1,6 +1,79 @@
 # Changelog
 
+## ggchangepoint 0.3.0
+
+### Documentation and coverage
+
+- The README now introduces every exported function, grouped by role,
+  and the over-claimed `gfpop` engine (never wrapped) has been removed
+  from it.
+- New feature-tour vignette
+  ([`vignette("ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/ggchangepoint.md))
+  walking the full exported surface, including the per-engine wrappers,
+  [`theme_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/theme_ggcpt.md),
+  and
+  [`annotate_segments()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/annotate_segments.md).
+- The package-level help
+  ([`?ggchangepoint`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-package.md))
+  was rewritten to describe the unified `ggcpt` framework and the
+  current 13-method engine list (it previously still claimed “only three
+  changepoint packages”).
+- New documentation-coverage test asserting every export appears in the
+  README.
+
+### New features
+
+- New
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  introspection helper returning a tibble of every known method, its
+  engine, availability status, and whether the engine is installed.
+- New S3 methods for the `ggcpt` class:
+  [`summary()`](https://rdrr.io/r/base/summary.html),
+  [`as_tibble()`](https://tibble.tidyverse.org/reference/as_tibble.html),
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html),
+  [`format()`](https://rdrr.io/r/base/format.html), and
+  [`plot()`](https://rdrr.io/r/graphics/plot.default.html).
+- [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+  gained a documented per-engine penalty-semantics section.
+
+### Bug fixes
+
+- [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  no longer advertises 13 methods that errored at runtime;
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html) now enumerates
+  only the wired methods (B7).
+- [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  validates `method` × `change_in` combinations and errors with a clear
+  message instead of silently mislabelling the result (B3).
+- [`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md)
+  now produces the correct Blocks signal; the segment levels previously
+  collapsed to a single step because the assignment loop ran in reverse
+  (B1).
+- [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+  uses one-to-one matching, so `recall` and `f1` can no longer exceed 1
+  (B2), and no longer warns on empty `pred`/`truth` (B6).
+- [`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md)
+  returns a correct per-coordinate `cp_value` for matrix and data.frame
+  input instead of a column-major flattened scalar (B4);
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  no longer flattens multivariate input before passing it to `ecp`.
+- [`stat_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.md)
+  maps detected indices back to the `x` aesthetic so rules land at the
+  correct location on non-`1:n` axes (B5).
+- [`glance.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/glance.ggcpt.md)
+  now reports a measured `runtime` and populates `total_cost` from the
+  underlying fit when available (B8).
+- [`augment.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/augment.ggcpt.md)
+  renames data columns position-independently, so it no longer breaks
+  when the data carries more than two columns (B11).
+- [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
+  `@return` now documents the `seg_id` column it actually returns (B9),
+  and the dead `show_segments` parameter was removed from the internal
+  plot helper (B10).
+
 ## ggchangepoint 0.2.0
+
+CRAN release: 2026-06-21
 
 ### Major changes
 
@@ -12,7 +85,7 @@
   methods
 - New
   [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-  unified dispatcher for all changepoint methods
+  unified dispatcher for changepoint methods
 - New geoms:
   [`geom_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_changepoint.md),
   [`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md),
@@ -35,6 +108,11 @@
 - New
   [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
   helper
+- New
+  [`theme_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/theme_ggcpt.md)
+  and
+  [`annotate_segments()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/annotate_segments.md)
+  for plot customisation
 
 ### Hardening (bug fixes)
 
@@ -58,10 +136,14 @@
 
 - New `testthat` test suite with coverage for all new and hardened
   functions
-- vdiffr snapshot tests (where available)
 
 ## ggchangepoint 0.1.0
 
 CRAN release: 2022-02-24
 
 - Initial release to CRAN.
+- Exported functions:
+  [`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
+  [`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md),
+  [`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
+  [`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md).

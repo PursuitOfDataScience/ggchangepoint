@@ -29,7 +29,7 @@ maximised log-likelihood) and $`\beta f(m)`$ guards against
 over-segmentation (Yao 1988). The choice of penalty $`\beta`$ is the
 central challenge of the field.
 
-## Taxonomy of methods in v0.2.0
+## Taxonomy of methods
 
 The methods available through
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
@@ -179,34 +179,37 @@ results <- do.call(rbind, lapply(names(signals), function(nm) {
 #> Warning in BINSEG(sumstat, pen = pen.value, cost_func = costfunc, minseglen =
 #> minseglen, : The number of changepoints identified is Q, it is advised to
 #> increase Q to make sure changepoints have not been missed.
+#> Warning in BINSEG(sumstat, pen = pen.value, cost_func = costfunc, minseglen =
+#> minseglen, : The number of changepoints identified is Q, it is advised to
+#> increase Q to make sure changepoints have not been missed.
 results[, c("signal", "method", "precision", "recall", "f1", "covering",
             "hausdorff")]
-#>    signal method precision     recall        f1  covering hausdorff
-#> 1  blocks   pelt 1.0000000 0.09090909 0.1666667 0.2378708       363
-#> 2  blocks binseg 1.0000000 0.09090909 0.1666667 0.2378708       363
-#> 3  blocks   fpop 1.0000000 0.09090909 0.1666667 0.2378708       363
-#> 4  blocks    wbs 1.0000000 0.09090909 0.1666667 0.2378708       363
-#> 5  blocks    not 1.0000000 0.09090909 0.1666667 0.2378708       363
-#> 6     fms   pelt 1.0000000 0.28571429 0.4444444 0.3773701       179
-#> 7     fms binseg 0.7500000 0.42857143 0.5454545 0.6386754       172
-#> 8     fms   fpop 1.0000000 0.85714286 0.9230769 0.8626271        51
-#> 9     fms    wbs 1.0000000 1.00000000 1.0000000 0.9519373         5
-#> 10    fms    not 1.0000000 1.00000000 1.0000000 0.9632035         4
-#> 11    mix   pelt 0.0000000 0.00000000 0.0000000 0.4667797        55
-#> 12    mix binseg 0.0000000 0.00000000 0.0000000 0.3929160        59
-#> 13    mix   fpop 0.0000000 0.00000000 0.0000000 0.4667797        55
-#> 14    mix    wbs 0.1111111 0.20000000 0.1428571 0.5560015        77
-#> 15    mix    not 0.1000000 0.20000000 0.1333333 0.5355308        77
-#> 16  teeth   pelt 1.0000000 1.00000000 1.0000000 1.0000000         0
-#> 17  teeth binseg 1.0000000 1.00000000 1.0000000 0.9961131         1
-#> 18  teeth   fpop 1.0000000 1.00000000 1.0000000 1.0000000         0
-#> 19  teeth    wbs 1.0000000 1.00000000 1.0000000 1.0000000         0
-#> 20  teeth    not 1.0000000 1.00000000 1.0000000 1.0000000         0
-#> 21 stairs   pelt 1.0000000 1.00000000 1.0000000 1.0000000         0
-#> 22 stairs binseg 1.0000000 0.55555556 0.7142857 0.5991635        51
-#> 23 stairs   fpop 1.0000000 1.00000000 1.0000000 1.0000000         0
-#> 24 stairs    wbs 1.0000000 1.00000000 1.0000000 0.9961313         1
-#> 25 stairs    not 1.0000000 1.00000000 1.0000000 1.0000000         0
+#>    signal method precision    recall        f1  covering hausdorff
+#> 1  blocks   pelt 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 2  blocks binseg 1.0000000 0.4545455 0.6250000 0.6310029        82
+#> 3  blocks   fpop 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 4  blocks    wbs 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 5  blocks    not 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 6     fms   pelt 1.0000000 0.2857143 0.4444444 0.3773701       179
+#> 7     fms binseg 0.7500000 0.4285714 0.5454545 0.6386754       172
+#> 8     fms   fpop 1.0000000 0.8571429 0.9230769 0.8626271        51
+#> 9     fms    wbs 1.0000000 1.0000000 1.0000000 0.9519373         5
+#> 10    fms    not 1.0000000 1.0000000 1.0000000 0.9632035         4
+#> 11    mix   pelt 0.0000000 0.0000000 0.0000000 0.4667797        55
+#> 12    mix binseg 0.0000000 0.0000000 0.0000000 0.3929160        59
+#> 13    mix   fpop 0.0000000 0.0000000 0.0000000 0.4667797        55
+#> 14    mix    wbs 0.1111111 0.2000000 0.1428571 0.5560015        77
+#> 15    mix    not 0.1000000 0.2000000 0.1333333 0.5355308        77
+#> 16  teeth   pelt 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 17  teeth binseg 1.0000000 1.0000000 1.0000000 0.9961131         1
+#> 18  teeth   fpop 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 19  teeth    wbs 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 20  teeth    not 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 21 stairs   pelt 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 22 stairs binseg 1.0000000 0.5555556 0.7142857 0.5991635        51
+#> 23 stairs   fpop 1.0000000 1.0000000 1.0000000 1.0000000         0
+#> 24 stairs    wbs 1.0000000 1.0000000 1.0000000 0.9961313         1
+#> 25 stairs    not 1.0000000 1.0000000 1.0000000 1.0000000         0
 ```
 
 The table shows how different methods perform across signal types. PELT

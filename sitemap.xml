@@ -2,6 +2,7 @@
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/404.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/LICENSE.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/ggchangepoint/articles/ggchangepoint.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/articles/index.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/authors.html</loc></url>
@@ -12,6 +13,7 @@
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/augment.ggcpt.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/autoplot.ggcpt.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.html</loc></url>
@@ -26,6 +28,7 @@
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_methods.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/glance.ggcpt.html</loc></url>
@@ -43,6 +46,7 @@
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_stairs.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.html</loc></url>
+<url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/summary.ggcpt.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/tguh_wrapper.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/theme_ggcpt.html</loc></url>
 <url><loc>https://pursuitofdatascience.github.io/ggchangepoint/reference/tidy.ggcpt.html</loc></url>

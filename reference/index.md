@@ -4,6 +4,8 @@
 
 - [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
   : Unified changepoint detection dispatcher
+- [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  : Introspect available changepoint detection methods
 - [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
   : Construct changepoint penalties
 - [`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
@@ -45,6 +47,19 @@
   : Glance at a ggcpt object
 - [`augment(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/augment.ggcpt.md)
   : Augment a ggcpt object
+- [`summary(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/summary.ggcpt.md)
+  [`print(`*`<summary.ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/summary.ggcpt.md)
+  : Summary of a ggcpt object
+
+## Additional S3 methods
+
+- [`as_tibble(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_methods.md)
+  [`as.data.frame(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_methods.md)
+  [`format(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_methods.md)
+  [`plot(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_methods.md)
+  : Coerce, format, and plot ggcpt objects
+- [`print(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/print.ggcpt.md)
+  : Print a ggcpt object
 
 ## Theming and helpers
 

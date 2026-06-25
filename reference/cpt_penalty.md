@@ -33,6 +33,32 @@ cpt_penalty(type, n = NULL, k = 1, value = NULL)
 
 A numeric penalty value.
 
+## Penalty semantics across engines
+
+The same penalty name may be interpreted differently by different
+engines:
+
+- **changepoint-based methods** (PELT, BinSeg, SegNeigh, AMOC): accept
+  character penalties (`"MBIC"`, `"BIC"`, `"AIC"`, `"Hannan-Quinn"`,
+  `"None"`) and pass them to the upstream changepoint package. These
+  methods do *not* accept raw numeric penalty values.
+
+- **Functional-pruning methods** (`fpop`): accept numeric penalties
+  only. When a character penalty is supplied via
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md),
+  it is resolved to a numeric value using `cpt_penalty()` before
+  dispatch.
+
+- **Search-based methods** (WBS, WBS2, NOT, MOSUM, IDetect, TGUH): use
+  internal model-selection criteria (e.g., sSIC, threshold) and
+  generally *ignore* the `penalty` argument. Specify thresholds via the
+  wrapper's own arguments.
+
+- **`MBIC`** in `cpt_penalty()` uses the Zhang-Siegmund (2007) formula
+  \\0.5(k+1)\log n + \log{n \choose k}\\, which differs from the
+  changepoint package's MBIC. Use the character `"MBIC"` with
+  changepoint-based methods to get the engine's native MBIC.
+
 ## Examples
 
 ``` r

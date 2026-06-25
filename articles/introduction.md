@@ -644,12 +644,12 @@ metrics <- do.call(rbind, lapply(methods_cs, function(m) {
 }))
 metrics[, c("method", "n_pred", "precision", "recall", "f1", "covering")]
 #>   method n_pred precision     recall        f1  covering
-#> 1   pelt      1         1 0.09090909 0.1666667 0.2378708
-#> 2 binseg      1         1 0.09090909 0.1666667 0.2378708
-#> 3   amoc      1         1 0.09090909 0.1666667 0.2378708
-#> 4   fpop      1         1 0.09090909 0.1666667 0.2378708
-#> 5    wbs      1         1 0.09090909 0.1666667 0.2378708
-#> 6    not      1         1 0.09090909 0.1666667 0.2378708
+#> 1   pelt     11         1 1.00000000 1.0000000 1.0000000
+#> 2 binseg      5         1 0.45454545 0.6250000 0.6019535
+#> 3   amoc      1         1 0.09090909 0.1666667 0.3128671
+#> 4   fpop     11         1 1.00000000 1.0000000 1.0000000
+#> 5    wbs     11         1 1.00000000 1.0000000 1.0000000
+#> 6    not     11         1 1.00000000 1.0000000 1.0000000
 ```
 
 Visual evaluation of the PELT result, with the $`\pm 5`$ tolerance

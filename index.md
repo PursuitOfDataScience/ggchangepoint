@@ -2,15 +2,15 @@
 
 ggchangepoint provides a unified tidy interface to changepoint analysis
 in R. It wraps multiple detection engines (changepoint, changepoint.np,
-ecp, wbs, breakfast, not, mosum, fpop, IDetect, and gfpop) behind a
-consistent S3 result class (`ggcpt`) with `broom`-style methods
+ecp, wbs, breakfast, not, mosum, fpop, IDetect) behind a consistent S3
+result class (`ggcpt`) with `broom`-style methods
 ([`tidy()`](https://generics.r-lib.org/reference/tidy.html),
 [`glance()`](https://generics.r-lib.org/reference/glance.html),
 [`augment()`](https://generics.r-lib.org/reference/augment.html)),
 `ggplot2` integration via
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-and custom geoms, and a full method-comparison, evaluation, and
-simulation toolkit.
+and custom geoms, and a full method-comparison, evaluation, simulation,
+and visualisation toolkit.
 
 The engines beyond `changepoint`, `changepoint.np`, and `ecp` are
 optional (`Suggests`); install the ones you need. The original 0.1.0
@@ -158,6 +158,30 @@ cpt_detect(x, method = "fpop", change_in = "mean")
 #> 1   100    0.467
 ```
 
+Use
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+to see all available and planned methods with their engine packages and
+installation status:
+
+``` r
+
+cpt_methods()
+#> # A tibble: 26 × 6
+#>    method   change_in          engine         status    target_release installed
+#>    <chr>    <chr>              <chr>          <chr>     <chr>          <lgl>    
+#>  1 pelt     mean, var, meanvar changepoint    available <NA>           TRUE     
+#>  2 binseg   mean, var, meanvar changepoint    available <NA>           TRUE     
+#>  3 segneigh mean, var, meanvar changepoint    available <NA>           TRUE     
+#>  4 amoc     mean, var, meanvar changepoint    available <NA>           TRUE     
+#>  5 np       distribution       changepoint.np available <NA>           TRUE     
+#>  6 ecp      distribution       ecp            available <NA>           TRUE     
+#>  7 fpop     mean               fpop           available <NA>           TRUE     
+#>  8 wbs      mean               wbs            available <NA>           TRUE     
+#>  9 wbs2     mean               breakfast      available <NA>           TRUE     
+#> 10 not      mean, var, slope   not            available <NA>           TRUE     
+#> # ℹ 16 more rows
+```
+
 ## Compare methods
 
 ``` r
@@ -166,7 +190,7 @@ ggcpt_compare(x, methods = c("pelt", "binseg", "fpop", "wbs"))
 ```
 
 ![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-8-1.png)
+changepoints](reference/figures/README-unnamed-chunk-9-1.png)
 
 For a numeric summary, use
 [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md):
@@ -208,13 +232,220 @@ attributes(dat)$true_changepoints
 #> [1] 100
 ```
 
-Built-in test signals include
+An alias
+[`rcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
+is provided for compatibility. Built-in test signals include
 [`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md),
 [`signal_fms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_fms.md),
 [`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md),
 [`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md),
 and
 [`signal_stairs()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_stairs.md).
+
+## Penalty configuration
+
+Use
+[`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+to construct penalty values for use with detection methods:
+
+``` r
+
+cpt_penalty("BIC", n = 200)
+#> [1] 5.298317
+cpt_penalty("AIC", n = 200)
+#> [1] 2
+cpt_penalty("Manual", value = 10)
+#> [1] 10
+```
+
+## Direct engine wrappers
+
+For fine-grained control, each detection engine has its own wrapper that
+returns a `ggcpt` object directly:
+
+``` r
+
+fpop_wrapper(x, penalty = 2 * log(200))
+#> ggcpt (changepoint detection result)
+#>   Method:          fpop 
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         Manual = 10.5966347330961 
+#>   Series length:   200 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+wbs_wrapper(x, n_intervals = 2000)
+#> ggcpt (changepoint detection result)
+#>   Method:          wbs 
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         sSIC = NA 
+#>   Series length:   200 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+wbs2_wrapper(x)
+#> ggcpt (changepoint detection result)
+#>   Method:          wbs2 
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         SDLL = NA 
+#>   Series length:   200 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+not_wrapper(x, contrast = "pcwsConstMean")
+#> ggcpt (changepoint detection result)
+#>   Method:          not 
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         sSIC = NA 
+#>   Series length:   200 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+mosum_wrapper(x)
+#> ggcpt (changepoint detection result)
+#>   Method:          mosum 
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         threshold = critical.value 
+#>   Series length:   200 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+idetect_wrapper(x)
+#> ggcpt (changepoint detection result)
+#>   Method:          IDetect 
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         threshold = NA 
+#>   Series length:   200 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+tguh_wrapper(x)
+#> ggcpt (changepoint detection result)
+#>   Method:          tguh 
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         threshold = NA 
+#>   Series length:   200 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+```
+
+## Custom geoms, stats, and theming
+
+The package provides composable ggplot2 layers for changepoint
+visualisation:
+
+``` r
+
+library(ggplot2)
+
+# Use geom_changepoint as a standalone layer
+cp_tbl <- tidy(cpt_detect(x, method = "pelt", change_in = "mean"))
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  geom_changepoint(data = cp_tbl, aes(xintercept = cp), color = "red") +
+  theme_ggcpt()
+
+# Use stat_changepoint to compute and draw changepoints in one step
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  stat_changepoint(method = "pelt", color = "red")
+
+# Shade alternating segments between changepoints
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  annotate_segments(cp = cp_tbl$cp, n = length(x))
+
+# Highlight segments with geom_cpt_segment
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  geom_cpt_segment(data = cp_tbl, aes(xintercept = cp), color = "blue")
+
+# Draw confidence intervals with geom_cpt_ci (when the engine provides them)
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_line() +
+  geom_cpt_ci(data = cp_tbl, aes(xintercept = cp, ymin = lower, ymax = upper))
+```
+
+## Evaluation metrics with annotation
+
+When multiple annotation sets are available, use
+[`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md)
+and visualise with
+[`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md):
+
+``` r
+
+cpt_metrics_annotated(c(100), list(c(100), c(101), c(99)), n = 200, margin = 5)
+#> # A tibble: 1 × 7
+#>       n n_annotators n_pred precision recall    f1 covering
+#>   <dbl>        <int>  <int>     <dbl>  <dbl> <dbl>    <dbl>
+#> 1   200            3      1         1      1     1    0.993
+```
+
+## Class constructors
+
+Advanced users can construct `ggcpt` objects directly or test for the
+class:
+
+``` r
+
+new_ggcpt(
+  changepoints = tibble::tibble(cp = 100L, cp_value = 5.0),
+  data = tibble::tibble(index = 1:200, value = rnorm(200)),
+  method = "manual"
+)
+is_ggcpt(x)
+```
+
+## Original ecp wrapper
+
+The
+[`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md)
+and its plotting function
+[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
+provide direct access to the ecp engine:
+
+``` r
+
+ecp_wrapper(x, algorithm = "divisive")
+ggecpplot(x, algorithm = "divisive")
+```
 
 ## Original wrappers (0.1.0 API)
 
@@ -237,11 +468,58 @@ ggcptplot(x)
 ```
 
 ![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-12-1.png)
+changepoints](reference/figures/README-unnamed-chunk-19-1.png)
+
+## Additional S3 methods
+
+The `ggcpt` class also provides:
+
+``` r
+
+res <- cpt_detect(x, method = "pelt", change_in = "mean")
+summary(res)          # human-readable digest
+#> ggcpt Summary
+#>   Method:                   pelt 
+#>   Change in:                mean 
+#>   Changepoints found:       1 
+#>   CP convention:            left 
+#>   Series length:            200 
+#>   Penalty:                  MBIC = NA 
+#>   Runtime (seconds):        0.006 
+#> 
+#> Segments:
+#> # A tibble: 2 × 5
+#>   seg_id start   end     n param_estimate
+#>    <int> <dbl> <int> <dbl>          <dbl>
+#> 1      1     1   100   100          0.139
+#> 2      2   101   200   100          9.80 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+as_tibble(res)        # tibble of changepoints
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.467
+as.data.frame(res)    # data frame of changepoints
+#>    cp cp_value
+#> 1 100 0.467023
+format(res)           # one-line summary string
+#> [1] "ggcpt [pelt] 1 changepoint(s) on 200 observations"
+plot(res)             # base-graphics fallback (delegates to autoplot)
+```
+
+![ggchangepoint plot of a time series with detected
+changepoints](reference/figures/README-unnamed-chunk-20-1.png)
 
 ## Learn more
 
 See the vignettes for a comprehensive walkthrough:
 
+- [`vignette("ggchangepoint", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/ggchangepoint.md)
+  — feature tour
 - [`vignette("introduction", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md)
 - [`vignette("comparison", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md)

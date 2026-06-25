@@ -18,11 +18,18 @@ cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
 
 - method:
 
-  Detection method. One of `"pelt"`, `"binseg"`, `"segneigh"`, `"amoc"`,
-  `"fpop"`, `"wbs"`, `"wbs2"`, `"not"`, `"mosum"`, `"idetect"`,
-  `"tguh"`, `"smuce"`, `"hsmuce"`, `"np"`, `"ecp"`, `"kcp"`, `"cpm"`,
-  `"robust"`, `"decafs"`, `"sn"`, `"inspect"`, `"sbs"`, `"bcp"`,
-  `"bocpd"`, `"strucchange"`, `"segmented"`. Defaults to `"pelt"`.
+  Detection method. See
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  for the complete table. Methods available in this release: `"pelt"`,
+  `"binseg"`, `"segneigh"`, `"amoc"`, `"np"`, `"ecp"`, `"fpop"`,
+  `"wbs"`, `"wbs2"`, `"not"`, `"mosum"`, `"idetect"`, `"tguh"`. Methods
+  that ship with optional (`Suggests`) engine packages will prompt you
+  to install them if missing. Planned methods — `"smuce"`, `"hsmuce"`,
+  `"kcp"`, `"cpm"`, `"robust"`, `"decafs"`, `"sn"`, `"inspect"`,
+  `"sbs"`, `"bcp"`, `"bocpd"`, `"strucchange"`, `"segmented"` — are
+  listed in
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  with their target release.
 
 - change_in:
 

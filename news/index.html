@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.2.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -20,6 +20,7 @@
   <button class="nav-link dropdown-toggle" type="button" id="dropdown-vignettes" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Vignettes</button>
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Comparing changepoint methods</a></li>
+    <li><a class="dropdown-item" href="../articles/ggchangepoint.html">Feature tour</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -36,11 +37,49 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.2.0" id="ggchangepoint-020">ggchangepoint 0.2.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-020"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.3.0" id="ggchangepoint-030">ggchangepoint 0.3.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-030"></a></h2>
+<div class="section level3">
+<h3 id="documentation-and-coverage-0-3-0">Documentation and coverage<a class="anchor" aria-label="anchor" href="#documentation-and-coverage-0-3-0"></a></h3>
+<ul><li>The README now introduces every exported function, grouped by role, and the over-claimed <code>gfpop</code> engine (never wrapped) has been removed from it.</li>
+<li>New feature-tour vignette (<code><a href="../articles/ggchangepoint.html">vignette("ggchangepoint")</a></code>) walking the full exported surface, including the per-engine wrappers, <code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code>, and <code><a href="../reference/annotate_segments.html">annotate_segments()</a></code>.</li>
+<li>The package-level help (<code><a href="../reference/ggchangepoint-package.html">?ggchangepoint</a></code>) was rewritten to describe the unified <code>ggcpt</code> framework and the current 13-method engine list (it previously still claimed “only three changepoint packages”).</li>
+<li>New documentation-coverage test asserting every export appears in the README.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-features-0-3-0">New features<a class="anchor" aria-label="anchor" href="#new-features-0-3-0"></a></h3>
+<ul><li>New <code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> introspection helper returning a tibble of every known method, its engine, availability status, and whether the engine is installed.</li>
+<li>New S3 methods for the <code>ggcpt</code> class: <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, <code><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble()</a></code>, <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>, <code><a href="https://rdrr.io/r/base/format.html" class="external-link">format()</a></code>, and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code>.</li>
+<li>
+<code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> gained a documented per-engine penalty-semantics section.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-0-3-0">Bug fixes<a class="anchor" aria-label="anchor" href="#bug-fixes-0-3-0"></a></h3>
+<ul><li>
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> no longer advertises 13 methods that errored at runtime; <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> now enumerates only the wired methods (B7).</li>
+<li>
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> validates <code>method</code> × <code>change_in</code> combinations and errors with a clear message instead of silently mislabelling the result (B3).</li>
+<li>
+<code><a href="../reference/signal_blocks.html">signal_blocks()</a></code> now produces the correct Blocks signal; the segment levels previously collapsed to a single step because the assignment loop ran in reverse (B1).</li>
+<li>
+<code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> uses one-to-one matching, so <code>recall</code> and <code>f1</code> can no longer exceed 1 (B2), and no longer warns on empty <code>pred</code>/<code>truth</code> (B6).</li>
+<li>
+<code><a href="../reference/ecp_wrapper.html">ecp_wrapper()</a></code> returns a correct per-coordinate <code>cp_value</code> for matrix and data.frame input instead of a column-major flattened scalar (B4); <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> no longer flattens multivariate input before passing it to <code>ecp</code>.</li>
+<li>
+<code><a href="../reference/stat_changepoint.html">stat_changepoint()</a></code> maps detected indices back to the <code>x</code> aesthetic so rules land at the correct location on non-<code>1:n</code> axes (B5).</li>
+<li>
+<code><a href="../reference/glance.ggcpt.html">glance.ggcpt()</a></code> now reports a measured <code>runtime</code> and populates <code>total_cost</code> from the underlying fit when available (B8).</li>
+<li>
+<code><a href="../reference/augment.ggcpt.html">augment.ggcpt()</a></code> renames data columns position-independently, so it no longer breaks when the data carries more than two columns (B11).</li>
+<li>
+<code><a href="../reference/cpt_simulate.html">cpt_simulate()</a></code> <code>@return</code> now documents the <code>seg_id</code> column it actually returns (B9), and the dead <code>show_segments</code> parameter was removed from the internal plot helper (B10).</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.2.0" id="ggchangepoint-020">ggchangepoint 0.2.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-020"></a></h2><p class="text-muted">CRAN release: 2026-06-21</p>
 <div class="section level3">
 <h3 id="major-changes-0-2-0">Major changes<a class="anchor" aria-label="anchor" href="#major-changes-0-2-0"></a></h3>
 <ul><li>New <code>ggcpt</code> S3 result class with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>, and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> methods</li>
-<li>New <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> unified dispatcher for all changepoint methods</li>
+<li>New <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> unified dispatcher for changepoint methods</li>
 <li>New geoms: <code><a href="../reference/geom_changepoint.html">geom_changepoint()</a></code>, <code><a href="../reference/geom_cpt_segment.html">geom_cpt_segment()</a></code>, <code><a href="../reference/geom_cpt_ci.html">geom_cpt_ci()</a></code>, <code><a href="../reference/stat_changepoint.html">stat_changepoint()</a></code>
 </li>
 <li>New first-wave wrappers: WBS/WBS2, NOT, MOSUM, FPOP, Isolate-Detect, TGUH</li>
@@ -49,6 +88,7 @@
 </li>
 <li>New simulator: <code><a href="../reference/cpt_simulate.html">cpt_simulate()</a></code>/<code><a href="../reference/cpt_simulate.html">rcpt()</a></code> and canonical test signals</li>
 <li>New <code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> helper</li>
+<li>New <code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code> and <code><a href="../reference/annotate_segments.html">annotate_segments()</a></code> for plot customisation</li>
 </ul></div>
 <div class="section level3">
 <h3 id="hardening-bug-fixes-0-2-0">Hardening (bug fixes)<a class="anchor" aria-label="anchor" href="#hardening-bug-fixes-0-2-0"></a></h3>
@@ -70,12 +110,12 @@
 <div class="section level3">
 <h3 id="testing-0-2-0">Testing<a class="anchor" aria-label="anchor" href="#testing-0-2-0"></a></h3>
 <ul><li>New <code>testthat</code> test suite with coverage for all new and hardened functions</li>
-<li>vdiffr snapshot tests (where available)</li>
 </ul></div>
 </div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.1.0" id="ggchangepoint-010">ggchangepoint 0.1.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-010"></a></h2><p class="text-muted">CRAN release: 2022-02-24</p>
 <ul><li>Initial release to CRAN.</li>
+<li>Exported functions: <code><a href="../reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="../reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code><a href="../reference/ggcptplot.html">ggcptplot()</a></code>, <code><a href="../reference/ggecpplot.html">ggecpplot()</a></code>.</li>
 </ul></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

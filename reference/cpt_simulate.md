@@ -70,8 +70,8 @@ rcpt(...)
 
 ## Value
 
-A tibble with columns `index` and `value`. The true changepoints are
-stored in the `true_changepoints` attribute.
+A tibble with columns `index`, `value`, and `seg_id`. The true
+changepoints are stored in the `true_changepoints` attribute.
 
 ## Examples
 
