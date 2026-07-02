@@ -20,5 +20,7 @@ A ggplot object.
 }
 \description{
 Overlays predictions and ground truth on the series with tolerance windows,
-colouring true positives, false positives, and misses.
+colouring true positives, false positives, and misses. Uses the same
+one-to-one matching as \code{\link{cpt_metrics}()}, so the plot and the
+metrics agree.
 }

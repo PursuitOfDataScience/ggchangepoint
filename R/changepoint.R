@@ -68,7 +68,13 @@ cpt_wrapper <- function(data,
     cpt_np   = changepoint.np::cpt.np
   )
 
-  fit <- cpt_fun(data, method = cp_method, ...)
+  # The changepoint package's default penalty (MBIC) is not implemented for
+  # SegNeigh; fall back to SIC unless the caller supplied a penalty.
+  args <- list(data, method = cp_method, ...)
+  if (cp_method == "SegNeigh" && !"penalty" %in% names(args)) {
+    args$penalty <- "SIC"
+  }
+  fit <- do.call(cpt_fun, args)
   cp <- changepoint::cpts(fit)
 
   tibble::tibble(cp = cp, cp_value = data[cp])

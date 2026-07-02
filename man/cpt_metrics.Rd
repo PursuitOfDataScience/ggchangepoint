@@ -24,8 +24,19 @@ A tibble with columns: \code{n}, \code{n_pred}, \code{n_truth},
 \description{
 Computes standard accuracy metrics comparing predicted changepoints to
 ground truth, including precision/recall/F1 with margin, covering metric,
-Hausdorff distance, (adjusted) Rand index, annotation error, and MAE/RMSE
+Hausdorff distance, adjusted Rand index, annotation error, and MAE/RMSE
 of matched locations.
+}
+\details{
+Precision/recall use a one-to-one matching: each truth may be
+claimed by at most one prediction (predictions are scanned in order and
+take the earliest unmatched truth within \code{margin}, which yields a
+maximum matching for interval-structured problems). When \code{pred} and
+\code{truth} are both empty the segmentation is exactly right, so
+precision, recall, and F1 are all 1. The covering metric follows
+van den Burg and Williams (2020): the prediction-side partition is always
+well defined, so an empty \code{pred} scores the covering of the trivial
+single-segment partition rather than 0.
 }
 \examples{
 cpt_metrics(c(100, 200), c(100, 200), n = 300)

@@ -1,7 +1,6 @@
 ---
 title: "ggchangepoint: A Unified Tidy Interface for Changepoint Analysis in R"
 author: "Youzhi Yu<br><span style='font-size:85%;'>University of Chicago</span>"
-date: "`r Sys.Date()`"
 bibliography: vignette_reference.bib
 output: rmarkdown::html_vignette
 vignette: >
@@ -10,7 +9,7 @@ vignette: >
   %\VignetteEncoding{UTF-8}
 ---
 
-```{r, include = FALSE}
+```{r setup, include = FALSE}
 knitr::opts_chunk$set(
   collapse = TRUE,
   fig.width = 8,
@@ -20,459 +19,600 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.alt = "ggchangepoint plot of a time series with detected changepoints"
 )
-# The wrappers for the optional engines live in Suggests; gate the chunks that
-# need them so the vignette still builds when an engine is not installed.
-has_fpop <- requireNamespace("fpop", quietly = TRUE)
-has_wbs  <- requireNamespace("wbs", quietly = TRUE)
-has_not  <- requireNamespace("not", quietly = TRUE)
+library(ggchangepoint)
+library(ggplot2)
+theme_set(theme_light())
+
+# Optional (Suggests) engines: gate the chunks that need them so the
+# vignette builds on any installation.
+has_stepR       <- requireNamespace("stepR", quietly = TRUE)
+has_cpop        <- requireNamespace("cpop", quietly = TRUE)
+has_bcp         <- requireNamespace("bcp", quietly = TRUE)
+has_ocp         <- requireNamespace("ocp", quietly = TRUE)
+has_fpop        <- requireNamespace("fpop", quietly = TRUE)
+has_wbs         <- requireNamespace("wbs", quietly = TRUE)
+has_not         <- requireNamespace("not", quietly = TRUE)
+has_mosum       <- requireNamespace("mosum", quietly = TRUE)
+has_idetect     <- requireNamespace("IDetect", quietly = TRUE)
+has_breakfast   <- requireNamespace("breakfast", quietly = TRUE)
+has_cpm         <- requireNamespace("cpm", quietly = TRUE)
+has_decafs      <- requireNamespace("DeCAFS", quietly = TRUE)
+has_inspect     <- requireNamespace("InspectChangepoint", quietly = TRUE)
+has_strucchange <- requireNamespace("strucchange", quietly = TRUE)
+has_segmented   <- requireNamespace("segmented", quietly = TRUE)
+has_fastcpd     <- requireNamespace("fastcpd", quietly = TRUE)
+has_envcpt      <- requireNamespace("EnvCpt", quietly = TRUE)
 ```
 
 # Abstract
 
 **ggchangepoint** is an R package that provides a unified, tidy interface to
-changepoint detection across multiple algorithmic backends. It introduces the
-`ggcpt` S3 result class with `broom`-style methods (`tidy()`, `glance()`,
-`augment()`), a central `cpt_detect()` dispatcher supporting over a dozen
-detection algorithms, native `ggplot2` visualization via `autoplot()` and
-specialised geoms, method comparison and accuracy evaluation modules, and a
-data simulation framework with canonical test signals. By harmonising the
-disparate APIs of existing R changepoint packages behind a single convention,
-ggchangepoint lowers the barrier to exploratory changepoint analysis and
-reproducible method comparison.
+changepoint detection across the methodological spectrum. It introduces a
+single S3 result class, `ggcpt`, with `broom`-style methods (`tidy()`,
+`glance()`, `augment()`) [@robinson2017broom], a central dispatcher
+`cpt_detect()` covering 31 detection methods across five algorithmic
+families, and native `ggplot2` [@wickham2016ggplot2] visualisation through
+`autoplot()` and a set of composable geoms. Where a method quantifies its
+uncertainty — the simultaneous confidence intervals of SMUCE
+[@frick2014smuce], the break-date intervals of Bai–Perron
+[@bai1998estimating], the posterior probabilities of Bayesian detectors
+[@barry1993bayesian; @adams2007bocpd] — the result object carries that
+uncertainty and the plotting layer can draw it. The package further supplies
+a penalty-path diagnostic (CROPS), batch detection over panels of series,
+bootstrap stability diagnostics, accuracy metrics aligned with modern
+benchmarking conventions [@van2020evaluation], ground-truth simulation, and
+per-method citations. This article describes the statistical background, the
+design of the package, and each method family in turn, with worked examples
+throughout.
 
 # Introduction
 
-Changepoint detection---the problem of identifying points in a sequence at
-which the underlying statistical properties change---is a fundamental task in
-time series analysis [@truong2020selective; @aminikhanghahi2017survey]. It has
-applications across virtually every domain that involves sequential data,
-including genomics [@picard2005statistical], finance [@athey2022detecting],
-climate science [@haslett1989space], and signal processing [@lavielle2005using].
+Changepoint analysis — locating the instants at which the stochastic
+behaviour of an ordered sequence changes — is one of the oldest problems in
+statistics, dating back at least to the quality-control charts of
+@page1954continuous, and one of its most active: modern surveys catalogue
+dozens of families of methods [@truong2020selective;
+@aminikhanghahi2017survey]. Its applications span virtually every domain
+that produces sequential data, including genomics [@picard2005statistical],
+finance [@athey2022detecting], climate science [@haslett1989space], and
+signal processing [@lavielle2005using].
 
-The R ecosystem offers a rich set of changepoint packages, each implementing one
-or more detection algorithms with its own conventions for input, output, and
-parameterisation. The **changepoint** package [@killick2014changepoint] provides
-PELT [@killick2012pelt], Binary Segmentation [@scott1974cluster;
-@vostrikova1981detecting], Segmented Neighbourhood, and AMOC. The **wbs**
-[@fryzlewicz2014wild] and **breakfast** packages implement Wild Binary
-Segmentation and its variants, while **not** [@baranowski2019narrowest],
-**mosum** [@eichinger2018mosum], **fpop** [@maidstone2017optimal],
-**IDetect** [@anastasiou2022idetect], and others
-offer further specialised algorithms. On the nonparametric side,
-**changepoint.np** [@haynes2017computationally] and **ecp**
-[@james2014ecp; @matteson2014nonparametric] handle distributional changes.
+The R ecosystem mirrors this breadth. Penalised optimal partitioning lives
+in **changepoint** [@killick2014changepoint] and **fpop**
+[@maidstone2017optimal]; wild binary segmentation in **wbs** and
+**breakfast** [@fryzlewicz2014wild; @fryzlewicz2020detecting]; multiscale
+inference in **stepR** [@frick2014smuce]; Bayesian analysis in **bcp**
+[@erdman2007bcp] and **ocp** [@adams2007bocpd]; structural breaks in
+**strucchange** [@zeileis2002strucchange]; and so on. Each of these packages
+is excellent at what it does, and each returns a different object, follows a
+different indexing convention, and draws (or does not draw) its own plots.
 
-While this diversity is a strength of the R community, it creates practical
-difficulties for the analyst. Each package uses a different result class,
-different naming conventions for parameters, different plot methods, and
-different changepoint indexing conventions. Comparing the output of several
-detectors on the same data---a standard practice for robust analysis---requires
-the user to write manual conversion code. Furthermore, none of the existing
-packages natively produce `ggplot2` [@wickham2016ggplot2] graphics or support
-the `broom` [@robinson2017broom] convention for tidy data extraction.
+An analyst who wants to *compare* a PELT segmentation with a Bayesian
+posterior and a multiscale confidence set — a routine task in applied work —
+must therefore learn several APIs, reconcile several conventions, and write
+custom plotting code for each. **ggchangepoint** removes that friction. Its
+design goals are:
 
-ggchangepoint addresses these problems by providing a single, consistent
-interface that wraps the most widely used detection packages. Its design goals
-are:
+1. **One vocabulary.** A single front door, `cpt_detect(x, method,
+   change_in, penalty, ...)`, whose arguments mean the same thing for every
+   engine.
+2. **One result type.** Every detector returns a `ggcpt` object with a
+   stable tidy contract, whatever the upstream engine returned.
+3. **One rendering path.** Every result — point estimates, confidence
+   intervals, fitted signals, posteriors, penalty paths — draws with
+   `autoplot()` and extends with ordinary `ggplot2` layers.
+4. **Wrap, don't reinvent.** All detection is delegated to the
+   peer-reviewed upstream engines; optional engines live in `Suggests` and
+   are loaded only when requested.
 
-1. **Uniformity**: a single `ggcpt` result class regardless of the underlying
-   detection engine, with `broom`-style methods for tidy data access.
-2. **Discoverability**: a central `cpt_detect()` dispatcher whose documentation
-   lists all supported methods and their capabilities.
-3. **Visualisation**: first-class `ggplot2` integration through `autoplot()`
-   and specialised geoms.
-4. **Comparison and evaluation**: built-in tools for running multiple detectors,
-   tabulating their results, computing accuracy metrics, and visualising
-   discrepancies.
-5. **Reproducibility**: a simulation framework that generates data with known
-   changepoints, enabling rigorous benchmarking.
+# The changepoint problem
 
-# The ggcpt Result Class
+Let $y_{1:n} = (y_1, \dots, y_n)$ be an ordered sequence. A segmentation
+with $m$ changepoints is an ordered set $\tau_{1:m}$ with
+$0 = \tau_0 < \tau_1 < \dots < \tau_m < \tau_{m+1} = n$, partitioning the
+data into $m + 1$ segments $y_{(\tau_{i-1}+1):\tau_i}$. Throughout the
+package a changepoint $\tau$ is reported as the **last index of the left
+segment** (the convention of the **changepoint** package); results from
+engines using the opposite convention are normalised on the way in, and the
+convention is recorded on every result object.
 
-The `ggcpt` class is an S3 class that stores the complete output of a
-changepoint detection in a structured format. Every detection function in
-ggchangepoint---whether called through `cpt_detect()` or directly---returns a
-`ggcpt` object, ensuring a uniform interface for downstream processing.
+## Penalised cost minimisation
 
-```{r}
-library(ggchangepoint)
-library(ggplot2)
-library(generics)
-theme_set(theme_light())
+The classical formulation chooses the segmentation minimising a penalised
+cost,
+$$
+\min_{m,\ \tau_{1:m}} \; \sum_{i=1}^{m+1}
+  \mathcal{C}\!\left(y_{(\tau_{i-1}+1):\tau_i}\right) \;+\; \beta m,
+$$
+where $\mathcal{C}$ is a segment cost (for a change in mean under Gaussian
+noise, the residual sum of squares; more generally twice the negative
+maximised log-likelihood) and $\beta > 0$ penalises each additional
+changepoint. Common choices of $\beta$ are AIC, BIC/SIC
+[@yao1988estimating], and modified BIC variants. Solving this optimisation
+exactly by dynamic programming costs $O(n^2)$; **PELT**
+[@killick2012pelt] prunes candidate changepoints to achieve linear expected
+cost while remaining exact, and **FPOP** [@maidstone2017optimal] achieves
+comparable speed by functional pruning.
 
+## Search-based and multiscale methods
+
+A complementary family locates changepoints by scanning test statistics.
+**Binary segmentation** [@scott1974cluster; @vostrikova1981detecting]
+recursively splits the series at the maximal CUSUM statistic; **wild binary
+segmentation** [@fryzlewicz2014wild] and its successor WBS2
+[@fryzlewicz2020detecting] draw random subintervals so that short segments
+are not masked; **narrowest-over-threshold** (NOT)
+[@baranowski2019narrowest] favours the narrowest interval on which the
+contrast exceeds a threshold, which generalises cleanly to changes in slope;
+**MOSUM** [@eichinger2018mosum] scans a moving-sum statistic at a fixed
+bandwidth; Isolate–Detect [@anastasiou2022idetect] isolates each
+changepoint in an expanding interval; and TGUH [@fryzlewicz2022tail]
+performs a tail-greedy bottom-up merge. **SMUCE** [@frick2014smuce]
+occupies a special place: it estimates the step function with the fewest
+jumps that passes a *simultaneous multiscale test* at level $\alpha$, and in
+doing so delivers confidence intervals for every changepoint location —
+uncertainty statements most competitors cannot make. HSMUCE
+[@pein2017hsmuce] extends this to heterogeneous noise.
+
+## Beyond the mean
+
+Changes need not be in the mean: the package's `change_in` argument spans
+variance, mean-and-variance, slope, and full distributional change.
+Nonparametric engines (energy statistics [@matteson2014nonparametric],
+nonparametric cost functions [@haynes2017computationally], kernel running
+statistics [@arlot2019kernel; @cabrieto2018kcprs], joint characteristic
+functions [@mcgonigle2023npmojo], self-normalisation [@zhao2022snseg])
+detect distributional change without likelihood assumptions; Bayesian
+engines [@barry1993bayesian; @adams2007bocpd; @zhao2019beast] return
+posteriors instead of point sets; high-dimensional engines
+[@wang2018inspect; @chen2022ocd; @grundy2020geomcp] aggregate evidence
+across coordinates; and regression engines [@bai1998estimating;
+@muggeo2003segmented] date breaks in model coefficients. The tour below
+visits each family with runnable code.
+
+# Design of the package
+
+## The `ggcpt` result contract
+
+Every detector returns an object of class `ggcpt` containing:
+
+- `changepoints`: a tibble with one row per changepoint. Columns `cp`
+  (location, "left" convention) and `cp_value` (the data value at `cp`) are
+  always present; engines add `ci_lower`/`ci_upper` (SMUCE, HSMUCE,
+  strucchange, segmented), `posterior_prob` (bcp, BEAST),
+  `detection_time` (CPM), `strength` (inspect), `declared_at` (ocd), or
+  `mapping` (geomcp) when they have more to say.
+- `segments`: a tibble of the induced segments (`seg_id`, `start`, `end`,
+  `n`, `param_estimate`).
+- `data`: the analysed series as a tibble (`index`, `value`), plus a
+  `fitted` column when the engine estimates a signal (SMUCE, DeCAFS, CPOP,
+  segmented, bcp, BEAST).
+- `method`, `change_in`, `penalty` (a `list(type, value)` descriptor),
+  `cp_convention` (always `"left"`), `runtime` (seconds, measured by
+  `cpt_detect()`), and `fit` (the untouched upstream object, for experts).
+
+Multivariate results additionally carry a `data_wide` tibble with one column
+per coordinate, which `autoplot()` renders as faceted small-multiples.
+
+## Tidy methods and the plotting layer
+
+The class implements the full complement of generics R users expect:
+
+```{r contract}
 set.seed(2022)
 x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
-
 res <- cpt_detect(x, method = "pelt", change_in = "mean")
-class(res)
+res
+tidy(res)
+glance(res)
+head(augment(res))
 ```
 
-A `ggcpt` object is a named list with the following components:
+`autoplot()` draws the series, the changepoint rules, and — on request —
+the fitted segment means (`show_segments`), the engine's fitted signal
+(`show_fit`), and changepoint-location confidence intervals (`show_ci`):
 
-- **`changepoints`**: a tibble of detected changepoint locations (`cp`) and
-  their corresponding data values (`cp_value`).
-- **`segments`**: a tibble describing the fitted segments (segment ID, start,
-  end, length, and the segment-level parameter estimate).
-- **`data`**: the original data series as a tidy tibble of `index` and `value`.
-- **metadata fields**: `method`, `change_in`, `penalty`, `fit` (the raw
-  upstream object), `call`, and `cp_convention`.
-
-```{r}
-print(res)
+```{r contract-plot}
+autoplot(res, show_segments = TRUE)
 ```
 
-The `cp_convention` component records whether changepoint indices follow the
-*left-segment* convention---the last observation before the change, used by
-the **changepoint** package---or the *right-segment* convention. All
-ggchangepoint methods report locations under the left-segment convention, with
-results from packages that use the alternative convention (e.g., **ecp**)
-normalised automatically so that methods can be compared on a common footing.
+Composable layers (`geom_changepoint()`, `geom_cpt_segment()`,
+`geom_cpt_ci()`, `stat_changepoint()`), a theme (`theme_ggcpt()`), and
+segment shading (`annotate_segments()`) let the same results be built into
+bespoke graphics; `summary()`, `as_tibble()`, `as.data.frame()`,
+`format()`, and `plot()` complete the S3 surface.
 
-```{r}
-res$cp_convention
+## Design principles
+
+The package follows seven principles, unchanged since 0.2.0:
+
+- **P1 — Wrap, don't reinvent**: bind to peer-reviewed CRAN engines.
+- **P2 — Tidy in, tidy out**: stable column names across all methods.
+- **P3 — ggplot2 all the way down**: every result renders and extends.
+- **P4 — One vocabulary**: `x`, `method`, `change_in`, `penalty`, `...`.
+- **P5 — Progressive disclosure**: beginners call `cpt_detect()` +
+  `autoplot()`; experts reach the upstream fit via `$fit`.
+- **P6 — No surprises**: the 0.1.0 functions still work unchanged.
+- **P7 — Document everything you ship**: every export is introduced in the
+  README and a vignette.
+
+Release 0.4.0 adds an eighth: **P8 — carry the uncertainty**. Where the
+method quantifies uncertainty, the `ggcpt` object records it and
+`autoplot()` can draw it.
+
+# The unified dispatcher
+
+`cpt_detect()` dispatches by method name; `cpt_methods()` reports every
+method the package knows, its engine, what it can detect, and whether the
+engine is installed:
+
+```{r methods-table}
+cpt_methods()
 ```
 
-## Broom-Style Methods
+Requests are validated against this capability matrix: asking a mean-only
+engine for a variance change is an error with the legal alternatives named —
+never a silent substitution. Univariate methods likewise refuse multi-column
+input rather than flattening it.
 
-Following the `broom` convention [@robinson2017broom] for standardised data
-access, `ggcpt` objects support `tidy()`, `glance()`, and `augment()`.
+Penalty semantics differ across engines, and `cpt_penalty()` documents and
+constructs the standard values:
 
-**`tidy()`** returns the changepoint locations as a tibble, one row per
-changepoint:
-
-```{r}
-generics::tidy(res)
+```{r penalty}
+cpt_penalty("BIC", n = 200)
+cpt_penalty("MBIC", n = 200)
+cpt_penalty("Hannan-Quinn", n = 200)
 ```
 
-**`glance()`** returns a one-row summary with the series length, number of
-detected changepoints, method, change type, and penalty information:
+Character penalties (`"MBIC"`, `"BIC"`, ...) pass through to the
+`changepoint`-family engines natively and are resolved to numeric values for
+functional-pruning engines (`fpop`, `cpop`, `decafs`); search-based engines
+(WBS, NOT, MOSUM, ...) use their own model-selection criteria and ignore the
+argument.
 
-```{r}
-generics::glance(res)
+# A tour of the method families
+
+Throughout, we use simulated series with known truth so results can be
+checked by eye. The simulator and canonical test signals
+(`signal_blocks()` — the Donoho–Johnstone blocks signal [@donoho1994ideal] —
+`signal_fms()`, `signal_teeth()`, `signal_stairs()`, `signal_mix()`) are
+described in the comparison vignette.
+
+```{r tour-data}
+set.seed(2026)
+x_mean  <- c(rnorm(100), rnorm(100, 4))                # mean shift at 100
+x_multi <- c(rnorm(100), rnorm(100, 3), rnorm(100, -1)) # shifts at 100, 200
+x_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200) # kink at 100
 ```
 
-**`augment()`** returns the original data augmented with segment identifiers,
-fitted segment-level parameter estimates, residuals, and a logical flag
-indicating changepoint positions:
+## Penalised and optimal partitioning
 
-```{r}
-generics::augment(res)
+PELT [@killick2012pelt], binary segmentation [@scott1974cluster], segment
+neighbourhoods, and AMOC come from the **changepoint** package; FPOP
+[@maidstone2017optimal] from **fpop**:
+
+```{r penalised}
+tidy(cpt_detect(x_multi, method = "pelt"))
+tidy(cpt_detect(x_multi, method = "binseg"))
 ```
 
-These methods make it straightforward to pipe ggchangepoint results into
-further analysis or custom visualisation.
-
-# Unified Detection Dispatcher
-
-The `cpt_detect()` function serves as the primary entry point for changepoint
-detection. It accepts a data series, a method name, a change type, and optional
-penalty parameters, and dispatches to the appropriate backend wrapper:
-
-```{r}
-cpt_detect(x, method = "pelt", change_in = "mean")
+```{r penalised-fpop, eval = has_fpop}
+tidy(cpt_detect(x_multi, method = "fpop"))
 ```
 
-```{r, eval = has_fpop}
-cpt_detect(x, method = "fpop", change_in = "mean")
+The Achilles heel of penalised methods is the choice of $\beta$. Rather
+than committing to one value, `cpt_crops()` computes *every* optimal
+segmentation as $\beta$ ranges over an interval — the CROPS algorithm of
+Haynes, Eckley and Fearnhead (2017), as implemented by **changepoint** —
+and turns penalty selection into a diagnostic:
+
+```{r crops}
+path <- cpt_crops(x_multi)
+path
+autoplot(path)
 ```
 
-The following detection methods are currently supported:
+The elbow at the true number of changepoints (here 2) is the standard
+reading. `autoplot(path, type = "segmentations")` shows the candidate
+models themselves, and `autoplot(path, type = "path")` the map from penalty
+to model size:
 
-| Method       | Package(s)      | Change types                    |
-|--------------|-----------------|---------------------------------|
-| `pelt`       | changepoint     | mean, var, meanvar              |
-| `binseg`     | changepoint     | mean, var, meanvar              |
-| `segneigh`   | changepoint     | mean, var, meanvar              |
-| `amoc`       | changepoint     | mean, var, meanvar              |
-| `fpop`       | fpop            | mean                            |
-| `wbs`        | wbs             | mean                            |
-| `wbs2`       | breakfast       | mean                            |
-| `not`        | not             | mean, var, meanvar              |
-| `mosum`      | mosum           | mean, var                       |
-| `idetect`    | IDetect         | mean                            |
-| `tguh`       | breakfast       | mean                            |
-| `np`         | changepoint.np  | distribution                    |
-| `ecp`        | ecp             | distribution (multivariate)     |
-
-## Penalty Specification
-
-For methods that support it (PELT, Binary Segmentation, Segmented Neighbourhood,
-AMOC, FPOP), the penalty parameter can be controlled via `cpt_penalty()`
-or the `penalty` argument. Penalties can be information criteria---`"BIC"`
-[@yao1988estimating], `"AIC"`---or user-specified numeric values:
-
-```{r}
-cpt_detect(x, method = "pelt", change_in = "mean", penalty = "BIC")
+```{r crops-segmentations}
+autoplot(path, type = "segmentations")
 ```
 
-```{r, eval = has_fpop}
-cpt_detect(x, method = "fpop", change_in = "mean", penalty = 2 * log(200))
+The modern **fastcpd** engine [@li2024fastcpd] brings the same penalised
+formulation to a wide family of models — mean, variance, mean-and-variance,
+and AR/ARMA/GARCH model changes — with sequential-gradient-descent speed:
+
+```{r fastcpd, eval = has_fastcpd}
+tidy(fastcpd_wrapper(x_multi, family = "mean"))
 ```
 
-# Visualisation
+## Multiscale and search methods
 
-ggchangepoint provides several layers of `ggplot2` integration, from
-one-function plotting to fully customisable geoms.
+The randomised and multiscale searchers are one wrapper call each:
 
-## The autoplot() Method
-
-The recommended way to visualise a `ggcpt` result is through `autoplot()`, which
-produces a `ggplot2` object showing the data series with changepoint locations
-marked by vertical lines:
-
-```{r}
-ggplot2::autoplot(res)
+```{r search-wbs, eval = has_wbs}
+tidy(wbs_wrapper(x_multi, seed = 1))
 ```
 
-Alternating shaded segments help delineate regimes:
-
-```{r}
-ggplot2::autoplot(res, show_segments = TRUE)
+```{r search-not, eval = has_not}
+tidy(not_wrapper(x_multi, seed = 1))
 ```
 
-## The Original Plotting Functions
-
-The `ggcptplot()` and `ggecpplot()` functions from version 0.1.0 are retained
-for backward compatibility:
-
-```{r}
-ggcptplot(x)
-ggecpplot(x, min_size = 10)
+```{r search-mosum, eval = has_mosum}
+tidy(mosum_wrapper(x_multi))
 ```
 
-## ggplot2 Geoms
-
-For users who wish to build custom visualisations, ggchangepoint provides four
-new geoms and stats.
-
-**`geom_changepoint()`** adds vertical lines at changepoint positions:
-
-```{r}
-ggplot(data.frame(t = seq_along(x), y = x), aes(t, y)) +
-  geom_line() +
-  geom_changepoint(data = generics::tidy(res), aes(xintercept = cp))
+```{r search-others, eval = has_idetect && has_breakfast}
+tidy(idetect_wrapper(x_multi, seed = 1))
+tidy(wbs2_wrapper(x_multi))
+tidy(tguh_wrapper(x_multi))
 ```
 
-**`geom_cpt_segment()`** draws the fitted segment-level means between
-changepoints:
+SMUCE [@frick2014smuce] is the family's inferential flagship: its level
+$\alpha$ bounds the probability of overestimating the number of
+changepoints, and every location comes with a confidence interval, stored in
+`ci_lower`/`ci_upper` and drawn by `show_ci = TRUE` as whiskers beneath the
+series (the step fit is drawn by `show_fit = TRUE`):
 
-```{r}
-seg <- res$segments
-ggplot(data.frame(t = seq_along(x), y = x), aes(t, y)) +
-  geom_line() +
-  geom_cpt_segment(data = seg,
-                   aes(x = start, xend = end, y = param_estimate,
-                       yend = param_estimate),
-                   colour = "steelblue", linewidth = 1.2)
+```{r smuce, eval = has_stepR}
+res_smuce <- smuce_wrapper(x_multi)
+tidy(res_smuce)
+autoplot(res_smuce, show_ci = TRUE, show_fit = TRUE)
 ```
 
-**`stat_changepoint()`** runs `cpt_detect()` inline within the ggplot pipeline:
+For heterogeneous noise, `smuce_wrapper(x, family = "hsmuce")` (or
+`cpt_detect(x, method = "hsmuce")`) runs HSMUCE [@pein2017hsmuce].
 
-```{r}
-ggplot(data.frame(t = seq_along(x), y = x), aes(t, y)) +
-  geom_line() +
-  stat_changepoint(method = "pelt", change_in = "mean")
+## Changes in slope
+
+A kink in the trend is not a jump in the level, and running a mean-change
+detector on a trending series over-detects notoriously. CPOP
+[@fearnhead2019cpop; @fearnhead2024cpop] solves the change-in-slope problem
+*exactly* under an $L_0$ penalty, returning a continuous piecewise-linear
+fit:
+
+```{r cpop, eval = has_cpop}
+res_cpop <- cpop_wrapper(x_slope)
+tidy(res_cpop)
+autoplot(res_cpop, show_fit = TRUE)
 ```
 
-**`geom_cpt_ci()`** adds confidence intervals around segment estimates.
+NOT with its linear contrast [@baranowski2019narrowest] offers a
+search-based alternative; the dispatcher routes
+`cpt_detect(x, method = "not", change_in = "slope")` to it automatically:
 
-# Method Comparison
-
-Robust changepoint analysis typically involves running multiple detectors on
-the same data and comparing their outputs. ggchangepoint provides dedicated
-comparison functions for this purpose.
-
-## Side-by-Side and Overlay Plots
-
-`ggcpt_compare()` runs several methods and arranges the results either as
-facetted panels (one per method) or as an overlay with colour-coded
-changepoint markers:
-
-```{r}
-x3 <- c(rnorm(100, 0, 1), rnorm(100, 10, 1), rnorm(100, 5, 2))
-cmp_methods <- if (has_fpop) c("pelt", "binseg", "fpop") else c("pelt", "binseg", "amoc")
-
-ggcpt_compare(x3, methods = cmp_methods, layout = "facet")
+```{r not-slope, eval = has_not}
+tidy(cpt_detect(x_slope, method = "not", change_in = "slope"))
 ```
 
-```{r}
-ggcpt_compare(x3, methods = cmp_methods, layout = "overlay")
+## Bayesian detection
+
+The Barry–Hartigan product partition model [@barry1993bayesian], via the
+**bcp** package [@erdman2007bcp], returns a *posterior probability of a
+changepoint at every location* along with posterior segment means. Locations
+clearing `prob_threshold` populate the changepoints tibble (with their
+probabilities), and `ggcpt_posterior()` draws the classic two-panel
+display:
+
+```{r bcp, eval = has_bcp}
+res_bcp <- bcp_wrapper(x_mean, seed = 2026)
+tidy(res_bcp)
+ggcpt_posterior(res_bcp)
 ```
 
-For a numeric summary, `ggcpt_compare_table()` returns a tidy tibble of all
-detected changepoints across methods:
+Bayesian *online* changepoint detection [@adams2007bocpd] instead tracks
+the posterior over the current **run length** — the time since the last
+change — updating recursively as data arrive. Its signature graphic is the
+run-length heatmap, where a change appears as the posterior mass collapsing
+to zero:
 
-```{r}
-ggcpt_compare_table(x3, methods = cmp_methods)
+```{r bocpd, eval = has_ocp}
+res_bocpd <- bocpd_wrapper(x_mean)
+tidy(res_bocpd)
+ggcpt_runlength(res_bocpd)
 ```
 
-## Parallel Execution
+A third Bayesian engine, BEAST [@zhao2019beast] via **Rbeast**, averages
+over models rather than conditioning on one, and is wired as
+`cpt_detect(x, method = "beast")` (or `beast_wrapper()`); it too reports
+`posterior_prob` and renders with `ggcpt_posterior()`.
 
-When many methods are being compared, `ggcpt_compare()` respects the
-`future::plan()` parallelisation strategy if the `future` and `future.apply`
-packages are available. Detection is fanned out over the requested methods;
-supplying a `seed` makes the parallel run reproducible via parallel-safe
-L'Ecuyer-CMRG streams:
+## Nonparametric and sequential detection
 
-```{r eval = FALSE}
-future::plan(future::multisession, workers = 2)
-ggcpt_compare(x, methods = c("pelt", "binseg", "fpop", "wbs", "not"),
-              seed = 1)
+When no parametric form is trustworthy, the nonparametric cost approach of
+**changepoint.np** [@haynes2017computationally] and the energy-statistics
+E-Divisive of **ecp** [@matteson2014nonparametric; @james2014ecp] detect
+general distributional change:
+
+```{r nonparam}
+set.seed(2022)
+tidy(cpt_detect(x_mean, method = "np"))
+tidy(cpt_detect(x_mean, method = "ecp", seed = 1))
 ```
 
-# Accuracy Evaluation
+The **cpm** package [@ross2015cpm] runs sequential two-sample tests
+(Mann–Whitney, Mood, Lepage, Kolmogorov–Smirnov, ...) as an online monitor;
+its results distinguish where a change *happened* (`cp`) from when it was
+*detected* (`detection_time`), the inherent lag of sequential monitoring:
 
-When ground-truth changepoint locations are known---either from synthetic data
-or from a labelled data set---ggchangepoint provides a comprehensive suite of
-accuracy metrics through `cpt_metrics()`:
-
-- **Precision and recall** based on a margin of tolerance (default 5).
-- **F1 score**, the harmonic mean of precision and recall.
-- **Covering metric**, the length-weighted average Jaccard overlap between the
-  true and predicted segmentations [@van2020evaluation].
-- **Hausdorff distance** between the sets of predicted and true changepoint
-  locations.
-- **Adjusted Rand index**, measuring agreement between the induced segment
-  labellings [@hariz2007classification].
-- **Annotation error**, the absolute difference between the predicted and true
-  number of changepoints [@van2020evaluation].
-- **Mean absolute error (MAE) and root mean squared error (RMSE)** of
-  changepoint locations.
-
-```{r}
-cpt_metrics(pred = c(100, 200), truth = c(100, 200), n = 300)
+```{r cpm, eval = has_cpm}
+tidy(cpm_wrapper(x_mean, cpm_type = "Mann-Whitney"))
 ```
 
-With a tolerance margin, detections within the margin are considered correct:
+Three further nonparametric engines are wired and worth knowing: kernel
+change-point analysis on running statistics (`kcp_wrapper()`, engine
+**kcpRS**), which detects changes in running means, variances,
+autocorrelations, or correlations [@arlot2019kernel; @cabrieto2018kcprs];
+NP-MOJO (`npmojo_wrapper()`, engine **CptNonPar**), which detects changes in
+the marginal or lagged joint distribution while remaining valid under serial
+dependence [@mcgonigle2023npmojo]; and self-normalised segmentation
+(`sn_wrapper()`, engine **SNSeg**), which avoids long-run variance
+estimation altogether and tests changes in means, variances,
+autocorrelations, or bivariate correlations [@zhao2022snseg].
 
-```{r}
-cpt_metrics(pred = c(105, 205), truth = c(100, 200), n = 300, margin = 10)
+## Robustness to drift, autocorrelation, and model ambiguity
+
+The most common failure of naive mean-change detection in practice is not a
+subtle statistical issue: it is running a Gaussian-mean detector on data
+whose baseline drifts or whose noise is autocorrelated, and reporting a
+changepoint wherever the model is wrong. DeCAFS [@romano2022decafs] models
+exactly this regime — abrupt changes superimposed on random-walk drift and
+AR(1) noise — and separates the two:
+
+```{r decafs, eval = has_decafs}
+res_decafs <- decafs_wrapper(x_mean)
+tidy(res_decafs)
+autoplot(res_decafs, show_fit = TRUE)
 ```
 
-For scenarios with multiple ground-truth annotations, `cpt_metrics_annotated()`
-computes metrics against each annotator and averages:
+EnvCpt [@beaulieu2018envcpt] attacks the same confusion by model
+selection: it fits up to twelve competing descriptions — constant mean or
+trend, with or without changepoints, with white or AR(1)/AR(2) noise — and
+reports changepoints only if a changepoint model wins on information
+criteria:
 
-```{r}
-cpt_metrics_annotated(pred = c(100, 200),
-                      annotations = list(c(100, 200), c(105, 198)),
-                      n = 300)
+```{r envcpt, eval = has_envcpt}
+res_env <- envcpt_wrapper(x_mean, models = c("mean", "meancpt", "trendcpt"))
+glance(res_env)
 ```
 
-The `ggcpt_eval()` function provides a visual evaluation plot, showing true
-and predicted changepoints colour-coded by match status:
+The winning model's name is recorded in the penalty descriptor
+(`penalty_type` above), so "no changepoints, it's just autocorrelation" is a
+first-class answer.
 
-```{r}
-ggcpt_eval(pred = c(100, 200), truth = c(100, 200), data_vec = x)
+## Multivariate and high-dimensional detection
+
+Multivariate methods accept a matrix (rows are time points) directly. The
+energy-statistics E-Divisive of **ecp** was built for this
+[@matteson2014nonparametric]; for high-dimensional data whose change is
+confined to a sparse subset of coordinates, `inspect` [@wang2018inspect]
+finds an optimal sparse projection of the CUSUM matrix and reports the
+projected evidence (`strength`). Multivariate results render as faceted
+small-multiples with shared changepoint rules:
+
+```{r inspect, eval = has_inspect}
+set.seed(2026)
+X <- cbind(a = c(rnorm(80), rnorm(80, 3)),
+           b = c(rnorm(80), rnorm(80, -2)),
+           c = rnorm(160))
+res_hd <- inspect_wrapper(X)
+tidy(res_hd)
+autoplot(res_hd)
 ```
 
-# Data Simulation
+Two further engines complete the family: `geomcp_wrapper()` (engine
+**changepoint.geo**) maps each observation to its distance from and angle to
+a reference point and segments the two mapped series, catching magnitude and
+orientation changes respectively [@grundy2020geomcp]; and `ocd_wrapper()`
+(engine **ocd**) monitors a high-dimensional stream *online* with
+worst-case detection-delay guarantees [@chen2022ocd], reporting both the
+declaration time and (by construction of the wrapper) handling baseline
+estimation and post-declaration restarts.
 
-Reproducible synthetic data is essential for benchmarking detection algorithms.
-ggchangepoint provides `cpt_simulate()` (and its shorthand `rcpt()`) for
-generating time series with known changepoint locations across a range of
-scenarios.
+## Structural breaks in regression
 
-## Flexible Simulation
+Econometric practice dates breaks in regression coefficients. The
+Bai–Perron estimator [@bai1998estimating; @bai2003computation], via
+**strucchange** [@zeileis2002strucchange], returns break dates *with
+confidence intervals*; called on a bare series it dates mean shifts, and
+called with a formula it dates breaks in arbitrary regressions:
 
-The simulator supports changes in mean, variance, both, or slope, with four
-noise models---Gaussian, Student-t, AR(1), and random walk:
-
-```{r}
-seg_params <- list(
-  list(mean = 0, sd = 1),
-  list(mean = 10, sd = 1),
-  list(mean = 5, sd = 0.5),
-  list(mean = -2, sd = 1)
-)
-dat <- cpt_simulate(200, changepoints = c(50, 100, 150),
-                    change_in = "meanvar",
-                    params = seg_params)
+```{r strucchange, eval = has_strucchange}
+res_bp <- strucchange_wrapper(x_mean)
+tidy(res_bp)
+autoplot(res_bp, show_ci = TRUE)
 ```
 
-The true changepoint locations are stored as an attribute:
+Where the regression function is continuous — a kink rather than a jump —
+**segmented** [@muggeo2003segmented; @muggeo2008segmented] estimates
+broken-line relationships with standard errors for the breakpoints:
 
-```{r}
-attr(dat, "true_changepoints")
+```{r segmented, eval = has_segmented}
+res_seg <- segmented_wrapper(x_slope, npsi = 1, seed = 1)
+tidy(res_seg)
+autoplot(res_seg, show_fit = TRUE, show_ci = TRUE)
 ```
 
-## Canonical Test Signals
+# Beyond detection
 
-The package also includes five canonical test signals adapted from the wavelet
-and changepoint literature [@donoho1994ideal]:
+## Batch detection over many series
 
-```{r}
-blocks  <- signal_blocks(512)
-fms     <- signal_fms(512)
-mix     <- signal_mix(512)
-teeth   <- signal_teeth(512)
-stairs  <- signal_stairs(512)
+Applied work rarely stops at one series. `cpt_batch()` runs a detector over
+every column of a matrix or data frame (or every element of a list) and
+returns a tidy tibble of results, with `future`-based parallelism available
+via `future::plan()`:
+
+```{r batch}
+set.seed(2026)
+panel <- cbind(shifted = x_mean, quiet = rnorm(200))
+batch <- cpt_batch(panel, method = "pelt")
+batch
+tidy(batch)
+autoplot(batch)
 ```
 
-Each signal has known changepoint locations and is suitable for benchmarking
-detection accuracy across different signal structures.
+## Stability diagnostics
 
-# Case Study: Comparative Evaluation on a Block Signal
+Most engines report a point set with no measure of its fragility.
+`cpt_stability()` resamples residuals within the fitted segments, re-runs
+the detector on each replicate, and reports how often each location is
+re-detected — a cheap, model-agnostic confidence signal available for
+*every* engine, including the many with no native intervals:
 
-We illustrate a complete workflow---simulation, detection, comparison, and
-evaluation---using the Blocks test signal with added Gaussian noise:
-
-```{r}
-set.seed(1)
-sig <- signal_blocks(512)
-truth <- attr(sig, "true_changepoints")
-
-x_noisy <- sig$value + rnorm(512, 0, 0.5)
+```{r stability}
+st <- cpt_stability(x_mean, method = "pelt", B = 50, seed = 1)
+st
+autoplot(st)
 ```
 
-Detect changepoints with every method available in this build, score each
-against the known truth with a tolerance margin of 5, and collect the results
-into a single table:
+## Evaluation, interactivity, and citations
 
-```{r}
-methods_cs <- c("pelt", "binseg", "amoc")
-if (has_fpop) methods_cs <- c(methods_cs, "fpop")
-if (has_wbs)  methods_cs <- c(methods_cs, "wbs")
-if (has_not)  methods_cs <- c(methods_cs, "not")
+When ground truth is known, `cpt_metrics()` computes precision, recall and
+F1 under one-to-one matching, the covering metric, Hausdorff distance, and
+adjusted Rand index, following the conventions of the modern benchmarking
+literature [@van2020evaluation]; `ggcpt_eval()` draws the agreement, and
+`ggcpt_compare()` juxtaposes methods. These are the subject of the
+companion vignette `vignette("comparison", package = "ggchangepoint")`.
 
-metrics <- do.call(rbind, lapply(methods_cs, function(m) {
-  res  <- cpt_detect(x_noisy, method = m, change_in = "mean")
-  pred <- generics::tidy(res)$cp
-  data.frame(method = m, cpt_metrics(pred, truth, n = 512, margin = 5))
-}))
-metrics[, c("method", "n_pred", "precision", "recall", "f1", "covering")]
+Any result renders as an interactive HTML widget with
+`ggcpt_interactive(res)` (engine **plotly**, in `Suggests`); the static
+`autoplot()` path is untouched.
+
+Finally, because every method here is someone's published work, `cpt_cite()`
+returns the reference(s) behind a result, so analyses can cite the right
+paper without leaving R:
+
+```{r cite}
+cpt_cite("pelt")
 ```
 
-Visual evaluation of the PELT result, with the $\pm 5$ tolerance windows shaded
-and predictions coloured by match status:
+# Discussion
 
-```{r}
-pred_pelt <- generics::tidy(cpt_detect(x_noisy, method = "pelt"))$cp
-ggcpt_eval(pred = pred_pelt, truth = truth, data_vec = x_noisy)
-```
+ggchangepoint does not contribute a new detection algorithm; it contributes
+a *surface*. The value of a common contract compounds with the number of
+methods behind it: the same `tidy()` pipeline, the same plot, and the same
+evaluation code now span penalised, multiscale, nonparametric, Bayesian,
+high-dimensional, and regression-based detection — 31 methods in this
+release. Methods whose engines are currently absent from CRAN
+(graph-constrained gfpop [@hocking2020gfpop], robust segmentation
+[@fearnhead2019changepoint], FOCuS, sparsified binary segmentation) are
+tracked as *planned* in `cpt_methods()` and will slot into the same wrapper
+pattern when their engines return.
 
-# Summary and Future Work
+Two practical notes. First, wrapped engines are run with sensible defaults,
+but each wrapper forwards `...` to its engine, and the raw fit is always in
+`$fit` — the package is a front door, not a cage. Second, detection quality
+is the engines'; the package's own additions (metrics, stability, penalty
+paths) are deliberately engine-agnostic, so conclusions drawn with them
+transfer.
 
-ggchangepoint provides a unified, tidy interface to the diverse changepoint
-detection ecosystem in R. By standardising on a single result class, adopting
-`broom` conventions, and integrating natively with `ggplot2`, the package
-reduces the friction of exploratory changepoint analysis and facilitates
-reproducible method comparison.
+# Acknowledgements
 
-Planned directions for future development include:
-
-1. **Additional wrapper coverage**: integration of further detection packages
-   such as **strucchange**, **segmented**, and **bcp**.
-2. **Online detection**: support for streaming and sequential changepoint
-   detection.
-3. **Model selection helpers**: visual tools for penalty selection, including
-   elbow plots and cross-validated loss curves.
-4. **Multivariate and high-dimensional methods**: improved handling of
-   multivariate changepoint detection, leveraging ecp's existing
-   multi-dimensional support.
-5. **Interactive visualisation**: integration with interactive plotting
-   frameworks for exploratory data analysis.
-
-Contributions and bug reports are welcome at the package's GitHub repository
-(https://github.com/PursuitOfDataScience/ggchangepoint).
+This package stands on the shoulders of the authors of the wrapped engines
+and of the R [@rcore], ggplot2 [@wickham2016ggplot2], and broom
+[@robinson2017broom] projects.
 
 # References

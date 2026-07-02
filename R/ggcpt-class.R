@@ -78,10 +78,7 @@ print.ggcpt <- function(x, ...) {
   cat("  Series length:  ", nrow(x$data), "\n")
   if (nrow(x$changepoints) > 0) {
     cat("\nChangepoints:\n")
-    print(x$changepoints, n = min(nrow(x$changepoints), 10))
-    if (nrow(x$changepoints) > 10) {
-      cat("  ... ", nrow(x$changepoints) - 10, " more changepoint(s)\n")
-    }
+    print(x$changepoints, n = 10)
   } else {
     cat("\nNo changepoints detected.\n")
   }

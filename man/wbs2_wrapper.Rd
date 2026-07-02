@@ -15,5 +15,6 @@ wbs2_wrapper(x, ...)
 A \code{ggcpt} object.
 }
 \description{
-Wraps the \code{breakfast} package. Requires the \code{breakfast} package.
+Wraps the \code{breakfast} package's WBS2 solution path with
+steepest-drop-to-low-levels (SDLL) model selection.
 }

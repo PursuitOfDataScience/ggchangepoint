@@ -21,7 +21,8 @@
 
 \item{...}{Additional arguments passed to methods.}
 
-\item{.name_repair}{Passed to \code{\link[tibble]{as_tibble}}.}
+\item{.name_repair}{Ignored (the changepoints tibble already has valid,
+unique names); present for signature compatibility with the generic.}
 
 \item{row.names, optional}{Passed to \code{\link[base]{as.data.frame}}.}
 }

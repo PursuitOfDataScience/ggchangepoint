@@ -11,8 +11,8 @@ wbs_wrapper(x, n_intervals = 5000, threshold = NULL, seed = NULL, ...)
 
 \item{n_intervals}{Number of random intervals. Defaults to \code{5000}.}
 
-\item{threshold}{Manual threshold for detection. If \code{NULL}, uses
-the strengthened Schwarz Information Criterion (sSIC).}
+\item{threshold}{Manual threshold for detection. If \code{NULL}, model
+selection uses the strengthened Schwarz Information Criterion (sSIC).}
 
 \item{seed}{Optional seed for reproducibility.}
 

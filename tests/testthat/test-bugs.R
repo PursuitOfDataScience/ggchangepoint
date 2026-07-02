@@ -37,9 +37,9 @@ test_that("B3: cpt_detect validates method x change_in combinations", {
   set.seed(2022)
   x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
 
-  # slope should error with clear message
+  # slope on a mean-only engine should error with a clear message
   expect_error(cpt_detect(x, method = "pelt", change_in = "slope"),
-               "not directly supported")
+               "not supported")
 
   # fpop + var should error
   expect_error(cpt_detect(x, method = "fpop", change_in = "var"),

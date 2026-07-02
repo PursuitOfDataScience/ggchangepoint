@@ -39,7 +39,9 @@ tidy.ggcpt <- function(x, ...) {
 #' @param ... Additional arguments (ignored).
 #' @return A one-row tibble with columns: \code{n}, \code{n_changepoints},
 #'   \code{method}, \code{change_in}, \code{penalty_type}, \code{penalty_value},
-#'   \code{cp_convention}, \code{total_cost} (if available), \code{runtime} (NA).
+#'   \code{cp_convention}, \code{total_cost} (\code{NA} when the engine does
+#'   not expose a cost), \code{runtime} (elapsed seconds when measured by
+#'   \code{cpt_detect()}, otherwise \code{NA}).
 #' @export
 glance.ggcpt <- function(x, ...) {
   total_cost <- NA_real_
@@ -48,12 +50,25 @@ glance.ggcpt <- function(x, ...) {
       total_cost <- tryCatch(-as.numeric(logLik(x$fit)), error = function(e) NA_real_)
     } else if (inherits(x$fit, "cptrange")) {
       total_cost <- tryCatch(x$fit$cost, error = function(e) NA_real_)
-    } else if (!is.null(x$fit$cost) || !is.null(x$fit$loss)) {
-      total_cost <- x$fit$cost %||% x$fit$loss %||% NA_real_
-    } else if (!is.null(x$fit$value)) {
-      total_cost <- x$fit$value
+    } else if (is.list(x$fit)) {
+      # Exact [[ ]] subsetting: $ would partial-match unrelated elements
+      # (e.g. DeCAFS's costFunction).
+      cand <- x$fit[["cost"]] %||% x$fit[["loss"]] %||% x$fit[["value"]]
+      if (!is.null(cand) && is.numeric(cand)) total_cost <- cand
+    }
+    # Some engines (e.g. fpop) expose a per-position cost vector; glance is
+    # one row per model, so keep the terminal (total) cost only.
+    total_cost <- suppressWarnings(as.numeric(total_cost))
+    if (length(total_cost) == 0) {
+      total_cost <- NA_real_
+    } else if (length(total_cost) > 1) {
+      total_cost <- total_cost[length(total_cost)]
     }
   }
+
+  penalty_value <- if (is.list(x$penalty)) x$penalty$value else NA_real_
+  penalty_value <- suppressWarnings(as.numeric(penalty_value %||% NA_real_))
+  if (length(penalty_value) != 1) penalty_value <- NA_real_
 
   runtime <- x$runtime %||% NA_real_
 
@@ -63,7 +78,7 @@ glance.ggcpt <- function(x, ...) {
     method = x$method,
     change_in = x$change_in,
     penalty_type = if (is.list(x$penalty)) x$penalty$type else NA_character_,
-    penalty_value = if (is.list(x$penalty)) x$penalty$value else NA_real_,
+    penalty_value = penalty_value,
     cp_convention = x$cp_convention %||% "left",
     total_cost = total_cost,
     runtime = runtime
@@ -173,7 +188,8 @@ print.summary.ggcpt <- function(x, ...) {
 #'
 #' @param x A \code{ggcpt} object.
 #' @param row.names,optional Passed to \code{\link[base]{as.data.frame}}.
-#' @param .name_repair Passed to \code{\link[tibble]{as_tibble}}.
+#' @param .name_repair Ignored (the changepoints tibble already has valid,
+#'   unique names); present for signature compatibility with the generic.
 #' @param ... Additional arguments passed to methods.
 #' @return \code{as_tibble()} and \code{as.data.frame()} return the changepoints
 #'   table; \code{format()} returns a length-one character string; \code{plot()}

@@ -15,5 +15,6 @@ tguh_wrapper(x, ...)
 A \code{ggcpt} object.
 }
 \description{
-Wraps the \code{breakfast} package for Tail-Greedy Unbalanced-Haar detection.
+Wraps the \code{breakfast} package for Tail-Greedy Unbalanced-Haar
+detection, with information-criterion model selection.
 }

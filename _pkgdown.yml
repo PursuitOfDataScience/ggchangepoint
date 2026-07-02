@@ -40,14 +40,15 @@ reference:
   - cpt_detect
   - cpt_methods
   - cpt_penalty
+  - cpt_cite
   - new_ggcpt
   - is_ggcpt
   - print.ggcpt
-- title: Existing wrappers
+- title: Original wrappers
   contents:
   - cpt_wrapper
   - ecp_wrapper
-- title: New wrappers
+- title: Search and pruning wrappers
   contents:
   - fpop_wrapper
   - wbs_wrapper
@@ -56,6 +57,36 @@ reference:
   - mosum_wrapper
   - idetect_wrapper
   - tguh_wrapper
+- title: Inference and slope wrappers
+  contents:
+  - smuce_wrapper
+  - cpop_wrapper
+  - cpt_crops
+- title: Bayesian wrappers
+  contents:
+  - bcp_wrapper
+  - bocpd_wrapper
+  - beast_wrapper
+- title: Nonparametric and sequential wrappers
+  contents:
+  - cpm_wrapper
+  - kcp_wrapper
+  - npmojo_wrapper
+  - sn_wrapper
+- title: Robust and model-selection wrappers
+  contents:
+  - decafs_wrapper
+  - envcpt_wrapper
+  - fastcpd_wrapper
+- title: Multivariate and high-dimensional wrappers
+  contents:
+  - inspect_wrapper
+  - ocd_wrapper
+  - geomcp_wrapper
+- title: Regression-break wrappers
+  contents:
+  - strucchange_wrapper
+  - segmented_wrapper
 - title: broom methods
   contents:
   - tidy.ggcpt
@@ -65,7 +96,6 @@ reference:
 - title: Additional S3 methods
   contents:
   - ggcpt_methods
-  - print.ggcpt
 - title: Theming and helpers
   contents:
   - theme_ggcpt
@@ -79,10 +109,15 @@ reference:
   - geom_cpt_segment
   - geom_cpt_ci
   - stat_changepoint
-- title: Method comparison
+  - ggcpt_posterior
+  - ggcpt_runlength
+  - ggcpt_interactive
+- title: Method comparison, batch, and stability
   contents:
   - ggcpt_compare
   - ggcpt_compare_table
+  - cpt_batch
+  - cpt_stability
 - title: Evaluation
   contents:
   - cpt_metrics
@@ -97,3 +132,6 @@ reference:
   - signal_mix
   - signal_teeth
   - signal_stairs
+- title: Re-exports
+  contents:
+  - reexports

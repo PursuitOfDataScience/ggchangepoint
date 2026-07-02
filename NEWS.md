@@ -1,3 +1,118 @@
+# ggchangepoint 0.4.0
+
+## The 0.4.0 engine wave
+
+`cpt_detect()` grows from 13 to 31 wired methods. Eighteen new wrappers, all
+of whose engines live on CRAN and enter `Suggests` behind
+`requireNamespace()` guards:
+
+- `smuce_wrapper()` — SMUCE/HSMUCE multiscale inference (`stepR`), the first
+  engines to populate `ci_lower`/`ci_upper` confidence-interval columns.
+- `cpop_wrapper()` — exact change-in-slope detection (`cpop`);
+  `cpt_detect(change_in = "slope")` now routes here or to NOT's linear
+  contrast instead of erroring.
+- `bcp_wrapper()`, `bocpd_wrapper()`, `beast_wrapper()` — the Bayesian
+  pillar (`bcp`, `ocp`, `Rbeast`), with `posterior_prob` columns and the
+  posterior mean carried as a fitted signal.
+- `cpm_wrapper()` — sequential distribution-free detection (`cpm`), with a
+  `detection_time` column.
+- `kcp_wrapper()` — kernel change point analysis on running statistics
+  (`kcpRS`; mean, variance, autocorrelation, correlation).
+- `npmojo_wrapper()` — nonparametric MOSUM under serial dependence
+  (`CptNonPar`).
+- `decafs_wrapper()` — abrupt changes amid drift and AR(1) noise
+  (`DeCAFS`).
+- `sn_wrapper()` — self-normalised segmentation (`SNSeg`; mean, variance,
+  acf, bivariate correlation).
+- `inspect_wrapper()`, `ocd_wrapper()`, `geomcp_wrapper()` —
+  high-dimensional and multivariate detection (`InspectChangepoint`,
+  `ocd`, `changepoint.geo`).
+- `strucchange_wrapper()` — Bai-Perron structural breaks with break-date
+  confidence intervals (`strucchange`); accepts a bare series or a
+  regression formula.
+- `segmented_wrapper()` — broken-line regression with kink confidence
+  intervals (`segmented`).
+- `envcpt_wrapper()` — changepoints vs. trends vs. autocorrelation model
+  selection (`EnvCpt`).
+- `fastcpd_wrapper()` — the modern fastcpd engine (`fastcpd`), covering
+  mean/variance/meanvariance plus AR/ARMA/GARCH model changepoints.
+
+## New tools
+
+- New `cpt_crops()` computes the full CROPS penalty path and returns a
+  `ggcpt_path` object with `print()`, `tidy()`, and
+  `autoplot(type = c("elbow", "path", "segmentations"))`.
+- New `cpt_batch()` runs one detector over many series (matrix, data frame,
+  or list) with optional `future` parallelism; returns a `ggcpt_batch`
+  tibble with `tidy()` and a faceted `autoplot()`.
+- New `cpt_stability()` bootstrap stability diagnostic: segment-preserving
+  resampling with a detection-frequency profile and `autoplot()`.
+- New Bayesian displays: `ggcpt_posterior()` (posterior mean + per-location
+  changepoint probability) and `ggcpt_runlength()` (the BOCPD run-length
+  posterior heatmap).
+- New `ggcpt_interactive()` renders any result as a `plotly` widget.
+- New `cpt_cite()` returns the verified methodological reference(s) behind
+  a result or method name.
+
+## Visualisation
+
+- `autoplot.ggcpt()` gains `show_ci` (draws changepoint-location confidence
+  intervals from `ci_lower`/`ci_upper`) and `show_fit` (overlays the
+  engine's fitted signal), and renders multivariate results as faceted
+  small-multiples.
+- `geom_cpt_ci()` migrated off the deprecated `ggplot2::geom_errorbarh()`
+  to `geom_errorbar(orientation = "y")`.
+- Unknown styling arguments passed through `autoplot()`/`ggcptplot()` now
+  warn instead of being silently discarded, and plotting an empty `ggcpt`
+  errors cleanly instead of producing infinite axis limits.
+
+## Bug fixes (audit items C1-C20; regression-tested)
+
+- `ecp_wrapper()` no longer fabricates changepoints on no-change data (the
+  positional boundary strip reversed `c(1, n+1)`), and no longer drops
+  genuine changepoints in `e.agglo`'s wrap-around case (C1).
+- `wbs_wrapper()` now returns the sSIC model selection it documents; a
+  manual threshold is recorded as the penalty actually used (C2).
+- Univariate wrappers and `cpt_detect()` now error on multi-column input
+  instead of silently flattening it column-major (C3).
+- `idetect_wrapper()` returns an empty result on no-change data instead of
+  erroring (C4).
+- `tguh_wrapper()` pins breakfast's model selection to "ic": no more
+  spurious changepoint on constant data, no crash on short series, and the
+  scalar-0 "no changepoints" sentinel is handled (C5).
+- `glance()` is always one row: fpop's per-position cost vector no longer
+  explodes the tibble, and `$` partial matching no longer grabs unrelated
+  fit elements (C6).
+- `mosum_wrapper()` records the numeric threshold as `penalty$value` (was
+  the string "critical.value") and implements its documented `multiscale`
+  argument via `mosum::multiscale.localPrune()` (C7, C8).
+- `cpt_detect()` forwards `change_in` to NOT via contrast mapping and the
+  result reports what actually ran (C9); `penalty = "None"` resolves to 0
+  for numeric-penalty engines (C10).
+- `cpt_penalty("sSIC")` implements the strengthened SIC `k * log(n)^alpha`
+  (was `0.5 * k * log(n)`, weaker than BIC) (C11).
+- Metrics agree with the van den Burg-Williams conventions: an exactly
+  correct empty prediction scores precision/recall/F1 = 1 (C12); empty
+  predictions score the trivial-partition covering and chance-level ARI 0
+  (C13); out-of-range indices are dropped with a warning instead of
+  crashing (C14); `ggcpt_eval()` uses the same one-to-one matching as
+  `cpt_metrics()` and its "Miss" legend entry renders (C15).
+- `ggcpt_compare()` keeps a facet panel for every method, including those
+  that found nothing, and no longer errors when no method finds anything
+  (C16).
+- `stat_changepoint()` sorts by the `x` aesthetic before detecting (results
+  were previously row-order dependent) and declares `dropped_aes` so
+  building the plot is warning-free (C17).
+- `signal_blocks()` generates the true Donoho-Johnstone blocks signal
+  (cumulative jumps, not absolute levels) (C18); simulated t-noise is
+  rescaled so its standard deviation matches `sd` (C19); all signal
+  generators validate their minimum lengths (C20).
+- `cpt_wrapper(cp_method = "SegNeigh")` falls back to the SIC penalty the
+  engine supports instead of always erroring under the default; `np`
+  results report `change_in = "distribution"`; `meanvar` results stay
+  `"meanvar"` in the user's vocabulary; `ggecpplot()` handles multivariate
+  input without crashing.
+
 # ggchangepoint 0.3.0
 
 ## Documentation and coverage

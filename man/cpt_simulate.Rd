@@ -37,9 +37,11 @@ per segment.}
 \item{noise}{Noise type: \code{"gauss"} (Gaussian), \code{"t"} (Student-t),
 \code{"ar1"} (AR(1)), or \code{"rw"} (random walk).}
 
-\item{sd}{Noise standard deviation (for Gaussian and t). Defaults to 1.}
+\item{sd}{Noise standard deviation (for Gaussian and t; t-noise is
+rescaled so its standard deviation is exactly \code{sd}). Defaults to 1.}
 
-\item{df}{Degrees of freedom for t-noise. Defaults to 3.}
+\item{df}{Degrees of freedom for t-noise; must exceed 2 so the variance
+exists. Defaults to 3.}
 
 \item{rho}{AR(1) autocorrelation parameter. Defaults to 0.}
 

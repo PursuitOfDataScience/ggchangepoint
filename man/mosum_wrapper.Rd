@@ -9,17 +9,24 @@ mosum_wrapper(x, G = NULL, multiscale = FALSE, seed = NULL, ...)
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{G}{Bandwidth. If \code{NULL}, automatically selected.}
+\item{G}{Bandwidth. If \code{NULL}, automatically selected
+(\code{min(n/10, 100)} for the single-bandwidth procedure; the engine's
+default bandwidth grid for the multiscale procedure).}
 
-\item{multiscale}{Logical. Use multiscale MOSUM? Defaults to \code{FALSE}.}
+\item{multiscale}{Logical. Use the multiscale MOSUM procedure
+(\code{mosum::multiscale.localPrune()}) instead of a single bandwidth?
+Defaults to \code{FALSE}.}
 
 \item{seed}{Optional seed for reproducibility.}
 
-\item{...}{Additional arguments passed to \code{mosum::mosum()}.}
+\item{...}{Additional arguments passed to \code{mosum::mosum()} or
+\code{mosum::multiscale.localPrune()}.}
 }
 \value{
 A \code{ggcpt} object.
 }
 \description{
-Wraps the \code{mosum} package for moving-sum-based changepoint detection.
+Wraps the \code{mosum} package for moving-sum-based changepoint
+detection, either at a single bandwidth or (with
+\code{multiscale = TRUE}) across a bandwidth grid with localised pruning.
 }

@@ -14,7 +14,9 @@
 \value{
 A one-row tibble with columns: \code{n}, \code{n_changepoints},
   \code{method}, \code{change_in}, \code{penalty_type}, \code{penalty_value},
-  \code{cp_convention}, \code{total_cost} (if available), \code{runtime} (NA).
+  \code{cp_convention}, \code{total_cost} (\code{NA} when the engine does
+  not expose a cost), \code{runtime} (elapsed seconds when measured by
+  \code{cpt_detect()}, otherwise \code{NA}).
 }
 \description{
 Returns a one-row summary of a changepoint detection result.

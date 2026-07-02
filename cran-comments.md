@@ -1,29 +1,35 @@
 ## Submission
 
-This is a minor-version update (0.2.0 -> 0.3.0) of an existing CRAN package.
+This is a minor-version update (0.3.0 -> 0.4.0) of an existing CRAN package.
 
-It closes the documentation-coverage gap from the previous cycle (every export is
-now introduced in the README and a feature-tour vignette, and the package-level
-help describes the current engine list), makes the `cpt_detect()` dispatcher
-honest (it advertises only wired methods and adds a `cpt_methods()` introspection
-helper), completes the `ggcpt` S3 surface (`summary()`, `as_tibble()`,
-`as.data.frame()`, `format()`, `plot()`), and fixes a set of correctness issues
-found by testing (a corrupted `signal_blocks()` test signal, `cpt_metrics()`
-recall/F1 exceeding 1, `ecp_wrapper()` returning a wrong value on multivariate
-input, and `stat_changepoint()` ignoring the x aesthetic). The 0.1.0/0.2.0
-function signatures and behaviour are unchanged.
+The release wires eighteen new detection engines behind the unified
+`cpt_detect()` dispatcher (SMUCE/HSMUCE via 'stepR', CPOP via 'cpop',
+Bayesian detection via 'bcp'/'ocp'/'Rbeast', sequential and kernel methods
+via 'cpm'/'kcpRS'/'CptNonPar', robust detection via 'DeCAFS'/'SNSeg',
+high-dimensional and multivariate detection via
+'InspectChangepoint'/'ocd'/'changepoint.geo', regression breaks via
+'strucchange'/'segmented'/'EnvCpt', and 'fastcpd'). All new engines are in
+Suggests, guarded with requireNamespace(), and their examples use
+@examplesIf so the package checks cleanly without them. New tooling includes
+the CROPS penalty path (`cpt_crops()`), batch detection (`cpt_batch()`),
+bootstrap stability diagnostics (`cpt_stability()`), Bayesian posterior and
+run-length displays, and per-method citations (`cpt_cite()`). Twenty bugs
+found by a systematic audit of 0.3.0 were fixed, each with a regression
+test. The 0.1.0-0.3.0 function signatures keep working unchanged.
 
 ## Test environments
 
 * local: R 4.4.1 on Rocky/RHEL 8 (x86_64), R CMD check --as-cran
+* GitHub Actions: ubuntu-latest (devel, release, oldrel-1),
+  macos-latest (release), windows-latest (release)
 
 ## R CMD check results
 
 0 errors | 0 warnings | 0 notes
 
 (Locally, the only items reported are environment-specific: `qpdf`, a LaTeX
-installation, and HTML `tidy` are not available on the test machine. These are
-not package issues.)
+installation, and HTML `tidy` are not available on the test machine. These
+are not package issues.)
 
 ## Reverse dependencies
 

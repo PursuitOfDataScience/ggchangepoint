@@ -8,29 +8,47 @@
 #' integration via \code{autoplot()} and composable geoms
 #' (\code{geom_changepoint()}, \code{geom_cpt_segment()},
 #' \code{geom_cpt_ci()}, \code{stat_changepoint()}), and a unified dispatcher
-#' \code{cpt_detect()} that supports multiple engines.
+#' \code{cpt_detect()} that supports over thirty methods.
 #'
-#' **Detection engines.** The package currently wraps 13 methods behind the
-#' unified \code{cpt_detect()} front-end:
+#' **Detection engines.** \code{cpt_detect()} currently dispatches to 31
+#' methods across five families (run \code{cpt_methods()} for the live
+#' table with installation status):
 #' \itemize{
-#'   \item \strong{changepoint:} PELT, BINSEG, SEGNEIGH, AMOC (mean, var, meanvar)
-#'   \item \strong{changepoint.np:} NP (non-parametric, distribution-free)
-#'   \item \strong{ecp:} E-Divisive, E-Agglo (multivariate, non-parametric)
-#'   \item \strong{fpop:} FPOP (functional pruning optimal partitioning)
-#'   \item \strong{wbs:} Wild Binary Segmentation
-#'   \item \strong{breakfast:} WBS2, TGUH
-#'   \item \strong{not:} Narrowest-Over-Threshold (mean, var, slope contrasts)
-#'   \item \strong{mosum:} Moving Sum
-#'   \item \strong{IDetect:} Isolate-Detect
+#'   \item \strong{Penalised/optimal:} PELT, BinSeg, SegNeigh, AMOC
+#'     (\pkg{changepoint}); FPOP (\pkg{fpop}); the CROPS penalty path
+#'     (\code{cpt_crops()}); fastcpd (\pkg{fastcpd}, incl. AR/ARMA/GARCH);
+#'     change-in-slope via CPOP (\pkg{cpop}).
+#'   \item \strong{Multiscale/search:} WBS (\pkg{wbs}), WBS2 and TGUH
+#'     (\pkg{breakfast}), NOT (\pkg{not}), MOSUM incl. multiscale
+#'     (\pkg{mosum}), Isolate-Detect (\pkg{IDetect}), SMUCE/HSMUCE with
+#'     confidence intervals (\pkg{stepR}).
+#'   \item \strong{Nonparametric/kernel:} NP (\pkg{changepoint.np}),
+#'     E-Divisive/E-Agglo (\pkg{ecp}), kernel running statistics
+#'     (\pkg{kcpRS}), NP-MOJO (\pkg{CptNonPar}), sequential CPM (\pkg{cpm}),
+#'     self-normalisation (\pkg{SNSeg}).
+#'   \item \strong{Bayesian:} Barry-Hartigan posterior (\pkg{bcp}), online
+#'     BOCPD (\pkg{ocp}), BEAST model averaging (\pkg{Rbeast}).
+#'   \item \strong{Multivariate/high-dimensional and regression:} sparse
+#'     projection (\pkg{InspectChangepoint}), online ocd (\pkg{ocd}),
+#'     geometric mapping (\pkg{changepoint.geo}), Bai-Perron breaks with CIs
+#'     (\pkg{strucchange}), broken-line regression (\pkg{segmented}),
+#'     changepoints-vs-autocorrelation model selection (\pkg{EnvCpt}),
+#'     drift+AR robust detection (\pkg{DeCAFS}).
 #' }
-#' Additional engines are planned (see \code{cpt_methods()} for the full table).
 #'
 #' **Key features.** Every detector returns a \code{ggcpt} object with a stable
-#' \code{tibble(cp, cp_value)} contract. Visualise any result directly with
-#' \code{autoplot()}. Compare methods with \code{ggcpt_compare()} and
-#' \code{ggcpt_compare_table()}. Evaluate accuracy with \code{cpt_metrics()}
-#' and \code{ggcpt_eval()}. Generate synthetic data with known ground truth
-#' via \code{cpt_simulate()} and the built-in canonical test signals.
+#' \code{tibble(cp, cp_value)} contract (plus engine extras such as
+#' \code{ci_lower}/\code{ci_upper} and \code{posterior_prob}). Visualise any
+#' result directly with \code{autoplot()} (confidence intervals, fitted
+#' signals, multivariate facets), the Bayesian displays
+#' (\code{ggcpt_posterior()}, \code{ggcpt_runlength()}), or interactively
+#' via \code{ggcpt_interactive()}. Compare methods with
+#' \code{ggcpt_compare()}; run panels of series with \code{cpt_batch()};
+#' quantify uncertainty with \code{cpt_stability()}; sweep penalties with
+#' \code{cpt_crops()}. Evaluate accuracy with \code{cpt_metrics()} and
+#' \code{ggcpt_eval()}; simulate ground-truth data with
+#' \code{cpt_simulate()} and the canonical test signals; and cite the
+#' methodology behind any result with \code{cpt_cite()}.
 #'
 #' @importFrom generics tidy glance augment
 #' @importFrom utils globalVariables
@@ -48,6 +66,19 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c(".",
                                                         "type",
                                                         "value",
                                                         "x",
+                                                        "xend",
+                                                        "y",
+                                                        "xmin",
+                                                        "xmax",
+                                                        "n_cpts",
+                                                        "cost",
+                                                        "penalty",
+                                                        "freq",
+                                                        "run_length",
+                                                        "time",
+                                                        "prob",
+                                                        "variable",
+                                                        "yint",
                                                         ".ymin",
                                                         ".ymax",
                                                         ".ymin_val",
@@ -65,7 +96,17 @@ ggcptplot_internal <- function(data, result,
                                show_line = TRUE,
                                ...) {
 
-  plot_data <- tibble::tibble(raw_value = data)
+  extra <- list(...)
+  if (length(extra) > 0) {
+    warning("Ignoring unknown argument(s): ",
+            paste(names(extra), collapse = ", "), call. = FALSE)
+  }
+
+  if (length(data) == 0) {
+    stop("Cannot plot an empty series.", call. = FALSE)
+  }
+
+  plot_data <- tibble::tibble(raw_value = as.numeric(data))
   if (is.null(index)) {
     plot_data <- dplyr::mutate(plot_data, x = dplyr::row_number())
   } else {

@@ -15,8 +15,10 @@
 #'   per segment.
 #' @param noise Noise type: \code{"gauss"} (Gaussian), \code{"t"} (Student-t),
 #'   \code{"ar1"} (AR(1)), or \code{"rw"} (random walk).
-#' @param sd Noise standard deviation (for Gaussian and t). Defaults to 1.
-#' @param df Degrees of freedom for t-noise. Defaults to 3.
+#' @param sd Noise standard deviation (for Gaussian and t; t-noise is
+#'   rescaled so its standard deviation is exactly \code{sd}). Defaults to 1.
+#' @param df Degrees of freedom for t-noise; must exceed 2 so the variance
+#'   exists. Defaults to 3.
 #' @param rho AR(1) autocorrelation parameter. Defaults to 0.
 #' @param seed Optional seed for reproducibility.
 #'
@@ -63,6 +65,11 @@ cpt_simulate <- function(n,
 
     if (change_in == "mean") {
       if (is.null(params)) params <- rep(0, n_seg)
+      if (i == 1 && length(params) < n_seg) {
+        warning("`params` has ", length(params), " value(s) for ", n_seg,
+                " segments; the last value is reused, so the extra ",
+                "segments carry no actual change.", call. = FALSE)
+      }
       signal[idx] <- params[min(i, length(params))]
     } else if (change_in == "var") {
       if (is.null(params)) params <- rep(1, n_seg)
@@ -90,11 +97,15 @@ cpt_simulate <- function(n,
   if (noise == "gauss") {
     errors <- stats::rnorm(n, mean = 0, sd = sd_vec)
   } else if (noise == "t") {
-    errors <- stats::rt(n, df = df) * sd_vec
+    if (df <= 2) {
+      stop("`df` must exceed 2 so the t-noise variance exists.", call. = FALSE)
+    }
+    # Rescale so the noise standard deviation is exactly sd_vec
+    errors <- stats::rt(n, df = df) / sqrt(df / (df - 2)) * sd_vec
   } else if (noise == "ar1") {
     errors <- numeric(n)
     errors[1] <- stats::rnorm(1, mean = 0, sd = sd_vec[1])
-    for (i in 2:n) {
+    for (i in seq_len(n)[-1]) {
       errors[i] <- rho * errors[i - 1] +
         stats::rnorm(1, mean = 0, sd = sd_vec[i] * sqrt(1 - rho^2))
     }
@@ -146,20 +157,25 @@ rcpt <- function(...) cpt_simulate(...)
 #'   by wavelet shrinkage. \emph{Biometrika}, 81(3), 425-455.
 signal_blocks <- function(n = 2048, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
+  if (n < 100) {
+    stop("`n` must be at least 100 for the blocks signal.", call. = FALSE)
+  }
 
-  t <- seq(0, 1, length.out = n)
-  # Standard blocks changepoints (scaled to [0,1])
+  # Standard blocks changepoints (scaled to [0,1]) and signed jump sizes
   cp_scaled <- c(0.1, 0.13, 0.15, 0.23, 0.25, 0.40, 0.44, 0.65, 0.76, 0.78, 0.81)
-  heights <- c(4, -5, 3, -4, 5, -4.2, 2.1, 4.3, -3.1, 2.1, -4.2)
+  jumps <- c(4, -5, 3, -4, 5, -4.2, 2.1, 4.3, -3.1, 2.1, -4.2)
 
   cp_idx <- as.integer(round(cp_scaled * n))
-  cp_idx <- cp_idx[cp_idx > 0 & cp_idx < n]
+  keep <- cp_idx > 0 & cp_idx < n & !duplicated(cp_idx)
+  cp_idx <- cp_idx[keep]
+  jumps <- jumps[keep]
 
-  # Segment-based assignment: each segment gets its absolute level.
-  # The segment before the first changepoint has level 0.
+  # The Donoho-Johnstone blocks signal is a sum of shifted step functions,
+  # f(t) = sum_j h_j K(t - t_j): each segment's level is the cumulative sum
+  # of the jumps, not the raw jump height.
   seg_starts <- c(1L, cp_idx + 1L)
   seg_ends <- c(cp_idx, n)
-  segment_levels <- c(0, heights)
+  segment_levels <- c(0, cumsum(jumps))
 
   signal <- rep(0, n)
   for (i in seq_along(seg_starts)) {
@@ -184,6 +200,9 @@ signal_blocks <- function(n = 2048, seed = NULL) {
 #' @export
 signal_fms <- function(n = 2000, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
+  if (n < 40) {
+    stop("`n` must be at least 40 for the fms signal.", call. = FALSE)
+  }
 
   seg_means <- c(0, 1, 0, -1, 0, 0.5, -0.5, 0)
   seg_lens <- round(n * c(0.2, 0.1, 0.15, 0.1, 0.1, 0.15, 0.1, 0.1))
@@ -193,6 +212,7 @@ signal_fms <- function(n = 2000, seed = NULL) {
 
   signal <- rep(seg_means, times = seg_lens)
   cp_idx <- cumsum(seg_lens)[-length(seg_lens)]
+  cp_idx <- unique(cp_idx[cp_idx > 0 & cp_idx < n])
 
   signal <- signal + stats::rnorm(n, 0, 0.5)
 
@@ -245,10 +265,16 @@ signal_teeth <- function(n = 2000, seed = NULL) {
 
   teeth_width <- 100
   n_teeth <- floor(n / teeth_width)
+  if (n_teeth < 2) {
+    stop("`n` must be at least 200 for the teeth signal ",
+         "(two teeth of width 100).", call. = FALSE)
+  }
 
   vals <- rep(c(0, 3), length.out = n_teeth)
   signal <- rep(vals, each = teeth_width)
-  signal <- c(signal, rep(0, n - length(signal)))
+  # Pad any remainder with the LAST tooth's level, so the padding does not
+  # introduce an undeclared changepoint at the final tooth boundary.
+  signal <- c(signal, rep(vals[n_teeth], n - length(signal)))
 
   cp_idx <- seq(teeth_width, by = teeth_width, length.out = n_teeth - 1)
   signal <- signal + stats::rnorm(n, 0, 0.5)
@@ -271,6 +297,10 @@ signal_stairs <- function(n = 2000, seed = NULL) {
 
   n_steps <- 10
   step_size <- n %/% n_steps
+  if (step_size < 1) {
+    stop("`n` must be at least 10 for the stairs signal (10 steps).",
+         call. = FALSE)
+  }
   heights <- seq(0, by = 2, length.out = n_steps)
 
   signal <- rep(heights, each = step_size)

@@ -56,7 +56,14 @@ ecp_wrapper <- function(data,
     ecp::e.agglo(as.matrix(data), ...)$estimates
   }
 
-  cp <- estimates[2:(length(estimates) - 1)]
+  # Keep genuine changepoints (2..n in ecp's right convention) rather than
+  # stripping the first/last entries positionally: with no changepoints,
+  # estimates is c(1, n+1) and `estimates[2:(length - 1)]` would evaluate to
+  # the reversed boundaries; and e.agglo's wrap-around case omits the
+  # boundary markers entirely, so positional stripping would drop genuine
+  # changepoints.
+  n_obs <- if (is.matrix(data) || is.data.frame(data)) nrow(data) else length(data)
+  cp <- sort(unique(estimates[estimates > 1 & estimates <= n_obs]))
 
   if (length(cp) == 0) {
     return(tibble::tibble(cp = integer(), cp_value = numeric()))
@@ -115,12 +122,27 @@ ggecpplot <- function(data,
     cptline_linewidth <- cptline_size
   }
 
+  n_obs <- if (is.matrix(data) || is.data.frame(data)) nrow(data) else length(data)
   if (is.null(show_points)) {
-    show_points <- if (is.vector(data)) length(data) <= 500 else nrow(data) <= 500
+    show_points <- n_obs <= 500
   }
 
   result <- ecp_wrapper(data, algorithm, min_size, ...)
-  ggcptplot_internal(data, result, cptline_alpha, cptline_color,
+
+  # The line plot is univariate; for multivariate input draw the first
+  # column (and say so) rather than crashing or silently mis-plotting.
+  plot_vec <- if (is.matrix(data) || is.data.frame(data)) {
+    if (ncol(as.matrix(data)) > 1) {
+      message("Multivariate input: plotting the first column. ",
+              "Use autoplot(cpt_detect(data, method = \"ecp\")) for a ",
+              "faceted multivariate plot.")
+    }
+    as.numeric(as.matrix(data)[, 1])
+  } else {
+    as.numeric(data)
+  }
+
+  ggcptplot_internal(plot_vec, result, cptline_alpha, cptline_color,
                      cptline_type, cptline_linewidth, index,
                      show_points, show_line)
 }

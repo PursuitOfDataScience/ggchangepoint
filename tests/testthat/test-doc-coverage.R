@@ -36,5 +36,7 @@ test_that("all exported functions appear in README", {
       paste(missing, collapse = ", "),
       sep = "\n"
     ))
+  } else {
+    succeed()
   }
 })

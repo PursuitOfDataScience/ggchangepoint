@@ -10,39 +10,19 @@
 #' @export
 fpop_wrapper <- function(x, penalty = NULL, ...) {
 
-  if (!requireNamespace("fpop", quietly = TRUE)) {
-    stop("Package 'fpop' is required. ",
-         "Install it with install.packages('fpop').",
-         call. = FALSE)
-  }
-
+  need_pkg("fpop")
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "fpop")
 
   if (is.null(penalty)) {
     penalty <- 2 * log(length(data_vec))
   }
 
   fit <- fpop::Fpop(data_vec, lambda = penalty, ...)
-  cp_indices <- sort(fit$t.est)
-  cp_indices <- cp_indices[cp_indices > 0 & cp_indices < length(data_vec)]
+  cp_indices <- as.integer(fit$t.est)
 
-  if (length(cp_indices) == 0) {
-    return(ggcpt_empty(data_vec, "fpop"))
-  }
-
-  changepoints <- tibble::tibble(
-    cp = cp_indices,
-    cp_value = data_vec[cp_indices]
-  )
-
-  segments <- build_segments(data_vec, cp_indices)
-  data_tbl <- tibble::tibble(index = seq_along(data_vec), value = data_vec)
-
-  new_ggcpt(
-    changepoints = changepoints,
-    segments = segments,
-    data = data_tbl,
+  ggcpt_build(
+    data_vec, cp_indices,
     method = "fpop",
     change_in = "mean",
     penalty = list(type = "Manual", value = penalty),
@@ -89,6 +69,6 @@ ggcpt_empty <- function(data_vec, method = "unknown") {
     change_in = "mean",
     penalty = list(type = NA_character_, value = NA_real_),
     fit = NULL,
-    call = match.call()
+    call = NULL
   )
 }

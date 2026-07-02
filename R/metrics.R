@@ -2,13 +2,23 @@
 #'
 #' Computes standard accuracy metrics comparing predicted changepoints to
 #' ground truth, including precision/recall/F1 with margin, covering metric,
-#' Hausdorff distance, (adjusted) Rand index, annotation error, and MAE/RMSE
+#' Hausdorff distance, adjusted Rand index, annotation error, and MAE/RMSE
 #' of matched locations.
 #'
 #' @param pred Predicted changepoint indices (integer vector).
 #' @param truth Ground truth changepoint indices (integer vector).
 #' @param n Length of the series.
 #' @param margin Tolerance margin for matching (default 5).
+#'
+#' @details Precision/recall use a one-to-one matching: each truth may be
+#' claimed by at most one prediction (predictions are scanned in order and
+#' take the earliest unmatched truth within \code{margin}, which yields a
+#' maximum matching for interval-structured problems). When \code{pred} and
+#' \code{truth} are both empty the segmentation is exactly right, so
+#' precision, recall, and F1 are all 1. The covering metric follows
+#' van den Burg and Williams (2020): the prediction-side partition is always
+#' well defined, so an empty \code{pred} scores the covering of the trivial
+#' single-segment partition rather than 0.
 #'
 #' @return A tibble with columns: \code{n}, \code{n_pred}, \code{n_truth},
 #'   \code{precision}, \code{recall}, \code{f1}, \code{covering},
@@ -25,50 +35,33 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
   truth <- sort(unique(as.integer(truth)))
   n <- as.integer(n)
 
-  # Precision / Recall / F1 with margin — one-to-one matching
-  # Each truth may be claimed by at most one prediction.
-  tp <- 0
-  matched_pred <- c()
-  matched_truth <- c()
-  truth_available <- rep(TRUE, length(truth))
-
-  for (p in pred) {
-    if (sum(truth_available) == 0) break
-    dists <- abs(p - truth)
-    # Consider only unmatched truths
-    dists[!truth_available] <- Inf
-    min_dist <- min(dists)
-    if (is.finite(min_dist) && min_dist <= margin) {
-      j <- which.min(dists)
-      tp <- tp + 1
-      matched_pred <- c(matched_pred, p)
-      matched_truth <- c(matched_truth, truth[j])
-      truth_available[j] <- FALSE  # remove from pool
-    }
+  # Changepoints follow the "left" convention, so valid locations are
+  # 1..(n-1); out-of-range entries would corrupt the partition metrics.
+  bad_pred <- pred[pred < 1 | pred >= n]
+  bad_truth <- truth[truth < 1 | truth >= n]
+  if (length(bad_pred) > 0 || length(bad_truth) > 0) {
+    warning("Dropping changepoint indices outside 1..(n-1): ",
+            paste(unique(c(bad_pred, bad_truth)), collapse = ", "),
+            call. = FALSE)
+    pred <- pred[pred >= 1 & pred < n]
+    truth <- truth[truth >= 1 & truth < n]
   }
 
-  fp <- length(pred) - tp
-  fn <- length(truth) - tp
+  m <- match_changepoints(pred, truth, margin)
+  tp <- nrow(m)
 
-  precision <- if (length(pred) == 0) 0 else tp / length(pred)
-  recall    <- if (length(truth) == 0) 0 else tp / length(truth)
+  both_empty <- length(pred) == 0 && length(truth) == 0
+  precision <- if (both_empty) 1 else if (length(pred) == 0) 0 else tp / length(pred)
+  recall    <- if (both_empty) 1 else if (length(truth) == 0) 0 else tp / length(truth)
   f1        <- if (precision + recall == 0) 0 else 2 * precision * recall / (precision + recall)
 
-  # Covering metric
   covering <- calc_covering(pred, truth, n)
-
-  # Hausdorff distance
   hausdorff <- calc_hausdorff(pred, truth)
-
-  # (Adjusted) Rand index between segment labellings
   rand_index <- calc_adjusted_rand(pred, truth, n)
-
-  # Annotation error
   annotation_error <- abs(length(pred) - length(truth))
 
-  # MAE / RMSE of matched locations
-  if (length(matched_pred) > 0) {
-    errors <- abs(matched_pred - matched_truth)
+  if (tp > 0) {
+    errors <- abs(m$pred - m$truth)
     mae_matched <- mean(errors)
     rmse_matched <- sqrt(mean(errors^2))
   } else {
@@ -130,7 +123,9 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
 #' Evaluation visualization
 #'
 #' Overlays predictions and ground truth on the series with tolerance windows,
-#' colouring true positives, false positives, and misses.
+#' colouring true positives, false positives, and misses. Uses the same
+#' one-to-one matching as \code{\link{cpt_metrics}()}, so the plot and the
+#' metrics agree.
 #'
 #' @param pred Predicted changepoint indices.
 #' @param truth Ground truth changepoint indices.
@@ -149,22 +144,14 @@ ggcpt_eval <- function(pred, truth, data_vec, margin = 5) {
     value = as.numeric(data_vec)
   )
 
-  # Classify predictions
-  pred_class <- vapply(pred, function(p) {
-    dists <- abs(p - truth)
-    if (length(dists) == 0) return("FP")
-    if (min(dists) <= margin) "TP" else "FP"
-  }, character(1))
-
-  # Classify truths
-  truth_class <- vapply(truth, function(t) {
-    dists <- abs(t - pred)
-    if (length(dists) == 0) return("FN")
-    if (min(dists) <= margin) "TP" else "FN"
-  }, character(1))
+  # One-to-one matching, shared with cpt_metrics()
+  m <- match_changepoints(pred, truth, margin)
+  pred_class <- ifelse(pred %in% m$pred, "TP", "FP")
+  truth_class <- ifelse(truth %in% m$truth, "TP", "FN")
 
   pred_df <- tibble::tibble(x = pred, type = pred_class)
-  truth_df <- tibble::tibble(x = truth, type = truth_class)
+  fn_df <- tibble::tibble(x = truth[truth_class == "FN"],
+                          type = rep("FN", sum(truth_class == "FN")))
 
   yrange <- diff(range(data_vec, na.rm = TRUE))
   if (yrange == 0) yrange <- 1
@@ -184,42 +171,61 @@ ggcpt_eval <- function(pred, truth, data_vec, margin = 5) {
     )
   }
 
-  # Add vertical lines for predictions (TP/FP)
-  if (nrow(pred_df) > 0) {
-    pred_df <- dplyr::mutate(pred_df, .ymin = ymin, .ymax = ymax)
+  # Vertical lines for predictions (TP/FP) and misses (FN), all mapped to
+  # `type` so the legend shows every class that appears.
+  lines_df <- rbind(pred_df, fn_df)
+  if (nrow(lines_df) > 0) {
+    lines_df <- dplyr::mutate(lines_df, .ymin = ymin, .ymax = ymax)
     p <- p + ggplot2::geom_linerange(
-      data = pred_df,
-      ggplot2::aes(x = x, ymin = .ymin, ymax = .ymax, color = type),
+      data = lines_df,
+      ggplot2::aes(x = x, ymin = .ymin, ymax = .ymax, color = type,
+                   linetype = type),
       inherit.aes = FALSE, linewidth = 1
     )
   }
 
-  # Add dashed vertical lines for misses (FN)
-  fn_df <- dplyr::filter(truth_df, type == "FN")
-  if (nrow(fn_df) > 0) {
-    fn_df <- dplyr::mutate(fn_df, .ymin = ymin, .ymax = ymax)
-    p <- p + ggplot2::geom_linerange(
-      data = fn_df,
-      ggplot2::aes(x = x, ymin = .ymin, ymax = .ymax),
-      inherit.aes = FALSE, color = "red", linewidth = 1, linetype = "dashed"
+  p +
+    ggplot2::scale_color_manual(
+      values = c(TP = "blue", FP = "orange", FN = "red"),
+      labels = c(TP = "True Positive", FP = "False Positive", FN = "Miss"),
+      name = "type"
+    ) +
+    ggplot2::scale_linetype_manual(
+      values = c(TP = "solid", FP = "solid", FN = "dashed"),
+      labels = c(TP = "True Positive", FP = "False Positive", FN = "Miss"),
+      name = "type"
     )
-  }
-
-  p + ggplot2::scale_color_manual(
-    values = c(TP = "blue", FP = "orange", FN = "red"),
-    labels = c(TP = "True Positive", FP = "False Positive", FN = "Miss")
-  )
 }
 
 
 # Internal helpers --------------------------------------------------------
 
-calc_covering <- function(pred, truth, n) {
-  if (length(truth) == 0) {
-    return(if (length(pred) == 0) 1 else 0)
-  }
-  if (length(pred) == 0) return(0)
+# One-to-one matching of predictions to truths within a margin. Predictions
+# are scanned in increasing order and take the earliest unmatched truth
+# within [p - margin, p + margin]; for points on a line this greedy rule
+# yields a maximum matching.
+#' @noRd
+match_changepoints <- function(pred, truth, margin) {
+  matched_pred <- integer(0)
+  matched_truth <- integer(0)
+  available <- rep(TRUE, length(truth))
 
+  for (p in sort(pred)) {
+    cand <- which(available & abs(p - truth) <= margin)
+    if (length(cand) > 0) {
+      j <- cand[1]
+      matched_pred <- c(matched_pred, p)
+      matched_truth <- c(matched_truth, truth[j])
+      available[j] <- FALSE
+    }
+  }
+
+  data.frame(pred = matched_pred, truth = matched_truth)
+}
+
+calc_covering <- function(pred, truth, n) {
+  # Both partitions are always well defined: an empty changepoint set is the
+  # trivial single-segment partition, not a zero score.
   truth_breaks <- sort(unique(c(0, truth, n)))
   pred_breaks <- sort(unique(c(0, pred, n)))
 
@@ -274,12 +280,16 @@ calc_adjusted_rand <- function(pred, truth, n) {
   expected <- a * b / sum_comb(n_points)
   max_index <- (a + b) / 2
 
-  if (abs(index - expected) < 1e-15) return(1)
+  # Identical partitions (including two trivial ones) have a degenerate
+  # denominator; they agree perfectly. Any other case uses the ARI formula
+  # directly — index == expected is chance-level agreement (ARI 0), not 1.
+  if (abs(max_index - expected) < 1e-15) return(1)
 
   (index - expected) / (max_index - expected)
 }
 
 label_segments <- function(cp, n) {
+  cp <- cp[cp >= 1 & cp < n]
   breaks <- sort(unique(c(0, cp, n)))
   labels <- rep(seq_len(length(breaks) - 1), diff(breaks))
   labels

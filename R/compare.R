@@ -40,6 +40,7 @@ ggcpt_compare <- function(x,
       cpt_detect(data_vec, method = m, change_in = change_in, ...)
     }, future.seed = seed)
   } else {
+    if (!is.null(seed)) set.seed(seed)
     results <- lapply(methods, function(m) {
       cpt_detect(data_vec, method = m, change_in = change_in, ...)
     })
@@ -55,10 +56,16 @@ ggcpt_compare <- function(x,
 }
 
 ggcpt_compare_facet <- function(data_vec, results, methods) {
-  plot_data <- tibble::tibble(
-    index = seq_along(data_vec),
-    value = data_vec
-  )
+  # One panel per method, whether or not it found changepoints — a method
+  # that ran and found nothing is a result, not a missing panel.
+  plot_data <- do.call(rbind, lapply(methods, function(m) {
+    tibble::tibble(
+      index = seq_along(data_vec),
+      value = data_vec,
+      method = m
+    )
+  }))
+  plot_data$method <- factor(plot_data$method, levels = methods)
 
   cp_data <- do.call(rbind, lapply(methods, function(m) {
     cp <- results[[m]]$changepoints
@@ -70,29 +77,25 @@ ggcpt_compare_facet <- function(data_vec, results, methods) {
     )
   }))
 
-  if (is.null(cp_data)) {
-    return(
-      ggplot2::ggplot(plot_data, ggplot2::aes(index, value)) +
-        ggplot2::geom_line() +
-        ggplot2::facet_wrap(~method)
-    )
-  }
-
-  ymin <- min(data_vec) - 0.05 * diff(range(data_vec))
-  ymax <- max(data_vec) + 0.05 * diff(range(data_vec))
-
-  cp_data <- dplyr::mutate(cp_data, .ymin = ymin, .ymax = ymax)
-
-  ggplot2::ggplot(plot_data, ggplot2::aes(index, value)) +
+  p <- ggplot2::ggplot(plot_data, ggplot2::aes(index, value)) +
     ggplot2::geom_line(color = "grey50") +
-    ggplot2::geom_linerange(
-      data = cp_data,
-      ggplot2::aes(x = index, ymin = .ymin, ymax = .ymax),
-      inherit.aes = FALSE, color = "blue", linewidth = 0.5
-    ) +
     ggplot2::facet_wrap(~method, ncol = 1, scales = "free_y") +
     ggplot2::labs(x = "Index", y = "Value",
                   title = "Changepoint Detection Comparison")
+
+  if (!is.null(cp_data)) {
+    ymin <- min(data_vec) - 0.05 * diff(range(data_vec))
+    ymax <- max(data_vec) + 0.05 * diff(range(data_vec))
+    cp_data <- dplyr::mutate(cp_data, .ymin = ymin, .ymax = ymax)
+    cp_data$method <- factor(cp_data$method, levels = methods)
+    p <- p + ggplot2::geom_linerange(
+      data = cp_data,
+      ggplot2::aes(x = index, ymin = .ymin, ymax = .ymax),
+      inherit.aes = FALSE, color = "blue", linewidth = 0.5
+    )
+  }
+
+  p
 }
 
 ggcpt_compare_overlay <- function(data_vec, results, methods) {

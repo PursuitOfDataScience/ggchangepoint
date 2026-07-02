@@ -14,7 +14,9 @@ idetect_wrapper(x, seed = NULL, ...)
 \item{...}{Additional arguments passed to \code{IDetect::ID()}.}
 }
 \value{
-A \code{ggcpt} object.
+A \code{ggcpt} object. When the engine finds no changepoints
+  (including when it signals "No change-points found"), an empty result
+  is returned rather than an error.
 }
 \description{
 Wraps the \code{IDetect} package. Requires the \code{IDetect} package.

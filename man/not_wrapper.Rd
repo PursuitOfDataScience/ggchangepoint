@@ -18,9 +18,12 @@ not_wrapper(x, contrast = "pcwsConstMean", seed = NULL, ...)
 \item{...}{Additional arguments passed to \code{not::not()}.}
 }
 \value{
-A \code{ggcpt} object.
+A \code{ggcpt} object whose \code{change_in} reflects the
+  contrast: \code{"mean"}, \code{"meanvar"}, or \code{"slope"}.
 }
 \description{
 Wraps the \code{not} package for changepoint detection via the
-Narrowest-Over-Threshold method.
+Narrowest-Over-Threshold method. The contrast determines what change is
+detected: piecewise-constant mean (default), mean and variance, or
+(continuous or discontinuous) piecewise-linear trend.
 }
