@@ -13,7 +13,7 @@ hy <- sin(ang)
 # ---- palette ----------------------------------------------------------------
 col_bg     <- "#1E2A4A"  # deep navy fill
 col_border <- "#6C8EEF"  # periwinkle border
-col_data   <- "#9DB4E8"  # muted blue data
+col_data   <- "#53D8E8"  # icy cyan data
 col_fit    <- "#FFB454"  # amber step (segment means)
 col_cp     <- "#FF6B6B"  # coral changepoint line
 col_title  <- "#FFFFFF"
@@ -25,7 +25,7 @@ n  <- 56
 cp <- 0.04                       # changepoint x-location
 xs <- seq(-0.70, 0.62, length.out = n)
 mu <- ifelse(xs < cp, -0.13, 0.30)
-ys <- mu + rnorm(n, 0, 0.045)
+ys <- mu + rnorm(n, 0, 0.075)
 
 png("man/figures/logo.png", width = 1200, height = 1386, res = 300,
     bg = "transparent", type = "cairo")
@@ -40,10 +40,10 @@ grid.polygon(hx, hy, default.units = "native",
 grid.polygon(hx, hy, default.units = "native",
              gp = gpar(fill = NA, col = col_border, lwd = 10, linejoin = "mitre"))
 
-# data: thin polyline + points
+# data: polyline + points
 grid.lines(xs, ys, default.units = "native",
-           gp = gpar(col = col_data, lwd = 1.6, alpha = 0.75))
-grid.points(xs, ys, default.units = "native", pch = 16, size = unit(1.7, "pt"),
+           gp = gpar(col = col_data, lwd = 2.6, alpha = 0.9))
+grid.points(xs, ys, default.units = "native", pch = 16, size = unit(2.2, "pt"),
             gp = gpar(col = col_data))
 
 # amber step function (piecewise-constant fit), inset from the changepoint
