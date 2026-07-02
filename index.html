@@ -13,6 +13,7 @@
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Combines Changepoint Analysis with ggplot2">
 <meta name="description" content="A unified, tidy, ggplot2-native interface to changepoint detection in R. Provides the ggcpt S3 result class with broom-style tidy/glance/augment methods, autoplot() (with confidence intervals, fitted signals, and multivariate facets), composable geoms (geom_changepoint(), geom_cpt_segment(), geom_cpt_ci(), stat_changepoint()), and a cpt_detect() dispatcher covering over thirty methods with introspection via cpt_methods(): penalised/optimal partitioning (PELT, BinSeg, SegNeigh, AMOC, FPOP, CROPS penalty paths, fastcpd, change-in-slope via cpop), multiscale and search methods (WBS, WBS2, NOT, MOSUM, Isolate-Detect, TGUH, SMUCE/HSMUCE with confidence intervals), nonparametric and kernel methods (changepoint.np, ecp, kcpRS, CptNonPar, sequential cpm, self-normalisation via SNSeg), Bayesian methods (bcp, online ocp, Rbeast), high-dimensional and multivariate methods (InspectChangepoint, ocd, changepoint.geo), regression breaks (strucchange, segmented, EnvCpt), and robust detection under drift and autocorrelation (DeCAFS). Also includes method comparison, batch/panel detection, bootstrap stability diagnostics, accuracy metrics, Bayesian posterior and run-length plots, interactive rendering, data simulation with canonical test signals, and per-method citations.">
 <meta property="og:description" content="A unified, tidy, ggplot2-native interface to changepoint detection in R. Provides the ggcpt S3 result class with broom-style tidy/glance/augment methods, autoplot() (with confidence intervals, fitted signals, and multivariate facets), composable geoms (geom_changepoint(), geom_cpt_segment(), geom_cpt_ci(), stat_changepoint()), and a cpt_detect() dispatcher covering over thirty methods with introspection via cpt_methods(): penalised/optimal partitioning (PELT, BinSeg, SegNeigh, AMOC, FPOP, CROPS penalty paths, fastcpd, change-in-slope via cpop), multiscale and search methods (WBS, WBS2, NOT, MOSUM, Isolate-Detect, TGUH, SMUCE/HSMUCE with confidence intervals), nonparametric and kernel methods (changepoint.np, ecp, kcpRS, CptNonPar, sequential cpm, self-normalisation via SNSeg), Bayesian methods (bcp, online ocp, Rbeast), high-dimensional and multivariate methods (InspectChangepoint, ocd, changepoint.geo), regression breaks (strucchange, segmented, EnvCpt), and robust detection under drift and autocorrelation (DeCAFS). Also includes method comparison, batch/panel detection, bootstrap stability diagnostics, accuracy metrics, Bayesian posterior and run-length plots, interactive rendering, data simulation with canonical test signals, and per-method citations.">
+<meta property="og:image" content="https://pursuitofdatascience.github.io/ggchangepoint/logo.png">
 </head>
 <body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
@@ -52,57 +53,16 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="ggchangepoint-">ggchangepoint <img src="https://img.shields.io/badge/R-package-276DC3?logo=r&amp;logoColor=white" align="right" alt="R package"><a class="anchor" aria-label="anchor" href="#ggchangepoint-"></a>
-</h1></div>
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="ggchangepoint-">ggchangepoint <a class="anchor" aria-label="anchor" href="#ggchangepoint-"></a>
+</h1>
+</div>
 <!-- badges: start -->
 
 <blockquote>
 <p><strong>One interface. 31 changepoint methods. Every result tidy, every result plottable.</strong></p>
 </blockquote>
-<p>ggchangepoint wraps the R changepoint ecosystem behind a single tidy, <code>ggplot2</code>-native interface:</p>
-<ul>
-<li>
-<strong>Detect with one call</strong> — <code>cpt_detect(x, method = "...")</code> dispatches to 31 methods, from classic PELT to Bayesian online detection.</li>
-<li>
-<strong>Tidy everywhere</strong> — every method returns the same <code>ggcpt</code> object, with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>.</li>
-<li>
-<strong>Plot everything</strong> — <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws any result: changepoints, confidence intervals, fitted signals, posteriors, multivariate facets.</li>
-<li>
-<strong>Trust the answer</strong> — compare methods side by side, sweep the penalty (CROPS), bootstrap stability, and score accuracy against ground truth.</li>
-</ul>
-<table class="table">
-<colgroup>
-<col width="50%">
-<col width="50%">
-</colgroup>
-<thead><tr>
-<th>Family</th>
-<th>Methods</th>
-</tr></thead>
-<tbody>
-<tr>
-<td>Penalised / optimal</td>
-<td>PELT · BinSeg · SegNeigh · AMOC · FPOP · CROPS path · fastcpd (ARMA/GARCH) · CPOP (slope)</td>
-</tr>
-<tr>
-<td>Multiscale / search</td>
-<td>WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE/HSMUCE (with CIs)</td>
-</tr>
-<tr>
-<td>Nonparametric / kernel</td>
-<td>ED-PELT · E-Divisive · E-Agglo · kernel running stats · NP-MOJO · CPM · self-normalisation</td>
-</tr>
-<tr>
-<td>Bayesian</td>
-<td>bcp posteriors · online BOCPD · BEAST model averaging</td>
-</tr>
-<tr>
-<td>Multivariate / regression</td>
-<td>inspect · ocd · geomcp · Bai–Perron · segmented · EnvCpt · DeCAFS</td>
-</tr>
-</tbody>
-</table>
-<p>Run <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> for the live table with engines and installation status. Only <code>changepoint</code>, <code>changepoint.np</code>, and <code>ecp</code> are required — every other engine is optional (<code>Suggests</code>), and the original 0.1.0 functions (<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code><a href="reference/ggcptplot.html">ggcptplot()</a></code>, <code><a href="reference/ggecpplot.html">ggecpplot()</a></code>) keep working unchanged.</p>
+<p>ggchangepoint wraps the R changepoint ecosystem behind a single tidy, <code>ggplot2</code>-native interface: <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> runs any of 31 detection methods, every result comes back as the same tidy <code>ggcpt</code> object, and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws it.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -158,6 +118,53 @@
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-unnamed-chunk-6-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"></p>
+</div>
+<div class="section level2">
+<h2 id="why-ggchangepoint">Why ggchangepoint<a class="anchor" aria-label="anchor" href="#why-ggchangepoint"></a>
+</h2>
+<ul>
+<li>
+<strong>Detect with one call</strong> — <code>cpt_detect(x, method = "...")</code> dispatches to 31 methods, from classic PELT to Bayesian online detection.</li>
+<li>
+<strong>Tidy everywhere</strong> — every method returns the same <code>ggcpt</code> object, with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>.</li>
+<li>
+<strong>Plot everything</strong> — <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws any result: changepoints, confidence intervals, fitted signals, posteriors, multivariate facets.</li>
+<li>
+<strong>Trust the answer</strong> — compare methods side by side, sweep the penalty (CROPS), bootstrap stability, and score accuracy against ground truth.</li>
+</ul>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Family</th>
+<th>Methods</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Penalised / optimal</td>
+<td>PELT · BinSeg · SegNeigh · AMOC · FPOP · CROPS path · fastcpd (ARMA/GARCH) · CPOP (slope)</td>
+</tr>
+<tr>
+<td>Multiscale / search</td>
+<td>WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE/HSMUCE (with CIs)</td>
+</tr>
+<tr>
+<td>Nonparametric / kernel</td>
+<td>ED-PELT · E-Divisive · E-Agglo · kernel running stats · NP-MOJO · CPM · self-normalisation</td>
+</tr>
+<tr>
+<td>Bayesian</td>
+<td>bcp posteriors · online BOCPD · BEAST model averaging</td>
+</tr>
+<tr>
+<td>Multivariate / regression</td>
+<td>inspect · ocd · geomcp · Bai–Perron · segmented · EnvCpt · DeCAFS</td>
+</tr>
+</tbody>
+</table>
+<p>Run <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> for the live table with engines and installation status. Only <code>changepoint</code>, <code>changepoint.np</code>, and <code>ecp</code> are required — every other engine is optional (<code>Suggests</code>), and the original 0.1.0 functions (<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code><a href="reference/ggcptplot.html">ggcptplot()</a></code>, <code><a href="reference/ggecpplot.html">ggecpplot()</a></code>) keep working unchanged.</p>
 </div>
 <div class="section level2">
 <h2 id="unified-detection-across-engines">Unified detection across engines<a class="anchor" aria-label="anchor" href="#unified-detection-across-engines"></a>

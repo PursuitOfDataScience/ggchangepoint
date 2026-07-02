@@ -1,42 +1,15 @@
-# ggchangepoint ![R package](https://img.shields.io/badge/R-package-276DC3?logo=r&logoColor=white)
+# ggchangepoint
 
 > **One interface. 31 changepoint methods. Every result tidy, every
 > result plottable.**
 
 ggchangepoint wraps the R changepoint ecosystem behind a single tidy,
 `ggplot2`-native interface:
-
-- **Detect with one call** — `cpt_detect(x, method = "...")` dispatches
-  to 31 methods, from classic PELT to Bayesian online detection.
-- **Tidy everywhere** — every method returns the same `ggcpt` object,
-  with [`tidy()`](https://generics.r-lib.org/reference/tidy.html),
-  [`glance()`](https://generics.r-lib.org/reference/glance.html), and
-  [`augment()`](https://generics.r-lib.org/reference/augment.html).
-- **Plot everything** —
-  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-  draws any result: changepoints, confidence intervals, fitted signals,
-  posteriors, multivariate facets.
-- **Trust the answer** — compare methods side by side, sweep the penalty
-  (CROPS), bootstrap stability, and score accuracy against ground truth.
-
-| Family | Methods |
-|----|----|
-| Penalised / optimal | PELT · BinSeg · SegNeigh · AMOC · FPOP · CROPS path · fastcpd (ARMA/GARCH) · CPOP (slope) |
-| Multiscale / search | WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE/HSMUCE (with CIs) |
-| Nonparametric / kernel | ED-PELT · E-Divisive · E-Agglo · kernel running stats · NP-MOJO · CPM · self-normalisation |
-| Bayesian | bcp posteriors · online BOCPD · BEAST model averaging |
-| Multivariate / regression | inspect · ocd · geomcp · Bai–Perron · segmented · EnvCpt · DeCAFS |
-
-Run
-[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-for the live table with engines and installation status. Only
-`changepoint`, `changepoint.np`, and `ecp` are required — every other
-engine is optional (`Suggests`), and the original 0.1.0 functions
-([`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
-[`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md),
-[`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
-[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md))
-keep working unchanged.
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+runs any of 31 detection methods, every result comes back as the same
+tidy `ggcpt` object, and
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+draws it.
 
 ## Installation
 
@@ -123,6 +96,40 @@ autoplot(res)
 
 ![ggchangepoint plot of a time series with detected
 changepoints](reference/figures/README-unnamed-chunk-6-1.png)
+
+## Why ggchangepoint
+
+- **Detect with one call** — `cpt_detect(x, method = "...")` dispatches
+  to 31 methods, from classic PELT to Bayesian online detection.
+- **Tidy everywhere** — every method returns the same `ggcpt` object,
+  with [`tidy()`](https://generics.r-lib.org/reference/tidy.html),
+  [`glance()`](https://generics.r-lib.org/reference/glance.html), and
+  [`augment()`](https://generics.r-lib.org/reference/augment.html).
+- **Plot everything** —
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  draws any result: changepoints, confidence intervals, fitted signals,
+  posteriors, multivariate facets.
+- **Trust the answer** — compare methods side by side, sweep the penalty
+  (CROPS), bootstrap stability, and score accuracy against ground truth.
+
+| Family | Methods |
+|----|----|
+| Penalised / optimal | PELT · BinSeg · SegNeigh · AMOC · FPOP · CROPS path · fastcpd (ARMA/GARCH) · CPOP (slope) |
+| Multiscale / search | WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE/HSMUCE (with CIs) |
+| Nonparametric / kernel | ED-PELT · E-Divisive · E-Agglo · kernel running stats · NP-MOJO · CPM · self-normalisation |
+| Bayesian | bcp posteriors · online BOCPD · BEAST model averaging |
+| Multivariate / regression | inspect · ocd · geomcp · Bai–Perron · segmented · EnvCpt · DeCAFS |
+
+Run
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+for the live table with engines and installation status. Only
+`changepoint`, `changepoint.np`, and `ecp` are required — every other
+engine is optional (`Suggests`), and the original 0.1.0 functions
+([`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
+[`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md),
+[`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
+[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md))
+keep working unchanged.
 
 ## Unified detection across engines
 
