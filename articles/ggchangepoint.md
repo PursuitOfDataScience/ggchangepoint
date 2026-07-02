@@ -118,7 +118,7 @@ summary(res)
 #>   CP convention:            left 
 #>   Series length:            200 
 #>   Penalty:                  MBIC = NA 
-#>   Runtime (seconds):        0.014 
+#>   Runtime (seconds):        0.015 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
