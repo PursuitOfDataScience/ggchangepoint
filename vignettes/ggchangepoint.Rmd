@@ -35,7 +35,10 @@ has_stepR     <- requireNamespace("stepR", quietly = TRUE)
 has_cpop      <- requireNamespace("cpop", quietly = TRUE)
 has_bcp       <- requireNamespace("bcp", quietly = TRUE)
 has_ocp       <- requireNamespace("ocp", quietly = TRUE)
-has_rbeast    <- requireNamespace("Rbeast", quietly = TRUE)
+# Rbeast (<= 1.0.2) can crash the vignette-building subprocess on Windows
+# (its C internals have known memory-state issues); run it elsewhere only.
+has_rbeast    <- requireNamespace("Rbeast", quietly = TRUE) &&
+  .Platform$OS.type != "windows"
 has_cpm       <- requireNamespace("cpm", quietly = TRUE)
 has_kcprs     <- requireNamespace("kcpRS", quietly = TRUE)
 has_cptnonpar <- requireNamespace("CptNonPar", quietly = TRUE)

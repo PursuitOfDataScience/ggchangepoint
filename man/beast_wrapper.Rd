@@ -31,7 +31,7 @@ reported; the probability profile renders via
 \code{\link{ggcpt_posterior}()}.
 }
 \examples{
-\dontshow{if (requireNamespace("Rbeast", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+\dontshow{if (requireNamespace("Rbeast", quietly = TRUE) && .Platform$OS.type != "windows") (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 res <- beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
 res$changepoints
 \dontshow{\}) # examplesIf}

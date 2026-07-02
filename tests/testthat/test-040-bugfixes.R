@@ -262,6 +262,7 @@ test_that("R8: ocd survives a declaration at the final row", {
 
 test_that("R9: beast seed makes results reproducible", {
   skip_if_not_installed("Rbeast")
+  skip_on_os("windows")  # Rbeast <= 1.0.2 can crash the session on Windows
   set.seed(42)
   # Same length as the other beast test: Rbeast <= 1.0.2 can intermittently
   # return broken fits when consecutive calls change the series length.

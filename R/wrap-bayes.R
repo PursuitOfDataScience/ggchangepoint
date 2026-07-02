@@ -133,7 +133,7 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
 #' @references
 #' \insertRef{zhao2019beast}{ggchangepoint}
 #' @export
-#' @examplesIf requireNamespace("Rbeast", quietly = TRUE)
+#' @examplesIf requireNamespace("Rbeast", quietly = TRUE) && .Platform$OS.type != "windows"
 #' res <- beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
 #' res$changepoints
 beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {

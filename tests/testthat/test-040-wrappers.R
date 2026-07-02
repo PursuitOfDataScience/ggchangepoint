@@ -66,6 +66,7 @@ test_that("bocpd_wrapper finds the change and supports the run-length plot", {
 
 test_that("beast_wrapper reports posterior probabilities", {
   skip_if_not_installed("Rbeast")
+  skip_on_os("windows")  # Rbeast <= 1.0.2 can crash the session on Windows
   res <- beast_wrapper(x_step, seed = 1)
   expect_ggcpt_contract(res, "beast")
   expect_true("posterior_prob" %in% names(res$changepoints))
