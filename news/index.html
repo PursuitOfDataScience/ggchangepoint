@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,7 +37,86 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.3.0" id="ggchangepoint-030">ggchangepoint 0.3.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-030"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.4.0" id="ggchangepoint-040">ggchangepoint 0.4.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-040"></a></h2>
+<div class="section level3">
+<h3 id="the-engine-wave-0-4-0">The 0.4.0 engine wave<a class="anchor" aria-label="anchor" href="#the-engine-wave-0-4-0"></a></h3>
+<p><code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> grows from 13 to 31 wired methods. Eighteen new wrappers, all of whose engines live on CRAN and enter <code>Suggests</code> behind <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> guards:</p>
+<ul><li>
+<code><a href="../reference/smuce_wrapper.html">smuce_wrapper()</a></code> — SMUCE/HSMUCE multiscale inference (<code>stepR</code>), the first engines to populate <code>ci_lower</code>/<code>ci_upper</code> confidence-interval columns.</li>
+<li>
+<code><a href="../reference/cpop_wrapper.html">cpop_wrapper()</a></code> — exact change-in-slope detection (<code>cpop</code>); <code>cpt_detect(change_in = "slope")</code> now routes here or to NOT’s linear contrast instead of erroring.</li>
+<li>
+<code><a href="../reference/bcp_wrapper.html">bcp_wrapper()</a></code>, <code><a href="../reference/bocpd_wrapper.html">bocpd_wrapper()</a></code>, <code><a href="../reference/beast_wrapper.html">beast_wrapper()</a></code> — the Bayesian pillar (<code>bcp</code>, <code>ocp</code>, <code>Rbeast</code>), with <code>posterior_prob</code> columns and the posterior mean carried as a fitted signal.</li>
+<li>
+<code><a href="../reference/cpm_wrapper.html">cpm_wrapper()</a></code> — sequential distribution-free detection (<code>cpm</code>), with a <code>detection_time</code> column.</li>
+<li>
+<code><a href="../reference/kcp_wrapper.html">kcp_wrapper()</a></code> — kernel change point analysis on running statistics (<code>kcpRS</code>; mean, variance, autocorrelation, correlation).</li>
+<li>
+<code><a href="../reference/npmojo_wrapper.html">npmojo_wrapper()</a></code> — nonparametric MOSUM under serial dependence (<code>CptNonPar</code>).</li>
+<li>
+<code><a href="../reference/decafs_wrapper.html">decafs_wrapper()</a></code> — abrupt changes amid drift and AR(1) noise (<code>DeCAFS</code>).</li>
+<li>
+<code><a href="../reference/sn_wrapper.html">sn_wrapper()</a></code> — self-normalised segmentation (<code>SNSeg</code>; mean, variance, acf, bivariate correlation).</li>
+<li>
+<code><a href="../reference/inspect_wrapper.html">inspect_wrapper()</a></code>, <code><a href="../reference/ocd_wrapper.html">ocd_wrapper()</a></code>, <code><a href="../reference/geomcp_wrapper.html">geomcp_wrapper()</a></code> — high-dimensional and multivariate detection (<code>InspectChangepoint</code>, <code>ocd</code>, <code>changepoint.geo</code>).</li>
+<li>
+<code><a href="../reference/strucchange_wrapper.html">strucchange_wrapper()</a></code> — Bai-Perron structural breaks with break-date confidence intervals (<code>strucchange</code>); accepts a bare series or a regression formula.</li>
+<li>
+<code><a href="../reference/segmented_wrapper.html">segmented_wrapper()</a></code> — broken-line regression with kink confidence intervals (<code>segmented</code>).</li>
+<li>
+<code><a href="../reference/envcpt_wrapper.html">envcpt_wrapper()</a></code> — changepoints vs. trends vs. autocorrelation model selection (<code>EnvCpt</code>).</li>
+<li>
+<code><a href="../reference/fastcpd_wrapper.html">fastcpd_wrapper()</a></code> — the modern fastcpd engine (<code>fastcpd</code>), covering mean/variance/meanvariance plus AR/ARMA/GARCH model changepoints.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="new-tools-0-4-0">New tools<a class="anchor" aria-label="anchor" href="#new-tools-0-4-0"></a></h3>
+<ul><li>New <code><a href="../reference/cpt_crops.html">cpt_crops()</a></code> computes the full CROPS penalty path and returns a <code>ggcpt_path</code> object with <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, and <code>autoplot(type = c("elbow", "path", "segmentations"))</code>.</li>
+<li>New <code><a href="../reference/cpt_batch.html">cpt_batch()</a></code> runs one detector over many series (matrix, data frame, or list) with optional <code>future</code> parallelism; returns a <code>ggcpt_batch</code> tibble with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and a faceted <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</li>
+<li>New <code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> bootstrap stability diagnostic: segment-preserving resampling with a detection-frequency profile and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</li>
+<li>New Bayesian displays: <code><a href="../reference/ggcpt_posterior.html">ggcpt_posterior()</a></code> (posterior mean + per-location changepoint probability) and <code><a href="../reference/ggcpt_runlength.html">ggcpt_runlength()</a></code> (the BOCPD run-length posterior heatmap).</li>
+<li>New <code><a href="../reference/ggcpt_interactive.html">ggcpt_interactive()</a></code> renders any result as a <code>plotly</code> widget.</li>
+<li>New <code><a href="../reference/cpt_cite.html">cpt_cite()</a></code> returns the verified methodological reference(s) behind a result or method name.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="visualisation-0-4-0">Visualisation<a class="anchor" aria-label="anchor" href="#visualisation-0-4-0"></a></h3>
+<ul><li>
+<code><a href="../reference/autoplot.ggcpt.html">autoplot.ggcpt()</a></code> gains <code>show_ci</code> (draws changepoint-location confidence intervals from <code>ci_lower</code>/<code>ci_upper</code>) and <code>show_fit</code> (overlays the engine’s fitted signal), and renders multivariate results as faceted small-multiples.</li>
+<li>
+<code><a href="../reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> migrated off the deprecated <code><a href="https://ggplot2.tidyverse.org/reference/geom_linerange.html" class="external-link">ggplot2::geom_errorbarh()</a></code> to <code>geom_errorbar(orientation = "y")</code>.</li>
+<li>Unknown styling arguments passed through <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>/<code><a href="../reference/ggcptplot.html">ggcptplot()</a></code> now warn instead of being silently discarded, and plotting an empty <code>ggcpt</code> errors cleanly instead of producing infinite axis limits.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="bug-fixes-audit-items-c1-c20-regression-tested-0-4-0">Bug fixes (audit items C1-C20; regression-tested)<a class="anchor" aria-label="anchor" href="#bug-fixes-audit-items-c1-c20-regression-tested-0-4-0"></a></h3>
+<ul><li>
+<code><a href="../reference/ecp_wrapper.html">ecp_wrapper()</a></code> no longer fabricates changepoints on no-change data (the positional boundary strip reversed <code>c(1, n+1)</code>), and no longer drops genuine changepoints in <code>e.agglo</code>’s wrap-around case (C1).</li>
+<li>
+<code><a href="../reference/wbs_wrapper.html">wbs_wrapper()</a></code> now returns the sSIC model selection it documents; a manual threshold is recorded as the penalty actually used (C2).</li>
+<li>Univariate wrappers and <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> now error on multi-column input instead of silently flattening it column-major (C3).</li>
+<li>
+<code><a href="../reference/idetect_wrapper.html">idetect_wrapper()</a></code> returns an empty result on no-change data instead of erroring (C4).</li>
+<li>
+<code><a href="../reference/tguh_wrapper.html">tguh_wrapper()</a></code> pins breakfast’s model selection to “ic”: no more spurious changepoint on constant data, no crash on short series, and the scalar-0 “no changepoints” sentinel is handled (C5).</li>
+<li>
+<code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> is always one row: fpop’s per-position cost vector no longer explodes the tibble, and <code>$</code> partial matching no longer grabs unrelated fit elements (C6).</li>
+<li>
+<code><a href="../reference/mosum_wrapper.html">mosum_wrapper()</a></code> records the numeric threshold as <code>penalty$value</code> (was the string “critical.value”) and implements its documented <code>multiscale</code> argument via <code><a href="https://rdrr.io/pkg/mosum/man/multiscale.localPrune.html" class="external-link">mosum::multiscale.localPrune()</a></code> (C7, C8).</li>
+<li>
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> forwards <code>change_in</code> to NOT via contrast mapping and the result reports what actually ran (C9); <code>penalty = "None"</code> resolves to 0 for numeric-penalty engines (C10).</li>
+<li>
+<code>cpt_penalty("sSIC")</code> implements the strengthened SIC <code>k * log(n)^alpha</code> (was <code>0.5 * k * log(n)</code>, weaker than BIC) (C11).</li>
+<li>Metrics agree with the van den Burg-Williams conventions: an exactly correct empty prediction scores precision/recall/F1 = 1 (C12); empty predictions score the trivial-partition covering and chance-level ARI 0 (C13); out-of-range indices are dropped with a warning instead of crashing (C14); <code><a href="../reference/ggcpt_eval.html">ggcpt_eval()</a></code> uses the same one-to-one matching as <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> and its “Miss” legend entry renders (C15).</li>
+<li>
+<code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code> keeps a facet panel for every method, including those that found nothing, and no longer errors when no method finds anything (C16).</li>
+<li>
+<code><a href="../reference/stat_changepoint.html">stat_changepoint()</a></code> sorts by the <code>x</code> aesthetic before detecting (results were previously row-order dependent) and declares <code>dropped_aes</code> so building the plot is warning-free (C17).</li>
+<li>
+<code><a href="../reference/signal_blocks.html">signal_blocks()</a></code> generates the true Donoho-Johnstone blocks signal (cumulative jumps, not absolute levels) (C18); simulated t-noise is rescaled so its standard deviation matches <code>sd</code> (C19); all signal generators validate their minimum lengths (C20).</li>
+<li>
+<code>cpt_wrapper(cp_method = "SegNeigh")</code> falls back to the SIC penalty the engine supports instead of always erroring under the default; <code>np</code> results report <code>change_in = "distribution"</code>; <code>meanvar</code> results stay <code>"meanvar"</code> in the user’s vocabulary; <code><a href="../reference/ggecpplot.html">ggecpplot()</a></code> handles multivariate input without crashing.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.3.0" id="ggchangepoint-030">ggchangepoint 0.3.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-030"></a></h2><p class="text-muted">CRAN release: 2026-06-26</p>
 <div class="section level3">
 <h3 id="documentation-and-coverage-0-3-0">Documentation and coverage<a class="anchor" aria-label="anchor" href="#documentation-and-coverage-0-3-0"></a></h3>
 <ul><li>The README now introduces every exported function, grouped by role, and the over-claimed <code>gfpop</code> engine (never wrapped) has been removed from it.</li>

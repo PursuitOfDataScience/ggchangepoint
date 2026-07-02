@@ -1,8 +1,10 @@
 # Unified changepoint detection dispatcher
 
-Runs one or more changepoint detection methods on a sequence and returns
-a tidy `ggcpt` result object. This is the recommended entry point for
-most users.
+Runs a changepoint detection method on a sequence and returns a tidy
+`ggcpt` result object. This is the recommended entry point for most
+users. See
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+for the full method table with engines and capabilities.
 
 ## Usage
 
@@ -14,39 +16,43 @@ cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
 
 - x:
 
-  A numeric vector (the data series).
+  A numeric vector for univariate methods, or a numeric matrix/data
+  frame (rows are time points) for the multivariate methods (`"ecp"`,
+  `"inspect"`, `"geomcp"`, `"ocd"`, `"npmojo"`, `"kcp"`, `"fastcpd"`).
 
 - method:
 
-  Detection method. See
-  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-  for the complete table. Methods available in this release: `"pelt"`,
-  `"binseg"`, `"segneigh"`, `"amoc"`, `"np"`, `"ecp"`, `"fpop"`,
-  `"wbs"`, `"wbs2"`, `"not"`, `"mosum"`, `"idetect"`, `"tguh"`. Methods
-  that ship with optional (`Suggests`) engine packages will prompt you
-  to install them if missing. Planned methods — `"smuce"`, `"hsmuce"`,
-  `"kcp"`, `"cpm"`, `"robust"`, `"decafs"`, `"sn"`, `"inspect"`,
-  `"sbs"`, `"bcp"`, `"bocpd"`, `"strucchange"`, `"segmented"` — are
-  listed in
-  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-  with their target release.
+  Detection method. One of `"pelt"`, `"binseg"`, `"segneigh"`, `"amoc"`,
+  `"np"`, `"ecp"`, `"fpop"`, `"wbs"`, `"wbs2"`, `"not"`, `"mosum"`,
+  `"idetect"`, `"tguh"`, `"smuce"`, `"hsmuce"`, `"cpop"`, `"bcp"`,
+  `"bocpd"`, `"beast"`, `"cpm"`, `"kcp"`, `"npmojo"`, `"decafs"`,
+  `"sn"`, `"inspect"`, `"ocd"`, `"geomcp"`, `"strucchange"`,
+  `"segmented"`, `"envcpt"`, or `"fastcpd"`. Methods whose engines live
+  in `Suggests` prompt for installation when missing.
 
 - change_in:
 
   What to detect change in. One of `"mean"`, `"var"`, `"meanvar"`,
-  `"slope"`, `"distribution"`. Defaults to `"mean"`.
+  `"slope"`, or `"distribution"`. Defaults to `"mean"`. The requested
+  value is validated against the method's capabilities (see
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md));
+  incompatible combinations error rather than silently running something
+  else.
 
 - penalty:
 
   Penalty type or value. Either a character string (`"MBIC"`, `"BIC"`,
-  `"AIC"`, `"Hannan-Quinn"`) or a numeric penalty value. Defaults to
-  `"MBIC"`. Numeric penalties are honoured by the functional-pruning
-  method (`fpop`); the `changepoint`-based methods expect one of the
-  character options.
+  `"SIC"`, `"AIC"`, `"Hannan-Quinn"`, `"None"`) or a numeric penalty
+  value. Defaults to `"MBIC"`. See the penalty-semantics section of
+  [`cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+  for how each engine interprets it; methods that use thresholds,
+  significance levels, or posteriors instead of penalties ignore this
+  argument.
 
 - ...:
 
-  Additional arguments passed to the specific wrapper.
+  Additional arguments passed to the specific wrapper (see the wrapper's
+  help page for engine-specific options).
 
 ## Value
 

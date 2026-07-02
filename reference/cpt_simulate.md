@@ -50,11 +50,13 @@ rcpt(...)
 
 - sd:
 
-  Noise standard deviation (for Gaussian and t). Defaults to 1.
+  Noise standard deviation (for Gaussian and t; t-noise is rescaled so
+  its standard deviation is exactly `sd`). Defaults to 1.
 
 - df:
 
-  Degrees of freedom for t-noise. Defaults to 3.
+  Degrees of freedom for t-noise; must exceed 2 so the variance exists.
+  Defaults to 3.
 
 - rho:
 

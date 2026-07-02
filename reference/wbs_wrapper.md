@@ -21,8 +21,8 @@ wbs_wrapper(x, n_intervals = 5000, threshold = NULL, seed = NULL, ...)
 
 - threshold:
 
-  Manual threshold for detection. If `NULL`, uses the strengthened
-  Schwarz Information Criterion (sSIC).
+  Manual threshold for detection. If `NULL`, model selection uses the
+  strengthened Schwarz Information Criterion (sSIC).
 
 - seed:
 

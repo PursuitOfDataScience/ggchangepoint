@@ -1,6 +1,7 @@
 # TGUH wrapper
 
-Wraps the `breakfast` package for Tail-Greedy Unbalanced-Haar detection.
+Wraps the `breakfast` package for Tail-Greedy Unbalanced-Haar detection,
+with information-criterion model selection.
 
 ## Usage
 

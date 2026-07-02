@@ -25,4 +25,6 @@ idetect_wrapper(x, seed = NULL, ...)
 
 ## Value
 
-A `ggcpt` object.
+A `ggcpt` object. When the engine finds no changepoints (including when
+it signals "No change-points found"), an empty result is returned rather
+than an error.

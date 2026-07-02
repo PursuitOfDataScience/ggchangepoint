@@ -9,7 +9,7 @@ benchmarking."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -93,11 +93,13 @@ per segment.</p></dd>
 
 
 <dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>
-<dd><p>Noise standard deviation (for Gaussian and t). Defaults to 1.</p></dd>
+<dd><p>Noise standard deviation (for Gaussian and t; t-noise is
+rescaled so its standard deviation is exactly <code>sd</code>). Defaults to 1.</p></dd>
 
 
 <dt id="arg-df">df<a class="anchor" aria-label="anchor" href="#arg-df"></a></dt>
-<dd><p>Degrees of freedom for t-noise. Defaults to 3.</p></dd>
+<dd><p>Degrees of freedom for t-noise; must exceed 2 so the variance
+exists. Defaults to 3.</p></dd>
 
 
 <dt id="arg-rho">rho<a class="anchor" aria-label="anchor" href="#arg-rho"></a></dt>

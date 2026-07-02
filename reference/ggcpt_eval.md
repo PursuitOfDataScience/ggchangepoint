@@ -1,7 +1,10 @@
 # Evaluation visualization
 
 Overlays predictions and ground truth on the series with tolerance
-windows, colouring true positives, false positives, and misses.
+windows, colouring true positives, false positives, and misses. Uses the
+same one-to-one matching as
+[`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md),
+so the plot and the metrics agree.
 
 ## Usage
 

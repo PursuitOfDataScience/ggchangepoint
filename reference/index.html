@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,6 +68,13 @@
 
         <dt>
 
+          <code><a href="cpt_cite.html">cpt_cite()</a></code>
+
+        </dt>
+        <dd>Cite the method behind a result</dd>
+
+        <dt>
+
           <code><a href="new_ggcpt.html">new_ggcpt()</a></code>
 
         </dt>
@@ -87,7 +94,7 @@
         </dt>
         <dd>Print a ggcpt object</dd>
       </dl></div><div class="section level2">
-      <h2 id="existing-wrappers">Existing wrappers<a class="anchor" aria-label="anchor" href="#existing-wrappers"></a></h2>
+      <h2 id="original-wrappers">Original wrappers<a class="anchor" aria-label="anchor" href="#original-wrappers"></a></h2>
 
 
 
@@ -110,7 +117,7 @@
         </dt>
         <dd>ecp wrapper</dd>
       </dl></div><div class="section level2">
-      <h2 id="new-wrappers">New wrappers<a class="anchor" aria-label="anchor" href="#new-wrappers"></a></h2>
+      <h2 id="search-and-pruning-wrappers">Search and pruning wrappers<a class="anchor" aria-label="anchor" href="#search-and-pruning-wrappers"></a></h2>
 
 
 
@@ -168,6 +175,186 @@
         </dt>
         <dd>TGUH wrapper</dd>
       </dl></div><div class="section level2">
+      <h2 id="inference-and-slope-wrappers">Inference and slope wrappers<a class="anchor" aria-label="anchor" href="#inference-and-slope-wrappers"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="smuce_wrapper.html">smuce_wrapper()</a></code>
+
+        </dt>
+        <dd>SMUCE / HSMUCE wrapper — multiscale changepoint inference</dd>
+
+        <dt>
+
+          <code><a href="cpop_wrapper.html">cpop_wrapper()</a></code>
+
+        </dt>
+        <dd>CPOP wrapper — optimal change-in-slope detection</dd>
+
+        <dt>
+
+          <code><a href="cpt_crops.html">cpt_crops()</a></code> <code><a href="cpt_crops.html">autoplot(<i>&lt;ggcpt_path&gt;</i>)</a></code> <code><a href="cpt_crops.html">print(<i>&lt;ggcpt_path&gt;</i>)</a></code> <code><a href="cpt_crops.html">tidy(<i>&lt;ggcpt_path&gt;</i>)</a></code>
+
+        </dt>
+        <dd>CROPS — the full penalty path of a penalised changepoint method</dd>
+      </dl></div><div class="section level2">
+      <h2 id="bayesian-wrappers">Bayesian wrappers<a class="anchor" aria-label="anchor" href="#bayesian-wrappers"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="bcp_wrapper.html">bcp_wrapper()</a></code>
+
+        </dt>
+        <dd>Bayesian changepoint wrapper (Barry-Hartigan product partition model)</dd>
+
+        <dt>
+
+          <code><a href="bocpd_wrapper.html">bocpd_wrapper()</a></code>
+
+        </dt>
+        <dd>Bayesian online changepoint detection wrapper (BOCPD)</dd>
+
+        <dt>
+
+          <code><a href="beast_wrapper.html">beast_wrapper()</a></code>
+
+        </dt>
+        <dd>BEAST wrapper — Bayesian estimation of abrupt change, seasonality, and trend</dd>
+      </dl></div><div class="section level2">
+      <h2 id="nonparametric-and-sequential-wrappers">Nonparametric and sequential wrappers<a class="anchor" aria-label="anchor" href="#nonparametric-and-sequential-wrappers"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpm_wrapper.html">cpm_wrapper()</a></code>
+
+        </dt>
+        <dd>Sequential change point model wrapper (CPM)</dd>
+
+        <dt>
+
+          <code><a href="kcp_wrapper.html">kcp_wrapper()</a></code>
+
+        </dt>
+        <dd>Kernel changepoint wrapper (KCP on running statistics)</dd>
+
+        <dt>
+
+          <code><a href="npmojo_wrapper.html">npmojo_wrapper()</a></code>
+
+        </dt>
+        <dd>Nonparametric MOSUM wrapper (NP-MOJO)</dd>
+
+        <dt>
+
+          <code><a href="sn_wrapper.html">sn_wrapper()</a></code>
+
+        </dt>
+        <dd>Self-normalisation wrapper (SNSeg)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="robust-and-model-selection-wrappers">Robust and model-selection wrappers<a class="anchor" aria-label="anchor" href="#robust-and-model-selection-wrappers"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="decafs_wrapper.html">decafs_wrapper()</a></code>
+
+        </dt>
+        <dd>DeCAFS wrapper — changes amid drift and autocorrelated noise</dd>
+
+        <dt>
+
+          <code><a href="envcpt_wrapper.html">envcpt_wrapper()</a></code>
+
+        </dt>
+        <dd>EnvCpt wrapper — changepoints versus trends versus autocorrelation</dd>
+
+        <dt>
+
+          <code><a href="fastcpd_wrapper.html">fastcpd_wrapper()</a></code>
+
+        </dt>
+        <dd>fastcpd wrapper — fast changepoint detection via sequential gradient descent</dd>
+      </dl></div><div class="section level2">
+      <h2 id="multivariate-and-high-dimensional-wrappers">Multivariate and high-dimensional wrappers<a class="anchor" aria-label="anchor" href="#multivariate-and-high-dimensional-wrappers"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="inspect_wrapper.html">inspect_wrapper()</a></code>
+
+        </dt>
+        <dd>inspect wrapper — high-dimensional changepoints via sparse projection</dd>
+
+        <dt>
+
+          <code><a href="ocd_wrapper.html">ocd_wrapper()</a></code>
+
+        </dt>
+        <dd>ocd wrapper — online high-dimensional changepoint detection</dd>
+
+        <dt>
+
+          <code><a href="geomcp_wrapper.html">geomcp_wrapper()</a></code>
+
+        </dt>
+        <dd>Geometrically-inspired multivariate changepoint wrapper (geomcp)</dd>
+      </dl></div><div class="section level2">
+      <h2 id="regression-break-wrappers">Regression-break wrappers<a class="anchor" aria-label="anchor" href="#regression-break-wrappers"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="strucchange_wrapper.html">strucchange_wrapper()</a></code>
+
+        </dt>
+        <dd>Bai-Perron structural break wrapper (strucchange)</dd>
+
+        <dt>
+
+          <code><a href="segmented_wrapper.html">segmented_wrapper()</a></code>
+
+        </dt>
+        <dd>Broken-line regression wrapper (segmented)</dd>
+      </dl></div><div class="section level2">
       <h2 id="broom-methods">broom methods<a class="anchor" aria-label="anchor" href="#broom-methods"></a></h2>
 
 
@@ -220,13 +407,6 @@
 
         </dt>
         <dd>Coerce, format, and plot ggcpt objects</dd>
-
-        <dt>
-
-          <code><a href="print.ggcpt.html">print(<i>&lt;ggcpt&gt;</i>)</a></code>
-
-        </dt>
-        <dd>Print a ggcpt object</dd>
       </dl></div><div class="section level2">
       <h2 id="theming-and-helpers">Theming and helpers<a class="anchor" aria-label="anchor" href="#theming-and-helpers"></a></h2>
 
@@ -308,8 +488,29 @@
 
         </dt>
         <dd>Changepoint detection stat</dd>
+
+        <dt>
+
+          <code><a href="ggcpt_posterior.html">ggcpt_posterior()</a></code>
+
+        </dt>
+        <dd>Posterior probability plot for Bayesian results</dd>
+
+        <dt>
+
+          <code><a href="ggcpt_runlength.html">ggcpt_runlength()</a></code>
+
+        </dt>
+        <dd>Run-length posterior heatmap for Bayesian online results</dd>
+
+        <dt>
+
+          <code><a href="ggcpt_interactive.html">ggcpt_interactive()</a></code>
+
+        </dt>
+        <dd>Interactive changepoint plot</dd>
       </dl></div><div class="section level2">
-      <h2 id="method-comparison">Method comparison<a class="anchor" aria-label="anchor" href="#method-comparison"></a></h2>
+      <h2 id="method-comparison-batch-and-stability">Method comparison, batch, and stability<a class="anchor" aria-label="anchor" href="#method-comparison-batch-and-stability"></a></h2>
 
 
 
@@ -331,6 +532,20 @@
 
         </dt>
         <dd>Comparison table</dd>
+
+        <dt>
+
+          <code><a href="cpt_batch.html">cpt_batch()</a></code> <code><a href="cpt_batch.html">print(<i>&lt;ggcpt_batch&gt;</i>)</a></code> <code><a href="cpt_batch.html">tidy(<i>&lt;ggcpt_batch&gt;</i>)</a></code> <code><a href="cpt_batch.html">autoplot(<i>&lt;ggcpt_batch&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Batch changepoint detection over many series</dd>
+
+        <dt>
+
+          <code><a href="cpt_stability.html">cpt_stability()</a></code> <code><a href="cpt_stability.html">print(<i>&lt;ggcpt_stability&gt;</i>)</a></code> <code><a href="cpt_stability.html">autoplot(<i>&lt;ggcpt_stability&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Changepoint stability diagnostics via bootstrap</dd>
       </dl></div><div class="section level2">
       <h2 id="evaluation">Evaluation<a class="anchor" aria-label="anchor" href="#evaluation"></a></h2>
 
@@ -412,6 +627,22 @@
 
         </dt>
         <dd>Stairs test signal</dd>
+      </dl></div><div class="section level2">
+      <h2 id="re-exports">Re-exports<a class="anchor" aria-label="anchor" href="#re-exports"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="reexports.html">reexports</a></code> <code><a href="reexports.html">tidy</a></code> <code><a href="reexports.html">glance</a></code> <code><a href="reexports.html">augment</a></code> <code><a href="reexports.html">autoplot</a></code> <code><a href="reexports.html">as_tibble</a></code>
+
+        </dt>
+        <dd>Objects exported from other packages</dd>
       </dl></div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

@@ -9,7 +9,7 @@ detection methods. Returns a numeric penalty value."></head><body>
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -46,7 +46,7 @@ detection methods. Returns a numeric penalty value.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_penalty</span><span class="op">(</span><span class="va">type</span>, n <span class="op">=</span> <span class="cn">NULL</span>, k <span class="op">=</span> <span class="fl">1</span>, value <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_penalty</span><span class="op">(</span><span class="va">type</span>, n <span class="op">=</span> <span class="cn">NULL</span>, k <span class="op">=</span> <span class="fl">1</span>, value <span class="op">=</span> <span class="cn">NULL</span>, alpha <span class="op">=</span> <span class="fl">1.01</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -71,6 +71,12 @@ mean+variance, 1 for mean-only). Defaults to 1.</p></dd>
 <dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>
 <dd><p>Numeric value for <code>Manual</code> type.</p></dd>
 
+
+<dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
+<dd><p>Exponent of the strengthened SIC (<code>"sSIC"</code>) penalty
+\(k (\log n)^\alpha\); must exceed 1. Defaults to <code>1.01</code>
+(Fryzlewicz, 2014).</p></dd>
+
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
@@ -85,14 +91,18 @@ mean+variance, 1 for mean-only). Defaults to 1.</p></dd>
     <code>"Hannan-Quinn"</code>, <code>"None"</code>) and pass them to the upstream
     <span class="pkg">changepoint</span> package. These methods do <em>not</em> accept raw numeric
     penalty values.</p></li>
-<li><p><strong>Functional-pruning methods</strong> (<code>fpop</code>): accept numeric
-    penalties only. When a character penalty is supplied via
-    <code><a href="cpt_detect.html">cpt_detect()</a></code>, it is resolved to a numeric value using
-    <code>cpt_penalty()</code> before dispatch.</p></li>
+<li><p><strong>Functional-pruning methods</strong> (<code>fpop</code>, <code>cpop</code>,
+    <code>decafs</code>): accept numeric penalties only. When a character penalty
+    is supplied via <code><a href="cpt_detect.html">cpt_detect()</a></code>, it is resolved to a numeric value
+    using <code>cpt_penalty()</code> before dispatch.</p></li>
 <li><p><strong>Search-based methods</strong> (WBS, WBS2, NOT, MOSUM, IDetect,
     TGUH): use internal model-selection criteria (e.g., sSIC, threshold)
     and generally <em>ignore</em> the <code>penalty</code> argument. Specify
     thresholds via the wrapper's own arguments.</p></li>
+<li><p><strong>Inference/Bayesian methods</strong> (<code>smuce</code>, <code>bcp</code>,
+    <code>bocpd</code>, <code>beast</code>, <code>cpm</code>, <code>sn</code>): are tuned by a
+    significance level, posterior-probability threshold, hazard, or
+    average run length rather than a penalty; see each wrapper.</p></li>
 <li><p><strong><code>MBIC</code></strong> in <code>cpt_penalty()</code> uses the
     Zhang-Siegmund (2007) formula \(0.5(k+1)\log n + \log{n \choose k}\),
     which differs from the <span class="pkg">changepoint</span> package's MBIC. Use the

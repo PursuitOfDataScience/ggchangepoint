@@ -34,8 +34,8 @@ plot(x, ...)
 
 - .name_repair:
 
-  Passed to
-  [`as_tibble`](https://tibble.tidyverse.org/reference/as_tibble.html).
+  Ignored (the changepoints tibble already has valid, unique names);
+  present for signature compatibility with the generic.
 
 - row.names, optional:
 

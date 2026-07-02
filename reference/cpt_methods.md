@@ -46,19 +46,18 @@ A tibble with columns:
 
 ``` r
 cpt_methods()
-#> Warning: no DISPLAY variable so Tk is not available
-#> # A tibble: 26 × 6
-#>    method   change_in          engine         status    target_release installed
-#>    <chr>    <chr>              <chr>          <chr>     <chr>          <lgl>    
-#>  1 pelt     mean, var, meanvar changepoint    available NA             TRUE     
-#>  2 binseg   mean, var, meanvar changepoint    available NA             TRUE     
-#>  3 segneigh mean, var, meanvar changepoint    available NA             TRUE     
-#>  4 amoc     mean, var, meanvar changepoint    available NA             TRUE     
-#>  5 np       distribution       changepoint.np available NA             TRUE     
-#>  6 ecp      distribution       ecp            available NA             TRUE     
-#>  7 fpop     mean               fpop           available NA             TRUE     
-#>  8 wbs      mean               wbs            available NA             TRUE     
-#>  9 wbs2     mean               breakfast      available NA             TRUE     
-#> 10 not      mean, var, slope   not            available NA             TRUE     
-#> # ℹ 16 more rows
+#> # A tibble: 35 × 6
+#>    method   change_in                   engine   status target_release installed
+#>    <chr>    <chr>                       <chr>    <chr>  <chr>          <lgl>    
+#>  1 pelt     mean, var, meanvar          changep… avail… NA             TRUE     
+#>  2 binseg   mean, var, meanvar          changep… avail… NA             TRUE     
+#>  3 segneigh mean, var, meanvar          changep… avail… NA             TRUE     
+#>  4 amoc     mean, var, meanvar          changep… avail… NA             TRUE     
+#>  5 np       distribution                changep… avail… NA             TRUE     
+#>  6 ecp      distribution (multivariate) ecp      avail… NA             TRUE     
+#>  7 fpop     mean                        fpop     avail… NA             TRUE     
+#>  8 wbs      mean                        wbs      avail… NA             TRUE     
+#>  9 wbs2     mean                        breakfa… avail… NA             TRUE     
+#> 10 not      mean, var, slope            not      avail… NA             TRUE     
+#> # ℹ 25 more rows
 ```

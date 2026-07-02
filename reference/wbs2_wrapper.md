@@ -1,6 +1,7 @@
 # WBS2 wrapper — Wild Binary Segmentation 2
 
-Wraps the `breakfast` package. Requires the `breakfast` package.
+Wraps the `breakfast` package's WBS2 solution path with
+steepest-drop-to-low-levels (SDLL) model selection.
 
 ## Usage
 

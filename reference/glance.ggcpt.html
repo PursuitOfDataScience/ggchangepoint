@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -63,7 +63,9 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A one-row tibble with columns: <code>n</code>, <code>n_changepoints</code>,
   <code>method</code>, <code>change_in</code>, <code>penalty_type</code>, <code>penalty_value</code>,
-  <code>cp_convention</code>, <code>total_cost</code> (if available), <code>runtime</code> (NA).</p>
+  <code>cp_convention</code>, <code>total_cost</code> (<code>NA</code> when the engine does
+  not expose a cost), <code>runtime</code> (elapsed seconds when measured by
+  <code><a href="cpt_detect.html">cpt_detect()</a></code>, otherwise <code>NA</code>).</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

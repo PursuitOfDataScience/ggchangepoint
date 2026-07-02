@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,759 +40,316 @@
 
 <div class="section level3">
 <h3 id="expanding-tidy-visualization-first-changepoint-detection-in-r">Expanding tidy, visualization-first changepoint detection in R<a class="anchor" aria-label="anchor" href="#expanding-tidy-visualization-first-changepoint-detection-in-r"></a></h3>
-<p><strong>Author:</strong> Youzhi Yu <strong>Status:</strong> Design document / development roadmap for <code>ggchangepoint</code> 0.3.0 and beyond <strong>Current release:</strong> <code>ggchangepoint</code> 0.2.0 (CRAN)</p>
+<p><strong>Author:</strong> Youzhi Yu <strong>Status:</strong> Design document / development roadmap for <code>ggchangepoint</code> 0.4.0 and beyond <strong>Current release:</strong> <code>ggchangepoint</code> 0.3.0 (CRAN)</p>
 <hr></div>
 <div class="section level2">
 <h2 id="abstract">Abstract<a class="anchor" aria-label="anchor" href="#abstract"></a></h2>
-<p><code>ggchangepoint</code> 0.2.0 is on CRAN. It turned the three-engine 0.1.0 prototype into a unified, tidy, <code>ggplot2</code>-native framework: a single S3 result class (<code>ggcpt</code>) with <code>broom</code>-style <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>/<code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>/<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> methods, an <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> method, a family of composable geoms (<code><a href="reference/geom_changepoint.html">geom_changepoint()</a></code>, <code><a href="reference/geom_cpt_segment.html">geom_cpt_segment()</a></code>, <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code>, <code><a href="reference/stat_changepoint.html">stat_changepoint()</a></code>), a unified <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> dispatcher, first-wave wrappers for WBS, WBS2, NOT, MOSUM, FPOP, Isolate-Detect and TGUH, a method-comparison module with optional <code>future</code> parallelism, an accuracy-metrics module, a data simulator with the canonical benchmark signals, and a thorough hardening of the original four functions.</p>
-<p>This document plans the <strong>next</strong> release. It does two things the 0.2.0 cycle did not finish, and they come first because they matter most for users <em>today</em>:</p>
-<ol style="list-style-type: decimal"><li><p><strong>It closes a documentation and coverage gap.</strong> The package now exports ~37 user-facing functions, but the README, the package-level help, and even the vignettes introduce only a subset; some documentation actively <em>mis</em>-states the surface (the README advertises a <code>gfpop</code> engine that is not wrapped; the package-level help still says the package “only include[s] three changepoint packages”; <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>’s signature advertises 13 methods that error with “not yet implemented”). <strong>§2 makes it a first-class, blocking deliverable that the next release introduce <em>every</em> feature the package actually provides</strong> — in the README, in a vignette, and with a runnable example — and reconcile every over- and under-claim. A package that ships features its own front door never mentions is a package whose features do not exist for most users.</p></li>
-<li><p><strong>It makes the dispatcher honest and finishes the foundation</strong> (§3): wire or stop advertising the stub methods, add a <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> introspection helper, deliver genuine multivariate input instead of silently flattening it, and extend the opt-in <code>future</code> parallelism beyond <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code>.</p></li>
-</ol><p>On top of that it plans the <strong>next engine wave</strong> (§4: <code>gfpop</code>, SMUCE/HSMUCE, CROPS penalty paths, robust loss, DeCAFS, self-normalisation), surveys the <strong>remaining method backlog</strong> with mathematics and citations (§5: Bayesian, high-dimensional/multivariate, regression breaks, online/sequential, kernel), and — answering the brief to <em>think harder about what to build</em> — proposes a set of <strong>genuinely new, non-detector features</strong> (§6: completed S3 surface, time/date and <code>ts</code>/<code>xts</code>/<code>tsibble</code> input, panel/batch detection, interactive and Shiny exploration, <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code>/segment labelling, stability diagnostics, reproducible citations, decomposition-then-detect, and interop/export). The document closes with the visualization, evaluation, and simulation extensions, an architecture/dependency/testing plan, a phased release schedule, a record of what 0.2.0 fixed, <strong>a verified bug audit reproducing twelve concrete defects found by actually running 0.2.0</strong> (§11.3 — including a broken canonical test signal, an accuracy metric that returns <code>recall &gt; 1</code>, and a stat that misplaces changepoints on dated axes), and a complete, verified reference list.</p>
-<p>The two commitments that define the package are unchanged: <strong>(i) every detector returns a tidy tibble inside a structured <code>ggcpt</code> object</strong>, and <strong>(ii) every result is directly renderable with <code>ggplot2</code></strong>.</p>
+<p><code>ggchangepoint</code> 0.3.0 closed the documentation gap of the 0.2.0 cycle: the README introduces every export, the dispatcher is honest (only wired methods are offered), a <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> introspection table ships, the <code>ggcpt</code> S3 surface is complete (<code>summary</code>/<code>as_tibble</code>/<code>as.data.frame</code>/<code>format</code>/<code>plot</code>), and eleven verified 0.2.0 bugs (B1–B11) were fixed.</p>
+<p>This document plans <strong>0.4.0</strong>, whose brief is the opposite of 0.3.0’s: not documentation, but <strong>methods</strong>. Guided by a fresh literature-and-CRAN survey (July 2026; §2), 0.4.0 ships the <strong>largest engine wave in the package’s history</strong> — eighteen new wrappers spanning multiscale inference with confidence intervals (SMUCE/HSMUCE), exact change-in-slope (CPOP), the CROPS penalty path, Bayesian detection offline and online (bcp, BOCPD, BEAST), sequential/nonparametric testing (CPM, kernel running statistics, NP-MOJO), robustness to drift, autocorrelation and dependence (DeCAFS, self-normalisation, EnvCpt), high-dimensional and multivariate detection (inspect, ocd, geomcp), regression breaks (Bai–Perron/strucchange, segmented), and the modern fastcpd engine (mean/var/ARMA/GARCH) — taking <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> from 13 to <strong>31 wired methods</strong> (§3). Around the new engines it builds the supporting features that compound across all of them: uncertainty-aware plotting (<code>show_ci</code>, <code>show_fit</code>, posterior and run-length displays), genuine multivariate input with faceted rendering, panel/batch detection, bootstrap stability diagnostics, interactive rendering, and per-method citations (§4). It also fixes <strong>twenty verified bugs</strong> found by a systematic audit that ran the 0.3.0 code (§6) — including an <code>ecp</code> wrapper that fabricated changepoints on no-change data, a WBS wrapper that silently discarded the model selection it claimed to use, and metrics that punished a correct “no changepoints” answer.</p>
+<p>The two commitments that define the package are unchanged: <strong>(i) every detector returns a tidy tibble inside a structured <code>ggcpt</code> object</strong>, and <strong>(ii) every result is directly renderable with <code>ggplot2</code></strong>. 0.4.0 adds a third: <strong>(iii) where a method quantifies uncertainty — confidence intervals, posterior probabilities, run-length distributions — the <code>ggcpt</code> object carries it and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> can draw it.</strong></p>
 <hr></div>
 <div class="section level2">
 <h2 id="contents">Contents<a class="anchor" aria-label="anchor" href="#contents"></a></h2>
-<ol style="list-style-type: decimal"><li><a href="#id_1-status-where-020-landed">Status: where 0.2.0 landed</a></li>
-<li><a href="#id_2-the-documentation-and-coverage-gap-and-the-mandate-to-close-it">The documentation and coverage gap (and the mandate to close it)</a></li>
-<li><a href="#id_3-finishing-the-foundation-an-honest-dispatcher-multivariate-input-parallelism">Finishing the foundation: an honest dispatcher, multivariate input, parallelism</a></li>
-<li>
-<a href="#id_4-the-next-engine-wave-030">The next engine wave (0.3.0)</a>
-<ul><li>4.1 <a href="#id_41-gfpop--graph-constrained-functional-pruning">gfpop — graph-constrained functional pruning</a>
-</li>
-<li>4.2 <a href="#id_42-smuce--hsmuce--multiscale-inference-with-confidence">SMUCE / HSMUCE — multiscale inference with confidence</a>
-</li>
-<li>4.3 <a href="#id_43-crops--the-penalty-path">CROPS — the penalty path</a>
-</li>
-<li>4.4 <a href="#id_44-robust-loss-decafs-self-normalisation">Robust loss, DeCAFS, self-normalisation</a>
-</li>
-</ul></li>
-<li>
-<a href="#id_5-the-remaining-method-backlog-040">The remaining method backlog (0.4.0+)</a>
-<ul><li>5.1 <a href="#id_51-nonparametric-and-kernel">Nonparametric and kernel</a>
-</li>
-<li>5.2 <a href="#id_52-high-dimensional-and-multivariate">High-dimensional and multivariate</a>
-</li>
-<li>5.3 <a href="#id_53-bayesian">Bayesian</a>
-</li>
-<li>5.4 <a href="#id_54-structural-breaks-in-regression">Structural breaks in regression</a>
-</li>
-<li>5.5 <a href="#id_55-online-and-sequential">Online and sequential</a>
-</li>
-</ul></li>
-<li><a href="#id_6-new-features-beyond-detection-methods">New features beyond detection methods</a></li>
-<li><a href="#id_7-the-visualization-layer-what-shipped-and-what-comes-next">The visualization layer: what shipped and what comes next</a></li>
-<li><a href="#id_8-evaluation-simulation-and-benchmark-data">Evaluation, simulation, and benchmark data</a></li>
-<li><a href="#id_9-architecture-dependencies-testing-and-parallelism">Architecture, dependencies, testing, and parallelism</a></li>
-<li><a href="#id_10-phased-release-plan">Phased release plan</a></li>
-<li>
-<a href="#id_11-hardening-what-020-fixed-and-what-remains">Hardening: what 0.2.0 fixed and what remains</a>
-<ul><li>11.3 <a href="#id_113-bugs-and-improvements-found-by-testing-020-verified">Bugs and improvements found by testing 0.2.0 (verified)</a>
-</li>
-</ul></li>
-<li><a href="#id_12-backward-compatibility-and-deprecation">Backward compatibility and deprecation</a></li>
-<li><a href="#appendix-a-method--package--function-map">Appendix A: Method → package → function map</a></li>
-<li><a href="#appendix-b-api-reference-shipped-and-proposed">Appendix B: API reference (shipped and proposed)</a></li>
+<ol style="list-style-type: decimal"><li><a href="#id_1-status-where-030-landed">Status: where 0.3.0 landed</a></li>
+<li><a href="#id_2-the-2026-method-survey">The 2026 method survey: what the field considers essential</a></li>
+<li><a href="#id_3-the-040-engine-wave">The 0.4.0 engine wave</a></li>
+<li><a href="#id_4-new-features-beyond-detectors">New features beyond detectors</a></li>
+<li><a href="#id_5-deferred-engines-and-the-050-horizon">Deferred engines and the 0.5.0 horizon</a></li>
+<li><a href="#id_6-the-040-bug-audit-verified">The 0.4.0 bug audit (verified)</a></li>
+<li><a href="#id_7-architecture-dependencies-testing">Architecture, dependencies, testing</a></li>
+<li><a href="#id_8-backward-compatibility">Backward compatibility</a></li>
 <li><a href="#references">References</a></li>
 </ol><hr></div>
 <div class="section level2">
-<h2 id="id_1-status-where-020-landed">1. Status: where 0.2.0 landed<a class="anchor" aria-label="anchor" href="#id_1-status-where-020-landed"></a></h2>
-<div class="section level3">
-<h3 id="id_11-what-020-delivered">1.1 What 0.2.0 delivered<a class="anchor" aria-label="anchor" href="#id_11-what-020-delivered"></a></h3>
-<p>The current public surface is much larger than 0.1.0’s four functions. Grouped by role:</p>
-<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>Area</th>
-<th>Exported surface (0.2.0)</th>
-<th>Notes</th>
-</tr></thead><tbody><tr><td>Result object</td>
-<td>
-<code><a href="reference/new_ggcpt.html">new_ggcpt()</a></code>, <code><a href="reference/is_ggcpt.html">is_ggcpt()</a></code>, <code><a href="reference/print.ggcpt.html">print.ggcpt()</a></code>
-</td>
-<td>the <code>ggcpt</code> S3 class; <code>cp</code>/<code>cp_value</code> contract preserved</td>
-</tr><tr><td>broom methods</td>
-<td>
-<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> (<code>.ggcpt</code>)</td>
-<td>one row per changepoint; one-row summary; data + <code>seg_id</code>/<code>.fitted</code>/<code>.resid</code>/<code>is_changepoint</code>
-</td>
-</tr><tr><td>Unified front-end</td>
-<td>
-<code><a href="reference/cpt_detect.html">cpt_detect()</a></code>, <code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code>
-</td>
-<td>dispatcher + penalty constructor</td>
-</tr><tr><td>Original wrappers</td>
-<td>
-<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code><a href="reference/ggcptplot.html">ggcptplot()</a></code>, <code><a href="reference/ggecpplot.html">ggecpplot()</a></code>
-</td>
-<td>retained, hardened, unchanged contract</td>
-</tr><tr><td>New engine wrappers</td>
-<td>
-<code><a href="reference/fpop_wrapper.html">fpop_wrapper()</a></code>, <code><a href="reference/wbs_wrapper.html">wbs_wrapper()</a></code>, <code><a href="reference/wbs2_wrapper.html">wbs2_wrapper()</a></code>, <code><a href="reference/not_wrapper.html">not_wrapper()</a></code>, <code><a href="reference/mosum_wrapper.html">mosum_wrapper()</a></code>, <code><a href="reference/idetect_wrapper.html">idetect_wrapper()</a></code>, <code><a href="reference/tguh_wrapper.html">tguh_wrapper()</a></code>
-</td>
-<td>all return <code>ggcpt</code>; engines in <code>Suggests</code>
-</td>
-</tr><tr><td>Visualization</td>
-<td>
-<code><a href="reference/autoplot.ggcpt.html">autoplot.ggcpt()</a></code>, <code><a href="reference/geom_changepoint.html">geom_changepoint()</a></code>, <code><a href="reference/geom_cpt_segment.html">geom_cpt_segment()</a></code>, <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code>, <code><a href="reference/stat_changepoint.html">stat_changepoint()</a></code>, <code><a href="reference/theme_ggcpt.html">theme_ggcpt()</a></code>, <code><a href="reference/annotate_segments.html">annotate_segments()</a></code>
-</td>
-<td>composable layers + theming</td>
-</tr><tr><td>Comparison</td>
-<td>
-<code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code>, <code><a href="reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code>
-</td>
-<td>facet/overlay; honours <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code>
-</td>
-</tr><tr><td>Evaluation</td>
-<td>
-<code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code>, <code><a href="reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code>, <code><a href="reference/ggcpt_eval.html">ggcpt_eval()</a></code>
-</td>
-<td>precision/recall/F1, covering, Hausdorff, Rand, annotation error</td>
-</tr><tr><td>Simulation / data</td>
-<td>
-<code><a href="reference/cpt_simulate.html">cpt_simulate()</a></code> / <code><a href="reference/cpt_simulate.html">rcpt()</a></code>, <code><a href="reference/signal_blocks.html">signal_blocks()</a></code>, <code><a href="reference/signal_fms.html">signal_fms()</a></code>, <code><a href="reference/signal_mix.html">signal_mix()</a></code>, <code><a href="reference/signal_teeth.html">signal_teeth()</a></code>, <code><a href="reference/signal_stairs.html">signal_stairs()</a></code>
-</td>
-<td>known-truth generators + canonical signals</td>
-</tr></tbody></table><p>The hardening promised for the 0.1.0 functions shipped too (§11): the <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> no-change bug is fixed, <code>size</code> became <code>linewidth</code> (<code>cptline_linewidth</code>, with <code>cptline_size</code> soft-deprecated), <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> validation is in, the changepoint-location convention is reconciled to “left” (last index of the left segment) with a <code>cp_convention</code> field, the plots gained an <code>index</code> argument and a length-aware <code>show_points</code>, the <code>"np"</code> alias exists, and a <code>testthat</code> suite plus the first snapshot tests are in place.</p>
-</div>
-<div class="section level3">
-<h3 id="id_12-what-020-set-up-but-did-not-finish">1.2 What 0.2.0 set up but did not finish<a class="anchor" aria-label="anchor" href="#id_12-what-020-set-up-but-did-not-finish"></a></h3>
-<p>Three load-bearing things are partial, and the next release should treat them as debt, not background:</p>
+<h2 id="id_1-status-where-030-landed">1. Status: where 0.3.0 landed<a class="anchor" aria-label="anchor" href="#id_1-status-where-030-landed"></a></h2>
+<p>0.3.0 delivered documentation parity (README/vignettes/help cover all ~40 exports), the honest dispatcher (13 wired methods, planned ones listed in <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> instead of erroring at runtime), the completed S3 surface, and fixes B1–B11 from the 0.2.0 audit (the broken <code><a href="reference/signal_blocks.html">signal_blocks()</a></code> loop, <code>recall &gt; 1</code> in <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code>, silent <code>change_in</code> mislabelling, flattened multivariate <code>ecp</code> input, misplaced <code><a href="reference/stat_changepoint.html">stat_changepoint()</a></code> rules, and others).</p>
+<p>What 0.3.0 explicitly deferred — and what defines 0.4.0:</p>
 <ul><li>
-<strong>The dispatcher advertises more than it can do.</strong> <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>’s <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> enumerates 26 methods, but only 13 are wired (<code>pelt</code>, <code>binseg</code>, <code>segneigh</code>, <code>amoc</code>, <code>np</code>, <code>ecp</code>, <code>fpop</code>, <code>wbs</code>, <code>wbs2</code>, <code>not</code>, <code>mosum</code>, <code>idetect</code>, <code>tguh</code>). The other 13 — <code>smuce</code>, <code>hsmuce</code>, <code>kcp</code>, <code>cpm</code>, <code>robust</code>, <code>decafs</code>, <code>sn</code>, <code>inspect</code>, <code>sbs</code>, <code>bcp</code>, <code>bocpd</code>, <code>strucchange</code>, <code>segmented</code> — fall through to <code>stop("... not yet implemented ...")</code>, yet <code>cpt_detect.Rd</code> lists all 26 as if they worked. This is both a correctness wart and a documentation defect (§2, §3.1).</li>
+<strong>The method backlog.</strong> Thirteen methods were listed as <em>planned</em>: <code>smuce</code>, <code>hsmuce</code>, <code>kcp</code>, <code>cpm</code>, <code>robust</code>, <code>decafs</code>, <code>sn</code>, <code>inspect</code>, <code>sbs</code>, <code>bcp</code>, <code>bocpd</code>, <code>strucchange</code>, <code>segmented</code>.</li>
 <li>
-<strong>Multivariate detection is a false promise.</strong> <code>ecp</code> is the package’s multivariate engine, but <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> does <code>data_vec &lt;- as.numeric(x)</code>, which <em>flattens</em> a matrix, and <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> returns <code>NA</code> for <code>cp_value</code> on matrix/data-frame input. <code>validate_data()</code> accepts matrices, so the door is open but the room is empty (§3.2).</li>
+<strong><code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> had no producer.</strong> The CI geom shipped in 0.2.0, but no engine emitted <code>ci_lower</code>/<code>ci_upper</code>.</li>
 <li>
-<strong>Parallelism reaches one function.</strong> <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code> honours <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code>, but the batch/simulation/metric-grid loops that dominate methodological work do not yet (§3.3, §9.4).</li>
+<strong>Multivariate input was routed but not rendered.</strong> <code>ecp</code> stopped being flattened, but <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> still drew only the first coordinate.</li>
+<li>
+<strong>Orchestration.</strong> No batch/panel loop, no stability diagnostics, no penalty-path tooling.</li>
 </ul></div>
-<div class="section level3">
-<h3 id="id_13-design-principles-carried-forward-with-one-addition">1.3 Design principles (carried forward, with one addition)<a class="anchor" aria-label="anchor" href="#id_13-design-principles-carried-forward-with-one-addition"></a></h3>
-<ul><li>
-<strong>P1 — Wrap, don’t reinvent.</strong> Bind to peer-reviewed, CRAN-published engines; new engines enter as <code>Suggests</code>, guarded with <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code>.</li>
-<li>
-<strong>P2 — Tidy in, tidy out.</strong> Every detector returns a <code>ggcpt</code>; column names are stable across methods.</li>
-<li>
-<strong>P3 — <code>ggplot2</code> all the way down.</strong> Every result renders with <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and extends with <code>+</code>.</li>
-<li>
-<strong>P4 — One vocabulary.</strong> A consistent argument set (<code>x</code>, <code>method</code>, <code>penalty</code>, <code>min_size</code>, <code>n_cpts</code>, …); method-specific arguments flow through <code>...</code>.</li>
-<li>
-<strong>P5 — Progressive disclosure.</strong> Beginners call <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> + <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>; experts reach the upstream object via <code>$fit</code>.</li>
-<li>
-<strong>P6 — No surprises for existing users.</strong> The 0.1.0 four and now the 0.2.0 surface keep working unchanged.</li>
-<li>
-<strong>P7 — Document everything you ship (new).</strong> No feature is “done” until it is introduced where users look first — the README and a vignette — with a runnable example, and until the package’s own help no longer contradicts the package’s own exports. This principle is what §2 operationalises.</li>
-</ul><hr></div>
-</div>
 <div class="section level2">
-<h2 id="id_2-the-documentation-and-coverage-gap-and-the-mandate-to-close-it">2. The documentation and coverage gap (and the mandate to close it)<a class="anchor" aria-label="anchor" href="#id_2-the-documentation-and-coverage-gap-and-the-mandate-to-close-it"></a></h2>
-<blockquote>
-<p><strong>This section is the headline deliverable of the next release.</strong> The package already provides far more than its public-facing documentation admits, and in a few places the documentation states things that are not true. Until that is fixed, much of 0.2.0’s work is invisible.</p>
-</blockquote>
-<div class="section level3">
-<h3 id="id_21-the-gap-concretely">2.1 The gap, concretely<a class="anchor" aria-label="anchor" href="#id_21-the-gap-concretely"></a></h3>
-<p>The README and the package-level help advertise the package; the vignettes teach it; the man pages document the individual functions. Today these three layers disagree with each other and with the code. Mapping every export against where it is actually introduced:</p>
-<table class="table"><colgroup><col width="16%"><col width="27%"><col width="27%"><col width="27%"></colgroup><thead><tr><th>Export</th>
-<th align="center">README</th>
-<th align="center">Vignette (narrative)</th>
-<th align="center">Man page</th>
-</tr></thead><tbody><tr><td>
-<code>cpt_detect</code>, <code>tidy</code>/<code>glance</code>/<code>augment</code>, <code>autoplot</code>, <code>ggcpt_compare</code>, <code>ggcpt_compare_table</code>, <code>cpt_metrics</code>, <code>cpt_simulate</code>, <code>signal_*</code>, <code>cpt_wrapper</code>, <code>ggcptplot</code>
-</td>
-<td align="center">✅</td>
-<td align="center">✅</td>
-<td align="center">✅</td>
-</tr><tr><td>
-<code>cpt_penalty</code>, <code>cpt_metrics_annotated</code>, <code>ggcpt_eval</code>, <code>geom_changepoint</code>, <code>geom_cpt_segment</code>, <code>geom_cpt_ci</code>, <code>stat_changepoint</code>, <code>rcpt</code>, <code>ecp_wrapper</code>/<code>ggecpplot</code>
-</td>
-<td align="center">❌</td>
-<td align="center">✅</td>
-<td align="center">✅</td>
-</tr><tr><td>
-<code>theme_ggcpt</code>, <code>annotate_segments</code>
-</td>
-<td align="center">❌</td>
-<td align="center">❌</td>
-<td align="center">✅</td>
-</tr><tr><td>
-<code>fpop_wrapper</code>, <code>wbs_wrapper</code>, <code>wbs2_wrapper</code>, <code>not_wrapper</code>, <code>mosum_wrapper</code>, <code>idetect_wrapper</code>, <code>tguh_wrapper</code>
-</td>
-<td align="center">❌</td>
-<td align="center">❌</td>
-<td align="center">✅</td>
-</tr><tr><td>
-<code>new_ggcpt</code>, <code>is_ggcpt</code>
-</td>
-<td align="center">❌</td>
-<td align="center">❌</td>
-<td align="center">✅</td>
-</tr></tbody></table><p>Roughly <strong>half of the ~37 exports never appear in the README</strong>, and a block of them — <code><a href="reference/theme_ggcpt.html">theme_ggcpt()</a></code>, <code><a href="reference/annotate_segments.html">annotate_segments()</a></code>, and <em>all seven</em> per-engine wrappers — appear in <strong>neither the README nor the vignettes</strong>, surviving only as man pages a user must already know to look for. A reader of the CRAN landing page would not learn that the package can theme its plots, shade segments, or be driven one engine at a time.</p>
-</div>
-<div class="section level3">
-<h3 id="id_22-statements-that-are-actively-wrong">2.2 Statements that are actively wrong<a class="anchor" aria-label="anchor" href="#id_22-statements-that-are-actively-wrong"></a></h3>
-<p>Worse than silence is mis-statement. The next release must fix all of these:</p>
+<h2 id="id_2-the-2026-method-survey">2. The 2026 method survey<a class="anchor" aria-label="anchor" href="#id_2-the-2026-method-survey"></a></h2>
+<p>A nine-area literature-and-CRAN sweep (penalised/optimal, multiscale, nonparametric/kernel, Bayesian, high-dimensional, regression breaks, online/sequential, robust/dependence, and recent benchmarking work, 2020–2026) was run in July 2026 with every citation and CRAN status verified. Its actionable conclusions:</p>
 <ol style="list-style-type: decimal"><li>
-<strong>The README advertises an engine the package does not have.</strong> <code>README.Rmd</code> says the package “wraps multiple detection engines (changepoint, changepoint.np, ecp, wbs, breakfast, not, mosum, fpop, IDetect, <strong>and gfpop</strong>).” There is <strong>no <code>gfpop</code> code</strong>, <code>gfpop</code> is <strong>not in <code>Suggests</code></strong>, and <code>DESCRIPTION</code> explicitly <strong>defers <code>gfpop</code> to v0.3.0</strong> (<code>gfpop</code> is also not currently available on CRAN). The claim must be removed until §4.1 actually ships it.</li>
+<strong>Confidence statements are now table stakes.</strong> SMUCE (Frick, Munk and Sieling, 2014) and HSMUCE (Pein, Sieling and Munk, 2017) give simultaneous confidence sets; Bai–Perron (<code>strucchange</code>) and <code>segmented</code> give break-date CIs. A visualisation-first package that cannot draw an interval around a changepoint is behind the field.</li>
 <li>
-<strong>The package-level help is stale by a whole release.</strong> <code><a href="reference/ggchangepoint-package.html">?ggchangepoint</a></code> still reads: <em>“For the moment, I only include three changepoint packages (‘changepoint’, ‘changepoint.np’ and ‘ecp’). More changepoint packages will be included as time progresses.”</em> The package now wraps eight-plus engines behind a unified class. This is the first help page a curious user reads, and it describes 0.1.0.</li>
+<strong>The Bayesian pillar is mandatory.</strong> Barry–Hartigan (<code>bcp</code>), BOCPD (Adams and MacKay, 2007; <code>ocp</code>), and the widely used BEAST ensemble (<code>Rbeast</code>) are all on CRAN and produce the field’s signature graphics (posterior profiles, run-length heatmaps) — exactly this package’s remit.</li>
 <li>
-<strong><code><a href="reference/cpt_detect.html">cpt_detect()</a></code>’s documentation over-promises.</strong> Its <code>@param method</code> enumerates 26 methods, 13 of which <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> at runtime (§1.2). The Rd makes no distinction between “available now,” “available with a <code>Suggests</code> package,” and “planned.” A user copying a method name out of the help gets an error.</li>
+<strong>Slope changes deserve an exact engine.</strong> <code>cpop</code> (Fearnhead, Maidstone and Letchford, 2019; JSS software paper 2024) is on CRAN and is the canonical answer to the <code>change_in = "slope"</code> request that 0.3.0 could only route to NOT’s contrast.</li>
 <li>
-<strong>Convention and multivariate caveats are under-stated.</strong> The <code>cp_convention</code> normalisation (§11) and the <em>current absence</em> of true multivariate support (§3.2) are not surfaced where a multivariate user would look (the <code>ecp_wrapper</code> and <code>cpt_detect</code> help, and the README).</li>
+<strong>fastcpd is the notable newcomer.</strong> Li and Zhang’s <code>fastcpd</code> (2024) reached CRAN 1.0.0 in 2026 and covers mean/variance/GLM/ARMA/GARCH families under one PELT-style interface — the survey’s highest-priority “new package to not miss”.</li>
+<li>
+<strong>Dependence-aware methods prevent the classic false positive.</strong> DeCAFS (drift + AR noise), SNSeg (self-normalisation), EnvCpt (changepoints vs trends vs memory), and NP-MOJO (<code>CptNonPar</code>, nonparametric under serial dependence) are all on CRAN and address the most common practical failure of naive mean-shift detection.</li>
+<li>
+<strong>CRAN availability rules out some 0.3.0 plans.</strong> <code>gfpop</code> was removed from CRAN (2024) and remains GitHub-only; <code>robseg</code> and <code>FOCuS</code> were never on CRAN; <code>hdbinseg</code> (SBS) was archived. These cannot live in <code>Suggests</code> of a CRAN package and are deferred (§5) — <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> says so honestly. <code>bcp</code> and <code>cpm</code> are on CRAN as of mid-2026 (both had brief archival episodes historically; pin versions if that recurs).</li>
+<li>
+<strong>Evaluation conventions have settled.</strong> van den Burg and Williams
+<ol start="2020" style="list-style-type: decimal"><li>covering/F1 under one-to-one matching is the benchmark standard — which the audit (§6, C12–C15) shows the 0.3.0 metrics module implemented inconsistently.</li>
+</ol></li>
 </ol></div>
-<div class="section level3">
-<h3 id="id_23-the-mandate-and-its-acceptance-criteria">2.3 The mandate and its acceptance criteria<a class="anchor" aria-label="anchor" href="#id_23-the-mandate-and-its-acceptance-criteria"></a></h3>
-<p>The next release adopts P7 (§1.3) and treats documentation coverage as a release gate. Concretely:</p>
-<ul><li>
-<strong>Every exported function is introduced in the README</strong>, grouped by role (detection, result object, broom, visualization, comparison, evaluation, simulation, theming), each with a minimal runnable example. The README is regenerated from <code>README.Rmd</code> so the examples are executed, not asserted.</li>
-<li>
-<strong>A short “feature tour” vignette</strong> (<code><a href="articles/ggchangepoint.html">vignette("ggchangepoint")</a></code>) walks the <em>entire</em> surface end to end — including the per-engine wrappers, <code><a href="reference/theme_ggcpt.html">theme_ggcpt()</a></code>, <code><a href="reference/annotate_segments.html">annotate_segments()</a></code>, <code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code>, <code><a href="reference/ggcpt_eval.html">ggcpt_eval()</a></code>, and the class constructors — so no export is vignette-orphaned. The existing <code>introduction</code> and <code>comparison</code> vignettes stay; the tour is the index to them.</li>
-<li>
-<strong>The package-level help is rewritten</strong> to describe the unified framework and the current engine list, generated so it cannot drift (e.g. an engine table the help and the README share).</li>
-<li>
-<strong><code><a href="reference/cpt_detect.html">cpt_detect()</a></code>’s help distinguishes three tiers</strong> — wired now / available via a named <code>Suggests</code> package / planned — and the runtime message for an unimplemented method names the package or release that will provide it (§3.1). A new <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> returns this table programmatically (§3.1), and the help links to it.</li>
-<li>
-<strong>A <code>pkgdown</code> reference audit</strong> ensures every export sits in a titled group (the current <code>_pkgdown.yml</code> is close; it must stay exhaustive as the surface grows), and a CI check (e.g. a <code>usethis</code>/<code>pkgdown</code>-style “undocumented export” test) fails the build if any export is missing from the reference index or lacks <code>@examples</code>.</li>
-<li>
-<strong>A coverage test in <code>testthat</code></strong> asserts that the set of exports equals the set of functions referenced by the README + tour vignette, so the gap cannot silently reopen.</li>
-<li>
-<strong><code>NEWS.md</code> is audited for accuracy and completeness</strong> — the changelog is a documentation surface too. No entry may advertise a feature or test that does not exist (the 0.2.0 entry’s nonexistent <code>vdiffr</code> tests; the “all methods” over-claim — §11.3 B13), and the 0.3.0 entry names every new export, including the ones 0.2.0’s changelog omitted (<code><a href="reference/theme_ggcpt.html">theme_ggcpt()</a></code>, <code><a href="reference/annotate_segments.html">annotate_segments()</a></code>).</li>
-</ul><p>This is deliberately mechanical: the point is that “introduce all features” becomes a checkable contract, not a good intention.</p>
-<hr></div>
-</div>
 <div class="section level2">
-<h2 id="id_3-finishing-the-foundation-an-honest-dispatcher-multivariate-input-parallelism">3. Finishing the foundation: an honest dispatcher, multivariate input, parallelism<a class="anchor" aria-label="anchor" href="#id_3-finishing-the-foundation-an-honest-dispatcher-multivariate-input-parallelism"></a></h2>
-<div class="section level3">
-<h3 id="id_31-make-cpt_detect-honest-and-make-the-method-set-discoverable">3.1 Make <code>cpt_detect()</code> honest, and make the method set discoverable<a class="anchor" aria-label="anchor" href="#id_31-make-cpt_detect-honest-and-make-the-method-set-discoverable"></a></h3>
-<p>Two acceptable fixes, used together:</p>
-<ul><li><p><strong>Stop advertising what does not run.</strong> <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> should enumerate only wired methods; planned methods are documented as planned, not offered as choices that error. As each engine lands (§4–§5) its name joins the enumeration.</p></li>
-<li>
-<p><strong>Make capability introspectable.</strong> Add <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> returning a tibble:</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_methods.html">cpt_methods</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: N × 5</span></span>
-<span><span class="co">#&gt;   method  change_in            engine        status     installed</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;   &lt;chr&gt;                &lt;chr&gt;         &lt;chr&gt;      &lt;lgl&gt;</span></span>
-<span><span class="co">#&gt; 1 pelt    mean,var,meanvar     changepoint   available  TRUE</span></span>
-<span><span class="co">#&gt; 2 wbs     mean                 wbs/breakfast available  FALSE      # Suggests not installed</span></span>
-<span><span class="co">#&gt; 3 smuce   mean                 stepR         planned    NA</span></span>
-<span><span class="co">#&gt; …</span></span></code></pre></div>
-<p><code>status</code> ∈ {<code>available</code>, <code>planned</code>}; <code>installed</code> reflects whether the <code>Suggests</code> engine is present. When a wired method’s engine is missing, the error is actionable (“install <code>mosum</code>”); when a method is <code>planned</code>, the error names the target release. This both fixes the over-promise and gives users (and <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code>) a programmatic way to ask “what can I run here?”</p>
-</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_32-genuine-multivariate-input">3.2 Genuine multivariate input<a class="anchor" aria-label="anchor" href="#id_32-genuine-multivariate-input"></a></h3>
-<p><code>ecp</code>, and several backlog engines (§5.2), exist precisely for multivariate data. The next release stops flattening it:</p>
-<ul><li>A single input-normalisation step classifies <code>x</code> as univariate (vector) or multivariate (<code>n × p</code> matrix/data-frame) and routes accordingly, instead of <code>as.numeric(x)</code>.</li>
-<li>For multivariate results, <code>cp_value</code> (a scalar) is replaced/augmented by a populated <code>segments</code> table carrying per-segment, per-coordinate summaries; the <code>ggcpt</code> object already has a <code>segments</code> slot for exactly this. (Today <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> returns a <em>silently wrong</em> <code>cp_value</code> for matrix input — a column-major-flattened scalar — and <code>NA</code> for data-frame input; see §11.3 B4.)</li>
-<li>
-<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> dispatches on dimensionality to the multivariate renderers of §7.4 (faceted small-multiples; heatmap). Univariate behaviour is unchanged.</li>
-<li>The <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> and <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> help gain a worked multivariate example, removing the §2.2(4) caveat by making the feature real.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_33-extend-opt-in-parallelism">3.3 Extend opt-in parallelism<a class="anchor" aria-label="anchor" href="#id_33-extend-opt-in-parallelism"></a></h3>
-<p>Lift the <code>future</code> pattern already in <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code> to the other orchestration-level loops — the planned <code>cpt_batch()</code> panel detector (§6.3), <code><a href="reference/cpt_simulate.html">cpt_simulate()</a></code>-driven studies, and <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> over a method×penalty grid — with parallel-safe L’Ecuyer RNG wired to a <code>seed</code> argument so results are identical regardless of worker count (§9.4). Sequential stays the default; no detector’s <em>result</em> depends on the plan, only its runtime.</p>
-<hr></div>
-</div>
-<div class="section level2">
-<h2 id="id_4-the-next-engine-wave-030">4. The next engine wave (0.3.0)<a class="anchor" aria-label="anchor" href="#id_4-the-next-engine-wave-030"></a></h2>
-<p>Each subsection gives the idea and key mathematics, the package to wrap, the proposed tidy signature, and the proposed plot. These four were chosen for 0.3.0 because they add the most reach (and, for <code>gfpop</code> and SMUCE, the most genuinely new <em>output types</em> — graph-constrained means and confidence bands) for modest dependency weight, and because <code>smuce</code>/<code>hsmuce</code> are already named in the dispatcher and <code>gfpop</code> is already (wrongly) named in the README.</p>
-<div class="section level3">
-<h3 id="id_41-gfpop--graph-constrained-functional-pruning">4.1 gfpop — graph-constrained functional pruning<a class="anchor" aria-label="anchor" href="#id_41-gfpop--graph-constrained-functional-pruning"></a></h3>
-<p><strong>Priority engine for 0.3.0</strong>, both because <code>DESCRIPTION</code> deferred it here and because the README already (incorrectly) claims it (§2.2(1)); shipping it converts a false claim into a true one.</p>
-<p>Generalized Functional Pruning Optimal Partitioning (Hocking, Rigaill, Fearnhead &amp; Bourque, 2022) lets the user encode prior structural constraints on the sequence of segment means as a <em>constraint graph</em>: means that must alternate up-then-down (peak detection in genomics), monotone-increasing (isotonic), or with bounded jumps. It minimises the penalised cost subject to the graph with empirical cost <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><mi>N</mi><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>N</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(N \log N)</annotation></semantics></math>, returning an exact constrained segmentation.</p>
-<ul><li>
-<strong>Wraps:</strong> <code>gfpop</code> (<code>gfpop()</code>, <code>graph()</code>). <em>Availability caveat:</em> <code>gfpop</code> is not currently on CRAN; the wrapper ships behind <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> and is excluded from CRAN examples/tests until the engine is installable, so the claim in the README is only restored once the dependency is genuinely available.</li>
-<li>
-<strong>Proposed:</strong> <code>gfpop_wrapper(x, graph = NULL, type = c("std","updown","isotonic","relevant"), penalty = "BIC", ...)</code> → <code>ggcpt</code>.</li>
-<li>
-<strong>Plot:</strong> <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> overlays the constrained step-mean (<code>show_segments</code>); for <code>updown</code> graphs it shades up/down states.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_42-smuce--hsmuce--multiscale-inference-with-confidence">4.2 SMUCE / HSMUCE — multiscale inference with confidence<a class="anchor" aria-label="anchor" href="#id_42-smuce--hsmuce--multiscale-inference-with-confidence"></a></h3>
-<p>Already named in <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> (<code>smuce</code>, <code>hsmuce</code>) but unwired. SMUCE (Frick, Munk &amp; Sieling, 2014) estimates a step function by minimising the number of changepoints subject to a <em>multiscale constraint</em>: the estimate must pass a multiscale test at level <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> on every interval simultaneously. The level <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math> bounds the probability of over-estimating the number of changepoints, and the method delivers <strong>confidence intervals for changepoint locations</strong> and <strong>confidence bands for the signal</strong>. HSMUCE (Pein, Sieling &amp; Munk, 2017) extends this to heterogeneous (segment-varying) noise.</p>
-<ul><li>
-<strong>Wraps:</strong> <code>stepR</code> (<code>stepFit()</code>, <code>confband()</code>, <code><a href="https://rdrr.io/r/stats/confint.html" class="external-link">confint()</a></code>).</li>
-<li>
-<strong>Proposed:</strong> <code>smuce_wrapper(x, alpha = 0.5, family = c("gauss","hsmuce","poisson"), ...)</code> → <code>ggcpt</code> with <code>ci_lower</code>/<code>ci_upper</code> populated.</li>
-<li>
-<strong>Plot:</strong> <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws the step estimate, a shaded confidence band for the signal, and the changepoint-location CIs via the <strong>already-shipped</strong> <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> — which today has no engine producing CIs to consume. SMUCE is the feature that finally exercises that geom.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_43-crops--the-penalty-path">4.3 CROPS — the penalty path<a class="anchor" aria-label="anchor" href="#id_43-crops--the-penalty-path"></a></h3>
-<p>The Achilles heel of penalised methods is the penalty <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>; <code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code> constructs standard values but cannot tell the user which to pick. CROPS (Haynes, Eckley &amp; Fearnhead, 2017) computes <em>all</em> optimal segmentations as <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math> ranges over <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><msub><mi>β</mi><mi mathvariant="normal">min</mi></msub><mo>,</mo><msub><mi>β</mi><mi mathvariant="normal">max</mi></msub><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[\beta_{\min}, \beta_{\max}]</annotation></semantics></math>, exploiting that the number of distinct optimal segmentations is small and each is found at PELT cost. This turns penalty selection from a guess into a diagnostic.</p>
-<ul><li>
-<strong>Wraps:</strong> <code>changepoint</code> (the <code>CROPS</code> penalty option).</li>
-<li>
-<strong>Proposed:</strong> <code>cpt_crops(x, method, change_in, pen_min, pen_max, ...)</code> → a <code>ggcpt_path</code> object holding, per penalty interval, the number of changepoints and the total unpenalised cost.</li>
-<li>
-<strong>Plot:</strong> <code>autoplot.ggcpt_path()</code> is the <strong>elbow plot</strong> (cost vs. number of changepoints); <code>ggcpt_pathplot()</code> is a faceted small-multiple of the actual segmentation at each distinct changepoint count, so the analyst <em>sees</em> the models being chosen among.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_44-robust-loss-decafs-self-normalisation">4.4 Robust loss, DeCAFS, self-normalisation<a class="anchor" aria-label="anchor" href="#id_44-robust-loss-decafs-self-normalisation"></a></h3>
-<p>Three engines that handle the regimes where naïve change-in-mean over-counts; all three are already named (<code>robust</code>, <code>decafs</code>, <code>sn</code>) in the dispatcher.</p>
-<ul><li>
-<strong>Robust loss (<code>robseg</code>).</strong> Fearnhead &amp; Rigaill (2019): only <em>bounded</em> loss is robust to arbitrary outliers. The exact DP minimises <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>𝒞</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mrow><mi>a</mi><mo>:</mo><mi>b</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mi>μ</mi></msub><msubsup><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mi>a</mi></mrow><mi>b</mi></msubsup><mi>γ</mi><mspace width="-0.167em"></mspace><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">(</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mi>i</mi></msub><mo>−</mo><mi>μ</mi><mo stretchy="false" form="postfix">)</mo><mi>/</mi><mi>σ</mi><mo minsize="120%" maxsize="120%" stretchy="true" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\mathcal{C}(y_{a:b}) = \min_{\mu}\sum_{i=a}^{b}\gamma\!\big((y_i-\mu)/\sigma\big)</annotation></semantics></math> with <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>γ</mi><mo stretchy="false" form="prefix">(</mo><mi>u</mi><mo stretchy="false" form="postfix">)</mo><mo>=</mo><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">(</mo><msup><mi>u</mi><mn>2</mn></msup><mo>,</mo><msup><mi>K</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\gamma(u)=\min(u^2,K^2)</annotation></semantics></math> (truncated quadratic / biweight), plus Huber and <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>L</mi><mn>1</mn></msub><annotation encoding="application/x-tex">L_1</annotation></semantics></math> variants. <code>robseg_wrapper(x, loss = c("biweight","huber","L1","L2"), lambda = ..., ...)</code>. <em>Availability caveat:</em> <code>robseg</code> is not on CRAN; ships behind a guard like <code>gfpop</code>.</li>
-<li>
-<strong>DeCAFS.</strong> Romano, Rigaill, Runge &amp; Fearnhead (2022): mean <em>drifts</em> (random walk) between abrupt changes and noise is autocorrelated (AR(1)). DeCAFS minimises <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mo>∑</mo><mi>t</mi></msub><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">[</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mi>t</mi></msub><mo>−</mo><msub><mi>μ</mi><mi>t</mi></msub><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup><mi>/</mi><msup><mi>σ</mi><mn>2</mn></msup><mo>+</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>μ</mi><mi>t</mi></msub><mo>−</mo><msub><mi>μ</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><msup><mo stretchy="false" form="postfix">)</mo><mn>2</mn></msup><mi>/</mi><msup><mi>η</mi><mn>2</mn></msup><mo>⋅</mo><mn>𝟙</mn><mo stretchy="false" form="prefix">{</mo><mtext mathvariant="normal">no change</mtext><mo stretchy="false" form="postfix">}</mo><mo minsize="120%" maxsize="120%" stretchy="true" form="postfix">]</mo><mo>+</mo><mi>β</mi><mo>⋅</mo><mo stretchy="false" form="prefix">(</mo><mi>#</mi><mtext mathvariant="normal">changes</mtext><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">\sum_t\big[(y_t-\mu_t)^2/\sigma^2 + (\mu_t-\mu_{t-1})^2/\eta^2\cdot\mathbb{1}\{\text{no change}\}\big] + \beta\cdot(\#\text{changes})</annotation></semantics></math>. <code>decafs_wrapper(x, beta = ..., model_param = NULL, ...)</code> (<code>DeCAFS</code> on CRAN).</li>
-<li>
-<strong>Self-normalisation (<code>SNSeg</code>).</strong> Zhao, Jiang &amp; Shao (2022): SN-based tests with nested local-window segmentation; nonparametric, robust to dependence, avoids long-run-variance estimation, detects changes in general parameters (mean, variance, quantiles, autocovariance, correlation) for univariate, multivariate, and high-dimensional series. <code>sn_wrapper(x, parameter = c("mean","variance","acf","bivcor"), ...)</code>.</li>
-</ul><hr></div>
-</div>
-<div class="section level2">
-<h2 id="id_5-the-remaining-method-backlog-040">5. The remaining method backlog (0.4.0+)<a class="anchor" aria-label="anchor" href="#id_5-the-remaining-method-backlog-040"></a></h2>
-<p>The methods below are surveyed with enough mathematics and citation to be directly actionable, but are scheduled after the 0.3.0 wave. Each is already a named-but-unwired method in <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> (§1.2), so wiring them is additive.</p>
-<div class="section level3">
-<h3 id="id_51-nonparametric-and-kernel">5.1 Nonparametric and kernel<a class="anchor" aria-label="anchor" href="#id_51-nonparametric-and-kernel"></a></h3>
-<ul><li>
-<strong>KCP (<code>kcpRS</code>).</strong> Arlot, Celisse &amp; Harchaoui (2019): map data into an RKHS via a Gaussian kernel and minimise a within-phase scatter criterion on running statistics (mean, variance, autocorrelation, correlation), with a permutation test for existence and model selection for number. Captures <em>higher-order</em> changes (e.g. correlation) that mean/variance methods miss. <code>kcp_wrapper(x, running_stat = c("mean","var","ar","cor"), wsize = 25, ...)</code>.</li>
-<li>
-<strong>Sequential CPM (<code>cpm</code>).</strong> Hawkins; Ross (2015): distribution-free sequential detection via repeated two-sample tests — Mann–Whitney (location), Mood (scale), Lepage (location+scale), Kolmogorov–Smirnov and Cramér–von-Mises (general). Also runs in batch (<code>processStream</code>). <code>cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)</code>.</li>
-<li>
-<strong>NMCD / E-Divisive (already shipped via <code>cpt.np</code> / <code>ecp</code>).</strong> Expose <code>nquantiles</code> and the CROPS path for <code>cpt.np</code>; lift <code>ecp</code> to genuine multivariate (§3.2) and expose <code>alpha</code>, <code>sig.lvl</code>, <code>R</code>.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_52-high-dimensional-and-multivariate">5.2 High-dimensional and multivariate<a class="anchor" aria-label="anchor" href="#id_52-high-dimensional-and-multivariate"></a></h3>
-<ul><li>
-<strong>inspect (<code>InspectChangepoint</code>).</strong> Wang &amp; Samworth (2018): for a <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>p</mi><annotation encoding="application/x-tex">p</annotation></semantics></math>-variate series whose mean changes in an unknown <em>sparse</em> subset of coordinates, form the CUSUM matrix, find a projection direction by a sparse-SVD convex relaxation, project to 1-D and apply a univariate detector, recursing via WBS. <code>inspect_wrapper(X, lambda = NULL, threshold = NULL, ...)</code>; plot adds the sparse projection direction (which coordinates drive the change).</li>
-<li>
-<strong>SBS / double-CUSUM (<code>hdbinseg</code>).</strong> Cho &amp; Fryzlewicz (2015); Cho (2016): threshold and aggregate per-coordinate CUSUMs to suppress noise coordinates before segmenting. <code>cpt_detect(method = "sbs")</code>.</li>
-<li>
-<strong>The <code>changepoints</code> collection.</strong> Xu, Padilla, Wang, Yu &amp; Li: univariate mean and covariance, high-dimensional mean, high-dimensional regression (incl. under temporal dependence; Xu, Wang, Zhao &amp; Yu, 2024), dynamic networks, and VAR, several with confidence procedures. <code>changepoints_wrapper(data, model = c("mean","cov","regression","network","var"), ...)</code>.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_53-bayesian">5.3 Bayesian<a class="anchor" aria-label="anchor" href="#id_53-bayesian"></a></h3>
-<ul><li>
-<strong>bcp.</strong> Erdman &amp; Emerson (2007), Barry &amp; Hartigan (1993): product-partition model via MCMC returning a <strong>posterior probability of a changepoint at every location</strong> plus posterior segment means with credible intervals. <code>bcp_wrapper(x, ..., prob_threshold = 0.5)</code>; <code>changepoints</code> gains a <code>posterior_prob</code> column. Plot: posterior means + credible band on top, per-location posterior probability below.</li>
-<li>
-<strong>BOCPD (<code>ocp</code>).</strong> Adams &amp; MacKay (2007): online posterior over the <strong>run length</strong> <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>r</mi><mi>t</mi></msub><annotation encoding="application/x-tex">r_t</annotation></semantics></math> via <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>P</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>r</mi><mi>t</mi></msub><mo>,</mo><msub><mi>y</mi><mrow><mn>1</mn><mo>:</mo><mi>t</mi></mrow></msub><mo stretchy="false" form="postfix">)</mo><mo>=</mo><msub><mo>∑</mo><msub><mi>r</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub></msub><mi>P</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>r</mi><mi>t</mi></msub><mo>∣</mo><msub><mi>r</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi>P</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mi>t</mi></msub><mo>∣</mo><msub><mi>r</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>,</mo><msubsup><mi>y</mi><mi>t</mi><mrow><mo stretchy="false" form="prefix">(</mo><mi>r</mi><mo stretchy="false" form="postfix">)</mo></mrow></msubsup><mo stretchy="false" form="postfix">)</mo><mspace width="0.167em"></mspace><mi>P</mi><mo stretchy="false" form="prefix">(</mo><msub><mi>r</mi><mrow><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>,</mo><msub><mi>y</mi><mrow><mn>1</mn><mo>:</mo><mi>t</mi><mo>−</mo><mn>1</mn></mrow></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">P(r_t, y_{1:t}) = \sum_{r_{t-1}} P(r_t\mid r_{t-1})\,P(y_t\mid r_{t-1}, y^{(r)}_t)\,P(r_{t-1}, y_{1:t-1})</annotation></semantics></math>, with a hazard <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>H</mi><mo stretchy="false" form="prefix">(</mo><mi>⋅</mi><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">H(\cdot)</annotation></semantics></math> and a conjugate predictive. <code>bocpd_wrapper(x, hazard_lambda = 250, ...)</code>. Plot: the run-length posterior heatmap — the signature BOCPD graphic.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_54-structural-breaks-in-regression">5.4 Structural breaks in regression<a class="anchor" aria-label="anchor" href="#id_54-structural-breaks-in-regression"></a></h3>
-<ul><li>
-<strong>Bai–Perron / fluctuation tests (<code>strucchange</code>).</strong> Zeileis et al. (2002): generalized fluctuation tests for <em>detecting</em> instability and the Bai &amp; Perron (1998, 2003) dynamic program (<code>breakpoints()</code>) for <em>dating</em> multiple breaks in <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mi>t</mi></msub><mo>=</mo><msubsup><mi>x</mi><mi>t</mi><mi>⊤</mi></msubsup><msub><mi>β</mi><mi>j</mi></msub><mo>+</mo><msub><mi>ε</mi><mi>t</mi></msub></mrow><annotation encoding="application/x-tex">y_t = x_t^\top\beta_j + \varepsilon_t</annotation></semantics></math>, with CIs for the break dates. <code>strucchange_wrapper(formula, data, breaks = NULL, ...)</code>.</li>
-<li>
-<strong>segmented.</strong> Muggeo (2003, 2008): <em>continuous</em> piecewise-linear (“broken-line”) fits with breakpoint standard errors and per-segment slopes. <code>segmented_wrapper(model, seg_var, npsi = 1, ...)</code>. Both render as fitted regime lines with break CIs rather than vertical rules (§7.3).</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_55-online-and-sequential">5.5 Online and sequential<a class="anchor" aria-label="anchor" href="#id_55-online-and-sequential"></a></h3>
-<ul><li>
-<strong>FOCuS (<code>FOCuS</code>).</strong> Romano, Eckley, Fearnhead &amp; Rigaill (2023): online change-in-mean by functional pruning of the CUSUM likelihood — equivalent to running CUSUM simultaneously for all magnitudes and window sizes, at amortised <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi mathvariant="normal">log</mi><annotation encoding="application/x-tex">\log</annotation></semantics></math> cost. <code>focus_wrapper(x, threshold = NULL, ...)</code>; streaming and batch. (Not on CRAN; guarded.)</li>
-<li>
-<strong>OCD (<code>ocd</code>).</strong> Chen, Wang &amp; Samworth (2022): high-dimensional online mean change, storage and per-observation cost independent of history, guaranteed average-run-length. <code>ocd_wrapper(X, thresh = "MC", ...)</code>.</li>
-</ul><hr></div>
-</div>
-<div class="section level2">
-<h2 id="id_6-new-features-beyond-detection-methods">6. New features beyond detection methods<a class="anchor" aria-label="anchor" href="#id_6-new-features-beyond-detection-methods"></a></h2>
-<p>The brief asked specifically for <em>new</em> thinking about what to build. Adding more detectors is the obvious axis; the less-obvious and arguably higher-leverage one is making the <em>result object</em>, the <em>inputs</em>, and the <em>exploration loop</em> first-class. These features compound across every detector the package already has, and several directly relieve friction visible in the current code and vignettes.</p>
-<div class="section level3">
-<h3 id="id_61-complete-the-ggcpt-s3-surface">6.1 Complete the <code>ggcpt</code> S3 surface<a class="anchor" aria-label="anchor" href="#id_61-complete-the-ggcpt-s3-surface"></a></h3>
-<p>The class implements <code>print</code>, <code>tidy</code>, <code>glance</code>, <code>augment</code>, <code>autoplot</code> — but not the other generics R users reflexively reach for:</p>
-<ul><li>
-<strong><code><a href="reference/summary.ggcpt.html">summary.ggcpt()</a></code></strong> — a human-readable digest beyond <code>print</code>: segment table with levels and lengths, total cost / log-likelihood, penalty, runtime, convention.</li>
-<li>
-<strong><code><a href="reference/ggcpt_methods.html">as_tibble.ggcpt()</a></code> / <code><a href="reference/ggcpt_methods.html">as.data.frame.ggcpt()</a></code></strong> — explicit coercion to the changepoints (or, via an argument, the segments/augmented frame), so the object drops cleanly into a pipe.</li>
-<li>
-<strong><code><a href="reference/ggcpt_methods.html">format.ggcpt()</a></code> + <code>knitr::knit_print.ggcpt()</code></strong> — clean rendering inside R Markdown / Quarto without forcing the user through <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>.</li>
-<li>
-<strong><code><a href="reference/ggcpt_methods.html">plot.ggcpt()</a></code></strong> — a base-graphics fallback delegating to <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> so <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> “just works” for users who type it out of habit.</li>
-<li>
-<strong><code><a href="https://rdrr.io/r/base/c.html" class="external-link">c()</a></code> / <code>rbind</code>-style combination</strong> of results from several methods into the tidy union that <code><a href="reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code> builds by hand.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_62-real-timedate-indices-and-time-series-input">6.2 Real time/date indices and time-series input<a class="anchor" aria-label="anchor" href="#id_62-real-timedate-indices-and-time-series-input"></a></h3>
-<p><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and the plots gained an <code>index</code> argument in 0.2.0, but detection still assumes a bare numeric vector. The next release accepts the objects R users actually hold:</p>
-<ul><li>
-<strong><code><a href="reference/cpt_detect.html">cpt_detect()</a></code> methods for <code>ts</code>, <code>zoo</code>/<code>xts</code>, and <code>tsibble</code></strong> that carry the time index through to <code>cp</code>/<code>cp_value</code> and label the axis with real dates, then return the index on the <code>ggcpt</code> object so <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> is date-aware by default.</li>
-<li>A <code>cpt_detect.data.frame(data, y, index = NULL, ...)</code> form taking column names, matching how tidyverse users think.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_63-panel--batch-detection">6.3 Panel / batch detection<a class="anchor" aria-label="anchor" href="#id_63-panel--batch-detection"></a></h3>
-<p>Methodological and applied work both routinely run <em>one detector over many series</em> (or many coordinates). <code>cpt_batch()</code> formalises the loop the comparison code already hints at:</p>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">cpt_batch</span><span class="op">(</span><span class="va">X</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span>, <span class="va">...</span>, workers <span class="op">=</span> <span class="cn">NULL</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; a tibble keyed by series id, each row a ggcpt (list-column) or its tidy summary</span></span></code></pre></div>
-<p>It is embarrassingly parallel (§3.3, §9.4), pairs naturally with <code>ggcpt_facet()</code> (§7.4), and is the substrate for benchmarking studies (§8).</p>
-</div>
-<div class="section level3">
-<h3 id="id_64-interactive-and-exploratory-tooling">6.4 Interactive and exploratory tooling<a class="anchor" aria-label="anchor" href="#id_64-interactive-and-exploratory-tooling"></a></h3>
-<p>Static <code>ggplot</code>s are the core, but exploration benefits from interactivity:</p>
-<ul><li>
-<strong><code>ggcpt_interactive()</code></strong> — render any <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> result through <code>ggiraph</code> or <code>plotly</code> (in <code>Suggests</code>), with changepoint locations, segment levels, and CIs on hover. Pure add-on; the static path is untouched.</li>
-<li>
-<strong><code>cpt_explore()</code></strong> — a <code>shiny</code>/<code>miniUI</code> gadget for the single most painful decision in the field: the penalty/threshold. A slider over <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math> (or the CROPS path of §4.3) updates the segmentation live, so the analyst <em>tunes by eye</em> and exports the chosen <code>ggcpt</code>. This turns §4.3’s diagnostic into a tool.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_65-using-the-result-prediction-labelling-stability">6.5 Using the result: prediction, labelling, stability<a class="anchor" aria-label="anchor" href="#id_65-using-the-result-prediction-labelling-stability"></a></h3>
-<ul><li>
-<strong><code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> / <code>segment_id()</code></strong> — assign each observation (or a new observation) to its segment and fitted level; the inverse of detection, useful for downstream modelling and for colouring raw data by regime.</li>
-<li>
-<strong>Stability / bootstrap diagnostics</strong> — <code>cpt_stability(x, method, B = 200, ...)</code> resamples or subsamples and reports, per candidate location, how often it is detected; <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> renders a detection-frequency profile. This gives a cheap, model-agnostic confidence signal for the many engines that ship no CIs.</li>
-<li>
-<strong>Cost / diagnostic plots</strong> — for penalised methods, the elbow of §4.3 and a cost-vs-number-of-changepoints curve; a residual/<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> diagnostic panel.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_66-reproducibility-interop-and-ergonomics">6.6 Reproducibility, interop, and ergonomics<a class="anchor" aria-label="anchor" href="#id_66-reproducibility-interop-and-ergonomics"></a></h3>
-<ul><li>
-<strong><code>cpt_cite(x)</code></strong> — return the bibliographic reference(s) for the method behind a result (the package already carries the references via <code>Rdpack</code>), so a user writing up an analysis can cite the right paper without leaving R.</li>
-<li>
-<strong>Interop / export</strong> — coercion of changepoints to a <code>tsibble</code> of events or a tidy “regimes” frame; <code>write_cpt()</code> helpers; an option to emit segment annotations for downstream plotting tools.</li>
-<li>
-<strong><code>cli</code>-quality messaging</strong> — replace bare <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code>/<code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> with <code>cli</code> (or <code><a href="https://rlang.r-lib.org/reference/abort.html" class="external-link">rlang::abort()</a></code>) errors that name the offending argument, the legal set, and (for a missing <code>Suggests</code> engine) the exact <code><a href="https://rdrr.io/r/utils/install.packages.html" class="external-link">install.packages()</a></code> call — consistent with the <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> introspection of §3.1.</li>
-<li>
-<strong>Decomposition-then-detect</strong> — a small <code>cpt_decompose()</code> helper that removes a trend/seasonal component (via <code><a href="https://rdrr.io/r/stats/stl.html" class="external-link">stats::stl</a></code>/<code>feasts</code>) before mean-change detection, plus documentation distinguishing a <em>changepoint</em> (a persistent regime shift) from a <em>point anomaly</em> (a single outlier) so users pick the right tool — a recurring confusion the package is well placed to clarify.</li>
-</ul><p>These are scoped so each is independently shippable and most are pure <code>Suggests</code>-guarded add-ons that do not touch the core contract (P1, P6).</p>
-<hr></div>
-</div>
-<div class="section level2">
-<h2 id="id_7-the-visualization-layer-what-shipped-and-what-comes-next">7. The visualization layer: what shipped and what comes next<a class="anchor" aria-label="anchor" href="#id_7-the-visualization-layer-what-shipped-and-what-comes-next"></a></h2>
-<p>Visualization is the package’s reason to exist. 0.2.0 delivered the composable core; the next release fills the method-aware gaps.</p>
-<div class="section level3">
-<h3 id="id_71-shipped-in-020">7.1 Shipped in 0.2.0<a class="anchor" aria-label="anchor" href="#id_71-shipped-in-020"></a></h3>
-<p><code><a href="reference/autoplot.ggcpt.html">autoplot.ggcpt()</a></code> (vertical rules by default, optional <code>show_segments</code> step line, <code>index</code>/<code>show_points</code>/<code>show_line</code> controls), the four geoms/stats (<code><a href="reference/geom_changepoint.html">geom_changepoint()</a></code>, <code><a href="reference/geom_cpt_segment.html">geom_cpt_segment()</a></code>, <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code>, <code><a href="reference/stat_changepoint.html">stat_changepoint()</a></code>), <code><a href="reference/theme_ggcpt.html">theme_ggcpt()</a></code>, <code><a href="reference/annotate_segments.html">annotate_segments()</a></code>, and the <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code> facet/overlay layouts. Note that <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> ships but has <strong>no engine feeding it CIs yet</strong> — §4.2 (SMUCE) and §5 (<code>mosum</code> CIs, <code>segmented</code>, <code>strucchange</code>) are what make it useful; until then it is an orphaned capability, itself an instance of the §2 coverage problem.</p>
-</div>
-<div class="section level3">
-<h3 id="id_72-penalty-path-and-solution-path-plots">7.2 Penalty-path and solution-path plots<a class="anchor" aria-label="anchor" href="#id_72-penalty-path-and-solution-path-plots"></a></h3>
-<p>The CROPS elbow and path plots (§4.3), plus solution-path plots for the randomised/multiscale methods already shipped — the ordered CUSUM contrasts of WBS/WBS2, the narrowest-over-threshold features of NOT, the MOSUM detector curve with its threshold and bandwidth band, the Isolate-Detect path — each showing <em>why</em> a changepoint was selected, not just where. These engines are already wrapped, so this is rendering work on existing <code>$fit</code> objects.</p>
-</div>
-<div class="section level3">
-<h3 id="id_73-trend-change-rendering">7.3 Trend-change rendering<a class="anchor" aria-label="anchor" href="#id_73-trend-change-rendering"></a></h3>
-<p>For slope-change methods (<code>not</code> with linear contrasts — already wrapped — and the backlog <code>segmented</code>, <code>gfpop</code> isotonic), <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws the <strong>fitted broken line</strong> with breakpoints marked (and CIs from <code>segmented</code>) instead of vertical rules — the correct idiom for trend changes, and a capability the wrapped <code>not</code> engine can already supply but the renderer does not yet use.</p>
-</div>
-<div class="section level3">
-<h3 id="id_74-multivariate-and-high-dimensional-plots">7.4 Multivariate and high-dimensional plots<a class="anchor" aria-label="anchor" href="#id_74-multivariate-and-high-dimensional-plots"></a></h3>
-<p>Enabled by §3.2: <code>ggcpt_facet(X, ...)</code> (one panel per coordinate, shared changepoint rules) and <code>ggcpt_heatmap(X, ...)</code> (tiles of the data or per-coordinate CUSUM contributions, with a side panel showing the <code>inspect</code> projection direction). Multivariate <code>ecp</code> and <code>changepoints</code> results plug straight in.</p>
-</div>
-<div class="section level3">
-<h3 id="id_75-bayesian-posterior-plots">7.5 Bayesian posterior plots<a class="anchor" aria-label="anchor" href="#id_75-bayesian-posterior-plots"></a></h3>
-<p>For §5.3: the bcp two-panel posterior-mean-plus-probability plot and the BOCPD run-length posterior heatmap.</p>
-<hr></div>
-</div>
-<div class="section level2">
-<h2 id="id_8-evaluation-simulation-and-benchmark-data">8. Evaluation, simulation, and benchmark data<a class="anchor" aria-label="anchor" href="#id_8-evaluation-simulation-and-benchmark-data"></a></h2>
-<div class="section level3">
-<h3 id="id_81-shipped">8.1 Shipped<a class="anchor" aria-label="anchor" href="#id_81-shipped"></a></h3>
-<p><code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> (precision/recall/F1 with margin, covering, Hausdorff, (adjusted) Rand, annotation error, matched MAE/RMSE), <code><a href="reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code> for multi-annotator data, <code><a href="reference/ggcpt_eval.html">ggcpt_eval()</a></code> for the visual TP/FP/miss overlay, <code><a href="reference/cpt_simulate.html">cpt_simulate()</a></code>/<code><a href="reference/cpt_simulate.html">rcpt()</a></code> with known-truth attributes, and the canonical signals <code>signal_blocks/fms/mix/teeth/stairs</code>.</p>
-</div>
-<div class="section level3">
-<h3 id="id_82-next">8.2 Next<a class="anchor" aria-label="anchor" href="#id_82-next"></a></h3>
-<ul><li>
-<strong>Benchmark study harness</strong> — a thin layer over <code>cpt_batch()</code> (§6.3) and <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> running a method×penalty×replication grid in parallel and returning a tidy results frame, the single largest time sink in methodological work.</li>
-<li>
-<strong>TCPD-style multi-annotator benchmarking</strong> — loaders/recipes for the Turing Change Point Dataset conventions (van den Burg &amp; Williams, 2020), scoring with the averaged covering/F1 already implemented.</li>
-<li>
-<strong>Real datasets</strong> — documented loaders for well-log, coal-mining disasters, Nile, aCGH, and server/HASC-style streams, with heavy data in <code>Suggests</code> or external packages to respect CRAN size limits.</li>
-<li>
-<strong>A simulator <code>slope</code> mode and multivariate sparse-mean mode</strong>, closing the gap between what <code><a href="reference/cpt_simulate.html">cpt_simulate()</a></code> documents and what the high-dimensional and trend-change detectors need to be tested against.</li>
-</ul><hr></div>
-</div>
-<div class="section level2">
-<h2 id="id_9-architecture-dependencies-testing-and-parallelism">9. Architecture, dependencies, testing, and parallelism<a class="anchor" aria-label="anchor" href="#id_9-architecture-dependencies-testing-and-parallelism"></a></h2>
-<div class="section level3">
-<h3 id="id_91-dependency-strategy">9.1 Dependency strategy<a class="anchor" aria-label="anchor" href="#id_91-dependency-strategy"></a></h3>
-<p>Only the original engines stay in <code>Imports</code> (<code>changepoint</code>, <code>changepoint.np</code>, <code>ecp</code>, plus the tidyverse/<code>broom</code>/<code>ggplot2</code> infrastructure). Every newly wrapped engine goes in <code>Suggests</code>, guarded with <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> and an actionable message (now routed through the §3.1 <code><a href="reference/cpt_methods.html">cpt_methods()</a></code>/<code>cli</code> machinery). Engines not on CRAN (<code>gfpop</code>, <code>robseg</code>, <code>FOCuS</code>) ship behind an install note and are excluded from CRAN examples/tests — and, per §2.2, are <strong>not advertised as available</strong> until installable.</p>
-</div>
-<div class="section level3">
-<h3 id="id_92-file-layout">9.2 File layout<a class="anchor" aria-label="anchor" href="#id_92-file-layout"></a></h3>
-<p>The existing layout (<code>ggcpt-class.R</code>, <code>broom-methods.R</code>, <code>autoplot.R</code>, <code>geoms.R</code>, <code>detect.R</code>, <code>compare.R</code>, <code>metrics.R</code>, <code>simulate.R</code>, <code>wrap-optpart.R</code>, <code>wrap-search.R</code>, plus <code>changepoint.R</code>/<code>ecp.R</code>) extends naturally: <code>wrap-multiscale.R</code> (stepR), <code>wrap-robust.R</code> (robseg/DeCAFS/SN), <code>wrap-highdim.R</code>, <code>wrap-bayes.R</code>, <code>wrap-regression.R</code>, <code>wrap-online.R</code>, <code>crops.R</code>, and <code>batch.R</code>/<code>explore.R</code>/<code>interop.R</code> for §6.</p>
-</div>
-<div class="section level3">
-<h3 id="id_93-testing-and-documentation">9.3 Testing and documentation<a class="anchor" aria-label="anchor" href="#id_93-testing-and-documentation"></a></h3>
-<ul><li>
-<code>testthat</code> per wrapper (<code>skip_if_not_installed()</code>), asserting the tidy contract and <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>/<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> round-trips; <code>vdiffr</code> snapshots for geoms and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</li>
-<li>The <strong>documentation-coverage tests of §2.3</strong> (exports ⊆ README+tour; every export in the <code>pkgdown</code> index; every export has <code>@examples</code>).</li>
-<li>The feature-tour vignette (§2.3) and updates to <code>introduction</code>/<code>comparison</code>.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="id_94-parallelism-and-reproducible-rng">9.4 Parallelism and reproducible RNG<a class="anchor" aria-label="anchor" href="#id_94-parallelism-and-reproducible-rng"></a></h3>
-<p>Standardise on the <code>future</code> ecosystem (<code>future.apply</code>/<code>furrr</code>, <code>progressr</code> for progress), already used in <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code>. Parallelise the <em>outer</em> loops — methods, series, coordinates, replications — never the inner DP recurrence or the online stream updates, which are sequential by construction. Because many engines are stochastic, use parallel-safe <strong>L’Ecuyer-CMRG</strong> streams (<code>future.seed</code>/ <code>furrr_options(seed = TRUE)</code>) wired to each wrapper’s <code>seed</code>, so a study is reproducible whether it runs on 1 core or 64; this is tested (same <code>seed</code> ⇒ identical changepoints under <code>sequential</code> and <code>multisession</code>). Backends live in <code>Suggests</code>; the sequential default adds no hard dependency.</p>
-<hr></div>
-</div>
-<div class="section level2">
-<h2 id="id_10-phased-release-plan">10. Phased release plan<a class="anchor" aria-label="anchor" href="#id_10-phased-release-plan"></a></h2>
-<div class="section level3">
-<h3 id="v020--foundations--first-engines--delivered-cran">v0.2.0 — Foundations + first engines — <strong>DELIVERED (CRAN)</strong>
-<a class="anchor" aria-label="anchor" href="#v020--foundations--first-engines--delivered-cran"></a></h3>
-<p>The <code>ggcpt</code> object, broom methods, <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>, the geoms, <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>, <code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code>, the WBS/WBS2/NOT/MOSUM/FPOP/IDetect/TGUH wrappers, <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code> (+ <code>future</code>), the evaluation module, the simulator and signals, and the 0.1.0 hardening.</p>
-</div>
-<div class="section level3">
-<h3 id="v030--documentation-parity-an-honest-dispatcher-inference--robustness--next">v0.3.0 — Documentation parity, an honest dispatcher, inference &amp; robustness — <strong>NEXT</strong>
-<a class="anchor" aria-label="anchor" href="#v030--documentation-parity-an-honest-dispatcher-inference--robustness--next"></a></h3>
-<ul><li>
-<strong>§2: full documentation coverage</strong> — README introduces every export; feature- tour vignette; rewritten package-level help; tiered <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> docs + <code><a href="reference/cpt_methods.html">cpt_methods()</a></code>; coverage tests; <strong>remove the gfpop over-claim</strong> (restored only when §4.1 ships).</li>
-<li>
-<strong>§3: finish the foundation</strong> — honest <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code>, genuine multivariate input, parallelism beyond <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code>.</li>
-<li>
-<strong>§4: next engine wave</strong> — <code>gfpop</code> (when installable), SMUCE/HSMUCE (<code>stepR</code>, wiring the orphaned <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code>), CROPS penalty path + plots, robust (<code>robseg</code>), DeCAFS, self-normalisation (<code>SNSeg</code>).</li>
-<li>
-<strong>§6 (first slice)</strong> — <code>summary</code>/<code>as_tibble</code>/<code>format</code>/<code>knit_print</code>/<code>plot</code> methods; <code>ts</code>/<code>xts</code>/<code>tsibble</code>/<code>data.frame</code> input; <code>cpt_cite()</code>.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="v040--bayesian-high-dimensional-regression-exploration">v0.4.0 — Bayesian, high-dimensional, regression, exploration<a class="anchor" aria-label="anchor" href="#v040--bayesian-high-dimensional-regression-exploration"></a></h3>
-<ul><li>bcp + BOCPD (<code>ocp</code>) with posterior plots; <code>inspect</code>, SBS (<code>hdbinseg</code>), the <code>changepoints</code> collection + multivariate/HD plots; <code>strucchange</code> + <code>segmented</code> with regression rendering; <code>cpt_batch()</code>, <code>ggcpt_interactive()</code>, <code>cpt_explore()</code>, stability diagnostics.</li>
-</ul></div>
-<div class="section level3">
-<h3 id="v050--v100--online--consolidation">v0.5.0 / v1.0.0 — Online + consolidation<a class="anchor" aria-label="anchor" href="#v050--v100--online--consolidation"></a></h3>
-<ul><li>CPM streaming, FOCuS, OCD + streaming plots; TCPD multi-annotator benchmarking and a benchmarking vignette; API freeze, full <code>pkgdown</code> site, JOSS/R-Journal software paper.</li>
-</ul><hr></div>
-</div>
-<div class="section level2">
-<h2 id="id_11-hardening-what-020-fixed-and-what-remains">11. Hardening: what 0.2.0 fixed and what remains<a class="anchor" aria-label="anchor" href="#id_11-hardening-what-020-fixed-and-what-remains"></a></h2>
-<div class="section level3">
-<h3 id="id_111-fixed-in-020">11.1 Fixed in 0.2.0<a class="anchor" aria-label="anchor" href="#id_111-fixed-in-020"></a></h3>
-<p>The 0.1.0 audit items are closed: the <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> no-change bug (now returns 0 rows; boundaries stripped unconditionally), the <code>size</code>→<code>linewidth</code> deprecation (<code>cptline_linewidth</code>, with <code>cptline_size</code> soft-deprecated via <code>lifecycle</code>), <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> input validation across wrappers, the changepoint-location convention (normalised to “left”, exposed as <code>cp_convention</code>), full-height rules with a <code>show_points</code> length cutoff and an <code>index</code> argument, the <code>"np"</code> alias, the “sytle”→“style” typo, the <code>"_PACKAGE"</code> sentinel, and the first <code>testthat</code> tests (24 <code>test_that</code> blocks across three files). <code>RoxygenNote</code> is current (7.3.2). Note: the <code>vdiffr</code> snapshot tests advertised in <code>NEWS.md</code> were <strong>not</strong> actually added — see §11.3 B13.</p>
-</div>
-<div class="section level3">
-<h3 id="id_112-remaining-and-newly-surfaced">11.2 Remaining and newly surfaced<a class="anchor" aria-label="anchor" href="#id_112-remaining-and-newly-surfaced"></a></h3>
-<ul><li>
-<strong>Documentation drift (now the §2 mandate).</strong> The package-level help is stale (claims three engines); the README over-claims <code>gfpop</code> and under-documents ~half the surface; <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> documents methods that error. These are the highest-priority “bugs” of the next cycle — wrong/missing docs are as harmful as wrong code.</li>
-<li>
-<strong>Dispatcher over-promise.</strong> <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> offers 13 methods that <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> (§1.2, §3.1).</li>
-<li>
-<strong>Multivariate <code>ecp</code> still degraded.</strong> <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> flattens a matrix with <code>as.numeric(x)</code>, and <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> returns a wrong column-major scalar <code>cp_value</code> for matrix input (and <code>NA</code> for a data frame). The validator accepts matrices, advertising support the detectors do not honour (§3.2, §11.3 B4).</li>
-<li>
-<strong><code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> has no producer.</strong> It ships but no shipped engine emits <code>ci_lower</code>/<code>ci_upper</code>; SMUCE/<code>mosum</code>-CIs (§4.2, §5) are what make it real.</li>
-<li>
-<strong>Penalty handling is uneven across engines.</strong> <code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code> and the string penalties map cleanly onto the <code>changepoint</code> family but only partially onto the newer wrappers; the CROPS work (§4.3) and a documented penalty-semantics table per engine should make this consistent and discoverable.</li>
-</ul><p>Each remaining item is either a doc fix (no compatibility risk) or ships behind an option/<code>Suggests</code> guard, consistent with §12.</p>
-</div>
-<div class="section level3">
-<h3 id="id_113-bugs-and-improvements-found-by-testing-020-verified">11.3 Bugs and improvements found by testing 0.2.0 (verified)<a class="anchor" aria-label="anchor" href="#id_113-bugs-and-improvements-found-by-testing-020-verified"></a></h3>
-<p>The following were <strong>reproduced by running 0.2.0</strong> on R 4.4.1 with the declared dependencies and all <code>Suggests</code> engines installed; the existing <code>testthat</code> suite passes, so none of these is currently caught. They are ordered by severity. Each is a concrete fix for the next release.</p>
-<div class="section level4">
-<h4 id="correctness--silently-wrong-results">Correctness — silently wrong results<a class="anchor" aria-label="anchor" href="#correctness--silently-wrong-results"></a></h4>
-<p><strong>B1. <code><a href="reference/signal_blocks.html">signal_blocks()</a></code> does not produce the Blocks signal; its data contradicts its own <code>true_changepoints</code>.</strong> In <code>simulate.R</code> the level loop runs <em>in reverse</em> and assigns <em>absolute</em> levels with a <code>&gt;=</code> mask:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw">for</span> <span class="op">(</span><span class="va">i</span> <span class="kw">in</span> <span class="fu"><a href="https://rdrr.io/r/base/rev.html" class="external-link">rev</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">cp_idx</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="va">signal</span><span class="op">[</span><span class="va">t</span> <span class="op">&gt;=</span> <span class="va">cp_scaled</span><span class="op">[</span><span class="va">i</span><span class="op">]</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">heights</span><span class="op">[</span><span class="va">i</span><span class="op">]</span></span></code></pre></div>
-<p>Because the iteration is reversed, the final assignment (<code>i = 1</code>, <code>t &gt;= 0.10</code>) overwrites the entire tail, collapsing all 11 blocks into a <strong>single step</strong> at the first changepoint. Reproduction: of the 11 declared <code>true_changepoints</code>, only <strong>1</strong> shows a real jump in the generated series; the other ten sit in flat noise. This is the worst kind of bug for a benchmark package — a “canonical test signal” whose ground truth is wrong — so every example, test, or evaluation built on <code><a href="reference/signal_blocks.html">signal_blocks()</a></code> is scored against fiction. <em>Fix:</em> iterate forward (<code>seq_along</code>), or build cumulative jumps; add a test asserting each declared changepoint is a genuine level change. (The other signals — <code>fms</code>, <code>mix</code>, <code>teeth</code>, <code>stairs</code> — were checked and are correct.)</p>
-<p><strong>B2. <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> double-counts true positives; <code>recall</code> and <code>f1</code> can exceed 1.</strong> The precision/recall loop matches every <em>prediction</em> to its nearest truth independently and increments <code>tp</code> each time, so several predictions near one true changepoint each count as a hit. Reproduction:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">98</span>, <span class="fl">100</span>, <span class="fl">102</span><span class="op">)</span>, truth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">200</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="co">#&gt; precision = 1, recall = 3, f1 = 1.5      # recall and f1 are impossible</span></span></code></pre></div>
-<p><code>recall &gt; 1</code>, <code>f1 &gt; 1</code>, and the implied <code>fn = length(truth) - tp</code> goes negative. <em>Fix:</em> one-to-one matching — each truth may be claimed by at most one prediction (e.g. greedy nearest matching with removal, or a bipartite match) — then <code>tp ≤ min(|pred|, |truth|)</code>. The covering and Rand metrics are unaffected (partition-based) and stayed in <code>[0, 1]</code> in testing.</p>
-<p><strong>B3. <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> silently changes or ignores <code>change_in</code>.</strong> Two faces of one problem, both verified: - <code>change_in = "slope"</code> is accepted by <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> but <code>change_in_mapping()</code> maps it to <code>"mean"</code>; on a pure linear trend the call runs mean-change detection (returning spurious changepoints) and the resulting object reports <code>change_in = "mean"</code>. The user’s request is silently discarded. - For the search/pruning engines (<code>fpop</code>, <code>wbs</code>, <code>wbs2</code>, <code>not</code>, <code>mosum</code>, <code>idetect</code>, <code>tguh</code>) <code>change_in</code> is not passed through at all, and the object is hard-coded to <code>change_in = "mean"</code>. <code>cpt_detect(x, method = "fpop",   change_in = "var")</code> reports <code>mean</code> and does mean detection.</p>
-<p><em>Fix:</em> validate the <code>method × change_in</code> combination and <strong>error</strong> (or route to a capable engine — <code>not</code> does support <code>slope</code>/<code>var</code> contrasts) instead of silently mislabelling; record the <em>actual</em> <code>change_in</code> on the object.</p>
-<p><strong>B4. <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> returns a wrong <code>cp_value</code> for multivariate input, and <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> flattens it.</strong> Because <code><a href="https://rdrr.io/r/base/numeric.html" class="external-link">is.numeric()</a></code> is <code>TRUE</code> for a numeric matrix, the <code>cp_value &lt;- data[cp]</code> branch fires and returns a <strong>column-major flattened scalar</strong> (e.g. <code>X[101]</code>), not the per-coordinate change; a <code>data.frame</code> falls to the <code>else</code> branch and returns <code>NA</code>. Separately, <code>cpt_detect(X, method = "ecp")</code> runs <code>as.numeric(X)</code>, so a 200×2 matrix is seen as a length-400 vector. <code>ecp</code> is the package’s multivariate engine, so this is its primary use case. <em>Fix:</em> §3.2 (route multivariate input without flattening; populate <code>segments</code> instead of a scalar <code>cp_value</code>).</p>
-<p><strong>B5. <code><a href="reference/stat_changepoint.html">stat_changepoint()</a></code> ignores the <code>x</code> aesthetic and draws lines at raw indices.</strong> <code>StatChangepoint$compute_group()</code> returns <code>xintercept = cp$cp</code> (integer positions) regardless of the panel’s <code>x</code> scale. On any axis that is not <code>1:n</code> the rules land in the wrong place. Reproduction: with <code>aes(t, y)</code> where <code>t</code> spans 2000–2019, a changepoint at observation 100 is drawn at <code>xintercept = 100</code> — off the visible axis — and ggplot also warns that the <code>x</code>/<code>y</code> aesthetics were dropped. <em>Fix:</em> map the detected index back to the <code>x</code> aesthetic (<code>xintercept = data$x[cp$cp]</code>) and preserve grouping.</p>
-</div>
-<div class="section level4">
-<h4 id="robustness--noisy-or-fragile-behaviour">Robustness — noisy or fragile behaviour<a class="anchor" aria-label="anchor" href="#robustness--noisy-or-fragile-behaviour"></a></h4>
-<p><strong>B6. <code>min(numeric(0))</code> warnings on empty <code>pred</code>/<code>truth</code>.</strong> <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> and <code><a href="reference/ggcpt_eval.html">ggcpt_eval()</a></code> call <code>min(abs(p - truth))</code> inside a loop; when <code>truth</code> (or <code>pred</code>) is empty this emits <em>“no non-missing arguments to min; returning Inf”</em> for every element. The numeric result is defensible (no matches) but the warning spam is not. A no-change series scored against an empty truth set is a normal case. <em>Fix:</em> guard the empty cases explicitly before the loop.</p>
-<p><strong>B7. The dispatcher advertises 13 methods that error at runtime</strong> (<code>smuce</code>, <code>hsmuce</code>, <code>kcp</code>, <code>cpm</code>, <code>robust</code>, <code>decafs</code>, <code>sn</code>, <code>inspect</code>, <code>sbs</code>, <code>bcp</code>, <code>bocpd</code>, <code>strucchange</code>, <code>segmented</code>) — cross-referenced as the §3.1 fix and the §2.2(3) documentation defect; listed here for completeness as a verified runtime behaviour (<code>cpt_detect(x, method = "smuce")</code> → <code>stop("... not yet implemented")</code>).</p>
-</div>
-<div class="section level4">
-<h4 id="improvements-and-documentation-mismatches">Improvements and documentation mismatches<a class="anchor" aria-label="anchor" href="#improvements-and-documentation-mismatches"></a></h4>
-<p><strong>B8. <code><a href="reference/glance.ggcpt.html">glance.ggcpt()</a></code> always returns <code>total_cost = NA</code> and <code>runtime = NA</code>.</strong> Both are hard-coded; the help says <code>total_cost</code> is filled “if available,” but it never is, and runtime is never measured. The upstream <code>changepoint</code>/<code>fpop</code> fits expose a cost/likelihood. <em>Fix:</em> populate <code>total_cost</code> from <code>$fit</code> where available and time the detector call.</p>
-<p><strong>B9. <code><a href="reference/cpt_simulate.html">cpt_simulate()</a></code> documents return columns <code>index</code> and <code>value</code>, but returns <code>index</code>, <code>value</code>, <code>seg_id</code>.</strong> A small <code>@return</code> mismatch (verified); reconcile the doc with the (useful) <code>seg_id</code> column.</p>
-<p><strong>B10. <code>ggcptplot_internal(show_segments = )</code> is a dead parameter.</strong> It is accepted but never used; segment drawing actually happens in <code><a href="reference/autoplot.ggcpt.html">autoplot.ggcpt()</a></code>. Harmless today, but a trap for future edits. <em>Fix:</em> remove the unused parameter or move the segment logic into the shared internal.</p>
-<p><strong>B11. <code><a href="reference/augment.ggcpt.html">augment.ggcpt()</a></code> hard-codes <code>colnames(data) &lt;- c("index", "value")</code>.</strong> It assumes exactly two data columns, so it will break or mislabel once multivariate data (§3.2) carries more. <em>Fix:</em> rename by position-independent logic before multivariate support lands.</p>
-<p><strong>B12. Penalty semantics differ across engines and are undocumented.</strong> <code>cpt_penalty("MBIC", n)</code> returns <code>2*log(n)</code> (for <code>k = 1</code>), which is <strong>not</strong> the <code>changepoint</code> package’s MBIC; a numeric penalty means different things to <code>fpop</code> (<code>lambda</code>) than the string <code>"MBIC"</code> does to PELT. Results can therefore differ across methods for “the same” penalty. <em>Fix:</em> the CROPS work (§4.3) plus a documented per-engine penalty-semantics table (also §11.2).</p>
-<p><strong>B13. <code>NEWS.md</code> over-claims and omits — the changelog is itself part of the documentation gap (§2).</strong> Verified against the repo: (a) the 0.2.0 entry advertises <em>“vdiffr snapshot tests (where available)”</em> but <strong>none exist</strong> — zero <code>expect_doppelganger</code>/<code>expect_snapshot</code> calls and no <code>tests/testthat/_snaps/</code> directory (the same inaccuracy previously inherited in §11.1, now corrected); (b) it calls <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> a <em>“dispatcher for all changepoint methods,”</em> echoing the §2.2(3) over-promise (13 of 26 methods error); (c) it never mentions the exported, user-facing <code><a href="reference/theme_ggcpt.html">theme_ggcpt()</a></code> and <code><a href="reference/annotate_segments.html">annotate_segments()</a></code>; and (d) the 0.1.0 entry is a bare <em>“Initial release to CRAN”</em> that does not record what 0.1.0 contained (<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code><a href="reference/ggcptplot.html">ggcptplot()</a></code>, <code><a href="reference/ggecpplot.html">ggecpplot()</a></code>). The shipped 0.2.0 CRAN changelog is frozen, so the fix is <em>forward</em>: make the 0.3.0 <code>NEWS.md</code> accurate and complete, fold <code>NEWS.md</code> into the §2 coverage mandate, and only print the <em>“vdiffr”</em> claim once those snapshot tests actually exist (§9.3).</p>
-<hr></div>
-</div>
-</div>
-<div class="section level2">
-<h2 id="id_12-backward-compatibility-and-deprecation">12. Backward compatibility and deprecation<a class="anchor" aria-label="anchor" href="#id_12-backward-compatibility-and-deprecation"></a></h2>
-<ul><li>The full 0.2.0 surface keeps working unchanged: signatures, defaults, return types, and the <code>tibble(cp, cp_value)</code> contract are covered by regression and <code>vdiffr</code> tests. The 0.1.0 four (<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code><a href="reference/ggcptplot.html">ggcptplot()</a></code>, <code><a href="reference/ggecpplot.html">ggecpplot()</a></code>) remain exported.</li>
-<li>New behaviour is strictly additive. Tightening <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>’s <code><a href="https://rdrr.io/r/base/match.arg.html" class="external-link">match.arg()</a></code> to wired methods (§3.1) only removes choices that already error, so no working call breaks; the removed names reappear as they are implemented.</li>
-<li>Removing <code>gfpop</code> from the README (§2.2) corrects an over-claim — it never worked — and is therefore compatible; the claim returns when §4.1 ships.</li>
-<li>No exported function is deprecated. Should a wrapper later be subsumed by <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>, it goes through the standard <code>lifecycle</code> soft-deprecation path with at least one minor-version notice.</li>
-</ul><hr></div>
-<div class="section level2">
-<h2 id="appendix-a-method--package--function-map">Appendix A: Method → package → function map<a class="anchor" aria-label="anchor" href="#appendix-a-method--package--function-map"></a></h2>
-<p>Status as of 0.2.0: ✅ shipped · 🚧 harden/finish · 🆕 planned.</p>
-<table class="table"><colgroup><col width="20%"><col width="20%"><col width="20%"><col width="20%"><col width="20%"></colgroup><thead><tr><th>Method</th>
-<th>Reference</th>
-<th>Package</th>
-<th>Access</th>
-<th>Status</th>
-</tr></thead><tbody><tr><td>Optimal Partitioning / SegNeigh / PELT / BinSeg / AMOC</td>
-<td>Jackson 2005; Auger–Lawrence 1989; Killick 2012; Scott–Knott 1974</td>
-<td><code>changepoint</code></td>
+<h2 id="id_3-the-040-engine-wave">3. The 0.4.0 engine wave<a class="anchor" aria-label="anchor" href="#id_3-the-040-engine-wave"></a></h2>
+<p>Eighteen new wrappers, all engines on CRAN, all in <code>Suggests</code> behind <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> guards. <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> grows from 13 to 31 methods; the <code>method × change_in</code> capability matrix is validated centrally and errors — never silently substitutes.</p>
+<table class="table"><colgroup><col width="20%"><col width="20%"><col width="20%"><col width="20%"><col width="20%"></colgroup><thead><tr><th>Family</th>
+<th>Method (<code>cpt_detect</code> name)</th>
+<th>Engine</th>
+<th>Wrapper</th>
+<th>Distinctive output</th>
+</tr></thead><tbody><tr><td>Multiscale inference</td>
 <td>
-<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>
+<code>smuce</code>, <code>hsmuce</code>
 </td>
-<td>✅</td>
-</tr><tr><td>NMCD (<code>cpt.np</code>)</td>
-<td>Zou 2014; Haynes 2017</td>
-<td><code>changepoint.np</code></td>
-<td><code>cpt_detect("np")</code></td>
-<td>✅</td>
-</tr><tr><td>E-Divisive / E-Agglo</td>
-<td>Matteson–James 2014</td>
-<td><code>ecp</code></td>
-<td>
-<code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code>cpt_detect("ecp")</code>
-</td>
-<td>✅ / 🚧 multivariate</td>
-</tr><tr><td>FPOP</td>
-<td>Maidstone 2017</td>
-<td><code>fpop</code></td>
-<td><code><a href="reference/fpop_wrapper.html">fpop_wrapper()</a></code></td>
-<td>✅</td>
-</tr><tr><td>WBS / WBS2 / NOT / MOSUM / IDetect / TGUH</td>
-<td>Fryzlewicz 2014/2020; Baranowski 2019; Eichinger–Kirch 2018; Anastasiou–Fryzlewicz 2022; Fryzlewicz 2018</td>
-<td>
-<code>wbs</code>/<code>breakfast</code>/<code>not</code>/<code>mosum</code>/<code>IDetect</code>
-</td>
-<td>
-<code>*_wrapper()</code>, <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>
-</td>
-<td>✅</td>
-</tr><tr><td>gfpop</td>
-<td>Hocking 2022</td>
-<td><code>gfpop</code></td>
-<td><code>gfpop_wrapper()</code></td>
-<td>🆕 (README over-claims)</td>
-</tr><tr><td>SMUCE / HSMUCE</td>
-<td>Frick 2014; Pein 2017</td>
 <td><code>stepR</code></td>
-<td><code>smuce_wrapper()</code></td>
-<td>🆕 (named, unwired)</td>
-</tr><tr><td>CROPS</td>
-<td>Haynes 2017</td>
+<td><code><a href="reference/smuce_wrapper.html">smuce_wrapper()</a></code></td>
+<td>
+<strong>CI columns</strong> + step fit</td>
+</tr><tr><td>Penalty path</td>
+<td>(path object)</td>
 <td><code>changepoint</code></td>
-<td><code>cpt_crops()</code></td>
-<td>🆕</td>
-</tr><tr><td>Robust loss / DeCAFS / SN</td>
-<td>Fearnhead–Rigaill 2019; Romano 2022; Zhao 2022</td>
+<td><code><a href="reference/cpt_crops.html">cpt_crops()</a></code></td>
 <td>
-<code>robseg</code>/<code>DeCAFS</code>/<code>SNSeg</code>
+<code>ggcpt_path</code>: elbow/path/segmentation plots</td>
+</tr><tr><td>Slope</td>
+<td><code>cpop</code></td>
+<td><code>cpop</code></td>
+<td><code><a href="reference/cpop_wrapper.html">cpop_wrapper()</a></code></td>
+<td>broken-line fit in <code>$data$fitted</code>
 </td>
-<td><code>*_wrapper()</code></td>
-<td>🆕 (named, unwired)</td>
-</tr><tr><td>KCP / CPM</td>
-<td>Arlot 2019; Ross 2015</td>
+</tr><tr><td>Bayesian</td>
+<td><code>bcp</code></td>
+<td><code>bcp</code></td>
+<td><code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code></td>
 <td>
-<code>kcpRS</code>/<code>cpm</code>
-</td>
+<code>posterior_prob</code> column, posterior mean</td>
+</tr><tr><td>Bayesian online</td>
+<td><code>bocpd</code></td>
+<td><code>ocp</code></td>
+<td><code><a href="reference/bocpd_wrapper.html">bocpd_wrapper()</a></code></td>
+<td>run-length posterior (<code><a href="reference/ggcpt_runlength.html">ggcpt_runlength()</a></code>)</td>
+</tr><tr><td>Bayesian ensemble</td>
+<td><code>beast</code></td>
+<td><code>Rbeast</code></td>
+<td><code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code></td>
 <td>
-<code>kcp_wrapper()</code>/<code>cpm_wrapper()</code>
-</td>
-<td>🆕</td>
-</tr><tr><td>inspect / SBS / changepoints</td>
-<td>Wang–Samworth 2018; Cho–Fryzlewicz 2015; Xu et al.</td>
+<code>posterior_prob</code>, mean trend</td>
+</tr><tr><td>Sequential</td>
+<td><code>cpm</code></td>
+<td><code>cpm</code></td>
+<td><code><a href="reference/cpm_wrapper.html">cpm_wrapper()</a></code></td>
 <td>
-<code>InspectChangepoint</code>/<code>hdbinseg</code>/<code>changepoints</code>
+<code>detection_time</code> column</td>
+</tr><tr><td>Kernel</td>
+<td><code>kcp</code></td>
+<td><code>kcpRS</code></td>
+<td><code><a href="reference/kcp_wrapper.html">kcp_wrapper()</a></code></td>
+<td>running-statistic changes (mean/var/AR/cor)</td>
+</tr><tr><td>NP + dependence</td>
+<td><code>npmojo</code></td>
+<td><code>CptNonPar</code></td>
+<td><code><a href="reference/npmojo_wrapper.html">npmojo_wrapper()</a></code></td>
+<td>distribution changes under serial dependence</td>
+</tr><tr><td>Drift + AR</td>
+<td><code>decafs</code></td>
+<td><code>DeCAFS</code></td>
+<td><code><a href="reference/decafs_wrapper.html">decafs_wrapper()</a></code></td>
+<td>estimated signal in <code>fitted</code>
 </td>
-<td><code>*_wrapper()</code></td>
-<td>🆕</td>
-</tr><tr><td>bcp / BOCPD</td>
-<td>Erdman–Emerson 2007; Adams–MacKay 2007</td>
+</tr><tr><td>Self-normalised</td>
+<td><code>sn</code></td>
+<td><code>SNSeg</code></td>
+<td><code><a href="reference/sn_wrapper.html">sn_wrapper()</a></code></td>
+<td>mean/var/acf/correlation changes</td>
+</tr><tr><td>High-dim</td>
+<td><code>inspect</code></td>
+<td><code>InspectChangepoint</code></td>
+<td><code><a href="reference/inspect_wrapper.html">inspect_wrapper()</a></code></td>
 <td>
-<code>bcp</code>/<code>ocp</code>
-</td>
+<code>strength</code> column, multivariate facets</td>
+</tr><tr><td>High-dim online</td>
+<td><code>ocd</code></td>
+<td><code>ocd</code></td>
+<td><code><a href="reference/ocd_wrapper.html">ocd_wrapper()</a></code></td>
 <td>
-<code>bcp_wrapper()</code>/<code>bocpd_wrapper()</code>
-</td>
-<td>🆕</td>
-</tr><tr><td>Bai–Perron / segmented</td>
-<td>Bai–Perron 1998/2003; Muggeo 2003/2008</td>
+<code>declared_at</code>, auto baseline handling</td>
+</tr><tr><td>Multivariate</td>
+<td><code>geomcp</code></td>
+<td><code>changepoint.geo</code></td>
+<td><code><a href="reference/geomcp_wrapper.html">geomcp_wrapper()</a></code></td>
 <td>
-<code>strucchange</code>/<code>segmented</code>
-</td>
-<td><code>*_wrapper()</code></td>
-<td>🆕</td>
-</tr><tr><td>FOCuS / OCD</td>
-<td>Romano 2023; Chen 2022</td>
-<td>
-<code>FOCuS</code>/<code>ocd</code>
-</td>
-<td><code>*_wrapper()</code></td>
-<td>🆕</td>
-</tr></tbody></table></div>
+<code>mapping</code> column (distance/angle)</td>
+</tr><tr><td>Regression</td>
+<td><code>strucchange</code></td>
+<td><code>strucchange</code></td>
+<td><code><a href="reference/strucchange_wrapper.html">strucchange_wrapper()</a></code></td>
+<td>Bai–Perron breaks + <strong>CI columns</strong>; formula input</td>
+</tr><tr><td>Broken line</td>
+<td><code>segmented</code></td>
+<td><code>segmented</code></td>
+<td><code><a href="reference/segmented_wrapper.html">segmented_wrapper()</a></code></td>
+<td>kink CIs + fitted broken line</td>
+</tr><tr><td>Model selection</td>
+<td><code>envcpt</code></td>
+<td><code>EnvCpt</code></td>
+<td><code><a href="reference/envcpt_wrapper.html">envcpt_wrapper()</a></code></td>
+<td>changepoints only if they beat trend/AR models</td>
+</tr><tr><td>Modern PELT</td>
+<td><code>fastcpd</code></td>
+<td><code>fastcpd</code></td>
+<td><code><a href="reference/fastcpd_wrapper.html">fastcpd_wrapper()</a></code></td>
+<td>mean/var/meanvar + AR/ARMA/GARCH families</td>
+</tr></tbody></table><p>Cross-cutting dispatcher work that shipped with the wave:</p>
+<ul><li>
+<strong>Central capability validation.</strong> <code>method_change_in_support()</code> is the single source of truth; <code>change_in = "slope"</code> now routes to <code>cpop</code> or NOT’s linear contrast, <code>"var"</code> to NOT’s meanvar contrast, etc. The 0.3.0 blanket “slope not supported” error is gone.</li>
+<li>
+<strong>Multivariate routing.</strong> Univariate methods <strong>error</strong> on wide input (previously: silent column-major flattening, §6 C3); multivariate methods (<code>ecp</code>, <code>inspect</code>, <code>geomcp</code>, <code>ocd</code>, <code>npmojo</code>, <code>kcp</code>, <code>fastcpd</code>, <code>sn</code>) receive the matrix intact and store a <code>data_wide</code> slot that <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> renders as facets.</li>
+<li>
+<strong>Penalty resolution.</strong> Character penalties resolve through <code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code> for numeric-penalty engines, including <code>"None"</code> → 0 (§6 C10); <code>cpt_penalty("sSIC")</code> now implements the actual strengthened SIC (k(n)^) (§6 C11).</li>
+<li>
+<strong>A shared <code>ggcpt_build()</code> constructor</strong> guarantees the contract (sorted, deduplicated, in-range <code>cp</code>; aligned extra columns; segments; optional <code>fitted</code> signal and <code>data_wide</code>) for every new wrapper.</li>
+</ul></div>
 <div class="section level2">
-<h2 id="appendix-b-api-reference-shipped-and-proposed">Appendix B: API reference (shipped and proposed)<a class="anchor" aria-label="anchor" href="#appendix-b-api-reference-shipped-and-proposed"></a></h2>
-<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" tabindex="-1"></a><span class="do">## Shipped in 0.2.0 -------------------------------------------------------</span></span>
-<span id="cb5-2"><a href="#cb5-2" tabindex="-1"></a><span class="do">## core</span></span>
-<span id="cb5-3"><a href="#cb5-3" tabindex="-1"></a><span class="fu">cpt_detect</span>(x, method, change_in, penalty, ...) <span class="ot">-&gt;</span> ggcpt</span>
-<span id="cb5-4"><a href="#cb5-4" tabindex="-1"></a><span class="fu">cpt_penalty</span>(type, n, k, value)                 <span class="ot">-&gt;</span> numeric</span>
-<span id="cb5-5"><a href="#cb5-5" tabindex="-1"></a><span class="fu">new_ggcpt</span>(...); <span class="fu">is_ggcpt</span>(x); <span class="fu">print</span>(<span class="sc">&lt;</span>ggcpt<span class="sc">&gt;</span>)</span>
-<span id="cb5-6"><a href="#cb5-6" tabindex="-1"></a><span class="do">## broom + ggplot2</span></span>
-<span id="cb5-7"><a href="#cb5-7" tabindex="-1"></a><span class="fu">tidy</span>(x); <span class="fu">glance</span>(x); <span class="fu">augment</span>(x)                 <span class="co"># x: ggcpt</span></span>
-<span id="cb5-8"><a href="#cb5-8" tabindex="-1"></a><span class="fu">autoplot</span>(x, show_segments, show_points, show_line, index, ...) <span class="ot">-&gt;</span> ggplot</span>
-<span id="cb5-9"><a href="#cb5-9" tabindex="-1"></a><span class="fu">ggcptplot</span>(...); <span class="fu">ggecpplot</span>(...)                 <span class="co"># original + hardened</span></span>
-<span id="cb5-10"><a href="#cb5-10" tabindex="-1"></a><span class="fu">geom_changepoint</span>(); <span class="fu">geom_cpt_segment</span>(); <span class="fu">geom_cpt_ci</span>(); <span class="fu">stat_changepoint</span>()</span>
-<span id="cb5-11"><a href="#cb5-11" tabindex="-1"></a><span class="fu">theme_ggcpt</span>(); <span class="fu">annotate_segments</span>()</span>
-<span id="cb5-12"><a href="#cb5-12" tabindex="-1"></a><span class="do">## wrappers</span></span>
-<span id="cb5-13"><a href="#cb5-13" tabindex="-1"></a><span class="fu">cpt_wrapper</span>(); <span class="fu">ecp_wrapper</span>()</span>
-<span id="cb5-14"><a href="#cb5-14" tabindex="-1"></a><span class="fu">fpop_wrapper</span>(); <span class="fu">wbs_wrapper</span>(); <span class="fu">wbs2_wrapper</span>(); <span class="fu">not_wrapper</span>()</span>
-<span id="cb5-15"><a href="#cb5-15" tabindex="-1"></a><span class="fu">mosum_wrapper</span>(); <span class="fu">idetect_wrapper</span>(); <span class="fu">tguh_wrapper</span>()</span>
-<span id="cb5-16"><a href="#cb5-16" tabindex="-1"></a><span class="do">## comparison / evaluation / simulation</span></span>
-<span id="cb5-17"><a href="#cb5-17" tabindex="-1"></a><span class="fu">ggcpt_compare</span>(x, methods, layout, seed, ...) <span class="ot">-&gt;</span> ggplot</span>
-<span id="cb5-18"><a href="#cb5-18" tabindex="-1"></a><span class="fu">ggcpt_compare_table</span>(x, methods, ...)         <span class="ot">-&gt;</span> tibble</span>
-<span id="cb5-19"><a href="#cb5-19" tabindex="-1"></a><span class="fu">cpt_metrics</span>(); <span class="fu">cpt_metrics_annotated</span>(); <span class="fu">ggcpt_eval</span>()</span>
-<span id="cb5-20"><a href="#cb5-20" tabindex="-1"></a><span class="fu">cpt_simulate</span>() <span class="sc">/</span> <span class="fu">rcpt</span>(); signal_blocks<span class="sc">/</span>fms<span class="sc">/</span>mix<span class="sc">/</span>teeth<span class="sc">/</span><span class="fu">stairs</span>()</span>
-<span id="cb5-21"><a href="#cb5-21" tabindex="-1"></a></span>
-<span id="cb5-22"><a href="#cb5-22" tabindex="-1"></a><span class="do">## Proposed for 0.3.0+ ----------------------------------------------------</span></span>
-<span id="cb5-23"><a href="#cb5-23" tabindex="-1"></a><span class="fu">cpt_methods</span>()                                  <span class="ot">-&gt;</span> <span class="fu">tibble</span> (introspection, §<span class="fl">3.1</span>)</span>
-<span id="cb5-24"><a href="#cb5-24" tabindex="-1"></a><span class="fu">cpt_detect</span>(<span class="sc">&lt;</span>ts<span class="sc">|</span>xts<span class="sc">|</span>tsibble<span class="sc">|</span>data.frame<span class="sc">&gt;</span>, ...)   <span class="co"># §6.2</span></span>
-<span id="cb5-25"><a href="#cb5-25" tabindex="-1"></a><span class="fu">gfpop_wrapper</span>(); <span class="fu">smuce_wrapper</span>(); <span class="fu">robseg_wrapper</span>(); <span class="fu">decafs_wrapper</span>(); <span class="fu">sn_wrapper</span>()</span>
-<span id="cb5-26"><a href="#cb5-26" tabindex="-1"></a><span class="fu">cpt_crops</span>(x, method, change_in, pen_min, pen_max, ...) <span class="ot">-&gt;</span> ggcpt_path  <span class="co"># §4.3</span></span>
-<span id="cb5-27"><a href="#cb5-27" tabindex="-1"></a><span class="fu">ggcpt_pathplot</span>(path, ...) <span class="ot">-&gt;</span> ggplot</span>
-<span id="cb5-28"><a href="#cb5-28" tabindex="-1"></a><span class="fu">summary</span>(<span class="sc">&lt;</span>ggcpt<span class="sc">&gt;</span>); <span class="fu">as_tibble</span>(<span class="sc">&lt;</span>ggcpt<span class="sc">&gt;</span>); <span class="fu">format</span>(<span class="sc">&lt;</span>ggcpt<span class="sc">&gt;</span>); <span class="fu">plot</span>(<span class="sc">&lt;</span>ggcpt<span class="sc">&gt;</span>)  <span class="co"># §6.1</span></span>
-<span id="cb5-29"><a href="#cb5-29" tabindex="-1"></a><span class="fu">cpt_batch</span>(X, method, ..., workers, seed) <span class="ot">-&gt;</span> tibble                    <span class="co"># §6.3</span></span>
-<span id="cb5-30"><a href="#cb5-30" tabindex="-1"></a><span class="fu">ggcpt_interactive</span>(p, ...); <span class="fu">cpt_explore</span>(x, ...)                        <span class="co"># §6.4</span></span>
-<span id="cb5-31"><a href="#cb5-31" tabindex="-1"></a><span class="fu">predict</span>(<span class="sc">&lt;</span>ggcpt<span class="sc">&gt;</span>); <span class="fu">segment_id</span>(<span class="sc">&lt;</span>ggcpt<span class="sc">&gt;</span>); <span class="fu">cpt_stability</span>(x, method, B)   <span class="co"># §6.5</span></span>
-<span id="cb5-32"><a href="#cb5-32" tabindex="-1"></a><span class="fu">cpt_cite</span>(x); <span class="fu">cpt_decompose</span>(x, ...)                                    <span class="co"># §6.6</span></span>
-<span id="cb5-33"><a href="#cb5-33" tabindex="-1"></a><span class="fu">ggcpt_facet</span>(X, ...); <span class="fu">ggcpt_heatmap</span>(X, ...)                           <span class="co"># §7.4</span></span>
-<span id="cb5-34"><a href="#cb5-34" tabindex="-1"></a><span class="do">## later: kcp/cpm/inspect/sbs/changepoints/bcp/bocpd/strucchange/segmented/focus/ocd</span></span></code></pre></div>
-<hr></div>
+<h2 id="id_4-new-features-beyond-detectors">4. New features beyond detectors<a class="anchor" aria-label="anchor" href="#id_4-new-features-beyond-detectors"></a></h2>
+<ul><li>
+<strong>Uncertainty-aware <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</strong> <code>show_ci = TRUE</code> draws changepoint-location intervals (SMUCE/HSMUCE, strucchange, segmented) as whiskers; <code>show_fit = TRUE</code> overlays the engine’s fitted signal (SMUCE, DeCAFS, CPOP, segmented, bcp, BEAST); multivariate results facet automatically. <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> finally has producers — and was migrated off the deprecated <code>geom_errorbarh()</code>.</li>
+<li>
+<strong>Bayesian displays.</strong> <code><a href="reference/ggcpt_posterior.html">ggcpt_posterior()</a></code> (series + posterior mean above, per-location changepoint probability below) and <code><a href="reference/ggcpt_runlength.html">ggcpt_runlength()</a></code> (the BOCPD run-length heatmap).</li>
+<li>
+<strong><code><a href="reference/cpt_crops.html">cpt_crops()</a></code> and the <code>ggcpt_path</code> class.</strong> The CROPS penalty path with <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, and <code>autoplot(type = c("elbow", "path", "segmentations"))</code> — penalty selection as a diagnostic, not a guess.</li>
+<li>
+<strong><code><a href="reference/cpt_batch.html">cpt_batch()</a></code>.</strong> One detector over many series (matrix/data frame/list), returning a <code>ggcpt_batch</code> tibble with list-columns, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, faceted <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>, and <code>future</code> parallelism with reproducible RNG.</li>
+<li>
+<strong><code><a href="reference/cpt_stability.html">cpt_stability()</a></code>.</strong> Segment-preserving bootstrap re-detection frequencies — a model-agnostic confidence signal for the many engines with no native intervals; renders as a frequency profile.</li>
+<li>
+<strong><code><a href="reference/ggcpt_interactive.html">ggcpt_interactive()</a></code>.</strong> Any result as a <code>plotly</code> widget (<code>Suggests</code>); the static path is untouched.</li>
+<li>
+<strong><code><a href="reference/cpt_cite.html">cpt_cite()</a></code>.</strong> The verified methodological reference(s) behind any result or method name.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="id_5-deferred-engines-and-the-050-horizon">5. Deferred engines and the 0.5.0 horizon<a class="anchor" aria-label="anchor" href="#id_5-deferred-engines-and-the-050-horizon"></a></h2>
+<p>Deferred for CRAN-availability reasons (tracked in <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> as <code>planned</code>): <code>gfpop</code> (removed from CRAN 2024), <code>robseg</code> and <code>FOCuS</code> (never on CRAN), <code>hdbinseg</code>/SBS (archived). If they return to CRAN they slot into the existing wrapper pattern in an afternoon.</p>
+<p>Planned for 0.5.0+: streaming interfaces for the online engines (<code>cpm</code>, <code>ocd</code>, BOCPD currently run in batch-replay mode); TCPD-style multi-annotator benchmark loaders; a benchmark-study harness over <code><a href="reference/cpt_batch.html">cpt_batch()</a></code> × <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> grids; time/date-index support (<code>ts</code>/<code>xts</code>/<code>tsibble</code>); <code>cpt_explore()</code> (Shiny penalty tuner); solution-path plots for WBS/NOT/MOSUM internals; API freeze toward 1.0.0 and a JOSS/R Journal software paper.</p>
+</div>
+<div class="section level2">
+<h2 id="id_6-the-040-bug-audit-verified">6. The 0.4.0 bug audit (verified)<a class="anchor" aria-label="anchor" href="#id_6-the-040-bug-audit-verified"></a></h2>
+<p>A six-agent audit ran the 0.3.0 code path by path; every claim below was reproduced on R 4.4.1 before being fixed, and each fix carries a regression test (<code>tests/testthat/test-040-bugfixes.R</code>).</p>
+<div class="section level4">
+<h4 id="correctness--wrong-results">Correctness — wrong results<a class="anchor" aria-label="anchor" href="#correctness--wrong-results"></a></h4>
+<ul><li>
+<strong>C1 (critical). <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> fabricated changepoints on no-change data.</strong> With no changepoints, <code>estimates = c(1, n+1)</code> and the positional strip <code>estimates[2:(length-1)]</code> evaluated <code>2:1</code>, returning the reversed boundaries — a ghost changepoint at <code>n</code> (with <code>cp_value = NA</code>) instead of the documented empty tibble. Same root cause silently dropped genuine changepoints in <code>e.agglo</code>’s wrap-around case. Fixed by value-based filtering (<code>estimates &gt; 1 &amp; estimates &lt;= n</code>).</li>
+<li>
+<strong>C2 (critical). <code><a href="reference/wbs_wrapper.html">wbs_wrapper()</a></code> discarded the model selection it claimed.</strong> The default branch computed the sSIC selection but read <code>cpt.th[[1]]</code> — the unrelated threshold selection — and labelled the result “sSIC”. Fixed to read <code>cpt.ic$ssic.penalty</code>; a manual threshold is now recorded as the penalty actually used.</li>
+<li>
+<strong>C3 (major). Univariate wrappers silently flattened matrices.</strong> A 100×2 matrix became a 200-point series with meaningless changepoints. All univariate paths now error with the list of multivariate methods; single-column matrices/data frames still work.</li>
+<li>
+<strong>C9 (major). <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> did not forward <code>change_in</code> to NOT.</strong> <code>method = "not", change_in = "var"</code> ran the mean contrast and reported “mean”. Contrasts are now mapped centrally (<code>var</code> → <code>pcwsConstMeanVar</code>, <code>slope</code> → <code>pcwsLinContMean</code>) and the object reports what ran.</li>
+<li>
+<strong>C10 (major). <code>penalty = "None"</code> silently became the default.</strong> For numeric-penalty engines, unmapped strings fell through to <code>NULL</code> → engine default; <code>"None"</code> now resolves to 0.</li>
+<li>
+<strong>C11 (major). <code>cpt_penalty("sSIC")</code> returned half of SIC.</strong> The “strengthened” criterion was weaker than BIC, over-detecting wherever used; now (k(n)^{1.01}).</li>
+<li>
+<strong>C18 (major). <code><a href="reference/signal_blocks.html">signal_blocks()</a></code> used absolute levels for the Donoho–Johnstone jumps.</strong> The classic signal is the cumulative sum of the jump heights; benchmarks against the literature were scored against the wrong signal.</li>
+<li>
+<strong>C19 (minor). t-noise had sd ≈ 1.73×<code>sd</code>.</strong> <code>rt(n, df) * sd</code> is not sd-<code>sd</code> noise; now rescaled by (), with <code>df &lt;= 2</code> rejected.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="contract-violations-and-crashes">Contract violations and crashes<a class="anchor" aria-label="anchor" href="#contract-violations-and-crashes"></a></h4>
+<ul><li>
+<strong>C4 (major).</strong> <code><a href="reference/idetect_wrapper.html">idetect_wrapper()</a></code> errored on no-change data (“No change-points found…”) instead of returning the documented empty result. Normalised.</li>
+<li>
+<strong>C5 (major).</strong> <code><a href="reference/tguh_wrapper.html">tguh_wrapper()</a></code> reported a spurious changepoint on constant data (breakfast’s default “lp” selector), crashed on short series (empty <code>cptmodel.list</code>), and mishandled the scalar-0 sentinel (producing a corrupt two-segment/zero-changepoint object). Selector pinned to “ic”; both edge cases handled in a shared <code>breakfast_cpts()</code>.</li>
+<li>
+<strong>C6 (major).</strong> <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> on an fpop result returned <strong>n rows</strong> — <code>$fit$cost</code> is a length-n vector and tibble recycled every column. Also <code>$</code> partial matching grabbed DeCAFS’s <code>costFunction</code>. Exact <code>[[</code> subsetting + terminal-cost extraction; glance is one row always.</li>
+<li>
+<strong>C7/C8 (major).</strong> <code><a href="reference/mosum_wrapper.html">mosum_wrapper()</a></code> stored the threshold <em>type string</em> as the numeric penalty value (breaking <code>bind_rows</code> over glances), and its documented <code>multiscale</code> argument was ignored. Both fixed; <code>multiscale = TRUE</code> now calls <code><a href="https://rdrr.io/pkg/mosum/man/multiscale.localPrune.html" class="external-link">mosum::multiscale.localPrune()</a></code>.</li>
+<li>
+<strong>C14 (minor).</strong> <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> crashed opaquely when an index exceeded <code>n</code>; now drops out-of-range indices with a warning.</li>
+<li>
+<strong>C20 (minor).</strong> The signal generators produced nonsense for small <code>n</code> (negative <code>length.out</code>, nine zero changepoints, <code>n</code> itself as a changepoint); all now validate their minimum sizes.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="metric-semantics-van-den-burgwilliams-alignment">Metric semantics (van den Burg–Williams alignment)<a class="anchor" aria-label="anchor" href="#metric-semantics-van-den-burgwilliams-alignment"></a></h4>
+<ul><li>
+<strong>C12 (major).</strong> Both-empty pred/truth scored precision = recall = F1 = 0 — punishing a perfect “no changepoints” answer while covering and Rand said 1. Now 1 across the board.</li>
+<li>
+<strong>C13 (major).</strong> Empty predictions scored covering 0, though the induced trivial partition has a well-defined (positive) covering; and the ARI guard returned 1 for chance-level agreement (<code>index == expected</code>). Both corrected.</li>
+<li>
+<strong>C15 (minor).</strong> <code><a href="reference/ggcpt_eval.html">ggcpt_eval()</a></code> classified many-to-one while <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> matched one-to-one, so the picture contradicted the numbers; both now share <code>match_changepoints()</code>, and the “Miss” legend entry actually renders.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="visualisation">Visualisation<a class="anchor" aria-label="anchor" href="#visualisation"></a></h4>
+<ul><li>
+<strong>C16 (major).</strong> <code>ggcpt_compare(layout = "facet")</code> errored when no method found changepoints, and silently dropped panels for methods that found none. Panels now come from the method list.</li>
+<li>
+<strong>C17 (major).</strong> <code><a href="reference/stat_changepoint.html">stat_changepoint()</a></code> detected on data-frame <strong>row order</strong> (shuffled rows → different changepoints) and emitted the “dropped aesthetics” warning on every build. Now sorts by <code>x</code> and declares <code>dropped_aes</code>.</li>
+<li>Also fixed: <code>show_ci</code> was documented but unimplemented (§4 makes it real); <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> sat on deprecated <code>geom_errorbarh()</code>; <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>’s <code>...</code> silently swallowed misspelled arguments (now warns); empty <code>ggcpt</code> objects produced Inf-limit plots (now a clean error); <code><a href="reference/ggecpplot.html">ggecpplot()</a></code> crashed on data-frame input (now plots the first column with a message); <code>cpt_wrapper(cp_method = "SegNeigh")</code> always errored under the default penalty (now falls back to SIC like the dispatcher); <code>print.ggcpt</code> double-printed its truncation message; <code>np</code> results now report <code>change_in = "distribution"</code> and <code>meanvar</code> stays <code>"meanvar"</code> in the user’s vocabulary.</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_7-architecture-dependencies-testing">7. Architecture, dependencies, testing<a class="anchor" aria-label="anchor" href="#id_7-architecture-dependencies-testing"></a></h2>
+<ul><li>
+<strong>Imports unchanged</strong> (<code>changepoint</code>, <code>changepoint.np</code>, <code>ecp</code> + tidyverse/broom/ggplot2 infrastructure). Eighteen engines + <code>plotly</code> joined <code>Suggests</code>. Nothing not-on-CRAN is referenced.</li>
+<li>
+<strong>File layout:</strong> new <code>wrap-inference.R</code> (stepR), <code>wrap-bayes.R</code> (bcp/ocp/Rbeast), <code>wrap-nonparam.R</code> (cpm/kcpRS/CptNonPar), <code>wrap-robust.R</code> (DeCAFS/SNSeg), <code>wrap-regression.R</code> (strucchange/segmented/EnvCpt), <code>wrap-highdim.R</code> (inspect/ocd/geomcp), <code>wrap-slope.R</code> (cpop), <code>wrap-fastcpd.R</code>, <code>crops.R</code>, <code>batch.R</code>, <code>stability.R</code>, <code>cite.R</code>, <code>posterior-plots.R</code>, and the shared <code>ggcpt-build.R</code>.</li>
+<li>
+<strong>Testing:</strong> three new test files — per-wrapper contract tests behind <code>skip_if_not_installed()</code>, tool tests (CROPS/batch/stability/cite/ posterior plots/autoplot extensions), and a regression test per audit item C1–C20. The suite passes with all engines installed and with none.</li>
+<li>
+<strong>Docs:</strong> every new export has runnable <code>@examples</code> (guarded with <code>@examplesIf</code>), the README and the pkgdown reference index cover the full surface (enforced by the existing coverage test), and the vignettes are written in research-paper format.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="id_8-backward-compatibility">8. Backward compatibility<a class="anchor" aria-label="anchor" href="#id_8-backward-compatibility"></a></h2>
+<ul><li>The full 0.3.0 surface keeps working unchanged; the <code>tibble(cp, cp_value)</code> contract is untouched (new columns are additive).</li>
+<li>Two behaviour changes are deliberate bug fixes, not breaks: univariate methods error on wide matrices instead of flattening (C3), and <code>cpt_detect(change_in = ...)</code> mappings that silently ran something else now either run the right thing or error (C9). No correct program is affected.</li>
+<li>
+<code>validate_method_change_in()</code> accepts <code>change_in = "mean"</code> for every method (routing it to the method’s native change type), so all existing single-argument calls keep working.</li>
+<li>No exported function is deprecated in this cycle.</li>
+</ul><hr></div>
 <div class="section level2">
 <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-<p>The following references are the basis for the shipped and proposed features. Venues and years have been verified against the published record; arXiv identifiers are given where useful.</p>
-<ol style="list-style-type: decimal"><li>Adams, R. P. and MacKay, D. J. C. (2007). <em>Bayesian Online Changepoint Detection.</em> arXiv:0710.3742.</li>
-<li>Anastasiou, A. and Fryzlewicz, P. (2022). <em>Detecting multiple generalized change-points by isolating single ones.</em> <strong>Metrika</strong> 85, 141–174. (R packages <code>IDetect</code>, <code>breakfast</code>.) arXiv:1901.10852.</li>
-<li>Arlot, S., Celisse, A. and Harchaoui, Z. (2019). <em>A kernel multiple change-point algorithm via model selection.</em> <strong>Journal of Machine Learning Research</strong> 20(162), 1–56.</li>
-<li>Auger, I. E. and Lawrence, C. E. (1989). <em>Algorithms for the optimal identification of segment neighborhoods.</em> <strong>Bulletin of Mathematical Biology</strong> 51(1), 39–54.</li>
+<p>All verified against the published record in July 2026.</p>
+<ol style="list-style-type: decimal"><li>Adams, R. P. and MacKay, D. J. C. (2007). <em>Bayesian online changepoint detection.</em> arXiv:0710.3742. (R package <code>ocp</code>.)</li>
+<li>Anastasiou, A. and Fryzlewicz, P. (2022). <em>Detecting multiple generalized change-points by isolating single ones.</em> <strong>Metrika</strong> 85, 141–174. (R package <code>IDetect</code>.)</li>
+<li>Arlot, S., Celisse, A. and Harchaoui, Z. (2019). <em>A kernel multiple change-point algorithm via model selection.</em> <strong>JMLR</strong> 20(162), 1–56. (R package <code>kcpRS</code> via Cabrieto et al.)</li>
 <li>Bai, J. and Perron, P. (1998). <em>Estimating and testing linear models with multiple structural changes.</em> <strong>Econometrica</strong> 66(1), 47–78.</li>
-<li>Bai, J. and Perron, P. (2003). <em>Computation and analysis of multiple structural change models.</em> <strong>Journal of Applied Econometrics</strong> 18(1), 1–22.</li>
-<li>Baranowski, R., Chen, Y. and Fryzlewicz, P. (2019). <em>Narrowest-over-threshold detection of multiple change points and change-point-like features.</em> <strong>Journal of the Royal Statistical Society: Series B</strong> 81(3), 649–672. (R package <code>not</code>.)</li>
-<li>Barry, D. and Hartigan, J. A. (1993). <em>A Bayesian analysis for change point problems.</em> <strong>Journal of the American Statistical Association</strong> 88(421), 309–319.</li>
-<li>Cho, H. and Fryzlewicz, P. (2015). <em>Multiple-change-point detection for high dimensional time series via sparsified binary segmentation.</em> <strong>Journal of the Royal Statistical Society: Series B</strong> 77(2), 475–507. (R package <code>hdbinseg</code>.)</li>
-<li>Cho, H. (2016). <em>Change-point detection in panel data via double CUSUM statistic.</em> <strong>Electronic Journal of Statistics</strong> 10(2), 2000–2038.</li>
-<li>Cho, H. and Kirch, C. (2022). <em>Two-stage data segmentation permitting multiscale change points, heavy tails and dependence.</em> <strong>Annals of the Institute of Statistical Mathematics</strong> 74, 653–684. Companion bootstrap location CIs: Cho, H. and Kirch, C. (2022), <em>Bootstrap confidence intervals for multiple change points based on moving sum procedures</em>, <strong>Computational Statistics &amp; Data Analysis</strong> 175, 107552.</li>
-<li>Chen, Y., Wang, T. and Samworth, R. J. (2022). <em>High-dimensional, multiscale online changepoint detection.</em> <strong>Journal of the Royal Statistical Society: Series B</strong> 84(1), 234–266. (R package <code>ocd</code>.) arXiv:2003.03668.</li>
-<li>Davis, R. A., Lee, T. C. M. and Rodriguez-Yam, G. A. (2006). <em>Structural break estimation for nonstationary time series models (Auto-PARM).</em> <strong>Journal of the American Statistical Association</strong> 101(473), 223–239.</li>
-<li>Eichinger, B. and Kirch, C. (2018). <em>A MOSUM procedure for the estimation of multiple random change points.</em> <strong>Bernoulli</strong> 24(1), 526–564.</li>
-<li>Erdman, C. and Emerson, J. W. (2007). <em>bcp: An R package for performing a Bayesian analysis of change point problems.</em> <strong>Journal of Statistical Software</strong> 23(3), 1–13.</li>
-<li>Fearnhead, P. (2006). <em>Exact and efficient Bayesian inference for multiple changepoint problems.</em> <strong>Statistics and Computing</strong> 16, 203–213.</li>
-<li>Fearnhead, P. and Rigaill, G. (2019). <em>Changepoint detection in the presence of outliers.</em> <strong>Journal of the American Statistical Association</strong> 114(525), 169–183. (R package <code>robseg</code>.) arXiv:1609.07363.</li>
-<li>Frick, K., Munk, A. and Sieling, H. (2014). <em>Multiscale change point inference (SMUCE).</em> <strong>Journal of the Royal Statistical Society: Series B</strong> 76(3), 495–580. (R package <code>stepR</code>.) arXiv:1301.7212.</li>
-<li>Fryzlewicz, P. (2014). <em>Wild binary segmentation for multiple change-point detection.</em> <strong>Annals of Statistics</strong> 42(6), 2243–2281. (R packages <code>wbs</code>, <code>breakfast</code>.) arXiv:1411.0858.</li>
-<li>Fryzlewicz, P. (2018). <em>Tail-greedy bottom-up data decompositions and fast multiple change-point detection (TGUH).</em> <strong>Annals of Statistics</strong> 46(6B), 3390–3421. (R package <code>breakfast</code>.)</li>
-<li>Fryzlewicz, P. (2020). <em>Detecting possibly frequent change-points: Wild Binary Segmentation 2 and steepest-drop model selection.</em> <strong>Journal of the Korean Statistical Society</strong> 49, 1027–1070. (R package <code>breakfast</code>.) arXiv:1812.06880.</li>
-<li>Hannan, E. J. and Quinn, B. G. (1979). <em>The determination of the order of an autoregression.</em> <strong>Journal of the Royal Statistical Society: Series B</strong> 41(2), 190–195.</li>
-<li>Haynes, K., Eckley, I. A. and Fearnhead, P. (2017). <em>Computationally efficient changepoint detection for a range of penalties (CROPS).</em> <strong>Journal of Computational and Graphical Statistics</strong> 26(1), 134–143.</li>
-<li>Haynes, K., Fearnhead, P. and Eckley, I. A. (2017). <em>A computationally efficient nonparametric approach for changepoint detection.</em> <strong>Statistics and Computing</strong> 27(5), 1293–1305. (R package <code>changepoint.np</code>.) arXiv:1602.01254.</li>
-<li>Hocking, T. D., Rigaill, G., Fearnhead, P. and Bourque, G. (2022). <em>Generalized functional pruning optimal partitioning (GFPOP) for constrained changepoint detection in genomic data.</em> <strong>Journal of Statistical Software</strong> 101(10). (R package <code>gfpop</code>.) arXiv:1810.00117.</li>
-<li>Jackson, B., Scargle, J. D., et al. (2005). <em>An algorithm for optimal partitioning of data on an interval.</em> <strong>IEEE Signal Processing Letters</strong> 12(2), 105–108.</li>
-<li>James, N. A. and Matteson, D. S. (2015). <em>ecp: An R package for nonparametric multiple change point analysis of multivariate data.</em> <strong>Journal of Statistical Software</strong> 62(7), 1–25. arXiv:1309.3295.</li>
-<li>Killick, R., Fearnhead, P. and Eckley, I. A. (2012). <em>Optimal detection of changepoints with a linear computational cost (PELT).</em> <strong>Journal of the American Statistical Association</strong> 107(500), 1590–1598. arXiv:1101.1438.</li>
-<li>Killick, R. and Eckley, I. A. (2014). <em>changepoint: An R package for changepoint analysis.</em> <strong>Journal of Statistical Software</strong> 58(3), 1–19.</li>
-<li>Maidstone, R., Hocking, T., Rigaill, G. and Fearnhead, P. (2017). <em>On optimal multiple changepoint algorithms for large data (FPOP/SNIP).</em> <strong>Statistics and Computing</strong> 27(2), 519–533. (R package <code>fpop</code>.)</li>
-<li>Matteson, D. S. and James, N. A. (2014). <em>A nonparametric approach for multiple change point analysis of multivariate data.</em> <strong>Journal of the American Statistical Association</strong> 109(505), 334–345. (R package <code>ecp</code>.) arXiv:1306.4933.</li>
-<li>Meier, A., Kirch, C. and Cho, H. (2021). <em>mosum: A package for moving sums in change-point analysis.</em> <strong>Journal of Statistical Software</strong> 97(8). (R package <code>mosum</code>.)</li>
-<li>Muggeo, V. M. R. (2003). <em>Estimating regression models with unknown break-points.</em> <strong>Statistics in Medicine</strong> 22(19), 3055–3071.</li>
+<li>Bai, J. and Perron, P. (2003). <em>Computation and analysis of multiple structural change models.</em> <strong>J. Applied Econometrics</strong> 18(1), 1–22. (R package <code>strucchange</code>.)</li>
+<li>Baranowski, R., Chen, Y. and Fryzlewicz, P. (2019). <em>Narrowest-over-threshold detection of multiple change points.</em> <strong>JRSS-B</strong> 81(3), 649–672. (R package <code>not</code>.)</li>
+<li>Barry, D. and Hartigan, J. A. (1993). <em>A Bayesian analysis for change point problems.</em> <strong>JASA</strong> 88(421), 309–319. (R package <code>bcp</code>.)</li>
+<li>Beaulieu, C. and Killick, R. (2018). <em>Distinguishing trends and shifts from memory in climate data.</em> <strong>Journal of Climate</strong> 31(23), 9519–9543. (R package <code>EnvCpt</code>.)</li>
+<li>Cabrieto, J., Adolf, J., Tuerlinckx, F., Kuppens, P. and Ceulemans, E. (2018). <em>Detecting long-lived autodependency changes in a multivariate system via change point detection and regime switching models.</em> <strong>Scientific Reports</strong> 8, 15637. (R package <code>kcpRS</code>.)</li>
+<li>Chen, Y., Wang, T. and Samworth, R. J. (2022). <em>High-dimensional, multiscale online changepoint detection.</em> <strong>JRSS-B</strong> 84(1), 234–266. (R package <code>ocd</code>.)</li>
+<li>Eichinger, B. and Kirch, C. (2018). <em>A MOSUM procedure for the estimation of multiple random change points.</em> <strong>Bernoulli</strong> 24(1), 526–564. (R package <code>mosum</code>.)</li>
+<li>Erdman, C. and Emerson, J. W. (2007). <em>bcp: An R package for performing a Bayesian analysis of change point problems.</em> <strong>JSS</strong> 23(3), 1–13.</li>
+<li>Fearnhead, P., Maidstone, R. and Letchford, A. (2019). <em>Detecting changes in slope with an L0 penalty.</em> <strong>JCGS</strong> 28(2), 265–275.</li>
+<li>Fearnhead, P. and Grose, D. (2024). <em>cpop: Detecting changes in piecewise-linear signals.</em> <strong>JSS</strong> 109(7), 1–30. (R package <code>cpop</code>.)</li>
+<li>Frick, K., Munk, A. and Sieling, H. (2014). <em>Multiscale change point inference.</em> <strong>JRSS-B</strong> 76(3), 495–580. (R package <code>stepR</code>.)</li>
+<li>Fryzlewicz, P. (2014). <em>Wild binary segmentation for multiple change-point detection.</em> <strong>Annals of Statistics</strong> 42(6), 2243–2281. (R package <code>wbs</code>.)</li>
+<li>Fryzlewicz, P. (2018). <em>Tail-greedy bottom-up data decompositions and fast multiple change-point detection.</em> <strong>Annals of Statistics</strong> 46(6B), 3390–3421. (R package <code>breakfast</code>.)</li>
+<li>Fryzlewicz, P. (2020). <em>Detecting possibly frequent change-points: Wild Binary Segmentation 2 and steepest-drop model selection.</em> <strong>J. Korean Statistical Society</strong> 49, 1027–1070. (R package <code>breakfast</code>.)</li>
+<li>Grundy, T., Killick, R. and Mihaylov, G. (2020). <em>High-dimensional changepoint detection via a geometrically inspired mapping.</em> <strong>Statistics and Computing</strong> 30, 1155–1166. (R package <code>changepoint.geo</code>.)</li>
+<li>Haynes, K., Eckley, I. A. and Fearnhead, P. (2017). <em>Computationally efficient changepoint detection for a range of penalties.</em> <strong>JCGS</strong> 26(1), 134–143. (CROPS; <code>changepoint</code>.)</li>
+<li>Haynes, K., Fearnhead, P. and Eckley, I. A. (2017). <em>A computationally efficient nonparametric approach for changepoint detection.</em> <strong>Statistics and Computing</strong> 27(5), 1293–1305. (R package <code>changepoint.np</code>.)</li>
+<li>Killick, R., Fearnhead, P. and Eckley, I. A. (2012). <em>Optimal detection of changepoints with a linear computational cost.</em> <strong>JASA</strong> 107(500), 1590–1598. (PELT; R package <code>changepoint</code>.)</li>
+<li>Killick, R. and Eckley, I. A. (2014). <em>changepoint: An R package for changepoint analysis.</em> <strong>JSS</strong> 58(3), 1–19.</li>
+<li>Li, X. and Zhang, X. (2024). <em>fastcpd: Fast change point detection in R.</em> arXiv:2404.05933. (R package <code>fastcpd</code>.)</li>
+<li>Maidstone, R., Hocking, T., Rigaill, G. and Fearnhead, P. (2017). <em>On optimal multiple changepoint algorithms for large data.</em> <strong>Statistics and Computing</strong> 27(2), 519–533. (R package <code>fpop</code>.)</li>
+<li>Matteson, D. S. and James, N. A. (2014). <em>A nonparametric approach for multiple change point analysis of multivariate data.</em> <strong>JASA</strong> 109(505), 334–345. (R package <code>ecp</code>.)</li>
+<li>McGonigle, E. T. and Cho, H. (2025). <em>Nonparametric data segmentation in multivariate time series via joint characteristic functions.</em> <strong>Biometrika</strong> 112(2), asaf024. (R package <code>CptNonPar</code>.)</li>
+<li>Muggeo, V. M. R. (2003). <em>Estimating regression models with unknown break-points.</em> <strong>Statistics in Medicine</strong> 22(19), 3055–3071. (R package <code>segmented</code>.)</li>
 <li>Muggeo, V. M. R. (2008). <em>segmented: An R package to fit regression models with broken-line relationships.</em> <strong>R News</strong> 8(1), 20–25.</li>
-<li>Pein, F., Sieling, H. and Munk, A. (2017). <em>Heterogeneous change point inference (HSMUCE).</em> <strong>Journal of the Royal Statistical Society: Series B</strong> 79(4), 1207–1227. (R package <code>stepR</code>.)</li>
-<li>Page, E. S. (1954). <em>Continuous inspection schemes.</em> <strong>Biometrika</strong> 41(1/2), 100–115.</li>
-<li>Romano, G., Rigaill, G., Runge, V. and Fearnhead, P. (2022). <em>Detecting abrupt changes in the presence of local fluctuations and autocorrelated noise (DeCAFS).</em> <strong>Journal of the American Statistical Association</strong> 117(540), 2147–2162. (R package <code>DeCAFS</code>.) arXiv:2005.01379.</li>
-<li>Romano, G., Eckley, I. A., Fearnhead, P. and Rigaill, G. (2023). <em>Fast online changepoint detection via functional pruning CUSUM statistics (FOCuS).</em> <strong>Journal of Machine Learning Research</strong> 24, 1–36. arXiv:2110.08205.</li>
-<li>Ross, G. J. (2015). <em>Parametric and nonparametric sequential change detection in R: The cpm package.</em> <strong>Journal of Statistical Software</strong> 66(3), 1–20.</li>
-<li>Schwarz, G. (1978). <em>Estimating the dimension of a model (BIC).</em> <strong>Annals of Statistics</strong> 6(2), 461–464.</li>
-<li>Scott, A. J. and Knott, M. (1974). <em>A cluster analysis method for grouping means in the analysis of variance (Binary Segmentation).</em> <strong>Biometrics</strong> 30(3), 507–512.</li>
-<li>van den Burg, G. J. J. and Williams, C. K. I. (2020). <em>An evaluation of change point detection algorithms.</em> arXiv:2003.06222. (Turing Change Point Dataset / benchmark.)</li>
-<li>Wang, T. and Samworth, R. J. (2018). <em>High dimensional change point estimation via sparse projection (inspect).</em> <strong>Journal of the Royal Statistical Society: Series B</strong> 80(1), 57–83. (R package <code>InspectChangepoint</code>.) arXiv:1606.06246.</li>
-<li>Xu, H., Wang, D., Zhao, Z. and Yu, Y. (2024). <em>Change-point inference in high-dimensional regression models under temporal dependence.</em> <strong>Annals of Statistics</strong> 52(3). (R package <code>changepoints</code>.) arXiv:2207.12453.</li>
-<li>Yao, Y.-C. (1988). <em>Estimating the number of change-points via Schwarz’s criterion.</em> <strong>Statistics &amp; Probability Letters</strong> 6(3), 181–189.</li>
-<li>Zeileis, A., Leisch, F., Hornik, K. and Kleiber, C. (2002). <em>strucchange: An R package for testing for structural change in linear regression models.</em> <strong>Journal of Statistical Software</strong> 7(2), 1–38.</li>
-<li>Zhang, N. R. and Siegmund, D. O. (2007). <em>A modified Bayes information criterion with applications to the analysis of comparative genomic hybridization data (mBIC).</em> <strong>Biometrics</strong> 63(1), 22–32.</li>
-<li>Zhao, Z., Jiang, F. and Shao, X. (2022). <em>Segmenting time series via self-normalisation.</em> <strong>Journal of the Royal Statistical Society: Series B</strong> 84(5), 1699–1725. (R package <code>SNSeg</code>.)</li>
-<li>Zou, C., Yin, G., Feng, L. and Wang, Z. (2014). <em>Nonparametric maximum likelihood approach to multiple change-point problems (NMCD).</em> <strong>Annals of Statistics</strong> 42(3), 970–1002. arXiv:1405.7173.</li>
-</ol><div class="section level3">
-<h3 id="secondary-references-surveys-and-benchmarks">Secondary references (surveys and benchmarks)<a class="anchor" aria-label="anchor" href="#secondary-references-surveys-and-benchmarks"></a></h3>
-<ol start="50" style="list-style-type: decimal"><li>Aminikhanghahi, S. and Cook, D. J. (2017). <em>A survey of methods for time series change point detection.</em> <strong>Knowledge and Information Systems</strong> 51(2), 339–367.</li>
-<li>Niu, Y. S., Hao, N. and Zhang, H. (2016). <em>Multiple change-point detection: A selective overview.</em> <strong>Statistical Science</strong> 31(4), 611–623.</li>
-<li>Truong, C., Oudre, L. and Vayatis, N. (2020). <em>Selective review of offline change point detection methods.</em> <strong>Signal Processing</strong> 167, 107299. (Python <code>ruptures</code>; useful for cross-language API comparison.)</li>
+<li>Pein, F., Sieling, H. and Munk, A. (2017). <em>Heterogeneous change point inference.</em> <strong>JRSS-B</strong> 79(4), 1207–1227. (HSMUCE; R package <code>stepR</code>.)</li>
+<li>Romano, G., Rigaill, G., Runge, V. and Fearnhead, P. (2022). <em>Detecting abrupt changes in the presence of local fluctuations and autocorrelated noise.</em> <strong>JASA</strong> 117(540), 2147–2162. (R package <code>DeCAFS</code>.)</li>
+<li>Ross, G. J. (2015). <em>Parametric and nonparametric sequential change detection in R: The cpm package.</em> <strong>JSS</strong> 66(3), 1–20.</li>
+<li>van den Burg, G. J. J. and Williams, C. K. I. (2020). <em>An evaluation of change point detection algorithms.</em> arXiv:2003.06222.</li>
+<li>Wang, T. and Samworth, R. J. (2018). <em>High dimensional change point estimation via sparse projection.</em> <strong>JRSS-B</strong> 80(1), 57–83. (R package <code>InspectChangepoint</code>.)</li>
+<li>Zeileis, A., Leisch, F., Hornik, K. and Kleiber, C. (2002). <em>strucchange: An R package for testing for structural change in linear regression models.</em> <strong>JSS</strong> 7(2), 1–38.</li>
+<li>Zhao, K., Wulder, M. A., Hu, T., et al. (2019). <em>Detecting change-point, trend, and seasonality in satellite time series data…</em> (BEAST). <strong>Remote Sensing of Environment</strong> 232, 111181. (R package <code>Rbeast</code>.)</li>
+<li>Zhao, Z., Jiang, F. and Shao, X. (2022). <em>Segmenting time series via self-normalisation.</em> <strong>JRSS-B</strong> 84(5), 1699–1725. (R package <code>SNSeg</code>.)</li>
 </ol><hr><p><em>This document is a living roadmap; signatures and milestones will be refined as implementation proceeds. Contributions and method suggestions are welcome via the issue tracker.</em></p>
-</div>
 </div>
 </div>
 

@@ -2,7 +2,7 @@
 
 Computes standard accuracy metrics comparing predicted changepoints to
 ground truth, including precision/recall/F1 with margin, covering
-metric, Hausdorff distance, (adjusted) Rand index, annotation error, and
+metric, Hausdorff distance, adjusted Rand index, annotation error, and
 MAE/RMSE of matched locations.
 
 ## Usage
@@ -34,6 +34,18 @@ cpt_metrics(pred, truth, n, margin = 5)
 A tibble with columns: `n`, `n_pred`, `n_truth`, `precision`, `recall`,
 `f1`, `covering`, `hausdorff`, `rand_index`, `annotation_error`,
 `mae_matched`, `rmse_matched`.
+
+## Details
+
+Precision/recall use a one-to-one matching: each truth may be claimed by
+at most one prediction (predictions are scanned in order and take the
+earliest unmatched truth within `margin`, which yields a maximum
+matching for interval-structured problems). When `pred` and `truth` are
+both empty the segmentation is exactly right, so precision, recall, and
+F1 are all 1. The covering metric follows van den Burg and Williams
+(2020): the prediction-side partition is always well defined, so an
+empty `pred` scores the covering of the trivial single-segment partition
+rather than 0.
 
 ## Examples
 

@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.3.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -60,7 +60,6 @@
 Yu<br><span style="font-size:85%;">University of Chicago</span>
 </h4>
             
-            <h4 data-toc-skip class="date">2026-06-25</h4>
       
       <small class="dont-index">Source: <a href="https://github.com/PursuitOfDataScience/ggchangepoint/blob/master/vignettes/introduction.Rmd" class="external-link"><code>vignettes/introduction.Rmd</code></a></small>
       <div class="d-none name"><code>introduction.Rmd</code></div>
@@ -72,124 +71,212 @@ Yu<br><span style="font-size:85%;">University of Chicago</span>
 <h2 id="abstract">Abstract<a class="anchor" aria-label="anchor" href="#abstract"></a>
 </h2>
 <p><strong>ggchangepoint</strong> is an R package that provides a
-unified, tidy interface to changepoint detection across multiple
-algorithmic backends. It introduces the <code>ggcpt</code> S3 result
-class with <code>broom</code>-style methods (<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>,
-<code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>), a central
-<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> dispatcher supporting over a dozen detection
-algorithms, native <code>ggplot2</code> visualization via
-<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and specialised geoms, method comparison and
-accuracy evaluation modules, and a data simulation framework with
-canonical test signals. By harmonising the disparate APIs of existing R
-changepoint packages behind a single convention, ggchangepoint lowers
-the barrier to exploratory changepoint analysis and reproducible method
-comparison.</p>
+unified, tidy interface to changepoint detection across the
+methodological spectrum. It introduces a single S3 result class,
+<code>ggcpt</code>, with <code>broom</code>-style methods
+(<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>)
+<span class="citation">(Robinson 2017)</span>, a central dispatcher
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> covering 31 detection methods across five
+algorithmic families, and native <code>ggplot2</code> <span class="citation">(Wickham 2016)</span> visualisation through
+<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and a set of composable geoms. Where a method
+quantifies its uncertainty — the simultaneous confidence intervals of
+SMUCE <span class="citation">(Frick et al. 2014)</span>, the break-date
+intervals of Bai–Perron <span class="citation">(Bai and Perron
+1998)</span>, the posterior probabilities of Bayesian detectors <span class="citation">(Barry and Hartigan 1993; Adams and MacKay 2007)</span>
+— the result object carries that uncertainty and the plotting layer can
+draw it. The package further supplies a penalty-path diagnostic (CROPS),
+batch detection over panels of series, bootstrap stability diagnostics,
+accuracy metrics aligned with modern benchmarking conventions <span class="citation">(<span class="nocase">van den Burg and Williams</span>
+2020)</span>, ground-truth simulation, and per-method citations. This
+article describes the statistical background, the design of the package,
+and each method family in turn, with worked examples throughout.</p>
 </div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>Changepoint detection—the problem of identifying points in a sequence
-at which the underlying statistical properties change—is a fundamental
-task in time series analysis <span class="citation">(Truong et al. 2020;
-Aminikhanghahi and Cook 2017)</span>. It has applications across
-virtually every domain that involves sequential data, including genomics
-<span class="citation">(Picard et al. 2005)</span>, finance <span class="citation">(Athey et al. 2022)</span>, climate science <span class="citation">(Haslett and Raftery 1989)</span>, and signal
-processing <span class="citation">(Lavielle 2005)</span>.</p>
-<p>The R ecosystem offers a rich set of changepoint packages, each
-implementing one or more detection algorithms with its own conventions
-for input, output, and parameterisation. The
-<strong>changepoint</strong> package <span class="citation">(Killick and
-Eckley 2014)</span> provides PELT <span class="citation">(Killick et al.
-2012)</span>, Binary Segmentation <span class="citation">(Scott and
-Knott 1974; Vostrikova 1981)</span>, Segmented Neighbourhood, and AMOC.
-The <strong>wbs</strong> <span class="citation">(Fryzlewicz 2014)</span>
-and <strong>breakfast</strong> packages implement Wild Binary
-Segmentation and its variants, while <strong>not</strong> <span class="citation">(Baranowski et al. 2019)</span>, <strong>mosum</strong>
-<span class="citation">(Eichinger and Kirch 2018)</span>,
-<strong>fpop</strong> <span class="citation">(Maidstone et al.
-2017)</span>, <strong>IDetect</strong> <span class="citation">(Anastasiou and Fryzlewicz 2022)</span>, and others
-offer further specialised algorithms. On the nonparametric side,
-<strong>changepoint.np</strong> <span class="citation">(Haynes et al.
-2017)</span> and <strong>ecp</strong> <span class="citation">(James and
-Matteson 2014; Matteson and James 2014)</span> handle distributional
-changes.</p>
-<p>While this diversity is a strength of the R community, it creates
-practical difficulties for the analyst. Each package uses a different
-result class, different naming conventions for parameters, different
-plot methods, and different changepoint indexing conventions. Comparing
-the output of several detectors on the same data—a standard practice for
-robust analysis—requires the user to write manual conversion code.
-Furthermore, none of the existing packages natively produce
-<code>ggplot2</code> <span class="citation">(Wickham 2016)</span>
-graphics or support the <code>broom</code> <span class="citation">(Robinson 2017)</span> convention for tidy data
-extraction.</p>
-<p>ggchangepoint addresses these problems by providing a single,
-consistent interface that wraps the most widely used detection packages.
-Its design goals are:</p>
+<p>Changepoint analysis — locating the instants at which the stochastic
+behaviour of an ordered sequence changes — is one of the oldest problems
+in statistics, dating back at least to the quality-control charts of
+<span class="citation">Page (1954)</span>, and one of its most active:
+modern surveys catalogue dozens of families of methods <span class="citation">(Truong et al. 2020; Aminikhanghahi and Cook
+2017)</span>. Its applications span virtually every domain that produces
+sequential data, including genomics <span class="citation">(Picard et
+al. 2005)</span>, finance <span class="citation">(Athey et al.
+2022)</span>, climate science <span class="citation">(Haslett and
+Raftery 1989)</span>, and signal processing <span class="citation">(Lavielle 2005)</span>.</p>
+<p>The R ecosystem mirrors this breadth. Penalised optimal partitioning
+lives in <strong>changepoint</strong> <span class="citation">(Killick
+and Eckley 2014)</span> and <strong>fpop</strong> <span class="citation">(Maidstone et al. 2017)</span>; wild binary
+segmentation in <strong>wbs</strong> and <strong>breakfast</strong>
+<span class="citation">(Fryzlewicz 2014, 2020)</span>; multiscale
+inference in <strong>stepR</strong> <span class="citation">(Frick et al.
+2014)</span>; Bayesian analysis in <strong>bcp</strong> <span class="citation">(Erdman and Emerson 2007)</span> and
+<strong>ocp</strong> <span class="citation">(Adams and MacKay
+2007)</span>; structural breaks in <strong>strucchange</strong> <span class="citation">(Zeileis et al. 2002)</span>; and so on. Each of these
+packages is excellent at what it does, and each returns a different
+object, follows a different indexing convention, and draws (or does not
+draw) its own plots.</p>
+<p>An analyst who wants to <em>compare</em> a PELT segmentation with a
+Bayesian posterior and a multiscale confidence set — a routine task in
+applied work — must therefore learn several APIs, reconcile several
+conventions, and write custom plotting code for each.
+<strong>ggchangepoint</strong> removes that friction. Its design goals
+are:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>Uniformity</strong>: a single <code>ggcpt</code> result
-class regardless of the underlying detection engine, with
-<code>broom</code>-style methods for tidy data access.</li>
+<strong>One vocabulary.</strong> A single front door,
+<code>cpt_detect(x, method, change_in, penalty, ...)</code>, whose
+arguments mean the same thing for every engine.</li>
 <li>
-<strong>Discoverability</strong>: a central
-<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> dispatcher whose documentation lists all
-supported methods and their capabilities.</li>
+<strong>One result type.</strong> Every detector returns a
+<code>ggcpt</code> object with a stable tidy contract, whatever the
+upstream engine returned.</li>
 <li>
-<strong>Visualisation</strong>: first-class <code>ggplot2</code>
-integration through <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and specialised geoms.</li>
+<strong>One rendering path.</strong> Every result — point estimates,
+confidence intervals, fitted signals, posteriors, penalty paths — draws
+with <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and extends with ordinary
+<code>ggplot2</code> layers.</li>
 <li>
-<strong>Comparison and evaluation</strong>: built-in tools for
-running multiple detectors, tabulating their results, computing accuracy
-metrics, and visualising discrepancies.</li>
-<li>
-<strong>Reproducibility</strong>: a simulation framework that
-generates data with known changepoints, enabling rigorous
-benchmarking.</li>
+<strong>Wrap, don’t reinvent.</strong> All detection is delegated to
+the peer-reviewed upstream engines; optional engines live in
+<code>Suggests</code> and are loaded only when requested.</li>
 </ol>
 </div>
 <div class="section level2">
-<h2 id="the-ggcpt-result-class">The ggcpt Result Class<a class="anchor" aria-label="anchor" href="#the-ggcpt-result-class"></a>
+<h2 id="the-changepoint-problem">The changepoint problem<a class="anchor" aria-label="anchor" href="#the-changepoint-problem"></a>
 </h2>
-<p>The <code>ggcpt</code> class is an S3 class that stores the complete
-output of a changepoint detection in a structured format. Every
-detection function in ggchangepoint—whether called through
-<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> or directly—returns a <code>ggcpt</code>
-object, ensuring a uniform interface for downstream processing.</p>
-<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://pursuitofdatascience.github.io/ggchangepoint/">ggchangepoint</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://ggplot2.tidyverse.org" class="external-link">ggplot2</a></span><span class="op">)</span></span>
-<span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://generics.r-lib.org" class="external-link">generics</a></span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/get_theme.html" class="external-link">theme_set</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggtheme.html" class="external-link">theme_light</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2022</span><span class="op">)</span></span>
-<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">10</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/class.html" class="external-link">class</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] "ggcpt"</span></span></code></pre></div>
-<p>A <code>ggcpt</code> object is a named list with the following
-components:</p>
+<p>Let
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>y</mi><mrow><mn>1</mn><mo>:</mo><mi>n</mi></mrow></msub><mo>=</mo><mo stretchy="false" form="prefix">(</mo><msub><mi>y</mi><mn>1</mn></msub><mo>,</mo><mi>…</mi><mo>,</mo><msub><mi>y</mi><mi>n</mi></msub><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">y_{1:n} = (y_1, \dots, y_n)</annotation></semantics></math>
+be an ordered sequence. A segmentation with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>m</mi><annotation encoding="application/x-tex">m</annotation></semantics></math>
+changepoints is an ordered set
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>τ</mi><mrow><mn>1</mn><mo>:</mo><mi>m</mi></mrow></msub><annotation encoding="application/x-tex">\tau_{1:m}</annotation></semantics></math>
+with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0</mn><mo>=</mo><msub><mi>τ</mi><mn>0</mn></msub><mo>&lt;</mo><msub><mi>τ</mi><mn>1</mn></msub><mo>&lt;</mo><mi>…</mi><mo>&lt;</mo><msub><mi>τ</mi><mi>m</mi></msub><mo>&lt;</mo><msub><mi>τ</mi><mrow><mi>m</mi><mo>+</mo><mn>1</mn></mrow></msub><mo>=</mo><mi>n</mi></mrow><annotation encoding="application/x-tex">0 = \tau_0 &lt; \tau_1 &lt; \dots &lt; \tau_m &lt; \tau_{m+1} = n</annotation></semantics></math>,
+partitioning the data into
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>m</mi><mo>+</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">m + 1</annotation></semantics></math>
+segments
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>y</mi><mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>τ</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo>:</mo><msub><mi>τ</mi><mi>i</mi></msub></mrow></msub><annotation encoding="application/x-tex">y_{(\tau_{i-1}+1):\tau_i}</annotation></semantics></math>.
+Throughout the package a changepoint
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>τ</mi><annotation encoding="application/x-tex">\tau</annotation></semantics></math>
+is reported as the <strong>last index of the left segment</strong> (the
+convention of the <strong>changepoint</strong> package); results from
+engines using the opposite convention are normalised on the way in, and
+the convention is recorded on every result object.</p>
+<div class="section level3">
+<h3 id="penalised-cost-minimisation">Penalised cost minimisation<a class="anchor" aria-label="anchor" href="#penalised-cost-minimisation"></a>
+</h3>
+<p>The classical formulation chooses the segmentation minimising a
+penalised cost,
+<math display="block" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><munder><mi mathvariant="normal">min</mi><mrow><mi>m</mi><mo>,</mo><mspace width="0.222em"></mspace><msub><mi>τ</mi><mrow><mn>1</mn><mo>:</mo><mi>m</mi></mrow></msub></mrow></munder><mspace width="0.278em"></mspace><munderover><mo>∑</mo><mrow><mi>i</mi><mo>=</mo><mn>1</mn></mrow><mrow><mi>m</mi><mo>+</mo><mn>1</mn></mrow></munderover><mi>𝒞</mi><mspace width="-0.167em"></mspace><mrow><mo stretchy="true" form="prefix">(</mo><msub><mi>y</mi><mrow><mo stretchy="false" form="prefix">(</mo><msub><mi>τ</mi><mrow><mi>i</mi><mo>−</mo><mn>1</mn></mrow></msub><mo>+</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mo>:</mo><msub><mi>τ</mi><mi>i</mi></msub></mrow></msub><mo stretchy="true" form="postfix">)</mo></mrow><mspace width="0.278em"></mspace><mo>+</mo><mspace width="0.278em"></mspace><mi>β</mi><mi>m</mi><mo>,</mo></mrow><annotation encoding="application/x-tex">
+\min_{m,\ \tau_{1:m}} \; \sum_{i=1}^{m+1}
+  \mathcal{C}\!\left(y_{(\tau_{i-1}+1):\tau_i}\right) \;+\; \beta m,
+</annotation></semantics></math> where
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>
+is a segment cost (for a change in mean under Gaussian noise, the
+residual sum of squares; more generally twice the negative maximised
+log-likelihood) and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta &gt; 0</annotation></semantics></math>
+penalises each additional changepoint. Common choices of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
+are AIC, BIC/SIC <span class="citation">(Yao 1988)</span>, and modified
+BIC variants. Solving this optimisation exactly by dynamic programming
+costs
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>O</mi><mo stretchy="false" form="prefix">(</mo><msup><mi>n</mi><mn>2</mn></msup><mo stretchy="false" form="postfix">)</mo></mrow><annotation encoding="application/x-tex">O(n^2)</annotation></semantics></math>;
+<strong>PELT</strong> <span class="citation">(Killick et al.
+2012)</span> prunes candidate changepoints to achieve linear expected
+cost while remaining exact, and <strong>FPOP</strong> <span class="citation">(Maidstone et al. 2017)</span> achieves comparable
+speed by functional pruning.</p>
+</div>
+<div class="section level3">
+<h3 id="search-based-and-multiscale-methods">Search-based and multiscale methods<a class="anchor" aria-label="anchor" href="#search-based-and-multiscale-methods"></a>
+</h3>
+<p>A complementary family locates changepoints by scanning test
+statistics. <strong>Binary segmentation</strong> <span class="citation">(Scott and Knott 1974; Vostrikova 1981)</span>
+recursively splits the series at the maximal CUSUM statistic;
+<strong>wild binary segmentation</strong> <span class="citation">(Fryzlewicz 2014)</span> and its successor WBS2 <span class="citation">(Fryzlewicz 2020)</span> draw random subintervals so
+that short segments are not masked;
+<strong>narrowest-over-threshold</strong> (NOT) <span class="citation">(Baranowski et al. 2019)</span> favours the narrowest
+interval on which the contrast exceeds a threshold, which generalises
+cleanly to changes in slope; <strong>MOSUM</strong> <span class="citation">(Eichinger and Kirch 2018)</span> scans a moving-sum
+statistic at a fixed bandwidth; Isolate–Detect <span class="citation">(Anastasiou and Fryzlewicz 2022)</span> isolates each
+changepoint in an expanding interval; and TGUH <span class="citation">(Fryzlewicz 2022)</span> performs a tail-greedy
+bottom-up merge. <strong>SMUCE</strong> <span class="citation">(Frick et
+al. 2014)</span> occupies a special place: it estimates the step
+function with the fewest jumps that passes a <em>simultaneous multiscale
+test</em> at level
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>,
+and in doing so delivers confidence intervals for every changepoint
+location — uncertainty statements most competitors cannot make. HSMUCE
+<span class="citation">(Pein et al. 2017)</span> extends this to
+heterogeneous noise.</p>
+</div>
+<div class="section level3">
+<h3 id="beyond-the-mean">Beyond the mean<a class="anchor" aria-label="anchor" href="#beyond-the-mean"></a>
+</h3>
+<p>Changes need not be in the mean: the package’s <code>change_in</code>
+argument spans variance, mean-and-variance, slope, and full
+distributional change. Nonparametric engines (energy statistics <span class="citation">(Matteson and James 2014)</span>, nonparametric cost
+functions <span class="citation">(Haynes et al. 2017)</span>, kernel
+running statistics <span class="citation">(Arlot et al. 2019; Cabrieto
+et al. 2018)</span>, joint characteristic functions <span class="citation">(McGonigle and Cho 2025)</span>, self-normalisation
+<span class="citation">(Zhao et al. 2022)</span>) detect distributional
+change without likelihood assumptions; Bayesian engines <span class="citation">(Barry and Hartigan 1993; Adams and MacKay 2007; <span class="nocase">Zhao et al.</span> 2019)</span> return posteriors instead
+of point sets; high-dimensional engines <span class="citation">(Wang and
+Samworth 2018; Chen et al. 2022; Grundy et al. 2020)</span> aggregate
+evidence across coordinates; and regression engines <span class="citation">(Bai and Perron 1998; Muggeo 2003)</span> date breaks
+in model coefficients. The tour below visits each family with runnable
+code.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="design-of-the-package">Design of the package<a class="anchor" aria-label="anchor" href="#design-of-the-package"></a>
+</h2>
+<div class="section level3">
+<h3 id="the-ggcpt-result-contract">The <code>ggcpt</code> result contract<a class="anchor" aria-label="anchor" href="#the-ggcpt-result-contract"></a>
+</h3>
+<p>Every detector returns an object of class <code>ggcpt</code>
+containing:</p>
 <ul>
 <li>
-<strong><code>changepoints</code></strong>: a tibble of detected
-changepoint locations (<code>cp</code>) and their corresponding data
-values (<code>cp_value</code>).</li>
+<code>changepoints</code>: a tibble with one row per changepoint.
+Columns <code>cp</code> (location, “left” convention) and
+<code>cp_value</code> (the data value at <code>cp</code>) are always
+present; engines add <code>ci_lower</code>/<code>ci_upper</code> (SMUCE,
+HSMUCE, strucchange, segmented), <code>posterior_prob</code> (bcp,
+BEAST), <code>detection_time</code> (CPM), <code>strength</code>
+(inspect), <code>declared_at</code> (ocd), or <code>mapping</code>
+(geomcp) when they have more to say.</li>
 <li>
-<strong><code>segments</code></strong>: a tibble describing the
-fitted segments (segment ID, start, end, length, and the segment-level
-parameter estimate).</li>
+<code>segments</code>: a tibble of the induced segments
+(<code>seg_id</code>, <code>start</code>, <code>end</code>,
+<code>n</code>, <code>param_estimate</code>).</li>
 <li>
-<strong><code>data</code></strong>: the original data series as a
-tidy tibble of <code>index</code> and <code>value</code>.</li>
+<code>data</code>: the analysed series as a tibble
+(<code>index</code>, <code>value</code>), plus a <code>fitted</code>
+column when the engine estimates a signal (SMUCE, DeCAFS, CPOP,
+segmented, bcp, BEAST).</li>
 <li>
-<strong>metadata fields</strong>: <code>method</code>,
-<code>change_in</code>, <code>penalty</code>, <code>fit</code> (the raw
-upstream object), <code>call</code>, and
-<code>cp_convention</code>.</li>
+<code>method</code>, <code>change_in</code>, <code>penalty</code> (a
+<code>list(type, value)</code> descriptor), <code>cp_convention</code>
+(always <code>"left"</code>), <code>runtime</code> (seconds, measured by
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>), and <code>fit</code> (the untouched upstream
+object, for experts).</li>
 </ul>
-<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<p>Multivariate results additionally carry a <code>data_wide</code>
+tibble with one column per coordinate, which <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>
+renders as faceted small-multiples.</p>
+</div>
+<div class="section level3">
+<h3 id="tidy-methods-and-the-plotting-layer">Tidy methods and the plotting layer<a class="anchor" aria-label="anchor" href="#tidy-methods-and-the-plotting-layer"></a>
+</h3>
+<p>The class implements the full complement of generics R users
+expect:</p>
+<div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2022</span><span class="op">)</span></span>
+<span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">10</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
+<span><span class="va">res</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
 <span><span class="co">#&gt;   Method:          pelt </span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
@@ -202,528 +289,615 @@ upstream object), <code>call</code>, and
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span></code></pre></div>
-<p>The <code>cp_convention</code> component records whether changepoint
-indices follow the <em>left-segment</em> convention—the last observation
-before the change, used by the <strong>changepoint</strong> package—or
-the <em>right-segment</em> convention. All ggchangepoint methods report
-locations under the left-segment convention, with results from packages
-that use the alternative convention (e.g., <strong>ecp</strong>)
-normalised automatically so that methods can be compared on a common
-footing.</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res</span><span class="op">$</span><span class="va">cp_convention</span></span>
-<span><span class="co">#&gt; [1] "left"</span></span></code></pre></div>
-<div class="section level3">
-<h3 id="broom-style-methods">Broom-Style Methods<a class="anchor" aria-label="anchor" href="#broom-style-methods"></a>
-</h3>
-<p>Following the <code>broom</code> convention <span class="citation">(Robinson 2017)</span> for standardised data access,
-<code>ggcpt</code> objects support <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>,
-<code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>.</p>
-<p><strong><code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code></strong> returns the changepoint
-locations as a tibble, one row per changepoint:</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span></code></pre></div>
-<p><strong><code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code></strong> returns a one-row summary with
-the series length, number of detected changepoints, method, change type,
-and penalty information:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
 <span><span class="co">#&gt;       n n_changepoints method change_in penalty_type penalty_value cp_convention</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200              1 pelt   mean      MBIC                    <span style="color: #BB0000;">NA</span> left         </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;</span></span></span></code></pre></div>
-<p><strong><code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code></strong> returns the original data
-augmented with segment identifiers, fitted segment-level parameter
-estimates, residuals, and a logical flag indicating changepoint
-positions:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 200 × 6</span></span></span>
-<span><span class="co">#&gt;    index  value seg_id .fitted .resid is_changepoint</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>     1  0.900      1   0.139  0.761 FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>     2 -<span style="color: #BB0000;">1.17</span>       1   0.139 -<span style="color: #BB0000;">1.31</span>  FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>     3 -<span style="color: #BB0000;">0.897</span>      1   0.139 -<span style="color: #BB0000;">1.04</span>  FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>     4 -<span style="color: #BB0000;">1.44</span>       1   0.139 -<span style="color: #BB0000;">1.58</span>  FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>     5 -<span style="color: #BB0000;">0.331</span>      1   0.139 -<span style="color: #BB0000;">0.470</span> FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>     6 -<span style="color: #BB0000;">2.90</span>       1   0.139 -<span style="color: #BB0000;">3.04</span>  FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>     7 -<span style="color: #BB0000;">1.06</span>       1   0.139 -<span style="color: #BB0000;">1.20</span>  FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>     8  0.278      1   0.139  0.139 FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>     9  0.749      1   0.139  0.611 FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>    10  0.242      1   0.139  0.103 FALSE         </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 190 more rows</span></span></span></code></pre></div>
-<p>These methods make it straightforward to pipe ggchangepoint results
-into further analysis or custom visualisation.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="unified-detection-dispatcher">Unified Detection Dispatcher<a class="anchor" aria-label="anchor" href="#unified-detection-dispatcher"></a>
-</h2>
-<p>The <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> function serves as the primary entry
-point for changepoint detection. It accepts a data series, a method
-name, a change type, and optional penalty parameters, and dispatches to
-the appropriate backend wrapper:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          pelt </span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC = NA </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Changepoints:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;      cp cp_value</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"fpop"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          fpop </span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         Manual = 10.5966347330961 </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Changepoints:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;      cp cp_value</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span></code></pre></div>
-<p>The following detection methods are currently supported:</p>
-<table class="table">
-<thead><tr class="header">
-<th>Method</th>
-<th>Package(s)</th>
-<th>Change types</th>
-</tr></thead>
-<tbody>
-<tr class="odd">
-<td><code>pelt</code></td>
-<td>changepoint</td>
-<td>mean, var, meanvar</td>
-</tr>
-<tr class="even">
-<td><code>binseg</code></td>
-<td>changepoint</td>
-<td>mean, var, meanvar</td>
-</tr>
-<tr class="odd">
-<td><code>segneigh</code></td>
-<td>changepoint</td>
-<td>mean, var, meanvar</td>
-</tr>
-<tr class="even">
-<td><code>amoc</code></td>
-<td>changepoint</td>
-<td>mean, var, meanvar</td>
-</tr>
-<tr class="odd">
-<td><code>fpop</code></td>
-<td>fpop</td>
-<td>mean</td>
-</tr>
-<tr class="even">
-<td><code>wbs</code></td>
-<td>wbs</td>
-<td>mean</td>
-</tr>
-<tr class="odd">
-<td><code>wbs2</code></td>
-<td>breakfast</td>
-<td>mean</td>
-</tr>
-<tr class="even">
-<td><code>not</code></td>
-<td>not</td>
-<td>mean, var, meanvar</td>
-</tr>
-<tr class="odd">
-<td><code>mosum</code></td>
-<td>mosum</td>
-<td>mean, var</td>
-</tr>
-<tr class="even">
-<td><code>idetect</code></td>
-<td>IDetect</td>
-<td>mean</td>
-</tr>
-<tr class="odd">
-<td><code>tguh</code></td>
-<td>breakfast</td>
-<td>mean</td>
-</tr>
-<tr class="even">
-<td><code>np</code></td>
-<td>changepoint.np</td>
-<td>distribution</td>
-</tr>
-<tr class="odd">
-<td><code>ecp</code></td>
-<td>ecp</td>
-<td>distribution (multivariate)</td>
-</tr>
-</tbody>
-</table>
-<div class="section level3">
-<h3 id="penalty-specification">Penalty Specification<a class="anchor" aria-label="anchor" href="#penalty-specification"></a>
-</h3>
-<p>For methods that support it (PELT, Binary Segmentation, Segmented
-Neighbourhood, AMOC, FPOP), the penalty parameter can be controlled via
-<code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> or the <code>penalty</code> argument.
-Penalties can be information criteria—<code>"BIC"</code> <span class="citation">(Yao 1988)</span>, <code>"AIC"</code>—or user-specified
-numeric values:</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span>, penalty <span class="op">=</span> <span class="st">"BIC"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          pelt </span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         BIC = NA </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Changepoints:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;      cp cp_value</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span></code></pre></div>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"fpop"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span>, penalty <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          fpop </span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         Manual = 10.5966347330961 </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Changepoints:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;      cp cp_value</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level2">
-<h2 id="visualisation">Visualisation<a class="anchor" aria-label="anchor" href="#visualisation"></a>
-</h2>
-<p>ggchangepoint provides several layers of <code>ggplot2</code>
-integration, from one-function plotting to fully customisable geoms.</p>
-<div class="section level3">
-<h3 id="the-autoplot-method">The autoplot() Method<a class="anchor" aria-label="anchor" href="#the-autoplot-method"></a>
-</h3>
-<p>The recommended way to visualise a <code>ggcpt</code> result is
-through <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>, which produces a <code>ggplot2</code>
-object showing the data series with changepoint locations marked by
-vertical lines:</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-<p>Alternating shaded segments help delineate regimes:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-13-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;</span></span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
+<span><span class="co">#&gt;   index  value seg_id .fitted .resid is_changepoint</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1  0.900      1   0.139  0.761 FALSE         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2 -<span style="color: #BB0000;">1.17</span>       1   0.139 -<span style="color: #BB0000;">1.31</span>  FALSE         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3 -<span style="color: #BB0000;">0.897</span>      1   0.139 -<span style="color: #BB0000;">1.04</span>  FALSE         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4 -<span style="color: #BB0000;">1.44</span>       1   0.139 -<span style="color: #BB0000;">1.58</span>  FALSE         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5 -<span style="color: #BB0000;">0.331</span>      1   0.139 -<span style="color: #BB0000;">0.470</span> FALSE         </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     6 -<span style="color: #BB0000;">2.90</span>       1   0.139 -<span style="color: #BB0000;">3.04</span>  FALSE</span></span></code></pre></div>
+<p><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws the series, the changepoint rules, and
+— on request — the fitted segment means (<code>show_segments</code>),
+the engine’s fitted signal (<code>show_fit</code>), and
+changepoint-location confidence intervals (<code>show_ci</code>):</p>
+<div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/contract-plot-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>Composable layers (<code><a href="../reference/geom_changepoint.html">geom_changepoint()</a></code>,
+<code><a href="../reference/geom_cpt_segment.html">geom_cpt_segment()</a></code>, <code><a href="../reference/geom_cpt_ci.html">geom_cpt_ci()</a></code>,
+<code><a href="../reference/stat_changepoint.html">stat_changepoint()</a></code>), a theme (<code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code>),
+and segment shading (<code><a href="../reference/annotate_segments.html">annotate_segments()</a></code>) let the same
+results be built into bespoke graphics; <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>,
+<code><a href="https://tibble.tidyverse.org/reference/as_tibble.html" class="external-link">as_tibble()</a></code>, <code><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame()</a></code>,
+<code><a href="https://rdrr.io/r/base/format.html" class="external-link">format()</a></code>, and <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> complete the S3
+surface.</p>
 </div>
 <div class="section level3">
-<h3 id="the-original-plotting-functions">The Original Plotting Functions<a class="anchor" aria-label="anchor" href="#the-original-plotting-functions"></a>
+<h3 id="design-principles">Design principles<a class="anchor" aria-label="anchor" href="#design-principles"></a>
 </h3>
-<p>The <code><a href="../reference/ggcptplot.html">ggcptplot()</a></code> and <code><a href="../reference/ggecpplot.html">ggecpplot()</a></code> functions
-from version 0.1.0 are retained for backward compatibility:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcptplot.html">ggcptplot</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-14-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ggecpplot.html">ggecpplot</a></span><span class="op">(</span><span class="va">x</span>, min_size <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-14-2.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-</div>
-<div class="section level3">
-<h3 id="ggplot2-geoms">ggplot2 Geoms<a class="anchor" aria-label="anchor" href="#ggplot2-geoms"></a>
-</h3>
-<p>For users who wish to build custom visualisations, ggchangepoint
-provides four new geoms and stats.</p>
-<p><strong><code><a href="../reference/geom_changepoint.html">geom_changepoint()</a></code></strong> adds vertical lines
-at changepoint positions:</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_changepoint.html">geom_changepoint</a></span><span class="op">(</span>data <span class="op">=</span> <span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="va">cp</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-15-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-<p><strong><code><a href="../reference/geom_cpt_segment.html">geom_cpt_segment()</a></code></strong> draws the fitted
-segment-level means between changepoints:</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">seg</span> <span class="op">&lt;-</span> <span class="va">res</span><span class="op">$</span><span class="va">segments</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/geom_cpt_segment.html">geom_cpt_segment</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">seg</span>,</span>
-<span>                   <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>x <span class="op">=</span> <span class="va">start</span>, xend <span class="op">=</span> <span class="va">end</span>, y <span class="op">=</span> <span class="va">param_estimate</span>,</span>
-<span>                       yend <span class="op">=</span> <span class="va">param_estimate</span><span class="op">)</span>,</span>
-<span>                   colour <span class="op">=</span> <span class="st">"steelblue"</span>, linewidth <span class="op">=</span> <span class="fl">1.2</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-16-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-<p><strong><code><a href="../reference/stat_changepoint.html">stat_changepoint()</a></code></strong> runs
-<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> inline within the ggplot pipeline:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
-<span>  <span class="fu"><a href="../reference/stat_changepoint.html">stat_changepoint</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-17-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-<p><strong><code><a href="../reference/geom_cpt_ci.html">geom_cpt_ci()</a></code></strong> adds confidence intervals
-around segment estimates.</p>
-</div>
-</div>
-<div class="section level2">
-<h2 id="method-comparison">Method Comparison<a class="anchor" aria-label="anchor" href="#method-comparison"></a>
-</h2>
-<p>Robust changepoint analysis typically involves running multiple
-detectors on the same data and comparing their outputs. ggchangepoint
-provides dedicated comparison functions for this purpose.</p>
-<div class="section level3">
-<h3 id="side-by-side-and-overlay-plots">Side-by-Side and Overlay Plots<a class="anchor" aria-label="anchor" href="#side-by-side-and-overlay-plots"></a>
-</h3>
-<p><code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code> runs several methods and arranges the
-results either as facetted panels (one per method) or as an overlay with
-colour-coded changepoint markers:</p>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">10</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">5</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">cmp_methods</span> <span class="op">&lt;-</span> <span class="kw">if</span> <span class="op">(</span><span class="va">has_fpop</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"fpop"</span><span class="op">)</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x3</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span>, layout <span class="op">=</span> <span class="st">"facet"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-18-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x3</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span>, layout <span class="op">=</span> <span class="st">"overlay"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-19-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-<p>For a numeric summary, <code><a href="../reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code> returns a
-tidy tibble of all detected changepoints across methods:</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare_table.html">ggcpt_compare_table</a></span><span class="op">(</span><span class="va">x3</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 10 × 3</span></span></span>
-<span><span class="co">#&gt;    method    cp cp_value</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> pelt     100    1.47 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> pelt     200    9.94 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> pelt     214    7.52 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> pelt     222    0.581</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> binseg   100    1.47 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> binseg   200    9.94 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fpop     100    1.47 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> fpop     200    9.94 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> fpop     214    7.52 </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> fpop     222    0.581</span></span></code></pre></div>
-</div>
-<div class="section level3">
-<h3 id="parallel-execution">Parallel Execution<a class="anchor" aria-label="anchor" href="#parallel-execution"></a>
-</h3>
-<p>When many methods are being compared, <code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code>
-respects the <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> parallelisation strategy if the
-<code>future</code> and <code>future.apply</code> packages are
-available. Detection is fanned out over the requested methods; supplying
-a <code>seed</code> makes the parallel run reproducible via
-parallel-safe L’Ecuyer-CMRG streams:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu">future</span><span class="fu">::</span><span class="fu"><a href="https://future.futureverse.org/reference/plan.html" class="external-link">plan</a></span><span class="op">(</span><span class="fu">future</span><span class="fu">::</span><span class="va"><a href="https://future.futureverse.org/reference/multisession.html" class="external-link">multisession</a></span>, workers <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
-<span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"fpop"</span>, <span class="st">"wbs"</span>, <span class="st">"not"</span><span class="op">)</span>,</span>
-<span>              seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-</div>
-</div>
-<div class="section level2">
-<h2 id="accuracy-evaluation">Accuracy Evaluation<a class="anchor" aria-label="anchor" href="#accuracy-evaluation"></a>
-</h2>
-<p>When ground-truth changepoint locations are known—either from
-synthetic data or from a labelled data set—ggchangepoint provides a
-comprehensive suite of accuracy metrics through
-<code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code>:</p>
+<p>The package follows seven principles, unchanged since 0.2.0:</p>
 <ul>
 <li>
-<strong>Precision and recall</strong> based on a margin of tolerance
-(default 5).</li>
+<strong>P1 — Wrap, don’t reinvent</strong>: bind to peer-reviewed
+CRAN engines.</li>
 <li>
-<strong>F1 score</strong>, the harmonic mean of precision and
-recall.</li>
+<strong>P2 — Tidy in, tidy out</strong>: stable column names across
+all methods.</li>
 <li>
-<strong>Covering metric</strong>, the length-weighted average
-Jaccard overlap between the true and predicted segmentations <span class="citation">(<span class="nocase">van den Burg and Williams</span>
-2020)</span>.</li>
+<strong>P3 — ggplot2 all the way down</strong>: every result renders
+and extends.</li>
 <li>
-<strong>Hausdorff distance</strong> between the sets of predicted
-and true changepoint locations.</li>
+<strong>P4 — One vocabulary</strong>: <code>x</code>,
+<code>method</code>, <code>change_in</code>, <code>penalty</code>,
+<code>...</code>.</li>
 <li>
-<strong>Adjusted Rand index</strong>, measuring agreement between
-the induced segment labellings <span class="citation">(Hariz et al.
-2007)</span>.</li>
+<strong>P5 — Progressive disclosure</strong>: beginners call
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> + <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>; experts reach the
+upstream fit via <code>$fit</code>.</li>
 <li>
-<strong>Annotation error</strong>, the absolute difference between
-the predicted and true number of changepoints <span class="citation">(<span class="nocase">van den Burg and Williams</span>
-2020)</span>.</li>
+<strong>P6 — No surprises</strong>: the 0.1.0 functions still work
+unchanged.</li>
 <li>
-<strong>Mean absolute error (MAE) and root mean squared error
-(RMSE)</strong> of changepoint locations.</li>
+<strong>P7 — Document everything you ship</strong>: every export is
+introduced in the README and a vignette.</li>
 </ul>
+<p>Release 0.4.0 adds an eighth: <strong>P8 — carry the
+uncertainty</strong>. Where the method quantifies uncertainty, the
+<code>ggcpt</code> object records it and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> can
+draw it.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="the-unified-dispatcher">The unified dispatcher<a class="anchor" aria-label="anchor" href="#the-unified-dispatcher"></a>
+</h2>
+<p><code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> dispatches by method name;
+<code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> reports every method the package knows, its
+engine, what it can detect, and whether the engine is installed:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_methods.html">cpt_methods</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 35 × 6</span></span></span>
+<span><span class="co">#&gt;    method   change_in                   engine   status target_release installed</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> pelt     mean, var, meanvar          changep… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> binseg   mean, var, meanvar          changep… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> segneigh mean, var, meanvar          changep… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> amoc     mean, var, meanvar          changep… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> np       distribution                changep… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ecp      distribution (multivariate) ecp      avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fpop     mean                        fpop     avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> wbs      mean                        wbs      avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> wbs2     mean                        breakfa… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> not      mean, var, slope            not      avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 25 more rows</span></span></span></code></pre></div>
+<p>Requests are validated against this capability matrix: asking a
+mean-only engine for a variance change is an error with the legal
+alternatives named — never a silent substitution. Univariate methods
+likewise refuse multi-column input rather than flattening it.</p>
+<p>Penalty semantics differ across engines, and
+<code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> documents and constructs the standard
+values:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_penalty.html">cpt_penalty</a></span><span class="op">(</span><span class="st">"BIC"</span>, n <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 5.298317</span></span>
+<span><span class="fu"><a href="../reference/cpt_penalty.html">cpt_penalty</a></span><span class="op">(</span><span class="st">"MBIC"</span>, n <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 10.59663</span></span>
+<span><span class="fu"><a href="../reference/cpt_penalty.html">cpt_penalty</a></span><span class="op">(</span><span class="st">"Hannan-Quinn"</span>, n <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [1] 3.334779</span></span></code></pre></div>
+<p>Character penalties (<code>"MBIC"</code>, <code>"BIC"</code>, …) pass
+through to the <code>changepoint</code>-family engines natively and are
+resolved to numeric values for functional-pruning engines
+(<code>fpop</code>, <code>cpop</code>, <code>decafs</code>);
+search-based engines (WBS, NOT, MOSUM, …) use their own model-selection
+criteria and ignore the argument.</p>
+</div>
+<div class="section level2">
+<h2 id="a-tour-of-the-method-families">A tour of the method families<a class="anchor" aria-label="anchor" href="#a-tour-of-the-method-families"></a>
+</h2>
+<p>Throughout, we use simulated series with known truth so results can
+be checked by eye. The simulator and canonical test signals
+(<code><a href="../reference/signal_blocks.html">signal_blocks()</a></code> — the Donoho–Johnstone blocks signal <span class="citation">(Donoho and Johnstone 1994)</span> —
+<code><a href="../reference/signal_fms.html">signal_fms()</a></code>, <code><a href="../reference/signal_teeth.html">signal_teeth()</a></code>,
+<code><a href="../reference/signal_stairs.html">signal_stairs()</a></code>, <code><a href="../reference/signal_mix.html">signal_mix()</a></code>) are described
+in the comparison vignette.</p>
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
+<span><span class="va">x_mean</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span>                <span class="co"># mean shift at 100</span></span>
+<span><span class="va">x_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span> <span class="co"># shifts at 100, 200</span></span>
+<span><span class="va">x_slope</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.3</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span> <span class="co"># kink at 100</span></span></code></pre></div>
+<div class="section level3">
+<h3 id="penalised-and-optimal-partitioning">Penalised and optimal partitioning<a class="anchor" aria-label="anchor" href="#penalised-and-optimal-partitioning"></a>
+</h3>
+<p>PELT <span class="citation">(Killick et al. 2012)</span>, binary
+segmentation <span class="citation">(Scott and Knott 1974)</span>,
+segment neighbourhoods, and AMOC come from the
+<strong>changepoint</strong> package; FPOP <span class="citation">(Maidstone et al. 2017)</span> from
+<strong>fpop</strong>:</p>
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_multi</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_multi</span>, method <span class="op">=</span> <span class="st">"binseg"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   201    0.337</span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_multi</span>, method <span class="op">=</span> <span class="st">"fpop"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90</span></span></code></pre></div>
+<p>The Achilles heel of penalised methods is the choice of
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>.
+Rather than committing to one value, <code><a href="../reference/cpt_crops.html">cpt_crops()</a></code> computes
+<em>every</em> optimal segmentation as
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
+ranges over an interval — the CROPS algorithm of Haynes, Eckley and
+Fearnhead (2017), as implemented by <strong>changepoint</strong> — and
+turns penalty selection into a diagnostic:</p>
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="va">x_multi</span><span class="op">)</span></span>
+<span><span class="va">path</span></span>
+<span><span class="co">#&gt; ggcpt_path (CROPS penalty path)</span></span>
+<span><span class="co">#&gt;   Change in:       mean </span></span>
+<span><span class="co">#&gt;   Penalty range:  [5.704, 57.04]</span></span>
+<span><span class="co">#&gt;   Series length:   300 </span></span>
+<span><span class="co">#&gt;   Distinct segmentations: 5 </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 3</span></span></span>
+<span><span class="co">#&gt;   penalty n_cpts  cost</span></span>
+<span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    6.69      2  327.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>    6.27      5  307.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>    6.19      8  288.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>    5.76      9  282.</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>    5.70     10  276.</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/crops-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>The elbow at the true number of changepoints (here 2) is the standard
+reading. <code>autoplot(path, type = "segmentations")</code> shows the
+candidate models themselves, and
+<code>autoplot(path, type = "path")</code> the map from penalty to model
+size:</p>
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span>, type <span class="op">=</span> <span class="st">"segmentations"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/crops-segmentations-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>The modern <strong>fastcpd</strong> engine <span class="citation">(Li
+and Zhang 2024)</span> brings the same penalised formulation to a wide
+family of models — mean, variance, mean-and-variance, and AR/ARMA/GARCH
+model changes — with sequential-gradient-descent speed:</p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/fastcpd_wrapper.html">fastcpd_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span>, family <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="multiscale-and-search-methods">Multiscale and search methods<a class="anchor" aria-label="anchor" href="#multiscale-and-search-methods"></a>
+</h3>
+<p>The randomised and multiscale searchers are one wrapper call
+each:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/wbs_wrapper.html">wbs_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90</span></span></code></pre></div>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/not_wrapper.html">not_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90</span></span></code></pre></div>
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/mosum_wrapper.html">mosum_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90</span></span></code></pre></div>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/idetect_wrapper.html">idetect_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/wbs2_wrapper.html">wbs2_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/tguh_wrapper.html">tguh_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   199    4.53</span></span></code></pre></div>
+<p>SMUCE <span class="citation">(Frick et al. 2014)</span> is the
+family’s inferential flagship: its level
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>
+bounds the probability of overestimating the number of changepoints, and
+every location comes with a confidence interval, stored in
+<code>ci_lower</code>/<code>ci_upper</code> and drawn by
+<code>show_ci = TRUE</code> as whiskers beneath the series (the step fit
+is drawn by <code>show_fit = TRUE</code>):</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res_smuce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/smuce_wrapper.html">smuce_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_smuce</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
+<span><span class="co">#&gt;      cp cp_value ci_lower ci_upper</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span>       98      103</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90       199      202</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_smuce</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/smuce-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>For heterogeneous noise,
+<code>smuce_wrapper(x, family = "hsmuce")</code> (or
+<code>cpt_detect(x, method = "hsmuce")</code>) runs HSMUCE <span class="citation">(Pein et al. 2017)</span>.</p>
+</div>
+<div class="section level3">
+<h3 id="changes-in-slope">Changes in slope<a class="anchor" aria-label="anchor" href="#changes-in-slope"></a>
+</h3>
+<p>A kink in the trend is not a jump in the level, and running a
+mean-change detector on a trending series over-detects notoriously. CPOP
+<span class="citation">(Fearnhead et al. 2019; Fearnhead and Grose
+2024)</span> solves the change-in-slope problem <em>exactly</em> under
+an
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><msub><mi>L</mi><mn>0</mn></msub><annotation encoding="application/x-tex">L_0</annotation></semantics></math>
+penalty, returning a continuous piecewise-linear fit:</p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res_cpop</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpop_wrapper.html">cpop_wrapper</a></span><span class="op">(</span><span class="va">x_slope</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_cpop</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_cpop</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/cpop-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>NOT with its linear contrast <span class="citation">(Baranowski et
+al. 2019)</span> offers a search-based alternative; the dispatcher
+routes <code>cpt_detect(x, method = "not", change_in = "slope")</code>
+to it automatically:</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_slope</span>, method <span class="op">=</span> <span class="st">"not"</span>, change_in <span class="op">=</span> <span class="st">"slope"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    85     36.8</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   101     40.7</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="bayesian-detection">Bayesian detection<a class="anchor" aria-label="anchor" href="#bayesian-detection"></a>
+</h3>
+<p>The Barry–Hartigan product partition model <span class="citation">(Barry and Hartigan 1993)</span>, via the
+<strong>bcp</strong> package <span class="citation">(Erdman and Emerson
+2007)</span>, returns a <em>posterior probability of a changepoint at
+every location</em> along with posterior segment means. Locations
+clearing <code>prob_threshold</code> populate the changepoints tibble
+(with their probabilities), and <code><a href="../reference/ggcpt_posterior.html">ggcpt_posterior()</a></code> draws the
+classic two-panel display:</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res_bcp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bcp_wrapper.html">bcp_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span>, seed <span class="op">=</span> <span class="fl">2026</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_bcp</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
+<span><span class="co">#&gt;      cp cp_value posterior_prob</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369              1</span></span>
+<span><span class="fu"><a href="../reference/ggcpt_posterior.html">ggcpt_posterior</a></span><span class="op">(</span><span class="va">res_bcp</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/bcp-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>Bayesian <em>online</em> changepoint detection <span class="citation">(Adams and MacKay 2007)</span> instead tracks the
+posterior over the current <strong>run length</strong> — the time since
+the last change — updating recursively as data arrive. Its signature
+graphic is the run-length heatmap, where a change appears as the
+posterior mass collapsing to zero:</p>
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res_bocpd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bocpd_wrapper.html">bocpd_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_bocpd</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
+<span><span class="fu"><a href="../reference/ggcpt_runlength.html">ggcpt_runlength</a></span><span class="op">(</span><span class="va">res_bocpd</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/bocpd-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>A third Bayesian engine, BEAST <span class="citation">(<span class="nocase">Zhao et al.</span> 2019)</span> via
+<strong>Rbeast</strong>, averages over models rather than conditioning
+on one, and is wired as <code>cpt_detect(x, method = "beast")</code> (or
+<code><a href="../reference/beast_wrapper.html">beast_wrapper()</a></code>); it too reports
+<code>posterior_prob</code> and renders with
+<code><a href="../reference/ggcpt_posterior.html">ggcpt_posterior()</a></code>.</p>
+</div>
+<div class="section level3">
+<h3 id="nonparametric-and-sequential-detection">Nonparametric and sequential detection<a class="anchor" aria-label="anchor" href="#nonparametric-and-sequential-detection"></a>
+</h3>
+<p>When no parametric form is trustworthy, the nonparametric cost
+approach of <strong>changepoint.np</strong> <span class="citation">(Haynes et al. 2017)</span> and the energy-statistics
+E-Divisive of <strong>ecp</strong> <span class="citation">(Matteson and
+James 2014; James and Matteson 2014)</span> detect general
+distributional change:</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2022</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_mean</span>, method <span class="op">=</span> <span class="st">"np"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_mean</span>, method <span class="op">=</span> <span class="st">"ecp"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span></code></pre></div>
+<p>The <strong>cpm</strong> package <span class="citation">(Ross
+2015)</span> runs sequential two-sample tests (Mann–Whitney, Mood,
+Lepage, Kolmogorov–Smirnov, …) as an online monitor; its results
+distinguish where a change <em>happened</em> (<code>cp</code>) from when
+it was <em>detected</em> (<code>detection_time</code>), the inherent lag
+of sequential monitoring:</p>
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpm_wrapper.html">cpm_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span>, cpm_type <span class="op">=</span> <span class="st">"Mann-Whitney"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
+<span><span class="co">#&gt;      cp cp_value detection_time</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    23   -<span style="color: #BB0000;">1.39</span>              30</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>    50    0.426             67</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   100    0.369            104</span></span></code></pre></div>
+<p>Three further nonparametric engines are wired and worth knowing:
+kernel change-point analysis on running statistics
+(<code><a href="../reference/kcp_wrapper.html">kcp_wrapper()</a></code>, engine <strong>kcpRS</strong>), which
+detects changes in running means, variances, autocorrelations, or
+correlations <span class="citation">(Arlot et al. 2019; Cabrieto et al.
+2018)</span>; NP-MOJO (<code><a href="../reference/npmojo_wrapper.html">npmojo_wrapper()</a></code>, engine
+<strong>CptNonPar</strong>), which detects changes in the marginal or
+lagged joint distribution while remaining valid under serial dependence
+<span class="citation">(McGonigle and Cho 2025)</span>; and
+self-normalised segmentation (<code><a href="../reference/sn_wrapper.html">sn_wrapper()</a></code>, engine
+<strong>SNSeg</strong>), which avoids long-run variance estimation
+altogether and tests changes in means, variances, autocorrelations, or
+bivariate correlations <span class="citation">(Zhao et al.
+2022)</span>.</p>
+</div>
+<div class="section level3">
+<h3 id="robustness-to-drift-autocorrelation-and-model-ambiguity">Robustness to drift, autocorrelation, and model ambiguity<a class="anchor" aria-label="anchor" href="#robustness-to-drift-autocorrelation-and-model-ambiguity"></a>
+</h3>
+<p>The most common failure of naive mean-change detection in practice is
+not a subtle statistical issue: it is running a Gaussian-mean detector
+on data whose baseline drifts or whose noise is autocorrelated, and
+reporting a changepoint wherever the model is wrong. DeCAFS <span class="citation">(Romano et al. 2022)</span> models exactly this regime
+— abrupt changes superimposed on random-walk drift and AR(1) noise — and
+separates the two:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span>, truth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 12</span></span></span>
-<span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering hausdorff rand_index</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   300      2       2         1      1     1        1         0          1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span></code></pre></div>
-<p>With a tolerance margin, detections within the margin are considered
-correct:</p>
+<code class="sourceCode R"><span><span class="va">res_decafs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/decafs_wrapper.html">decafs_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_decafs</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;      cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_decafs</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/decafs-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>EnvCpt <span class="citation">(Beaulieu and Killick 2018)</span>
+attacks the same confusion by model selection: it fits up to twelve
+competing descriptions — constant mean or trend, with or without
+changepoints, with white or AR(1)/AR(2) noise — and reports changepoints
+only if a changepoint model wins on information criteria:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">105</span>, <span class="fl">205</span><span class="op">)</span>, truth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">300</span>, margin <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 12</span></span></span>
-<span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering hausdorff rand_index</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   300      2       2         1      1     1    0.936         5      0.903</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span></code></pre></div>
-<p>For scenarios with multiple ground-truth annotations,
-<code><a href="../reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code> computes metrics against each
-annotator and averages:</p>
+<code class="sourceCode R"><span><span class="va">res_env</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/envcpt_wrapper.html">envcpt_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span>, models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>, <span class="st">"meancpt"</span>, <span class="st">"trendcpt"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">res_env</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt;       n n_changepoints method change_in penalty_type penalty_value cp_convention</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200              1 envcpt mean      AIC: meancpt          568. left         </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;</span></span></span></code></pre></div>
+<p>The winning model’s name is recorded in the penalty descriptor
+(<code>penalty_type</code> above), so “no changepoints, it’s just
+autocorrelation” is a first-class answer.</p>
+</div>
+<div class="section level3">
+<h3 id="multivariate-and-high-dimensional-detection">Multivariate and high-dimensional detection<a class="anchor" aria-label="anchor" href="#multivariate-and-high-dimensional-detection"></a>
+</h3>
+<p>Multivariate methods accept a matrix (rows are time points) directly.
+The energy-statistics E-Divisive of <strong>ecp</strong> was built for
+this <span class="citation">(Matteson and James 2014)</span>; for
+high-dimensional data whose change is confined to a sparse subset of
+coordinates, <code>inspect</code> <span class="citation">(Wang and
+Samworth 2018)</span> finds an optimal sparse projection of the CUSUM
+matrix and reports the projected evidence (<code>strength</code>).
+Multivariate results render as faceted small-multiples with shared
+changepoint rules:</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_metrics_annotated.html">cpt_metrics_annotated</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span>,</span>
-<span>                      annotations <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">105</span>, <span class="fl">198</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>                      n <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
-<span><span class="co">#&gt;       n n_annotators n_pred precision recall    f1 covering</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   300            2      2         1      1     1    0.977</span></span></code></pre></div>
-<p>The <code><a href="../reference/ggcpt_eval.html">ggcpt_eval()</a></code> function provides a visual evaluation
-plot, showing true and predicted changepoints colour-coded by match
-status:</p>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>           b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, <span class="op">-</span><span class="fl">2</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>           c <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">160</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">res_hd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/inspect_wrapper.html">inspect_wrapper</a></span><span class="op">(</span><span class="va">X</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_hd</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
+<span><span class="co">#&gt;      cp cp_value strength</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    80    0.785     21.9</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_hd</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/inspect-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>Two further engines complete the family:
+<code><a href="../reference/geomcp_wrapper.html">geomcp_wrapper()</a></code> (engine <strong>changepoint.geo</strong>)
+maps each observation to its distance from and angle to a reference
+point and segments the two mapped series, catching magnitude and
+orientation changes respectively <span class="citation">(Grundy et al.
+2020)</span>; and <code><a href="../reference/ocd_wrapper.html">ocd_wrapper()</a></code> (engine
+<strong>ocd</strong>) monitors a high-dimensional stream <em>online</em>
+with worst-case detection-delay guarantees <span class="citation">(Chen
+et al. 2022)</span>, reporting both the declaration time and (by
+construction of the wrapper) handling baseline estimation and
+post-declaration restarts.</p>
+</div>
+<div class="section level3">
+<h3 id="structural-breaks-in-regression">Structural breaks in regression<a class="anchor" aria-label="anchor" href="#structural-breaks-in-regression"></a>
+</h3>
+<p>Econometric practice dates breaks in regression coefficients. The
+Bai–Perron estimator <span class="citation">(Bai and Perron 1998,
+2003)</span>, via <strong>strucchange</strong> <span class="citation">(Zeileis et al. 2002)</span>, returns break dates
+<em>with confidence intervals</em>; called on a bare series it dates
+mean shifts, and called with a formula it dates breaks in arbitrary
+regressions:</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_eval.html">ggcpt_eval</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span>, truth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span>, data_vec <span class="op">=</span> <span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-25-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
-</div>
-<div class="section level2">
-<h2 id="data-simulation">Data Simulation<a class="anchor" aria-label="anchor" href="#data-simulation"></a>
-</h2>
-<p>Reproducible synthetic data is essential for benchmarking detection
-algorithms. ggchangepoint provides <code><a href="../reference/cpt_simulate.html">cpt_simulate()</a></code> (and its
-shorthand <code><a href="../reference/cpt_simulate.html">rcpt()</a></code>) for generating time series with known
-changepoint locations across a range of scenarios.</p>
-<div class="section level3">
-<h3 id="flexible-simulation">Flexible Simulation<a class="anchor" aria-label="anchor" href="#flexible-simulation"></a>
-</h3>
-<p>The simulator supports changes in mean, variance, both, or slope,
-with four noise models—Gaussian, Student-t, AR(1), and random walk:</p>
+<code class="sourceCode R"><span><span class="va">res_bp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/strucchange_wrapper.html">strucchange_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_bp</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
+<span><span class="co">#&gt;      cp cp_value ci_lower ci_upper</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369       99      101</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_bp</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/strucchange-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<p>Where the regression function is continuous — a kink rather than a
+jump — <strong>segmented</strong> <span class="citation">(Muggeo 2003,
+2008)</span> estimates broken-line relationships with standard errors
+for the breakpoints:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">seg_params</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mean <span class="op">=</span> <span class="fl">0</span>, sd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mean <span class="op">=</span> <span class="fl">10</span>, sd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mean <span class="op">=</span> <span class="fl">5</span>, sd <span class="op">=</span> <span class="fl">0.5</span><span class="op">)</span>,</span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>mean <span class="op">=</span> <span class="op">-</span><span class="fl">2</span>, sd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="op">)</span></span>
-<span><span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_simulate.html">cpt_simulate</a></span><span class="op">(</span><span class="fl">200</span>, changepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">100</span>, <span class="fl">150</span><span class="op">)</span>,</span>
-<span>                    change_in <span class="op">=</span> <span class="st">"meanvar"</span>,</span>
-<span>                    params <span class="op">=</span> <span class="va">seg_params</span><span class="op">)</span></span></code></pre></div>
-<p>The true changepoint locations are stored as an attribute:</p>
+<code class="sourceCode R"><span><span class="va">res_seg</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/segmented_wrapper.html">segmented_wrapper</a></span><span class="op">(</span><span class="va">x_slope</span>, npsi <span class="op">=</span> <span class="fl">1</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_seg</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
+<span><span class="co">#&gt;      cp cp_value ci_lower ci_upper</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6       98      101</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_seg</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/segmented-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="beyond-detection">Beyond detection<a class="anchor" aria-label="anchor" href="#beyond-detection"></a>
+</h2>
+<div class="section level3">
+<h3 id="batch-detection-over-many-series">Batch detection over many series<a class="anchor" aria-label="anchor" href="#batch-detection-over-many-series"></a>
+</h3>
+<p>Applied work rarely stops at one series. <code><a href="../reference/cpt_batch.html">cpt_batch()</a></code>
+runs a detector over every column of a matrix or data frame (or every
+element of a list) and returns a tidy tibble of results, with
+<code>future</code>-based parallelism available via
+<code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code>:</p>
 <div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dat</span>, <span class="st">"true_changepoints"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1]  50 100 150</span></span></code></pre></div>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
+<span><span class="va">panel</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>shifted <span class="op">=</span> <span class="va">x_mean</span>, quiet <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">batch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_batch.html">cpt_batch</a></span><span class="op">(</span><span class="va">panel</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span></span>
+<span><span class="va">batch</span></span>
+<span><span class="co">#&gt; ggcpt_batch (2 series, method: pelt)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;   series  n_changepoints</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> shifted              1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> quiet                0</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">batch</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
+<span><span class="co">#&gt;   series     cp cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> shifted   100    0.369</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">batch</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/batch-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
 </div>
 <div class="section level3">
-<h3 id="canonical-test-signals">Canonical Test Signals<a class="anchor" aria-label="anchor" href="#canonical-test-signals"></a>
+<h3 id="stability-diagnostics">Stability diagnostics<a class="anchor" aria-label="anchor" href="#stability-diagnostics"></a>
 </h3>
-<p>The package also includes five canonical test signals adapted from
-the wavelet and changepoint literature <span class="citation">(Donoho
-and Johnstone 1994)</span>:</p>
+<p>Most engines report a point set with no measure of its fragility.
+<code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> resamples residuals within the fitted
+segments, re-runs the detector on each replicate, and reports how often
+each location is re-detected — a cheap, model-agnostic confidence signal
+available for <em>every</em> engine, including the many with no native
+intervals:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">blocks</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/signal_blocks.html">signal_blocks</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
-<span><span class="va">fms</span>     <span class="op">&lt;-</span> <span class="fu"><a href="../reference/signal_fms.html">signal_fms</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
-<span><span class="va">mix</span>     <span class="op">&lt;-</span> <span class="fu"><a href="../reference/signal_mix.html">signal_mix</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
-<span><span class="va">teeth</span>   <span class="op">&lt;-</span> <span class="fu"><a href="../reference/signal_teeth.html">signal_teeth</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
-<span><span class="va">stairs</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/signal_stairs.html">signal_stairs</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span></code></pre></div>
-<p>Each signal has known changepoint locations and is suitable for
-benchmarking detection accuracy across different signal structures.</p>
+<code class="sourceCode R"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_stability.html">cpt_stability</a></span><span class="op">(</span><span class="va">x_mean</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, B <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">st</span></span>
+<span><span class="co">#&gt; ggcpt_stability (50 bootstrap replicates, method: pelt)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Original changepoints and their re-detection frequency:</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;      cp stability</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100         1</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
+<p><img src="introduction_files/figure-html/stability-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
 </div>
-</div>
-<div class="section level2">
-<h2 id="case-study-comparative-evaluation-on-a-block-signal">Case Study: Comparative Evaluation on a Block Signal<a class="anchor" aria-label="anchor" href="#case-study-comparative-evaluation-on-a-block-signal"></a>
-</h2>
-<p>We illustrate a complete workflow—simulation, detection, comparison,
-and evaluation—using the Blocks test signal with added Gaussian
-noise:</p>
+<div class="section level3">
+<h3 id="evaluation-interactivity-and-citations">Evaluation, interactivity, and citations<a class="anchor" aria-label="anchor" href="#evaluation-interactivity-and-citations"></a>
+</h3>
+<p>When ground truth is known, <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> computes
+precision, recall and F1 under one-to-one matching, the covering metric,
+Hausdorff distance, and adjusted Rand index, following the conventions
+of the modern benchmarking literature <span class="citation">(<span class="nocase">van den Burg and Williams</span> 2020)</span>;
+<code><a href="../reference/ggcpt_eval.html">ggcpt_eval()</a></code> draws the agreement, and
+<code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code> juxtaposes methods. These are the subject
+of the companion vignette
+<code><a href="../articles/comparison.html">vignette("comparison", package = "ggchangepoint")</a></code>.</p>
+<p>Any result renders as an interactive HTML widget with
+<code>ggcpt_interactive(res)</code> (engine <strong>plotly</strong>, in
+<code>Suggests</code>); the static <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> path is
+untouched.</p>
+<p>Finally, because every method here is someone’s published work,
+<code><a href="../reference/cpt_cite.html">cpt_cite()</a></code> returns the reference(s) behind a result, so
+analyses can cite the right paper without leaving R:</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span></span>
-<span><span class="va">sig</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/signal_blocks.html">signal_blocks</a></span><span class="op">(</span><span class="fl">512</span><span class="op">)</span></span>
-<span><span class="va">truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">sig</span>, <span class="st">"true_changepoints"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">x_noisy</span> <span class="op">&lt;-</span> <span class="va">sig</span><span class="op">$</span><span class="va">value</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">512</span>, <span class="fl">0</span>, <span class="fl">0.5</span><span class="op">)</span></span></code></pre></div>
-<p>Detect changepoints with every method available in this build, score
-each against the known truth with a tolerance margin of 5, and collect
-the results into a single table:</p>
-<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">methods_cs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="va">has_fpop</span><span class="op">)</span> <span class="va">methods_cs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">methods_cs</span>, <span class="st">"fpop"</span><span class="op">)</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="va">has_wbs</span><span class="op">)</span>  <span class="va">methods_cs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">methods_cs</span>, <span class="st">"wbs"</span><span class="op">)</span></span>
-<span><span class="kw">if</span> <span class="op">(</span><span class="va">has_not</span><span class="op">)</span>  <span class="va">methods_cs</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">methods_cs</span>, <span class="st">"not"</span><span class="op">)</span></span>
-<span></span>
-<span><span class="va">metrics</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">methods_cs</span>, <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">res</span>  <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_noisy</span>, method <span class="op">=</span> <span class="va">m</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
-<span>  <span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">$</span><span class="va">cp</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>method <span class="op">=</span> <span class="va">m</span>, <span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span><span class="va">pred</span>, <span class="va">truth</span>, n <span class="op">=</span> <span class="fl">512</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="va">metrics</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"method"</span>, <span class="st">"n_pred"</span>, <span class="st">"precision"</span>, <span class="st">"recall"</span>, <span class="st">"f1"</span>, <span class="st">"covering"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt;   method n_pred precision     recall        f1  covering</span></span>
-<span><span class="co">#&gt; 1   pelt     11         1 1.00000000 1.0000000 1.0000000</span></span>
-<span><span class="co">#&gt; 2 binseg      5         1 0.45454545 0.6250000 0.6019535</span></span>
-<span><span class="co">#&gt; 3   amoc      1         1 0.09090909 0.1666667 0.3128671</span></span>
-<span><span class="co">#&gt; 4   fpop     11         1 1.00000000 1.0000000 1.0000000</span></span>
-<span><span class="co">#&gt; 5    wbs     11         1 1.00000000 1.0000000 1.0000000</span></span>
-<span><span class="co">#&gt; 6    not     11         1 1.00000000 1.0000000 1.0000000</span></span></code></pre></div>
-<p>Visual evaluation of the PELT result, with the
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>±</mi><mn>5</mn></mrow><annotation encoding="application/x-tex">\pm 5</annotation></semantics></math>
-tolerance windows shaded and predictions coloured by match status:</p>
-<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">pred_pelt</span> <span class="op">&lt;-</span> <span class="fu">generics</span><span class="fu">::</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_noisy</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">cp</span></span>
-<span><span class="fu"><a href="../reference/ggcpt_eval.html">ggcpt_eval</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="va">pred_pelt</span>, truth <span class="op">=</span> <span class="va">truth</span>, data_vec <span class="op">=</span> <span class="va">x_noisy</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/unnamed-chunk-31-1.png" class="r-plt" alt="ggchangepoint plot of a time series with detected changepoints" width="768"></p>
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_cite.html">cpt_cite</a></span><span class="op">(</span><span class="st">"pelt"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; [pelt] Killick, R., Fearnhead, P. and Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. Journal of the American Statistical Association, 107(500), 1590-1598.</span></span></code></pre></div>
+</div>
 </div>
 <div class="section level2">
-<h2 id="summary-and-future-work">Summary and Future Work<a class="anchor" aria-label="anchor" href="#summary-and-future-work"></a>
+<h2 id="discussion">Discussion<a class="anchor" aria-label="anchor" href="#discussion"></a>
 </h2>
-<p>ggchangepoint provides a unified, tidy interface to the diverse
-changepoint detection ecosystem in R. By standardising on a single
-result class, adopting <code>broom</code> conventions, and integrating
-natively with <code>ggplot2</code>, the package reduces the friction of
-exploratory changepoint analysis and facilitates reproducible method
-comparison.</p>
-<p>Planned directions for future development include:</p>
-<ol style="list-style-type: decimal">
-<li>
-<strong>Additional wrapper coverage</strong>: integration of further
-detection packages such as <strong>strucchange</strong>,
-<strong>segmented</strong>, and <strong>bcp</strong>.</li>
-<li>
-<strong>Online detection</strong>: support for streaming and
-sequential changepoint detection.</li>
-<li>
-<strong>Model selection helpers</strong>: visual tools for penalty
-selection, including elbow plots and cross-validated loss curves.</li>
-<li>
-<strong>Multivariate and high-dimensional methods</strong>: improved
-handling of multivariate changepoint detection, leveraging ecp’s
-existing multi-dimensional support.</li>
-<li>
-<strong>Interactive visualisation</strong>: integration with
-interactive plotting frameworks for exploratory data analysis.</li>
-</ol>
-<p>Contributions and bug reports are welcome at the package’s GitHub
-repository (<a href="https://github.com/PursuitOfDataScience/ggchangepoint" class="external-link uri">https://github.com/PursuitOfDataScience/ggchangepoint</a>).</p>
+<p>ggchangepoint does not contribute a new detection algorithm; it
+contributes a <em>surface</em>. The value of a common contract compounds
+with the number of methods behind it: the same <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>
+pipeline, the same plot, and the same evaluation code now span
+penalised, multiscale, nonparametric, Bayesian, high-dimensional, and
+regression-based detection — 31 methods in this release. Methods whose
+engines are currently absent from CRAN (graph-constrained gfpop <span class="citation">(Hocking et al. 2020)</span>, robust segmentation <span class="citation">(Fearnhead and Rigaill 2019)</span>, FOCuS, sparsified
+binary segmentation) are tracked as <em>planned</em> in
+<code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> and will slot into the same wrapper pattern
+when their engines return.</p>
+<p>Two practical notes. First, wrapped engines are run with sensible
+defaults, but each wrapper forwards <code>...</code> to its engine, and
+the raw fit is always in <code>$fit</code> — the package is a front
+door, not a cage. Second, detection quality is the engines’; the
+package’s own additions (metrics, stability, penalty paths) are
+deliberately engine-agnostic, so conclusions drawn with them
+transfer.</p>
+</div>
+<div class="section level2">
+<h2 id="acknowledgements">Acknowledgements<a class="anchor" aria-label="anchor" href="#acknowledgements"></a>
+</h2>
+<p>This package stands on the shoulders of the authors of the wrapped
+engines and of the R <span class="citation">(R Core Team 2024)</span>,
+ggplot2 <span class="citation">(Wickham 2016)</span>, and broom <span class="citation">(Robinson 2017)</span> projects.</p>
 </div>
 <div class="section level2">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>
 </h2>
 <div id="refs" class="references csl-bib-body hanging-indent">
+<div id="ref-adams2007bocpd" class="csl-entry">
+Adams, Ryan Prescott, and David JC MacKay. 2007. <span>“Bayesian Online
+Changepoint Detection.”</span> <em>arXiv Preprint arXiv:0710.3742</em>.
+</div>
 <div id="ref-aminikhanghahi2017survey" class="csl-entry">
 Aminikhanghahi, Samaneh, and Diane J Cook. 2017. <span>“A Survey of
 Methods for Time Series Change Point Detection.”</span> <em>Knowledge
@@ -734,16 +908,53 @@ Anastasiou, Andreas, and Piotr Fryzlewicz. 2022. <span>“Detecting
 Multiple Generalized Change-Points by Isolating Single Ones.”</span>
 <em>Metrika</em> 85: 141–74. <a href="https://doi.org/10.1007/s00184-021-00821-6" class="external-link">https://doi.org/10.1007/s00184-021-00821-6</a>.
 </div>
+<div id="ref-arlot2019kernel" class="csl-entry">
+Arlot, Sylvain, Alain Celisse, and Zaid Harchaoui. 2019. <span>“A Kernel
+Multiple Change-Point Algorithm via Model Selection.”</span> <em>Journal
+of Machine Learning Research</em> 20 (162): 1–56.
+</div>
 <div id="ref-athey2022detecting" class="csl-entry">
 Athey, Susan, Mohsen Bayati, Guido Imbens, and Zhaonan Qu. 2022.
 <span>“Detecting Change Points in High-Dimensional Time Series.”</span>
 <em>Journal of Econometrics</em> 227 (2): 367–89.
+</div>
+<div id="ref-bai1998estimating" class="csl-entry">
+Bai, Jushan, and Pierre Perron. 1998. <span>“Estimating and Testing
+Linear Models with Multiple Structural Changes.”</span>
+<em>Econometrica</em> 66 (1): 47–78.
+</div>
+<div id="ref-bai2003computation" class="csl-entry">
+Bai, Jushan, and Pierre Perron. 2003. <span>“Computation and Analysis of
+Multiple Structural Change Models.”</span> <em>Journal of Applied
+Econometrics</em> 18 (1): 1–22.
 </div>
 <div id="ref-baranowski2019narrowest" class="csl-entry">
 Baranowski, Rafał, Yining Chen, and Piotr Fryzlewicz. 2019.
 <span>“Narrowest-over-Threshold Detection of Multiple Change Points and
 Change-Point-Like Features.”</span> <em>Journal of the Royal Statistical
 Society Series B</em> 81 (3): 649–72. <a href="https://doi.org/10.1111/rssb.12322" class="external-link">https://doi.org/10.1111/rssb.12322</a>.
+</div>
+<div id="ref-barry1993bayesian" class="csl-entry">
+Barry, Daniel, and John A Hartigan. 1993. <span>“A Bayesian Analysis for
+Change Point Problems.”</span> <em>Journal of the American Statistical
+Association</em> 88 (421): 309–19.
+</div>
+<div id="ref-beaulieu2018envcpt" class="csl-entry">
+Beaulieu, Claudie, and Rebecca Killick. 2018. <span>“Distinguishing
+Trends and Shifts from Memory in Climate Data.”</span> <em>Journal of
+Climate</em> 31 (23): 9519–43.
+</div>
+<div id="ref-cabrieto2018kcprs" class="csl-entry">
+Cabrieto, Jedelyn, Janne Adolf, Francis Tuerlinckx, Peter Kuppens, and
+Eva Ceulemans. 2018. <span>“Detecting Long-Lived Autodependency Changes
+in a Multivariate System via Change Point Detection and Regime Switching
+Models.”</span> <em>Scientific Reports</em> 8: 15637.
+</div>
+<div id="ref-chen2022ocd" class="csl-entry">
+Chen, Yudong, Tengyao Wang, and Richard J Samworth. 2022.
+<span>“High-Dimensional, Multiscale Online Changepoint
+Detection.”</span> <em>Journal of the Royal Statistical Society: Series
+B</em> 84 (1): 234–66.
 </div>
 <div id="ref-donoho1994ideal" class="csl-entry">
 Donoho, David L, and John M Johnstone. 1994. <span>“Ideal Spatial
@@ -755,15 +966,51 @@ Eichinger, Birte, and Claudia Kirch. 2018. <span>“A <span>MOSUM</span>
 Procedure for the Estimation of Multiple Random Change Points.”</span>
 <em>Bernoulli</em> 24 (1): 526–64. <a href="https://doi.org/10.3150/16-BEJ887" class="external-link">https://doi.org/10.3150/16-BEJ887</a>.
 </div>
+<div id="ref-erdman2007bcp" class="csl-entry">
+Erdman, Chandra, and John W Emerson. 2007. <span>“Bcp: An r Package for
+Performing a Bayesian Analysis of Change Point Problems.”</span>
+<em>Journal of Statistical Software</em> 23 (3): 1–13.
+</div>
+<div id="ref-fearnhead2024cpop" class="csl-entry">
+Fearnhead, Paul, and Daniel Grose. 2024. <span>“Cpop: Detecting Changes
+in Piecewise-Linear Signals.”</span> <em>Journal of Statistical
+Software</em> 109 (7): 1–30.
+</div>
+<div id="ref-fearnhead2019cpop" class="csl-entry">
+Fearnhead, Paul, Robert Maidstone, and Adam Letchford. 2019.
+<span>“Detecting Changes in Slope with an L0 Penalty.”</span>
+<em>Journal of Computational and Graphical Statistics</em> 28 (2):
+265–75.
+</div>
+<div id="ref-fearnhead2019changepoint" class="csl-entry">
+Fearnhead, Paul, and Guillem Rigaill. 2019. <span>“Changepoint Detection
+in the Presence of Outliers.”</span> <em>Journal of the American
+Statistical Association</em> 114 (525): 169–83. <a href="https://doi.org/10.1080/01621459.2017.1385466" class="external-link">https://doi.org/10.1080/01621459.2017.1385466</a>.
+</div>
+<div id="ref-frick2014smuce" class="csl-entry">
+Frick, Klaus, Axel Munk, and Hannes Sieling. 2014. <span>“Multiscale
+Change Point Inference.”</span> <em>Journal of the Royal Statistical
+Society: Series B</em> 76 (3): 495–580.
+</div>
 <div id="ref-fryzlewicz2014wild" class="csl-entry">
 Fryzlewicz, Piotr. 2014. <span>“Wild Binary Segmentation for Multiple
 Change-Point Detection.”</span> <em>The Annals of Statistics</em> 42
 (6): 2243–81. <a href="https://doi.org/10.1214/14-AOS1245" class="external-link">https://doi.org/10.1214/14-AOS1245</a>.
 </div>
-<div id="ref-hariz2007classification" class="csl-entry">
-Hariz, Samir Ben, Jonathan J Wylie, and Qiang Zhang. 2007.
-<span>“Classification and Clustering of Change-Point Data.”</span>
-<em>Signal Processing</em> 87 (9): 2100–2118.
+<div id="ref-fryzlewicz2020detecting" class="csl-entry">
+Fryzlewicz, Piotr. 2020. <span>“Detecting Multiple Change-Point Features
+via Narrowest-over-Threshold.”</span> <em>Journal of the Royal
+Statistical Society Series B</em> 82 (5): 1377–418.
+</div>
+<div id="ref-fryzlewicz2022tail" class="csl-entry">
+Fryzlewicz, Piotr. 2022. <span>“Tail-Greedy Bottom-up Data
+Decompositions and Fast Multiple Change-Point Detection.”</span> <em>The
+Annals of Statistics</em> 50 (5): 2721–61.
+</div>
+<div id="ref-grundy2020geomcp" class="csl-entry">
+Grundy, Thomas, Rebecca Killick, and Gueorgui Mihaylov. 2020.
+<span>“High-Dimensional Changepoint Detection via a Geometrically
+Inspired Mapping.”</span> <em>Statistics and Computing</em> 30: 1155–66.
 </div>
 <div id="ref-haslett1989space" class="csl-entry">
 Haslett, John, and Adrian E Raftery. 1989. <span>“Space-Time Modelling
@@ -775,6 +1022,12 @@ C</em> 38 (1): 1–21.
 Haynes, Kaylea, Paul Fearnhead, and Idris A Eckley. 2017. <span>“A
 Computationally Efficient Nonparametric Approach for Changepoint
 Detection.”</span> <em>Statistics and Computing</em> 27 (5): 1313–29. <a href="https://doi.org/10.1007/s11222-016-9687-5" class="external-link">https://doi.org/10.1007/s11222-016-9687-5</a>.
+</div>
+<div id="ref-hocking2020gfpop" class="csl-entry">
+Hocking, Toby Dylan, Guillem Rigaill, Paul Fearnhead, and Guillaume
+Bourque. 2020. <span>“Gfpop: An <span>R</span> Package for Unsupervised
+Graph-Constrained Change-Point Detection.”</span> <em>Journal of
+Statistical Software</em> 95 (1): 1–30.
 </div>
 <div id="ref-james2014ecp" class="csl-entry">
 James, Nicholas A, and David S Matteson. 2014. <span>“Ecp: An
@@ -798,6 +1051,10 @@ Lavielle, Marc. 2005. <span>“Using the Maximum of the CUSUM Statistic to
 Detect Changes.”</span> <em>Computational Statistics &amp; Data
 Analysis</em> 48 (4): 679–96.
 </div>
+<div id="ref-li2024fastcpd" class="csl-entry">
+Li, Xingchi, and Xianyang Zhang. 2024. <span>“Fastcpd: Fast Change Point
+Detection in r.”</span> <em>arXiv Preprint arXiv:2404.05933</em>.
+</div>
 <div id="ref-maidstone2017optimal" class="csl-entry">
 Maidstone, Robert, Toby Hocking, Guillem Rigaill, and Paul Fearnhead.
 2017. <span>“On Optimal Multiple Changepoint Algorithms for Large
@@ -809,16 +1066,54 @@ Approach for Multiple Change Point Analysis of Multivariate
 Data.”</span> <em>Journal of the American Statistical Association</em>
 109 (505): 334–45.
 </div>
+<div id="ref-mcgonigle2023npmojo" class="csl-entry">
+McGonigle, Euan T, and Haeran Cho. 2025. <span>“Nonparametric Data
+Segmentation in Multivariate Time Series via Joint Characteristic
+Functions.”</span> <em>Biometrika</em> 112 (2): asaf024.
+</div>
+<div id="ref-muggeo2003segmented" class="csl-entry">
+Muggeo, Vito MR. 2003. <span>“Estimating Regression Models with Unknown
+Break-Points.”</span> <em>Statistics in Medicine</em> 22 (19): 3055–71.
+</div>
+<div id="ref-muggeo2008segmented" class="csl-entry">
+Muggeo, Vito MR. 2008. <span>“Segmented: An r Package to Fit Regression
+Models with Broken-Line Relationships.”</span> <em>R News</em> 8 (1):
+20–25.
+</div>
+<div id="ref-page1954continuous" class="csl-entry">
+Page, Ewan S. 1954. <span>“Continuous Inspection Schemes.”</span>
+<em>Biometrika</em> 41 (1/2): 100–115.
+</div>
+<div id="ref-pein2017hsmuce" class="csl-entry">
+Pein, Florian, Hannes Sieling, and Axel Munk. 2017. <span>“Heterogeneous
+Change Point Inference.”</span> <em>Journal of the Royal Statistical
+Society: Series B</em> 79 (4): 1207–27.
+</div>
 <div id="ref-picard2005statistical" class="csl-entry">
 Picard, Franck, Stéphane Robin, Marc Lavielle, Christiane Vaisse, and
 Jean-Jacques Daudin. 2005. <span>“A Statistical Approach for Array
 <span>CGH</span> Data Analysis.”</span> <em>BMC Bioinformatics</em> 6
 (1): 27.
 </div>
+<div id="ref-rcore" class="csl-entry">
+R Core Team. 2024. <em>R: A Language and Environment for Statistical
+Computing</em>. R Foundation for Statistical Computing. <a href="https://www.R-project.org/" class="external-link">https://www.R-project.org/</a>.
+</div>
 <div id="ref-robinson2017broom" class="csl-entry">
 Robinson, David. 2017. <span>“Broom: An <span>R</span> Package for
 Converting Statistical Analysis Objects into Tidy Data Frames.”</span>
 <em>Journal of Open Source Software</em> 2 (19): 401. <a href="https://doi.org/10.21105/joss.00401" class="external-link">https://doi.org/10.21105/joss.00401</a>.
+</div>
+<div id="ref-romano2022decafs" class="csl-entry">
+Romano, Gaetano, Guillem Rigaill, Vincent Runge, and Paul Fearnhead.
+2022. <span>“Detecting Abrupt Changes in the Presence of Local
+Fluctuations and Autocorrelated Noise.”</span> <em>Journal of the
+American Statistical Association</em> 117 (540): 2147–62.
+</div>
+<div id="ref-ross2015cpm" class="csl-entry">
+Ross, Gordon J. 2015. <span>“Parametric and Nonparametric Sequential
+Change Detection in r: The Cpm Package.”</span> <em>Journal of
+Statistical Software</em> 66 (3): 1–20.
 </div>
 <div id="ref-scott1974cluster" class="csl-entry">
 Scott, A J, and M Knott. 1974. <span>“A Cluster Analysis Method for
@@ -841,6 +1136,11 @@ Vostrikova, L Ju. 1981. <span>“Detecting <span>‘Disorder’</span> in
 Multidimensional Random Processes.”</span> <em>Soviet Mathematics
 Doklady</em> 24: 55–59.
 </div>
+<div id="ref-wang2018inspect" class="csl-entry">
+Wang, Tengyao, and Richard J Samworth. 2018. <span>“High Dimensional
+Change Point Estimation via Sparse Projection.”</span> <em>Journal of
+the Royal Statistical Society: Series B</em> 80 (1): 57–83.
+</div>
 <div id="ref-wickham2016ggplot2" class="csl-entry">
 Wickham, Hadley. 2016. <em>Ggplot2: Elegant Graphics for Data
 Analysis</em>. Springer. <a href="https://doi.org/10.1007/978-3-319-24277-4" class="external-link">https://doi.org/10.1007/978-3-319-24277-4</a>.
@@ -849,6 +1149,24 @@ Analysis</em>. Springer. <a href="https://doi.org/10.1007/978-3-319-24277-4" cla
 Yao, Yi-Ching. 1988. <span>“Estimating the Number of Change-Points via
 <span>Schwarz</span>’ Criterion.”</span> <em>Statistics &amp;
 Probability Letters</em> 6 (3): 181–89. <a href="https://doi.org/10.1016/0167-7152(88)90118-6" class="external-link">https://doi.org/10.1016/0167-7152(88)90118-6</a>.
+</div>
+<div id="ref-zeileis2002strucchange" class="csl-entry">
+Zeileis, Achim, Friedrich Leisch, Kurt Hornik, and Christian Kleiber.
+2002. <span>“Strucchange: An r Package for Testing for Structural Change
+in Linear Regression Models.”</span> <em>Journal of Statistical
+Software</em> 7 (2): 1–38.
+</div>
+<div id="ref-zhao2019beast" class="csl-entry">
+<span class="nocase">Zhao, Kaiguang, Michael A Wulder, Tongxi Hu, et
+al.</span> 2019. <span>“Detecting Change-Point, Trend, and Seasonality
+in Satellite Time Series Data to Track Abrupt Changes and Nonlinear
+Dynamics: A Bayesian Ensemble Algorithm.”</span> <em>Remote Sensing of
+Environment</em> 232: 111181.
+</div>
+<div id="ref-zhao2022snseg" class="csl-entry">
+Zhao, Zifeng, Feiyu Jiang, and Xiaofeng Shao. 2022. <span>“Segmenting
+Time Series via Self-Normalisation.”</span> <em>Journal of the Royal
+Statistical Society: Series B</em> 84 (5): 1699–725.
 </div>
 </div>
 </div>

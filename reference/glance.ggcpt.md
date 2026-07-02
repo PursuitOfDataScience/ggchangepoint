@@ -23,4 +23,7 @@ glance(x, ...)
 
 A one-row tibble with columns: `n`, `n_changepoints`, `method`,
 `change_in`, `penalty_type`, `penalty_value`, `cp_convention`,
-`total_cost` (if available), `runtime` (NA).
+`total_cost` (`NA` when the engine does not expose a cost), `runtime`
+(elapsed seconds when measured by
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md),
+otherwise `NA`).
