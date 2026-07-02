@@ -40,21 +40,23 @@ grid.polygon(hx, hy, default.units = "native",
 grid.polygon(hx, hy, default.units = "native",
              gp = gpar(fill = NA, col = col_border, lwd = 10, linejoin = "mitre"))
 
-# changepoint vertical dashed line
-grid.lines(x = c(cp, cp), y = c(-0.40, 0.52), default.units = "native",
-           gp = gpar(col = col_cp, lwd = 4.5, lty = "22", lineend = "round"))
-
 # data: thin polyline + points
 grid.lines(xs, ys, default.units = "native",
            gp = gpar(col = col_data, lwd = 1.6, alpha = 0.75))
 grid.points(xs, ys, default.units = "native", pch = 16, size = unit(1.7, "pt"),
             gp = gpar(col = col_data))
 
-# amber step function (piecewise-constant fit)
-grid.lines(x = c(-0.70, cp), y = c(-0.13, -0.13), default.units = "native",
-           gp = gpar(col = col_fit, lwd = 7, lineend = "round"))
-grid.lines(x = c(cp, 0.62), y = c(0.30, 0.30), default.units = "native",
-           gp = gpar(col = col_fit, lwd = 7, lineend = "round"))
+# amber step function (piecewise-constant fit), inset from the changepoint
+grid.lines(x = c(-0.70, cp - 0.05), y = c(-0.13, -0.13),
+           default.units = "native",
+           gp = gpar(col = col_fit, lwd = 4, lineend = "round"))
+grid.lines(x = c(cp + 0.05, 0.62), y = c(0.30, 0.30),
+           default.units = "native",
+           gp = gpar(col = col_fit, lwd = 4, lineend = "round"))
+
+# changepoint vertical dashed line, drawn last so it stays on top
+grid.lines(x = c(cp, cp), y = c(-0.42, 0.54), default.units = "native",
+           gp = gpar(col = col_cp, lwd = 5.5, lty = "22", lineend = "round"))
 
 # package name
 grid.text("ggchangepoint", x = 0, y = -0.62, default.units = "native",
