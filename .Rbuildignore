@@ -10,3 +10,4 @@
 ^pkgdown$
 ^next_release\.md$
 ^README\.html$
+^data-raw$
