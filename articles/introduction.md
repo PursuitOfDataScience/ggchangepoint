@@ -534,11 +534,10 @@ automatically:
 ``` r
 
 tidy(cpt_detect(x_slope, method = "not", change_in = "slope"))
-#> # A tibble: 2 × 2
+#> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1    85     36.8
-#> 2   101     40.7
+#> 1   100     38.6
 ```
 
 ### Bayesian detection

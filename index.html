@@ -52,25 +52,57 @@
 </nav><div class="container template-home">
 <div class="row">
   <main id="main" class="col-md-9"><div class="section level1">
-<div class="page-header"><h1 id="ggchangepoint">ggchangepoint<a class="anchor" aria-label="anchor" href="#ggchangepoint"></a>
+<div class="page-header"><h1 id="ggchangepoint-">ggchangepoint <img src="https://img.shields.io/badge/R-package-276DC3?logo=r&amp;logoColor=white" align="right" alt="R package"><a class="anchor" aria-label="anchor" href="#ggchangepoint-"></a>
 </h1></div>
 <!-- badges: start -->
 
-<p>ggchangepoint provides a unified tidy interface to changepoint analysis in R. One dispatcher — <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> — covers <strong>31 detection methods across five methodological families</strong>, every result comes back as the same tidy <code>ggcpt</code> S3 object with <code>broom</code>-style methods (<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>), and every result renders directly with <code>ggplot2</code> via <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and a family of composable geoms.</p>
-<p>The five families (run <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> for the live table):</p>
+<blockquote>
+<p><strong>One interface. 31 changepoint methods. Every result tidy, every result plottable.</strong></p>
+</blockquote>
+<p>ggchangepoint wraps the R changepoint ecosystem behind a single tidy, <code>ggplot2</code>-native interface:</p>
 <ul>
 <li>
-<strong>Penalised / optimal partitioning</strong> — PELT, BinSeg, SegNeigh, AMOC (<code>changepoint</code>), FPOP (<code>fpop</code>), the CROPS penalty path (<code><a href="reference/cpt_crops.html">cpt_crops()</a></code>), fastcpd incl. AR/ARMA/GARCH model changes (<code>fastcpd</code>), and exact change-in-slope via CPOP (<code>cpop</code>).</li>
+<strong>Detect with one call</strong> — <code>cpt_detect(x, method = "...")</code> dispatches to 31 methods, from classic PELT to Bayesian online detection.</li>
 <li>
-<strong>Multiscale / search</strong> — WBS (<code>wbs</code>), WBS2 and TGUH (<code>breakfast</code>), NOT (<code>not</code>), MOSUM incl. multiscale (<code>mosum</code>), Isolate-Detect (<code>IDetect</code>), and SMUCE/HSMUCE with changepoint-location <strong>confidence intervals</strong> (<code>stepR</code>).</li>
+<strong>Tidy everywhere</strong> — every method returns the same <code>ggcpt</code> object, with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>.</li>
 <li>
-<strong>Nonparametric / kernel</strong> — ED-PELT (<code>changepoint.np</code>), E-Divisive/E-Agglo (<code>ecp</code>), kernel running statistics (<code>kcpRS</code>), NP-MOJO (<code>CptNonPar</code>), sequential CPM (<code>cpm</code>), self-normalisation (<code>SNSeg</code>).</li>
+<strong>Plot everything</strong> — <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws any result: changepoints, confidence intervals, fitted signals, posteriors, multivariate facets.</li>
 <li>
-<strong>Bayesian</strong> — Barry–Hartigan posterior probabilities (<code>bcp</code>), online BOCPD with run-length posteriors (<code>ocp</code>), BEAST Bayesian model averaging (<code>Rbeast</code>).</li>
-<li>
-<strong>Multivariate / high-dimensional / regression</strong> — sparse-projection inspect (<code>InspectChangepoint</code>), online high-dimensional ocd (<code>ocd</code>), geometric mapping (<code>changepoint.geo</code>), Bai–Perron structural breaks with CIs (<code>strucchange</code>), broken-line regression (<code>segmented</code>), changepoint-vs-trend-vs-autocorrelation model selection (<code>EnvCpt</code>), and robust detection under drift and AR noise (<code>DeCAFS</code>).</li>
+<strong>Trust the answer</strong> — compare methods side by side, sweep the penalty (CROPS), bootstrap stability, and score accuracy against ground truth.</li>
 </ul>
-<p>Only <code>changepoint</code>, <code>changepoint.np</code>, and <code>ecp</code> are hard dependencies; every other engine is optional (<code>Suggests</code>) — install the ones you need and <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> will tell you what is missing. The original 0.1.0 functions (<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code><a href="reference/ggcptplot.html">ggcptplot()</a></code>, <code><a href="reference/ggecpplot.html">ggecpplot()</a></code>) continue to work unchanged.</p>
+<table class="table">
+<colgroup>
+<col width="50%">
+<col width="50%">
+</colgroup>
+<thead><tr>
+<th>Family</th>
+<th>Methods</th>
+</tr></thead>
+<tbody>
+<tr>
+<td>Penalised / optimal</td>
+<td>PELT · BinSeg · SegNeigh · AMOC · FPOP · CROPS path · fastcpd (ARMA/GARCH) · CPOP (slope)</td>
+</tr>
+<tr>
+<td>Multiscale / search</td>
+<td>WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE/HSMUCE (with CIs)</td>
+</tr>
+<tr>
+<td>Nonparametric / kernel</td>
+<td>ED-PELT · E-Divisive · E-Agglo · kernel running stats · NP-MOJO · CPM · self-normalisation</td>
+</tr>
+<tr>
+<td>Bayesian</td>
+<td>bcp posteriors · online BOCPD · BEAST model averaging</td>
+</tr>
+<tr>
+<td>Multivariate / regression</td>
+<td>inspect · ocd · geomcp · Bai–Perron · segmented · EnvCpt · DeCAFS</td>
+</tr>
+</tbody>
+</table>
+<p>Run <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> for the live table with engines and installation status. Only <code>changepoint</code>, <code>changepoint.np</code>, and <code>ecp</code> are required — every other engine is optional (<code>Suggests</code>), and the original 0.1.0 functions (<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>, <code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code>, <code><a href="reference/ggcptplot.html">ggcptplot()</a></code>, <code><a href="reference/ggecpplot.html">ggecpplot()</a></code>) keep working unchanged.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -166,7 +198,7 @@
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         Manual = 10.5966347330961 </span></span>
+<span><span class="co">#&gt;   Penalty:         Manual = 17.8459510605346 </span></span>
 <span><span class="co">#&gt;   Series length:   200 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
@@ -631,6 +663,7 @@
 <ul class="list-unstyled">
 <li><a href="https://github.com/PursuitOfDataScience/ggchangepoint/actions/workflows/R-CMD-check.yaml" class="external-link"><img src="https://github.com/PursuitOfDataScience/ggchangepoint/actions/workflows/R-CMD-check.yaml/badge.svg" alt="R-CMD-check"></a></li>
 <li><a href="https://CRAN.R-project.org/package=ggchangepoint" class="external-link"><img src="https://www.r-pkg.org/badges/version/ggchangepoint" alt="CRAN status"></a></li>
+<li><a href="https://CRAN.R-project.org/package=ggchangepoint" class="external-link"><img src="https://cranlogs.r-pkg.org/badges/grand-total/ggchangepoint" alt="CRAN downloads"></a></li>
 <li><a href="https://lifecycle.r-lib.org/articles/stages.html#stable" class="external-link"><img src="https://img.shields.io/badge/lifecycle-stable-brightgreen.svg" alt="Lifecycle: stable"></a></li>
 </ul>
 </div>

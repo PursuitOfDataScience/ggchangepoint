@@ -1,55 +1,42 @@
-# ggchangepoint
+# ggchangepoint ![R package](https://img.shields.io/badge/R-package-276DC3?logo=r&logoColor=white)
 
-ggchangepoint provides a unified tidy interface to changepoint analysis
-in R. One dispatcher —
-[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-— covers **31 detection methods across five methodological families**,
-every result comes back as the same tidy `ggcpt` S3 object with
-`broom`-style methods
-([`tidy()`](https://generics.r-lib.org/reference/tidy.html),
-[`glance()`](https://generics.r-lib.org/reference/glance.html),
-[`augment()`](https://generics.r-lib.org/reference/augment.html)), and
-every result renders directly with `ggplot2` via
-[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-and a family of composable geoms.
+> **One interface. 31 changepoint methods. Every result tidy, every
+> result plottable.**
 
-The five families (run
+ggchangepoint wraps the R changepoint ecosystem behind a single tidy,
+`ggplot2`-native interface:
+
+- **Detect with one call** — `cpt_detect(x, method = "...")` dispatches
+  to 31 methods, from classic PELT to Bayesian online detection.
+- **Tidy everywhere** — every method returns the same `ggcpt` object,
+  with [`tidy()`](https://generics.r-lib.org/reference/tidy.html),
+  [`glance()`](https://generics.r-lib.org/reference/glance.html), and
+  [`augment()`](https://generics.r-lib.org/reference/augment.html).
+- **Plot everything** —
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  draws any result: changepoints, confidence intervals, fitted signals,
+  posteriors, multivariate facets.
+- **Trust the answer** — compare methods side by side, sweep the penalty
+  (CROPS), bootstrap stability, and score accuracy against ground truth.
+
+| Family | Methods |
+|----|----|
+| Penalised / optimal | PELT · BinSeg · SegNeigh · AMOC · FPOP · CROPS path · fastcpd (ARMA/GARCH) · CPOP (slope) |
+| Multiscale / search | WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE/HSMUCE (with CIs) |
+| Nonparametric / kernel | ED-PELT · E-Divisive · E-Agglo · kernel running stats · NP-MOJO · CPM · self-normalisation |
+| Bayesian | bcp posteriors · online BOCPD · BEAST model averaging |
+| Multivariate / regression | inspect · ocd · geomcp · Bai–Perron · segmented · EnvCpt · DeCAFS |
+
+Run
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-for the live table):
-
-- **Penalised / optimal partitioning** — PELT, BinSeg, SegNeigh, AMOC
-  (`changepoint`), FPOP (`fpop`), the CROPS penalty path
-  ([`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)),
-  fastcpd incl. AR/ARMA/GARCH model changes (`fastcpd`), and exact
-  change-in-slope via CPOP (`cpop`).
-- **Multiscale / search** — WBS (`wbs`), WBS2 and TGUH (`breakfast`),
-  NOT (`not`), MOSUM incl. multiscale (`mosum`), Isolate-Detect
-  (`IDetect`), and SMUCE/HSMUCE with changepoint-location **confidence
-  intervals** (`stepR`).
-- **Nonparametric / kernel** — ED-PELT (`changepoint.np`),
-  E-Divisive/E-Agglo (`ecp`), kernel running statistics (`kcpRS`),
-  NP-MOJO (`CptNonPar`), sequential CPM (`cpm`), self-normalisation
-  (`SNSeg`).
-- **Bayesian** — Barry–Hartigan posterior probabilities (`bcp`), online
-  BOCPD with run-length posteriors (`ocp`), BEAST Bayesian model
-  averaging (`Rbeast`).
-- **Multivariate / high-dimensional / regression** — sparse-projection
-  inspect (`InspectChangepoint`), online high-dimensional ocd (`ocd`),
-  geometric mapping (`changepoint.geo`), Bai–Perron structural breaks
-  with CIs (`strucchange`), broken-line regression (`segmented`),
-  changepoint-vs-trend-vs-autocorrelation model selection (`EnvCpt`),
-  and robust detection under drift and AR noise (`DeCAFS`).
-
-Only `changepoint`, `changepoint.np`, and `ecp` are hard dependencies;
-every other engine is optional (`Suggests`) — install the ones you need
-and
-[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-will tell you what is missing. The original 0.1.0 functions
+for the live table with engines and installation status. Only
+`changepoint`, `changepoint.np`, and `ecp` are required — every other
+engine is optional (`Suggests`), and the original 0.1.0 functions
 ([`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
 [`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md),
 [`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
 [`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md))
-continue to work unchanged.
+keep working unchanged.
 
 ## Installation
 
@@ -178,7 +165,7 @@ cpt_detect(x, method = "fpop", change_in = "mean")
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         Manual = 10.5966347330961 
+#>   Penalty:         Manual = 17.8459510605346 
 #>   Series length:   200 
 #> 
 #> Changepoints:
