@@ -123,7 +123,7 @@ summary(res)
 #> Segments:
 #> # A tibble: 2 × 5
 #>   seg_id start   end     n param_estimate
-#>    <int> <dbl> <int> <dbl>          <dbl>
+#>    <int> <int> <int> <int>          <dbl>
 #> 1      1     1   100   100        -0.0980
 #> 2      2   101   200   100         6.12  
 #> 

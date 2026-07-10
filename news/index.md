@@ -101,6 +101,47 @@ engines live on CRAN and enter `Suggests` behind
 
 ### Bug fixes (audit items C1-C20; regression-tested)
 
+- `cpt_detect(penalty = <number>)` works for the changepoint-package
+  methods (`pelt`, `binseg`, `segneigh`, `amoc`): a numeric penalty is
+  now translated to the engine’s
+  `penalty = "Manual", pen.value = <number>` instead of erroring with
+  “Unknown Penalty”
+  ([\#2](https://github.com/PursuitOfDataScience/ggchangepoint/issues/2)).
+- `binseg` / `segneigh` no longer crash on short series that pass
+  validation; the maximum number of segments `Q` is clamped to a
+  length-safe value
+  ([\#3](https://github.com/PursuitOfDataScience/ggchangepoint/issues/3)).
+- [`augment()`](https://generics.r-lib.org/reference/augment.html) uses
+  the engine’s fitted signal when the result carries one, instead of
+  always the per-segment mean
+  ([\#4](https://github.com/PursuitOfDataScience/ggchangepoint/issues/4)).
+- [`augment()`](https://generics.r-lib.org/reference/augment.html) keeps
+  all coordinates for a multivariate result instead of dropping
+  everything but the first
+  ([\#5](https://github.com/PursuitOfDataScience/ggchangepoint/issues/5)).
+- The `segments` table’s `start` / `n` columns are integer, matching the
+  documented schema
+  ([\#6](https://github.com/PursuitOfDataScience/ggchangepoint/issues/6)).
+- [`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md)
+  gains a minimum-`n` guard and filters its changepoint indices, so
+  `true_changepoints` no longer contains 0, `n`, or duplicates for small
+  `n`
+  ([\#7](https://github.com/PursuitOfDataScience/ggchangepoint/issues/7)).
+- [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  honours the `index` argument for multivariate results
+  ([\#8](https://github.com/PursuitOfDataScience/ggchangepoint/issues/8)).
+- [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+  /
+  [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
+  no longer crash with “factor level duplicated” when two series share a
+  name, or the `methods` vector repeats
+  ([\#9](https://github.com/PursuitOfDataScience/ggchangepoint/issues/9)).
+- `wbs` returns an empty result instead of erroring when a manual
+  `threshold` admits no changepoints
+  ([\#10](https://github.com/PursuitOfDataScience/ggchangepoint/issues/10)).
+- `idetect` returns an empty result on short series instead of erroring
+  with “wrong sign in ‘by’ argument”
+  ([\#11](https://github.com/PursuitOfDataScience/ggchangepoint/issues/11)).
 - [`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md)
   no longer fabricates changepoints on no-change data (the positional
   boundary strip reversed `c(1, n+1)`), and no longer drops genuine

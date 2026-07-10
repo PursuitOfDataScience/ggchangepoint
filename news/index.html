@@ -87,6 +87,25 @@
 <div class="section level3">
 <h3 id="bug-fixes-audit-items-c1-c20-regression-tested-0-4-0">Bug fixes (audit items C1-C20; regression-tested)<a class="anchor" aria-label="anchor" href="#bug-fixes-audit-items-c1-c20-regression-tested-0-4-0"></a></h3>
 <ul><li>
+<code>cpt_detect(penalty = &lt;number&gt;)</code> works for the changepoint-package methods (<code>pelt</code>, <code>binseg</code>, <code>segneigh</code>, <code>amoc</code>): a numeric penalty is now translated to the engine’s <code>penalty = "Manual", pen.value = &lt;number&gt;</code> instead of erroring with “Unknown Penalty” (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/2" class="external-link">#2</a>).</li>
+<li>
+<code>binseg</code> / <code>segneigh</code> no longer crash on short series that pass validation; the maximum number of segments <code>Q</code> is clamped to a length-safe value (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/3" class="external-link">#3</a>).</li>
+<li>
+<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> uses the engine’s fitted signal when the result carries one, instead of always the per-segment mean (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/4" class="external-link">#4</a>).</li>
+<li>
+<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> keeps all coordinates for a multivariate result instead of dropping everything but the first (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/5" class="external-link">#5</a>).</li>
+<li>The <code>segments</code> table’s <code>start</code> / <code>n</code> columns are integer, matching the documented schema (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/6" class="external-link">#6</a>).</li>
+<li>
+<code><a href="../reference/signal_mix.html">signal_mix()</a></code> gains a minimum-<code>n</code> guard and filters its changepoint indices, so <code>true_changepoints</code> no longer contains 0, <code>n</code>, or duplicates for small <code>n</code> (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/7" class="external-link">#7</a>).</li>
+<li>
+<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> honours the <code>index</code> argument for multivariate results (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/8" class="external-link">#8</a>).</li>
+<li>
+<code><a href="../reference/cpt_batch.html">cpt_batch()</a></code> / <code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code> no longer crash with “factor level duplicated” when two series share a name, or the <code>methods</code> vector repeats (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/9" class="external-link">#9</a>).</li>
+<li>
+<code>wbs</code> returns an empty result instead of erroring when a manual <code>threshold</code> admits no changepoints (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/10" class="external-link">#10</a>).</li>
+<li>
+<code>idetect</code> returns an empty result on short series instead of erroring with “wrong sign in ‘by’ argument” (<a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/11" class="external-link">#11</a>).</li>
+<li>
 <code><a href="../reference/ecp_wrapper.html">ecp_wrapper()</a></code> no longer fabricates changepoints on no-change data (the positional boundary strip reversed <code>c(1, n+1)</code>), and no longer drops genuine changepoints in <code>e.agglo</code>’s wrap-around case (C1).</li>
 <li>
 <code><a href="../reference/wbs_wrapper.html">wbs_wrapper()</a></code> now returns the sSIC model selection it documents; a manual threshold is recorded as the penalty actually used (C2).</li>
@@ -204,7 +223,7 @@
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.1.</p>
 </div>
 
     </footer></div>
