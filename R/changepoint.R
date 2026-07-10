@@ -71,9 +71,27 @@ cpt_wrapper <- function(data,
   # The changepoint package's default penalty (MBIC) is not implemented for
   # SegNeigh; fall back to SIC unless the caller supplied a penalty.
   args <- list(data, method = cp_method, ...)
+
+  # A numeric penalty is not a valid changepoint-package penalty name; the
+  # engine requires penalty = "Manual" together with pen.value = <number>.
+  if (is.numeric(args$penalty)) {
+    args$pen.value <- args$penalty
+    args$penalty <- "Manual"
+  }
+
   if (cp_method == "SegNeigh" && !"penalty" %in% names(args)) {
     args$penalty <- "SIC"
   }
+
+  # BinSeg/SegNeigh use a default Q (max segments) that can exceed what a
+  # short series admits, which the engine rejects. Clamp Q to a length-safe
+  # value when the caller has not supplied one.
+  if (cp_method %in% c("BinSeg", "SegNeigh") && !"Q" %in% names(args)) {
+    n <- length(data)
+    q_cap <- max(1L, floor(n / 2) - 1L)
+    args$Q <- min(5L, q_cap)
+  }
+
   fit <- do.call(cpt_fun, args)
   cp <- changepoint::cpts(fit)
 

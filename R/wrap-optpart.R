@@ -35,7 +35,7 @@ fpop_wrapper <- function(x, penalty = NULL, ...) {
 #' @noRd
 build_segments <- function(data_vec, cp_indices) {
   n <- length(data_vec)
-  starts <- c(1, cp_indices + 1)
+  starts <- c(1L, cp_indices + 1L)
   ends <- c(cp_indices, n)
   n_seg <- length(starts)
 
@@ -43,7 +43,7 @@ build_segments <- function(data_vec, cp_indices) {
     seg_id = seq_len(n_seg),
     start = starts,
     end = ends,
-    n = ends - starts + 1,
+    n = ends - starts + 1L,
     param_estimate = vapply(seq_len(n_seg), function(i) {
       mean(data_vec[starts[i]:ends[i]])
     }, numeric(1))

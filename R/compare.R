@@ -28,6 +28,9 @@ ggcpt_compare <- function(x,
                           ...) {
 
   layout <- match.arg(layout)
+  # De-duplicate methods so repeated names do not crash factor construction
+  # (duplicated factor levels) downstream.
+  methods <- unique(methods)
   data_vec <- as.numeric(x)
 
   # Attempt parallel execution if future is set up

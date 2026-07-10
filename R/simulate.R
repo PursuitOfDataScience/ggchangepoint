@@ -231,6 +231,9 @@ signal_fms <- function(n = 2000, seed = NULL) {
 #' @export
 signal_mix <- function(n = 2000, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
+  if (n < 40) {
+    stop("`n` must be at least 40 for the mix signal.", call. = FALSE)
+  }
 
   seg_lens <- round(n * c(0.15, 0.2, 0.1, 0.2, 0.15, 0.2))
   seg_lens[length(seg_lens)] <- n - sum(seg_lens[-length(seg_lens)])
@@ -245,6 +248,7 @@ signal_mix <- function(n = 2000, seed = NULL) {
   )
 
   cp_idx <- cumsum(seg_lens)[-length(seg_lens)]
+  cp_idx <- unique(cp_idx[cp_idx > 0 & cp_idx < n])
   signal <- signal + stats::rnorm(n, 0, 0.5)
 
   res <- tibble::tibble(index = seq_len(n), value = signal)
