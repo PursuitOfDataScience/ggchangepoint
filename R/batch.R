@@ -44,7 +44,9 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", seed = NULL,
   nms[is.na(nms)] <- ""
   missing_nm <- !nzchar(nms)
   nms[missing_nm] <- paste0("series_", which(missing_nm))
-  names(series_list) <- nms
+  # De-duplicate so downstream factor levels (in autoplot()/tidy()) are
+  # unique; duplicate column names otherwise crash factor construction.
+  names(series_list) <- make.unique(as.character(nms))
 
   has_future <- requireNamespace("future", quietly = TRUE) &&
     requireNamespace("future.apply", quietly = TRUE) &&
@@ -106,7 +108,8 @@ autoplot.ggcpt_batch <- function(object, ...) {
     d$series <- object$series[i]
     d
   }))
-  panel_data$series <- factor(panel_data$series, levels = object$series)
+  series_levels <- make.unique(as.character(object$series))
+  panel_data$series <- factor(panel_data$series, levels = series_levels)
 
   cp_data <- tidy.ggcpt_batch(object)
 
@@ -118,7 +121,7 @@ autoplot.ggcpt_batch <- function(object, ...) {
                                  attr(object, "method") %||% "?", ")"))
 
   if (nrow(cp_data) > 0) {
-    cp_data$series <- factor(cp_data$series, levels = object$series)
+    cp_data$series <- factor(cp_data$series, levels = series_levels)
     p <- p + ggplot2::geom_vline(
       data = cp_data,
       ggplot2::aes(xintercept = cp),

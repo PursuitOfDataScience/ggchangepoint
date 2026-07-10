@@ -95,11 +95,28 @@ glance.ggcpt <- function(x, ...) {
 #' @return A tibble with the original data plus augment columns.
 #' @export
 augment.ggcpt <- function(x, ...) {
-  data <- x$data
-  # Rename columns by position in a way that works with >2 columns
-  nms <- names(data)
-  if (length(nms) >= 2) {
-    names(data)[1:2] <- c("index", "value")
+  # For a multivariate result use the wide frame (index + one column per
+  # coordinate) so all coordinates are kept; otherwise use the univariate
+  # single-column frame.
+  use_wide <- !is.null(x$data_wide)
+  data <- if (use_wide) tibble::as_tibble(x$data_wide) else x$data
+
+  if (!use_wide) {
+    # Rename columns by position in a way that works with >2 columns
+    nms <- names(data)
+    if (length(nms) >= 2) {
+      names(data)[1:2] <- c("index", "value")
+    }
+  }
+
+  # The index used to flag changepoints, and the value vector used for .resid
+  # (the first coordinate for the wide multivariate frame).
+  index_col <- data[["index"]]
+  value_vec <- if (use_wide) {
+    coord_cols <- setdiff(names(data), "index")
+    as.numeric(data[[coord_cols[1]]])
+  } else {
+    data$value
   }
 
   data$seg_id <- NA_integer_
@@ -114,11 +131,18 @@ augment.ggcpt <- function(x, ...) {
       data$seg_id[idx] <- s$seg_id
       data$.fitted[idx] <- s$param_estimate
     }
-    data$.resid <- data$value - data$.fitted
+    data$.resid <- value_vec - data$.fitted
+  }
+
+  # Prefer the engine's fitted signal when the object carries one.
+  engine_fitted <- x$data[["fitted"]]
+  if (!is.null(engine_fitted) && length(engine_fitted) == nrow(data)) {
+    data$.fitted <- as.numeric(engine_fitted)
+    data$.resid <- value_vec - data$.fitted
   }
 
   if (nrow(x$changepoints) > 0) {
-    data$is_changepoint[data$index %in% x$changepoints$cp] <- TRUE
+    data$is_changepoint[index_col %in% x$changepoints$cp] <- TRUE
   }
 
   tibble::as_tibble(data)

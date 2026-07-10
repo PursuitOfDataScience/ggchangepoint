@@ -51,9 +51,23 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
                        call = match.call()))
   }
   if (!is.null(threshold)) {
-    cp <- wbs::changepoints(fit, th = threshold)
-    cp_indices <- as.integer(cp$cpt.th[[1]])
     penalty <- list(type = "threshold", value = as.numeric(threshold))
+    # A manual threshold that finds nothing errors ("no change-poinst found,
+    # choose larger Kmax"); a series with no detected changepoints is a valid
+    # result, so normalise that to the empty-ggcpt contract.
+    cp <- tryCatch(
+      wbs::changepoints(fit, th = threshold),
+      error = function(e) {
+        msg <- conditionMessage(e)
+        if (grepl("no change-poinst found", msg, fixed = TRUE) ||
+            grepl("choose larger Kmax", msg, fixed = TRUE)) {
+          NULL
+        } else {
+          stop(e)
+        }
+      }
+    )
+    cp_indices <- if (is.null(cp)) integer(0) else as.integer(cp$cpt.th[[1]])
   } else {
     cp <- wbs::changepoints(fit, penalty = "ssic.penalty")
     # The sSIC model selection lives in cpt.ic; cpt.th holds the
@@ -255,7 +269,12 @@ idetect_wrapper <- function(x, seed = NULL, ...) {
   fit <- tryCatch(
     IDetect::ID(data_vec, ...),
     error = function(e) {
-      if (grepl("No change-points found", conditionMessage(e), fixed = TRUE)) {
+      msg <- conditionMessage(e)
+      # No changepoints, or the engine choking on a short valid series, are
+      # both "no changepoints" outcomes, not user errors.
+      if (grepl("No change-points found", msg, fixed = TRUE) ||
+          grepl("wrong sign in 'by' argument", msg, fixed = TRUE) ||
+          grepl("Sample size is too small", msg, fixed = TRUE)) {
         NULL
       } else {
         stop(e)

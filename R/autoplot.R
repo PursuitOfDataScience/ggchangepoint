@@ -66,7 +66,8 @@ autoplot.ggcpt <- function(object,
                              cptline_alpha = cptline_alpha,
                              cptline_color = cptline_color,
                              cptline_type = cptline_type,
-                             cptline_linewidth = cptline_linewidth))
+                             cptline_linewidth = cptline_linewidth,
+                             index = index))
   }
 
   p <- ggcptplot_internal(
@@ -153,11 +154,15 @@ autoplot.ggcpt <- function(object,
 autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
                               cptline_color = "blue",
                               cptline_type = "solid",
-                              cptline_linewidth = 0.5) {
+                              cptline_linewidth = 0.5,
+                              index = NULL) {
   wide <- object$data_wide
   vars <- setdiff(names(wide), "index")
+  # Honour a custom index (e.g. dates) for the x-axis when supplied; default
+  # to the observation index otherwise.
+  x_vals <- index %||% wide$index
   long <- do.call(rbind, lapply(vars, function(v) {
-    tibble::tibble(index = wide$index, value = as.numeric(wide[[v]]),
+    tibble::tibble(index = x_vals, value = as.numeric(wide[[v]]),
                    variable = v)
   }))
   long$variable <- factor(long$variable, levels = vars)
@@ -173,7 +178,7 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
 
   if (nrow(object$changepoints) > 0) {
     p <- p + ggplot2::geom_vline(
-      xintercept = object$changepoints$cp,
+      xintercept = x_vals[object$changepoints$cp],
       alpha = cptline_alpha, color = cptline_color,
       linetype = cptline_type, linewidth = cptline_linewidth
     )
