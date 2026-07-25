@@ -1,20 +1,3 @@
-# Internal: coerce input for a univariate wrapper. Accepts vectors and
-# single-column matrices/data frames; errors on wider input instead of
-# silently flattening it column-major.
-#' @noRd
-as_uni_vector <- function(x, method) {
-  if (is.matrix(x) || is.data.frame(x)) {
-    X <- as.matrix(x)
-    if (ncol(X) > 1) {
-      stop("Method `", method, "` is univariate, but `x` has ", ncol(X),
-           " columns. See cpt_methods() for multivariate methods.",
-           call. = FALSE)
-    }
-    return(as.numeric(X[, 1]))
-  }
-  as.numeric(x)
-}
-
 #' WBS wrapper — Wild Binary Segmentation
 #'
 #' Wraps the \code{wbs} package for randomised changepoint detection via

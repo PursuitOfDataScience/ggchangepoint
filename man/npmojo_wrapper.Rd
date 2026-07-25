@@ -19,10 +19,12 @@ examined; \code{0} targets the marginal distribution. Defaults to
 \item{...}{Additional arguments passed to \code{CptNonPar::np.mojo()}.}
 }
 \value{
-A \code{ggcpt} object.
+A \code{ggcpt} object. Constant coordinates leave the kernel
+  statistics undefined, so they are dropped (with a warning) before
+  detection and an all-constant input returns an empty result.
 }
 \description{
-Wraps \code{CptNonPar::np.mojo()} (McGonigle and Cho, 2023): nonparametric
+Wraps \code{CptNonPar::np.mojo()} (McGonigle and Cho, 2025): nonparametric
 moving-sum detection of changes in the marginal or joint distribution of a
 (possibly multivariate) time series, robust to serial dependence.
 }

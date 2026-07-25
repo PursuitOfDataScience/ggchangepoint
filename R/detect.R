@@ -33,7 +33,11 @@
 #'   that use thresholds, significance levels, or posteriors instead of
 #'   penalties ignore this argument.
 #' @param ... Additional arguments passed to the specific wrapper (see the
-#'   wrapper's help page for engine-specific options).
+#'   wrapper's help page for engine-specific options). Where an argument is
+#'   also derived from \code{change_in} (\code{not}'s \code{contrast},
+#'   \code{cpm}'s \code{cpm_type}, \code{kcp}'s \code{running_stat},
+#'   \code{sn}'s \code{parameter}, \code{fastcpd}'s \code{family}), a value
+#'   supplied here takes precedence.
 #'
 #' @return A \code{ggcpt} object.
 #' @export
@@ -101,33 +105,50 @@ cpt_detect <- function(x,
     # Convert penalty to numeric for methods that need it
     pen_val <- resolve_numeric_penalty(penalty, n = length(data_vec))
 
+    dots <- list(...)
+    # Call a wrapper with the arguments this dispatcher derives (from
+    # `change_in`, `penalty`, or the method name). A value the caller passed
+    # through `...` wins over the derived one, so
+    # `cpt_detect(x, method = "not", contrast = "pcwsLinMean")` overrides the
+    # contrast instead of erroring with "matched by multiple actual
+    # arguments". `x` is passed as a symbol so the wrapper's `match.call()`
+    # stays compact rather than inlining the whole series.
+    run <- function(wrapper, derived = list()) {
+      derived <- derived[setdiff(names(derived), names(dots))]
+      do.call(wrapper, c(list(x = quote(x)), derived, dots),
+              envir = environment())
+    }
+
     res <- switch(method,
-      fpop     = fpop_wrapper(x, penalty = pen_val, ...),
-      wbs      = wbs_wrapper(x, ...),
-      wbs2     = wbs2_wrapper(x, ...),
-      not      = not_wrapper(x, contrast = not_contrast_for(change_in), ...),
-      mosum    = mosum_wrapper(x, ...),
-      idetect  = idetect_wrapper(x, ...),
-      tguh     = tguh_wrapper(x, ...),
-      smuce    = smuce_wrapper(x, ...),
-      hsmuce   = smuce_wrapper(x, family = "hsmuce", ...),
-      cpop     = cpop_wrapper(x, penalty = pen_val, ...),
-      bcp      = bcp_wrapper(x, ...),
-      bocpd    = bocpd_wrapper(x, ...),
-      beast    = beast_wrapper(x, ...),
-      cpm      = cpm_wrapper(x, cpm_type = cpm_type_for(change_in), ...),
-      kcp      = kcp_wrapper(x, running_stat = kcp_stat_for(change_in), ...),
-      npmojo   = npmojo_wrapper(x, ...),
-      decafs   = decafs_wrapper(x, penalty = pen_val, ...),
-      sn       = sn_wrapper(x, parameter = sn_param_for(change_in), ...),
-      inspect  = inspect_wrapper(x, ...),
-      ocd      = ocd_wrapper(x, ...),
-      geomcp   = geomcp_wrapper(x, ...),
-      strucchange = strucchange_wrapper(x, ...),
-      segmented = segmented_wrapper(x, ...),
-      envcpt   = envcpt_wrapper(x, ...),
-      fastcpd  = fastcpd_wrapper(x, family = fastcpd_family_for(change_in),
-                                 ...),
+      fpop     = run("fpop_wrapper", list(penalty = pen_val)),
+      wbs      = run("wbs_wrapper"),
+      wbs2     = run("wbs2_wrapper"),
+      not      = run("not_wrapper",
+                     list(contrast = not_contrast_for(change_in))),
+      mosum    = run("mosum_wrapper"),
+      idetect  = run("idetect_wrapper"),
+      tguh     = run("tguh_wrapper"),
+      smuce    = run("smuce_wrapper"),
+      hsmuce   = run("smuce_wrapper", list(family = "hsmuce")),
+      cpop     = run("cpop_wrapper", list(penalty = pen_val)),
+      bcp      = run("bcp_wrapper"),
+      bocpd    = run("bocpd_wrapper"),
+      beast    = run("beast_wrapper"),
+      cpm      = run("cpm_wrapper",
+                     list(cpm_type = cpm_type_for(change_in))),
+      kcp      = run("kcp_wrapper",
+                     list(running_stat = kcp_stat_for(change_in))),
+      npmojo   = run("npmojo_wrapper"),
+      decafs   = run("decafs_wrapper", list(penalty = pen_val)),
+      sn       = run("sn_wrapper", list(parameter = sn_param_for(change_in))),
+      inspect  = run("inspect_wrapper"),
+      ocd      = run("ocd_wrapper"),
+      geomcp   = run("geomcp_wrapper"),
+      strucchange = run("strucchange_wrapper"),
+      segmented = run("segmented_wrapper"),
+      envcpt   = run("envcpt_wrapper"),
+      fastcpd  = run("fastcpd_wrapper",
+                     list(family = fastcpd_family_for(change_in))),
       stop("Method '", method, "' is not wired to a wrapper. ",
            "This is an internal error; please report it.", call. = FALSE)
     )
@@ -425,7 +446,9 @@ wrap_ecp_to_ggcpt <- function(x, ...) {
 #'   \code{"Manual"}.
 #' @param n Series length. Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.
 #' @param k Number of parameters per changepoint (typically 2 for
-#'   mean+variance, 1 for mean-only). Defaults to 1.
+#'   mean+variance, 1 for mean-only). Defaults to 1. The \code{"MBIC"}
+#'   penalty additionally reads \code{k} as the number of changepoints being
+#'   placed, in its \eqn{\log{n \choose k}} term.
 #' @param value Numeric value for \code{Manual} type.
 #' @param alpha Exponent of the strengthened SIC (\code{"sSIC"}) penalty
 #'   \eqn{k (\log n)^\alpha}; must exceed 1. Defaults to \code{1.01}
@@ -451,11 +474,16 @@ wrap_ecp_to_ggcpt <- function(x, ...) {
 #'     \code{bocpd}, \code{beast}, \code{cpm}, \code{sn}): are tuned by a
 #'     significance level, posterior-probability threshold, hazard, or
 #'     average run length rather than a penalty; see each wrapper.
-#'   \item \strong{\code{MBIC}} in \code{cpt_penalty()} uses the
-#'     Zhang-Siegmund (2007) formula \eqn{0.5(k+1)\log n + \log{n \choose k}},
-#'     which differs from the \pkg{changepoint} package's MBIC. Use the
-#'     character \code{"MBIC"} with \pkg{changepoint}-based methods to get
-#'     the engine's native MBIC.
+#'   \item \strong{\code{MBIC}} in \code{cpt_penalty()} is a BIC-type penalty
+#'     that adds a combinatorial term for the number of ways \code{k}
+#'     changepoints can be placed in \code{n} observations,
+#'     \eqn{0.5(k+1)\log n + \log{n \choose k}}. It is deliberately stronger
+#'     than \code{"BIC"}. It is \emph{not} the modified BIC of Zhang and
+#'     Siegmund (2007), whose penalty
+#'     \eqn{1.5 k \log n + 0.5 \sum_i \log(l_i / n)} depends on the segment
+#'     lengths \eqn{l_i} and so cannot be expressed by a function of
+#'     \code{n} and \code{k} alone. Use the character \code{"MBIC"} with
+#'     \pkg{changepoint}-based methods to get the engine's native MBIC.
 #' }
 #'
 #' @return A numeric penalty value.
@@ -480,6 +508,9 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01) {
   switch(type,
     BIC            = k * log(n),
     SIC            = k * log(n),
+    # BIC plus a combinatorial term for placing k changepoints among n
+    # points. Stronger than BIC; not Zhang-Siegmund's segment-length mBIC
+    # (see the penalty-semantics section).
     MBIC           = 0.5 * (k + 1) * log(n) + lchoose(n, k),
     AIC            = 2 * k,
     `Hannan-Quinn` = 2 * k * log(log(n)),

@@ -314,3 +314,211 @@ test_that("R15: sn is dispatched as univariate only", {
   expect_error(cpt_detect(cbind(rnorm(50), rnorm(50)), method = "sn"),
                "univariate")
 })
+
+# Regression tests for the pre-0.4.0-release audit (R16-R19)
+
+test_that("R16: every univariate wrapper rejects wide input, not just the
+           search-based ones", {
+  X <- cbind(a = c(rnorm(60), rnorm(60, 4)), b = rnorm(120))
+  # wrapper -> engine it needs; a missing engine still errors on the shape,
+  # because the coercion happens before the engine is used
+  wrappers <- c(smuce_wrapper = "stepR", cpop_wrapper = "cpop",
+                bcp_wrapper = "bcp", bocpd_wrapper = "ocp",
+                beast_wrapper = "Rbeast", cpm_wrapper = "cpm",
+                decafs_wrapper = "DeCAFS",
+                strucchange_wrapper = "strucchange",
+                segmented_wrapper = "segmented", envcpt_wrapper = "EnvCpt",
+                fpop_wrapper = "fpop")
+  for (nm in names(wrappers)) {
+    skip_if_not_installed(wrappers[[nm]])
+    expect_error(get(nm)(X), "univariate", info = nm)
+  }
+  # the 0.4.0 tools that take a single series guard the same way
+  expect_error(cpt_crops(X), "univariate")
+  expect_error(cpt_stability(X), "univariate")
+  # single-column input is still accepted
+  expect_s3_class(cpt_crops(data.frame(y = c(rnorm(60), rnorm(60, 4)))),
+                  "ggcpt_path")
+})
+
+test_that("R17: SegNeigh runs on short series or says why it cannot", {
+  # The engine requires 3 <= Q <= (n - 2) for a mean change and
+  # floor(n / 2) + 1 once a variance is estimated per segment. Below that the
+  # message must be actionable, not "subscript out of bounds".
+  for (n in 5:12) {
+    expect_s3_class(
+      suppressWarnings(cpt_detect(rnorm(n), method = "segneigh")), "ggcpt")
+  }
+  for (n in 4:12) {
+    expect_s3_class(
+      suppressWarnings(cpt_detect(rnorm(n), method = "segneigh",
+                                  change_in = "meanvar")), "ggcpt")
+  }
+  expect_error(cpt_detect(rnorm(4), method = "segneigh"), "SegNeigh requires")
+  expect_error(cpt_detect(rnorm(3), method = "segneigh"), "SegNeigh requires")
+  # a caller-supplied Q is still honoured
+  expect_s3_class(
+    suppressWarnings(cpt_wrapper(rnorm(20), change_in = "mean",
+                                 cp_method = "SegNeigh", Q = 4)),
+    "tbl_df")
+})
+
+test_that("R18: a coordinate named 'index' does not collide with the
+           position column", {
+  set.seed(21)
+  Xi <- data.frame(index = c(rnorm(60), rnorm(60, 4)), other = rnorm(120))
+  res <- cpt_detect(Xi, method = "ecp", seed = 1)
+  expect_false(anyDuplicated(names(res$data_wide)) > 0)
+  expect_identical(names(res$data_wide), c("index", "index.1", "other"))
+  expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(res)))
+  expect_no_error(augment(res))
+  # ordinary names are untouched
+  res2 <- cpt_detect(cbind(a = c(rnorm(60), rnorm(60, 4)), b = rnorm(120)),
+                     method = "ecp", seed = 1)
+  expect_identical(names(res2$data_wide), c("index", "a", "b"))
+})
+
+test_that("R19: NA changepoint indices are dropped, keeping extra columns
+           aligned", {
+  res <- ggcpt_build(rnorm(50), c(10L, NA, 30L), method = "m",
+                     change_in = "mean",
+                     penalty = list(type = "x", value = NA_real_),
+                     extra_cp_cols = list(posterior_prob = c(0.9, 0.5, 0.7)))
+  expect_identical(res$changepoints$cp, c(10L, 30L))
+  expect_identical(res$changepoints$posterior_prob, c(0.9, 0.7))
+  expect_equal(nrow(res$segments), 3)
+  # an all-NA set collapses to the empty-result contract
+  empty <- ggcpt_build(rnorm(50), c(NA_integer_, NA_integer_), method = "m",
+                       change_in = "mean",
+                       penalty = list(type = "x", value = NA_real_))
+  expect_equal(nrow(empty$changepoints), 0)
+  expect_equal(nrow(empty$segments), 1)
+})
+
+test_that("R20: a wrapper argument passed through cpt_detect() overrides the
+           value the dispatcher derives from change_in", {
+  set.seed(31)
+  xs <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
+  xx <- c(rnorm(200), rnorm(200, 4))
+
+  # Each of these used to fail with "formal argument ... matched by multiple
+  # actual arguments" because the dispatcher and the caller both supplied it.
+  skip_if_not_installed("not")
+  expect_s3_class(cpt_detect(xs, method = "not", change_in = "slope",
+                             contrast = "pcwsLinMean"), "ggcpt")
+  # the derived value is still used when the caller supplies nothing
+  expect_identical(cpt_detect(xs, method = "not", change_in = "slope")$change_in,
+                   "slope")
+
+  skip_if_not_installed("cpm")
+  expect_s3_class(cpt_detect(xx, method = "cpm", cpm_type = "Mood"), "ggcpt")
+
+  skip_if_not_installed("SNSeg")
+  expect_identical(
+    cpt_detect(xx, method = "sn", parameter = "variance")$change_in, "var")
+
+  skip_if_not_installed("fastcpd")
+  expect_identical(
+    cpt_detect(xx, method = "fastcpd", family = "variance")$change_in, "var")
+
+  # `x` reaches the wrapper as a symbol, so the stored call stays small
+  # instead of inlining the whole series
+  skip_if_not_installed("fpop")
+  res <- cpt_detect(xx, method = "fpop")
+  expect_lt(as.numeric(utils::object.size(res$call)), 2000)
+})
+
+test_that("R21: enumerated engine options that cannot work are not offered", {
+  # stepR dropped family = "poisson"; offering it guaranteed a runtime error
+  skip_if_not_installed("stepR")
+  expect_error(smuce_wrapper(rnorm(50), family = "poisson"),
+               "should be one of")
+  expect_s3_class(smuce_wrapper(c(rnorm(60), rnorm(60, 4))), "ggcpt")
+
+  # cpm documents "GLRAdjusted" but processStream() rejects it by *printing*
+  # an error and returning nothing, so it silently found zero changepoints
+  skip_if_not_installed("cpm")
+  expect_error(cpm_wrapper(rnorm(50), cpm_type = "GLRAdjusted"),
+               "should be one of")
+  # FET still works for the Bernoulli data it is meant for
+  set.seed(1)
+  xb <- c(rbinom(300, 1, 0.1), rbinom(300, 1, 0.4), rbinom(300, 1, 0.7))
+  res <- cpm_wrapper(xb, cpm_type = "FET", lambda = 0.3)
+  expect_gt(nrow(res$changepoints), 0)
+})
+
+test_that("R23: a constant series returns an empty result instead of an
+           opaque engine error or a spurious changepoint", {
+  flat <- rep(5, 150)
+  for (pkg in c("segmented", "SNSeg", "kcpRS", "CptNonPar")) {
+    if (!requireNamespace(pkg, quietly = TRUE)) next
+    res <- switch(pkg,
+      segmented = segmented_wrapper(flat),
+      SNSeg     = sn_wrapper(flat),
+      kcpRS     = suppressWarnings(kcp_wrapper(flat, nperm = 20, seed = 1)),
+      CptNonPar = npmojo_wrapper(flat))
+    expect_s3_class(res, "ggcpt")
+    expect_equal(nrow(res$changepoints), 0, info = pkg)
+    expect_equal(nrow(res$segments), 1, info = pkg)
+  }
+  # all-constant multivariate input, too
+  flat_m <- matrix(5, 150, 3)
+  for (pkg in c("InspectChangepoint", "CptNonPar", "kcpRS")) {
+    if (!requireNamespace(pkg, quietly = TRUE)) next
+    res <- switch(pkg,
+      InspectChangepoint = inspect_wrapper(flat_m),
+      CptNonPar          = npmojo_wrapper(flat_m),
+      kcpRS              = suppressWarnings(kcp_wrapper(flat_m, nperm = 20,
+                                                        seed = 1)))
+    expect_equal(nrow(res$changepoints), 0, info = pkg)
+  }
+})
+
+test_that("R24: one flat coordinate among real signal is dropped with a
+           warning, not fatal", {
+  set.seed(24)
+  # coordinate `b` is flat; `a` carries a genuine change at 75
+  X <- cbind(a = c(rnorm(75), rnorm(75, 5)), b = rep(2, 150), c = rnorm(150))
+  for (pkg in c("InspectChangepoint", "CptNonPar", "kcpRS")) {
+    if (!requireNamespace(pkg, quietly = TRUE)) next
+    expect_warning(
+      res <- switch(pkg,
+        InspectChangepoint = inspect_wrapper(X),
+        CptNonPar          = npmojo_wrapper(X),
+        kcpRS              = kcp_wrapper(X, nperm = 20, seed = 1)),
+      "Dropping constant coordinate", info = pkg)
+    # the real change is still found, in the ORIGINAL row index space
+    expect_true(any(abs(res$changepoints$cp - 75) <= 20), info = pkg)
+    # and the dropped coordinate is still available for plotting
+    expect_identical(names(res$data_wide), c("index", "a", "b", "c"),
+                     info = pkg)
+  }
+  # healthy input warns about nothing
+  Xg <- cbind(a = c(rnorm(75), rnorm(75, 5)), b = c(rnorm(75), rnorm(75, -4)))
+  skip_if_not_installed("InspectChangepoint")
+  expect_no_warning(inspect_wrapper(Xg))
+})
+
+test_that("R25: short series get an actionable message, not the engine's
+           internal one", {
+  skip_if_not_installed("kcpRS")
+  expect_error(kcp_wrapper(rnorm(15), nperm = 20), "wsize")
+  # lowering wsize makes the same series usable
+  expect_s3_class(
+    suppressWarnings(kcp_wrapper(rnorm(20), wsize = 10, nperm = 20, seed = 1)),
+    "ggcpt")
+  skip_if_not_installed("SNSeg")
+  expect_error(sn_wrapper(rnorm(15)), "needs a longer series")
+})
+
+test_that("R22: ocd rejects univariate input instead of surfacing the
+           engine's 'subscript out of bounds'", {
+  skip_if_not_installed("ocd")
+  set.seed(41)
+  x <- c(rnorm(80), rnorm(80, 4))
+  expect_error(ocd_wrapper(x, mc_reps = 10), "at least two")
+  expect_error(cpt_detect(x, method = "ocd", mc_reps = 10), "at least two")
+  # multivariate input is unaffected
+  X <- rbind(matrix(rnorm(80 * 3), 80), matrix(rnorm(80 * 3, 3), 80))
+  expect_s3_class(ocd_wrapper(X, mc_reps = 10), "ggcpt")
+})

@@ -4,7 +4,7 @@
 \alias{smuce_wrapper}
 \title{SMUCE / HSMUCE wrapper — multiscale changepoint inference}
 \usage{
-smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce", "poisson"), ...)
+smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
 }
 \arguments{
 \item{x}{A numeric vector.}
@@ -14,8 +14,10 @@ smaller values yield more conservative (fewer-changepoint) fits.
 Defaults to \code{0.5}, the upstream recommendation for estimation.}
 
 \item{family}{Noise model: \code{"gauss"} (SMUCE, homogeneous Gaussian
-noise), \code{"hsmuce"} (HSMUCE, segment-wise variance), or
-\code{"poisson"} (SMUCE for Poisson counts). Defaults to \code{"gauss"}.}
+noise) or \code{"hsmuce"} (HSMUCE, segment-wise variance). Defaults to
+\code{"gauss"}. The remaining \code{stepR} families (\code{"jsmurf"},
+\code{"mDependentPS"}, ...) all require a filter or covariance
+specification; call \code{stepR::stepFit()} directly for those.}
 
 \item{...}{Additional arguments passed to \code{stepR::stepFit()}.}
 }

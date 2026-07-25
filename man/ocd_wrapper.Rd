@@ -15,7 +15,11 @@ ocd_wrapper(
 )
 }
 \arguments{
-\item{x}{A numeric matrix (rows are time points) or vector.}
+\item{x}{A numeric matrix or data frame with one row per time point and at
+least two columns. The \code{ocd} detector is inherently
+high-dimensional and cannot be constructed for a single coordinate, so
+univariate input is rejected; use a univariate engine
+(see \code{\link{cpt_methods}()}) for one series.}
 
 \item{train}{Number of initial observations used to estimate the baseline
 mean/sd (not monitored). Defaults to

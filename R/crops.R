@@ -40,7 +40,7 @@ cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
   change_in <- match.arg(change_in)
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "crops")
   n <- length(data_vec)
 
   if (is.null(pen_min)) pen_min <- log(n)

@@ -33,7 +33,7 @@
 cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
                           seed = NULL, ...) {
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, method)
   n <- length(data_vec)
 
   if (!is.null(seed)) set.seed(seed)

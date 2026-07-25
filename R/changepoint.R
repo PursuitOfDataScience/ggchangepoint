@@ -88,8 +88,24 @@ cpt_wrapper <- function(data,
   # value when the caller has not supplied one.
   if (cp_method %in% c("BinSeg", "SegNeigh") && !"Q" %in% names(args)) {
     n <- length(data)
-    q_cap <- max(1L, floor(n / 2) - 1L)
-    args$Q <- min(5L, q_cap)
+    if (cp_method == "SegNeigh") {
+      # Segment Neighbourhood is valid only for 3 <= Q <= q_hi: it indexes
+      # Q - 2 internally, so Q < 3 is rejected outright (whatever the series
+      # length), and the upper bound is the number of segments the data admit
+      # -- n - 2 for a change in mean, floor(n / 2) + 1 once a variance is
+      # estimated per segment.
+      q_hi <- if (change_in == "mean") n - 2L else as.integer(floor(n / 2) + 1L)
+      if (q_hi < 3L) {
+        stop("SegNeigh requires at least Q = 3 maximum segments, but ", n,
+             " observations admit at most Q = ", q_hi,
+             ". Use `cp_method = \"PELT\"` or \"BinSeg\" for a series this short.",
+             call. = FALSE)
+      }
+      args$Q <- max(3L, min(5L, q_hi))
+    } else {
+      q_cap <- max(1L, floor(n / 2) - 1L)
+      args$Q <- min(5L, q_cap)
+    }
   }
 
   fit <- do.call(cpt_fun, args)

@@ -40,7 +40,10 @@ at least two columns). Defaults to \code{"mean"}.}
 }
 \value{
 A \code{ggcpt} object. Reported locations refer to the centre of
-  the sliding window in which the change occurs.
+  the sliding window in which the change occurs. The series must be at
+  least \code{wsize} long to form one window. Constant coordinates make
+  every running statistic \code{NA}, so they are dropped (with a warning)
+  before detection and an all-constant input returns an empty result.
 }
 \description{
 Wraps \code{kcpRS::kcpRS()} (Cabrieto et al., 2018; the KCP framework of

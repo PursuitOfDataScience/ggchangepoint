@@ -49,6 +49,20 @@ new_ggcpt <- function(changepoints = tibble::tibble(cp = integer(), cp_value = n
   )
 }
 
+# Internal: render a penalty descriptor for printing. Numeric values are
+# rounded to something readable rather than shown at full double precision,
+# and a penalty that has no numeric value (a name, threshold type, or model
+# selector) prints as just its type instead of trailing " = NA".
+#' @noRd
+format_penalty <- function(penalty) {
+  if (!is.list(penalty)) return(as.character(penalty))
+  val <- penalty$value
+  if (length(val) != 1 || !is.numeric(val) || !is.finite(val)) {
+    return(as.character(penalty$type))
+  }
+  paste0(penalty$type, " = ", format(val, digits = 5))
+}
+
 #' Test if an object is a ggcpt object
 #'
 #' @param x An object to test.
@@ -69,12 +83,7 @@ print.ggcpt <- function(x, ...) {
   cat("  Change in:      ", x$change_in, "\n")
   cat("  Changepoints found:", nrow(x$changepoints), "\n")
   cat("  CP convention:  ", x$cp_convention, "\n")
-  penalty_str <- if (is.list(x$penalty)) {
-    paste0(x$penalty$type, " = ", x$penalty$value)
-  } else {
-    as.character(x$penalty)
-  }
-  cat("  Penalty:        ", penalty_str, "\n")
+  cat("  Penalty:        ", format_penalty(x$penalty), "\n")
   cat("  Series length:  ", nrow(x$data), "\n")
   if (nrow(x$changepoints) > 0) {
     cat("\nChangepoints:\n")

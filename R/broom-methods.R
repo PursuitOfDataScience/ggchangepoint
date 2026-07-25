@@ -187,10 +187,7 @@ print.summary.ggcpt <- function(x, ...) {
   cat("  Changepoints found:      ", x$n_changepoints, "\n")
   cat("  CP convention:           ", x$cp_convention, "\n")
   cat("  Series length:           ", x$n_obs, "\n")
-  pen <- x$penalty
-  if (is.list(pen)) {
-    cat("  Penalty:                 ", paste0(pen$type, " = ", pen$value), "\n")
-  }
+  cat("  Penalty:                 ", format_penalty(x$penalty), "\n")
   cat("  Runtime (seconds):       ", format(x$runtime, digits = 4), "\n")
   if (nrow(x$segments) > 0) {
     cat("\nSegments:\n")

@@ -23,7 +23,8 @@ segmented_wrapper(x, npsi = 1, conf_level = 0.95, seed = NULL, ...)
 A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} columns
   and the fitted broken line in \code{$data$fitted}. Breakpoints are
   rounded to the nearest index; for a continuous fit the reported location
-  is the kink itself.
+  is the kink itself. A constant series has no kink and returns an empty
+  result, rather than the arbitrary breakpoint a singular fit would give.
 }
 \description{
 Wraps \code{segmented::segmented()} (Muggeo, 2003, 2008): maximum

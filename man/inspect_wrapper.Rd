@@ -24,7 +24,11 @@ A \code{ggcpt} object. The changepoints tibble carries a
   \code{strength} column (the maximum projected CUSUM statistic). The
   first coordinate is used for \code{cp_value} and the univariate plot
   line; the full matrix is kept for the faceted multivariate
-  \code{autoplot()}.
+  \code{autoplot()}. Coordinates that are constant carry no changepoint
+  information and would make the engine's variance rescaling undefined, so
+  they are dropped (with a warning) before detection and an all-constant
+  matrix returns an empty result; the dropped coordinates are still kept
+  for plotting, and reported locations always refer to the original rows.
 }
 \description{
 Wraps \code{InspectChangepoint::inspect()} (Wang and Samworth, 2018). For

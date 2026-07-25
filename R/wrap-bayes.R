@@ -32,7 +32,7 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
   need_pkg("bcp")
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "bcp")
   # bcp::bcp() crashes the R session (segfault in its C++ code) on n = 3.
   if (length(data_vec) < 4) {
     stop("`x` must have at least 4 observations for the bcp engine.",
@@ -90,7 +90,7 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
   need_pkg("ocp")
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "bocpd")
 
   fit <- ocp::onlineCPD(data_vec, getR = TRUE,
                         hazard_func = function(x, lambda) {
@@ -140,7 +140,7 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
   need_pkg("Rbeast")
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "beast")
 
   args <- list(y = data_vec, season = "none", quiet = TRUE,
                print.progress = FALSE, ...)
@@ -148,13 +148,14 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
   # mcmc.seed (0 means "random").
   if (!is.null(seed)) args$mcmc.seed <- seed
   fit <- do.call(Rbeast::beast, args)
-  # Rbeast (<= 1.0.2) intermittently returns an all-NaN fit when called
-  # after a run on a series of different length. Identical retries can stay
-  # stuck, but a call with a perturbed argument set knocks the internal
-  # state loose; fail loudly rather than reporting "no changepoints" from a
-  # broken fit.
+  # Rbeast (<= 1.0.2) intermittently returns an all-NaN fit -- measured at
+  # roughly 0.7% of calls, and more often when other compiled engines are
+  # loaded in the same session. A retry recovers it, so retry a few times
+  # (each is cheap) and only then fail loudly, rather than reporting "no
+  # changepoints" from a broken fit. The perturbed call in between is there
+  # because identical retries can stay stuck.
   attempt <- 1
-  while (!is.finite(fit$trend$ncp) && attempt < 3) {
+  while (!is.finite(fit$trend$ncp) && attempt < 6) {
     perturbed <- args
     perturbed$dump.ci <- TRUE
     try(do.call(Rbeast::beast, perturbed), silent = TRUE)

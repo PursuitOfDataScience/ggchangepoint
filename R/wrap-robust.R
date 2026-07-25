@@ -27,7 +27,7 @@ decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
   need_pkg("DeCAFS")
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "decafs")
 
   if (is.null(penalty)) {
     penalty <- 2 * log(length(data_vec))
@@ -66,7 +66,9 @@ decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
 #' @param grid_size Grid size controlling the local-window sweep; when
 #'   \code{NULL} the engine's default is used.
 #' @param ... Additional arguments passed to \code{SNSeg::SNSeg_Uni()}.
-#' @return A \code{ggcpt} object.
+#' @return A \code{ggcpt} object. About 20 observations are needed for the
+#'   nested local windows at the default \code{grid_size}; a constant series
+#'   returns an empty result rather than an engine error.
 #' @references
 #' \insertRef{zhao2022snseg}{ggchangepoint}
 #' @export
@@ -100,12 +102,40 @@ sn_wrapper <- function(x, parameter = c("mean", "variance", "acf", "bivcor"),
     data_vec <- input
   }
 
-  fit <- SNSeg::SNSeg_Uni(ts = input, paras_to_test = parameter,
-                          confidence = confidence, grid_size = grid_size,
-                          plot_SN = FALSE, ...)
-
   change_lab <- switch(parameter,
     mean = "mean", variance = "var", acf = "acf", bivcor = "correlation"
+  )
+
+  # A flat series leaves the self-normalised statistic undefined (the engine
+  # fails with "missing value where TRUE/FALSE needed"); it also plainly has
+  # no changepoint.
+  if (any(constant_cols(as.matrix(input)))) {
+    return(ggcpt_build(data_vec, integer(0), method = "sn",
+                       change_in = change_lab,
+                       penalty = list(type = "confidence", value = confidence),
+                       call = match.call(),
+                       data_wide = if (parameter == "bivcor") {
+                         mv_data_wide(as.matrix(input))
+                       }))
+  }
+
+  # Below roughly 20 observations there is no room for the nested local
+  # windows and the engine fails with "only 0's may be mixed with negative
+  # subscripts"; say what is actually wrong.
+  fit <- tryCatch(
+    SNSeg::SNSeg_Uni(ts = input, paras_to_test = parameter,
+                     confidence = confidence, grid_size = grid_size,
+                     plot_SN = FALSE, ...),
+    error = function(e) {
+      if (grepl("only 0's may be mixed with negative subscripts",
+                conditionMessage(e), fixed = TRUE)) {
+        stop("`sn` needs a longer series: ", length(data_vec),
+             " observations leave no room for the self-normalisation ",
+             "windows (about 20 are needed at the default `grid_size`).",
+             call. = FALSE)
+      }
+      stop(e)
+    }
   )
 
   ggcpt_build(

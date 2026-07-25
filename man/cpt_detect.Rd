@@ -39,7 +39,11 @@ that use thresholds, significance levels, or posteriors instead of
 penalties ignore this argument.}
 
 \item{...}{Additional arguments passed to the specific wrapper (see the
-wrapper's help page for engine-specific options).}
+wrapper's help page for engine-specific options). Where an argument is
+also derived from \code{change_in} (\code{not}'s \code{contrast},
+\code{cpm}'s \code{cpm_type}, \code{kcp}'s \code{running_stat},
+\code{sn}'s \code{parameter}, \code{fastcpd}'s \code{family}), a value
+supplied here takes precedence.}
 }
 \value{
 A \code{ggcpt} object.

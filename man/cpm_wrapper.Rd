@@ -10,10 +10,13 @@ cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)
 \item{x}{A numeric vector.}
 
 \item{cpm_type}{Test statistic, passed to \code{cpm::processStream()} as
-\code{cpmType}. One of \code{"Mann-Whitney"}, \code{"Mood"},
-\code{"Lepage"}, \code{"Kolmogorov-Smirnov"}, \code{"Cramer-von-Mises"},
-\code{"Student"}, \code{"Bartlett"}, \code{"GLR"}, \code{"Exponential"},
-\code{"GLRAdjusted"}, \code{"FET"}. Defaults to \code{"Mann-Whitney"}.}
+\code{cpmType}. Distribution-free: \code{"Mann-Whitney"} (location, the
+default), \code{"Mood"} (scale), \code{"Lepage"},
+\code{"Kolmogorov-Smirnov"}, \code{"Cramer-von-Mises"}. Parametric:
+\code{"Student"}, \code{"Bartlett"}, \code{"GLR"} (Gaussian),
+\code{"Exponential"} (positive data), \code{"FET"} (Fisher's exact test,
+for 0/1 Bernoulli data — this one also needs a \code{lambda} value passed
+through \code{...}, e.g. \code{lambda = 0.3}).}
 
 \item{arl0}{Target in-control average run length (how many observations,
 on average, before a false alarm). Defaults to \code{500}.}

@@ -29,7 +29,9 @@ correlation). Defaults to \code{"mean"}.}
 \item{...}{Additional arguments passed to \code{SNSeg::SNSeg_Uni()}.}
 }
 \value{
-A \code{ggcpt} object.
+A \code{ggcpt} object. About 20 observations are needed for the
+  nested local windows at the default \code{grid_size}; a constant series
+  returns an empty result rather than an engine error.
 }
 \description{
 Wraps \code{SNSeg::SNSeg_Uni()} (Zhao, Jiang and Shao, 2022):

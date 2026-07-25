@@ -18,7 +18,7 @@ integration via \code{autoplot()} and composable geoms
 \code{cpt_detect()} that supports over thirty methods.
 
 **Detection engines.** \code{cpt_detect()} currently dispatches to 31
-methods across five families (run \code{cpt_methods()} for the live
+methods across six families (run \code{cpt_methods()} for the live
 table with installation status):
 \itemize{
   \item \strong{Penalised/optimal:} PELT, BinSeg, SegNeigh, AMOC
@@ -35,12 +35,13 @@ table with installation status):
     self-normalisation (\pkg{SNSeg}).
   \item \strong{Bayesian:} Barry-Hartigan posterior (\pkg{bcp}), online
     BOCPD (\pkg{ocp}), BEAST model averaging (\pkg{Rbeast}).
-  \item \strong{Multivariate/high-dimensional and regression:} sparse
-    projection (\pkg{InspectChangepoint}), online ocd (\pkg{ocd}),
-    geometric mapping (\pkg{changepoint.geo}), Bai-Perron breaks with CIs
-    (\pkg{strucchange}), broken-line regression (\pkg{segmented}),
-    changepoints-vs-autocorrelation model selection (\pkg{EnvCpt}),
-    drift+AR robust detection (\pkg{DeCAFS}).
+  \item \strong{Multivariate/high-dimensional:} sparse projection
+    (\pkg{InspectChangepoint}), online ocd (\pkg{ocd}), geometric mapping
+    (\pkg{changepoint.geo}).
+  \item \strong{Regression breaks and robust detection:} Bai-Perron breaks
+    with CIs (\pkg{strucchange}), broken-line regression
+    (\pkg{segmented}), changepoints-vs-autocorrelation model selection
+    (\pkg{EnvCpt}), drift+AR robust detection (\pkg{DeCAFS}).
 }
 
 **Key features.** Every detector returns a \code{ggcpt} object with a stable

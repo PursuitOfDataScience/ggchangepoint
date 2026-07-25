@@ -10,10 +10,13 @@
 #'
 #' @param x A numeric vector.
 #' @param cpm_type Test statistic, passed to \code{cpm::processStream()} as
-#'   \code{cpmType}. One of \code{"Mann-Whitney"}, \code{"Mood"},
-#'   \code{"Lepage"}, \code{"Kolmogorov-Smirnov"}, \code{"Cramer-von-Mises"},
-#'   \code{"Student"}, \code{"Bartlett"}, \code{"GLR"}, \code{"Exponential"},
-#'   \code{"GLRAdjusted"}, \code{"FET"}. Defaults to \code{"Mann-Whitney"}.
+#'   \code{cpmType}. Distribution-free: \code{"Mann-Whitney"} (location, the
+#'   default), \code{"Mood"} (scale), \code{"Lepage"},
+#'   \code{"Kolmogorov-Smirnov"}, \code{"Cramer-von-Mises"}. Parametric:
+#'   \code{"Student"}, \code{"Bartlett"}, \code{"GLR"} (Gaussian),
+#'   \code{"Exponential"} (positive data), \code{"FET"} (Fisher's exact test,
+#'   for 0/1 Bernoulli data — this one also needs a \code{lambda} value passed
+#'   through \code{...}, e.g. \code{lambda = 0.3}).
 #' @param arl0 Target in-control average run length (how many observations,
 #'   on average, before a false alarm). Defaults to \code{500}.
 #' @param startup Number of observations after each restart before monitoring
@@ -32,14 +35,18 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
                         startup = 20, ...) {
   need_pkg("cpm")
 
+  # "GLRAdjusted"/"ExponentialAdjusted" are documented by cpm but rejected by
+  # its own processStream() dispatch (it prints "not a valid
+  # ChangePointModel type" and returns no changepoints instead of erroring),
+  # so they are not offered here: a silent empty result is worse than a
+  # refusal.
   cpm_type <- match.arg(cpm_type, c(
     "Mann-Whitney", "Mood", "Lepage", "Kolmogorov-Smirnov",
-    "Cramer-von-Mises", "Student", "Bartlett", "GLR", "Exponential",
-    "GLRAdjusted", "FET"
+    "Cramer-von-Mises", "Student", "Bartlett", "GLR", "Exponential", "FET"
   ))
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "cpm")
 
   fit <- cpm::processStream(data_vec, cpmType = cpm_type, ARL0 = arl0,
                             startup = startup, ...)
@@ -85,7 +92,10 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
 #' @param seed Optional seed for reproducibility of the permutation test.
 #' @param ... Additional arguments passed to \code{kcpRS::kcpRS()}.
 #' @return A \code{ggcpt} object. Reported locations refer to the centre of
-#'   the sliding window in which the change occurs.
+#'   the sliding window in which the change occurs. The series must be at
+#'   least \code{wsize} long to form one window. Constant coordinates make
+#'   every running statistic \code{NA}, so they are dropped (with a warning)
+#'   before detection and an all-constant input returns an empty result.
 #' @references
 #' \insertRef{arlot2019kernel}{ggchangepoint}
 #'
@@ -109,6 +119,30 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
   }
   data_vec <- as.numeric(X[, 1])
 
+  # The running statistic needs at least one full window; without one the
+  # engine fails with "wrong sign in 'by' argument".
+  if (nrow(X) < wsize) {
+    stop("`kcp` needs at least `wsize` observations to form a running ",
+         "window, but `x` has ", nrow(X), " and `wsize` is ", wsize,
+         ". Lower `wsize` or use a longer series.", call. = FALSE)
+  }
+
+  # A flat coordinate makes the running statistic NA on every window, which
+  # the engine rejects outright ("NA values are found in the running
+  # statistics") even when the other coordinates carry a real change.
+  X_fit <- drop_constant_cols(X, "kcp")
+  if (is.null(X_fit)) {
+    return(ggcpt_build(data_vec, integer(0), method = "kcp",
+                       change_in = paste0("running ", running_stat),
+                       penalty = list(type = "permutation", value = alpha),
+                       call = match.call(),
+                       data_wide = if (is_mv) mv_data_wide(X)))
+  }
+  if (running_stat == "corr" && ncol(X_fit) < 2) {
+    stop("`running_stat = \"corr\"` needs at least two varying columns.",
+         call. = FALSE)
+  }
+
   rs_fun <- switch(running_stat,
     mean     = kcpRS::runMean,
     var      = kcpRS::runVar,
@@ -118,7 +152,7 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
 
   if (!is.null(seed)) set.seed(seed)
 
-  fit <- kcpRS::kcpRS(data = as.data.frame(X), RS_fun = rs_fun,
+  fit <- kcpRS::kcpRS(data = as.data.frame(X_fit), RS_fun = rs_fun,
                       RS_name = running_stat, wsize = wsize, nperm = nperm,
                       Kmax = kmax, alpha = alpha, ...)
 
@@ -139,7 +173,7 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
 
 #' Nonparametric MOSUM wrapper (NP-MOJO)
 #'
-#' Wraps \code{CptNonPar::np.mojo()} (McGonigle and Cho, 2023): nonparametric
+#' Wraps \code{CptNonPar::np.mojo()} (McGonigle and Cho, 2025): nonparametric
 #' moving-sum detection of changes in the marginal or joint distribution of a
 #' (possibly multivariate) time series, robust to serial dependence.
 #'
@@ -150,7 +184,9 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
 #'   examined; \code{0} targets the marginal distribution. Defaults to
 #'   \code{0}.
 #' @param ... Additional arguments passed to \code{CptNonPar::np.mojo()}.
-#' @return A \code{ggcpt} object.
+#' @return A \code{ggcpt} object. Constant coordinates leave the kernel
+#'   statistics undefined, so they are dropped (with a warning) before
+#'   detection and an all-constant input returns an empty result.
 #' @references
 #' \insertRef{mcgonigle2023npmojo}{ggchangepoint}
 #' @export
@@ -170,7 +206,21 @@ npmojo_wrapper <- function(x, G = NULL, lag = 0, ...) {
     G <- max(20L, floor(0.1 * n))
   }
 
-  fit <- CptNonPar::np.mojo(X, G = G, lag = lag, ...)
+  # A flat coordinate leaves the kernel statistics undefined and the engine
+  # fails with "missing value where TRUE/FALSE needed"; a wholly flat series
+  # simply has no changepoint.
+  X_fit <- if (is_mv) drop_constant_cols(X, "npmojo") else {
+    if (is_constant(X)) NULL else X
+  }
+  if (is.null(X_fit)) {
+    return(ggcpt_build(data_vec, integer(0), method = "npmojo",
+                       change_in = "distribution",
+                       penalty = list(type = "threshold", value = NA_real_),
+                       call = match.call(),
+                       data_wide = if (is_mv) mv_data_wide(X)))
+  }
+
+  fit <- CptNonPar::np.mojo(X_fit, G = G, lag = lag, ...)
 
   cp_indices <- as.integer(fit$cpts)
 

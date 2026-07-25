@@ -58,11 +58,11 @@ has_plotly    <- requireNamespace("plotly", quietly = TRUE)
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface to
 changepoint detection in R: one dispatcher (`cpt_detect()`) covering 31
 methods across five methodological families, one result class (`ggcpt`) with
-a stable tidy contract, and one visualization entry point (`autoplot()`)
-that can draw everything a method reports — including confidence intervals
-and posterior probabilities [@wickham2016ggplot2; @robinson2017broom]. This
+a stable tidy contract, and one visualisation entry point (`autoplot()`)
+that draws everything a method reports — including confidence intervals and
+posterior probabilities [@wickham2016ggplot2; @robinson2017broom]. This
 vignette is the *feature tour*: it visits **every exported function** in the
-package exactly where it belongs in the workflow, so that a reader can map
+package at the point where it belongs in the workflow, so a reader can map
 the full surface in one sitting. The companion vignettes develop the
 methodology in depth (`vignette("introduction")`) and treat method
 comparison and evaluation (`vignette("comparison")`).
@@ -78,9 +78,9 @@ x3 <- c(rnorm(100), rnorm(100, 4), rnorm(100, 1))  # shifts at 100, 200
 Every detector returns a `ggcpt` object: a list carrying the tidy
 `changepoints` tibble (`cp` = last index of the left segment, `cp_value` =
 series value there, plus any method-specific columns), a `segments` table,
-the `data`, and metadata (method, `change_in`, penalty, convention,
-runtime). `new_ggcpt()` is the low-level constructor and `is_ggcpt()` the
-class test; most users never call either directly.
+the `data`, the raw engine `fit`, and metadata (method, `change_in`,
+penalty, convention, runtime). `new_ggcpt()` is the low-level constructor
+and `is_ggcpt()` the class test; most users never call either directly.
 
 ```{r class}
 res <- cpt_detect(x, method = "pelt", change_in = "mean")
@@ -99,7 +99,7 @@ is_ggcpt(manual)
 
 The `broom` verbs give one row per changepoint (`tidy()`), a one-row model
 summary (`glance()`), and the data augmented with segment ids, fitted
-levels, and residuals (`augment()`):
+levels, residuals, and a changepoint flag (`augment()`):
 
 ```{r broom}
 tidy(res)
@@ -134,12 +134,22 @@ substituted.
 cpt_detect(x, method = "binseg", change_in = "mean")
 ```
 
+Anything else in `...` reaches the underlying wrapper, and takes precedence
+over the value the dispatcher would otherwise derive from `change_in` —
+here the NOT contrast is set directly rather than inherited:
+
+```{r detect-dots, eval = has_not}
+tidy(cpt_detect(x, method = "not", contrast = "pcwsLinMean"))
+```
+
 `cpt_methods()` is the live capability table: every method the package
 knows, its engine package, what it can detect, and whether the engine is
-installed.
+installed. Four rows carry status `"planned"` rather than `"available"`:
+their engines (`gfpop`, `robseg`, `FOCuS`, `hdbinseg`) are not on CRAN, so
+they are documented as future work and are *not* wired to `cpt_detect()`.
 
 ```{r methods}
-cpt_methods()
+print(cpt_methods(), n = Inf)
 ```
 
 `cpt_penalty()` constructs standard penalty values for the engines that
@@ -153,26 +163,29 @@ cpt_penalty("Manual", value = 10)
 
 # Engine wrappers
 
-Each engine also has a direct wrapper exposing its native arguments. All
-return the same `ggcpt` object.
+Each engine also has a direct wrapper exposing its native arguments. Every
+wrapper from 0.2.0 onwards returns a `ggcpt` object; only the two original
+wrappers below predate the class and still return a bare tibble.
 
-## The classical wave
+## The classical core (0.1.0)
 
-`cpt_wrapper()` and `ecp_wrapper()` are the original 0.1.0 interface to
-the *changepoint*/*changepoint.np* [@killick2012pelt;
-@killick2014changepoint; @haynes2017computationally] and *ecp*
-[@matteson2014nonparametric; @james2014ecp] engines; they return bare
-tibbles for backward compatibility.
+`cpt_wrapper()` and `ecp_wrapper()` are the original interface to the
+*changepoint*/*changepoint.np* [@killick2012pelt; @killick2014changepoint;
+@haynes2017computationally] and *ecp* [@matteson2014nonparametric;
+@james2014ecp] engines; they return bare tibbles for backward
+compatibility.
 
 ```{r classic}
 cpt_wrapper(x, change_in = "mean", cp_method = "PELT")
 ecp_wrapper(x, algorithm = "divisive", seed = 1)
 ```
 
-The search and pruning engines added in 0.2.0
-[@fryzlewicz2014wild; @baranowski2019narrowest; @eichinger2018mosum;
-@anastasiou2022idetect; @fryzlewicz2022tail; @maidstone2017optimal],
-one call each:
+## The search and pruning wave (0.2.0)
+
+Seven multiscale, randomised, and functional-pruning engines
+[@fryzlewicz2014wild; @fryzlewicz2020detecting; @baranowski2019narrowest;
+@eichinger2018mosum; @anastasiou2022idetect; @fryzlewicz2022tail;
+@maidstone2017optimal], one call each:
 
 ```{r fpop, eval = has_fpop}
 fpop_wrapper(x, penalty = 2 * log(length(x)))
@@ -203,20 +216,22 @@ idetect_wrapper(x, seed = 1)
 tguh_wrapper(x)
 ```
 
-## The 0.4.0 wave
+## The engine wave (0.4.0)
 
-**Multiscale inference with confidence.** SMUCE [@frick2014smuce] and its
-heteroskedastic extension HSMUCE [@pein2017hsmuce] control the probability
-of over-estimating the number of changes and return a confidence interval
-for every changepoint location (`ci_lower`/`ci_upper`):
+**Multiscale inference with confidence.** `smuce_wrapper()` implements SMUCE
+[@frick2014smuce], which bounds the probability of over-estimating the number
+of changes at the level `alpha` and returns a confidence interval for every
+changepoint location (`ci_lower`/`ci_upper`); `family = "hsmuce"` switches to
+the heteroskedastic extension HSMUCE [@pein2017hsmuce], which estimates a
+variance per segment:
 
 ```{r smuce, eval = has_stepR}
 res_smuce <- smuce_wrapper(x, alpha = 0.5)
 tidy(res_smuce)
 ```
 
-**Change in slope.** CPOP performs exact penalised estimation of a
-continuous piecewise-linear mean [@fearnhead2019cpop; @fearnhead2024cpop]:
+**Change in slope.** `cpop_wrapper()` performs exact penalised estimation of
+a continuous piecewise-linear mean [@fearnhead2019cpop; @fearnhead2024cpop]:
 
 ```{r cpop, eval = has_cpop}
 y_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
@@ -230,11 +245,13 @@ y_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
 ```
 
 **Bayesian detection.** `bcp_wrapper()` implements the Barry–Hartigan
-product-partition model [@barry1993bayesian; @erdman2007bcp] and reports a
-posterior probability per location; `bocpd_wrapper()` runs Bayesian online
-changepoint detection over the run-length posterior [@adams2007bocpd];
-`beast_wrapper()` wraps the BEAST Bayesian model-averaging ensemble
-[@zhao2019beast]:
+product-partition model [@barry1993bayesian; @erdman2007bcp];
+`bocpd_wrapper()` runs Bayesian online changepoint detection over the
+run-length posterior [@adams2007bocpd]; `beast_wrapper()` wraps the BEAST
+Bayesian model-averaging ensemble [@zhao2019beast]. The first and third keep
+the locations whose posterior probability clears `prob_threshold` and record
+it in a `posterior_prob` column; BOCPD returns the maximum a posteriori
+changepoint set.
 
 ```{r bcp, eval = has_bcp}
 res_bcp <- bcp_wrapper(x, seed = 1)
@@ -252,12 +269,12 @@ tidy(res_beast)
 ```
 
 **Sequential and kernel nonparametrics.** `cpm_wrapper()` runs
-distribution-free sequential tests and reports when each change would have
-been *detected* in a stream [@ross2015cpm]; `kcp_wrapper()` applies kernel
-change point analysis to running statistics (mean, variance,
-autocorrelation, correlation) [@arlot2019kernel; @cabrieto2018kcprs];
-`npmojo_wrapper()` detects distributional changes under serial dependence
-[@mcgonigle2023npmojo]:
+distribution-free sequential tests and reports, alongside each estimated
+location, the `detection_time` at which a stream monitor would have flagged
+it [@ross2015cpm]; `kcp_wrapper()` applies kernel change point analysis to
+running statistics (mean, variance, autocorrelation, correlation)
+[@arlot2019kernel; @cabrieto2018kcprs]; `npmojo_wrapper()` detects
+distributional changes under serial dependence [@mcgonigle2023npmojo]:
 
 ```{r cpm, eval = has_cpm}
 tidy(cpm_wrapper(x, cpm_type = "Mann-Whitney"))
@@ -271,12 +288,13 @@ tidy(kcp_wrapper(x, running_stat = "mean", nperm = 100, seed = 1))
 tidy(npmojo_wrapper(x))
 ```
 
-**Robustness to drift and dependence.** DeCAFS detects abrupt changes when
-the signal also drifts and the noise is autocorrelated [@romano2022decafs];
-self-normalised segmentation avoids long-run variance estimation entirely
-[@zhao2022snseg]; EnvCpt only reports changepoints when a
-changepoint model beats trend and autoregressive alternatives
-[@beaulieu2018envcpt]:
+**Robustness to drift and dependence.** `decafs_wrapper()` detects abrupt
+changes when the signal also drifts and the noise is autocorrelated
+[@romano2022decafs]; `sn_wrapper()` segments a chosen `parameter` (mean,
+variance, autocorrelation, or bivariate correlation) by self-normalisation,
+avoiding long-run variance estimation entirely [@zhao2022snseg];
+`envcpt_wrapper()` reports changepoints only when a changepoint model beats
+the trend and autoregressive alternatives [@beaulieu2018envcpt]:
 
 ```{r decafs, eval = has_decafs}
 tidy(decafs_wrapper(x))
@@ -289,15 +307,17 @@ tidy(sn_wrapper(x3, parameter = "mean"))
 ```{r envcpt, eval = has_envcpt}
 res_env <- envcpt_wrapper(x, models = c("mean", "meancpt", "trendcpt"))
 tidy(res_env)
-res_env$penalty$type   # which model won
+res_env$penalty$type   # criterion and winning model
 ```
 
-**High-dimensional and multivariate.** `inspect_wrapper()` finds sparse
-mean changes by projection [@wang2018inspect]; `ocd_wrapper()` monitors a
+**High-dimensional and multivariate.** These wrappers take a matrix or data
+frame with one row per time point. `inspect_wrapper()` finds sparse mean
+changes by projection [@wang2018inspect]; `ocd_wrapper()` monitors a
 high-dimensional stream online [@chen2022ocd]; `geomcp_wrapper()` maps each
 observation to a distance and an angle and segments both
 [@grundy2020geomcp]; multivariate `ecp` input flows through `cpt_detect()`
-unchanged.
+unchanged. The univariate wrappers, by contrast, reject a multi-column
+argument rather than silently flattening it.
 
 ```{r hd-data}
 set.seed(1)
@@ -312,8 +332,10 @@ tidy(res_hd)
 ```
 
 ```{r ocd, eval = FALSE}
-# Online high-dimensional detection; Monte Carlo threshold calibration makes
-# this the slowest wrapper, so it is shown but not run here.
+# Online detection: the reported locations are declaration times (the change
+# plus the detection delay), in a `declared_at` column. Monte Carlo threshold
+# calibration makes this the slowest wrapper, so it is shown but not run
+# here. It needs at least two coordinates and rejects a univariate series.
 res_ocd <- ocd_wrapper(X, mc_reps = 100)
 tidy(res_ocd)
 ```
@@ -322,11 +344,17 @@ tidy(res_ocd)
 tidy(geomcp_wrapper(X))
 ```
 
-**Regression structure.** `strucchange_wrapper()` dates Bai–Perron breaks
-with confidence intervals [@bai1998estimating; @bai2003computation;
-@zeileis2002strucchange] and accepts either a bare series or a formula;
-`segmented_wrapper()` fits continuous broken-line regressions with
-breakpoint standard errors [@muggeo2003segmented; @muggeo2008segmented]:
+```{r ecp-mv}
+tidy(cpt_detect(X, method = "ecp", seed = 1))
+```
+
+**Regression structure.** `strucchange_wrapper()` dates Bai–Perron breaks,
+either in a bare series or in the coefficients of a formula
+[@bai1998estimating; @bai2003computation; @zeileis2002strucchange];
+`segmented_wrapper()` fits a continuous broken-line regression, so the
+change it reports is a kink in the trend rather than a jump in the level
+[@muggeo2003segmented; @muggeo2008segmented]. Both carry a confidence
+interval for every break:
 
 ```{r strucchange, eval = has_struc}
 tidy(strucchange_wrapper(x))
@@ -337,8 +365,8 @@ tidy(segmented_wrapper(y_slope, npsi = 1, seed = 1))
 ```
 
 **The modern PELT family.** `fastcpd_wrapper()` exposes the *fastcpd*
-engine — mean, variance, mean-and-variance, and AR/ARMA/GARCH model
-changepoints under one interface [@li2024fastcpd]:
+engine, whose `family` argument covers changes in the mean, the variance, or
+both, as well as changes in a fitted AR/ARMA/GARCH model [@li2024fastcpd]:
 
 ```{r fastcpd, eval = has_fastcpd}
 tidy(fastcpd_wrapper(x, family = "mean"))
@@ -348,8 +376,8 @@ tidy(fastcpd_wrapper(x, family = "mean"))
 
 Rather than guessing one penalty, `cpt_crops()` computes *every* optimal
 segmentation over a penalty interval (the CROPS algorithm, via
-*changepoint* [@killick2014changepoint]) and returns a `ggcpt_path` with
-its own `print()`, `tidy()`, and three plots:
+*changepoint* [@killick2014changepoint]) and returns a `ggcpt_path` object
+with its own `print()`, `tidy()`, and three `autoplot()` types:
 
 ```{r crops}
 path <- cpt_crops(x3)
@@ -369,15 +397,16 @@ autoplot(path, type = "path")           # changepoints vs penalty
 autoplot(path, type = "segmentations")  # the candidate models themselves
 ```
 
-# The visualization layer
+# The visualisation layer
 
 `autoplot()` renders any `ggcpt`. Options: `show_segments` (fitted segment
-means), `show_fit` (the engine's own fitted signal, where provided —
-SMUCE, DeCAFS, CPOP, segmented, bcp, BEAST), `show_ci`
-(changepoint-location confidence intervals, where provided — SMUCE/HSMUCE,
-strucchange, segmented), `show_points`/`show_line`, and the `cptline_*`
-styling arguments (`cptline_color`, `cptline_alpha`, `cptline_type`,
-`cptline_linewidth`).
+means), `show_fit` (the engine's own fitted signal, where provided — SMUCE,
+DeCAFS, CPOP, segmented, bcp, BEAST), `show_ci` (changepoint-location
+confidence intervals, where provided — SMUCE/HSMUCE, strucchange,
+segmented), `show_points`/`show_line`, an `index` for a date axis, and the
+`cptline_*` styling arguments (`cptline_color`, `cptline_alpha`,
+`cptline_type`, `cptline_linewidth`). Asking for an overlay the result
+cannot supply warns rather than failing silently.
 
 ```{r autoplot}
 autoplot(res, show_segments = TRUE, cptline_color = "firebrick",
@@ -448,8 +477,8 @@ ggecpplot(x, algorithm = "divisive", seed = 1)
 
 The Bayesian engines get the field's signature displays:
 `ggcpt_posterior()` shows the posterior mean over the series and the
-per-location changepoint probability; `ggcpt_runlength()` shows the BOCPD
-run-length posterior as a heatmap.
+per-location changepoint probability (for `bcp` and BEAST results);
+`ggcpt_runlength()` shows the BOCPD run-length posterior as a heatmap.
 
 ```{r posterior, eval = has_bcp, fig.height = 6}
 ggcpt_posterior(res_bcp)
@@ -459,18 +488,21 @@ ggcpt_posterior(res_bcp)
 ggcpt_runlength(res_bocpd)
 ```
 
-Finally, `ggcpt_interactive()` turns any result (or ggplot built from one)
-into a `plotly` widget with values on hover:
+Finally, `ggcpt_interactive()` turns any result (or any ggplot built from
+one) into a `plotly` widget with values on hover. The widget itself is not
+embedded here, only its class:
 
-```{r interactive, eval = FALSE}
-ggcpt_interactive(res)   # requires plotly; opens an htmlwidget
+```{r interactive, eval = has_plotly}
+class(ggcpt_interactive(res))   # requires plotly
 ```
 
 # Comparing methods
 
-`ggcpt_compare()` runs several detectors on the same series and renders
-them faceted (default) or overlaid; `ggcpt_compare_table()` returns the
-tidy union. Both honour `future::plan()` for parallel execution.
+`ggcpt_compare()` runs several detectors on the same series and renders them
+faceted (default) or overlaid, honouring `future::plan()` for parallel
+execution; `ggcpt_compare_table()` returns the tidy union of the same runs.
+A method that finds nothing keeps its panel and contributes an `NA` row —
+"no changepoints" is a result, not a missing one.
 
 ```{r compare, fig.height = 6}
 ggcpt_compare(x, methods = c("pelt", "binseg", "amoc"))
@@ -487,7 +519,9 @@ ggcpt_compare_table(x, methods = c("pelt", "binseg", "amoc"))
 # Batch detection and stability
 
 `cpt_batch()` runs one detector over many series (matrix, data frame, or
-list of vectors) and returns a tidy `ggcpt_batch` tibble with list-columns:
+list of vectors), also under `future::plan()`, and returns a tidy
+`ggcpt_batch` tibble with list-columns for the per-series changepoints and
+the `ggcpt` objects themselves:
 
 ```{r batch}
 XB <- cbind(shifted = x, pure_noise = rnorm(200))
@@ -518,10 +552,10 @@ over multiple annotators, and `ggcpt_eval()` draws the agreement (true
 positives, false positives, and misses):
 
 ```{r metrics}
-truth <- c(100)
+truth <- 100
 pred <- tidy(res)$cp
 cpt_metrics(pred, truth, n = length(x), margin = 5)
-cpt_metrics_annotated(pred, list(c(100), c(101), c(99)), n = length(x))
+cpt_metrics_annotated(pred, list(100, 101, 99), n = length(x))
 ```
 
 ```{r eval-plot}
@@ -532,7 +566,8 @@ ggcpt_eval(pred, truth, x, margin = 5)
 
 `cpt_simulate()` (alias `rcpt()`) generates series with known changepoints
 in mean, variance, both, or slope, under Gaussian, Student-t, AR(1), or
-random-walk noise; the truth is carried in attributes. Five canonical test
+random-walk noise; the truth travels with the data in the
+`true_changepoints` and `true_segments` attributes. Five canonical test
 signals from the literature ship ready-made: `signal_blocks()` (the
 Donoho–Johnstone blocks signal [@donoho1994ideal]), `signal_fms()`,
 `signal_mix()`, `signal_teeth()`, and `signal_stairs()`.
@@ -541,16 +576,19 @@ Donoho–Johnstone blocks signal [@donoho1994ideal]), `signal_fms()`,
 sim <- cpt_simulate(300, changepoints = c(100, 200), change_in = "mean",
                     params = c(0, 5, 1), seed = 1)
 attr(sim, "true_changepoints")
-sim2 <- rcpt(300, changepoints = 150, params = c(0, 3), seed = 2)
+sim2 <- rcpt(300, changepoints = 150, params = c(0, 3), seed = 2)  # the alias
+attr(sim2, "true_changepoints")
 
-blocks <- signal_blocks(1024, seed = 1)
-fms    <- signal_fms(500, seed = 1)
-mix    <- signal_mix(500, seed = 1)
-teeth  <- signal_teeth(400, seed = 1)
-stairs <- signal_stairs(500, seed = 1)
+signals <- list(blocks = signal_blocks(1024, seed = 1),
+                fms    = signal_fms(500, seed = 1),
+                mix    = signal_mix(500, seed = 1),
+                teeth  = signal_teeth(400, seed = 1),
+                stairs = signal_stairs(500, seed = 1))
+vapply(signals, function(s) length(attr(s, "true_changepoints")), integer(1))
 ```
 
 ```{r blocks-plot}
+blocks <- signals$blocks
 ggplot(blocks, aes(index, value)) +
   geom_line(color = "grey50") +
   geom_vline(xintercept = attr(blocks, "true_changepoints"),
@@ -561,7 +599,8 @@ ggplot(blocks, aes(index, value)) +
 # Citing the methodology
 
 `cpt_cite()` returns the verified reference(s) behind a result or a method
-name, so a write-up can cite the right paper without leaving R:
+name, so a write-up can cite the right paper without leaving R; called with
+no argument it returns the whole method-to-reference table.
 
 ```{r cite}
 cpt_cite("pelt")
@@ -570,10 +609,10 @@ cpt_cite(res)
 
 # Closing note
 
-This tour visited every exported function once. For the framework's design,
-the mathematics of the wrapped methods, and worked analyses, see
-`vignette("introduction", package = "ggchangepoint")`; for method
-comparison and accuracy evaluation in depth, see
+This tour visited every exported function in the package. For the
+framework's design, the mathematics of the wrapped methods, and worked
+analyses, see `vignette("introduction", package = "ggchangepoint")`; for
+method comparison and accuracy evaluation in depth, see
 `vignette("comparison", package = "ggchangepoint")`.
 
 # References

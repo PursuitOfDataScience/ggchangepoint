@@ -14,8 +14,13 @@ Suggests, guarded with requireNamespace(), and their examples use
 the CROPS penalty path (`cpt_crops()`), batch detection (`cpt_batch()`),
 bootstrap stability diagnostics (`cpt_stability()`), Bayesian posterior and
 run-length displays, and per-method citations (`cpt_cite()`). Twenty bugs
-found by a systematic audit of 0.3.0 were fixed, each with a regression
-test. The 0.1.0-0.3.0 function signatures keep working unchanged.
+found by a systematic audit of 0.3.0 were fixed, and a further pre-release
+audit fixed eight more (silent column-major flattening of multi-column input
+in the ten univariate wrappers added this release; SegNeigh's `Q` clamp on
+short series; a multivariate coordinate named `index`; `NA` changepoint
+indices; a broken `...` passthrough in `cpt_detect()`; and three enumerated
+engine options that could never succeed). Every fix has a regression test.
+The 0.1.0-0.3.0 function signatures keep working unchanged.
 
 ## Test environments
 

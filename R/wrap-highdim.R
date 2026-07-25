@@ -19,7 +19,11 @@
 #'   \code{strength} column (the maximum projected CUSUM statistic). The
 #'   first coordinate is used for \code{cp_value} and the univariate plot
 #'   line; the full matrix is kept for the faceted multivariate
-#'   \code{autoplot()}.
+#'   \code{autoplot()}. Coordinates that are constant carry no changepoint
+#'   information and would make the engine's variance rescaling undefined, so
+#'   they are dropped (with a warning) before detection and an all-constant
+#'   matrix returns an empty result; the dropped coordinates are still kept
+#'   for plotting, and reported locations always refer to the original rows.
 #' @references
 #' \insertRef{wang2018inspect}{ggchangepoint}
 #' @export
@@ -36,7 +40,18 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
   X <- as_mv_matrix(x)
   data_vec <- as.numeric(X[, 1])
 
-  args <- list(x = t(X), ...)
+  # A flat coordinate makes the engine's variance rescaling divide by zero,
+  # which fails with "missing value where TRUE/FALSE needed" even when the
+  # other coordinates carry a real change.
+  X_fit <- drop_constant_cols(X, "inspect")
+  if (is.null(X_fit)) {
+    return(ggcpt_build(data_vec, integer(0), method = "inspect",
+                       change_in = "mean",
+                       penalty = list(type = "threshold", value = NA_real_),
+                       call = match.call(), data_wide = mv_data_wide(X)))
+  }
+
+  args <- list(x = t(X_fit), ...)
   if (!is.null(lambda)) args$lambda <- lambda
   if (!is.null(threshold)) args$threshold <- threshold
 
@@ -72,7 +87,11 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #' series, resetting after each declaration so multiple changes can be
 #' found.
 #'
-#' @param x A numeric matrix (rows are time points) or vector.
+#' @param x A numeric matrix or data frame with one row per time point and at
+#'   least two columns. The \code{ocd} detector is inherently
+#'   high-dimensional and cannot be constructed for a single coordinate, so
+#'   univariate input is rejected; use a univariate engine
+#'   (see \code{\link{cpt_methods}()}) for one series.
 #' @param train Number of initial observations used to estimate the baseline
 #'   mean/sd (not monitored). Defaults to
 #'   \code{max(20, floor(0.2 * n))}, capped at \code{n/2}.
@@ -109,6 +128,14 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
        else matrix(as.numeric(x), ncol = 1)
   n <- nrow(X)
   p <- ncol(X)
+  # ocd::ChangepointDetector() fails to construct at dim = 1 ("subscript out
+  # of bounds"): the method projects across coordinates, so it needs at
+  # least two. Say so rather than surfacing the engine's internal error.
+  if (p < 2) {
+    stop("Method `ocd` is high-dimensional and needs at least two ",
+         "coordinates, but `x` has ", p,
+         ". See cpt_methods() for univariate methods.", call. = FALSE)
+  }
   data_vec <- as.numeric(X[, 1])
 
   if (is.null(train)) {
@@ -162,7 +189,7 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
     extra_cp_cols = if (length(declared) > 0) {
       list(declared_at = as.integer(declared))
     },
-    data_wide = if (p > 1) mv_data_wide(X)
+    data_wide = mv_data_wide(X)
   )
 }
 

@@ -14,7 +14,9 @@ cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01)
 \item{n}{Series length. Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.}
 
 \item{k}{Number of parameters per changepoint (typically 2 for
-mean+variance, 1 for mean-only). Defaults to 1.}
+mean+variance, 1 for mean-only). Defaults to 1. The \code{"MBIC"}
+penalty additionally reads \code{k} as the number of changepoints being
+placed, in its \eqn{\log{n \choose k}} term.}
 
 \item{value}{Numeric value for \code{Manual} type.}
 
@@ -50,11 +52,16 @@ The same penalty name may be interpreted differently by different engines:
     \code{bocpd}, \code{beast}, \code{cpm}, \code{sn}): are tuned by a
     significance level, posterior-probability threshold, hazard, or
     average run length rather than a penalty; see each wrapper.
-  \item \strong{\code{MBIC}} in \code{cpt_penalty()} uses the
-    Zhang-Siegmund (2007) formula \eqn{0.5(k+1)\log n + \log{n \choose k}},
-    which differs from the \pkg{changepoint} package's MBIC. Use the
-    character \code{"MBIC"} with \pkg{changepoint}-based methods to get
-    the engine's native MBIC.
+  \item \strong{\code{MBIC}} in \code{cpt_penalty()} is a BIC-type penalty
+    that adds a combinatorial term for the number of ways \code{k}
+    changepoints can be placed in \code{n} observations,
+    \eqn{0.5(k+1)\log n + \log{n \choose k}}. It is deliberately stronger
+    than \code{"BIC"}. It is \emph{not} the modified BIC of Zhang and
+    Siegmund (2007), whose penalty
+    \eqn{1.5 k \log n + 0.5 \sum_i \log(l_i / n)} depends on the segment
+    lengths \eqn{l_i} and so cannot be expressed by a function of
+    \code{n} and \code{k} alone. Use the character \code{"MBIC"} with
+    \pkg{changepoint}-based methods to get the engine's native MBIC.
 }
 }
 

@@ -15,8 +15,10 @@
 #'   smaller values yield more conservative (fewer-changepoint) fits.
 #'   Defaults to \code{0.5}, the upstream recommendation for estimation.
 #' @param family Noise model: \code{"gauss"} (SMUCE, homogeneous Gaussian
-#'   noise), \code{"hsmuce"} (HSMUCE, segment-wise variance), or
-#'   \code{"poisson"} (SMUCE for Poisson counts). Defaults to \code{"gauss"}.
+#'   noise) or \code{"hsmuce"} (HSMUCE, segment-wise variance). Defaults to
+#'   \code{"gauss"}. The remaining \code{stepR} families (\code{"jsmurf"},
+#'   \code{"mDependentPS"}, ...) all require a filter or covariance
+#'   specification; call \code{stepR::stepFit()} directly for those.
 #' @param ... Additional arguments passed to \code{stepR::stepFit()}.
 #' @return A \code{ggcpt} object. The \code{changepoints} tibble carries
 #'   \code{ci_lower}/\code{ci_upper} (confidence interval for each
@@ -36,12 +38,12 @@
 #' ggplot2::autoplot(res, show_ci = TRUE)
 #' }
 smuce_wrapper <- function(x, alpha = 0.5,
-                          family = c("gauss", "hsmuce", "poisson"), ...) {
+                          family = c("gauss", "hsmuce"), ...) {
   need_pkg("stepR")
   family <- match.arg(family)
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, if (family == "hsmuce") "hsmuce" else "smuce")
 
   fit <- stepR::stepFit(data_vec, alpha = alpha, family = family,
                         jumpint = TRUE, ...)

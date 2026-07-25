@@ -43,7 +43,7 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
     fml <- x
   } else {
     validate_data(x)
-    data_vec <- as.numeric(x)
+    data_vec <- as_uni_vector(x, "strucchange")
     data <- data.frame(.y = data_vec)
     fml <- stats::as.formula(".y ~ 1")
   }
@@ -102,7 +102,8 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
 #' @return A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} columns
 #'   and the fitted broken line in \code{$data$fitted}. Breakpoints are
 #'   rounded to the nearest index; for a continuous fit the reported location
-#'   is the kink itself.
+#'   is the kink itself. A constant series has no kink and returns an empty
+#'   result, rather than the arbitrary breakpoint a singular fit would give.
 #' @references
 #' \insertRef{muggeo2003segmented}{ggchangepoint}
 #'
@@ -119,7 +120,18 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
   need_pkg("segmented")
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "segmented")
+
+  # A flat line has no kink. Left to itself the estimator returns an
+  # arbitrary breakpoint from a singular fit (with Lapack warnings), i.e. a
+  # spurious changepoint on data that plainly has none.
+  if (is_constant(data_vec)) {
+    return(ggcpt_build(data_vec, integer(0), method = "segmented",
+                       change_in = "slope",
+                       penalty = list(type = "npsi", value = npsi),
+                       call = match.call(), fitted = data_vec))
+  }
+
   df <- data.frame(.y = data_vec, .t = seq_along(data_vec))
 
   if (!is.null(seed)) set.seed(seed)
@@ -203,7 +215,7 @@ envcpt_wrapper <- function(x, models = c("mean", "meancpt", "meanar1",
   criterion <- match.arg(criterion)
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "envcpt")
 
   fit <- EnvCpt::envcpt(data_vec, models = models, minseglen = minseglen,
                         verbose = FALSE, ...)

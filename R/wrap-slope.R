@@ -31,7 +31,7 @@ cpop_wrapper <- function(x, penalty = NULL, sd = NULL, ...) {
   need_pkg("cpop")
 
   validate_data(x)
-  data_vec <- as.numeric(x)
+  data_vec <- as_uni_vector(x, "cpop")
   n <- length(data_vec)
 
   if (is.null(penalty)) {

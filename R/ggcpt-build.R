@@ -26,7 +26,8 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
       changepoints[[nm]] <- extra_cp_cols[[nm]]
     }
   }
-  changepoints <- changepoints[changepoints$cp >= 1 & changepoints$cp < n, , drop = FALSE]
+  keep <- !is.na(changepoints$cp) & changepoints$cp >= 1 & changepoints$cp < n
+  changepoints <- changepoints[keep, , drop = FALSE]
   changepoints <- changepoints[!duplicated(changepoints$cp), , drop = FALSE]
   changepoints <- changepoints[order(changepoints$cp), , drop = FALSE]
 
@@ -72,6 +73,60 @@ need_pkg <- function(pkg) {
   invisible(TRUE)
 }
 
+# Internal: coerce input for a univariate wrapper. Accepts vectors and
+# single-column matrices/data frames; errors on wider input instead of
+# silently flattening it column-major.
+#' @noRd
+as_uni_vector <- function(x, method) {
+  if (is.matrix(x) || is.data.frame(x)) {
+    X <- as.matrix(x)
+    if (ncol(X) > 1) {
+      stop("Method `", method, "` is univariate, but `x` has ", ncol(X),
+           " columns. See cpt_methods() for multivariate methods.",
+           call. = FALSE)
+    }
+    return(as.numeric(X[, 1]))
+  }
+  as.numeric(x)
+}
+
+# Internal: TRUE when a series carries no variation at all. Exact equality
+# (rather than a tolerance) is deliberate: only a genuinely flat series is
+# degenerate, and a series with tiny-but-real fluctuation should still be
+# handed to the engine.
+#' @noRd
+is_constant <- function(v) {
+  v <- v[is.finite(v)]
+  length(v) == 0L || max(v) == min(v)
+}
+
+# Internal: which coordinates of a matrix are flat. Engines that standardise
+# each coordinate (inspect, NP-MOJO, kcpRS) divide by an estimated standard
+# deviation, so a flat coordinate turns their statistics into NaN and they
+# fail with an opaque error -- even when the other coordinates carry a real
+# change. A flat coordinate also carries no changepoint information, so
+# dropping it loses nothing.
+#' @noRd
+constant_cols <- function(X) {
+  vapply(seq_len(ncol(X)), function(j) is_constant(X[, j]), logical(1))
+}
+
+# Internal: drop flat coordinates before handing a matrix to such an engine,
+# telling the user which went. Returns NULL when nothing is left to detect on.
+#' @noRd
+drop_constant_cols <- function(X, method) {
+  flat <- constant_cols(X)
+  if (!any(flat)) return(X)
+  if (all(flat)) return(NULL)
+  warning("Dropping constant coordinate(s) ",
+          paste(colnames(X)[flat], collapse = ", "),
+          " before running `", method,
+          "`: a flat coordinate carries no changepoint information and ",
+          "makes the engine's standardised statistics undefined.",
+          call. = FALSE)
+  X[, !flat, drop = FALSE]
+}
+
 # Internal: normalise multivariate input to a numeric matrix and build the
 # wide data tibble stored on the ggcpt object.
 #' @noRd
@@ -88,6 +143,13 @@ as_mv_matrix <- function(x) {
 
 #' @noRd
 mv_data_wide <- function(X) {
-  out <- tibble::as_tibble(as.data.frame(X))
+  # A coordinate literally named "index" would collide with the position
+  # column added below; make it unique instead of erroring.
+  cn <- colnames(X)
+  if (any(cn == "index")) {
+    colnames(X) <- make.unique(c("index", cn))[-1L]
+  }
+  out <- tibble::as_tibble(as.data.frame(X, check.names = FALSE),
+                           .name_repair = "minimal")
   tibble::add_column(out, index = seq_len(nrow(X)), .before = 1)
 }
