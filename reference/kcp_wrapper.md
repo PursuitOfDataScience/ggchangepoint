@@ -64,7 +64,10 @@ kcp_wrapper(
 ## Value
 
 A `ggcpt` object. Reported locations refer to the centre of the sliding
-window in which the change occurs.
+window in which the change occurs. The series must be at least `wsize`
+long to form one window. Constant coordinates make every running
+statistic `NA`, so they are dropped (with a warning) before detection
+and an all-constant input returns an empty result.
 
 ## References
 

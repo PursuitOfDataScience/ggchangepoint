@@ -73,10 +73,13 @@ run length <code>arl0</code>.</p>
 
 <dt id="arg-cpm-type">cpm_type<a class="anchor" aria-label="anchor" href="#arg-cpm-type"></a></dt>
 <dd><p>Test statistic, passed to <code><a href="https://rdrr.io/pkg/cpm/man/processStream.html" class="external-link">cpm::processStream()</a></code> as
-<code>cpmType</code>. One of <code>"Mann-Whitney"</code>, <code>"Mood"</code>,
-<code>"Lepage"</code>, <code>"Kolmogorov-Smirnov"</code>, <code>"Cramer-von-Mises"</code>,
-<code>"Student"</code>, <code>"Bartlett"</code>, <code>"GLR"</code>, <code>"Exponential"</code>,
-<code>"GLRAdjusted"</code>, <code>"FET"</code>. Defaults to <code>"Mann-Whitney"</code>.</p></dd>
+<code>cpmType</code>. Distribution-free: <code>"Mann-Whitney"</code> (location, the
+default), <code>"Mood"</code> (scale), <code>"Lepage"</code>,
+<code>"Kolmogorov-Smirnov"</code>, <code>"Cramer-von-Mises"</code>. Parametric:
+<code>"Student"</code>, <code>"Bartlett"</code>, <code>"GLR"</code> (Gaussian),
+<code>"Exponential"</code> (positive data), <code>"FET"</code> (Fisher's exact test,
+for 0/1 Bernoulli data — this one also needs a <code>lambda</code> value passed
+through <code>...</code>, e.g. <code>lambda = 0.3</code>).</p></dd>
 
 
 <dt id="arg-arl-">arl0<a class="anchor" aria-label="anchor" href="#arg-arl-"></a></dt>

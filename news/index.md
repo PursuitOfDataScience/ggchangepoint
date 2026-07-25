@@ -203,6 +203,112 @@ engines live on CRAN and enter `Suggests` behind
   [`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
   handles multivariate input without crashing.
 
+### Bug fixes (pre-release audit; regression-tested)
+
+- Every univariate wrapper now rejects multi-column input instead of
+  silently flattening it column-major. The C3 fix had only reached the
+  search-based wrappers, so
+  [`smuce_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/smuce_wrapper.md),
+  [`cpop_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpop_wrapper.md),
+  [`bcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bcp_wrapper.md),
+  [`bocpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bocpd_wrapper.md),
+  [`beast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/beast_wrapper.md),
+  [`cpm_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpm_wrapper.md),
+  [`decafs_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/decafs_wrapper.md),
+  [`strucchange_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md),
+  [`segmented_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/segmented_wrapper.md)
+  and
+  [`envcpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/envcpt_wrapper.md)
+  turned a 120x2 matrix into a 240-point series. The new
+  [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
+  and
+  [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
+  entry points guard the same way (R16).
+- `segneigh` no longer errors with “subscript out of bounds” on short
+  series. The `Q` clamp added for
+  [\#3](https://github.com/PursuitOfDataScience/ggchangepoint/issues/3)
+  missed the engine’s real constraint: Segment Neighbourhood requires
+  `Q >= 3` regardless of length, so the clamped `Q` of 1 or 2 failed for
+  every `n < 8`. `Q` is now clamped into the engine’s valid window
+  (`3 <= Q <= n - 2` for a mean change, `floor(n / 2) + 1` when a
+  variance is estimated per segment), and a series too short to admit
+  any valid `Q` gets an actionable message naming the constraint instead
+  of the engine’s internal error (R17).
+- A multivariate coordinate literally named `index` no longer crashes
+  `mv_data_wide()` with “Column name `index` must not be duplicated”; it
+  is made unique against the position column, so `ecp`, `inspect`,
+  `geomcp`, `ocd`, `npmojo`, `kcp` and `fastcpd` all accept such data
+  (R18).
+- `NA` changepoint indices from an engine are dropped rather than
+  propagating into `build_segments()` as an “NA/NaN argument” error, and
+  any engine-supplied extra columns (`ci_lower`, `posterior_prob`, …)
+  stay row-aligned through the drop (R19).
+- [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)’s
+  `"MBIC"` no longer misattributes its formula to Zhang and Siegmund
+  (2007), whose modified BIC penalty depends on the segment lengths and
+  cannot be written as a function of `n` and `k` alone. The computed
+  value is unchanged; the documentation now states what it is (BIC plus
+  a combinatorial placement term) and how it differs.
+- Passing a wrapper’s own argument through
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  no longer errors with “formal argument … matched by multiple actual
+  arguments”. The dispatcher derives some arguments from `change_in` and
+  was passing them alongside the caller’s, so the documented `...`
+  passthrough was broken for `not`’s `contrast`, `cpm`’s `cpm_type`,
+  `kcp`’s `running_stat`, `sn`’s `parameter`, `fastcpd`’s `family` and
+  `hsmuce`’s `family`. A value supplied by the caller now wins over the
+  derived one (R20).
+- Two enumerated engine options that could never succeed were removed
+  (R21): `smuce_wrapper(family = "poisson")` — current `stepR` accepts
+  no such family, so it always errored — and
+  `cpm_wrapper(cpm_type = "GLRAdjusted")`, which
+  [`cpm::processStream()`](https://rdrr.io/pkg/cpm/man/processStream.html)
+  rejects by *printing* an error and returning no changepoints, making
+  it silently report “no changes” for any input. `cpm_type = "FET"` is
+  retained and documented as needing 0/1 data plus a `lambda` value.
+- [`ocd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)
+  no longer advertises univariate input: `ocd`’s detector cannot be
+  constructed for a single coordinate (it fails with “subscript out of
+  bounds”), so a bare vector now gets a message naming the requirement
+  instead of the engine’s internal error (R22).
+- Degenerate input is handled the way the rest of the package already
+  handled it. A constant series now returns the empty result instead of
+  an opaque engine error (`sn`, `kcp`, `npmojo`, `inspect`) or, for
+  `segmented`, a spurious kink recovered from a singular fit (R23).
+- A single constant coordinate no longer kills a multivariate run.
+  `inspect`, `npmojo` and `kcp` standardise each coordinate, so one flat
+  column (a dead sensor channel, say) made their statistics undefined
+  and the whole call failed with “missing value where TRUE/FALSE needed”
+  even when the other coordinates carried an obvious change. Flat
+  coordinates are now dropped with a warning naming them, detection
+  proceeds on the rest, reported locations stay in the original row
+  space, and the dropped coordinates are still kept for plotting (R24).
+- `kcp` and `sn` explain themselves on series too short for their
+  windows, instead of surfacing “wrong sign in ‘by’ argument” and “only
+  0’s may be mixed with negative subscripts” (R25).
+- [`print()`](https://rdrr.io/r/base/print.html) and
+  [`summary()`](https://rdrr.io/r/base/summary.html) no longer render
+  penalties at full double precision or with a placeholder value:
+  `Penalty: Manual = 17.8459510605346` is now `Manual = 17.846`, and a
+  penalty that carries no numeric value prints as `MBIC` rather than
+  `MBIC = NA`.
+
+### Documentation
+
+- The README and all three vignettes were reviewed against the source
+  and corrected. Notably: a
+  [`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md)
+  example that could not run (it was given `xintercept`, but the geom
+  needs `x`/`xend`/`y`/`yend`); `DeCAFS` and `EnvCpt` filed under
+  multivariate methods when both are univariate;
+  [`is_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/is_ggcpt.md)
+  demonstrated on the input series rather than the result; a claim that
+  only three engine packages are required; and a method-family count
+  that disagreed between the package help, the README and the vignettes
+  (all now six).
+- Figure alt text is now specific per figure instead of one generic
+  string for every plot.
+
 ## ggchangepoint 0.3.0
 
 CRAN release: 2026-06-26

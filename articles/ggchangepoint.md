@@ -6,15 +6,15 @@
 to changepoint detection in R: one dispatcher
 ([`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md))
 covering 31 methods across five methodological families, one result
-class (`ggcpt`) with a stable tidy contract, and one visualization entry
+class (`ggcpt`) with a stable tidy contract, and one visualisation entry
 point
 ([`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html))
-that can draw everything a method reports — including confidence
-intervals and posterior probabilities (Wickham 2016; Robinson 2017).
-This vignette is the *feature tour*: it visits **every exported
-function** in the package exactly where it belongs in the workflow, so
-that a reader can map the full surface in one sitting. The companion
-vignettes develop the methodology in depth
+that draws everything a method reports — including confidence intervals
+and posterior probabilities (Wickham 2016; Robinson 2017). This vignette
+is the *feature tour*: it visits **every exported function** in the
+package at the point where it belongs in the workflow, so a reader can
+map the full surface in one sitting. The companion vignettes develop the
+methodology in depth
 ([`vignette("introduction")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md))
 and treat method comparison and evaluation
 ([`vignette("comparison")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md)).
@@ -31,8 +31,8 @@ x3 <- c(rnorm(100), rnorm(100, 4), rnorm(100, 1))  # shifts at 100, 200
 Every detector returns a `ggcpt` object: a list carrying the tidy
 `changepoints` tibble (`cp` = last index of the left segment, `cp_value`
 = series value there, plus any method-specific columns), a `segments`
-table, the `data`, and metadata (method, `change_in`, penalty,
-convention, runtime).
+table, the `data`, the raw engine `fit`, and metadata (method,
+`change_in`, penalty, convention, runtime).
 [`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
 is the low-level constructor and
 [`is_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/is_ggcpt.md)
@@ -49,7 +49,7 @@ print(res)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         MBIC = NA 
+#>   Penalty:         MBIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -74,7 +74,8 @@ The `broom` verbs give one row per changepoint
 ([`tidy()`](https://generics.r-lib.org/reference/tidy.html)), a one-row
 model summary
 ([`glance()`](https://generics.r-lib.org/reference/glance.html)), and
-the data augmented with segment ids, fitted levels, and residuals
+the data augmented with segment ids, fitted levels, residuals, and a
+changepoint flag
 ([`augment()`](https://generics.r-lib.org/reference/augment.html)):
 
 ``` r
@@ -117,7 +118,7 @@ summary(res)
 #>   Changepoints found:       1 
 #>   CP convention:            left 
 #>   Series length:            200 
-#>   Penalty:                  MBIC = NA 
+#>   Penalty:                  MBIC 
 #>   Runtime (seconds):        0.015 
 #> 
 #> Segments:
@@ -169,7 +170,7 @@ cpt_detect(x, method = "binseg", change_in = "mean")
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         MBIC = NA 
+#>   Penalty:         MBIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -179,27 +180,69 @@ cpt_detect(x, method = "binseg", change_in = "mean")
 #> 1   100    0.369
 ```
 
-[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-is the live capability table: every method the package knows, its engine
-package, what it can detect, and whether the engine is installed.
+Anything else in `...` reaches the underlying wrapper, and takes
+precedence over the value the dispatcher would otherwise derive from
+`change_in` — here the NOT contrast is set directly rather than
+inherited:
 
 ``` r
 
-cpt_methods()
+tidy(cpt_detect(x, method = "not", contrast = "pcwsLinMean"))
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100    0.369
+```
+
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+is the live capability table: every method the package knows, its engine
+package, what it can detect, and whether the engine is installed. Four
+rows carry status `"planned"` rather than `"available"`: their engines
+(`gfpop`, `robseg`, `FOCuS`, `hdbinseg`) are not on CRAN, so they are
+documented as future work and are *not* wired to
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md).
+
+``` r
+
+print(cpt_methods(), n = Inf)
 #> # A tibble: 35 × 6
-#>    method   change_in                   engine   status target_release installed
-#>    <chr>    <chr>                       <chr>    <chr>  <chr>          <lgl>    
-#>  1 pelt     mean, var, meanvar          changep… avail… NA             TRUE     
-#>  2 binseg   mean, var, meanvar          changep… avail… NA             TRUE     
-#>  3 segneigh mean, var, meanvar          changep… avail… NA             TRUE     
-#>  4 amoc     mean, var, meanvar          changep… avail… NA             TRUE     
-#>  5 np       distribution                changep… avail… NA             TRUE     
-#>  6 ecp      distribution (multivariate) ecp      avail… NA             TRUE     
-#>  7 fpop     mean                        fpop     avail… NA             TRUE     
-#>  8 wbs      mean                        wbs      avail… NA             TRUE     
-#>  9 wbs2     mean                        breakfa… avail… NA             TRUE     
-#> 10 not      mean, var, slope            not      avail… NA             TRUE     
-#> # ℹ 25 more rows
+#>    method      change_in                  engine status target_release installed
+#>    <chr>       <chr>                      <chr>  <chr>  <chr>          <lgl>    
+#>  1 pelt        mean, var, meanvar         chang… avail… NA             TRUE     
+#>  2 binseg      mean, var, meanvar         chang… avail… NA             TRUE     
+#>  3 segneigh    mean, var, meanvar         chang… avail… NA             TRUE     
+#>  4 amoc        mean, var, meanvar         chang… avail… NA             TRUE     
+#>  5 np          distribution               chang… avail… NA             TRUE     
+#>  6 ecp         distribution (multivariat… ecp    avail… NA             TRUE     
+#>  7 fpop        mean                       fpop   avail… NA             TRUE     
+#>  8 wbs         mean                       wbs    avail… NA             TRUE     
+#>  9 wbs2        mean                       break… avail… NA             TRUE     
+#> 10 not         mean, var, slope           not    avail… NA             TRUE     
+#> 11 mosum       mean                       mosum  avail… NA             TRUE     
+#> 12 idetect     mean                       IDete… avail… NA             TRUE     
+#> 13 tguh        mean                       break… avail… NA             TRUE     
+#> 14 smuce       mean (with CIs)            stepR  avail… NA             TRUE     
+#> 15 hsmuce      mean (heteroskedastic, wi… stepR  avail… NA             TRUE     
+#> 16 cpop        slope                      cpop   avail… NA             TRUE     
+#> 17 bcp         mean (Bayesian)            bcp    avail… NA             TRUE     
+#> 18 bocpd       mean (Bayesian online)     ocp    avail… NA             TRUE     
+#> 19 beast       mean/trend (Bayesian)      Rbeast avail… NA             TRUE     
+#> 20 cpm         distribution (sequential)  cpm    avail… NA             TRUE     
+#> 21 kcp         running statistics (kerne… kcpRS  avail… NA             TRUE     
+#> 22 npmojo      distribution (multivariat… CptNo… avail… NA             TRUE     
+#> 23 decafs      mean (drift + AR noise)    DeCAFS avail… NA             TRUE     
+#> 24 sn          mean, var, acf, correlati… SNSeg  avail… NA             TRUE     
+#> 25 inspect     mean (high-dimensional)    Inspe… avail… NA             TRUE     
+#> 26 ocd         mean (high-dimensional, o… ocd    avail… NA             TRUE     
+#> 27 geomcp      distribution (multivariat… chang… avail… NA             TRUE     
+#> 28 strucchange mean, regression (with CI… struc… avail… NA             TRUE     
+#> 29 segmented   slope (with CIs)           segme… avail… NA             TRUE     
+#> 30 envcpt      mean/trend vs autocorrela… EnvCpt avail… NA             TRUE     
+#> 31 fastcpd     mean, var, meanvar, AR/AR… fastc… avail… NA             TRUE     
+#> 32 gfpop       mean (graph-constrained)   gfpop  plann… when on CRAN   NA       
+#> 33 robust      mean (robust loss)         robseg plann… when on CRAN   NA       
+#> 34 focus       mean (online)              FOCuS  plann… when on CRAN   NA       
+#> 35 sbs         mean (high-dimensional)    hdbin… plann… when on CRAN   NA
 ```
 
 [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
@@ -218,15 +261,17 @@ cpt_penalty("Manual", value = 10)
 
 ## Engine wrappers
 
-Each engine also has a direct wrapper exposing its native arguments. All
-return the same `ggcpt` object.
+Each engine also has a direct wrapper exposing its native arguments.
+Every wrapper from 0.2.0 onwards returns a `ggcpt` object; only the two
+original wrappers below predate the class and still return a bare
+tibble.
 
-### The classical wave
+### The classical core (0.1.0)
 
 [`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md)
 and
 [`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md)
-are the original 0.1.0 interface to the *changepoint*/*changepoint.np*
+are the original interface to the *changepoint*/*changepoint.np*
 (Killick et al. 2012; Killick and Eckley 2014; Haynes et al. 2017) and
 *ecp* (Matteson and James 2014; James and Matteson 2014) engines; they
 return bare tibbles for backward compatibility.
@@ -245,9 +290,11 @@ ecp_wrapper(x, algorithm = "divisive", seed = 1)
 #> 1   101     7.22
 ```
 
-The search and pruning engines added in 0.2.0 (Fryzlewicz 2014, 2022;
-Baranowski et al. 2019; Eichinger and Kirch 2018; Anastasiou and
-Fryzlewicz 2022; Maidstone et al. 2017), one call each:
+### The search and pruning wave (0.2.0)
+
+Seven multiscale, randomised, and functional-pruning engines (Fryzlewicz
+2014, 2020, 2022; Baranowski et al. 2019; Eichinger and Kirch 2018;
+Anastasiou and Fryzlewicz 2022; Maidstone et al. 2017), one call each:
 
 ``` r
 
@@ -257,7 +304,7 @@ fpop_wrapper(x, penalty = 2 * log(length(x)))
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         Manual = 10.5966347330961 
+#>   Penalty:         Manual = 10.597 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -275,7 +322,7 @@ wbs_wrapper(x, n_intervals = 2000, seed = 1)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         sSIC = NA 
+#>   Penalty:         sSIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -293,7 +340,7 @@ wbs2_wrapper(x)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         SDLL = NA 
+#>   Penalty:         SDLL 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -311,7 +358,7 @@ not_wrapper(x, contrast = "pcwsConstMean", seed = 1)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         sSIC = NA 
+#>   Penalty:         sSIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -329,7 +376,7 @@ mosum_wrapper(x)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         threshold = 3.63416800924526 
+#>   Penalty:         threshold = 3.6342 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -343,7 +390,7 @@ mosum_wrapper(x3, multiscale = TRUE)
 #>   Change in:       mean 
 #>   Changepoints found: 2 
 #>   CP convention:   left 
-#>   Penalty:         threshold = NA 
+#>   Penalty:         threshold 
 #>   Series length:   300 
 #> 
 #> Changepoints:
@@ -362,7 +409,7 @@ idetect_wrapper(x, seed = 1)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         threshold = NA 
+#>   Penalty:         threshold 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -380,7 +427,7 @@ tguh_wrapper(x)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         sSIC = NA 
+#>   Penalty:         sSIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -390,13 +437,16 @@ tguh_wrapper(x)
 #> 1   100    0.369
 ```
 
-### The 0.4.0 wave
+### The engine wave (0.4.0)
 
-**Multiscale inference with confidence.** SMUCE (Frick et al. 2014) and
-its heteroskedastic extension HSMUCE (Pein et al. 2017) control the
-probability of over-estimating the number of changes and return a
+**Multiscale inference with confidence.**
+[`smuce_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/smuce_wrapper.md)
+implements SMUCE (Frick et al. 2014), which bounds the probability of
+over-estimating the number of changes at the level `alpha` and returns a
 confidence interval for every changepoint location
-(`ci_lower`/`ci_upper`):
+(`ci_lower`/`ci_upper`); `family = "hsmuce"` switches to the
+heteroskedastic extension HSMUCE (Pein et al. 2017), which estimates a
+variance per segment:
 
 ``` r
 
@@ -408,9 +458,10 @@ tidy(res_smuce)
 #> 1   100    0.369      100      100
 ```
 
-**Change in slope.** CPOP performs exact penalised estimation of a
-continuous piecewise-linear mean (Fearnhead et al. 2019; Fearnhead and
-Grose 2024):
+**Change in slope.**
+[`cpop_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpop_wrapper.md)
+performs exact penalised estimation of a continuous piecewise-linear
+mean (Fearnhead et al. 2019; Fearnhead and Grose 2024):
 
 ``` r
 
@@ -426,13 +477,15 @@ tidy(res_cpop)
 **Bayesian detection.**
 [`bcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bcp_wrapper.md)
 implements the Barry–Hartigan product-partition model (Barry and
-Hartigan 1993; Erdman and Emerson 2007) and reports a posterior
-probability per location;
+Hartigan 1993; Erdman and Emerson 2007);
 [`bocpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bocpd_wrapper.md)
 runs Bayesian online changepoint detection over the run-length posterior
 (Adams and MacKay 2007);
 [`beast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/beast_wrapper.md)
-wraps the BEAST Bayesian model-averaging ensemble (Zhao et al. 2019):
+wraps the BEAST Bayesian model-averaging ensemble (Zhao et al. 2019).
+The first and third keep the locations whose posterior probability
+clears `prob_threshold` and record it in a `posterior_prob` column;
+BOCPD returns the maximum a posteriori changepoint set.
 
 ``` r
 
@@ -466,8 +519,9 @@ tidy(res_beast)
 
 **Sequential and kernel nonparametrics.**
 [`cpm_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpm_wrapper.md)
-runs distribution-free sequential tests and reports when each change
-would have been *detected* in a stream (Ross 2015);
+runs distribution-free sequential tests and reports, alongside each
+estimated location, the `detection_time` at which a stream monitor would
+have flagged it (Ross 2015);
 [`kcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/kcp_wrapper.md)
 applies kernel change point analysis to running statistics (mean,
 variance, autocorrelation, correlation) (Arlot et al. 2019; Cabrieto et
@@ -506,12 +560,17 @@ tidy(npmojo_wrapper(x))
 #> 2   122    8.13
 ```
 
-**Robustness to drift and dependence.** DeCAFS detects abrupt changes
-when the signal also drifts and the noise is autocorrelated (Romano et
-al. 2022); self-normalised segmentation avoids long-run variance
-estimation entirely (Zhao et al. 2022); EnvCpt only reports changepoints
-when a changepoint model beats trend and autoregressive alternatives
-(Beaulieu and Killick 2018):
+**Robustness to drift and dependence.**
+[`decafs_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/decafs_wrapper.md)
+detects abrupt changes when the signal also drifts and the noise is
+autocorrelated (Romano et al. 2022);
+[`sn_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/sn_wrapper.md)
+segments a chosen `parameter` (mean, variance, autocorrelation, or
+bivariate correlation) by self-normalisation, avoiding long-run variance
+estimation entirely (Zhao et al. 2022);
+[`envcpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/envcpt_wrapper.md)
+reports changepoints only when a changepoint model beats the trend and
+autoregressive alternatives (Beaulieu and Killick 2018):
 
 ``` r
 
@@ -540,11 +599,12 @@ tidy(res_env)
 #>      cp cp_value
 #>   <int>    <dbl>
 #> 1   100    0.369
-res_env$penalty$type   # which model won
+res_env$penalty$type   # criterion and winning model
 #> [1] "AIC: meancpt"
 ```
 
-**High-dimensional and multivariate.**
+**High-dimensional and multivariate.** These wrappers take a matrix or
+data frame with one row per time point.
 [`inspect_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/inspect_wrapper.md)
 finds sparse mean changes by projection (Wang and Samworth 2018);
 [`ocd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)
@@ -553,7 +613,8 @@ monitors a high-dimensional stream online (Chen et al. 2022);
 maps each observation to a distance and an angle and segments both
 (Grundy et al. 2020); multivariate `ecp` input flows through
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-unchanged.
+unchanged. The univariate wrappers, by contrast, reject a multi-column
+argument rather than silently flattening it.
 
 ``` r
 
@@ -575,8 +636,10 @@ tidy(res_hd)
 
 ``` r
 
-# Online high-dimensional detection; Monte Carlo threshold calibration makes
-# this the slowest wrapper, so it is shown but not run here.
+# Online detection: the reported locations are declaration times (the change
+# plus the detection delay), in a `declared_at` column. Monte Carlo threshold
+# calibration makes this the slowest wrapper, so it is shown but not run
+# here. It needs at least two coordinates and rejects a univariate series.
 res_ocd <- ocd_wrapper(X, mc_reps = 100)
 tidy(res_ocd)
 ```
@@ -588,14 +651,23 @@ tidy(geomcp_wrapper(X))
 #> # ℹ 2 variables: cp <int>, cp_value <dbl>
 ```
 
+``` r
+
+tidy(cpt_detect(X, method = "ecp", seed = 1))
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1    80   -0.590
+```
+
 **Regression structure.**
 [`strucchange_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md)
-dates Bai–Perron breaks with confidence intervals (Bai and Perron 1998,
-2003; Zeileis et al. 2002) and accepts either a bare series or a
-formula;
+dates Bai–Perron breaks, either in a bare series or in the coefficients
+of a formula (Bai and Perron 1998, 2003; Zeileis et al. 2002);
 [`segmented_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/segmented_wrapper.md)
-fits continuous broken-line regressions with breakpoint standard errors
-(Muggeo 2003, 2008):
+fits a continuous broken-line regression, so the change it reports is a
+kink in the trend rather than a jump in the level (Muggeo 2003, 2008).
+Both carry a confidence interval for every break:
 
 ``` r
 
@@ -617,9 +689,9 @@ tidy(segmented_wrapper(y_slope, npsi = 1, seed = 1))
 
 **The modern PELT family.**
 [`fastcpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fastcpd_wrapper.md)
-exposes the *fastcpd* engine — mean, variance, mean-and-variance, and
-AR/ARMA/GARCH model changepoints under one interface (Li and Zhang
-2024):
+exposes the *fastcpd* engine, whose `family` argument covers changes in
+the mean, the variance, or both, as well as changes in a fitted
+AR/ARMA/GARCH model (Li and Zhang 2024):
 
 ``` r
 
@@ -636,10 +708,11 @@ Rather than guessing one penalty,
 [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
 computes *every* optimal segmentation over a penalty interval (the CROPS
 algorithm, via *changepoint* (Killick and Eckley 2014)) and returns a
-`ggcpt_path` with its own
+`ggcpt_path` object with its own
 [`print()`](https://rdrr.io/r/base/print.html),
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html), and three
-plots:
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+types:
 
 ``` r
 
@@ -694,16 +767,17 @@ autoplot(path, type = "segmentations")  # the candidate models themselves
 ![ggchangepoint feature tour
 plot](ggchangepoint_files/figure-html/crops-seg-1.png)
 
-## The visualization layer
+## The visualisation layer
 
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 renders any `ggcpt`. Options: `show_segments` (fitted segment means),
 `show_fit` (the engine’s own fitted signal, where provided — SMUCE,
 DeCAFS, CPOP, segmented, bcp, BEAST), `show_ci` (changepoint-location
 confidence intervals, where provided — SMUCE/HSMUCE, strucchange,
-segmented), `show_points`/`show_line`, and the `cptline_*` styling
-arguments (`cptline_color`, `cptline_alpha`, `cptline_type`,
-`cptline_linewidth`).
+segmented), `show_points`/`show_line`, an `index` for a date axis, and
+the `cptline_*` styling arguments (`cptline_color`, `cptline_alpha`,
+`cptline_type`, `cptline_linewidth`). Asking for an overlay the result
+cannot supply warns rather than failing silently.
 
 ``` r
 
@@ -817,7 +891,7 @@ plot](ggchangepoint_files/figure-html/ggecpplot-1.png)
 The Bayesian engines get the field’s signature displays:
 [`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)
 shows the posterior mean over the series and the per-location
-changepoint probability;
+changepoint probability (for `bcp` and BEAST results);
 [`ggcpt_runlength()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_runlength.md)
 shows the BOCPD run-length posterior as a heatmap.
 
@@ -839,23 +913,27 @@ plot](ggchangepoint_files/figure-html/runlength-1.png)
 
 Finally,
 [`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md)
-turns any result (or ggplot built from one) into a `plotly` widget with
-values on hover:
+turns any result (or any ggplot built from one) into a `plotly` widget
+with values on hover. The widget itself is not embedded here, only its
+class:
 
 ``` r
 
-ggcpt_interactive(res)   # requires plotly; opens an htmlwidget
+class(ggcpt_interactive(res))   # requires plotly
+#> [1] "plotly"     "htmlwidget"
 ```
 
 ## Comparing methods
 
 [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
 runs several detectors on the same series and renders them faceted
-(default) or overlaid;
-[`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md)
-returns the tidy union. Both honour
+(default) or overlaid, honouring
 [`future::plan()`](https://future.futureverse.org/reference/plan.html)
-for parallel execution.
+for parallel execution;
+[`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md)
+returns the tidy union of the same runs. A method that finds nothing
+keeps its panel and contributes an `NA` row — “no changepoints” is a
+result, not a missing one.
 
 ``` r
 
@@ -888,7 +966,10 @@ ggcpt_compare_table(x, methods = c("pelt", "binseg", "amoc"))
 
 [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
 runs one detector over many series (matrix, data frame, or list of
-vectors) and returns a tidy `ggcpt_batch` tibble with list-columns:
+vectors), also under
+[`future::plan()`](https://future.futureverse.org/reference/plan.html),
+and returns a tidy `ggcpt_batch` tibble with list-columns for the
+per-series changepoints and the `ggcpt` objects themselves:
 
 ``` r
 
@@ -950,7 +1031,7 @@ draws the agreement (true positives, false positives, and misses):
 
 ``` r
 
-truth <- c(100)
+truth <- 100
 pred <- tidy(res)$cp
 cpt_metrics(pred, truth, n = length(x), margin = 5)
 #> # A tibble: 1 × 12
@@ -959,7 +1040,7 @@ cpt_metrics(pred, truth, n = length(x), margin = 5)
 #> 1   200      1       1         1      1     1        1         0          1
 #> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
 #> #   rmse_matched <dbl>
-cpt_metrics_annotated(pred, list(c(100), c(101), c(99)), n = length(x))
+cpt_metrics_annotated(pred, list(100, 101, 99), n = length(x))
 #> # A tibble: 1 × 7
 #>       n n_annotators n_pred precision recall    f1 covering
 #>   <int>        <int>  <int>     <dbl>  <dbl> <dbl>    <dbl>
@@ -981,8 +1062,9 @@ plot](ggchangepoint_files/figure-html/eval-plot-1.png)
 [`rcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md))
 generates series with known changepoints in mean, variance, both, or
 slope, under Gaussian, Student-t, AR(1), or random-walk noise; the truth
-is carried in attributes. Five canonical test signals from the
-literature ship ready-made:
+travels with the data in the `true_changepoints` and `true_segments`
+attributes. Five canonical test signals from the literature ship
+ready-made:
 [`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md)
 (the Donoho–Johnstone blocks signal (Donoho and Johnstone 1994)),
 [`signal_fms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_fms.md),
@@ -997,17 +1079,23 @@ sim <- cpt_simulate(300, changepoints = c(100, 200), change_in = "mean",
                     params = c(0, 5, 1), seed = 1)
 attr(sim, "true_changepoints")
 #> [1] 100 200
-sim2 <- rcpt(300, changepoints = 150, params = c(0, 3), seed = 2)
+sim2 <- rcpt(300, changepoints = 150, params = c(0, 3), seed = 2)  # the alias
+attr(sim2, "true_changepoints")
+#> [1] 150
 
-blocks <- signal_blocks(1024, seed = 1)
-fms    <- signal_fms(500, seed = 1)
-mix    <- signal_mix(500, seed = 1)
-teeth  <- signal_teeth(400, seed = 1)
-stairs <- signal_stairs(500, seed = 1)
+signals <- list(blocks = signal_blocks(1024, seed = 1),
+                fms    = signal_fms(500, seed = 1),
+                mix    = signal_mix(500, seed = 1),
+                teeth  = signal_teeth(400, seed = 1),
+                stairs = signal_stairs(500, seed = 1))
+vapply(signals, function(s) length(attr(s, "true_changepoints")), integer(1))
+#> blocks    fms    mix  teeth stairs 
+#>     11      7      5      3      9
 ```
 
 ``` r
 
+blocks <- signals$blocks
 ggplot(blocks, aes(index, value)) +
   geom_line(color = "grey50") +
   geom_vline(xintercept = attr(blocks, "true_changepoints"),
@@ -1022,7 +1110,8 @@ plot](ggchangepoint_files/figure-html/blocks-plot-1.png)
 
 [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
 returns the verified reference(s) behind a result or a method name, so a
-write-up can cite the right paper without leaving R:
+write-up can cite the right paper without leaving R; called with no
+argument it returns the whole method-to-reference table.
 
 ``` r
 
@@ -1034,8 +1123,9 @@ cpt_cite(res)
 
 ## Closing note
 
-This tour visited every exported function once. For the framework’s
-design, the mathematics of the wrapped methods, and worked analyses, see
+This tour visited every exported function in the package. For the
+framework’s design, the mathematics of the wrapped methods, and worked
+analyses, see
 [`vignette("introduction", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md);
 for method comparison and accuracy evaluation in depth, see
 [`vignette("comparison", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md).
@@ -1109,6 +1199,10 @@ Point Inference.” *Journal of the Royal Statistical Society: Series B*
 Fryzlewicz, Piotr. 2014. “Wild Binary Segmentation for Multiple
 Change-Point Detection.” *The Annals of Statistics* 42 (6): 2243–81.
 <https://doi.org/10.1214/14-AOS1245>.
+
+Fryzlewicz, Piotr. 2020. “Detecting Multiple Change-Point Features via
+Narrowest-over-Threshold.” *Journal of the Royal Statistical Society
+Series B* 82 (5): 1377–418.
 
 Fryzlewicz, Piotr. 2022. “Tail-Greedy Bottom-up Data Decompositions and
 Fast Multiple Change-Point Detection.” *The Annals of Statistics* 50

@@ -23,7 +23,9 @@ cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01)
 - k:
 
   Number of parameters per changepoint (typically 2 for mean+variance, 1
-  for mean-only). Defaults to 1.
+  for mean-only). Defaults to 1. The `"MBIC"` penalty additionally reads
+  `k` as the number of changepoints being placed, in its \\\log{n
+  \choose k}\\ term.
 
 - value:
 
@@ -64,10 +66,15 @@ engines:
   threshold, hazard, or average run length rather than a penalty; see
   each wrapper.
 
-- **`MBIC`** in `cpt_penalty()` uses the Zhang-Siegmund (2007) formula
-  \\0.5(k+1)\log n + \log{n \choose k}\\, which differs from the
-  changepoint package's MBIC. Use the character `"MBIC"` with
-  changepoint-based methods to get the engine's native MBIC.
+- **`MBIC`** in `cpt_penalty()` is a BIC-type penalty that adds a
+  combinatorial term for the number of ways `k` changepoints can be
+  placed in `n` observations, \\0.5(k+1)\log n + \log{n \choose k}\\. It
+  is deliberately stronger than `"BIC"`. It is *not* the modified BIC of
+  Zhang and Siegmund (2007), whose penalty \\1.5 k \log n + 0.5 \sum_i
+  \log(l_i / n)\\ depends on the segment lengths \\l_i\\ and so cannot
+  be expressed by a function of `n` and `k` alone. Use the character
+  `"MBIC"` with changepoint-based methods to get the engine's native
+  MBIC.
 
 ## Examples
 

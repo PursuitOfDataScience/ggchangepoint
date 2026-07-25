@@ -41,7 +41,7 @@ nonparametric divergence measures, Bayesian posteriors — each with its
 own inductive bias (Aminikhanghahi and Cook 2017; Truong et al. 2020).
 Benchmarks that score many algorithms on many series find no uniform
 winner: performance depends on the kind of change (mean, variance,
-distribution), the noise (Gaussian, heavy tailed, autocorrelated), the
+distribution), the noise (Gaussian, heavy-tailed, autocorrelated), the
 number and spacing of changes, and the tuning of penalties and
 thresholds (van den Burg and Williams 2020). Two practical consequences
 follow. First, an analyst should *compare* several methods on the data
@@ -111,9 +111,9 @@ ggcpt_compare(x, methods = cmp_methods)
 ![ggchangepoint plot comparing changepoint detection methods on a time
 series](comparison_files/figure-html/compare-facet-1.png)
 
-A method that finds *no* changepoints keeps its (empty-ruled) panel
-rather than silently disappearing — a method that ran and found nothing
-is a result, not a missing value:
+A method that finds *no* changepoints keeps its panel — ruleless, but
+present — rather than silently disappearing. A method that ran and found
+nothing is a result, not a missing value:
 
 ``` r
 
@@ -126,8 +126,9 @@ ggcpt_compare(x_null, methods = c("pelt", "binseg"))
 series](comparison_files/figure-html/compare-nochange-1.png)
 
 The `layout = "overlay"` variant superimposes all methods in a single
-panel with colour-coded rules, which makes small disagreements in
-estimated locations easier to see:
+panel with colour-coded rules, which makes both kinds of disagreement
+easier to see: small differences in an estimated location, and outright
+differences in how many changepoints a method reports.
 
 ``` r
 
@@ -139,7 +140,9 @@ series](comparison_files/figure-html/compare-overlay-1.png)
 
 For a numeric rather than visual comparison,
 [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md)
-returns one tidy tibble with a row per (method, changepoint) pair:
+returns one tidy tibble with a row per (method, changepoint) pair; a
+method that found nothing contributes a single row with `cp = NA`, which
+is the table’s version of keeping the empty panel:
 
 ``` r
 
@@ -160,7 +163,12 @@ ggcpt_compare_table(x, methods = cmp_methods)
 
 Because every row carries the same columns, this table pipes directly
 into **dplyr**/**ggplot2** summaries — counting detections per method,
-plotting location agreement, and so on (Wickham 2016).
+plotting location agreement, and so on (Wickham 2016). When the
+detectors are slow,
+[`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
+honours
+[`future::plan()`](https://future.futureverse.org/reference/plan.html)
+(through **future.apply**) and fits them in parallel.
 
 ## Accuracy metrics
 
@@ -180,8 +188,10 @@ rule attains a maximum matching). With $`\mathrm{TP}`$ matched pairs,
 F_1 = \frac{2\,\mathrm{precision}\cdot\mathrm{recall}}
            {\mathrm{precision} + \mathrm{recall}},
 ```
-which guarantees all three lie in $`[0, 1]`$ — three predictions crowded
-around one true change score one true positive, not three.
+with $`F_1 = 0`$ by convention when precision and recall are both zero.
+Because $`\mathrm{TP}`$ counts *pairs*, all three quantities lie in
+$`[0, 1]`$: three predictions crowded around one true change score one
+true positive, not three.
 
 **The covering metric.** Following van den Burg and Williams (2020), let
 $`\mathcal{S}`$ and $`\mathcal{S}'`$ be the partitions induced by the
@@ -195,9 +205,10 @@ $`\mathcal{S}'`$ is
 ```
 a weighted average of the best overlap achieved for each true segment.
 
-**Hausdorff distance.** The worst-case location error
+**Hausdorff distance.** The worst-case location error, in index units,
 $`\max\{\max_p \min_t |p - t|,\; \max_t \min_p |p - t|\}`$; it is `NA`
-when either set is empty (there is no distance to a nonexistent point).
+when either set is empty, since there is no distance to a nonexistent
+point.
 
 **Adjusted Rand index.** The chance-corrected agreement of the two
 induced segment labellings; 1 for identical partitions, 0 for
@@ -205,7 +216,8 @@ chance-level agreement.
 
 **Annotation error and matched location errors.** The absolute
 difference in counts $`\bigl||\mathcal{P}| - |\mathcal{T}|\bigr|`$, and
-the MAE/RMSE of the matched location pairs.
+the MAE/RMSE of the matched location pairs — the latter two `NA` when
+nothing matched, because an average over no pairs is not zero error.
 
 ``` r
 
@@ -242,17 +254,18 @@ silently corrupts benchmark averages:
 
 - **Both sets empty.** Predicting “no changepoints” for a series with no
   changepoints is *exactly right*, so precision, recall, F1, covering,
-  and the Rand index all equal 1.
-- **Empty prediction, non-empty truth.** An empty changepoint set
-  induces the trivial one-segment partition, which is a perfectly
-  well-defined partition: covering scores it by segment overlap (not an
-  automatic 0), while the adjusted Rand index is 0 (chance-level
-  agreement) and precision/recall are
-  0.  
+  and the Rand index all equal 1. (Hausdorff distance and the
+  matched-location errors remain `NA`: there are no pairs to measure.)
+- **Empty prediction, non-empty truth.** An empty changepoint set still
+  induces a perfectly well-defined partition — the trivial one with a
+  single segment — so covering scores it by segment overlap rather than
+  awarding an automatic 0. Precision and recall are 0, and the adjusted
+  Rand index is 0 because the trivial partition agrees with the truth
+  only at chance level.
 - **Out-of-range indices.** Changepoint locations must lie in
   $`\{1, \dots, n-1\}`$ under the left convention; anything outside is
-  dropped with a warning rather than crashing the partition
-  construction.
+  dropped with a warning rather than corrupting the partition
+  construction, and the metrics are then computed on what remains.
 
 ``` r
 
@@ -265,12 +278,26 @@ cpt_metrics(pred = integer(0), truth = integer(0), n = 300)
 #> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
 #> #   rmse_matched <dbl>
 
-# empty prediction against one true change: trivial-partition covering
+# empty prediction against one true change at the midpoint: the trivial
+# one-segment partition still overlaps half the series, so covering is 0.5
 cpt_metrics(pred = integer(0), truth = c(150), n = 300)
 #> # A tibble: 1 × 12
 #>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
 #>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
 #> 1   300      0       1         0      0     0      0.5        NA          0
+#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
+#> #   rmse_matched <dbl>
+```
+
+``` r
+
+# index 700 cannot be a changepoint of a length-500 series
+cpt_metrics(pred = c(100, 700), truth = c(100, 300), n = 500)
+#> Warning: Dropping changepoint indices outside 1..(n-1): 700
+#> # A tibble: 1 × 12
+#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
+#> 1   500      1       2         1    0.5 0.667      0.6       200      0.418
 #> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
 #> #   rmse_matched <dbl>
 ```
@@ -299,6 +326,14 @@ cpt_metrics_annotated(pred = c(150, 300), annotations, n = 500, margin = 5)
 #> 1   500            3      2     0.833      1 0.889    0.895
 ```
 
+Averaging *per annotator* rather than pooling the annotations matters.
+The prediction matches both of the first two annotators completely;
+against the third it finds the one change that annotator marked but also
+reports a second one, scoring precision $`1/2`$ and recall $`1`$. The
+averages are therefore precision $`5/6`$ and recall $`1`$: the
+disagreement is charged to precision, which is the honest place for it,
+since the extra detection may well be real and merely unannotated.
+
 ## Visual evaluation
 
 [`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md)
@@ -316,8 +351,10 @@ pred <- c(151, 240)      # one hit, one false alarm, one miss
 ggcpt_eval(pred, truth, data_vec = x, margin = 5)
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/eval-plot-1.png)
+![Series with predictions coloured as true positives and false
+positives, shaded tolerance windows around each true changepoint, and
+missed truths as dashed
+rules](comparison_files/figure-html/eval-plot-1.png)
 
 ``` r
 
@@ -329,6 +366,10 @@ cpt_metrics(pred, truth, n = length(x), margin = 5)
 #> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
 #> #   rmse_matched <dbl>
 ```
+
+One true positive out of two predictions and two truths gives precision,
+recall, and F1 all equal to $`0.5`$ — the single blue rule, the single
+orange rule, and the single dashed rule in the plot, counted.
 
 ## Uncertainty beyond point sets
 
@@ -342,9 +383,12 @@ Some engines deliver genuine confidence statements for changepoint
 the probability of overestimating the number of changepoints, and
 returns a confidence interval for every location; the Bai–Perron dynamic
 program (Bai and Perron 2003; Zeileis et al. 2002) returns break-date
-intervals for regression breaks. Both populate `ci_lower`/`ci_upper`
-columns on the `ggcpt` changepoints tibble, and
-`autoplot(show_ci = TRUE)` draws them as whiskers:
+intervals for regression breaks. Four wrapped engines report such
+intervals — `smuce`, `hsmuce`, `strucchange`, and `segmented` — as
+`ci_lower`/`ci_upper` columns on the `ggcpt` changepoints tibble, which
+`autoplot(show_ci = TRUE)` draws as whiskers below the series.
+`show_fit = TRUE` adds the engine’s own fitted signal, available here
+and from `decafs`, `cpop`, `segmented`, `bcp`, and `beast`:
 
 ``` r
 
@@ -358,8 +402,9 @@ tidy(res_smuce)
 autoplot(res_smuce, show_ci = TRUE, show_fit = TRUE)
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/smuce-ci-1.png)
+![Series with the SMUCE step fit overlaid and confidence-interval
+whiskers for each estimated changepoint
+location](comparison_files/figure-html/smuce-ci-1.png)
 
 ``` r
 
@@ -371,6 +416,10 @@ tidy(res_bp)
 #> 1   150     1.05      149      152
 #> 2   300     3.14      297      303
 ```
+
+Such intervals are worth reading alongside each other: two engines can
+agree on where a change is and still, under their different noise
+models, disagree about how tightly the location is pinned down.
 
 ### Bootstrap stability
 
@@ -399,20 +448,24 @@ st
 autoplot(st)
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/stability-1.png)
+![Bootstrap detection-frequency profile along the series index, with the
+original changepoints marked as dashed
+rules](comparison_files/figure-html/stability-1.png)
+
+Both changepoints here are re-detected in every replicate, so the point
+estimate is as stable as this diagnostic can report. The profile is also
+informative where the print method is silent: a broad, low plateau marks
+a region the detector keeps splitting somewhere without agreeing where.
 
 ### Penalty-path sensitivity: CROPS
 
 Penalised methods commit to one penalty $`\beta`$, and the segmentation
 can change qualitatively as $`\beta`$ moves. CROPS (Haynes et al. 2017)
 computes *every* optimal segmentation as the penalty ranges over an
-interval, at roughly one PELT run per distinct solution.
+interval, at roughly one PELT run per distinct solution — penalty
+selection as a diagnostic rather than a guess.
 [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
-returns the full path; the elbow plot shows where adding changepoints
-stops paying for itself, and the segmentation facets show the actual
-candidate models being chosen among — penalty selection as a diagnostic
-rather than a guess:
+returns the full path:
 
 ``` r
 
@@ -429,19 +482,44 @@ path
 #>     <dbl>  <int> <dbl>
 #> 1    9.36      2  468.
 #> 2    6.21      3  459.
-autoplot(path)                          # cost elbow
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/crops-1.png)
+Over the default range $`[\log n, 10 \log n]`$ this series admits only
+two distinct segmentations, and the two-changepoint solution holds over
+all but the very bottom of it. That insensitivity is itself the
+diagnostic: on a signal this cleanly separated, the answer does not
+depend on the penalty. Lowering `pen_min` opens up the rest of the path,
+where the elbow plot shows the cost reduction per additional changepoint
+flattening out and the segmentation facets show the candidate models
+being chosen among:
 
 ``` r
 
-autoplot(path, type = "segmentations")  # the candidate segmentations
+path_wide <- cpt_crops(x, pen_min = 4)
+autoplot(path_wide)                          # cost elbow
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/crops-2.png)
+![CROPS cost elbow: segmentation cost plotted against the number of
+changepoints for each solution on the penalty
+path](comparison_files/figure-html/crops-elbow-1.png)
+
+``` r
+
+autoplot(path_wide, type = "segmentations")
+```
+
+![The candidate CROPS segmentations, faceted by number of changepoints,
+each panel showing the series with that solution's
+changepoints](comparison_files/figure-html/crops-segs-1.png)
+
+Both
+[`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
+and
+[`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
+operate on a single numeric series and reject multi-column input; for a
+panel of series, loop over the columns (or use
+[`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+for the detection step).
 
 ## A benchmarking workflow
 
@@ -449,13 +527,20 @@ The package’s simulation module closes the loop: generators with *known*
 truth feed the metrics module, so methods can be scored over
 replications.
 [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
-draws series with specified changepoints, and the canonical test signals
-ship as ready-made generators — including
-[`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md),
-the Donoho–Johnstone blocks signal (Donoho and Johnstone 1994), plus
-[`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md)
+draws series with specified changepoints under Gaussian, Student-$`t`$,
+AR(1), or random-walk noise, and the canonical test signals of the
+literature ship as ready-made generators:
+[`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md)
+(the Donoho–Johnstone blocks signal, Donoho and Johnstone 1994),
+[`signal_fms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_fms.md),
+[`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md),
+[`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md),
 and
 [`signal_stairs()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_stairs.md).
+Every generator attaches its true changepoints as a `true_changepoints`
+attribute, which is exactly the `truth` argument
+[`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+expects.
 
 ``` r
 
@@ -467,12 +552,15 @@ ggplot(blocks, aes(index, value)) +
   labs(title = "signal_blocks(): Donoho-Johnstone blocks with true changepoints")
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/signals-1.png)
+![Donoho-Johnstone blocks test signal with its eleven true changepoints
+marked by vertical rules](comparison_files/figure-html/signals-1.png)
 
-A minimal benchmark: three methods, ten replications of a two-change
-series, scored by precision, recall, F1, and covering. (For clarity we
-keep everything sequential and small;
+A minimal benchmark: three methods, two signal-to-noise regimes, ten
+replications each, scored by precision, recall, F1, and covering. The
+two regimes differ only in the size of the jumps — 2.5 noise standard
+deviations against 1.0 — so any difference between the panels is
+attributable to difficulty alone. (Everything stays sequential and small
+here;
 [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
 runs one method over many series and honours
 [`future::plan()`](https://future.futureverse.org/reference/plan.html)
@@ -482,33 +570,51 @@ for parallel execution in larger studies.)
 
 methods <- cmp_methods[1:3]
 n_rep <- 10
+regimes <- list(
+  "high SNR (jump 2.5 sd)" = c(0, 2.5, 0.5),
+  "low SNR (jump 1.0 sd)"  = c(0, 1.0, 0.3)
+)
 
-results <- do.call(rbind, lapply(seq_len(n_rep), function(r) {
-  dat <- cpt_simulate(400, changepoints = c(130, 260), change_in = "mean",
-                      params = c(0, 2.5, 0.5), sd = 1, seed = 100 + r)
-  truth <- attr(dat, "true_changepoints")
-  do.call(rbind, lapply(methods, function(m) {
-    fit <- cpt_detect(dat$value, method = m)
-    score <- cpt_metrics(fit$changepoints$cp, truth, n = 400, margin = 5)
-    cbind(tibble::tibble(rep = r, method = m),
-          score[, c("precision", "recall", "f1", "covering")])
+results <- do.call(rbind, lapply(names(regimes), function(g) {
+  do.call(rbind, lapply(seq_len(n_rep), function(r) {
+    dat <- cpt_simulate(400, changepoints = c(130, 260), change_in = "mean",
+                        params = regimes[[g]], sd = 1, seed = 100 + r)
+    truth <- attr(dat, "true_changepoints")
+    do.call(rbind, lapply(methods, function(m) {
+      fit <- cpt_detect(dat$value, method = m)
+      score <- cpt_metrics(fit$changepoints$cp, truth, n = 400, margin = 5)
+      cbind(tibble::tibble(regime = g, rep = r, method = m),
+            score[, c("precision", "recall", "f1", "covering")])
+    }))
   }))
 }))
 
-# average over replications
-res_summary <- aggregate(cbind(precision, recall, f1, covering) ~ method,
+# average over replications, within regime
+res_summary <- aggregate(cbind(precision, recall, f1, covering) ~ method + regime,
                          data = results, FUN = mean)
 knitr::kable(res_summary, digits = 3,
-             caption = "Mean accuracy over 10 replications (margin = 5).")
+             caption = "Mean accuracy over 10 replications per regime (margin = 5).")
 ```
 
-| method | precision | recall |   f1 | covering |
-|:-------|----------:|-------:|-----:|---------:|
-| binseg |      0.95 |   0.95 | 0.95 |    0.993 |
-| fpop   |      0.95 |   0.95 | 0.95 |    0.993 |
-| pelt   |      0.95 |   0.95 | 0.95 |    0.993 |
+| method | regime                 | precision | recall |    f1 | covering |
+|:-------|:-----------------------|----------:|-------:|------:|---------:|
+| binseg | high SNR (jump 2.5 sd) |      0.95 |   0.95 | 0.950 |    0.993 |
+| fpop   | high SNR (jump 2.5 sd) |      0.95 |   0.95 | 0.950 |    0.993 |
+| pelt   | high SNR (jump 2.5 sd) |      0.95 |   0.95 | 0.950 |    0.993 |
+| binseg | low SNR (jump 1.0 sd)  |      0.65 |   0.60 | 0.617 |    0.852 |
+| fpop   | low SNR (jump 1.0 sd)  |      0.65 |   0.65 | 0.650 |    0.884 |
+| pelt   | low SNR (jump 1.0 sd)  |      0.70 |   0.65 | 0.667 |    0.857 |
 
-Mean accuracy over 10 replications (margin = 5). {.table}
+Mean accuracy over 10 replications per regime (margin = 5). {.table}
+
+Two regimes are enough to reproduce the claim this article opened with.
+In the high-SNR panel the problem is close to solved and the methods are
+hard to tell apart; shrinking the jump to one noise standard deviation
+lowers all four metrics for every method and opens a visible gap between
+them, so an ordering read off the easy regime need not survive into the
+hard one. Accuracy is a property of the (method, signal, noise) triple
+rather than of the method alone, which is why this loop is worth running
+on the series at hand instead of adopting a ranking from the literature.
 
 The same skeleton scales to the studies of van den Burg and Williams
 (2020): more generators (heavy-tailed and autocorrelated noise via
@@ -526,7 +632,7 @@ of **ggchangepoint**’s toolkit follows three principles. First, *a
 common representation makes comparison trivial*: because every engine
 returns the same `ggcpt` contract in the same location convention,
 [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
-and the metrics module work for all thirty-plus methods without special
+and the metrics module work for all 31 wired methods without special
 cases. Second, *metrics must agree with their pictures*:
 [`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md)
 and

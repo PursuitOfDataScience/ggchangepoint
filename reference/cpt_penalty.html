@@ -64,7 +64,9 @@ detection methods. Returns a numeric penalty value.</p>
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
 <dd><p>Number of parameters per changepoint (typically 2 for
-mean+variance, 1 for mean-only). Defaults to 1.</p></dd>
+mean+variance, 1 for mean-only). Defaults to 1. The <code>"MBIC"</code>
+penalty additionally reads <code>k</code> as the number of changepoints being
+placed, in its \(\log{n \choose k}\) term.</p></dd>
 
 
 <dt id="arg-value">value<a class="anchor" aria-label="anchor" href="#arg-value"></a></dt>
@@ -102,11 +104,16 @@ mean+variance, 1 for mean-only). Defaults to 1.</p></dd>
     <code>bocpd</code>, <code>beast</code>, <code>cpm</code>, <code>sn</code>): are tuned by a
     significance level, posterior-probability threshold, hazard, or
     average run length rather than a penalty; see each wrapper.</p></li>
-<li><p><strong><code>MBIC</code></strong> in <code>cpt_penalty()</code> uses the
-    Zhang-Siegmund (2007) formula \(0.5(k+1)\log n + \log{n \choose k}\),
-    which differs from the <span class="pkg">changepoint</span> package's MBIC. Use the
-    character <code>"MBIC"</code> with <span class="pkg">changepoint</span>-based methods to get
-    the engine's native MBIC.</p></li>
+<li><p><strong><code>MBIC</code></strong> in <code>cpt_penalty()</code> is a BIC-type penalty
+    that adds a combinatorial term for the number of ways <code>k</code>
+    changepoints can be placed in <code>n</code> observations,
+    \(0.5(k+1)\log n + \log{n \choose k}\). It is deliberately stronger
+    than <code>"BIC"</code>. It is <em>not</em> the modified BIC of Zhang and
+    Siegmund (2007), whose penalty
+    \(1.5 k \log n + 0.5 \sum_i \log(l_i / n)\) depends on the segment
+    lengths \(l_i\) and so cannot be expressed by a function of
+    <code>n</code> and <code>k</code> alone. Use the character <code>"MBIC"</code> with
+    <span class="pkg">changepoint</span>-based methods to get the engine's native MBIC.</p></li>
 </ul></div>
 
     <div class="section level2">

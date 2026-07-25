@@ -14,7 +14,7 @@ populate the `ci_lower`/`ci_upper` columns of the result and render via
 ## Usage
 
 ``` r
-smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce", "poisson"), ...)
+smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
 ```
 
 ## Arguments
@@ -31,9 +31,12 @@ smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce", "poisson"), ...)
 
 - family:
 
-  Noise model: `"gauss"` (SMUCE, homogeneous Gaussian noise), `"hsmuce"`
-  (HSMUCE, segment-wise variance), or `"poisson"` (SMUCE for Poisson
-  counts). Defaults to `"gauss"`.
+  Noise model: `"gauss"` (SMUCE, homogeneous Gaussian noise) or
+  `"hsmuce"` (HSMUCE, segment-wise variance). Defaults to `"gauss"`. The
+  remaining `stepR` families (`"jsmurf"`, `"mDependentPS"`, ...) all
+  require a filter or covariance specification; call
+  [`stepR::stepFit()`](https://rdrr.io/pkg/stepR/man/stepFit.html)
+  directly for those.
 
 - ...:
 

@@ -52,7 +52,10 @@ cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
 - ...:
 
   Additional arguments passed to the specific wrapper (see the wrapper's
-  help page for engine-specific options).
+  help page for engine-specific options). Where an argument is also
+  derived from `change_in` (`not`'s `contrast`, `cpm`'s `cpm_type`,
+  `kcp`'s `running_stat`, `sn`'s `parameter`, `fastcpd`'s `family`), a
+  value supplied here takes precedence.
 
 ## Value
 
@@ -70,7 +73,7 @@ result
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         MBIC = NA 
+#>   Penalty:         MBIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:

@@ -2,7 +2,7 @@
 
 Wraps
 [`CptNonPar::np.mojo()`](https://rdrr.io/pkg/CptNonPar/man/np.mojo.html)
-(McGonigle and Cho, 2023): nonparametric moving-sum detection of changes
+(McGonigle and Cho, 2025): nonparametric moving-sum detection of changes
 in the marginal or joint distribution of a (possibly multivariate) time
 series, robust to serial dependence.
 
@@ -34,7 +34,9 @@ npmojo_wrapper(x, G = NULL, lag = 0, ...)
 
 ## Value
 
-A `ggcpt` object.
+A `ggcpt` object. Constant coordinates leave the kernel statistics
+undefined, so they are dropped (with a warning) before detection and an
+all-constant input returns an empty result.
 
 ## References
 

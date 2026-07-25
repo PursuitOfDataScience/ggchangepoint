@@ -104,9 +104,9 @@ nonparametric divergence measures, Bayesian posteriors — each with its
 own inductive bias <span class="citation">(Aminikhanghahi and Cook 2017;
 Truong et al. 2020)</span>. Benchmarks that score many algorithms on
 many series find no uniform winner: performance depends on the kind of
-change (mean, variance, distribution), the noise (Gaussian, heavy
-tailed, autocorrelated), the number and spacing of changes, and the
-tuning of penalties and thresholds <span class="citation">(<span class="nocase">van den Burg and Williams</span> 2020)</span>. Two
+change (mean, variance, distribution), the noise (Gaussian,
+heavy-tailed, autocorrelated), the number and spacing of changes, and
+the tuning of penalties and thresholds <span class="citation">(<span class="nocase">van den Burg and Williams</span> 2020)</span>. Two
 practical consequences follow. First, an analyst should <em>compare</em>
 several methods on the data at hand rather than trust one default.
 Second, when ground truth (or expert annotation) exists, comparison
@@ -179,23 +179,26 @@ method:</p>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span><span class="op">)</span></span></code></pre></div>
 <p><img src="comparison_files/figure-html/compare-facet-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
-<p>A method that finds <em>no</em> changepoints keeps its (empty-ruled)
-panel rather than silently disappearing — a method that ran and found
-nothing is a result, not a missing value:</p>
+<p>A method that finds <em>no</em> changepoints keeps its panel —
+ruleless, but present — rather than silently disappearing. A method that
+ran and found nothing is a result, not a missing value:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">7</span><span class="op">)</span></span>
 <span><span class="va">x_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">300</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x_null</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="comparison_files/figure-html/compare-nochange-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
 <p>The <code>layout = "overlay"</code> variant superimposes all methods
-in a single panel with colour-coded rules, which makes small
-disagreements in estimated locations easier to see:</p>
+in a single panel with colour-coded rules, which makes both kinds of
+disagreement easier to see: small differences in an estimated location,
+and outright differences in how many changepoints a method reports.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span>, layout <span class="op">=</span> <span class="st">"overlay"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="comparison_files/figure-html/compare-overlay-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
 <p>For a numeric rather than visual comparison,
 <code><a href="../reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code> returns one tidy tibble with a row
-per (method, changepoint) pair:</p>
+per (method, changepoint) pair; a method that found nothing contributes
+a single row with <code>cp = NA</code>, which is the table’s version of
+keeping the empty panel:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare_table.html">ggcpt_compare_table</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 9 × 3</span></span></span>
@@ -213,7 +216,9 @@ per (method, changepoint) pair:</p>
 <p>Because every row carries the same columns, this table pipes directly
 into <strong>dplyr</strong>/<strong>ggplot2</strong> summaries —
 counting detections per method, plotting location agreement, and so on
-<span class="citation">(Wickham 2016)</span>.</p>
+<span class="citation">(Wickham 2016)</span>. When the detectors are
+slow, <code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code> honours <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code>
+(through <strong>future.apply</strong>) and fits them in parallel.</p>
 </div>
 <div class="section level2">
 <h2 id="accuracy-metrics">Accuracy metrics<a class="anchor" aria-label="anchor" href="#accuracy-metrics"></a>
@@ -241,9 +246,13 @@ matched pairs,
 \mathrm{recall} = \frac{\mathrm{TP}}{|\mathcal{T}|}, \qquad
 F_1 = \frac{2\,\mathrm{precision}\cdot\mathrm{recall}}
            {\mathrm{precision} + \mathrm{recall}},
-</annotation></semantics></math> which guarantees all three lie in
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0, 1]</annotation></semantics></math>
-— three predictions crowded around one true change score one true
+</annotation></semantics></math> with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>F</mi><mn>1</mn></msub><mo>=</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">F_1 = 0</annotation></semantics></math>
+by convention when precision and recall are both zero. Because
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi mathvariant="normal">T</mi><mi mathvariant="normal">P</mi></mrow><annotation encoding="application/x-tex">\mathrm{TP}</annotation></semantics></math>
+counts <em>pairs</em>, all three quantities lie in
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mn>0</mn><mo>,</mo><mn>1</mn><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[0, 1]</annotation></semantics></math>:
+three predictions crowded around one true change score one true
 positive, not three.</p>
 <p><strong>The covering metric.</strong> Following <span class="citation"><span class="nocase">van den Burg and Williams</span>
 (2020)</span>, let
@@ -263,17 +272,20 @@ is
   \max_{A' \in \mathcal{S}'} J(A, A'),
 </annotation></semantics></math> a weighted average of the best overlap
 achieved for each true segment.</p>
-<p><strong>Hausdorff distance.</strong> The worst-case location error
+<p><strong>Hausdorff distance.</strong> The worst-case location error,
+in index units,
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mo stretchy="false" form="prefix">{</mo><msub><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mi>p</mi></msub><msub><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mi>t</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>p</mi><mo>−</mo><mi>t</mi><mo stretchy="false" form="prefix">|</mo><mo>,</mo><mspace width="0.278em"></mspace><msub><mrow><mi mathvariant="normal">max</mi><mo>⁡</mo></mrow><mi>t</mi></msub><msub><mrow><mi mathvariant="normal">min</mi><mo>⁡</mo></mrow><mi>p</mi></msub><mo stretchy="false" form="prefix">|</mo><mi>p</mi><mo>−</mo><mi>t</mi><mo stretchy="false" form="prefix">|</mo><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">\max\{\max_p \min_t |p - t|,\; \max_t \min_p |p - t|\}</annotation></semantics></math>;
-it is <code>NA</code> when either set is empty (there is no distance to
-a nonexistent point).</p>
+it is <code>NA</code> when either set is empty, since there is no
+distance to a nonexistent point.</p>
 <p><strong>Adjusted Rand index.</strong> The chance-corrected agreement
 of the two induced segment labellings; 1 for identical partitions, 0 for
 chance-level agreement.</p>
 <p><strong>Annotation error and matched location errors.</strong> The
 absolute difference in counts
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">|</mo><mo stretchy="false" form="prefix">|</mo><mi>𝒫</mi><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mo stretchy="false" form="prefix">|</mo><mi>𝒯</mi><mo stretchy="false" form="prefix">|</mo><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">\bigl||\mathcal{P}| - |\mathcal{T}|\bigr|</annotation></semantics></math>,
-and the MAE/RMSE of the matched location pairs.</p>
+and the MAE/RMSE of the matched location pairs — the latter two
+<code>NA</code> when nothing matched, because an average over no pairs
+is not zero error.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># perfect detection</span></span>
 <span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">300</span><span class="op">)</span>, truth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">300</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">500</span><span class="op">)</span></span>
@@ -307,22 +319,23 @@ wrong silently corrupts benchmark averages:</p>
 <li>
 <strong>Both sets empty.</strong> Predicting “no changepoints” for a
 series with no changepoints is <em>exactly right</em>, so precision,
-recall, F1, covering, and the Rand index all equal 1.</li>
+recall, F1, covering, and the Rand index all equal 1. (Hausdorff
+distance and the matched-location errors remain <code>NA</code>: there
+are no pairs to measure.)</li>
 <li>
 <strong>Empty prediction, non-empty truth.</strong> An empty
-changepoint set induces the trivial one-segment partition, which is a
-perfectly well-defined partition: covering scores it by segment overlap
-(not an automatic 0), while the adjusted Rand index is 0 (chance-level
-agreement) and precision/recall are
-<ol start="0" style="list-style-type: decimal"><li>
-</li></ol>
-</li>
+changepoint set still induces a perfectly well-defined partition — the
+trivial one with a single segment — so covering scores it by segment
+overlap rather than awarding an automatic 0. Precision and recall are 0,
+and the adjusted Rand index is 0 because the trivial partition agrees
+with the truth only at chance level.</li>
 <li>
 <strong>Out-of-range indices.</strong> Changepoint locations must
 lie in
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">{</mo><mn>1</mn><mo>,</mo><mi>…</mi><mo>,</mo><mi>n</mi><mo>−</mo><mn>1</mn><mo stretchy="false" form="postfix">}</mo></mrow><annotation encoding="application/x-tex">\{1, \dots, n-1\}</annotation></semantics></math>
 under the left convention; anything outside is dropped with a warning
-rather than crashing the partition construction.</li>
+rather than corrupting the partition construction, and the metrics are
+then computed on what remains.</li>
 </ul>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># a correct "no change" answer is rewarded</span></span>
@@ -334,12 +347,23 @@ rather than crashing the partition construction.</li>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span>
 <span></span>
-<span><span class="co"># empty prediction against one true change: trivial-partition covering</span></span>
+<span><span class="co"># empty prediction against one true change at the midpoint: the trivial</span></span>
+<span><span class="co"># one-segment partition still overlaps half the series, so covering is 0.5</span></span>
 <span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span>, truth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 12</span></span></span>
 <span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering hausdorff rand_index</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   300      0       1         0      0     0      0.5        <span style="color: #BB0000;">NA</span>          0</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span></code></pre></div>
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="co"># index 700 cannot be a changepoint of a length-500 series</span></span>
+<span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span>pred <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">700</span><span class="op">)</span>, truth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">300</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">500</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: Dropping changepoint indices outside 1..(n-1): 700</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 12</span></span></span>
+<span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering hausdorff rand_index</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   500      1       2         1    0.5 0.667      0.6       200      0.418</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span></code></pre></div>
 </div>
@@ -354,7 +378,7 @@ Williams</span> 2020)</span> therefore scores a prediction against
 <code><a href="../reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code> implements this convention: it
 takes a list of annotation vectors and returns the averaged precision,
 recall, F1, and covering.</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">annotations</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  ann1 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">300</span><span class="op">)</span>,</span>
 <span>  ann2 <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">152</span>, <span class="fl">301</span><span class="op">)</span>,</span>
@@ -365,6 +389,20 @@ recall, F1, and covering.</p>
 <span><span class="co">#&gt;       n n_annotators n_pred precision recall    f1 covering</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   500            3      2     0.833      1 0.889    0.895</span></span></code></pre></div>
+<p>Averaging <em>per annotator</em> rather than pooling the annotations
+matters. The prediction matches both of the first two annotators
+completely; against the third it finds the one change that annotator
+marked but also reports a second one, scoring precision
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mn>2</mn></mrow><annotation encoding="application/x-tex">1/2</annotation></semantics></math>
+and recall
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math>.
+The averages are therefore precision
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>5</mn><mi>/</mi><mn>6</mn></mrow><annotation encoding="application/x-tex">5/6</annotation></semantics></math>
+and recall
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>1</mn><annotation encoding="application/x-tex">1</annotation></semantics></math>:
+the disagreement is charged to precision, which is the honest place for
+it, since the extra detection may well be real and merely
+unannotated.</p>
 </div>
 <div class="section level2">
 <h2 id="visual-evaluation">Visual evaluation<a class="anchor" aria-label="anchor" href="#visual-evaluation"></a>
@@ -375,12 +413,12 @@ colours each prediction as a true positive or false positive, with
 missed truths drawn as dashed “Miss” rules. It uses the <em>same
 one-to-one matching</em> as <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code>, so the picture
 and the numbers always agree:</p>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">300</span><span class="op">)</span></span>
 <span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">151</span>, <span class="fl">240</span><span class="op">)</span>      <span class="co"># one hit, one false alarm, one miss</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_eval.html">ggcpt_eval</a></span><span class="op">(</span><span class="va">pred</span>, <span class="va">truth</span>, data_vec <span class="op">=</span> <span class="va">x</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/eval-plot-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<p><img src="comparison_files/figure-html/eval-plot-1.png" class="r-plt" alt="Series with predictions coloured as true positives and false positives, shaded tolerance windows around each true changepoint, and missed truths as dashed rules" width="768"></p>
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span><span class="va">pred</span>, <span class="va">truth</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 12</span></span></span>
 <span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering hausdorff rand_index</span></span>
@@ -388,6 +426,11 @@ and the numbers always agree:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   500      2       2       0.5    0.5   0.5    0.784        60      0.696</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span></code></pre></div>
+<p>One true positive out of two predictions and two truths gives
+precision, recall, and F1 all equal to
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.5</mn><annotation encoding="application/x-tex">0.5</annotation></semantics></math>
+— the single blue rule, the single orange rule, and the single dashed
+rule in the plot, counted.</p>
 </div>
 <div class="section level2">
 <h2 id="uncertainty-beyond-point-sets">Uncertainty beyond point sets<a class="anchor" aria-label="anchor" href="#uncertainty-beyond-point-sets"></a>
@@ -404,11 +447,16 @@ quantify how much confidence it deserves.</p>
 the probability of overestimating the number of changepoints, and
 returns a confidence interval for every location; the Bai–Perron dynamic
 program <span class="citation">(Bai and Perron 2003; Zeileis et al.
-2002)</span> returns break-date intervals for regression breaks. Both
-populate <code>ci_lower</code>/<code>ci_upper</code> columns on the
-<code>ggcpt</code> changepoints tibble, and
-<code>autoplot(show_ci = TRUE)</code> draws them as whiskers:</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+2002)</span> returns break-date intervals for regression breaks. Four
+wrapped engines report such intervals — <code>smuce</code>,
+<code>hsmuce</code>, <code>strucchange</code>, and
+<code>segmented</code> — as <code>ci_lower</code>/<code>ci_upper</code>
+columns on the <code>ggcpt</code> changepoints tibble, which
+<code>autoplot(show_ci = TRUE)</code> draws as whiskers below the
+series. <code>show_fit = TRUE</code> adds the engine’s own fitted
+signal, available here and from <code>decafs</code>, <code>cpop</code>,
+<code>segmented</code>, <code>bcp</code>, and <code>beast</code>:</p>
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_smuce</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/smuce_wrapper.html">smuce_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_smuce</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
@@ -417,8 +465,8 @@ populate <code>ci_lower</code>/<code>ci_upper</code> columns on the
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   150     1.05      146      152</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   300     3.14      295      306</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_smuce</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/smuce-ci-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<p><img src="comparison_files/figure-html/smuce-ci-1.png" class="r-plt" alt="Series with the SMUCE step fit overlaid and confidence-interval whiskers for each estimated changepoint location" width="768"></p>
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_bp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/strucchange_wrapper.html">strucchange_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_bp</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
@@ -426,6 +474,9 @@ populate <code>ci_lower</code>/<code>ci_upper</code> columns on the
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   150     1.05      149      152</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   300     3.14      297      303</span></span></code></pre></div>
+<p>Such intervals are worth reading alongside each other: two engines
+can agree on where a change is and still, under their different noise
+models, disagree about how tightly the location is pinned down.</p>
 </div>
 <div class="section level3">
 <h3 id="bootstrap-stability">Bootstrap stability<a class="anchor" aria-label="anchor" href="#bootstrap-stability"></a>
@@ -438,7 +489,7 @@ reports the proportion of replicates that re-detect a change within
 <code>margin</code> of each index. Locations that survive resampling are
 trustworthy; locations that appear in only a fraction of replicates are
 fragile.</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_stability.html">cpt_stability</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, B <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">st</span></span>
 <span><span class="co">#&gt; ggcpt_stability (30 bootstrap replicates, method: pelt)</span></span>
@@ -450,7 +501,12 @@ fragile.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   150         1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   300         1</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/stability-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
+<p><img src="comparison_files/figure-html/stability-1.png" class="r-plt" alt="Bootstrap detection-frequency profile along the series index, with the original changepoints marked as dashed rules" width="768"></p>
+<p>Both changepoints here are re-detected in every replicate, so the
+point estimate is as stable as this diagnostic can report. The profile
+is also informative where the print method is silent: a broad, low
+plateau marks a region the detector keeps splitting somewhere without
+agreeing where.</p>
 </div>
 <div class="section level3">
 <h3 id="penalty-path-sensitivity-crops">Penalty-path sensitivity: CROPS<a class="anchor" aria-label="anchor" href="#penalty-path-sensitivity-crops"></a>
@@ -461,12 +517,10 @@ and the segmentation can change qualitatively as
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
 moves. CROPS <span class="citation">(Haynes et al. 2017)</span> computes
 <em>every</em> optimal segmentation as the penalty ranges over an
-interval, at roughly one PELT run per distinct solution.
-<code><a href="../reference/cpt_crops.html">cpt_crops()</a></code> returns the full path; the elbow plot shows
-where adding changepoints stops paying for itself, and the segmentation
-facets show the actual candidate models being chosen among — penalty
-selection as a diagnostic rather than a guess:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+interval, at roughly one PELT run per distinct solution — penalty
+selection as a diagnostic rather than a guess. <code><a href="../reference/cpt_crops.html">cpt_crops()</a></code>
+returns the full path:</p>
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="va">path</span></span>
 <span><span class="co">#&gt; ggcpt_path (CROPS penalty path)</span></span>
@@ -479,12 +533,28 @@ selection as a diagnostic rather than a guess:</p>
 <span><span class="co">#&gt;   penalty n_cpts  cost</span></span>
 <span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    9.36      2  468.</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>    6.21      3  459.</span></span>
-<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span>                          <span class="co"># cost elbow</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/crops-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span>, type <span class="op">=</span> <span class="st">"segmentations"</span><span class="op">)</span>  <span class="co"># the candidate segmentations</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/crops-2.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>    6.21      3  459.</span></span></code></pre></div>
+<p>Over the default range
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo stretchy="false" form="prefix">[</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mo>,</mo><mn>10</mn><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mo stretchy="false" form="postfix">]</mo></mrow><annotation encoding="application/x-tex">[\log n, 10 \log n]</annotation></semantics></math>
+this series admits only two distinct segmentations, and the
+two-changepoint solution holds over all but the very bottom of it. That
+insensitivity is itself the diagnostic: on a signal this cleanly
+separated, the answer does not depend on the penalty. Lowering
+<code>pen_min</code> opens up the rest of the path, where the elbow plot
+shows the cost reduction per additional changepoint flattening out and
+the segmentation facets show the candidate models being chosen
+among:</p>
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">path_wide</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="va">x</span>, pen_min <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path_wide</span><span class="op">)</span>                          <span class="co"># cost elbow</span></span></code></pre></div>
+<p><img src="comparison_files/figure-html/crops-elbow-1.png" class="r-plt" alt="CROPS cost elbow: segmentation cost plotted against the number of changepoints for each solution on the penalty path" width="768"></p>
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path_wide</span>, type <span class="op">=</span> <span class="st">"segmentations"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="comparison_files/figure-html/crops-segs-1.png" class="r-plt" alt="The candidate CROPS segmentations, faceted by number of changepoints, each panel showing the series with that solution's changepoints" width="768"></p>
+<p>Both <code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> and <code><a href="../reference/cpt_crops.html">cpt_crops()</a></code>
+operate on a single numeric series and reject multi-column input; for a
+panel of series, loop over the columns (or use <code><a href="../reference/cpt_batch.html">cpt_batch()</a></code>
+for the detection step).</p>
 </div>
 </div>
 <div class="section level2">
@@ -493,49 +563,66 @@ selection as a diagnostic rather than a guess:</p>
 <p>The package’s simulation module closes the loop: generators with
 <em>known</em> truth feed the metrics module, so methods can be scored
 over replications. <code><a href="../reference/cpt_simulate.html">cpt_simulate()</a></code> draws series with
-specified changepoints, and the canonical test signals ship as
-ready-made generators — including <code><a href="../reference/signal_blocks.html">signal_blocks()</a></code>, the
-Donoho–Johnstone blocks signal <span class="citation">(Donoho and
-Johnstone 1994)</span>, plus <code><a href="../reference/signal_teeth.html">signal_teeth()</a></code> and
-<code><a href="../reference/signal_stairs.html">signal_stairs()</a></code>.</p>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+specified changepoints under Gaussian,
+Student-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>,
+AR(1), or random-walk noise, and the canonical test signals of the
+literature ship as ready-made generators: <code><a href="../reference/signal_blocks.html">signal_blocks()</a></code>
+<span class="citation">(the Donoho–Johnstone blocks signal, Donoho and
+Johnstone 1994)</span>, <code><a href="../reference/signal_fms.html">signal_fms()</a></code>,
+<code><a href="../reference/signal_mix.html">signal_mix()</a></code>, <code><a href="../reference/signal_teeth.html">signal_teeth()</a></code>, and
+<code><a href="../reference/signal_stairs.html">signal_stairs()</a></code>. Every generator attaches its true
+changepoints as a <code>true_changepoints</code> attribute, which is
+exactly the <code>truth</code> argument <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code>
+expects.</p>
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">blocks</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/signal_blocks.html">signal_blocks</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">500</span>, seed <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">blocks</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">index</span>, <span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>colour <span class="op">=</span> <span class="st">"grey40"</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">blocks</span>, <span class="st">"true_changepoints"</span><span class="op">)</span>,</span>
 <span>             colour <span class="op">=</span> <span class="st">"blue"</span>, linewidth <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"signal_blocks(): Donoho-Johnstone blocks with true changepoints"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/signals-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
-<p>A minimal benchmark: three methods, ten replications of a two-change
-series, scored by precision, recall, F1, and covering. (For clarity we
-keep everything sequential and small; <code><a href="../reference/cpt_batch.html">cpt_batch()</a></code> runs one
-method over many series and honours <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for
-parallel execution in larger studies.)</p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<p><img src="comparison_files/figure-html/signals-1.png" class="r-plt" alt="Donoho-Johnstone blocks test signal with its eleven true changepoints marked by vertical rules" width="768"></p>
+<p>A minimal benchmark: three methods, two signal-to-noise regimes, ten
+replications each, scored by precision, recall, F1, and covering. The
+two regimes differ only in the size of the jumps — 2.5 noise standard
+deviations against 1.0 — so any difference between the panels is
+attributable to difficulty alone. (Everything stays sequential and small
+here; <code><a href="../reference/cpt_batch.html">cpt_batch()</a></code> runs one method over many series and
+honours <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for parallel execution in larger
+studies.)</p>
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">methods</span> <span class="op">&lt;-</span> <span class="va">cmp_methods</span><span class="op">[</span><span class="fl">1</span><span class="op">:</span><span class="fl">3</span><span class="op">]</span></span>
 <span><span class="va">n_rep</span> <span class="op">&lt;-</span> <span class="fl">10</span></span>
+<span><span class="va">regimes</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<span>  <span class="st">"high SNR (jump 2.5 sd)"</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2.5</span>, <span class="fl">0.5</span><span class="op">)</span>,</span>
+<span>  <span class="st">"low SNR (jump 1.0 sd)"</span>  <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">1.0</span>, <span class="fl">0.3</span><span class="op">)</span></span>
+<span><span class="op">)</span></span>
 <span></span>
-<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_rep</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="op">{</span></span>
-<span>  <span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_simulate.html">cpt_simulate</a></span><span class="op">(</span><span class="fl">400</span>, changepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">130</span>, <span class="fl">260</span><span class="op">)</span>, change_in <span class="op">=</span> <span class="st">"mean"</span>,</span>
-<span>                      params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">2.5</span>, <span class="fl">0.5</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fl">1</span>, seed <span class="op">=</span> <span class="fl">100</span> <span class="op">+</span> <span class="va">r</span><span class="op">)</span></span>
-<span>  <span class="va">truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dat</span>, <span class="st">"true_changepoints"</span><span class="op">)</span></span>
-<span>  <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">methods</span>, <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
-<span>    <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">dat</span><span class="op">$</span><span class="va">value</span>, method <span class="op">=</span> <span class="va">m</span><span class="op">)</span></span>
-<span>    <span class="va">score</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">changepoints</span><span class="op">$</span><span class="va">cp</span>, <span class="va">truth</span>, n <span class="op">=</span> <span class="fl">400</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span>    <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>rep <span class="op">=</span> <span class="va">r</span>, method <span class="op">=</span> <span class="va">m</span><span class="op">)</span>,</span>
-<span>          <span class="va">score</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"precision"</span>, <span class="st">"recall"</span>, <span class="st">"f1"</span>, <span class="st">"covering"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span><span class="va">results</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/names.html" class="external-link">names</a></span><span class="op">(</span><span class="va">regimes</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">g</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_len</a></span><span class="op">(</span><span class="va">n_rep</span><span class="op">)</span>, <span class="kw">function</span><span class="op">(</span><span class="va">r</span><span class="op">)</span> <span class="op">{</span></span>
+<span>    <span class="va">dat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_simulate.html">cpt_simulate</a></span><span class="op">(</span><span class="fl">400</span>, changepoints <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">130</span>, <span class="fl">260</span><span class="op">)</span>, change_in <span class="op">=</span> <span class="st">"mean"</span>,</span>
+<span>                        params <span class="op">=</span> <span class="va">regimes</span><span class="op">[[</span><span class="va">g</span><span class="op">]</span><span class="op">]</span>, sd <span class="op">=</span> <span class="fl">1</span>, seed <span class="op">=</span> <span class="fl">100</span> <span class="op">+</span> <span class="va">r</span><span class="op">)</span></span>
+<span>    <span class="va">truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">dat</span>, <span class="st">"true_changepoints"</span><span class="op">)</span></span>
+<span>    <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="va">rbind</span>, <span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply</a></span><span class="op">(</span><span class="va">methods</span>, <span class="kw">function</span><span class="op">(</span><span class="va">m</span><span class="op">)</span> <span class="op">{</span></span>
+<span>      <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">dat</span><span class="op">$</span><span class="va">value</span>, method <span class="op">=</span> <span class="va">m</span><span class="op">)</span></span>
+<span>      <span class="va">score</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span><span class="va">fit</span><span class="op">$</span><span class="va">changepoints</span><span class="op">$</span><span class="va">cp</span>, <span class="va">truth</span>, n <span class="op">=</span> <span class="fl">400</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
+<span>      <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>regime <span class="op">=</span> <span class="va">g</span>, rep <span class="op">=</span> <span class="va">r</span>, method <span class="op">=</span> <span class="va">m</span><span class="op">)</span>,</span>
+<span>            <span class="va">score</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"precision"</span>, <span class="st">"recall"</span>, <span class="st">"f1"</span>, <span class="st">"covering"</span><span class="op">)</span><span class="op">]</span><span class="op">)</span></span>
+<span>    <span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span>  <span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="op">}</span><span class="op">)</span><span class="op">)</span></span>
 <span></span>
-<span><span class="co"># average over replications</span></span>
-<span><span class="va">res_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">precision</span>, <span class="va">recall</span>, <span class="va">f1</span>, <span class="va">covering</span><span class="op">)</span> <span class="op">~</span> <span class="va">method</span>,</span>
+<span><span class="co"># average over replications, within regime</span></span>
+<span><span class="va">res_summary</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span><span class="va">precision</span>, <span class="va">recall</span>, <span class="va">f1</span>, <span class="va">covering</span><span class="op">)</span> <span class="op">~</span> <span class="va">method</span> <span class="op">+</span> <span class="va">regime</span>,</span>
 <span>                         data <span class="op">=</span> <span class="va">results</span>, FUN <span class="op">=</span> <span class="va">mean</span><span class="op">)</span></span>
 <span><span class="fu">knitr</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/pkg/knitr/man/kable.html" class="external-link">kable</a></span><span class="op">(</span><span class="va">res_summary</span>, digits <span class="op">=</span> <span class="fl">3</span>,</span>
-<span>             caption <span class="op">=</span> <span class="st">"Mean accuracy over 10 replications (margin = 5)."</span><span class="op">)</span></span></code></pre></div>
+<span>             caption <span class="op">=</span> <span class="st">"Mean accuracy over 10 replications per regime (margin = 5)."</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
-<caption>Mean accuracy over 10 replications (margin = 5).</caption>
+<caption>Mean accuracy over 10 replications per regime (margin =
+5).</caption>
 <thead><tr class="header">
 <th align="left">method</th>
+<th align="left">regime</th>
 <th align="right">precision</th>
 <th align="right">recall</th>
 <th align="right">f1</th>
@@ -544,27 +631,63 @@ parallel execution in larger studies.)</p>
 <tbody>
 <tr class="odd">
 <td align="left">binseg</td>
+<td align="left">high SNR (jump 2.5 sd)</td>
 <td align="right">0.95</td>
 <td align="right">0.95</td>
-<td align="right">0.95</td>
+<td align="right">0.950</td>
 <td align="right">0.993</td>
 </tr>
 <tr class="even">
 <td align="left">fpop</td>
+<td align="left">high SNR (jump 2.5 sd)</td>
 <td align="right">0.95</td>
 <td align="right">0.95</td>
-<td align="right">0.95</td>
+<td align="right">0.950</td>
 <td align="right">0.993</td>
 </tr>
 <tr class="odd">
 <td align="left">pelt</td>
+<td align="left">high SNR (jump 2.5 sd)</td>
 <td align="right">0.95</td>
 <td align="right">0.95</td>
-<td align="right">0.95</td>
+<td align="right">0.950</td>
 <td align="right">0.993</td>
+</tr>
+<tr class="even">
+<td align="left">binseg</td>
+<td align="left">low SNR (jump 1.0 sd)</td>
+<td align="right">0.65</td>
+<td align="right">0.60</td>
+<td align="right">0.617</td>
+<td align="right">0.852</td>
+</tr>
+<tr class="odd">
+<td align="left">fpop</td>
+<td align="left">low SNR (jump 1.0 sd)</td>
+<td align="right">0.65</td>
+<td align="right">0.65</td>
+<td align="right">0.650</td>
+<td align="right">0.884</td>
+</tr>
+<tr class="even">
+<td align="left">pelt</td>
+<td align="left">low SNR (jump 1.0 sd)</td>
+<td align="right">0.70</td>
+<td align="right">0.65</td>
+<td align="right">0.667</td>
+<td align="right">0.857</td>
 </tr>
 </tbody>
 </table>
+<p>Two regimes are enough to reproduce the claim this article opened
+with. In the high-SNR panel the problem is close to solved and the
+methods are hard to tell apart; shrinking the jump to one noise standard
+deviation lowers all four metrics for every method and opens a visible
+gap between them, so an ordering read off the easy regime need not
+survive into the hard one. Accuracy is a property of the (method,
+signal, noise) triple rather than of the method alone, which is why this
+loop is worth running on the series at hand instead of adopting a
+ranking from the literature.</p>
 <p>The same skeleton scales to the studies of <span class="citation"><span class="nocase">van den Burg and Williams</span>
 (2020)</span>: more generators (heavy-tailed and autocorrelated noise
 via <code>cpt_simulate(noise = "t")</code> and
@@ -581,7 +704,7 @@ The design of <strong>ggchangepoint</strong>’s toolkit follows three
 principles. First, <em>a common representation makes comparison
 trivial</em>: because every engine returns the same <code>ggcpt</code>
 contract in the same location convention, <code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code>
-and the metrics module work for all thirty-plus methods without special
+and the metrics module work for all 31 wired methods without special
 cases. Second, <em>metrics must agree with their pictures</em>:
 <code><a href="../reference/ggcpt_eval.html">ggcpt_eval()</a></code> and <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> share one
 matching routine, so a plotted true positive is a counted true positive.

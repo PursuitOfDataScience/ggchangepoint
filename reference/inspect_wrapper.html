@@ -90,7 +90,11 @@ Monte Carlo (via the engine).</p></dd>
   <code>strength</code> column (the maximum projected CUSUM statistic). The
   first coordinate is used for <code>cp_value</code> and the univariate plot
   line; the full matrix is kept for the faceted multivariate
-  <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</p>
+  <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>. Coordinates that are constant carry no changepoint
+  information and would make the engine's variance rescaling undefined, so
+  they are dropped (with a warning) before detection and an all-constant
+  matrix returns an empty result; the dropped coordinates are still kept
+  for plotting, and reported locations always refer to the original rows.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

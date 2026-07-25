@@ -43,6 +43,11 @@ A `ggcpt` object. The changepoints tibble carries a `strength` column
 for `cp_value` and the univariate plot line; the full matrix is kept for
 the faceted multivariate
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
+Coordinates that are constant carry no changepoint information and would
+make the engine's variance rescaling undefined, so they are dropped
+(with a warning) before detection and an all-constant matrix returns an
+empty result; the dropped coordinates are still kept for plotting, and
+reported locations always refer to the original rows.
 
 ## References
 

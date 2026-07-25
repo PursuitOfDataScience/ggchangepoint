@@ -25,10 +25,12 @@ cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)
 
   Test statistic, passed to
   [`cpm::processStream()`](https://rdrr.io/pkg/cpm/man/processStream.html)
-  as `cpmType`. One of `"Mann-Whitney"`, `"Mood"`, `"Lepage"`,
-  `"Kolmogorov-Smirnov"`, `"Cramer-von-Mises"`, `"Student"`,
-  `"Bartlett"`, `"GLR"`, `"Exponential"`, `"GLRAdjusted"`, `"FET"`.
-  Defaults to `"Mann-Whitney"`.
+  as `cpmType`. Distribution-free: `"Mann-Whitney"` (location, the
+  default), `"Mood"` (scale), `"Lepage"`, `"Kolmogorov-Smirnov"`,
+  `"Cramer-von-Mises"`. Parametric: `"Student"`, `"Bartlett"`, `"GLR"`
+  (Gaussian), `"Exponential"` (positive data), `"FET"` (Fisher's exact
+  test, for 0/1 Bernoulli data — this one also needs a `lambda` value
+  passed through `...`, e.g. `lambda = 0.3`).
 
 - arl0:
 

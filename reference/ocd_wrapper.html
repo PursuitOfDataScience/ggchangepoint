@@ -79,7 +79,11 @@ found.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A numeric matrix (rows are time points) or vector.</p></dd>
+<dd><p>A numeric matrix or data frame with one row per time point and at
+least two columns. The <code>ocd</code> detector is inherently
+high-dimensional and cannot be constructed for a single coordinate, so
+univariate input is rejected; use a univariate engine
+(see <code><a href="cpt_methods.html">cpt_methods()</a></code>) for one series.</p></dd>
 
 
 <dt id="arg-train">train<a class="anchor" aria-label="anchor" href="#arg-train"></a></dt>

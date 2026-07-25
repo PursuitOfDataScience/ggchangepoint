@@ -22,7 +22,7 @@ that supports over thirty methods.
 
 \*\*Detection engines.\*\*
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-currently dispatches to 31 methods across five families (run
+currently dispatches to 31 methods across six families (run
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
 for the live table with installation status):
 
@@ -43,11 +43,14 @@ for the live table with installation status):
 - **Bayesian:** Barry-Hartigan posterior (bcp), online BOCPD (ocp),
   BEAST model averaging (Rbeast).
 
-- **Multivariate/high-dimensional and regression:** sparse projection
+- **Multivariate/high-dimensional:** sparse projection
   (InspectChangepoint), online ocd (ocd), geometric mapping
-  (changepoint.geo), Bai-Perron breaks with CIs (strucchange),
-  broken-line regression (segmented), changepoints-vs-autocorrelation
-  model selection (EnvCpt), drift+AR robust detection (DeCAFS).
+  (changepoint.geo).
+
+- **Regression breaks and robust detection:** Bai-Perron breaks with CIs
+  (strucchange), broken-line regression (segmented),
+  changepoints-vs-autocorrelation model selection (EnvCpt), drift+AR
+  robust detection (DeCAFS).
 
 \*\*Key features.\*\* Every detector returns a `ggcpt` object with a
 stable `tibble(cp, cp_value)` contract (plus engine extras such as

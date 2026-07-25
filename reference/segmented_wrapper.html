@@ -94,7 +94,8 @@ the <code>fitted</code> column for <code>autoplot(show_fit = TRUE)</code>.</p>
     <p>A <code>ggcpt</code> object with <code>ci_lower</code>/<code>ci_upper</code> columns
   and the fitted broken line in <code>$data$fitted</code>. Breakpoints are
   rounded to the nearest index; for a continuous fit the reported location
-  is the kink itself.</p>
+  is the kink itself. A constant series has no kink and returns an empty
+  result, rather than the arbitrary breakpoint a singular fit would give.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

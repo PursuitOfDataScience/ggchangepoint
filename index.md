@@ -3,13 +3,16 @@
 > **One interface. 31 changepoint methods. Every result tidy, every
 > result plottable.**
 
-ggchangepoint wraps the R changepoint ecosystem behind a single tidy,
-`ggplot2`-native interface:
+R has excellent changepoint packages, but each one takes its own input,
+returns its own result object, and has its own idea of a plot — so
+switching methods means rewriting your analysis. ggchangepoint puts them
+behind one interface:
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 runs any of 31 detection methods, every result comes back as the same
 tidy `ggcpt` object, and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-draws it.
+draws it, with confidence intervals, posteriors, penalty paths and
+accuracy metrics when you need them.
 
 ## Installation
 
@@ -56,7 +59,7 @@ res
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         MBIC = NA 
+#>   Penalty:         MBIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -66,10 +69,13 @@ res
 #> 1   100    0.467
 ```
 
-The result is a `ggcpt` S3 object. Print it to see the changepoints, or
-use [`tidy()`](https://generics.r-lib.org/reference/tidy.html),
-[`glance()`](https://generics.r-lib.org/reference/glance.html), and
-[`augment()`](https://generics.r-lib.org/reference/augment.html):
+The result is a `ggcpt` S3 object, so the broom verbs work on it:
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) gives one row
+per changepoint,
+[`glance()`](https://generics.r-lib.org/reference/glance.html) a one-row
+model summary, and
+[`augment()`](https://generics.r-lib.org/reference/augment.html) the
+original series with segment labels, fitted values and residuals.
 
 ``` r
 
@@ -114,22 +120,19 @@ changepoints](reference/figures/README-unnamed-chunk-6-1.png)
 
 | Family | Methods |
 |----|----|
-| Penalised / optimal | PELT · BinSeg · SegNeigh · AMOC · FPOP · CROPS path · fastcpd (ARMA/GARCH) · CPOP (slope) |
-| Multiscale / search | WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE/HSMUCE (with CIs) |
-| Nonparametric / kernel | ED-PELT · E-Divisive · E-Agglo · kernel running stats · NP-MOJO · CPM · self-normalisation |
+| Penalised / optimal partitioning | PELT · BinSeg · SegNeigh · AMOC · FPOP · CPOP (slope) · fastcpd (mean/var/AR/ARMA/GARCH) |
+| Multiscale / search | WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE · HSMUCE (the last two with CIs) |
+| Nonparametric / kernel | ED-PELT · E-Divisive / E-Agglo · kernel running stats · NP-MOJO · sequential CPM · self-normalisation |
 | Bayesian | bcp posteriors · online BOCPD · BEAST model averaging |
-| Multivariate / regression | inspect · ocd · geomcp · Bai–Perron · segmented · EnvCpt · DeCAFS |
+| High-dimensional / multivariate | inspect · ocd · geomcp |
+| Regression breaks / robust | Bai–Perron · segmented · EnvCpt · DeCAFS |
 
 Run
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-for the live table with engines and installation status. Only
-`changepoint`, `changepoint.np`, and `ecp` are required — every other
-engine is optional (`Suggests`), and the original 0.1.0 functions
-([`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
-[`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md),
-[`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
-[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md))
-keep working unchanged.
+for the live table with engines and installation status. Only three
+engines are required — `changepoint`, `changepoint.np` and `ecp`; every
+other engine lives in `Suggests` and is loaded on demand, so a plain
+install stays light.
 
 ## Unified detection across engines
 
@@ -144,7 +147,7 @@ cpt_detect(x, method = "binseg", change_in = "mean")
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         MBIC = NA 
+#>   Penalty:         MBIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -158,7 +161,7 @@ cpt_detect(x, method = "wbs", change_in = "mean")
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         sSIC = NA 
+#>   Penalty:         sSIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -172,7 +175,7 @@ cpt_detect(x, method = "fpop", change_in = "mean")
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         Manual = 17.8459510605346 
+#>   Penalty:         Manual = 17.846 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -233,8 +236,14 @@ tidy(res_smuce)
 autoplot(res_smuce, show_ci = TRUE, show_fit = TRUE)
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-9-1.png)
+![Series with the SMUCE step fit, changepoint rules and horizontal
+confidence intervals for each changepoint
+location](reference/figures/README-unnamed-chunk-9-1.png)
+
+Read the intervals, not just the locations: the genuine shift is pinned
+to a single index, while the spurious early changepoint carries an
+interval nearly a hundred observations wide — exactly the distinction a
+bare list of locations hides.
 
 Bayesian engines return posterior probabilities instead:
 [`bcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bcp_wrapper.md)
@@ -258,8 +267,9 @@ tidy(res_bcp)
 ggcpt_posterior(res_bcp)
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-10-1.png)
+![Two-panel Bayesian display: the series with its posterior mean above,
+the per-location posterior changepoint probability
+below](reference/figures/README-unnamed-chunk-10-1.png)
 
 ## The penalty path: CROPS
 
@@ -287,7 +297,7 @@ path
 autoplot(path)                          # cost elbow
 ```
 
-![ggchangepoint plot of a time series with detected
+![CROPS elbow diagnostic: segmentation cost against the number of
 changepoints](reference/figures/README-unnamed-chunk-11-1.png)
 
 ``` r
@@ -295,18 +305,22 @@ changepoints](reference/figures/README-unnamed-chunk-11-1.png)
 autoplot(path, type = "segmentations")  # see the actual candidate models
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-12-1.png)
+![Faceted small-multiples, one panel per candidate segmentation on the
+CROPS penalty path](reference/figures/README-unnamed-chunk-12-1.png)
 
 ## Compare methods
+
+[`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
+runs several detectors on the same series and facets the results, so
+agreement (and disagreement) is visible at a glance:
 
 ``` r
 
 ggcpt_compare(x, methods = c("pelt", "binseg", "fpop", "wbs"))
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-13-1.png)
+![One facet per detection method, each showing the same series with that
+method's changepoints](reference/figures/README-unnamed-chunk-13-1.png)
 
 For a numeric summary, use
 [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md):
@@ -350,7 +364,7 @@ batch
 autoplot(batch)
 ```
 
-![ggchangepoint plot of a time series with detected
+![One facet per series in the batch, each with its own detected
 changepoints](reference/figures/README-unnamed-chunk-15-1.png)
 
 ``` r
@@ -367,8 +381,8 @@ st
 autoplot(st)
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-16-1.png)
+![Bootstrap re-detection frequency for each changepoint
+location](reference/figures/README-unnamed-chunk-16-1.png)
 
 ## Multivariate and high-dimensional detection
 
@@ -392,22 +406,30 @@ tidy(res_hd)
 autoplot(res_hd)
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-17-1.png)
+![One facet per coordinate of a multivariate series, sharing the
+changepoints detected across
+coordinates](reference/figures/README-unnamed-chunk-17-1.png)
+
+Univariate methods never silently flatten a matrix: hand one to `pelt`
+and you get an error naming the multivariate alternatives instead.
+[`ocd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)
+insists the other way — it projects across coordinates, so it needs a
+matrix with at least two columns.
 
 ## Evaluation
 
 When ground truth changepoints are known, compute accuracy metrics
-(precision/recall/F1 under one-to-one matching, the covering metric,
-Hausdorff distance, adjusted Rand index):
+(precision/recall/F1 under one-to-one matching within a tolerance
+`margin`, the covering metric, Hausdorff distance, adjusted Rand index):
 
 ``` r
 
-cpt_metrics(pred = c(100), truth = c(100), n = 200)
+# 98 matches the true changepoint at 100; 150 is a false positive
+cpt_metrics(pred = c(98, 150), truth = c(100), n = 200)
 #> # A tibble: 1 × 12
 #>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
 #>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   200      1       1         1      1     1        1         0          1
+#> 1   200      2       1       0.5      1 0.667     0.74        50      0.719
 #> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
 #> #   rmse_matched <dbl>
 ```
@@ -436,22 +458,25 @@ attributes(dat)$true_changepoints
 #> [1] 100
 ```
 
-An alias
 [`rcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
-is provided for compatibility. Built-in test signals include
+is an alias, for readers who prefer the `r*` random-generation naming.
+Built-in test signals include
 [`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md)
 (the Donoho–Johnstone blocks signal),
 [`signal_fms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_fms.md),
 [`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md),
-[`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md),
+[`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md)
 and
-[`signal_stairs()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_stairs.md).
+[`signal_stairs()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_stairs.md),
+each carrying its known changepoints in a `true_changepoints` attribute.
 
 ## Penalty configuration
 
-Use
 [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
-to construct penalty values for use with detection methods:
+constructs penalty values for the methods that take a numeric penalty.
+Engines differ in how they read a penalty, and
+[`?cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+documents each convention:
 
 ``` r
 
@@ -465,8 +490,9 @@ cpt_penalty("Manual", value = 10)
 
 ## Direct engine wrappers
 
-For fine-grained control, every engine has its own wrapper returning a
-`ggcpt` object directly. The classic search/pruning engines:
+For fine-grained control, each engine also has a dedicated wrapper that
+exposes its own arguments and returns a `ggcpt` object directly. The
+classic search and pruning engines:
 
 ``` r
 
@@ -476,7 +502,7 @@ fpop_wrapper(x, penalty = 2 * log(200))
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         Manual = 10.5966347330961 
+#>   Penalty:         Manual = 10.597 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -490,7 +516,7 @@ wbs_wrapper(x, n_intervals = 2000)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         sSIC = NA 
+#>   Penalty:         sSIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -504,7 +530,7 @@ wbs2_wrapper(x)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         SDLL = NA 
+#>   Penalty:         SDLL 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -518,7 +544,7 @@ not_wrapper(x, contrast = "pcwsConstMean")
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         sSIC = NA 
+#>   Penalty:         sSIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -532,7 +558,7 @@ mosum_wrapper(x)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         threshold = 3.63416800924526 
+#>   Penalty:         threshold = 3.6342 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -546,7 +572,7 @@ idetect_wrapper(x)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         threshold = NA 
+#>   Penalty:         threshold 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -560,7 +586,7 @@ tguh_wrapper(x)
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
-#>   Penalty:         sSIC = NA 
+#>   Penalty:         sSIC 
 #>   Series length:   200 
 #> 
 #> Changepoints:
@@ -598,8 +624,9 @@ res_slope <- cpop_wrapper(y_slope)
 autoplot(res_slope, show_fit = TRUE)
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-23-1.png)
+![Piecewise-linear series with the fitted broken line and a
+change-in-slope
+changepoint](reference/figures/README-unnamed-chunk-23-1.png)
 
 ## Custom geoms, stats, and theming
 
@@ -627,10 +654,14 @@ ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
   geom_line() +
   annotate_segments(cp = cp_tbl$cp, n = length(x))
 
-# Highlight segments with geom_cpt_segment
+# Draw each segment's estimated level with geom_cpt_segment
+segs <- cpt_detect(x, method = "pelt", change_in = "mean")$segments
 ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
   geom_line() +
-  geom_cpt_segment(data = cp_tbl, aes(xintercept = cp), color = "blue")
+  geom_cpt_segment(data = segs,
+                   aes(x = start, xend = end,
+                       y = param_estimate, yend = param_estimate),
+                   color = "blue", linewidth = 1)
 
 # Draw confidence intervals with geom_cpt_ci (when the engine provides them)
 cp_ci <- tidy(smuce_wrapper(x))
@@ -642,12 +673,12 @@ ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
 
 ## Interactive exploration and citations
 
-Any result (or ggplot built from one) renders as an interactive widget
-with
+Any result — or any ggplot built from one — renders as an interactive
+widget with
 [`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md)
-(requires `plotly`). And
+(requires `plotly`).
 [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
-returns the methodological reference behind a result, so analyses can
+returns the methodological reference behind a result, so an analysis can
 cite the right paper without leaving R:
 
 ``` r
@@ -673,33 +704,27 @@ new_ggcpt(
   data = tibble::tibble(index = 1:200, value = rnorm(200)),
   method = "manual"
 )
-is_ggcpt(x)
+is_ggcpt(res)
 ```
 
-## Original ecp wrapper
+## The original 0.1.0 API
 
-The
-[`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md)
-and its plotting function
+[`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
+[`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md),
+[`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md)
+and
 [`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
-provide direct access to the ecp engine (including genuine multivariate
-input):
+all continue to work unchanged.
+[`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md)
+and
+[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
+reach the `ecp` engine directly, including genuine multivariate input:
 
 ``` r
 
 ecp_wrapper(x, algorithm = "divisive")
 ggecpplot(x, algorithm = "divisive")
 ```
-
-## Original wrappers (0.1.0 API)
-
-The original
-[`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
-[`ecp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md),
-[`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
-and
-[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
-continue to work unchanged for backward compatibility.
 
 ``` r
 
@@ -728,13 +753,13 @@ summary(res)          # human-readable digest
 #>   Changepoints found:       1 
 #>   CP convention:            left 
 #>   Series length:            200 
-#>   Penalty:                  MBIC = NA 
+#>   Penalty:                  MBIC 
 #>   Runtime (seconds):        0.003 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
 #>   seg_id start   end     n param_estimate
-#>    <int> <dbl> <int> <dbl>          <dbl>
+#>    <int> <int> <int> <int>          <dbl>
 #> 1      1     1   100   100          0.139
 #> 2      2   101   200   100          9.80 
 #> 
@@ -761,7 +786,8 @@ changepoints](reference/figures/README-unnamed-chunk-30-1.png)
 
 ## Learn more
 
-See the vignettes for a comprehensive walkthrough:
+The full reference index and rendered vignettes live at
+<https://pursuitofdatascience.github.io/ggchangepoint/>. From R:
 
 - [`vignette("ggchangepoint", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/ggchangepoint.md)
   — feature tour

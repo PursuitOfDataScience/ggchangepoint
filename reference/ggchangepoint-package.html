@@ -51,7 +51,7 @@ integration via <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.
 <code><a href="geom_cpt_ci.html">geom_cpt_ci()</a></code>, <code><a href="stat_changepoint.html">stat_changepoint()</a></code>), and a unified dispatcher
 <code><a href="cpt_detect.html">cpt_detect()</a></code> that supports over thirty methods.</p>
 <p>**Detection engines.** <code><a href="cpt_detect.html">cpt_detect()</a></code> currently dispatches to 31
-methods across five families (run <code><a href="cpt_methods.html">cpt_methods()</a></code> for the live
+methods across six families (run <code><a href="cpt_methods.html">cpt_methods()</a></code> for the live
 table with installation status):</p><ul><li><p><strong>Penalised/optimal:</strong> PELT, BinSeg, SegNeigh, AMOC
     (<span class="pkg">changepoint</span>); FPOP (<span class="pkg">fpop</span>); the CROPS penalty path
     (<code><a href="cpt_crops.html">cpt_crops()</a></code>); fastcpd (<span class="pkg">fastcpd</span>, incl. AR/ARMA/GARCH);
@@ -66,12 +66,13 @@ table with installation status):</p><ul><li><p><strong>Penalised/optimal:</stron
     self-normalisation (<span class="pkg">SNSeg</span>).</p></li>
 <li><p><strong>Bayesian:</strong> Barry-Hartigan posterior (<span class="pkg">bcp</span>), online
     BOCPD (<span class="pkg">ocp</span>), BEAST model averaging (<span class="pkg">Rbeast</span>).</p></li>
-<li><p><strong>Multivariate/high-dimensional and regression:</strong> sparse
-    projection (<span class="pkg">InspectChangepoint</span>), online ocd (<span class="pkg">ocd</span>),
-    geometric mapping (<span class="pkg">changepoint.geo</span>), Bai-Perron breaks with CIs
-    (<span class="pkg">strucchange</span>), broken-line regression (<span class="pkg">segmented</span>),
-    changepoints-vs-autocorrelation model selection (<span class="pkg">EnvCpt</span>),
-    drift+AR robust detection (<span class="pkg">DeCAFS</span>).</p></li>
+<li><p><strong>Multivariate/high-dimensional:</strong> sparse projection
+    (<span class="pkg">InspectChangepoint</span>), online ocd (<span class="pkg">ocd</span>), geometric mapping
+    (<span class="pkg">changepoint.geo</span>).</p></li>
+<li><p><strong>Regression breaks and robust detection:</strong> Bai-Perron breaks
+    with CIs (<span class="pkg">strucchange</span>), broken-line regression
+    (<span class="pkg">segmented</span>), changepoints-vs-autocorrelation model selection
+    (<span class="pkg">EnvCpt</span>), drift+AR robust detection (<span class="pkg">DeCAFS</span>).</p></li>
 </ul><p>**Key features.** Every detector returns a <code>ggcpt</code> object with a stable
 <code>tibble(cp, cp_value)</code> contract (plus engine extras such as
 <code>ci_lower</code>/<code>ci_upper</code> and <code>posterior_prob</code>). Visualise any

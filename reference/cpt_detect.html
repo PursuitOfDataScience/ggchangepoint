@@ -99,7 +99,11 @@ penalties ignore this argument.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments passed to the specific wrapper (see the
-wrapper's help page for engine-specific options).</p></dd>
+wrapper's help page for engine-specific options). Where an argument is
+also derived from <code>change_in</code> (<code>not</code>'s <code>contrast</code>,
+<code>cpm</code>'s <code>cpm_type</code>, <code>kcp</code>'s <code>running_stat</code>,
+<code>sn</code>'s <code>parameter</code>, <code>fastcpd</code>'s <code>family</code>), a value
+supplied here takes precedence.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -118,7 +122,7 @@ wrapper's help page for engine-specific options).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       mean </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         MBIC = NA </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         MBIC </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:   200 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>

@@ -48,7 +48,9 @@ sn_wrapper(
 
 ## Value
 
-A `ggcpt` object.
+A `ggcpt` object. About 20 observations are needed for the nested local
+windows at the default `grid_size`; a constant series returns an empty
+result rather than an engine error.
 
 ## References
 

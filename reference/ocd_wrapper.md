@@ -27,7 +27,12 @@ ocd_wrapper(
 
 - x:
 
-  A numeric matrix (rows are time points) or vector.
+  A numeric matrix or data frame with one row per time point and at
+  least two columns. The `ocd` detector is inherently high-dimensional
+  and cannot be constructed for a single coordinate, so univariate input
+  is rejected; use a univariate engine (see
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md))
+  for one series.
 
 - train:
 
