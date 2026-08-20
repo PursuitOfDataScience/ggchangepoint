@@ -86,10 +86,10 @@ Reports*, **8**, 15637.
 ## Examples
 
 ``` r
-res <- kcp_wrapper(c(rnorm(100), rnorm(100, 3)), nperm = 200, seed = 2026)
+res <- kcp_wrapper(c(rnorm(60), rnorm(60, 3)), nperm = 100, seed = 2026)
 res$changepoints
 #> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1   100   -0.405
+#> 1    58    0.688
 ```
