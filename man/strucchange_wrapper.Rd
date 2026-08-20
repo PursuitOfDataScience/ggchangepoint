@@ -53,8 +53,8 @@ table of segment residual sums of squares, which is what lets
 of breaks without refitting. Measured here, the whole result is about
 1.7 MB at \code{n = 200}, 5.9 MB at \code{n = 400} and 22.6 MB at
 \code{n = 800} — roughly four times larger each time the series doubles —
-and the share taken by that one table grows with it, from 85\% at
-\code{n = 200} to 95\% at \code{n = 400}. A single fit is not a problem; a
+and that one table outweighs everything else in the fit put together, by a
+margin that widens as the series grows. A single fit is not a problem; a
 few hundred of them are, so when running this engine over a panel with
 \code{\link{cpt_batch}()} keep what you need
 (\code{res$changepoints}) rather than the whole list of results. No other

@@ -42,14 +42,6 @@ undocumented.
 
 The 0.1.0-0.3.0 function signatures keep working unchanged.
 
-The methods themselves are not implemented here: each is provided by the
-package named alongside it above, and this package supplies the interface.
-The reference for every method is therefore attached to the wrapper that
-calls it, in the \references section of its help page (via Rdpack and
-inst/REFERENCES.bib), rather than collected in the Description field, and
-`cpt_cite()` returns the citation for any result. Please let me know if you
-would prefer a selection of them in DESCRIPTION as well.
-
 ## Test environments
 
 * local: R 4.4.1 on Rocky/RHEL 8 (x86_64), R CMD check --as-cran
@@ -74,6 +66,23 @@ and skipping what it cannot run.
 (Under R 4.4.1 the only item reported is environment-specific: `qpdf` is not
 available on that machine, so `R CMD check --as-cran` cannot run its PDF
 size-reduction check. That is not a package issue.)
+
+Two informational lines that R-devel reports, both understood and left alone.
+The installed size is 6.1Mb, of which 3.4Mb is `doc`: the three vignettes
+embed 42 figures, and they are what the vignettes are for — a package whose
+subject is plotting changepoints is hard to explain without showing the
+plots. Dropping the figure resolution far enough to matter would cost more in
+legibility than it saves. And `kcp_wrapper`'s example was once timed at 9.7s
+elapsed against 0.9s of CPU; the gap is 'kcpRS' attaching 'doParallel' on a
+slow runner rather than the example doing work, but the example has been
+halved regardless.
+
+## Suggested methods and their references
+
+The methods themselves are not implemented here; each comes from the package
+named beside it, and this package supplies the interface. Every reference is
+therefore on the help page of the wrapper that calls it, via Rdpack and
+inst/REFERENCES.bib, and `cpt_cite()` returns the citation for any result.
 
 ## Reverse dependencies
 

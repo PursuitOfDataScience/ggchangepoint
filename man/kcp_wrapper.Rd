@@ -59,7 +59,7 @@ supported.
 }
 \examples{
 \dontshow{if (requireNamespace("kcpRS", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-res <- kcp_wrapper(c(rnorm(100), rnorm(100, 3)), nperm = 200, seed = 2026)
+res <- kcp_wrapper(c(rnorm(60), rnorm(60, 3)), nperm = 100, seed = 2026)
 res$changepoints
 \dontshow{\}) # examplesIf}
 }
