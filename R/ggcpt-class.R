@@ -4,10 +4,19 @@
 #' @param segments A tibble with segment information: \code{seg_id}, \code{start},
 #'   \code{end}, \code{n}, \code{param_estimate}.
 #' @param data A tibble with \code{index} and \code{value}.
-#' @param method Character. The detection method used.
-#' @param change_in Character. What was detected (e.g. "mean", "var", "meanvar").
+#' @param method Character. The detection method used. A length-one string;
+#'   defaults to \code{NA_character_}. (A zero-length value would make
+#'   \code{glance()} return zero rows instead of its documented single row,
+#'   because every other column would be recycled against it.)
+#' @param change_in Character. What was detected (e.g. "mean", "var",
+#'   "meanvar"). A length-one string; defaults to \code{NA_character_}.
 #' @param penalty A list with \code{type} and \code{value}.
-#' @param fit The raw upstream object.
+#' @param fit The raw upstream object. Every wrapper stores one except
+#'   \code{"ecp"}: \code{ecp::e.agglo()} returns a cluster-progression
+#'   matrix that is quadratic in the series length, so keeping it by
+#'   default would make the result object explode on a long series. Call
+#'   \code{ecp::e.divisive()} or \code{ecp::e.agglo()} directly if you
+#'   need it.
 #' @param call The matched call.
 #' @param cp_convention Character. The convention for reporting changepoint
 #'   locations: \code{"left"} (last index of left segment, used by
@@ -25,8 +34,8 @@ new_ggcpt <- function(changepoints = tibble::tibble(cp = integer(), cp_value = n
                                                   n = integer(),
                                                   param_estimate = numeric()),
                        data = tibble::tibble(index = integer(), value = numeric()),
-                       method = character(),
-                       change_in = character(),
+                       method = NA_character_,
+                       change_in = NA_character_,
                        penalty = list(type = NA_character_, value = NA_real_),
                        fit = NULL,
                        call = NULL,

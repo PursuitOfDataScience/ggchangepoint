@@ -19,7 +19,10 @@ for 0/1 Bernoulli data — this one also needs a \code{lambda} value passed
 through \code{...}, e.g. \code{lambda = 0.3}).}
 
 \item{arl0}{Target in-control average run length (how many observations,
-on average, before a false alarm). Defaults to \code{500}.}
+on average, before a false alarm). Defaults to \code{500}. \pkg{cpm}
+ships thresholds only for 100, 200, 370, 400, 500, 600, 700, 1000, 2000,
+5000, 10000 and 20000; any other value is refused, because the engine
+answers it by printing an error and reporting no changepoints.}
 
 \item{startup}{Number of observations after each restart before monitoring
 begins. Defaults to \code{20}.}

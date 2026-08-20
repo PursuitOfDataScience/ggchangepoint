@@ -9,7 +9,16 @@ fpop_wrapper(x, penalty = NULL, ...)
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{penalty}{Penalty value. Defaults to \code{2 * log(length(x))} (BIC).}
+\item{penalty}{Penalty value. Defaults to \code{2 * log(length(x))} (BIC).
+This is an \emph{absolute} penalty on the residual sum of squares, so
+it is only calibrated for noise of standard deviation 1: on wider data
+the default under-penalises badly and the segmentation shatters.
+Standardise the series, or scale the penalty by the noise variance
+(for example \code{2 * log(length(x)) * stats::var(diff(x)) / 2}).
+See the scale-sensitivity section of \code{\link{cpt_detect}}. This
+default differs from the one \code{\link{cpt_detect}} applies, which
+resolves its \code{"MBIC"} default to a stronger numeric value, so the
+two entry points need not agree unless \code{penalty} is given.}
 
 \item{...}{Additional arguments passed to \code{fpop::Fpop()}.}
 }

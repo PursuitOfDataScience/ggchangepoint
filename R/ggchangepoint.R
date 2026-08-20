@@ -78,7 +78,7 @@ if(getRversion() >= "2.15.1")  utils::globalVariables(c(".",
                                                         "run_length",
                                                         "time",
                                                         "prob",
-                                                        "variable",
+                                                        "coordinate",
                                                         "yint",
                                                         ".ymin",
                                                         ".ymax",
@@ -106,6 +106,9 @@ ggcptplot_internal <- function(data, result,
   if (length(data) == 0) {
     stop("Cannot plot an empty series.", call. = FALSE)
   }
+  validate_flag(show_points, "show_points")
+  validate_flag(show_line, "show_line")
+  validate_index(index, length(data))
 
   plot_data <- tibble::tibble(raw_value = as.numeric(data))
   if (is.null(index)) {
@@ -153,18 +156,69 @@ ggcptplot_internal <- function(data, result,
   p
 }
 
-.onLoad <- function(libname, pkgname) {
-  pkg_ns <- getNamespace(pkgname)
-  suppressWarnings({
-    registerS3method("tidy", "ggcpt", get("tidy.ggcpt", envir = pkg_ns), envir = asNamespace("generics"))
-    registerS3method("glance", "ggcpt", get("glance.ggcpt", envir = pkg_ns), envir = asNamespace("generics"))
-    registerS3method("augment", "ggcpt", get("augment.ggcpt", envir = pkg_ns), envir = asNamespace("generics"))
-    registerS3method("autoplot", "ggcpt", get("autoplot.ggcpt", envir = pkg_ns), envir = asNamespace("ggplot2"))
-    registerS3method("print", "ggcpt", get("print.ggcpt", envir = pkg_ns), envir = asNamespace("base"))
-    registerS3method("plot", "ggcpt", get("plot.ggcpt", envir = pkg_ns), envir = asNamespace("base"))
-    registerS3method("summary", "ggcpt", get("summary.ggcpt", envir = pkg_ns), envir = asNamespace("base"))
-    registerS3method("print", "summary.ggcpt", get("print.summary.ggcpt", envir = pkg_ns), envir = asNamespace("base"))
-  })
+# No .onLoad() is needed. Every S3 method this package provides is declared
+# in NAMESPACE -- including the ones on base generics, via
+# `@exportS3Method base::plot` / `base::summary` -- and R registers those at
+# load time on its own. An earlier version also called registerS3method()
+# here for print/plot/summary, which wrote into base's methods table for no
+# effect and wrapped the lot in suppressWarnings(), so a genuine registration
+# failure would have gone unseen. Verified redundant: with the block removed,
+# print/auto-print/summary/plot/format/autoplot/tidy/glance/augment/
+# as_tibble/as.data.frame all still dispatch, with and without the package
+# attached (regression test R41).
+
+# Internal: check a scalar numeric argument against its documented range.
+# The engines validate their own arguments (stepR rejects alpha outside
+# (0, 1), SNSeg rejects an unlisted confidence), but this package's own
+# arguments were taken on trust, and out-of-range values there produce
+# answers rather than errors: `margin = -3` scored a perfect segmentation as
+# precision 0, `B = 0` gave a stability profile of NaN, `n = -10` a covering
+# metric of -1.
+#' @noRd
+validate_scalar <- function(value, name, min = -Inf, max = Inf,
+                            min_open = FALSE, max_open = FALSE) {
+  ok <- is.numeric(value) && length(value) == 1L && is.finite(value) &&
+    (if (min_open) value > min else value >= min) &&
+    (if (max_open) value < max else value <= max)
+  if (!ok) {
+    lo <- if (is.finite(min)) paste0(if (min_open) "greater than " else "at least ", min)
+    hi <- if (is.finite(max)) paste0(if (max_open) "less than " else "at most ", max)
+    rng <- paste(Filter(Negate(is.null), list(lo, hi)), collapse = " and ")
+    stop("`", name, "` must be a single finite number",
+         if (nzchar(rng)) paste0(", ", rng), " (got ",
+         paste(format(value), collapse = ", "), ").", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+# Internal: check a switch documented as "Logical". `isTRUE()` treats every
+# non-TRUE value as FALSE, so `show_segments = 1` or `show_fit = "TRUE"`
+# silently drew nothing, and `show_line = 1` silently removed the line the
+# user was asking to keep. Refuse instead of quietly doing the opposite.
+#' @noRd
+validate_flag <- function(value, name, allow_null = FALSE) {
+  if (allow_null && is.null(value)) return(invisible(TRUE))
+  if (!is.logical(value) || length(value) != 1L || is.na(value)) {
+    stop("`", name, "` must be TRUE or FALSE",
+         if (allow_null) " (or NULL)", " (got ",
+         paste(format(value), collapse = ", "), ").", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+# Internal: a user-supplied `index` labels the x axis, so it must line up
+# with the series one-to-one. Without this check a wrong-length index
+# surfaces as an opaque recycling error from dplyr ("`x` must be size n or
+# 1") that never mentions the argument at fault.
+#' @noRd
+validate_index <- function(index, n) {
+  if (is.null(index)) return(invisible(TRUE))
+  if (length(index) != n) {
+    stop("`index` must have one value per observation: the series has ", n,
+         " observation(s) but `index` has ", length(index), ".",
+         call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 # Validate input data

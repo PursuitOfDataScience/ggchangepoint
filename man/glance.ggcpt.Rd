@@ -21,3 +21,25 @@ A one-row tibble with columns: \code{n}, \code{n_changepoints},
 \description{
 Returns a one-row summary of a changepoint detection result.
 }
+\details{
+\code{total_cost} is reported on whatever scale the engine itself uses, so
+it is meaningful when comparing penalties within one method and not when
+comparing one method against another. For the \pkg{changepoint} engines it
+is the unpenalised \eqn{-2\log L} of the chosen segmentation. Four cases
+there are \code{NA} rather than filled with a number that would not mean
+the same thing:
+\itemize{
+  \item \code{"binseg"} and \code{"segneigh"}, whose \code{cpt.range}
+    fits report the raw within-segment cost instead — for one and the same
+    segmentation that is 219.7 where a PELT fit reports 659.9;
+  \item \code{"np"}, because \pkg{changepoint.np} defines no
+    \code{logLik} method;
+  \item a change in \emph{mean} under the default \code{"MBIC"} penalty.
+    Loading \pkg{changepoint.np} — which this package imports, so it is
+    always loaded — replaces \pkg{changepoint}'s \code{logLik} method for
+    \code{cpt} objects with one that errors on exactly that combination.
+    Any other penalty (\code{"BIC"}, \code{"AIC"}, a numeric value)
+    reports normally, as do \code{change_in = "var"} and
+    \code{"meanvar"}.
+}
+}

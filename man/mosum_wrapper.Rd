@@ -10,8 +10,10 @@ mosum_wrapper(x, G = NULL, multiscale = FALSE, seed = NULL, ...)
 \item{x}{A numeric vector.}
 
 \item{G}{Bandwidth. If \code{NULL}, automatically selected
-(\code{min(n/10, 100)} for the single-bandwidth procedure; the engine's
-default bandwidth grid for the multiscale procedure).}
+(\code{min(n/10, 100)}, but never below 2, for the single-bandwidth
+procedure; the engine's default bandwidth grid for the multiscale
+procedure). A bandwidth of 1 leaves the engine's local variance
+estimate undefined, so the automatic choice is floored at 2.}
 
 \item{multiscale}{Logical. Use the multiscale MOSUM procedure
 (\code{mosum::multiscale.localPrune()}) instead of a single bandwidth?

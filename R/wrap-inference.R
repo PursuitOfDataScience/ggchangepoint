@@ -19,6 +19,13 @@
 #'   \code{"gauss"}. The remaining \code{stepR} families (\code{"jsmurf"},
 #'   \code{"mDependentPS"}, ...) all require a filter or covariance
 #'   specification; call \code{stepR::stepFit()} directly for those.
+#'   \code{"hsmuce"} additionally refuses a series whose point-to-point
+#'   variation lies more than about seven orders of magnitude below its own
+#'   scale — a globally flat series, or a step whose segments are numerically
+#'   constant, as \code{cpt_simulate(sd = 0)} produces once any rounding is
+#'   added. \pkg{stepR}'s heterogeneous variance estimator aborts the \R
+#'   session on such input rather than raising an error, so it cannot be
+#'   caught. \code{"gauss"} handles the whole range.
 #' @param ... Additional arguments passed to \code{stepR::stepFit()}.
 #' @return A \code{ggcpt} object. The \code{changepoints} tibble carries
 #'   \code{ci_lower}/\code{ci_upper} (confidence interval for each
@@ -44,6 +51,34 @@ smuce_wrapper <- function(x, alpha = 0.5,
 
   validate_data(x)
   data_vec <- as_uni_vector(x, if (family == "hsmuce") "hsmuce" else "smuce")
+
+  # HSMUCE estimates a variance per *segment*, and when the data carry
+  # essentially no noise at that scale stepR's compiled code does not raise
+  # an R error -- it aborts the session, so nothing can catch it and the user
+  # loses their work. Measured: it dies whenever the local variation sits
+  # more than about seven orders of magnitude below the data's magnitude,
+  # both for a globally flat series (rep(4, 300) + rnorm(300, 0, 2e-7)) and,
+  # more dangerously, for an ordinary-looking step whose segments are
+  # numerically constant (c(rep(0, 150), rep(5, 150)) + rnorm(300, 0, 1e-9)) --
+  # which is exactly what cpt_simulate(sd = 0) produces once any rounding is
+  # added. An *exactly* noiseless series is safe, because the engine
+  # short-circuits, so only the numerically-degenerate band is refused. The
+  # threshold sits a little inside the crash zone: HSMUCE's variance estimate
+  # is meaningless there anyway (it returned five to thirteen "changepoints"
+  # on such input), and refusing beats terminating the session.
+  if (family == "hsmuce") {
+    local_scale <- stats::mad(diff(data_vec))
+    magnitude <- max(abs(data_vec))
+    if (local_scale > 0 && magnitude > 0 && local_scale < 1e-7 * magnitude) {
+      stop("`hsmuce` cannot be used on this series: its point-to-point ",
+           "variation (", format(local_scale, digits = 3), ") is more than ",
+           "seven orders of magnitude below the data's own scale (",
+           format(magnitude, digits = 3), "), and stepR's heterogeneous ",
+           "variance estimator aborts the R session on such input rather ",
+           "than returning. Use `family = \"gauss\"` (SMUCE), which handles ",
+           "it.", call. = FALSE)
+    }
+  }
 
   fit <- stepR::stepFit(data_vec, alpha = alpha, family = family,
                         jumpint = TRUE, ...)

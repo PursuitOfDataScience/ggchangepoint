@@ -11,7 +11,8 @@ cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01)
 \code{"MBIC"}, \code{"AIC"}, \code{"Hannan-Quinn"}, \code{"sSIC"}, or
 \code{"Manual"}.}
 
-\item{n}{Series length. Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.}
+\item{n}{Series length (at least 3 for the \eqn{\log n}-based
+penalties). Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.}
 
 \item{k}{Number of parameters per changepoint (typically 2 for
 mean+variance, 1 for mean-only). Defaults to 1. The \code{"MBIC"}
@@ -38,8 +39,17 @@ The same penalty name may be interpreted differently by different engines:
   \item \strong{changepoint-based methods} (PELT, BinSeg, SegNeigh, AMOC):
     accept character penalties (\code{"MBIC"}, \code{"BIC"}, \code{"AIC"},
     \code{"Hannan-Quinn"}, \code{"None"}) and pass them to the upstream
-    \pkg{changepoint} package. These methods do \emph{not} accept raw numeric
-    penalty values.
+    \pkg{changepoint} package. A numeric penalty is translated to that
+    package's \code{penalty = "Manual"} plus \code{pen.value}. The one
+    exception is Segment Neighbourhood, for which \pkg{changepoint} does
+    not implement MBIC: \code{cpt_detect(method = "segneigh")} and
+    \code{cpt_wrapper(cp_method = "SegNeigh")} therefore fall back to
+    \code{"SIC"} when the default penalty is left in place, so a segneigh
+    result is not directly penalty-comparable with a PELT one. Pass
+    \code{penalty} explicitly to pin it. For a change in \emph{mean}
+    these engines also read the penalty on the data's own scale rather
+    than a standardised one; see the scale-sensitivity section of
+    \code{\link{cpt_detect}}.
   \item \strong{Functional-pruning methods} (\code{fpop}, \code{cpop},
     \code{decafs}): accept numeric penalties only. When a character penalty
     is supplied via \code{cpt_detect()}, it is resolved to a numeric value

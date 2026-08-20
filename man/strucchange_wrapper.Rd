@@ -44,6 +44,24 @@ breaks in arbitrary regression coefficients. Break-date confidence
 intervals from \code{confint()} populate \code{ci_lower}/\code{ci_upper}
 and render via \code{autoplot(show_ci = TRUE)}.
 }
+\section{Result size}{
+
+\code{$fit} is the \code{breakpoints} object itself, and that object is
+quadratic in the series length: it keeps \code{RSS.triang}, the triangular
+table of segment residual sums of squares, which is what lets
+\code{strucchange} return the optimal segmentation for \emph{any} number
+of breaks without refitting. Measured here, the whole result is about
+1.7 MB at \code{n = 200}, 5.9 MB at \code{n = 400} and 22.6 MB at
+\code{n = 800} — roughly four times larger each time the series doubles —
+and the share taken by that one table grows with it, from 85\% at
+\code{n = 200} to 95\% at \code{n = 400}. A single fit is not a problem; a
+few hundred of them are, so when running this engine over a panel with
+\code{\link{cpt_batch}()} keep what you need
+(\code{res$changepoints}) rather than the whole list of results. No other
+engine here behaves this way: the median result across the other thirty is
+under ten times the size of the series it was given.
+}
+
 \examples{
 \dontshow{if (requireNamespace("strucchange", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 set.seed(2026)

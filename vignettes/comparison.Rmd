@@ -133,9 +133,9 @@ x <- c(rnorm(150, 0), rnorm(150, 3), rnorm(200, 1))
 ggcpt_compare(x, methods = cmp_methods)
 ```
 
-A method that finds *no* changepoints keeps its panel — ruleless, but present
-— rather than silently disappearing. A method that ran and found nothing is a
-result, not a missing value:
+A method that finds *no* changepoints keeps its panel — the series is drawn
+with no vertical lines on it — rather than silently disappearing. A method
+that ran and found nothing is a result, not a missing value:
 
 ```{r compare-nochange}
 set.seed(7)

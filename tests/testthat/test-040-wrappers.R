@@ -125,7 +125,10 @@ test_that("ocd_wrapper declares the change shortly after it happens", {
   X_strong <- cbind(a = c(rnorm(80), rnorm(80, 5)),
                     b = c(rnorm(80), rnorm(80, -5)),
                     c = c(rnorm(80), rnorm(80, 3)))
-  res <- ocd_wrapper(X_strong, mc_reps = 50)
+  # mc_reps only calibrates the detection threshold, and the change here is
+  # far too large for that calibration to matter: 10 reps give the same
+  # declaration as 50 and take 7 s instead of 36.
+  res <- ocd_wrapper(X_strong, mc_reps = 10)
   expect_ggcpt_contract(res, "ocd")
   expect_true("declared_at" %in% names(res$changepoints))
   expect_lte(nrow(res$changepoints), 3)

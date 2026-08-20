@@ -10,7 +10,8 @@ npmojo_wrapper(x, G = NULL, lag = 0, ...)
 \item{x}{A numeric vector or matrix (rows are time points).}
 
 \item{G}{Moving-window bandwidth. Defaults to \code{max(20, 0.1 * n)}
-observations.}
+observations, capped at \code{n / 2} — the largest bandwidth the engine
+accepts — so the default also works on series shorter than 40.}
 
 \item{lag}{Time lag at which changes in the joint distribution are
 examined; \code{0} targets the marginal distribution. Defaults to
@@ -21,7 +22,11 @@ examined; \code{0} targets the marginal distribution. Defaults to
 \value{
 A \code{ggcpt} object. Constant coordinates leave the kernel
   statistics undefined, so they are dropped (with a warning) before
-  detection and an all-constant input returns an empty result.
+  detection and an all-constant input returns an empty result. The
+  engine calibrates its detection threshold by bootstrap, so the value
+  recorded in the penalty descriptor varies between runs; call
+  \code{set.seed()} beforehand, or pass \code{threshold = "manual"} and
+  \code{threshold.val} through \code{...}, for a reproducible one.
 }
 \description{
 Wraps \code{CptNonPar::np.mojo()} (McGonigle and Cho, 2025): nonparametric

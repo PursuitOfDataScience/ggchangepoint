@@ -21,7 +21,11 @@ stat_changepoint(
 
 \item{data}{A data frame.}
 
-\item{geom}{The geometric object to use (default: "vline").}
+\item{geom}{The geometric object to use (default: \code{"vline"}). The stat
+computes a single \code{xintercept} per changepoint, so only geoms that
+consume that aesthetic fit — \code{"vline"} and \code{"rug"}. A geom
+needing \code{x}/\code{y}, such as \code{"point"}, errors because the
+stat drops those aesthetics.}
 
 \item{position}{Position adjustment.}
 

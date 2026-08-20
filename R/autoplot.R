@@ -48,6 +48,11 @@ autoplot.ggcpt <- function(object,
   if (length(data_vec) == 0) {
     stop("Cannot autoplot an empty ggcpt object (no data).", call. = FALSE)
   }
+  validate_flag(show_segments, "show_segments")
+  validate_flag(show_ci, "show_ci")
+  validate_flag(show_fit, "show_fit")
+  validate_flag(show_line, "show_line")
+  validate_flag(show_points, "show_points", allow_null = TRUE)
   if (is.null(show_points)) {
     show_points <- length(data_vec) <= 500
   }
@@ -158,18 +163,23 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
                               index = NULL) {
   wide <- object$data_wide
   vars <- setdiff(names(wide), "index")
+  validate_index(index, nrow(wide))
   # Honour a custom index (e.g. dates) for the x-axis when supplied; default
   # to the observation index otherwise.
   x_vals <- index %||% wide$index
+  # The facet column must not be called `variable`: plotly::ggplotly() melts
+  # the built plot into a frame that already has a column of that name, so a
+  # faceted plot using it fails with "Names must be unique" -- which would
+  # make ggcpt_interactive() unusable for every multivariate result.
   long <- do.call(rbind, lapply(vars, function(v) {
     tibble::tibble(index = x_vals, value = as.numeric(wide[[v]]),
-                   variable = v)
+                   coordinate = v)
   }))
-  long$variable <- factor(long$variable, levels = vars)
+  long$coordinate <- factor(long$coordinate, levels = vars)
 
   p <- ggplot2::ggplot(long, ggplot2::aes(index, value)) +
     ggplot2::geom_line(color = "grey40") +
-    ggplot2::facet_wrap(~variable, scales = "free_y", ncol = 1) +
+    ggplot2::facet_wrap(~coordinate, scales = "free_y", ncol = 1) +
     ggplot2::labs(
       x = "Index", y = "Value",
       title = paste0("Changepoint Detection (", object$method,

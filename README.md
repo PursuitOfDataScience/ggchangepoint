@@ -420,6 +420,21 @@ cpt_penalty("Manual", value = 10)
 #> [1] 10
 ```
 
+**One caveat worth knowing.** `pelt`, `binseg`, `segneigh` and `fpop`
+compare the penalty against a *raw* segment cost when detecting a change
+in mean: `changepoint`'s Normal cost assumes noise of standard deviation
+1, and `fpop`'s `lambda` penalises the residual sum of squares directly.
+On a series with wider noise the penalty is effectively negligible and
+the segmentation shatters — for one true changepoint with a five-sigma
+jump, `pelt` returns 1 changepoint at sigma = 1 but 29 at sigma = 3 and
+138 at sigma = 10. Standardise the series
+(`cpt_detect(scale(x)[, 1], method = "pelt")`), pass a penalty on the
+data's own scale, or use `change_in = "meanvar"`, which estimates a
+variance per segment. Every other engine — SMUCE, WBS, NOT, MOSUM, CPOP,
+DeCAFS, the Bayesian and nonparametric families — estimates or cancels
+the noise scale itself and is unaffected. See `?cpt_detect` for the full
+note.
+
 ## Direct engine wrappers
 
 For fine-grained control, each engine also has a dedicated wrapper that

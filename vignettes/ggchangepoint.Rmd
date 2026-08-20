@@ -57,7 +57,7 @@ has_plotly    <- requireNamespace("plotly", quietly = TRUE)
 
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface to
 changepoint detection in R: one dispatcher (`cpt_detect()`) covering 31
-methods across five methodological families, one result class (`ggcpt`) with
+methods across six methodological families, one result class (`ggcpt`) with
 a stable tidy contract, and one visualisation entry point (`autoplot()`)
 that draws everything a method reports — including confidence intervals and
 posterior probabilities [@wickham2016ggplot2; @robinson2017broom]. This
@@ -184,7 +184,7 @@ ecp_wrapper(x, algorithm = "divisive", seed = 1)
 
 Seven multiscale, randomised, and functional-pruning engines
 [@fryzlewicz2014wild; @fryzlewicz2020detecting; @baranowski2019narrowest;
-@eichinger2018mosum; @anastasiou2022idetect; @fryzlewicz2022tail;
+@eichinger2018mosum; @anastasiou2022idetect; @fryzlewicz2018tail;
 @maidstone2017optimal], one call each:
 
 ```{r fpop, eval = has_fpop}

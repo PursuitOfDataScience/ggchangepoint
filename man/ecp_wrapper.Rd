@@ -28,7 +28,11 @@ A tibble includes which point(s) is/are the changepoint along with
   raw changepoint value corresponding to that changepoint. Changepoint
   locations follow the \code{ecp} package convention: the first index of the
   right segment. When no changepoint is found, an empty tibble is returned
-  (0 rows).
+  (0 rows). The upstream fit is not retained — and \code{$fit} is
+  \code{NULL} on a \code{ggcpt} from \code{cpt_detect(method = "ecp")} —
+  because \code{ecp::e.agglo()}'s cluster-progression matrix is quadratic
+  in the series length; call the \pkg{ecp} functions directly if you need
+  their full output.
 }
 \description{
 The ecp package provides a non-parametric way to detect changepoints. Unlike
@@ -45,5 +49,5 @@ ecp_wrapper(c(rnorm(100,0,1),rnorm(100,10,1)))
 
 }
 \references{
-\insertRef{james2013ecp}{ggchangepoint}
+\insertRef{james2014ecp}{ggchangepoint}
 }

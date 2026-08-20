@@ -30,10 +30,14 @@ test_that("C2: wbs_wrapper default selection uses sSIC, not the threshold set", 
 
 test_that("C3: univariate wrappers reject wide matrices instead of flattening", {
   X <- cbind(rnorm(50), rnorm(50))
-  expect_error(fpop_wrapper(X), "univariate")
   expect_error(cpt_detect(X, method = "pelt"), "univariate")
-  # single-column data frames are fine
+  # `fpop_wrapper()` calls need_pkg() before it validates its input, so
+  # without fpop installed the assertion below sees the install prompt
+  # instead of the shape error. Guard it, and keep the pelt case above
+  # unguarded so the check still runs with none of the Suggests present.
   skip_if_not_installed("fpop")
+  expect_error(fpop_wrapper(X), "univariate")
+  # single-column data frames are fine
   res <- fpop_wrapper(data.frame(y = x_step))
   expect_s3_class(res, "ggcpt")
 })

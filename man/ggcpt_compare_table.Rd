@@ -12,7 +12,10 @@ ggcpt_compare_table(
 )
 }
 \arguments{
-\item{x}{A numeric vector (the data series).}
+\item{x}{A numeric vector (the data series). A one-column matrix or data
+frame is accepted; wider input is refused, because these detectors are
+univariate and flattening the columns would invent a changepoint at
+every seam. Use \code{\link{cpt_batch}()} for a panel of series.}
 
 \item{methods}{Character vector of method names.}
 

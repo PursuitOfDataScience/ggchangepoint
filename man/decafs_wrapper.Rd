@@ -10,7 +10,10 @@ decafs_wrapper(x, penalty = NULL, model_param = NULL, ...)
 \item{x}{A numeric vector.}
 
 \item{penalty}{Penalty \eqn{\beta} for adding a changepoint. Defaults to
-\code{2 * log(length(x))}.}
+\code{2 * log(length(x))}. \code{\link{cpt_detect}} resolves its own
+\code{"MBIC"} default to a stronger numeric value — on a five-changepoint
+series that is 3 changepoints through the dispatcher against 5 here — so
+pass \code{penalty} explicitly when the two must agree.}
 
 \item{model_param}{Optional list of model parameters
 (\code{sdEta}, \code{sdNu}, \code{phi}) as accepted by

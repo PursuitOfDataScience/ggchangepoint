@@ -55,8 +55,12 @@ geom_cpt_segment <- function(mapping = NULL, data = NULL, ...,
 #' Draws horizontal whiskers for changepoint-location confidence
 #' intervals (e.g. from MOSUM, stepR, strucchange, segmented).
 #'
-#' @param mapping Aesthetic mappings. Requires \code{x}, \code{xmin}, \code{xmax},
-#'   and \code{y}.
+#' @param mapping Aesthetic mappings. Requires \code{y} (the height at which
+#'   to draw the whisker) together with \code{xmin} and \code{xmax}. An
+#'   \code{x} aesthetic is accepted but not needed: the layer is a
+#'   horizontal error bar, so the interval is given by \code{xmin}/\code{xmax}
+#'   and the changepoint itself is usually marked with a separate point layer,
+#'   as \code{autoplot(show_ci = TRUE)} does.
 #' @param data A data frame with CI information.
 #' @param ... Other arguments passed to \code{geom_errorbarh}.
 #' @param na.rm If \code{FALSE}, missing values are removed.
@@ -87,7 +91,11 @@ geom_cpt_ci <- function(mapping = NULL, data = NULL, ...,
 #'
 #' @param mapping Aesthetic mappings.
 #' @param data A data frame.
-#' @param geom The geometric object to use (default: "vline").
+#' @param geom The geometric object to use (default: \code{"vline"}). The stat
+#'   computes a single \code{xintercept} per changepoint, so only geoms that
+#'   consume that aesthetic fit — \code{"vline"} and \code{"rug"}. A geom
+#'   needing \code{x}/\code{y}, such as \code{"point"}, errors because the
+#'   stat drops those aesthetics.
 #' @param position Position adjustment.
 #' @param ... Other arguments passed to the geom.
 #' @param method Detection method (passed to \code{cpt_detect}).

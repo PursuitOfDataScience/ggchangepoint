@@ -27,7 +27,10 @@ mean/sd (not monitored). Defaults to
 
 \item{thresh}{Threshold specification passed to
 \code{ocd::ChangepointDetector()}; \code{"MC"} (default) calibrates by
-Monte Carlo.}
+Monte Carlo, which is what makes this the slowest wrapper — see the
+timing note below. Supplying the three thresholds directly, as a named
+numeric vector \code{c(diag =, off_d =, off_s =)}, skips calibration
+altogether.}
 
 \item{patience}{Target average run length to false alarm. Defaults to
 \code{5000}.}
@@ -36,7 +39,8 @@ Monte Carlo.}
 change. Defaults to \code{1}.}
 
 \item{mc_reps}{Monte Carlo repetitions for threshold calibration.
-Defaults to \code{100}.}
+Defaults to \code{100}. The cost is linear in this and grows with the
+number of coordinates; see the timing note below.}
 
 \item{...}{Additional arguments passed to
 \code{ocd::ChangepointDetector()}.}
@@ -56,12 +60,27 @@ from an initial training window, then monitors the remainder of the
 series, resetting after each declaration so multiple changes can be
 found.
 }
+\section{How long this takes}{
+
+Nearly all of the run time is \code{ocd}'s Monte Carlo threshold
+calibration, which happens before a single observation is read. It is
+linear in \code{mc_reps} and grows with the number of coordinates:
+measured at \code{mc_reps = 5}, construction takes about 3 s at
+\eqn{p = 3}, 9 s at \eqn{p = 10} and 55 s at \eqn{p = 50}, and four
+times as long at \code{mc_reps = 20}. At the default \code{mc_reps = 100}
+that extrapolates to roughly a minute at \eqn{p = 3} and a quarter of an
+hour at \eqn{p = 50}. Monitoring the observations afterwards is cheap by
+comparison — well under a second for a thousand of them. Lower
+\code{mc_reps} while exploring, or pass \code{thresh} directly to skip
+calibration entirely.
+}
+
 \examples{
 \dontshow{if (requireNamespace("ocd", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
 set.seed(2026)
-X <- rbind(matrix(rnorm(100 * 5), 100), matrix(rnorm(60 * 5, 2), 60))
-res <- ocd_wrapper(X, mc_reps = 20)
+X <- rbind(matrix(rnorm(60 * 3), 60), matrix(rnorm(40 * 3, 3), 40))
+res <- ocd_wrapper(X, mc_reps = 5)
 res$changepoints
 }
 \dontshow{\}) # examplesIf}

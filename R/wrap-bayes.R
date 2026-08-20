@@ -32,6 +32,8 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
   need_pkg("bcp")
 
   validate_data(x)
+  validate_scalar(prob_threshold, "prob_threshold", min = 0, max = 1,
+                  min_open = TRUE)
   data_vec <- as_uni_vector(x, "bcp")
   # bcp::bcp() crashes the R session (segfault in its C++ code) on n = 3.
   if (length(data_vec) < 4) {
@@ -88,6 +90,7 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
 #' ggcpt_runlength(res)
 bocpd_wrapper <- function(x, hazard = 100, ...) {
   need_pkg("ocp")
+  validate_scalar(hazard, "hazard", min = 0, min_open = TRUE)
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "bocpd")
@@ -140,6 +143,8 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
   need_pkg("Rbeast")
 
   validate_data(x)
+  validate_scalar(prob_threshold, "prob_threshold", min = 0, max = 1,
+                  min_open = TRUE)
   data_vec <- as_uni_vector(x, "beast")
 
   args <- list(y = data_vec, season = "none", quiet = TRUE,

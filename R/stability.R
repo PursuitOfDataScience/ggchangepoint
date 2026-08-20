@@ -33,6 +33,8 @@
 cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
                           seed = NULL, ...) {
   validate_data(x)
+  validate_scalar(B, "B", min = 1)
+  validate_scalar(margin, "margin", min = 0)
   data_vec <- as_uni_vector(x, method)
   n <- length(data_vec)
 
@@ -57,19 +59,27 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
       cpt_detect(rep_series, method = method, ...)$changepoints$cp,
       error = function(e) integer(0)
     )
-    if (length(rep_cp) > 0) {
-      for (cp in rep_cp) {
-        lo <- max(1, cp - margin)
-        hi <- min(n, cp + margin)
-        hits[lo:hi] <- hits[lo:hi] + 1
-      }
+    # Each replicate contributes at most 1 to any index: mark the covered
+    # window first, then add the mask. Incrementing once per changepoint
+    # instead counts a replicate twice wherever two detections' windows
+    # overlap, which the old `pmin(hits / B, 1)` then hid by clipping --
+    # reporting 1.00 ("re-detected every time") for indices that only half
+    # the replicates actually covered.
+    covered <- logical(n)
+    for (cp in rep_cp) {
+      lo <- max(1, cp - margin)
+      hi <- min(n, cp + margin)
+      covered[lo:hi] <- TRUE
     }
+    hits <- hits + covered
   }
 
   structure(
     list(
+      # hits is now bounded by B by construction, so freq is a genuine
+      # proportion in [0, 1] and needs no clipping.
       frequency = tibble::tibble(index = seq_len(n),
-                                 freq = pmin(hits / B, 1)),
+                                 freq = hits / B),
       original = original,
       B = B,
       margin = margin,

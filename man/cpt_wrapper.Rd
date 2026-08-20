@@ -25,7 +25,9 @@ and \code{cpt.np()} respectively. The default is \code{mean_var}.}
 A tibble including which point(s) is/are the changepoint along with
   raw changepoint value corresponding to that changepoint. Changepoint
   locations follow the convention of the \code{changepoint} package: the
-  last index of the left segment.
+  last index of the left segment. The upstream \code{cpt} object is
+  attached as the \code{"ggcpt_fit"} attribute, which is what
+  \code{\link{cpt_detect}()} stores in the result's \code{$fit}.
 }
 \description{
 This function wraps a number of \code{cpt} functions from the changepoint
@@ -40,6 +42,18 @@ be set before using the function for the sake of reproducibility. For more
 details on the changepoint and changepoint.np packages, please refer to
 their documentation.
 }
+\section{Standardise the data for a change in mean}{
+
+With \code{change_in = "mean"} the upstream Normal cost assumes a noise
+standard deviation of 1 and the penalty is compared against the raw
+residual sum of squares, so a series with wider noise is under-penalised
+and over-segmented: 29 changepoints instead of 1 at \eqn{\sigma = 3} in a
+measured example. Standardise the series first, or use
+\code{change_in = "mean_var"}, which estimates a variance per segment and
+is unaffected. See the scale-sensitivity section of
+\code{\link{cpt_detect}}.
+}
+
 \examples{
 set.seed(2022)
 cpt_wrapper(c(rnorm(100,0,1),rnorm(100,0,10)))

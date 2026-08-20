@@ -25,8 +25,10 @@ at least two columns). Defaults to \code{"mean"}.}
 \item{wsize}{Sliding window size for the running statistic. Defaults to
 \code{25}.}
 
-\item{nperm}{Number of permutations for the significance test. Defaults to
-\code{1000}.}
+\item{nperm}{Number of permutations for the significance test, at least 2.
+Defaults to \code{1000}. Fewer than two leaves the engine with no
+permutation distribution: it reports no changepoints at all for 0, and
+fails inside its own code for 1.}
 
 \item{kmax}{Maximum number of changepoints considered. Defaults to
 \code{10}.}

@@ -10,7 +10,9 @@ cpop_wrapper(x, penalty = NULL, sd = NULL, ...)
 \item{x}{A numeric vector.}
 
 \item{penalty}{Penalty for adding a changepoint. Defaults to
-\code{2 * log(length(x))}.}
+\code{2 * log(length(x))}. \code{\link{cpt_detect}} resolves its own
+\code{"MBIC"} default to a stronger numeric value, so the two entry
+points need not agree unless \code{penalty} is given.}
 
 \item{sd}{Noise standard deviation; when \code{NULL} it is estimated from
 the data by the engine's default difference-based estimator.}

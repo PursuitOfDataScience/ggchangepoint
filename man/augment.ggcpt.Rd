@@ -18,3 +18,13 @@ A tibble with the original data plus augment columns.
 Returns the original data with added columns: \code{seg_id}, \code{.fitted},
 \code{.resid}, and \code{is_changepoint}.
 }
+\details{
+For a multivariate result every coordinate is returned, but the
+changepoints are shared across them, so \code{seg_id} and
+\code{is_changepoint} apply to the whole row while \code{.fitted} and
+\code{.resid} describe the \emph{first} coordinate only — the same
+coordinate \code{$segments$param_estimate} summarises. When an engine
+supplies its own fitted signal (SMUCE, DeCAFS, cpop, segmented, bcp,
+beast) that signal is used for \code{.fitted} in place of the segment
+means.
+}

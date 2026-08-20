@@ -17,7 +17,14 @@ Defaults to \code{0.5}, the upstream recommendation for estimation.}
 noise) or \code{"hsmuce"} (HSMUCE, segment-wise variance). Defaults to
 \code{"gauss"}. The remaining \code{stepR} families (\code{"jsmurf"},
 \code{"mDependentPS"}, ...) all require a filter or covariance
-specification; call \code{stepR::stepFit()} directly for those.}
+specification; call \code{stepR::stepFit()} directly for those.
+\code{"hsmuce"} additionally refuses a series whose point-to-point
+variation lies more than about seven orders of magnitude below its own
+scale — a globally flat series, or a step whose segments are numerically
+constant, as \code{cpt_simulate(sd = 0)} produces once any rounding is
+added. \pkg{stepR}'s heterogeneous variance estimator aborts the \R
+session on such input rather than raising an error, so it cannot be
+caught. \code{"gauss"} handles the whole range.}
 
 \item{...}{Additional arguments passed to \code{stepR::stepFit()}.}
 }

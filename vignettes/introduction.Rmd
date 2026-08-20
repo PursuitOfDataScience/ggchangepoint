@@ -138,6 +138,21 @@ costs $O(n^2)$; **PELT** [@killick2012pelt] prunes candidate changepoints to
 reach linear expected cost while remaining exact, and **FPOP**
 [@maidstone2017optimal] reaches comparable speed by functional pruning.
 
+A practical consequence of writing the objective this way is easy to miss:
+$\beta$ and $\mathcal{C}$ must live on the same scale. For a change in mean
+the **changepoint** engines evaluate the Normal cost with the noise standard
+deviation fixed at 1, and **fpop** penalises the residual sum of squares
+directly, so multiplying the data by a constant multiplies the cost while
+leaving $\beta$ untouched. On a single changepoint whose jump is five standard
+deviations, `pelt` recovers exactly one changepoint at $\sigma = 1$ but
+returns 29 at $\sigma = 3$ and 138 at $\sigma = 10$. Standardise the series,
+pass a penalty on the data's own scale (say
+`2 * log(n) * var(diff(x)) / 2`), or use `change_in = "meanvar"`, which
+estimates a variance per segment. Methods that estimate the noise level as
+part of their procedure — SMUCE, the WBS family, CPOP, DeCAFS, and the
+Bayesian and nonparametric engines — return the same segmentation whatever
+the units.
+
 ## Search-based and multiscale methods
 
 A complementary family locates changepoints by scanning test statistics.
@@ -151,7 +166,7 @@ contrast exceeds a threshold, which generalises cleanly to changes in slope;
 **MOSUM** [@eichinger2018mosum] scans a moving-sum statistic at a fixed
 bandwidth, or across a range of bandwidths; Isolate–Detect
 [@anastasiou2022idetect] isolates each changepoint in an expanding interval;
-and TGUH [@fryzlewicz2022tail] performs a tail-greedy bottom-up merge.
+and TGUH [@fryzlewicz2018tail] performs a tail-greedy bottom-up merge.
 **SMUCE** [@frick2014smuce] occupies a special place: it estimates the step
 function with the fewest jumps that still passes a *simultaneous multiscale
 test* at level $\alpha$, and in doing so delivers confidence intervals for

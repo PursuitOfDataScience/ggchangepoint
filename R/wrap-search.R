@@ -14,6 +14,7 @@
 wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ...) {
 
   need_pkg("wbs")
+  validate_scalar(n_intervals, "n_intervals", min = 1)
   validate_data(x)
   data_vec <- as_uni_vector(x, "wbs")
 
@@ -180,8 +181,10 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
 #'
 #' @param x A numeric vector.
 #' @param G Bandwidth. If \code{NULL}, automatically selected
-#'   (\code{min(n/10, 100)} for the single-bandwidth procedure; the engine's
-#'   default bandwidth grid for the multiscale procedure).
+#'   (\code{min(n/10, 100)}, but never below 2, for the single-bandwidth
+#'   procedure; the engine's default bandwidth grid for the multiscale
+#'   procedure). A bandwidth of 1 leaves the engine's local variance
+#'   estimate undefined, so the automatic choice is floored at 2.
 #' @param multiscale Logical. Use the multiscale MOSUM procedure
 #'   (\code{mosum::multiscale.localPrune()}) instead of a single bandwidth?
 #'   Defaults to \code{FALSE}.
@@ -193,6 +196,7 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
 mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
 
   need_pkg("mosum")
+  validate_flag(multiscale, "multiscale")
   validate_data(x)
   data_vec <- as_uni_vector(x, "mosum")
 
@@ -208,7 +212,19 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
     thresh_val <- NA_real_
   } else {
     if (is.null(G)) {
-      G <- ceiling(min(length(data_vec) / 10, 100))
+      # A single-observation window has no within-window variability, so the
+      # engine's studentised statistic divides by zero and it returns a
+      # "NaNs produced" warning with garbage changepoints rather than
+      # failing. n / 10 falls to 1 for every n < 20, so floor the automatic
+      # bandwidth at 2.
+      G <- max(2L, as.integer(ceiling(min(length(data_vec) / 10, 100))))
+      if (length(data_vec) <= 2L * G) {
+        stop("`mosum` needs a moving-sum window on each side of a candidate ",
+             "changepoint (bandwidth ", G, " requires more than ", 2L * G,
+             " observations), but `x` has ", length(data_vec),
+             ". Use a longer series, or see cpt_methods() for a method that ",
+             "suits short series.", call. = FALSE)
+      }
     }
     fit <- mosum::mosum(data_vec, G = G, ...)
     cp_indices <- as.integer(fit$cpts)
@@ -236,13 +252,34 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
 #' @param ... Additional arguments passed to \code{IDetect::ID()}.
 #' @return A \code{ggcpt} object. When the engine finds no changepoints
 #'   (including when it signals "No change-points found"), an empty result
-#'   is returned rather than an error.
+#'   is returned rather than an error. A constant series likewise returns the
+#'   empty result; see the note below.
+#'
+#' @section Constant input:
+#' \code{IDetect::ID()} does not treat a flat series consistently — its
+#' statistics become \eqn{0/0}, and what comes back depends on the value and
+#' the length. \code{rep(3, 200)} yields \emph{126} changepoints, at
+#' 1, 3, 4, 6, 7, ...; \code{rep(0, 100)} raises "No change-points found";
+#' \code{rep(-2.5, 60)} returns the sentinel 0. A constant series plainly has
+#' no changepoint, and every other search wrapper here reports none, so this
+#' one short-circuits to the empty result. Constancy is decided by exact
+#' equality, so a series with tiny but genuine variation still reaches the
+#' engine.
 #' @export
 idetect_wrapper <- function(x, seed = NULL, ...) {
 
   need_pkg("IDetect")
   validate_data(x)
   data_vec <- as_uni_vector(x, "idetect")
+
+  # See the "Constant input" section: on a flat series the engine invents
+  # changepoints instead of reporting none.
+  if (is_constant(data_vec)) {
+    return(ggcpt_build(data_vec, integer(0), method = "idetect",
+                       change_in = "mean",
+                       penalty = list(type = "threshold", value = NA_real_),
+                       call = match.call()))
+  }
 
   if (!is.null(seed)) set.seed(seed)
 

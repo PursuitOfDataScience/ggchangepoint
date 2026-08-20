@@ -16,8 +16,22 @@ idetect_wrapper(x, seed = NULL, ...)
 \value{
 A \code{ggcpt} object. When the engine finds no changepoints
   (including when it signals "No change-points found"), an empty result
-  is returned rather than an error.
+  is returned rather than an error. A constant series likewise returns the
+  empty result; see the note below.
 }
 \description{
 Wraps the \code{IDetect} package. Requires the \code{IDetect} package.
 }
+\section{Constant input}{
+
+\code{IDetect::ID()} does not treat a flat series consistently — its
+statistics become \eqn{0/0}, and what comes back depends on the value and
+the length. \code{rep(3, 200)} yields \emph{126} changepoints, at
+1, 3, 4, 6, 7, ...; \code{rep(0, 100)} raises "No change-points found";
+\code{rep(-2.5, 60)} returns the sentinel 0. A constant series plainly has
+no changepoint, and every other search wrapper here reports none, so this
+one short-circuits to the empty result. Constancy is decided by exact
+equality, so a series with tiny but genuine variation still reaches the
+engine.
+}
+

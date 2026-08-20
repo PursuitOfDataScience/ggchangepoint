@@ -10,7 +10,9 @@
 #'
 #' @param x A numeric vector.
 #' @param penalty Penalty for adding a changepoint. Defaults to
-#'   \code{2 * log(length(x))}.
+#'   \code{2 * log(length(x))}. \code{\link{cpt_detect}} resolves its own
+#'   \code{"MBIC"} default to a stronger numeric value, so the two entry
+#'   points need not agree unless \code{penalty} is given.
 #' @param sd Noise standard deviation; when \code{NULL} it is estimated from
 #'   the data by the engine's default difference-based estimator.
 #' @param ... Additional arguments passed to \code{cpop::cpop()}.
@@ -29,6 +31,8 @@
 #' ggplot2::autoplot(res, show_fit = TRUE)
 cpop_wrapper <- function(x, penalty = NULL, sd = NULL, ...) {
   need_pkg("cpop")
+
+  if (!is.null(sd)) validate_scalar(sd, "sd", min = 0, min_open = TRUE)
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "cpop")

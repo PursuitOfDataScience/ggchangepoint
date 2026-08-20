@@ -21,6 +21,21 @@
 #'   \code{strucchange::breakpoints()}.
 #' @return A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} columns
 #'   on the changepoints tibble.
+#' @section Result size:
+#' \code{$fit} is the \code{breakpoints} object itself, and that object is
+#' quadratic in the series length: it keeps \code{RSS.triang}, the triangular
+#' table of segment residual sums of squares, which is what lets
+#' \code{strucchange} return the optimal segmentation for \emph{any} number
+#' of breaks without refitting. Measured here, the whole result is about
+#' 1.7 MB at \code{n = 200}, 5.9 MB at \code{n = 400} and 22.6 MB at
+#' \code{n = 800} — roughly four times larger each time the series doubles —
+#' and the share taken by that one table grows with it, from 85\% at
+#' \code{n = 200} to 95\% at \code{n = 400}. A single fit is not a problem; a
+#' few hundred of them are, so when running this engine over a panel with
+#' \code{\link{cpt_batch}()} keep what you need
+#' (\code{res$changepoints}) rather than the whole list of results. No other
+#' engine here behaves this way: the median result across the other thirty is
+#' under ten times the size of the series it was given.
 #' @references
 #' \insertRef{bai2003computation}{ggchangepoint}
 #'
@@ -33,6 +48,12 @@
 strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
                                 conf_level = 0.95, ...) {
   need_pkg("strucchange")
+  # A confidence level outside (0, 1) is meaningless, and `level = 2` makes
+  # stats::confint() on a breakpoints fit spin without ever returning -- a
+  # tryCatch() cannot rescue a call that does not terminate, so it has to be
+  # refused up front.
+  validate_scalar(conf_level, "conf_level", min = 0, max = 1,
+                  min_open = TRUE, max_open = TRUE)
 
   if (inherits(x, "formula")) {
     if (is.null(data)) {
@@ -118,6 +139,8 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
 segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
                               ...) {
   need_pkg("segmented")
+  validate_scalar(conf_level, "conf_level", min = 0, max = 1,
+                  min_open = TRUE, max_open = TRUE)
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "segmented")
@@ -197,7 +220,10 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
 #' @param ... Additional arguments passed to \code{EnvCpt::envcpt()}.
 #' @return A \code{ggcpt} object. \code{$fit} holds the full \code{envcpt}
 #'   output; the selected model name is stored in the penalty descriptor and
-#'   printed by \code{glance()} via \code{penalty_type}.
+#'   printed by \code{glance()} via \code{penalty_type}. Individual model
+#'   fits that fail are expected — the criterion ignores them — so the
+#'   engine's own \code{try()} output is not passed on; genuine warnings
+#'   still are, and a series on which no model fits at all raises an error.
 #' @references
 #' \insertRef{beaulieu2018envcpt}{ggchangepoint}
 #' @export
@@ -217,8 +243,20 @@ envcpt_wrapper <- function(x, models = c("mean", "meancpt", "meanar1",
   validate_data(x)
   data_vec <- as_uni_vector(x, "envcpt")
 
-  fit <- EnvCpt::envcpt(data_vec, models = models, minseglen = minseglen,
-                        verbose = FALSE, ...)
+  # EnvCpt fits up to twelve models with try(), and a try() that is not
+  # silent prints its error straight to stderr. On a degenerate series
+  # several of the AR fits fail that way, so the call succeeds and returns a
+  # perfectly good answer after printing "Error in arima(...): non-stationary
+  # AR part from CSS" -- which reads as a failure. Divert the message stream
+  # for the duration: individual model failures are expected here (the
+  # criterion simply ignores the non-finite ones, and a run where nothing
+  # fits gets its own error below), while genuine warnings are deferred past
+  # the diversion and still reach the user.
+  utils::capture.output(
+    fit <- EnvCpt::envcpt(data_vec, models = models, minseglen = minseglen,
+                          verbose = FALSE, ...),
+    type = "message"
+  )
 
   crit_vals <- if (criterion == "AIC") stats::AIC(fit) else stats::BIC(fit)
   crit_vals <- crit_vals[is.finite(crit_vals)]

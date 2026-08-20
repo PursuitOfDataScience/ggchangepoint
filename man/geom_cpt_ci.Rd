@@ -7,8 +7,12 @@
 geom_cpt_ci(mapping = NULL, data = NULL, ..., na.rm = FALSE, show.legend = NA)
 }
 \arguments{
-\item{mapping}{Aesthetic mappings. Requires \code{x}, \code{xmin}, \code{xmax},
-and \code{y}.}
+\item{mapping}{Aesthetic mappings. Requires \code{y} (the height at which
+to draw the whisker) together with \code{xmin} and \code{xmax}. An
+\code{x} aesthetic is accepted but not needed: the layer is a
+horizontal error bar, so the interval is given by \code{xmin}/\code{xmax}
+and the changepoint itself is usually marked with a separate point layer,
+as \code{autoplot(show_ci = TRUE)} does.}
 
 \item{data}{A data frame with CI information.}
 

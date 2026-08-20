@@ -31,13 +31,52 @@
 #'   Defaults to \code{"MBIC"}. See the penalty-semantics section of
 #'   \code{\link{cpt_penalty}} for how each engine interprets it; methods
 #'   that use thresholds, significance levels, or posteriors instead of
-#'   penalties ignore this argument.
+#'   penalties ignore this argument, and \code{"segneigh"} falls back to
+#'   \code{"SIC"} because \pkg{changepoint} does not implement MBIC for
+#'   Segment Neighbourhood. Note also that the default \code{"MBIC"} is
+#'   resolved to a \emph{numeric} value for the numeric-penalty engines
+#'   (\code{"fpop"}, \code{"cpop"}, \code{"decafs"}), and that value is
+#'   stronger than those wrappers' own \code{2 * log(n)} default — 19.9
+#'   against 11.8 at \eqn{n = 360} — so \code{cpt_detect(x, method =
+#'   "decafs")} can report fewer changepoints than \code{decafs_wrapper(x)}
+#'   on the same series. Pass \code{penalty} explicitly to make the two
+#'   entry points agree.
 #' @param ... Additional arguments passed to the specific wrapper (see the
 #'   wrapper's help page for engine-specific options). Where an argument is
 #'   also derived from \code{change_in} (\code{not}'s \code{contrast},
 #'   \code{cpm}'s \code{cpm_type}, \code{kcp}'s \code{running_stat},
 #'   \code{sn}'s \code{parameter}, \code{fastcpd}'s \code{family}), a value
-#'   supplied here takes precedence.
+#'   supplied here takes precedence. Check the spelling against the wrapper's
+#'   help page: several engines end their own signature in \code{...}
+#'   (\pkg{wbs}, \pkg{not}, \pkg{Rbeast}, \pkg{strucchange},
+#'   \pkg{segmented}, \pkg{fastcpd}), so for those a misspelt argument name
+#'   is silently discarded upstream and the engine quietly uses its default
+#'   rather than reporting the typo.
+#'
+#' @section Scale sensitivity of the penalised change-in-mean engines:
+#' \code{"pelt"}, \code{"binseg"}, \code{"segneigh"} and \code{"fpop"}
+#' compare a penalty against a \emph{raw} segment cost when
+#' \code{change_in = "mean"}: \pkg{changepoint}'s Normal cost assumes a
+#' noise standard deviation of 1, and \pkg{fpop}'s \code{lambda} is an
+#' absolute penalty on the residual sum of squares. Neither rescales the
+#' data, so on a series whose noise is much wider than 1 the penalty is
+#' effectively negligible and the segmentation shatters. On one true
+#' changepoint with a jump of five standard deviations, \code{"pelt"}
+#' returns 1 changepoint at \eqn{\sigma = 1}, 29 at \eqn{\sigma = 3} and
+#' 138 at \eqn{\sigma = 10}. Three ways to avoid it, in order of
+#' convenience:
+#' \itemize{
+#'   \item standardise the series first
+#'     (\code{cpt_detect(scale(x)[, 1], method = "pelt")});
+#'   \item pass a penalty on the data's own scale, for example
+#'     \code{penalty = 2 * log(length(x)) * stats::var(diff(x)) / 2};
+#'   \item use \code{change_in = "meanvar"}, which estimates a variance per
+#'     segment and is unaffected.
+#' }
+#' The other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
+#' Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
+#' multivariate methods all estimate or cancel the noise scale internally,
+#' and return the same segmentation whatever the units.
 #'
 #' @return A \code{ggcpt} object.
 #' @export
@@ -54,6 +93,23 @@ cpt_detect <- function(x,
                        penalty = "MBIC",
                        ...) {
 
+  # `cpt_methods()` advertises four engines as "planned", but match.arg()
+  # answered a request for one of them with the generic "'arg' should be one
+  # of ..." list, which does not contain it -- so the table said the name
+  # exists and the dispatcher said it does not. Name the situation instead.
+  if (is.character(method) && length(method) == 1L &&
+      method %in% planned_methods()$method) {
+    pl <- planned_methods()
+    row <- pl[pl$method == method, ]
+    stop("`", method, "` is planned but not wired in this release: see the ",
+         "\"planned\" rows of `cpt_methods()`. It will be built on the ",
+         row$engine, " package, and is waiting on ",
+         if (identical(row$target_release, "when on CRAN")) {
+           paste0(row$engine, " being available from CRAN")
+         } else {
+           paste0("the ", row$target_release)
+         }, ".", call. = FALSE)
+  }
   method <- match.arg(method, cpt_methods_table()$method)
   change_in <- match.arg(change_in,
                          c("mean", "var", "meanvar", "slope", "distribution"))
@@ -156,7 +212,28 @@ cpt_detect <- function(x,
 
   runtime <- proc.time()[["elapsed"]] - t0
   res$runtime <- runtime
+  # Record the call the user actually made. The wrappers each store their own
+  # match.call(), which for a dispatched run is an internal, unexported helper
+  # (`wrap_cpt_to_ggcpt(x = data_vec, change_in = ci, ...)`) that the reader
+  # can neither recognise nor re-run.
+  res$call <- match.call()
   res
+}
+
+# Internal: the methods this release names but does not wire. Kept in one
+# place so `cpt_detect()` can recognise the name and say so, rather than
+# denying it exists. `robseg` and `FOCuS` have never been on CRAN and `gfpop`
+# was removed from it, so those three wait on the archive; `hdbinseg` is back
+# (1.0.3), so `sbs` waits only on the wrapper.
+#' @noRd
+planned_methods <- function() {
+  tibble::tribble(
+    ~method,   ~change_in,                 ~engine,    ~status,   ~target_release,
+    "gfpop",   "mean (graph-constrained)", "gfpop",    "planned", "when on CRAN",
+    "robust",  "mean (robust loss)",       "robseg",   "planned", "when on CRAN",
+    "focus",   "mean (online)",            "FOCuS",    "planned", "when on CRAN",
+    "sbs",     "mean (high-dimensional)",  "hdbinseg", "planned", "next release"
+  )
 }
 
 #' Introspect available changepoint detection methods
@@ -175,24 +252,18 @@ cpt_detect <- function(x,
 #'   \item{installed}{\code{TRUE} if the engine package is installed,
 #'         \code{FALSE} if it is a \code{Suggests} engine that is missing,
 #'         \code{NA} for planned methods.}
-#'   \item{target_release}{The release that plans to wire this method,
-#'         or \code{NA} for currently available methods.}
+#'   \item{target_release}{What a planned method is waiting on: a release,
+#'         or \code{"when on CRAN"} when the engine package itself is not
+#'         available from CRAN. \code{NA} for methods that are already
+#'         wired. Asking \code{cpt_detect()} for a planned method reports
+#'         this rather than claiming the name does not exist.}
 #' }
 #' @export
 #'
 #' @examples
 #' cpt_methods()
 cpt_methods <- function() {
-  methods <- rbind(
-    cpt_methods_table(),
-    tibble::tribble(
-      ~method,   ~change_in,                 ~engine,   ~status,   ~target_release,
-      "gfpop",   "mean (graph-constrained)", "gfpop",   "planned", "when on CRAN",
-      "robust",  "mean (robust loss)",       "robseg",  "planned", "when on CRAN",
-      "focus",   "mean (online)",            "FOCuS",   "planned", "when on CRAN",
-      "sbs",     "mean (high-dimensional)",  "hdbinseg", "planned", "when on CRAN"
-    )
-  )
+  methods <- rbind(cpt_methods_table(), planned_methods())
 
   # Installation status: TRUE/FALSE for wired engines, NA for planned ones.
   methods$installed <- ifelse(
@@ -401,7 +472,7 @@ wrap_cpt_to_ggcpt <- function(x, change_in, cp_method, method_name = NULL,
     method = method_name,
     change_in = reported_change_in,
     penalty = penalty_descriptor(penalty),
-    fit = NULL,
+    fit = attr(tbl, "ggcpt_fit"),
     call = match.call()
   )
 }
@@ -444,7 +515,8 @@ wrap_ecp_to_ggcpt <- function(x, ...) {
 #' @param type Penalty type: \code{"None"}, \code{"BIC"} (or \code{"SIC"}),
 #'   \code{"MBIC"}, \code{"AIC"}, \code{"Hannan-Quinn"}, \code{"sSIC"}, or
 #'   \code{"Manual"}.
-#' @param n Series length. Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.
+#' @param n Series length (at least 3 for the \eqn{\log n}-based
+#'   penalties). Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.
 #' @param k Number of parameters per changepoint (typically 2 for
 #'   mean+variance, 1 for mean-only). Defaults to 1. The \code{"MBIC"}
 #'   penalty additionally reads \code{k} as the number of changepoints being
@@ -460,8 +532,17 @@ wrap_ecp_to_ggcpt <- function(x, ...) {
 #'   \item \strong{changepoint-based methods} (PELT, BinSeg, SegNeigh, AMOC):
 #'     accept character penalties (\code{"MBIC"}, \code{"BIC"}, \code{"AIC"},
 #'     \code{"Hannan-Quinn"}, \code{"None"}) and pass them to the upstream
-#'     \pkg{changepoint} package. These methods do \emph{not} accept raw numeric
-#'     penalty values.
+#'     \pkg{changepoint} package. A numeric penalty is translated to that
+#'     package's \code{penalty = "Manual"} plus \code{pen.value}. The one
+#'     exception is Segment Neighbourhood, for which \pkg{changepoint} does
+#'     not implement MBIC: \code{cpt_detect(method = "segneigh")} and
+#'     \code{cpt_wrapper(cp_method = "SegNeigh")} therefore fall back to
+#'     \code{"SIC"} when the default penalty is left in place, so a segneigh
+#'     result is not directly penalty-comparable with a PELT one. Pass
+#'     \code{penalty} explicitly to pin it. For a change in \emph{mean}
+#'     these engines also read the penalty on the data's own scale rather
+#'     than a standardised one; see the scale-sensitivity section of
+#'     \code{\link{cpt_detect}}.
 #'   \item \strong{Functional-pruning methods} (\code{fpop}, \code{cpop},
 #'     \code{decafs}): accept numeric penalties only. When a character penalty
 #'     is supplied via \code{cpt_detect()}, it is resolved to a numeric value
@@ -504,6 +585,37 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01) {
   }
 
   if (is.null(n)) stop("`n` must be supplied for ", type, " penalty.", call. = FALSE)
+  if (!is.numeric(n) || length(n) != 1L || !is.finite(n)) {
+    stop("`n` must be a single finite number.", call. = FALSE)
+  }
+  # Below n = 3 the log-based penalties stop being penalties: log(n) is 0 at
+  # n = 1, and log(log(n)) is -Inf there and negative at n = 2, so the
+  # "penalty" would reward extra changepoints instead of discouraging them.
+  # (AIC = 2k does not involve n, so it is exempt.) Series that short are
+  # rejected upstream by validate_data() anyway.
+  if (type != "AIC" && n < 3) {
+    stop("`n` must be at least 3 for the ", type,
+         " penalty; log(n) and log(log(n)) stop being penalties below that.",
+         call. = FALSE)
+  }
+  # MBIC's log C(n, k) term is -Inf once k exceeds n, which would silently
+  # turn the penalty into -Inf rather than erroring.
+  if (type == "MBIC" &&
+      (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 0 || k > n)) {
+    stop("`k` must be a single number between 0 and `n` for the MBIC ",
+         "penalty (it counts the changepoints being placed among `n` ",
+         "observations).", call. = FALSE)
+  }
+  # alpha <= 1 makes sSIC weaker than BIC, i.e. no longer the *strengthened*
+  # SIC the argument names; the definition (Fryzlewicz 2014) requires
+  # alpha > 1.
+  if (type == "sSIC" &&
+      (!is.numeric(alpha) || length(alpha) != 1L || !is.finite(alpha) ||
+       alpha <= 1)) {
+    stop("`alpha` must be a single number greater than 1 for the sSIC ",
+         "penalty (got ", paste(format(alpha), collapse = ", "), ").",
+         call. = FALSE)
+  }
 
   switch(type,
     BIC            = k * log(n),

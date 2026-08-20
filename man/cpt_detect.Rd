@@ -36,14 +36,28 @@ silently running something else.}
 Defaults to \code{"MBIC"}. See the penalty-semantics section of
 \code{\link{cpt_penalty}} for how each engine interprets it; methods
 that use thresholds, significance levels, or posteriors instead of
-penalties ignore this argument.}
+penalties ignore this argument, and \code{"segneigh"} falls back to
+\code{"SIC"} because \pkg{changepoint} does not implement MBIC for
+Segment Neighbourhood. Note also that the default \code{"MBIC"} is
+resolved to a \emph{numeric} value for the numeric-penalty engines
+(\code{"fpop"}, \code{"cpop"}, \code{"decafs"}), and that value is
+stronger than those wrappers' own \code{2 * log(n)} default — 19.9
+against 11.8 at \eqn{n = 360} — so \code{cpt_detect(x, method =
+"decafs")} can report fewer changepoints than \code{decafs_wrapper(x)}
+on the same series. Pass \code{penalty} explicitly to make the two
+entry points agree.}
 
 \item{...}{Additional arguments passed to the specific wrapper (see the
 wrapper's help page for engine-specific options). Where an argument is
 also derived from \code{change_in} (\code{not}'s \code{contrast},
 \code{cpm}'s \code{cpm_type}, \code{kcp}'s \code{running_stat},
 \code{sn}'s \code{parameter}, \code{fastcpd}'s \code{family}), a value
-supplied here takes precedence.}
+supplied here takes precedence. Check the spelling against the wrapper's
+help page: several engines end their own signature in \code{...}
+(\pkg{wbs}, \pkg{not}, \pkg{Rbeast}, \pkg{strucchange},
+\pkg{segmented}, \pkg{fastcpd}), so for those a misspelt argument name
+is silently discarded upstream and the engine quietly uses its default
+rather than reporting the typo.}
 }
 \value{
 A \code{ggcpt} object.
@@ -54,6 +68,33 @@ Runs a changepoint detection method on a sequence and returns a tidy
 users. See \code{\link{cpt_methods}()} for the full method table with
 engines and capabilities.
 }
+\section{Scale sensitivity of the penalised change-in-mean engines}{
+
+\code{"pelt"}, \code{"binseg"}, \code{"segneigh"} and \code{"fpop"}
+compare a penalty against a \emph{raw} segment cost when
+\code{change_in = "mean"}: \pkg{changepoint}'s Normal cost assumes a
+noise standard deviation of 1, and \pkg{fpop}'s \code{lambda} is an
+absolute penalty on the residual sum of squares. Neither rescales the
+data, so on a series whose noise is much wider than 1 the penalty is
+effectively negligible and the segmentation shatters. On one true
+changepoint with a jump of five standard deviations, \code{"pelt"}
+returns 1 changepoint at \eqn{\sigma = 1}, 29 at \eqn{\sigma = 3} and
+138 at \eqn{\sigma = 10}. Three ways to avoid it, in order of
+convenience:
+\itemize{
+  \item standardise the series first
+    (\code{cpt_detect(scale(x)[, 1], method = "pelt")});
+  \item pass a penalty on the data's own scale, for example
+    \code{penalty = 2 * log(length(x)) * stats::var(diff(x)) / 2};
+  \item use \code{change_in = "meanvar"}, which estimates a variance per
+    segment and is unaffected.
+}
+The other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
+Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
+multivariate methods all estimate or cancel the noise scale internally,
+and return the same segmentation whatever the units.
+}
+
 \examples{
 set.seed(2022)
 x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))

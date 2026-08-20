@@ -31,6 +31,8 @@
 #' cpt_metrics(c(101, 205), c(100, 200), n = 300, margin = 5)
 cpt_metrics <- function(pred, truth, n, margin = 5) {
 
+  validate_scalar(n, "n", min = 1)
+  validate_scalar(margin, "margin", min = 0)
   pred <- sort(unique(as.integer(pred)))
   truth <- sort(unique(as.integer(truth)))
   n <- as.integer(n)
@@ -184,6 +186,11 @@ ggcpt_eval <- function(pred, truth, data_vec, margin = 5) {
     )
   }
 
+  # The manual scales only make sense once something is mapped to `type`;
+  # adding them to a plot with no prediction and no miss makes ggplot warn
+  # ("No shared levels found ...") on what is a perfectly good evaluation.
+  if (nrow(lines_df) == 0) return(p)
+
   p +
     ggplot2::scale_color_manual(
       values = c(TP = "blue", FP = "orange", FN = "red"),
@@ -229,23 +236,30 @@ calc_covering <- function(pred, truth, n) {
   truth_breaks <- sort(unique(c(0, truth, n)))
   pred_breaks <- sort(unique(c(0, pred, n)))
 
+  b_start <- pred_breaks[-length(pred_breaks)] + 1
+  b_end <- pred_breaks[-1]
+
   covering <- 0
   for (i in seq_len(length(truth_breaks) - 1)) {
     a_start <- truth_breaks[i] + 1
     a_end <- truth_breaks[i + 1]
     a_len <- a_end - a_start + 1
 
-    best_j <- 0
-    for (j in seq_len(length(pred_breaks) - 1)) {
-      b_start <- pred_breaks[j] + 1
-      b_end <- pred_breaks[j + 1]
+    # Only prediction segments that actually overlap this truth segment can
+    # win: a disjoint pair has intersection 0, so its Jaccard is 0, and both
+    # partitions tile 1..n so at least one overlapping segment always exists.
+    # Both break vectors are sorted, so the overlapping range is two
+    # findInterval() lookups. Scanning every prediction segment for every
+    # truth segment instead made the metric quadratic -- 7.5 s for 3000
+    # changepoints, against a few hundredths here -- for identical numbers.
+    j_lo <- findInterval(a_start - 1, b_end) + 1L
+    j_hi <- findInterval(a_end, b_start)
+    if (j_lo > j_hi) next
 
-      inter <- max(0, min(a_end, b_end) - max(a_start, b_start) + 1)
-      union <- max(a_end, b_end) - min(a_start, b_start) + 1
-      jaccard <- if (union == 0) 0 else inter / union
-      if (jaccard > best_j) best_j <- jaccard
-    }
-    covering <- covering + a_len * best_j
+    j <- j_lo:j_hi
+    inter <- pmax(0, pmin(a_end, b_end[j]) - pmax(a_start, b_start[j]) + 1)
+    union <- pmax(a_end, b_end[j]) - pmin(a_start, b_start[j]) + 1
+    covering <- covering + a_len * max(inter / union)
   }
 
   covering / n

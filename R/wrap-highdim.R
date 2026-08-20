@@ -56,7 +56,7 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
   if (!is.null(threshold)) args$threshold <- threshold
 
   # The engine prints Monte Carlo progress; keep the console clean.
-  out <- utils::capture.output(fit <- do.call(InspectChangepoint::inspect, args))
+  utils::capture.output(fit <- do.call(InspectChangepoint::inspect, args))
 
   cp_mat <- fit$changepoints
   cp_indices <- if (is.null(cp_mat)) integer(0) else as.integer(cp_mat[, "location"])
@@ -97,26 +97,43 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #'   \code{max(20, floor(0.2 * n))}, capped at \code{n/2}.
 #' @param thresh Threshold specification passed to
 #'   \code{ocd::ChangepointDetector()}; \code{"MC"} (default) calibrates by
-#'   Monte Carlo.
+#'   Monte Carlo, which is what makes this the slowest wrapper — see the
+#'   timing note below. Supplying the three thresholds directly, as a named
+#'   numeric vector \code{c(diag =, off_d =, off_s =)}, skips calibration
+#'   altogether.
 #' @param patience Target average run length to false alarm. Defaults to
 #'   \code{5000}.
 #' @param beta Assumed lower bound on the squared Euclidean norm of the mean
 #'   change. Defaults to \code{1}.
 #' @param mc_reps Monte Carlo repetitions for threshold calibration.
-#'   Defaults to \code{100}.
+#'   Defaults to \code{100}. The cost is linear in this and grows with the
+#'   number of coordinates; see the timing note below.
 #' @param ... Additional arguments passed to
 #'   \code{ocd::ChangepointDetector()}.
 #' @return A \code{ggcpt} object. Because the detector is online, reported
 #'   locations are \emph{declaration times} (the changepoint plus the
 #'   detection delay), stored together with a \code{declared_at} column.
+#' @section How long this takes:
+#' Nearly all of the run time is \code{ocd}'s Monte Carlo threshold
+#' calibration, which happens before a single observation is read. It is
+#' linear in \code{mc_reps} and grows with the number of coordinates:
+#' measured at \code{mc_reps = 5}, construction takes about 3 s at
+#' \eqn{p = 3}, 9 s at \eqn{p = 10} and 55 s at \eqn{p = 50}, and four
+#' times as long at \code{mc_reps = 20}. At the default \code{mc_reps = 100}
+#' that extrapolates to roughly a minute at \eqn{p = 3} and a quarter of an
+#' hour at \eqn{p = 50}. Monitoring the observations afterwards is cheap by
+#' comparison — well under a second for a thousand of them. Lower
+#' \code{mc_reps} while exploring, or pass \code{thresh} directly to skip
+#' calibration entirely.
+#'
 #' @references
 #' \insertRef{chen2022ocd}{ggchangepoint}
 #' @export
 #' @examplesIf requireNamespace("ocd", quietly = TRUE)
 #' \donttest{
 #' set.seed(2026)
-#' X <- rbind(matrix(rnorm(100 * 5), 100), matrix(rnorm(60 * 5, 2), 60))
-#' res <- ocd_wrapper(X, mc_reps = 20)
+#' X <- rbind(matrix(rnorm(60 * 3), 60), matrix(rnorm(40 * 3, 3), 40))
+#' res <- ocd_wrapper(X, mc_reps = 5)
 #' res$changepoints
 #' }
 ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,

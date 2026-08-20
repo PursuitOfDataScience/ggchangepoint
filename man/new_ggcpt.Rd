@@ -9,8 +9,8 @@ new_ggcpt(
   segments = tibble::tibble(seg_id = integer(), start = integer(), end = integer(), n =
     integer(), param_estimate = numeric()),
   data = tibble::tibble(index = integer(), value = numeric()),
-  method = character(),
-  change_in = character(),
+  method = NA_character_,
+  change_in = NA_character_,
   penalty = list(type = NA_character_, value = NA_real_),
   fit = NULL,
   call = NULL,
@@ -26,13 +26,22 @@ new_ggcpt(
 
 \item{data}{A tibble with \code{index} and \code{value}.}
 
-\item{method}{Character. The detection method used.}
+\item{method}{Character. The detection method used. A length-one string;
+defaults to \code{NA_character_}. (A zero-length value would make
+\code{glance()} return zero rows instead of its documented single row,
+because every other column would be recycled against it.)}
 
-\item{change_in}{Character. What was detected (e.g. "mean", "var", "meanvar").}
+\item{change_in}{Character. What was detected (e.g. "mean", "var",
+"meanvar"). A length-one string; defaults to \code{NA_character_}.}
 
 \item{penalty}{A list with \code{type} and \code{value}.}
 
-\item{fit}{The raw upstream object.}
+\item{fit}{The raw upstream object. Every wrapper stores one except
+\code{"ecp"}: \code{ecp::e.agglo()} returns a cluster-progression
+matrix that is quadratic in the series length, so keeping it by
+default would make the result object explode on a long series. Call
+\code{ecp::e.divisive()} or \code{ecp::e.agglo()} directly if you
+need it.}
 
 \item{call}{The matched call.}
 

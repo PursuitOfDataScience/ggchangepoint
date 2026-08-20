@@ -12,14 +12,20 @@
 #'   vector of segment means. For \code{var} changes, a vector of segment sds.
 #'   For \code{meanvar}, a list of lists with \code{mean} and \code{sd} per
 #'   segment. For \code{slope}, a list with \code{intercept} and \code{slope}
-#'   per segment.
+#'   per segment. When \code{NULL}, every segment gets the same neutral
+#'   parameters, so the series has no actual change. Supplying fewer entries
+#'   than there are segments recycles the last one and warns, because the
+#'   trailing \code{changepoints} would then be recorded as ground truth
+#'   without a change behind them.
 #' @param noise Noise type: \code{"gauss"} (Gaussian), \code{"t"} (Student-t),
 #'   \code{"ar1"} (AR(1)), or \code{"rw"} (random walk).
-#' @param sd Noise standard deviation (for Gaussian and t; t-noise is
-#'   rescaled so its standard deviation is exactly \code{sd}). Defaults to 1.
+#' @param sd Noise standard deviation, non-negative (for Gaussian and t;
+#'   t-noise is rescaled so its standard deviation is exactly \code{sd}).
+#'   Defaults to 1.
 #' @param df Degrees of freedom for t-noise; must exceed 2 so the variance
 #'   exists. Defaults to 3.
-#' @param rho AR(1) autocorrelation parameter. Defaults to 0.
+#' @param rho AR(1) autocorrelation parameter, strictly between -1 and 1 for
+#'   stationarity. Defaults to 0. Used only when \code{noise = "ar1"}.
 #' @param seed Optional seed for reproducibility.
 #'
 #' @return A tibble with columns \code{index}, \code{value}, and \code{seg_id}.
@@ -42,6 +48,16 @@ cpt_simulate <- function(n,
 
   change_in <- match.arg(change_in)
   noise <- match.arg(noise)
+  validate_scalar(n, "n", min = 1)
+  validate_scalar(sd, "sd", min = 0)
+  # rho only enters the AR(1) path, and |rho| >= 1 makes the innovation scale
+  # sqrt(1 - rho^2) NaN (or zero), so the whole series comes back NaN with no
+  # complaint. Checking it only where it is used avoids rejecting a stray
+  # value that the chosen noise model ignores.
+  if (noise == "ar1") {
+    validate_scalar(rho, "rho", min = -1, max = 1,
+                    min_open = TRUE, max_open = TRUE)
+  }
 
   if (!is.null(seed)) set.seed(seed)
 
@@ -54,6 +70,29 @@ cpt_simulate <- function(n,
 
   n_seg <- length(seg_ends)
 
+  # Resolve the per-segment parameter defaults up front. Doing this inside
+  # the segment loop left "meanvar" with no default at all, so
+  # cpt_simulate(n, cp, change_in = "meanvar") died with "replacement has
+  # length zero" instead of simulating anything.
+  if (is.null(params) || length(params) == 0) {
+    params <- switch(change_in,
+      mean    = rep(0, n_seg),
+      var     = rep(1, n_seg),
+      meanvar = rep(list(list(mean = 0, sd = 1)), n_seg),
+      slope   = rep(list(list(intercept = 0, slope = 0)), n_seg)
+    )
+  }
+
+  # Too few parameters means the last one is recycled, so the trailing
+  # `changepoints` are declared in `true_changepoints` without any actual
+  # change behind them -- corrupt ground truth for benchmarking. Warn for
+  # every change type (this used to fire only for "mean").
+  if (length(params) < n_seg) {
+    warning("`params` has ", length(params), " value(s) for ", n_seg,
+            " segments; the last value is reused, so the extra ",
+            "segments carry no actual change.", call. = FALSE)
+  }
+
   # Build the per-observation signal (mean) and noise scale (sd). For "var"
   # and "meanvar" the per-segment standard deviation is applied to the noise,
   # so a change in variance is genuinely simulated.
@@ -62,32 +101,23 @@ cpt_simulate <- function(n,
 
   for (i in seq_len(n_seg)) {
     idx <- seg_starts[i]:seg_ends[i]
+    j <- min(i, length(params))
 
     if (change_in == "mean") {
-      if (is.null(params)) params <- rep(0, n_seg)
-      if (i == 1 && length(params) < n_seg) {
-        warning("`params` has ", length(params), " value(s) for ", n_seg,
-                " segments; the last value is reused, so the extra ",
-                "segments carry no actual change.", call. = FALSE)
-      }
-      signal[idx] <- params[min(i, length(params))]
+      signal[idx] <- params[[j]]
     } else if (change_in == "var") {
-      if (is.null(params)) params <- rep(1, n_seg)
       signal[idx] <- 0
-      sd_vec[idx] <- params[min(i, length(params))]
+      sd_vec[idx] <- params[[j]]
     } else if (change_in == "meanvar") {
       if (is.list(params)) {
-        p <- params[[min(i, length(params))]]
+        p <- params[[j]]
         signal[idx] <- p$mean
         if (!is.null(p$sd)) sd_vec[idx] <- p$sd
       } else {
-        signal[idx] <- params[min(i, length(params))]
+        signal[idx] <- params[[j]]
       }
     } else if (change_in == "slope") {
-      if (is.null(params)) {
-        params <- rep(list(list(intercept = 0, slope = 0)), n_seg)
-      }
-      p <- params[[min(i, length(params))]]
+      p <- params[[j]]
       t_vals <- seq_along(idx)
       signal[idx] <- p$intercept + p$slope * t_vals
     }

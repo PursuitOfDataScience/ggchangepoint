@@ -52,17 +52,28 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", seed = NULL,
     requireNamespace("future.apply", quietly = TRUE) &&
     !inherits(future::plan(), "sequential")
 
-  run_one <- function(v) {
-    cpt_detect(v, method = method, change_in = change_in, ...)
+  # Name the offending series when one of them fails. A panel can hold
+  # hundreds; "`x` must have at least 3 observations" on its own leaves the
+  # user to bisect the list to find which.
+  run_one <- function(i) {
+    tryCatch(
+      cpt_detect(series_list[[i]], method = method, change_in = change_in,
+                 ...),
+      error = function(e) {
+        stop("Series `", names(series_list)[i], "` (", i, " of ",
+             length(series_list), "): ", conditionMessage(e), call. = FALSE)
+      }
+    )
   }
 
   results <- if (has_future) {
-    future.apply::future_lapply(series_list, run_one,
+    future.apply::future_lapply(seq_along(series_list), run_one,
                                 future.seed = seed %||% TRUE)
   } else {
     if (!is.null(seed)) set.seed(seed)
-    lapply(series_list, run_one)
+    lapply(seq_along(series_list), run_one)
   }
+  names(results) <- names(series_list)
 
   out <- tibble::tibble(
     series = names(series_list),

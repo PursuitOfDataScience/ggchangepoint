@@ -42,14 +42,58 @@ tidy.ggcpt <- function(x, ...) {
 #'   \code{cp_convention}, \code{total_cost} (\code{NA} when the engine does
 #'   not expose a cost), \code{runtime} (elapsed seconds when measured by
 #'   \code{cpt_detect()}, otherwise \code{NA}).
+#'
+#' @details
+#' \code{total_cost} is reported on whatever scale the engine itself uses, so
+#' it is meaningful when comparing penalties within one method and not when
+#' comparing one method against another. For the \pkg{changepoint} engines it
+#' is the unpenalised \eqn{-2\log L} of the chosen segmentation. Four cases
+#' there are \code{NA} rather than filled with a number that would not mean
+#' the same thing:
+#' \itemize{
+#'   \item \code{"binseg"} and \code{"segneigh"}, whose \code{cpt.range}
+#'     fits report the raw within-segment cost instead — for one and the same
+#'     segmentation that is 219.7 where a PELT fit reports 659.9;
+#'   \item \code{"np"}, because \pkg{changepoint.np} defines no
+#'     \code{logLik} method;
+#'   \item a change in \emph{mean} under the default \code{"MBIC"} penalty.
+#'     Loading \pkg{changepoint.np} — which this package imports, so it is
+#'     always loaded — replaces \pkg{changepoint}'s \code{logLik} method for
+#'     \code{cpt} objects with one that errors on exactly that combination.
+#'     Any other penalty (\code{"BIC"}, \code{"AIC"}, a numeric value)
+#'     reports normally, as do \code{change_in = "var"} and
+#'     \code{"meanvar"}.
+#' }
 #' @export
 glance.ggcpt <- function(x, ...) {
   total_cost <- NA_real_
   if (!is.null(x$fit)) {
-    if (inherits(x$fit, "cpt")) {
-      total_cost <- tryCatch(-as.numeric(logLik(x$fit)), error = function(e) NA_real_)
-    } else if (inherits(x$fit, "cptrange")) {
-      total_cost <- tryCatch(x$fit$cost, error = function(e) NA_real_)
+    if (inherits(x$fit, "cpt") && !inherits(x$fit, "cpt.range") &&
+        identical(cpt_test_stat(x$fit), "Normal")) {
+      # changepoint's logLik() returns c(`-2*logLik`, `-2*logLik + pen`);
+      # report the unpenalised first element, which is already a cost (do not
+      # negate it). The two guards above keep values that are NOT on that
+      # scale out of the column: a `cpt.range` fit (BinSeg, SegNeigh) returns
+      # the raw within-segment cost instead -- for one and the same
+      # segmentation that is 219.7 where a PELT fit reports 659.9 -- and the
+      # non-Normal test statistics warn "Not changed to be -2*logLik" for the
+      # same reason. It also skips cpt.np() fits, which carry the `cpt` class
+      # but have no logLik method, so asking would print "Calculating
+      # parameter estimates..." and then error.
+      #
+      # `logLik` is deliberately unqualified: the method for `cpt` is an S4
+      # method owned by changepoint, which this package @imports, so plain
+      # dispatch finds it. `stats::logLik` reaches only the S3 generic and
+      # never dispatches to it. The tryCatch is not belt-and-braces: loading
+      # changepoint.np replaces that method with one that errors on a
+      # change in mean under the MBIC penalty (see the details section).
+      total_cost <- tryCatch(
+        {
+          utils::capture.output(ll <- logLik(x$fit))
+          as.numeric(ll)[1]
+        },
+        error = function(e) NA_real_
+      )
     } else if (is.list(x$fit)) {
       # Exact [[ ]] subsetting: $ would partial-match unrelated elements
       # (e.g. DeCAFS's costFunction).
@@ -72,12 +116,20 @@ glance.ggcpt <- function(x, ...) {
 
   runtime <- x$runtime %||% NA_real_
 
+  # glance() promises exactly one row. A hand-built object may carry a
+  # zero-length `method` or `change_in` (that used to be new_ggcpt()'s
+  # default), and tibble() would then recycle every other column down to
+  # zero rows -- an empty summary rather than a summary saying "unknown".
   tibble::tibble(
     n = nrow(x$data),
     n_changepoints = nrow(x$changepoints),
-    method = x$method,
-    change_in = x$change_in,
-    penalty_type = if (is.list(x$penalty)) x$penalty$type else NA_character_,
+    method = scalar_chr(x$method),
+    change_in = scalar_chr(x$change_in),
+    penalty_type = if (is.list(x$penalty)) {
+      scalar_chr(x$penalty$type)
+    } else {
+      NA_character_
+    },
     penalty_value = penalty_value,
     cp_convention = x$cp_convention %||% "left",
     total_cost = total_cost,
@@ -93,6 +145,16 @@ glance.ggcpt <- function(x, ...) {
 #' @param x A \code{ggcpt} object.
 #' @param ... Additional arguments (ignored).
 #' @return A tibble with the original data plus augment columns.
+#'
+#' @details
+#' For a multivariate result every coordinate is returned, but the
+#' changepoints are shared across them, so \code{seg_id} and
+#' \code{is_changepoint} apply to the whole row while \code{.fitted} and
+#' \code{.resid} describe the \emph{first} coordinate only — the same
+#' coordinate \code{$segments$param_estimate} summarises. When an engine
+#' supplies its own fitted signal (SMUCE, DeCAFS, cpop, segmented, bcp,
+#' beast) that signal is used for \code{.fitted} in place of the segment
+#' means.
 #' @export
 augment.ggcpt <- function(x, ...) {
   # For a multivariate result use the wide frame (index + one column per
@@ -149,6 +211,23 @@ augment.ggcpt <- function(x, ...) {
 }
 
 `%||%` <- function(x, y) if (is.null(x)) y else x
+
+# Internal: coerce a metadata field to exactly one string, so a
+# zero-length or over-long value cannot change the shape of glance()'s row.
+#' @noRd
+scalar_chr <- function(x) {
+  if (length(x) == 0L) return(NA_character_)
+  as.character(x)[1L]
+}
+
+# Internal: the test statistic of a changepoint `cpt` fit, or NA when the
+# object does not carry one. Only "Normal" fits have a -2*logLik on the scale
+# glance() reports.
+#' @noRd
+cpt_test_stat <- function(fit) {
+  tryCatch(as.character(changepoint::test.stat(fit))[1],
+           error = function(e) NA_character_)
+}
 
 #' Summary of a ggcpt object
 #'

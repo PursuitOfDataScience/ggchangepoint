@@ -29,7 +29,10 @@ envcpt_wrapper(
 \value{
 A \code{ggcpt} object. \code{$fit} holds the full \code{envcpt}
   output; the selected model name is stored in the penalty descriptor and
-  printed by \code{glance()} via \code{penalty_type}.
+  printed by \code{glance()} via \code{penalty_type}. Individual model
+  fits that fail are expected — the criterion ignores them — so the
+  engine's own \code{try()} output is not passed on; genuine warnings
+  still are, and a series on which no model fits at all raises an error.
 }
 \description{
 Wraps \code{EnvCpt::envcpt()} (Beaulieu and Killick, 2018), which fits up

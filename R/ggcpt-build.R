@@ -143,12 +143,14 @@ as_mv_matrix <- function(x) {
 
 #' @noRd
 mv_data_wide <- function(X) {
-  # A coordinate literally named "index" would collide with the position
-  # column added below; make it unique instead of erroring.
+  # The coordinates become columns alongside the position column added below,
+  # so their names must be unique both from "index" and from each other --
+  # a matrix may legally carry duplicate colnames, and add_column() rejects
+  # the frame if any survive. Deduplicating against a leading "index" handles
+  # both collisions in one pass.
   cn <- colnames(X)
-  if (any(cn == "index")) {
-    colnames(X) <- make.unique(c("index", cn))[-1L]
-  }
+  if (is.null(cn)) cn <- paste0("V", seq_len(ncol(X)))
+  colnames(X) <- make.unique(c("index", cn))[-1L]
   out <- tibble::as_tibble(as.data.frame(X, check.names = FALSE),
                            .name_repair = "minimal")
   tibble::add_column(out, index = seq_len(nrow(X)), .before = 1)

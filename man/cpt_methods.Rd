@@ -16,8 +16,11 @@ A tibble with columns:
   \item{installed}{\code{TRUE} if the engine package is installed,
         \code{FALSE} if it is a \code{Suggests} engine that is missing,
         \code{NA} for planned methods.}
-  \item{target_release}{The release that plans to wire this method,
-        or \code{NA} for currently available methods.}
+  \item{target_release}{What a planned method is waiting on: a release,
+        or \code{"when on CRAN"} when the engine package itself is not
+        available from CRAN. \code{NA} for methods that are already
+        wired. Asking \code{cpt_detect()} for a planned method reports
+        this rather than claiming the name does not exist.}
 }
 }
 \description{

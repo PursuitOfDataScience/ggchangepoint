@@ -45,6 +45,8 @@ cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
 
   if (is.null(pen_min)) pen_min <- log(n)
   if (is.null(pen_max)) pen_max <- 10 * log(n)
+  validate_scalar(pen_min, "pen_min", min = 0, min_open = TRUE)
+  validate_scalar(pen_max, "pen_max", min = 0, min_open = TRUE)
   if (pen_min >= pen_max) {
     stop("`pen_min` must be strictly smaller than `pen_max`.", call. = FALSE)
   }

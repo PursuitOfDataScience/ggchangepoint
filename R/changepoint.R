@@ -23,10 +23,22 @@
 #' @param ... Extra arguments for each \code{cpt} function mentioned in the
 #'   \code{change_in} section.
 #'
+#' @section Standardise the data for a change in mean:
+#' With \code{change_in = "mean"} the upstream Normal cost assumes a noise
+#' standard deviation of 1 and the penalty is compared against the raw
+#' residual sum of squares, so a series with wider noise is under-penalised
+#' and over-segmented: 29 changepoints instead of 1 at \eqn{\sigma = 3} in a
+#' measured example. Standardise the series first, or use
+#' \code{change_in = "mean_var"}, which estimates a variance per segment and
+#' is unaffected. See the scale-sensitivity section of
+#' \code{\link{cpt_detect}}.
+#'
 #' @return A tibble including which point(s) is/are the changepoint along with
 #'   raw changepoint value corresponding to that changepoint. Changepoint
 #'   locations follow the convention of the \code{changepoint} package: the
-#'   last index of the left segment.
+#'   last index of the left segment. The upstream \code{cpt} object is
+#'   attached as the \code{"ggcpt_fit"} attribute, which is what
+#'   \code{\link{cpt_detect}()} stores in the result's \code{$fit}.
 #' @import changepoint
 #' @import changepoint.np
 #' @import tibble
@@ -59,6 +71,16 @@ cpt_wrapper <- function(data,
   }
 
   cp_method <- match.arg(cp_method, c("AMOC", "PELT", "SegNeigh", "BinSeg"))
+
+  # changepoint.np::cpt.np() implements PELT only: it rejects "AMOC" outright
+  # and has no `Q` argument, so BinSeg/SegNeigh die on the segment-count clamp
+  # below with "unused argument (Q = ...)". Refuse up front with the reason.
+  is_np <- change_in %in% c("np", "cpt_np")
+  if (is_np && cp_method != "PELT") {
+    stop("`change_in = \"", change_in, "\"` uses changepoint.np, which ",
+         "implements `cp_method = \"PELT\"` only (got \"", cp_method,
+         "\").", call. = FALSE)
+  }
 
   cpt_fun <- switch(change_in,
     mean_var = changepoint::cpt.meanvar,
@@ -111,7 +133,13 @@ cpt_wrapper <- function(data,
   fit <- do.call(cpt_fun, args)
   cp <- changepoint::cpts(fit)
 
-  tibble::tibble(cp = cp, cp_value = data[cp])
+  out <- tibble::tibble(cp = cp, cp_value = data[cp])
+  # Carry the upstream `cpt` object along so cpt_detect() can store it on the
+  # ggcpt result's `$fit`, the way every other engine's wrapper does. It rides
+  # as an attribute rather than a column so this function's documented return
+  # value -- a two-column tibble -- is unchanged.
+  attr(out, "ggcpt_fit") <- fit
+  out
 }
 
 

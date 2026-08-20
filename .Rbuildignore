@@ -4,10 +4,12 @@
 ^cran-comments\.md$
 ^README\.Rmd$
 ^\.github$
+^\.claude$
 ^CRAN-SUBMISSION$
 ^_pkgdown\.yml$
 ^docs$
 ^pkgdown$
 ^next_release\.md$
+^features\.md$
 ^README\.html$
 ^data-raw$

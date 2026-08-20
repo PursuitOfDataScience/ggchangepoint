@@ -14,7 +14,10 @@ ggcpt_compare(
 )
 }
 \arguments{
-\item{x}{A numeric vector (the data series).}
+\item{x}{A numeric vector (the data series). A one-column matrix or data
+frame is accepted; wider input is refused, because these detectors are
+univariate and flattening the columns would invent a changepoint at
+every seam. Use \code{\link{cpt_batch}()} for a panel of series.}
 
 \item{methods}{Character vector of method names (passed to \code{cpt_detect}).}
 
@@ -24,7 +27,10 @@ ggcpt_compare(
 \item{change_in}{What to detect change in. Passed to each detector.}
 
 \item{seed}{Optional seed for reproducible parallelism. Passed to
-\code{future.apply::future_lapply()} as \code{future.seed}.}
+\code{future.apply::future_lapply()} as \code{future.seed}, and to
+\code{set.seed()} when running sequentially. Left \code{NULL} under a
+parallel plan, \code{future.seed = TRUE} is used, so the workers get
+parallel-safe streams but the run is not reproducible.}
 
 \item{...}{Additional arguments passed to each detector.}
 }

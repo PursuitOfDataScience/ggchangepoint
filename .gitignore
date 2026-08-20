@@ -7,3 +7,4 @@
 .DS_Store
 inst/doc
 docs
+.claude/scheduled_tasks.lock

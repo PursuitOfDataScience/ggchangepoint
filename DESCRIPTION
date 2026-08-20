@@ -39,6 +39,7 @@ Imports:
     ggplot2 (>= 3.4.0),
     lifecycle,
     Rdpack,
+    stats,
     tibble,
     utils
 RdMacros: Rdpack

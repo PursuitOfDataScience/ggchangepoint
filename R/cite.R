@@ -20,6 +20,15 @@ cpt_cite <- function(x) {
     out <- refs
   } else {
     method <- if (is_ggcpt(x)) x$method else as.character(x)
+    # A ggcpt built by hand may carry no method at all; comparing against a
+    # zero-length or NA value yields a zero-length/NA subscript, which
+    # surfaces as tibble's "Can't subset rows with ..." rather than saying
+    # what is wrong.
+    if (length(method) != 1L || is.na(method) || !nzchar(method)) {
+      stop("`x` must be a method name, or a ggcpt object whose `method` is ",
+           "set. Call cpt_cite() with no argument for the full table.",
+           call. = FALSE)
+    }
     method <- tolower(method)
     out <- refs[refs$method == method, , drop = FALSE]
     if (nrow(out) == 0) {
