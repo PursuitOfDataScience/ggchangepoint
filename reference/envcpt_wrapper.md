@@ -53,7 +53,11 @@ envcpt_wrapper(
 A `ggcpt` object. `$fit` holds the full `envcpt` output; the selected
 model name is stored in the penalty descriptor and printed by
 [`glance()`](https://generics.r-lib.org/reference/glance.html) via
-`penalty_type`.
+`penalty_type`. Individual model fits that fail are expected — the
+criterion ignores them — so the engine's own
+[`try()`](https://rdrr.io/r/base/try.html) output is not passed on;
+genuine warnings still are, and a series on which no model fits at all
+raises an error.
 
 ## References
 

@@ -61,8 +61,10 @@ detection, either at a single bandwidth or (with
 
 <dt id="arg-g">G<a class="anchor" aria-label="anchor" href="#arg-g"></a></dt>
 <dd><p>Bandwidth. If <code>NULL</code>, automatically selected
-(<code>min(n/10, 100)</code> for the single-bandwidth procedure; the engine's
-default bandwidth grid for the multiscale procedure).</p></dd>
+(<code>min(n/10, 100)</code>, but never below 2, for the single-bandwidth
+procedure; the engine's default bandwidth grid for the multiscale
+procedure). A bandwidth of 1 leaves the engine's local variance
+estimate undefined, so the automatic choice is floored at 2.</p></dd>
 
 
 <dt id="arg-multiscale">multiscale<a class="anchor" aria-label="anchor" href="#arg-multiscale"></a></dt>

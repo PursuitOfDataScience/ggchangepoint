@@ -18,9 +18,11 @@ mosum_wrapper(x, G = NULL, multiscale = FALSE, seed = NULL, ...)
 
 - G:
 
-  Bandwidth. If `NULL`, automatically selected (`min(n/10, 100)` for the
-  single-bandwidth procedure; the engine's default bandwidth grid for
-  the multiscale procedure).
+  Bandwidth. If `NULL`, automatically selected (`min(n/10, 100)`, but
+  never below 2, for the single-bandwidth procedure; the engine's
+  default bandwidth grid for the multiscale procedure). A bandwidth of 1
+  leaves the engine's local variance estimate undefined, so the
+  automatic choice is floored at 2.
 
 - multiscale:
 

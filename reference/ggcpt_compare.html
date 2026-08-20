@@ -63,7 +63,10 @@ if the <code>future.apply</code> package is available.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A numeric vector (the data series).</p></dd>
+<dd><p>A numeric vector (the data series). A one-column matrix or data
+frame is accepted; wider input is refused, because these detectors are
+univariate and flattening the columns would invent a changepoint at
+every seam. Use <code><a href="cpt_batch.html">cpt_batch()</a></code> for a panel of series.</p></dd>
 
 
 <dt id="arg-methods">methods<a class="anchor" aria-label="anchor" href="#arg-methods"></a></dt>
@@ -81,7 +84,10 @@ if the <code>future.apply</code> package is available.</p>
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Optional seed for reproducible parallelism. Passed to
-<code><a href="https://future.apply.futureverse.org/reference/future_lapply.html" class="external-link">future.apply::future_lapply()</a></code> as <code>future.seed</code>.</p></dd>
+<code><a href="https://future.apply.futureverse.org/reference/future_lapply.html" class="external-link">future.apply::future_lapply()</a></code> as <code>future.seed</code>, and to
+<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> when running sequentially. Left <code>NULL</code> under a
+parallel plan, <code>future.seed = TRUE</code> is used, so the workers get
+parallel-safe streams but the run is not reproducible.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

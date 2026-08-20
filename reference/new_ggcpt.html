@@ -47,8 +47,8 @@
 <span>  segments <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>seg_id <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="op">)</span>, start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="op">)</span>, end <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="op">)</span>, n <span class="op">=</span></span>
 <span>    <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="op">)</span>, param_estimate <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>index <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/integer.html" class="external-link">integer</a></span><span class="op">(</span><span class="op">)</span>, value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span>,</span>
-<span>  method <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  change_in <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/character.html" class="external-link">character</a></span><span class="op">(</span><span class="op">)</span>,</span>
+<span>  method <span class="op">=</span> <span class="cn">NA_character_</span>,</span>
+<span>  change_in <span class="op">=</span> <span class="cn">NA_character_</span>,</span>
 <span>  penalty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>type <span class="op">=</span> <span class="cn">NA_character_</span>, value <span class="op">=</span> <span class="cn">NA_real_</span><span class="op">)</span>,</span>
 <span>  fit <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  call <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -75,11 +75,15 @@
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Character. The detection method used.</p></dd>
+<dd><p>Character. The detection method used. A length-one string;
+defaults to <code>NA_character_</code>. (A zero-length value would make
+<code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> return zero rows instead of its documented single row,
+because every other column would be recycled against it.)</p></dd>
 
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>
-<dd><p>Character. What was detected (e.g. "mean", "var", "meanvar").</p></dd>
+<dd><p>Character. What was detected (e.g. "mean", "var",
+"meanvar"). A length-one string; defaults to <code>NA_character_</code>.</p></dd>
 
 
 <dt id="arg-penalty">penalty<a class="anchor" aria-label="anchor" href="#arg-penalty"></a></dt>
@@ -87,7 +91,12 @@
 
 
 <dt id="arg-fit">fit<a class="anchor" aria-label="anchor" href="#arg-fit"></a></dt>
-<dd><p>The raw upstream object.</p></dd>
+<dd><p>The raw upstream object. Every wrapper stores one except
+<code>"ecp"</code>: <code><a href="https://rdrr.io/pkg/ecp/man/e.agglo.html" class="external-link">ecp::e.agglo()</a></code> returns a cluster-progression
+matrix that is quadratic in the series length, so keeping it by
+default would make the result object explode on a long series. Call
+<code><a href="https://rdrr.io/pkg/ecp/man/e.divisive.html" class="external-link">ecp::e.divisive()</a></code> or <code><a href="https://rdrr.io/pkg/ecp/man/e.agglo.html" class="external-link">ecp::e.agglo()</a></code> directly if you
+need it.</p></dd>
 
 
 <dt id="arg-call">call<a class="anchor" aria-label="anchor" href="#arg-call"></a></dt>

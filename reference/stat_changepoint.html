@@ -77,7 +77,11 @@ changepoint locations.</p>
 
 
 <dt id="arg-geom">geom<a class="anchor" aria-label="anchor" href="#arg-geom"></a></dt>
-<dd><p>The geometric object to use (default: "vline").</p></dd>
+<dd><p>The geometric object to use (default: <code>"vline"</code>). The stat
+computes a single <code>xintercept</code> per changepoint, so only geoms that
+consume that aesthetic fit — <code>"vline"</code> and <code>"rug"</code>. A geom
+needing <code>x</code>/<code>y</code>, such as <code>"point"</code>, errors because the
+stat drops those aesthetics.</p></dd>
 
 
 <dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>

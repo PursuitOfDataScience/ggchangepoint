@@ -293,8 +293,479 @@ engines live on CRAN and enter `Suggests` behind
   penalty that carries no numeric value prints as `MBIC` rather than
   `MBIC = NA`.
 
+### Bug fixes (final pre-submission audit; regression-tested)
+
+The whole exported surface was exercised with degenerate,
+contract-violating and self-generated input. Items are listed with the
+ones that change an answer or end a session first.
+
+- `hsmuce` no longer aborts the R session. When a series carries
+  essentially no noise at the per-segment scale, `stepR`’s heterogeneous
+  variance estimator does not raise an R error but *terminates the
+  session*, so nothing downstream can catch it and the user loses their
+  work. It is reachable straight from
+  `cpt_detect(x, method = "hsmuce")`. Two regimes were measured as
+  fatal: a globally flat series such as
+  `rep(4, 300) + rnorm(300, 0, 2e-7)`, and — more dangerous, because it
+  looks entirely ordinary — a clean step whose segments are numerically
+  constant, `c(rep(0, 150), rep(5, 150)) + rnorm(300, 0, 1e-9)`, which
+  is what `cpt_simulate(sd = 0)` produces once any rounding is added.
+  Both are refused when the point-to-point variation lies more than
+  about seven orders of magnitude below the data’s own scale, with a
+  message naming `family = "gauss"`, which handles the whole range. An
+  exactly noiseless series is safe upstream and still works (R53).
+- `idetect` no longer invents changepoints on a constant series.
+  [`IDetect::ID()`](https://rdrr.io/pkg/IDetect/man/ID.html) is erratic
+  on flat input — its statistics go to 0/0, and what it returns depends
+  on the value and the length: `rep(3, 200)` came back with **126**
+  changepoints at 1, 3, 4, 6, 7, …, while `rep(0, 100)` errors and
+  `rep(-2.5, 60)` returns a sentinel 0. Every other search wrapper
+  reports none, and the 0.4.0 audit fixed exactly this class of bug for
+  `segmented`, `sn`, `kcp`, `npmojo` and `inspect` — `idetect` was
+  missed. It now short-circuits to the empty result, decided by exact
+  equality so a series with tiny but genuine variation still reaches the
+  engine (R50).
+- [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
+  reports the quantity it documents. `freq` is described as “the
+  proportion of replicates detecting a changepoint within `margin` of
+  that index”, but the loop incremented once per *changepoint*, so a
+  replicate whose detections had overlapping ±`margin` windows was
+  counted twice at the shared indices; `pmin(hits / B, 1)` then hid the
+  overflow by clipping it. The effect was to inflate exactly the number
+  the function exists to report — in a measured example an index that
+  only half the replicates covered was shown as 1.00, “re-detected every
+  time”. Each replicate now contributes at most one to any index, so
+  `freq` is a genuine proportion and needs no clipping (R38).
+- [`glance()`](https://generics.r-lib.org/reference/glance.html) always
+  returns the single row it documents.
+  [`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
+  defaulted `method` and `change_in` to `character(0)`, so `tibble()`
+  recycled every other column down to zero rows — an empty summary for
+  any hand-built result, including the one the README demonstrates.
+  Those defaults are now `NA_character_`, and
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) coerces
+  the metadata fields to length one whatever the object carries (R37).
+- The `changepoint` engines (`pelt`, `binseg`, `segneigh`, `amoc`, `np`)
+  keep their upstream `cpt` object in `$fit`. It was `NULL`, although
+  `$fit` is documented as “the raw upstream object” and every other
+  engine stored one — which also left the `inherits(fit, "cpt")` branch
+  of [`glance()`](https://generics.r-lib.org/reference/glance.html)
+  unreachable, and with it a sign error and a wrong element index that
+  had never run. `glance()$total_cost` now reports the unpenalised −2
+  log L for those engines where `changepoint` exposes it on that scale,
+  and stays `NA` where it does not, rather than mixing two scales in one
+  column;
+  [`?glance.ggcpt`](https://pursuitofdatascience.github.io/ggchangepoint/reference/glance.ggcpt.md)
+  spells out which cases are which (R35).
+- [`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md)
+  works on multivariate results. The faceted small-multiple that
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  builds for them used a facet column named `variable`, which is also
+  the name
+  [`plotly::ggplotly()`](https://rdrr.io/pkg/plotly/man/ggplotly.html)
+  gives a column of its own when it melts the built plot, so every
+  multivariate result failed with “Names must be unique”. The column is
+  now `coordinate`; the facet strips are unchanged (R36).
+- Duplicate multivariate coordinate names no longer abort a run. A
+  matrix may legally carry the same colname twice, which made
+  `add_column()` reject the wide frame with “must have unique names as
+  of tibble 3.0.0”; the R18 fix had only deduplicated a coordinate named
+  `index` against the position column, not the coordinates against each
+  other. All coordinate names are now made unique in one pass (R34).
+- `envcpt` no longer prints its engine’s internal failures as though the
+  call had failed. `EnvCpt` fits up to twelve models with
+  [`try()`](https://rdrr.io/r/base/try.html), and a non-silent
+  [`try()`](https://rdrr.io/r/base/try.html) writes its error straight
+  to stderr, so on a degenerate series
+  [`envcpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/envcpt_wrapper.md)
+  printed six lines beginning “Error in arima(…): non-stationary AR part
+  from CSS” and then returned a perfectly good result. Those failures
+  are expected — the criterion ignores the models that did not fit — so
+  the message stream is diverted for the duration of the call. Genuine
+  warnings are deferred past the diversion and still reach the user, and
+  a call that really does fail still errors (R52).
+- `cpt_simulate(change_in = "meanvar")` works without `params`. It was
+  the one change type with no parameter default, so the call died with
+  “replacement has length zero” instead of simulating anything (R32).
+- [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
+  warns about recycled parameters for every change type, not only
+  `"mean"`. Supplying fewer parameters than there are segments reuses
+  the last one, so the trailing entries of `changepoints` were recorded
+  in `true_changepoints` with no actual change behind them — silently
+  wrong ground truth for `"var"`, `"meanvar"` and `"slope"` (R32).
+- Two more ways to get a silent “no changepoints” are closed. `cpm`
+  ships thresholds only for a fixed set of average run lengths; for any
+  other `arl0` its `processStream()` *prints* “Error: No thresholds
+  available for selected ARL0” and returns an empty result instead of
+  raising a condition, so
+  [`tryCatch()`](https://rdrr.io/r/base/conditions.html) never saw it
+  and the wrapper reported zero changepoints on a series with an obvious
+  one — the same trap the earlier audit found for
+  `cpm_type = "GLRAdjusted"`, on a different argument. And
+  [`kcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/kcp_wrapper.md)
+  with `nperm` below 2 either reported nothing (0 or negative) or died
+  inside the engine with an unreadable `row.names` error (1). Both are
+  refused now, with the supported `arl0` values named in the message
+  (R61).
+- An out-of-range `conf_level` no longer hangs
+  [`strucchange_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md).
+  [`stats::confint()`](https://rdrr.io/r/stats/confint.html) on a
+  breakpoints fit at `level = 2` never returns, and the
+  [`tryCatch()`](https://rdrr.io/r/base/conditions.html) already around
+  that call cannot rescue a call that does not terminate — so the
+  session simply locked up. `conf_level` is now required to lie strictly
+  between 0 and 1 in both
+  [`strucchange_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md)
+  and
+  [`segmented_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/segmented_wrapper.md).
+  In the same sweep: `bocpd_wrapper(hazard)` and `cpop_wrapper(sd)` must
+  be positive, and `wbs_wrapper(n_intervals)` at least 1 — all
+  previously accepted meaningless values (R60).
+- [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
+  refuses parameters that made it emit `NaN`. It is where ground truth
+  for every benchmark comes from, so a silent series of `NaN` is the
+  worst thing it can produce — and `sd = -1`, `sd = NA`, and
+  `|rho| >= 1` under the AR(1) model each did exactly that, with no
+  error and no warning (`sqrt(1 - rho^2)` is not a number outside the
+  stationary range). Non-positive `n` is refused too. `rho` is checked
+  only for `noise = "ar1"`, so a stray value the chosen model ignores is
+  still accepted (R59).
+- The logical switches refuse a non-logical value instead of silently
+  doing the opposite. `show_segments`, `show_ci`, `show_fit`,
+  `show_line`, `show_points` and `mosum_wrapper(multiscale)` are all
+  documented as “Logical” but were read with
+  [`isTRUE()`](https://rdrr.io/r/base/Logic.html), which treats
+  everything that is not `TRUE` as `FALSE`. So `show_segments = 1`,
+  `= "yes"`, `= "TRUE"` or `= NA` quietly drew nothing, and
+  `show_line = 1` quietly *removed* the line the user was asking to keep
+  — three layers down to one. `show_points = NULL` keeps its documented
+  meaning of deciding from the series length (R58).
+- The package’s own arguments now enforce the ranges they document. The
+  engines police their own — `stepR` refuses an `alpha` outside (0, 1),
+  `SNSeg` an unlisted `confidence` — but ggchangepoint’s were taken on
+  trust, and out-of-range values returned answers instead of errors:
+  `cpt_metrics(margin = -3)` scored a *perfect* segmentation as
+  precision 0 and recall 0; `cpt_stability(B = 0)` produced a stability
+  profile of `NaN`; `cpt_metrics(n = -10)` a covering metric of −1;
+  `bcp_wrapper` and `beast_wrapper` with `prob_threshold = 0` reported
+  239 changepoints in a 240-point series; `kcp_wrapper(alpha = 2)` and
+  `cpt_crops(pen_min = -5)` ran regardless. All are refused now, with
+  the legitimate boundaries (`margin = 0`, `B = 1`, `n = 1`,
+  `prob_threshold = 1`) still accepted (R57).
+- [`mosum_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mosum_wrapper.md)’s
+  automatic bandwidth is never 1. `min(n / 10, 100)` rounds to 1 for
+  every `n < 20`, and a one-observation window leaves the engine’s
+  studentised statistic undefined, so it warned “NaNs produced” and
+  returned spurious changepoints rather than failing. The automatic
+  bandwidth is floored at 2, and a series too short for any window gets
+  an actionable message (R29).
+- [`npmojo_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/npmojo_wrapper.md)’s
+  default bandwidth is capped at `n / 2`, the largest the engine
+  accepts. The documented `max(20, 0.1 * n)` exceeded that for every
+  series shorter than 40, so the default always failed with “Bandwidth
+  is too large for the length of time series”. Series of 40 or more
+  observations are unchanged (R30).
+- `cpt_wrapper(change_in = "np")` refuses `cp_method` values other than
+  `"PELT"` up front.
+  [`changepoint.np::cpt.np()`](https://rdrr.io/pkg/changepoint.np/man/cpt.np.html)
+  implements PELT only, so `"BinSeg"` and `"SegNeigh"` used to die on
+  the internal `Q` clamp with “unused argument (Q = 5)” and `"AMOC"`
+  surfaced the engine’s “Invalid Method” (R27).
+- [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
+  [`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md)
+  and
+  [`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
+  reject an `index` whose length does not match the series, naming the
+  argument at fault, instead of surfacing dplyr’s recycling error (“`x`
+  must be size 200 or 1, not 10”), which never mentions `index` (R26).
+- [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+  enforces the argument ranges it documents (R28): `alpha > 1` for
+  `"sSIC"` (at or below 1 it is weaker than BIC, so no longer a
+  *strengthened* SIC); `n >= 3` for the log-based penalties (`log(n)` is
+  0 at `n = 1` and `log(log(n))` is negative below `n = 3`, so the
+  “penalty” rewarded extra changepoints); and `0 <= k <= n` for
+  `"MBIC"`, whose `log C(n, k)` term is `-Inf` beyond that. `"AIC"`,
+  which does not involve `n`, is exempt.
+- [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+  names the series that failed. It exists for panels of hundreds of
+  series, but an error in any one of them surfaced only as the
+  underlying complaint — “`x` must have at least 3 observations” —
+  leaving the user to bisect the list to find which. The message is now
+  prefixed with the series name and its position,
+  e.g. `` Series `short` (2 of 3): `` (R49).
+- A result from
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  records the
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  call in `$call`. It previously held the internal helper each branch
+  happened to use — e.g.
+  `wrap_cpt_to_ggcpt(x = data_vec, change_in = ci, ...)`, an unexported
+  function named with the dispatcher’s local symbols, which a reader can
+  neither recognise nor re-run. Wrappers called directly still record
+  themselves (R33).
+- [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+  on a result with no method name says so, instead of surfacing tibble’s
+  “Can’t subset rows with `refs$method == method`” (R37).
+- [`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md)
+  no longer warns “No shared levels found …” when there is nothing to
+  draw: a run with no predictions and no ground truth is a perfect
+  score, not a broken plot (R31).
+- [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
+  pads its changepoint rules by a fixed amount on a flat series, as
+  [`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md)
+  already did; a zero data range would otherwise collapse them to
+  invisible zero-height segments.
+- [`glance()`](https://generics.r-lib.org/reference/glance.html) no
+  longer carries an unreachable branch. It tested
+  `inherits(fit, "cptrange")`, but the `changepoint` class is
+  `cpt.range` — with a dot — so the branch could never fire, and its
+  body used `$` on an S4 object, which would have errored had it ever
+  been reached. Removed; the BinSeg/SegNeigh case is handled explicitly
+  alongside the other engines whose cost is on a different scale (R46).
+- [`?new_ggcpt`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
+  and
+  [`?ecp_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md)
+  explain why `$fit` is `NULL` for `"ecp"` and only for `"ecp"`:
+  [`ecp::e.agglo()`](https://rdrr.io/pkg/ecp/man/e.agglo.html) returns a
+  cluster-progression matrix that is quadratic in the series length, so
+  retaining it by default would make the result object explode on a long
+  series — 207 kB of fit for a 1.3 kB series at n = 160 alone (R46).
+- The covering metric no longer scales quadratically.
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+  compared every truth segment against every prediction segment, so
+  scoring a segmentation with many changepoints crawled — 7.5 seconds
+  for 3000 of them. Because both partitions tile the series and their
+  breakpoints are sorted, only the overlapping prediction segments can
+  win, and two
+  [`findInterval()`](https://rdrr.io/r/base/findInterval.html) lookups
+  locate them; the same case now takes 0.42 seconds. The numbers are
+  unchanged: verified identical on 4010 cases (4000 random plus
+  adversarial partitions) and pinned in the tests against an independent
+  set-based statement of the definition (R42).
+- The redundant `.onLoad()` is gone. It re-registered `print`, `plot`,
+  `summary`, `tidy`, `glance`, `augment` and `autoplot` at load time —
+  writing into `base`‘s and `generics`’ S3 method tables — even though
+  NAMESPACE already declares every one of them, and it wrapped the lot
+  in [`suppressWarnings()`](https://rdrr.io/r/base/warning.html), so a
+  genuine registration failure would have been invisible. It was a
+  leftover from before `@exportS3Method base::generic` was adopted in
+  0.3.0. Verified redundant before removing: all eleven methods still
+  dispatch with and without the package attached, and every declared
+  generic/class pair still resolves through
+  [`getS3method()`](https://rdrr.io/r/utils/getS3method.html) (R41).
+- [`?ocd_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)
+  says how long it takes. Nearly all of `ocd`’s cost is Monte Carlo
+  threshold calibration, which happens before a single observation is
+  read: measured at `mc_reps = 5`, construction is about 3 s at p = 3, 9
+  s at p = 10 and 55 s at p = 50, and four times that at `mc_reps = 20`
+  — so the default `mc_reps = 100` extrapolates to roughly a quarter of
+  an hour at p = 50. The help now gives those numbers, notes that
+  monitoring the observations afterwards is comparatively free, and
+  points at `thresh`, which takes the three thresholds directly and
+  skips calibration entirely. That escape hatch had no test; it has one
+  now (R56).
+- `stats` is declared in `Imports`.
+- The documented simulate → detect → evaluate → plot workflow is
+  verified end to end. Each piece had its own tests, but not the chain:
+  a result’s changepoints feeding
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+  and
+  [`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md),
+  its segments feeding
+  [`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md),
+  the object itself feeding
+  [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md).
+  The chain was run for all 31 methods — it completes for every one, and
+  24 of them recover both planted changepoints with precision, recall,
+  F1 and covering all exactly 1. The exceptions are all correct by
+  construction: `amoc` finds at most one changepoint, `cpop` and
+  `segmented` are slope engines being shown a step, `ocd` is online and
+  reports declaration times, and `geomcp` unions its distance and angle
+  mappings. A six-method version spanning the structural variety is now
+  in the suite (R55).
+- Every configuration of
+  [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
+  and every canonical signal was run through all 31 methods to confirm
+  none of them can produce input that terminates the session. Three
+  configurations do land in the degenerate band and are now refused by
+  `hsmuce` rather than crashing it: `sd = 0` and `sd = 1e-9` for a
+  change in mean, and — the one the audit turned up —
+  `change_in = "slope"` with `sd = 0`, whose consecutive differences are
+  a constant slope, so its point-to-point variation is floating-point
+  residue of about 1e-14 rather than zero. Nothing else crashes on any
+  of them, and the realistic settings and all five canonical signals are
+  unaffected (R54).
+- The dispatcher’s `change_in` translations are tested.
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  derives an engine-specific argument from `change_in` for `not`, `cpm`,
+  `kcp`, `sn` and `fastcpd`; the suite covered *overriding* those
+  through `...` but never the derivation, so a wrong translation would
+  have silently run the wrong analysis. Each is now checked against the
+  equivalent explicit call (R51).
+- [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)’s
+  one-to-one matching is verified to be a genuine maximum matching,
+  which is what
+  [`?cpt_metrics`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+  claims and what precision and recall are derived from — if the greedy
+  scan ever fell short, both would be silently understated. Checked
+  against an exact maximum bipartite matching on 300 random
+  configurations plus seven clustered and interleaved patterns chosen to
+  break a greedy rule: it never falls short (R48).
+- The Bayesian displays’ remaining documented paths are tested:
+  [`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)
+  on a
+  [`beast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/beast_wrapper.md)
+  result (the help says it handles both bcp and BEAST, but only the bcp
+  branch of the profile extractor was ever run), and every guard on
+  [`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)/[`ggcpt_runlength()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_runlength.md)
+  — non-`ggcpt` input, a result with no posterior, and a `prob_floor`
+  that leaves nothing to draw (R47).
+- Test coverage rose to cover the exported surface that had none. A
+  coverage run found two exported functions with no test at all —
+  [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md)
+  and
+  [`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md)
+  — alongside a set of documented modes and arguments that nothing
+  exercised: `ecp_wrapper(algorithm = "agglo")`,
+  `sn_wrapper(parameter = "bivcor")`,
+  `cpt_simulate(noise = "ar1" | "rw")`,
+  [`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md),
+  `autoplot(show_segments = TRUE)`, the “no changepoints detected” print
+  paths, and the `sd`/`breaks`/`model_param`/`lambda`/`threshold`/`G`
+  arguments of the cpop, strucchange, DeCAFS, inspect and mosum
+  wrappers. All of them worked; none of them was guarded against a
+  future refactor (R45).
+- The test suite now really does run with none of the Suggests
+  installed. Two assertions reached a Suggests-only engine without a
+  guard — `expect_error(fpop_wrapper(X), "univariate")` and the fpop
+  half of the scale-sensitivity note — so on a machine with no fpop they
+  met “Package ‘fpop’ is required” instead of the message under test,
+  which is an ERROR rather than a skip on CRAN’s noSuggests flavour. The
+  earlier `_R_CHECK_DEPENDS_ONLY_` run had missed both because the
+  fallback library it used still exposed part of Suggests; the suite is
+  now verified against a library holding the Imports and nothing else.
+  Both assertions are guarded and the pelt half of each stayed
+  unguarded, so the cases that need no Suggests still run. A static
+  sweep of every `test_that()` block for a Suggests package used without
+  a matching guard found no others (R62).
+- [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
+  and
+  [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md)
+  refuse a multi-column `x` instead of flattening it. Both run
+  univariate detectors but took `as.numeric(x)` on trust, so a 160x2
+  matrix was unrolled column after column and the join between the
+  columns read as a level shift: the table came back with changepoints
+  at 80 *and* 160, and 160 is the seam, not a feature of either series.
+  Every wrapper already refused wide input through the same check; these
+  two entry points were the only ones that did not. Non-numeric input
+  now names the argument as well, rather than failing inside
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html) with “cannot
+  coerce type ‘object’ to vector of type ‘double’”. The message points
+  at
+  [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md),
+  which is what runs a detector over a panel (R63).
+- [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
+  hands `future.apply` a documented `future.seed` value. It passed
+  `seed` straight through, and `seed` defaults to `NULL`, which is not
+  among the logical/integer/list values `future_lapply()` documents — so
+  every parallel comparison run without an explicit seed was outside
+  that contract. It now sends `TRUE` in that case, asking for
+  parallel-safe L’Ecuyer streams, which is what
+  [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+  already did. Sequential runs are unaffected. Found by exercising the
+  parallel branch of both functions for the first time: it is documented
+  in three vignettes and both help pages, and no test had ever set a
+  non-sequential
+  [`future::plan()`](https://future.futureverse.org/reference/plan.html).
+  The branch is otherwise correct — same changepoints as the sequential
+  path, series names preserved, `...` forwarded, and the “which series
+  failed” error still named (R64).
+- [`?strucchange_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md)
+  says how large its result is. Measuring
+  [`object.size()`](https://rdrr.io/r/utils/object.size.html) for every
+  engine on one series turned up a single outlier: a `strucchange`
+  result is quadratic in the series length, because `breakpoints()`
+  keeps `RSS.triang`, the triangular table of segment residual sums of
+  squares that lets it return the optimal segmentation for any number of
+  breaks without refitting. On a 3.2 kB series it comes to 1.7 MB at n =
+  200, 5.9 MB at n = 400 and 22.6 MB at n = 800 — about four times
+  larger per doubling — and the table’s share of that grows from 85% to
+  95% over the same range. One fit is nothing; a few hundred from
+  [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+  are, so the help now says to keep `$changepoints` rather than the
+  whole list of results. Nothing changed in the object: this is the same
+  size-versus-usefulness trade-off already documented for `ecp` in the
+  opposite direction, and it was simply unstated. Every other engine is
+  ordinary — the median result across the other thirty is under ten
+  times the size of the series it was given (R65).
+- Asking for one of the four planned methods says so.
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  lists `gfpop`, `robust`, `focus` and `sbs` with `status = "planned"`,
+  but `cpt_detect(x, method = "gfpop")` went to
+  [`match.arg()`](https://rdrr.io/r/base/match.arg.html), whose message
+  enumerates the thirty-one wired methods — so it did not contain the
+  name the user had just read out of the table. The table said the name
+  existed and the dispatcher said it did not. It now reports what the
+  method is waiting on and which package it will be built on; an
+  outright unknown name still gets the ordinary list. In the same pass,
+  `sbs`’s entry was out of date: it said “when on CRAN”, but `hdbinseg`
+  returned to CRAN as 1.0.3 in September 2025, so the only thing
+  standing between `sbs` and a user is the wrapper. `gfpop` was removed
+  from CRAN and `robseg` and `FOCuS` have never been on it, so those
+  three still read “when on CRAN” (R66).
+
 ### Documentation
 
+- [`?cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  gains a scale-sensitivity section, and the README and the introduction
+  vignette repeat it: `pelt`, `binseg`, `segneigh` and `fpop` weigh the
+  penalty against a *raw* segment cost when detecting a change in mean,
+  because `changepoint`’s Normal cost fixes the noise standard deviation
+  at 1 and `fpop`’s `lambda` penalises the residual sum of squares
+  directly. Neither rescales the data, so wider noise makes the penalty
+  negligible and the segmentation shatters — on one true changepoint
+  with a five-sigma jump, `pelt` returns 1 changepoint at sigma = 1, 29
+  at sigma = 3 and 138 at sigma = 10. The note gives the three remedies
+  (standardise the series, scale the penalty by the noise variance, or
+  use `change_in = "meanvar"`) and records that every other engine
+  estimates or cancels the noise scale itself; both halves of it are
+  pinned by a test (R39).
+  [`?cpt_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
+  [`?fpop_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fpop_wrapper.md)
+  and
+  [`?cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+  point at it. Behaviour is unchanged; the trap was simply undocumented,
+  and the package’s own examples all use unit-variance data, so nothing
+  exposed it.
+- [`?cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md),
+  [`?fpop_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fpop_wrapper.md),
+  [`?cpop_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpop_wrapper.md)
+  and
+  [`?decafs_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/decafs_wrapper.md)
+  now record that the dispatcher and those wrappers do not share a
+  default penalty.
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  resolves its `"MBIC"` default to a numeric value that is stronger than
+  the wrappers’ own `2 * log(n)` — 19.9 against 11.8 at n = 360 — so
+  `cpt_detect(x, method = "decafs")` reports 3 changepoints where
+  `decafs_wrapper(x)` reports 5 on the same series. Both defaults were
+  documented individually; that they differ was not. Passing `penalty`
+  explicitly makes the two entry points agree (R40).
+- [`?npmojo_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/npmojo_wrapper.md)
+  records that the engine calibrates its detection threshold by
+  bootstrap, so the value stored in the penalty descriptor varies
+  between runs unless [`set.seed()`](https://rdrr.io/r/base/Random.html)
+  is called first (or a manual threshold is passed through `...`).
+- [`?cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  warns that a misspelt engine argument can pass unnoticed. `wbs`,
+  `not`, `Rbeast`, `strucchange`, `segmented` and `fastcpd` all end
+  their own signature in `...`, so an unrecognised name forwarded
+  through
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)’s
+  `...` is discarded upstream and the engine quietly uses its default.
+  Intercepting it here would risk rejecting arguments those engines
+  legitimately forward deeper, so the behaviour is unchanged and
+  documented instead.
 - The README and all three vignettes were reviewed against the source
   and corrected. Notably: a
   [`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md)
@@ -305,9 +776,62 @@ engines live on CRAN and enter `Suggests` behind
   demonstrated on the input series rather than the result; a claim that
   only three engine packages are required; and a method-family count
   that disagreed between the package help, the README and the vignettes
-  (all now six).
+  (all now six — the feature-tour vignette was the last straggler and
+  still said five).
 - Figure alt text is now specific per figure instead of one generic
   string for every plot.
+- The
+  [`ocd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)
+  test uses `mc_reps = 10` rather than 50. Those repetitions only
+  calibrate the detection threshold, and the change the test plants is
+  far too large for the calibration to matter — 10 reps give the same
+  declaration as 50 and take 7 seconds instead of 36, cutting the whole
+  test suite from 74 to 42 seconds with the assertions unchanged.
+- The
+  [`ocd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)
+  example runs in 3.6 seconds instead of 20. It was by far the slowest
+  example in the package — `ocd`’s Monte Carlo threshold calibration
+  scales with both the number of coordinates and `mc_reps` — and a
+  smaller, cleaner problem (100x3 with `mc_reps = 5`) demonstrates the
+  wrapper better anyway: it reports one declaration just after the true
+  change, where the old example also produced a spurious second one.
+- Two citations were wrong, and the package’s three citation sources now
+  agree. The TGUH paper was dated 2018 (Annals of Statistics 46(6B),
+  3390-3421) by `cpt_cite("tguh")` but 2022 (50(5), 2721-2761) in the
+  vignette bibliography — the same paper with two sets of coordinates;
+  the bibliography is corrected to match, and its key renamed
+  accordingly.
+  [`?ecp_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ecp_wrapper.md)
+  cited the arXiv preprint of the ecp software paper while both
+  vignettes cited its published form, so `inst/REFERENCES.bib` now
+  carries the Journal of Statistical Software version (62(7), 1-25). A
+  new test cross-validates all three sources: shared BibTeX keys must
+  describe the same publication, every `\insertRef` key must resolve in
+  `inst/REFERENCES.bib`, and every `@key` cited in a vignette must
+  resolve in the vignette bibliography (R44).
+- [`?stat_changepoint`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.md)
+  says which geoms actually work with it. The stat emits one
+  `xintercept` per changepoint and drops `x`/`y`, so `"vline"` (the
+  default) and `"rug"` fit while `"point"` errors; the help previously
+  read as though any geom would do.
+- [`?geom_cpt_ci`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_ci.md)
+  no longer claims an `x` aesthetic is required. The layer is a
+  horizontal error bar, so it needs `y`, `xmin` and `xmax`; `x` is
+  accepted but unnecessary, and neither of the package’s own call sites
+  (`autoplot(show_ci = TRUE)` and the feature-tour vignette) supplies
+  it, so the help contradicted the package’s own usage (R43).
+- [`?augment.ggcpt`](https://pursuitofdatascience.github.io/ggchangepoint/reference/augment.ggcpt.md)
+  now says what the columns mean for a multivariate result: every
+  coordinate is returned and `seg_id`/`is_changepoint` apply to the
+  whole row, but `.fitted` and `.resid` describe the first coordinate
+  only — the same one `$segments$param_estimate` summarises.
+- The penalty-semantics section of
+  [`?cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+  now records the one silent substitution the dispatcher makes:
+  `changepoint` does not implement MBIC for Segment Neighbourhood, so
+  `cpt_detect(method = "segneigh")` falls back to `"SIC"` on the default
+  penalty and its result is therefore not directly penalty-comparable
+  with a PELT one.
 
 ## ggchangepoint 0.3.0
 

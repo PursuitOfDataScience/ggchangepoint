@@ -195,6 +195,31 @@ below. Solved naively by dynamic programming, the minimisation costs
 2012)</span> prunes candidate changepoints to reach linear expected cost
 while remaining exact, and <strong>FPOP</strong> <span class="citation">(Maidstone et al. 2017)</span> reaches comparable speed
 by functional pruning.</p>
+<p>A practical consequence of writing the objective this way is easy to
+miss:
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
+and
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>
+must live on the same scale. For a change in mean the
+<strong>changepoint</strong> engines evaluate the Normal cost with the
+noise standard deviation fixed at 1, and <strong>fpop</strong> penalises
+the residual sum of squares directly, so multiplying the data by a
+constant multiplies the cost while leaving
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
+untouched. On a single changepoint whose jump is five standard
+deviations, <code>pelt</code> recovers exactly one changepoint at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sigma = 1</annotation></semantics></math>
+but returns 29 at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">\sigma = 3</annotation></semantics></math>
+and 138 at
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">\sigma = 10</annotation></semantics></math>.
+Standardise the series, pass a penalty on the data’s own scale (say
+<code>2 * log(n) * var(diff(x)) / 2</code>), or use
+<code>change_in = "meanvar"</code>, which estimates a variance per
+segment. Methods that estimate the noise level as part of their
+procedure — SMUCE, the WBS family, CPOP, DeCAFS, and the Bayesian and
+nonparametric engines — return the same segmentation whatever the
+units.</p>
 </div>
 <div class="section level3">
 <h3 id="search-based-and-multiscale-methods">Search-based and multiscale methods<a class="anchor" aria-label="anchor" href="#search-based-and-multiscale-methods"></a>
@@ -210,7 +235,7 @@ cleanly to changes in slope; <strong>MOSUM</strong> <span class="citation">(Eich
 statistic at a fixed bandwidth, or across a range of bandwidths;
 Isolate–Detect <span class="citation">(Anastasiou and Fryzlewicz
 2022)</span> isolates each changepoint in an expanding interval; and
-TGUH <span class="citation">(Fryzlewicz 2022)</span> performs a
+TGUH <span class="citation">(Fryzlewicz 2018)</span> performs a
 tail-greedy bottom-up merge. <strong>SMUCE</strong> <span class="citation">(Frick et al. 2014)</span> occupies a special place: it
 estimates the step function with the fewest jumps that still passes a
 <em>simultaneous multiscale test</em> at level
@@ -638,11 +663,10 @@ routes <code>cpt_detect(x, method = "not", change_in = "slope")</code>
 to it automatically:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_slope</span>, method <span class="op">=</span> <span class="st">"not"</span>, change_in <span class="op">=</span> <span class="st">"slope"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    85     36.8</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   101     40.7</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="bayesian-detection">Bayesian detection<a class="anchor" aria-label="anchor" href="#bayesian-detection"></a>
@@ -1063,15 +1087,15 @@ Fryzlewicz, Piotr. 2014. <span>“Wild Binary Segmentation for Multiple
 Change-Point Detection.”</span> <em>The Annals of Statistics</em> 42
 (6): 2243–81. <a href="https://doi.org/10.1214/14-AOS1245" class="external-link">https://doi.org/10.1214/14-AOS1245</a>.
 </div>
+<div id="ref-fryzlewicz2018tail" class="csl-entry">
+Fryzlewicz, Piotr. 2018. <span>“Tail-Greedy Bottom-up Data
+Decompositions and Fast Multiple Change-Point Detection.”</span> <em>The
+Annals of Statistics</em> 46 (6B): 3390–421.
+</div>
 <div id="ref-fryzlewicz2020detecting" class="csl-entry">
 Fryzlewicz, Piotr. 2020. <span>“Detecting Multiple Change-Point Features
 via Narrowest-over-Threshold.”</span> <em>Journal of the Royal
 Statistical Society Series B</em> 82 (5): 1377–418.
-</div>
-<div id="ref-fryzlewicz2022tail" class="csl-entry">
-Fryzlewicz, Piotr. 2022. <span>“Tail-Greedy Bottom-up Data
-Decompositions and Fast Multiple Change-Point Detection.”</span> <em>The
-Annals of Statistics</em> 50 (5): 2721–61.
 </div>
 <div id="ref-grundy2020geomcp" class="csl-entry">
 Grundy, Thomas, Rebecca Killick, and Gueorgui Mihaylov. 2020.

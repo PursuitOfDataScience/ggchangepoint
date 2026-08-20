@@ -71,7 +71,7 @@ Yu<br><span style="font-size:85%;">University of Chicago</span>
 </h2>
 <p><strong>ggchangepoint</strong> provides a unified, tidy,
 <code>ggplot2</code>-native interface to changepoint detection in R: one
-dispatcher (<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>) covering 31 methods across five
+dispatcher (<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>) covering 31 methods across six
 methodological families, one result class (<code>ggcpt</code>) with a
 stable tidy contract, and one visualisation entry point
 (<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>) that draws everything a method reports —
@@ -163,7 +163,7 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <span><span class="co">#&gt;   CP convention:            left </span></span>
 <span><span class="co">#&gt;   Series length:            200 </span></span>
 <span><span class="co">#&gt;   Penalty:                  MBIC </span></span>
-<span><span class="co">#&gt;   Runtime (seconds):        0.015 </span></span>
+<span><span class="co">#&gt;   Runtime (seconds):        0.014 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
@@ -272,7 +272,7 @@ wired to <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>.</
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">32</span> gfpop       mean (graph-constrained)   gfpop  plann… when on CRAN   <span style="color: #BB0000;">NA</span>       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">33</span> robust      mean (robust loss)         robseg plann… when on CRAN   <span style="color: #BB0000;">NA</span>       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">34</span> focus       mean (online)              FOCuS  plann… when on CRAN   <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">35</span> sbs         mean (high-dimensional)    hdbin… plann… when on CRAN   <span style="color: #BB0000;">NA</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">35</span> sbs         mean (high-dimensional)    hdbin… plann… next release   <span style="color: #BB0000;">NA</span></span></span></code></pre></div>
 <p><code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> constructs standard penalty values for the
 engines that take numeric penalties; see its help for the per-engine
 penalty semantics.</p>
@@ -315,7 +315,7 @@ compatibility.</p>
 <div class="section level3">
 <h3 id="the-search-and-pruning-wave-0-2-0">The search and pruning wave (0.2.0)<a class="anchor" aria-label="anchor" href="#the-search-and-pruning-wave-0-2-0"></a>
 </h3>
-<p>Seven multiscale, randomised, and functional-pruning engines <span class="citation">(Fryzlewicz 2014, 2020, 2022; Baranowski et al. 2019;
+<p>Seven multiscale, randomised, and functional-pruning engines <span class="citation">(Fryzlewicz 2014, 2020, 2018; Baranowski et al. 2019;
 Eichinger and Kirch 2018; Anastasiou and Fryzlewicz 2022; Maidstone et
 al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
@@ -1020,15 +1020,15 @@ Fryzlewicz, Piotr. 2014. <span>“Wild Binary Segmentation for Multiple
 Change-Point Detection.”</span> <em>The Annals of Statistics</em> 42
 (6): 2243–81. <a href="https://doi.org/10.1214/14-AOS1245" class="external-link">https://doi.org/10.1214/14-AOS1245</a>.
 </div>
+<div id="ref-fryzlewicz2018tail" class="csl-entry">
+Fryzlewicz, Piotr. 2018. <span>“Tail-Greedy Bottom-up Data
+Decompositions and Fast Multiple Change-Point Detection.”</span> <em>The
+Annals of Statistics</em> 46 (6B): 3390–421.
+</div>
 <div id="ref-fryzlewicz2020detecting" class="csl-entry">
 Fryzlewicz, Piotr. 2020. <span>“Detecting Multiple Change-Point Features
 via Narrowest-over-Threshold.”</span> <em>Journal of the Royal
 Statistical Society Series B</em> 82 (5): 1377–418.
-</div>
-<div id="ref-fryzlewicz2022tail" class="csl-entry">
-Fryzlewicz, Piotr. 2022. <span>“Tail-Greedy Bottom-up Data
-Decompositions and Fast Multiple Change-Point Detection.”</span> <em>The
-Annals of Statistics</em> 50 (5): 2721–61.
 </div>
 <div id="ref-grundy2020geomcp" class="csl-entry">
 Grundy, Thomas, Rebecca Killick, and Gueorgui Mihaylov. 2020.

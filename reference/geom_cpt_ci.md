@@ -13,7 +13,11 @@ geom_cpt_ci(mapping = NULL, data = NULL, ..., na.rm = FALSE, show.legend = NA)
 
 - mapping:
 
-  Aesthetic mappings. Requires `x`, `xmin`, `xmax`, and `y`.
+  Aesthetic mappings. Requires `y` (the height at which to draw the
+  whisker) together with `xmin` and `xmax`. An `x` aesthetic is accepted
+  but not needed: the layer is a horizontal error bar, so the interval
+  is given by `xmin`/`xmax` and the changepoint itself is usually marked
+  with a separate point layer, as `autoplot(show_ci = TRUE)` does.
 
 - data:
 

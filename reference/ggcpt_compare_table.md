@@ -18,7 +18,12 @@ ggcpt_compare_table(
 
 - x:
 
-  A numeric vector (the data series).
+  A numeric vector (the data series). A one-column matrix or data frame
+  is accepted; wider input is refused, because these detectors are
+  univariate and flattening the columns would invent a changepoint at
+  every seam. Use
+  [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+  for a panel of series.
 
 - methods:
 

@@ -96,13 +96,19 @@ permutation test.</p></dd>
   raw changepoint value corresponding to that changepoint. Changepoint
   locations follow the <code>ecp</code> package convention: the first index of the
   right segment. When no changepoint is found, an empty tibble is returned
-  (0 rows).</p>
+  (0 rows). The upstream fit is not retained — and <code>$fit</code> is
+  <code>NULL</code> on a <code>ggcpt</code> from <code>cpt_detect(method = "ecp")</code> —
+  because <code><a href="https://rdrr.io/pkg/ecp/man/e.agglo.html" class="external-link">ecp::e.agglo()</a></code>'s cluster-progression matrix is quadratic
+  in the series length; call the <span class="pkg">ecp</span> functions directly if you need
+  their full output.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
-    <p>James NA, Matteson DS (2013).
+    <p>James NA, Matteson DS (2014).
 “ecp: An R package for nonparametric multiple change point analysis of multivariate data.”
-<em>arXiv preprint arXiv:1309.3295</em>.</p>
+<em>Journal of Statistical Software</em>, <b>62</b>(7), 1–25.
+<a href="https://doi.org/10.18637/jss.v062.i07" class="external-link">doi:10.18637/jss.v062.i07</a>
+.</p>
     </div>
 
     <div class="section level2">

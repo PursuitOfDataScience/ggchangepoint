@@ -104,6 +104,21 @@ programming, the minimisation costs $`O(n^2)`$; **PELT** (Killick et al.
 remaining exact, and **FPOP** (Maidstone et al. 2017) reaches comparable
 speed by functional pruning.
 
+A practical consequence of writing the objective this way is easy to
+miss: $`\beta`$ and $`\mathcal{C}`$ must live on the same scale. For a
+change in mean the **changepoint** engines evaluate the Normal cost with
+the noise standard deviation fixed at 1, and **fpop** penalises the
+residual sum of squares directly, so multiplying the data by a constant
+multiplies the cost while leaving $`\beta`$ untouched. On a single
+changepoint whose jump is five standard deviations, `pelt` recovers
+exactly one changepoint at $`\sigma = 1`$ but returns 29 at
+$`\sigma = 3`$ and 138 at $`\sigma = 10`$. Standardise the series, pass
+a penalty on the data’s own scale (say `2 * log(n) * var(diff(x)) / 2`),
+or use `change_in = "meanvar"`, which estimates a variance per segment.
+Methods that estimate the noise level as part of their procedure —
+SMUCE, the WBS family, CPOP, DeCAFS, and the Bayesian and nonparametric
+engines — return the same segmentation whatever the units.
+
 ### Search-based and multiscale methods
 
 A complementary family locates changepoints by scanning test statistics.
@@ -117,7 +132,7 @@ threshold, which generalises cleanly to changes in slope; **MOSUM**
 (Eichinger and Kirch 2018) scans a moving-sum statistic at a fixed
 bandwidth, or across a range of bandwidths; Isolate–Detect (Anastasiou
 and Fryzlewicz 2022) isolates each changepoint in an expanding interval;
-and TGUH (Fryzlewicz 2022) performs a tail-greedy bottom-up merge.
+and TGUH (Fryzlewicz 2018) performs a tail-greedy bottom-up merge.
 **SMUCE** (Frick et al. 2014) occupies a special place: it estimates the
 step function with the fewest jumps that still passes a *simultaneous
 multiscale test* at level $`\alpha`$, and in doing so delivers
@@ -582,11 +597,10 @@ automatically:
 ``` r
 
 tidy(cpt_detect(x_slope, method = "not", change_in = "slope"))
-#> # A tibble: 2 × 2
+#> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1    85     36.8
-#> 2   101     40.7
+#> 1   100     38.6
 ```
 
 ### Bayesian detection
@@ -1035,13 +1049,13 @@ Fryzlewicz, Piotr. 2014. “Wild Binary Segmentation for Multiple
 Change-Point Detection.” *The Annals of Statistics* 42 (6): 2243–81.
 <https://doi.org/10.1214/14-AOS1245>.
 
+Fryzlewicz, Piotr. 2018. “Tail-Greedy Bottom-up Data Decompositions and
+Fast Multiple Change-Point Detection.” *The Annals of Statistics* 46
+(6B): 3390–421.
+
 Fryzlewicz, Piotr. 2020. “Detecting Multiple Change-Point Features via
 Narrowest-over-Threshold.” *Journal of the Royal Statistical Society
 Series B* 82 (5): 1377–418.
-
-Fryzlewicz, Piotr. 2022. “Tail-Greedy Bottom-up Data Decompositions and
-Fast Multiple Change-Point Detection.” *The Annals of Statistics* 50
-(5): 2721–61.
 
 Grundy, Thomas, Rebecca Killick, and Gueorgui Mihaylov. 2020.
 “High-Dimensional Changepoint Detection via a Geometrically Inspired

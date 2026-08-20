@@ -111,9 +111,9 @@ ggcpt_compare(x, methods = cmp_methods)
 ![ggchangepoint plot comparing changepoint detection methods on a time
 series](comparison_files/figure-html/compare-facet-1.png)
 
-A method that finds *no* changepoints keeps its panel — ruleless, but
-present — rather than silently disappearing. A method that ran and found
-nothing is a result, not a missing value:
+A method that finds *no* changepoints keeps its panel — the series is
+drawn with no vertical lines on it — rather than silently disappearing.
+A method that ran and found nothing is a result, not a missing value:
 
 ``` r
 

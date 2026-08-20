@@ -23,6 +23,10 @@ decafs_wrapper(x, penalty = NULL, model_param = NULL, ...)
 
   Penalty \\\beta\\ for adding a changepoint. Defaults to
   `2 * log(length(x))`.
+  [`cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  resolves its own `"MBIC"` default to a stronger numeric value — on a
+  five-changepoint series that is 3 changepoints through the dispatcher
+  against 5 here — so pass `penalty` explicitly when the two must agree.
 
 - model_param:
 

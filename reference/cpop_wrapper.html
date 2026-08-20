@@ -73,7 +73,9 @@ in the <code>fitted</code> column and renders via
 
 <dt id="arg-penalty">penalty<a class="anchor" aria-label="anchor" href="#arg-penalty"></a></dt>
 <dd><p>Penalty for adding a changepoint. Defaults to
-<code>2 * log(length(x))</code>.</p></dd>
+<code>2 * log(length(x))</code>. <code><a href="cpt_detect.html">cpt_detect</a></code> resolves its own
+<code>"MBIC"</code> default to a stronger numeric value, so the two entry
+points need not agree unless <code>penalty</code> is given.</p></dd>
 
 
 <dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>

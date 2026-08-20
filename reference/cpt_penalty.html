@@ -59,7 +59,8 @@ detection methods. Returns a numeric penalty value.</p>
 
 
 <dt id="arg-n">n<a class="anchor" aria-label="anchor" href="#arg-n"></a></dt>
-<dd><p>Series length. Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.</p></dd>
+<dd><p>Series length (at least 3 for the \(\log n\)-based
+penalties). Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.</p></dd>
 
 
 <dt id="arg-k">k<a class="anchor" aria-label="anchor" href="#arg-k"></a></dt>
@@ -90,8 +91,17 @@ placed, in its \(\log{n \choose k}\) term.</p></dd>
 <p>The same penalty name may be interpreted differently by different engines:</p><ul><li><p><strong>changepoint-based methods</strong> (PELT, BinSeg, SegNeigh, AMOC):
     accept character penalties (<code>"MBIC"</code>, <code>"BIC"</code>, <code>"AIC"</code>,
     <code>"Hannan-Quinn"</code>, <code>"None"</code>) and pass them to the upstream
-    <span class="pkg">changepoint</span> package. These methods do <em>not</em> accept raw numeric
-    penalty values.</p></li>
+    <span class="pkg">changepoint</span> package. A numeric penalty is translated to that
+    package's <code>penalty = "Manual"</code> plus <code>pen.value</code>. The one
+    exception is Segment Neighbourhood, for which <span class="pkg">changepoint</span> does
+    not implement MBIC: <code>cpt_detect(method = "segneigh")</code> and
+    <code>cpt_wrapper(cp_method = "SegNeigh")</code> therefore fall back to
+    <code>"SIC"</code> when the default penalty is left in place, so a segneigh
+    result is not directly penalty-comparable with a PELT one. Pass
+    <code>penalty</code> explicitly to pin it. For a change in <em>mean</em>
+    these engines also read the penalty on the data's own scale rather
+    than a standardised one; see the scale-sensitivity section of
+    <code><a href="cpt_detect.html">cpt_detect</a></code>.</p></li>
 <li><p><strong>Functional-pruning methods</strong> (<code>fpop</code>, <code>cpop</code>,
     <code>decafs</code>): accept numeric penalties only. When a character penalty
     is supplied via <code><a href="cpt_detect.html">cpt_detect()</a></code>, it is resolved to a numeric value

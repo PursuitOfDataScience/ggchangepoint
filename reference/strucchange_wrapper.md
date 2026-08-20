@@ -57,6 +57,23 @@ strucchange_wrapper(
 A `ggcpt` object with `ci_lower`/`ci_upper` columns on the changepoints
 tibble.
 
+## Result size
+
+`$fit` is the `breakpoints` object itself, and that object is quadratic
+in the series length: it keeps `RSS.triang`, the triangular table of
+segment residual sums of squares, which is what lets `strucchange`
+return the optimal segmentation for *any* number of breaks without
+refitting. Measured here, the whole result is about 1.7 MB at `n = 200`,
+5.9 MB at `n = 400` and 22.6 MB at `n = 800` — roughly four times larger
+each time the series doubles — and the share taken by that one table
+grows with it, from 85% at `n = 200` to 95% at `n = 400`. A single fit
+is not a problem; a few hundred of them are, so when running this engine
+over a panel with
+[`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+keep what you need (`res$changepoints`) rather than the whole list of
+results. No other engine here behaves this way: the median result across
+the other thirty is under ten times the size of the series it was given.
+
 ## References
 
 Bai J, Perron P (2003). “Computation and analysis of multiple structural

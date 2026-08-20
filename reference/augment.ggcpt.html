@@ -65,6 +65,17 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with the original data plus augment columns.</p>
     </div>
+    <div class="section level2">
+    <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
+    <p>For a multivariate result every coordinate is returned, but the
+changepoints are shared across them, so <code>seg_id</code> and
+<code>is_changepoint</code> apply to the whole row while <code>.fitted</code> and
+<code>.resid</code> describe the <em>first</em> coordinate only — the same
+coordinate <code>$segments$param_estimate</code> summarises. When an engine
+supplies its own fitted signal (SMUCE, DeCAFS, cpop, segmented, bcp,
+beast) that signal is used for <code>.fitted</code> in place of the segment
+means.</p>
+    </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>

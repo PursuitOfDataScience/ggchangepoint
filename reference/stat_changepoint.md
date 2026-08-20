@@ -33,7 +33,10 @@ stat_changepoint(
 
 - geom:
 
-  The geometric object to use (default: "vline").
+  The geometric object to use (default: `"vline"`). The stat computes a
+  single `xintercept` per changepoint, so only geoms that consume that
+  aesthetic fit — `"vline"` and `"rug"`. A geom needing `x`/`y`, such as
+  `"point"`, errors because the stat drops those aesthetics.
 
 - position:
 

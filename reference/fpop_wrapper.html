@@ -57,7 +57,16 @@ functional pruning.</p>
 
 
 <dt id="arg-penalty">penalty<a class="anchor" aria-label="anchor" href="#arg-penalty"></a></dt>
-<dd><p>Penalty value. Defaults to <code>2 * log(length(x))</code> (BIC).</p></dd>
+<dd><p>Penalty value. Defaults to <code>2 * log(length(x))</code> (BIC).
+This is an <em>absolute</em> penalty on the residual sum of squares, so
+it is only calibrated for noise of standard deviation 1: on wider data
+the default under-penalises badly and the segmentation shatters.
+Standardise the series, or scale the penalty by the noise variance
+(for example <code>2 * log(length(x)) * stats::var(diff(x)) / 2</code>).
+See the scale-sensitivity section of <code><a href="cpt_detect.html">cpt_detect</a></code>. This
+default differs from the one <code><a href="cpt_detect.html">cpt_detect</a></code> applies, which
+resolves its <code>"MBIC"</code> default to a stronger numeric value, so the
+two entry points need not agree unless <code>penalty</code> is given.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

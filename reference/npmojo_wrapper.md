@@ -20,7 +20,9 @@ npmojo_wrapper(x, G = NULL, lag = 0, ...)
 
 - G:
 
-  Moving-window bandwidth. Defaults to `max(20, 0.1 * n)` observations.
+  Moving-window bandwidth. Defaults to `max(20, 0.1 * n)` observations,
+  capped at `n / 2` — the largest bandwidth the engine accepts — so the
+  default also works on series shorter than 40.
 
 - lag:
 
@@ -36,7 +38,12 @@ npmojo_wrapper(x, G = NULL, lag = 0, ...)
 
 A `ggcpt` object. Constant coordinates leave the kernel statistics
 undefined, so they are dropped (with a warning) before detection and an
-all-constant input returns an empty result.
+all-constant input returns an empty result. The engine calibrates its
+detection threshold by bootstrap, so the value recorded in the penalty
+descriptor varies between runs; call
+[`set.seed()`](https://rdrr.io/r/base/Random.html) beforehand, or pass
+`threshold = "manual"` and `threshold.val` through `...`, for a
+reproducible one.
 
 ## References
 

@@ -5,9 +5,8 @@
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface
 to changepoint detection in R: one dispatcher
 ([`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md))
-covering 31 methods across five methodological families, one result
-class (`ggcpt`) with a stable tidy contract, and one visualisation entry
-point
+covering 31 methods across six methodological families, one result class
+(`ggcpt`) with a stable tidy contract, and one visualisation entry point
 ([`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html))
 that draws everything a method reports — including confidence intervals
 and posterior probabilities (Wickham 2016; Robinson 2017). This vignette
@@ -119,7 +118,7 @@ summary(res)
 #>   CP convention:            left 
 #>   Series length:            200 
 #>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.015 
+#>   Runtime (seconds):        0.014 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -242,7 +241,7 @@ print(cpt_methods(), n = Inf)
 #> 32 gfpop       mean (graph-constrained)   gfpop  plann… when on CRAN   NA       
 #> 33 robust      mean (robust loss)         robseg plann… when on CRAN   NA       
 #> 34 focus       mean (online)              FOCuS  plann… when on CRAN   NA       
-#> 35 sbs         mean (high-dimensional)    hdbin… plann… when on CRAN   NA
+#> 35 sbs         mean (high-dimensional)    hdbin… plann… next release   NA
 ```
 
 [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
@@ -293,7 +292,7 @@ ecp_wrapper(x, algorithm = "divisive", seed = 1)
 ### The search and pruning wave (0.2.0)
 
 Seven multiscale, randomised, and functional-pruning engines (Fryzlewicz
-2014, 2020, 2022; Baranowski et al. 2019; Eichinger and Kirch 2018;
+2014, 2020, 2018; Baranowski et al. 2019; Eichinger and Kirch 2018;
 Anastasiou and Fryzlewicz 2022; Maidstone et al. 2017), one call each:
 
 ``` r
@@ -1200,13 +1199,13 @@ Fryzlewicz, Piotr. 2014. “Wild Binary Segmentation for Multiple
 Change-Point Detection.” *The Annals of Statistics* 42 (6): 2243–81.
 <https://doi.org/10.1214/14-AOS1245>.
 
+Fryzlewicz, Piotr. 2018. “Tail-Greedy Bottom-up Data Decompositions and
+Fast Multiple Change-Point Detection.” *The Annals of Statistics* 46
+(6B): 3390–421.
+
 Fryzlewicz, Piotr. 2020. “Detecting Multiple Change-Point Features via
 Narrowest-over-Threshold.” *Journal of the Royal Statistical Society
 Series B* 82 (5): 1377–418.
-
-Fryzlewicz, Piotr. 2022. “Tail-Greedy Bottom-up Data Decompositions and
-Fast Multiple Change-Point Detection.” *The Annals of Statistics* 50
-(5): 2721–61.
 
 Grundy, Thomas, Rebecca Killick, and Gueorgui Mihaylov. 2020.
 “High-Dimensional Changepoint Detection via a Geometrically Inspired

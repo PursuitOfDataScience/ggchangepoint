@@ -106,7 +106,22 @@ and <code>cpt.np()</code> respectively. The default is <code>mean_var</code>.</p
     <p>A tibble including which point(s) is/are the changepoint along with
   raw changepoint value corresponding to that changepoint. Changepoint
   locations follow the convention of the <code>changepoint</code> package: the
-  last index of the left segment.</p>
+  last index of the left segment. The upstream <code>cpt</code> object is
+  attached as the <code>"ggcpt_fit"</code> attribute, which is what
+  <code><a href="cpt_detect.html">cpt_detect()</a></code> stores in the result's <code>$fit</code>.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="standardise-the-data-for-a-change-in-mean">Standardise the data for a change in mean<a class="anchor" aria-label="anchor" href="#standardise-the-data-for-a-change-in-mean"></a></h2>
+
+
+<p>With <code>change_in = "mean"</code> the upstream Normal cost assumes a noise
+standard deviation of 1 and the penalty is compared against the raw
+residual sum of squares, so a series with wider noise is under-penalised
+and over-segmented: 29 changepoints instead of 1 at \(\sigma = 3\) in a
+measured example. Standardise the series first, or use
+<code>change_in = "mean_var"</code>, which estimates a variance per segment and
+is unaffected. See the scale-sensitivity section of
+<code><a href="cpt_detect.html">cpt_detect</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

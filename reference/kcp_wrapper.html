@@ -95,8 +95,10 @@ at least two columns). Defaults to <code>"mean"</code>.</p></dd>
 
 
 <dt id="arg-nperm">nperm<a class="anchor" aria-label="anchor" href="#arg-nperm"></a></dt>
-<dd><p>Number of permutations for the significance test. Defaults to
-<code>1000</code>.</p></dd>
+<dd><p>Number of permutations for the significance test, at least 2.
+Defaults to <code>1000</code>. Fewer than two leaves the engine with no
+permutation distribution: it reports no changepoints at all for 0, and
+fails inside its own code for 1.</p></dd>
 
 
 <dt id="arg-kmax">kmax<a class="anchor" aria-label="anchor" href="#arg-kmax"></a></dt>

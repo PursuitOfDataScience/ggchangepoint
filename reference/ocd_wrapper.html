@@ -95,7 +95,10 @@ mean/sd (not monitored). Defaults to
 <dt id="arg-thresh">thresh<a class="anchor" aria-label="anchor" href="#arg-thresh"></a></dt>
 <dd><p>Threshold specification passed to
 <code><a href="https://rdrr.io/pkg/ocd/man/ChangepointDetector.html" class="external-link">ocd::ChangepointDetector()</a></code>; <code>"MC"</code> (default) calibrates by
-Monte Carlo.</p></dd>
+Monte Carlo, which is what makes this the slowest wrapper — see the
+timing note below. Supplying the three thresholds directly, as a named
+numeric vector <code>c(diag =, off_d =, off_s =)</code>, skips calibration
+altogether.</p></dd>
 
 
 <dt id="arg-patience">patience<a class="anchor" aria-label="anchor" href="#arg-patience"></a></dt>
@@ -110,7 +113,8 @@ change. Defaults to <code>1</code>.</p></dd>
 
 <dt id="arg-mc-reps">mc_reps<a class="anchor" aria-label="anchor" href="#arg-mc-reps"></a></dt>
 <dd><p>Monte Carlo repetitions for threshold calibration.
-Defaults to <code>100</code>.</p></dd>
+Defaults to <code>100</code>. The cost is linear in this and grows with the
+number of coordinates; see the timing note below.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -125,6 +129,22 @@ Defaults to <code>100</code>.</p></dd>
   detection delay), stored together with a <code>declared_at</code> column.</p>
     </div>
     <div class="section level2">
+    <h2 id="how-long-this-takes">How long this takes<a class="anchor" aria-label="anchor" href="#how-long-this-takes"></a></h2>
+
+
+<p>Nearly all of the run time is <code>ocd</code>'s Monte Carlo threshold
+calibration, which happens before a single observation is read. It is
+linear in <code>mc_reps</code> and grows with the number of coordinates:
+measured at <code>mc_reps = 5</code>, construction takes about 3 s at
+\(p = 3\), 9 s at \(p = 10\) and 55 s at \(p = 50\), and four
+times as long at <code>mc_reps = 20</code>. At the default <code>mc_reps = 100</code>
+that extrapolates to roughly a minute at \(p = 3\) and a quarter of an
+hour at \(p = 50\). Monitoring the observations afterwards is cheap by
+comparison — well under a second for a thousand of them. Lower
+<code>mc_reps</code> while exploring, or pass <code>thresh</code> directly to skip
+calibration entirely.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Chen Y, Wang T, Samworth RJ (2022).
 “High-dimensional, multiscale online changepoint detection.”
@@ -135,14 +155,13 @@ Defaults to <code>100</code>.</p></dd>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span> <span class="op">*</span> <span class="fl">5</span><span class="op">)</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span> <span class="op">*</span> <span class="fl">5</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fl">60</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">ocd_wrapper</span><span class="op">(</span><span class="va">X</span>, mc_reps <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span> <span class="op">*</span> <span class="fl">3</span><span class="op">)</span>, <span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">40</span> <span class="op">*</span> <span class="fl">3</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fl">40</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">ocd_wrapper</span><span class="op">(</span><span class="va">X</span>, mc_reps <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span><span class="op">$</span><span class="va">changepoints</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value declared_at</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   101     3.17         101</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>   158     1.20         158</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    62     4.31          62</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

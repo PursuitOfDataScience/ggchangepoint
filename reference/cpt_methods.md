@@ -39,8 +39,12 @@ A tibble with columns:
 
 - target_release:
 
-  The release that plans to wire this method, or `NA` for currently
-  available methods.
+  What a planned method is waiting on: a release, or `"when on CRAN"`
+  when the engine package itself is not available from CRAN. `NA` for
+  methods that are already wired. Asking
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  for a planned method reports this rather than claiming the name does
+  not exist.
 
 ## Examples
 

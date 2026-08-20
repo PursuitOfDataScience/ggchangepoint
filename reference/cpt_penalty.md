@@ -18,7 +18,8 @@ cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01)
 
 - n:
 
-  Series length. Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.
+  Series length (at least 3 for the \\\log n\\-based penalties).
+  Required for BIC, MBIC, AIC, Hannan-Quinn, sSIC.
 
 - k:
 
@@ -47,8 +48,17 @@ engines:
 
 - **changepoint-based methods** (PELT, BinSeg, SegNeigh, AMOC): accept
   character penalties (`"MBIC"`, `"BIC"`, `"AIC"`, `"Hannan-Quinn"`,
-  `"None"`) and pass them to the upstream changepoint package. These
-  methods do *not* accept raw numeric penalty values.
+  `"None"`) and pass them to the upstream changepoint package. A numeric
+  penalty is translated to that package's `penalty = "Manual"` plus
+  `pen.value`. The one exception is Segment Neighbourhood, for which
+  changepoint does not implement MBIC: `cpt_detect(method = "segneigh")`
+  and `cpt_wrapper(cp_method = "SegNeigh")` therefore fall back to
+  `"SIC"` when the default penalty is left in place, so a segneigh
+  result is not directly penalty-comparable with a PELT one. Pass
+  `penalty` explicitly to pin it. For a change in *mean* these engines
+  also read the penalty on the data's own scale rather than a
+  standardised one; see the scale-sensitivity section of
+  [`cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md).
 
 - **Functional-pruning methods** (`fpop`, `cpop`, `decafs`): accept
   numeric penalties only. When a character penalty is supplied via

@@ -10,8 +10,8 @@ new_ggcpt(
   segments = tibble::tibble(seg_id = integer(), start = integer(), end = integer(), n =
     integer(), param_estimate = numeric()),
   data = tibble::tibble(index = integer(), value = numeric()),
-  method = character(),
-  change_in = character(),
+  method = NA_character_,
+  change_in = NA_character_,
   penalty = list(type = NA_character_, value = NA_real_),
   fit = NULL,
   call = NULL,
@@ -37,11 +37,16 @@ new_ggcpt(
 
 - method:
 
-  Character. The detection method used.
+  Character. The detection method used. A length-one string; defaults to
+  `NA_character_`. (A zero-length value would make
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) return
+  zero rows instead of its documented single row, because every other
+  column would be recycled against it.)
 
 - change_in:
 
-  Character. What was detected (e.g. "mean", "var", "meanvar").
+  Character. What was detected (e.g. "mean", "var", "meanvar"). A
+  length-one string; defaults to `NA_character_`.
 
 - penalty:
 
@@ -49,7 +54,14 @@ new_ggcpt(
 
 - fit:
 
-  The raw upstream object.
+  The raw upstream object. Every wrapper stores one except `"ecp"`:
+  [`ecp::e.agglo()`](https://rdrr.io/pkg/ecp/man/e.agglo.html) returns a
+  cluster-progression matrix that is quadratic in the series length, so
+  keeping it by default would make the result object explode on a long
+  series. Call
+  [`ecp::e.divisive()`](https://rdrr.io/pkg/ecp/man/e.divisive.html) or
+  [`ecp::e.agglo()`](https://rdrr.io/pkg/ecp/man/e.agglo.html) directly
+  if you need it.
 
 - call:
 

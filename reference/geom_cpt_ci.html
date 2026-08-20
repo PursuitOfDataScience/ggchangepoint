@@ -53,8 +53,12 @@ intervals (e.g. from MOSUM, stepR, strucchange, segmented).</p>
 
 
 <dl><dt id="arg-mapping">mapping<a class="anchor" aria-label="anchor" href="#arg-mapping"></a></dt>
-<dd><p>Aesthetic mappings. Requires <code>x</code>, <code>xmin</code>, <code>xmax</code>,
-and <code>y</code>.</p></dd>
+<dd><p>Aesthetic mappings. Requires <code>y</code> (the height at which
+to draw the whisker) together with <code>xmin</code> and <code>xmax</code>. An
+<code>x</code> aesthetic is accepted but not needed: the layer is a
+horizontal error bar, so the interval is given by <code>xmin</code>/<code>xmax</code>
+and the changepoint itself is usually marked with a separate point layer,
+as <code>autoplot(show_ci = TRUE)</code> does.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>

@@ -88,7 +88,14 @@ Defaults to <code>0.5</code>, the upstream recommendation for estimation.</p></d
 noise) or <code>"hsmuce"</code> (HSMUCE, segment-wise variance). Defaults to
 <code>"gauss"</code>. The remaining <code>stepR</code> families (<code>"jsmurf"</code>,
 <code>"mDependentPS"</code>, ...) all require a filter or covariance
-specification; call <code><a href="https://rdrr.io/pkg/stepR/man/stepFit.html" class="external-link">stepR::stepFit()</a></code> directly for those.</p></dd>
+specification; call <code><a href="https://rdrr.io/pkg/stepR/man/stepFit.html" class="external-link">stepR::stepFit()</a></code> directly for those.
+<code>"hsmuce"</code> additionally refuses a series whose point-to-point
+variation lies more than about seven orders of magnitude below its own
+scale — a globally flat series, or a step whose segments are numerically
+constant, as <code>cpt_simulate(sd = 0)</code> produces once any rounding is
+added. <span class="pkg">stepR</span>'s heterogeneous variance estimator aborts the <span style="R">R</span>
+session on such input rather than raising an error, so it cannot be
+caught. <code>"gauss"</code> handles the whole range.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

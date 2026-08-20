@@ -67,7 +67,10 @@ parameters are estimated automatically unless supplied.</p>
 
 <dt id="arg-penalty">penalty<a class="anchor" aria-label="anchor" href="#arg-penalty"></a></dt>
 <dd><p>Penalty \(\beta\) for adding a changepoint. Defaults to
-<code>2 * log(length(x))</code>.</p></dd>
+<code>2 * log(length(x))</code>. <code><a href="cpt_detect.html">cpt_detect</a></code> resolves its own
+<code>"MBIC"</code> default to a stronger numeric value — on a five-changepoint
+series that is 3 changepoints through the dispatcher against 5 here — so
+pass <code>penalty</code> explicitly when the two must agree.</p></dd>
 
 
 <dt id="arg-model-param">model_param<a class="anchor" aria-label="anchor" href="#arg-model-param"></a></dt>

@@ -83,7 +83,11 @@ or <code>"slope"</code>.</p></dd>
 vector of segment means. For <code>var</code> changes, a vector of segment sds.
 For <code>meanvar</code>, a list of lists with <code>mean</code> and <code>sd</code> per
 segment. For <code>slope</code>, a list with <code>intercept</code> and <code>slope</code>
-per segment.</p></dd>
+per segment. When <code>NULL</code>, every segment gets the same neutral
+parameters, so the series has no actual change. Supplying fewer entries
+than there are segments recycles the last one and warns, because the
+trailing <code>changepoints</code> would then be recorded as ground truth
+without a change behind them.</p></dd>
 
 
 <dt id="arg-noise">noise<a class="anchor" aria-label="anchor" href="#arg-noise"></a></dt>
@@ -92,8 +96,9 @@ per segment.</p></dd>
 
 
 <dt id="arg-sd">sd<a class="anchor" aria-label="anchor" href="#arg-sd"></a></dt>
-<dd><p>Noise standard deviation (for Gaussian and t; t-noise is
-rescaled so its standard deviation is exactly <code>sd</code>). Defaults to 1.</p></dd>
+<dd><p>Noise standard deviation, non-negative (for Gaussian and t;
+t-noise is rescaled so its standard deviation is exactly <code>sd</code>).
+Defaults to 1.</p></dd>
 
 
 <dt id="arg-df">df<a class="anchor" aria-label="anchor" href="#arg-df"></a></dt>
@@ -102,7 +107,8 @@ exists. Defaults to 3.</p></dd>
 
 
 <dt id="arg-rho">rho<a class="anchor" aria-label="anchor" href="#arg-rho"></a></dt>
-<dd><p>AR(1) autocorrelation parameter. Defaults to 0.</p></dd>
+<dd><p>AR(1) autocorrelation parameter, strictly between -1 and 1 for
+stationarity. Defaults to 0. Used only when <code>noise = "ar1"</code>.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>

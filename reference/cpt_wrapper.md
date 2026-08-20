@@ -47,7 +47,21 @@ cpt_wrapper(data, change_in = "mean_var", cp_method = "PELT", ...)
 A tibble including which point(s) is/are the changepoint along with raw
 changepoint value corresponding to that changepoint. Changepoint
 locations follow the convention of the `changepoint` package: the last
-index of the left segment.
+index of the left segment. The upstream `cpt` object is attached as the
+`"ggcpt_fit"` attribute, which is what
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+stores in the result's `$fit`.
+
+## Standardise the data for a change in mean
+
+With `change_in = "mean"` the upstream Normal cost assumes a noise
+standard deviation of 1 and the penalty is compared against the raw
+residual sum of squares, so a series with wider noise is under-penalised
+and over-segmented: 29 changepoints instead of 1 at \\\sigma = 3\\ in a
+measured example. Standardise the series first, or use
+`change_in = "mean_var"`, which estimates a variance per segment and is
+unaffected. See the scale-sensitivity section of
+[`cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md).
 
 ## References
 

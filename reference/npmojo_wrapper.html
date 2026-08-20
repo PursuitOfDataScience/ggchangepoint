@@ -61,7 +61,8 @@ moving-sum detection of changes in the marginal or joint distribution of a
 
 <dt id="arg-g">G<a class="anchor" aria-label="anchor" href="#arg-g"></a></dt>
 <dd><p>Moving-window bandwidth. Defaults to <code>max(20, 0.1 * n)</code>
-observations.</p></dd>
+observations, capped at <code>n / 2</code> — the largest bandwidth the engine
+accepts — so the default also works on series shorter than 40.</p></dd>
 
 
 <dt id="arg-lag">lag<a class="anchor" aria-label="anchor" href="#arg-lag"></a></dt>
@@ -78,7 +79,11 @@ examined; <code>0</code> targets the marginal distribution. Defaults to
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>ggcpt</code> object. Constant coordinates leave the kernel
   statistics undefined, so they are dropped (with a warning) before
-  detection and an all-constant input returns an empty result.</p>
+  detection and an all-constant input returns an empty result. The
+  engine calibrates its detection threshold by bootstrap, so the value
+  recorded in the penalty descriptor varies between runs; call
+  <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> beforehand, or pass <code>threshold = "manual"</code> and
+  <code>threshold.val</code> through <code>...</code>, for a reproducible one.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

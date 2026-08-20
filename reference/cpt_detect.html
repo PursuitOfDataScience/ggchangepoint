@@ -94,7 +94,16 @@ silently running something else.</p></dd>
 Defaults to <code>"MBIC"</code>. See the penalty-semantics section of
 <code><a href="cpt_penalty.html">cpt_penalty</a></code> for how each engine interprets it; methods
 that use thresholds, significance levels, or posteriors instead of
-penalties ignore this argument.</p></dd>
+penalties ignore this argument, and <code>"segneigh"</code> falls back to
+<code>"SIC"</code> because <span class="pkg">changepoint</span> does not implement MBIC for
+Segment Neighbourhood. Note also that the default <code>"MBIC"</code> is
+resolved to a <em>numeric</em> value for the numeric-penalty engines
+(<code>"fpop"</code>, <code>"cpop"</code>, <code>"decafs"</code>), and that value is
+stronger than those wrappers' own <code>2 * log(n)</code> default — 19.9
+against 11.8 at \(n = 360\) — so <code>cpt_detect(x, method =
+"decafs")</code> can report fewer changepoints than <code>decafs_wrapper(x)</code>
+on the same series. Pass <code>penalty</code> explicitly to make the two
+entry points agree.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -103,12 +112,42 @@ wrapper's help page for engine-specific options). Where an argument is
 also derived from <code>change_in</code> (<code>not</code>'s <code>contrast</code>,
 <code>cpm</code>'s <code>cpm_type</code>, <code>kcp</code>'s <code>running_stat</code>,
 <code>sn</code>'s <code>parameter</code>, <code>fastcpd</code>'s <code>family</code>), a value
-supplied here takes precedence.</p></dd>
+supplied here takes precedence. Check the spelling against the wrapper's
+help page: several engines end their own signature in <code>...</code>
+(<span class="pkg">wbs</span>, <span class="pkg">not</span>, <span class="pkg">Rbeast</span>, <span class="pkg">strucchange</span>,
+<span class="pkg">segmented</span>, <span class="pkg">fastcpd</span>), so for those a misspelt argument name
+is silently discarded upstream and the engine quietly uses its default
+rather than reporting the typo.</p></dd>
 
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>ggcpt</code> object.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="scale-sensitivity-of-the-penalised-change-in-mean-engines">Scale sensitivity of the penalised change-in-mean engines<a class="anchor" aria-label="anchor" href="#scale-sensitivity-of-the-penalised-change-in-mean-engines"></a></h2>
+
+
+<p><code>"pelt"</code>, <code>"binseg"</code>, <code>"segneigh"</code> and <code>"fpop"</code>
+compare a penalty against a <em>raw</em> segment cost when
+<code>change_in = "mean"</code>: <span class="pkg">changepoint</span>'s Normal cost assumes a
+noise standard deviation of 1, and <span class="pkg">fpop</span>'s <code>lambda</code> is an
+absolute penalty on the residual sum of squares. Neither rescales the
+data, so on a series whose noise is much wider than 1 the penalty is
+effectively negligible and the segmentation shatters. On one true
+changepoint with a jump of five standard deviations, <code>"pelt"</code>
+returns 1 changepoint at \(\sigma = 1\), 29 at \(\sigma = 3\) and
+138 at \(\sigma = 10\). Three ways to avoid it, in order of
+convenience:</p><ul><li><p>standardise the series first
+    (<code>cpt_detect(scale(x)[, 1], method = "pelt")</code>);</p></li>
+<li><p>pass a penalty on the data's own scale, for example
+    <code>penalty = 2 * log(length(x)) * stats::var(diff(x)) / 2</code>;</p></li>
+<li><p>use <code>change_in = "meanvar"</code>, which estimates a variance per
+    segment and is unaffected.</p></li>
+</ul><p>The other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
+Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
+multivariate methods all estimate or cancel the noise scale internally,
+and return the same segmentation whatever the units.</p>
     </div>
 
     <div class="section level2">

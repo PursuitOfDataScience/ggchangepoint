@@ -22,7 +22,12 @@ ggcpt_compare(
 
 - x:
 
-  A numeric vector (the data series).
+  A numeric vector (the data series). A one-column matrix or data frame
+  is accepted; wider input is refused, because these detectors are
+  univariate and flattening the columns would invent a changepoint at
+  every seam. Use
+  [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+  for a panel of series.
 
 - methods:
 
@@ -41,7 +46,11 @@ ggcpt_compare(
 
   Optional seed for reproducible parallelism. Passed to
   [`future.apply::future_lapply()`](https://future.apply.futureverse.org/reference/future_lapply.html)
-  as `future.seed`.
+  as `future.seed`, and to
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) when running
+  sequentially. Left `NULL` under a parallel plan, `future.seed = TRUE`
+  is used, so the workers get parallel-safe streams but the run is not
+  reproducible.
 
 - ...:
 

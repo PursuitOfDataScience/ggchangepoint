@@ -65,7 +65,22 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>ggcpt</code> object. When the engine finds no changepoints
   (including when it signals "No change-points found"), an empty result
-  is returned rather than an error.</p>
+  is returned rather than an error. A constant series likewise returns the
+  empty result; see the note below.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="constant-input">Constant input<a class="anchor" aria-label="anchor" href="#constant-input"></a></h2>
+
+
+<p><code><a href="https://rdrr.io/pkg/IDetect/man/ID.html" class="external-link">IDetect::ID()</a></code> does not treat a flat series consistently — its
+statistics become \(0/0\), and what comes back depends on the value and
+the length. <code>rep(3, 200)</code> yields <em>126</em> changepoints, at
+1, 3, 4, 6, 7, ...; <code>rep(0, 100)</code> raises "No change-points found";
+<code>rep(-2.5, 60)</code> returns the sentinel 0. A constant series plainly has
+no changepoint, and every other search wrapper here reports none, so this
+one short-circuits to the empty result. Constancy is decided by exact
+equality, so a series with tiny but genuine variation still reaches the
+engine.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -84,7 +84,10 @@ through <code>...</code>, e.g. <code>lambda = 0.3</code>).</p></dd>
 
 <dt id="arg-arl-">arl0<a class="anchor" aria-label="anchor" href="#arg-arl-"></a></dt>
 <dd><p>Target in-control average run length (how many observations,
-on average, before a false alarm). Defaults to <code>500</code>.</p></dd>
+on average, before a false alarm). Defaults to <code>500</code>. <span class="pkg">cpm</span>
+ships thresholds only for 100, 200, 370, 400, 500, 600, 700, 1000, 2000,
+5000, 10000 and 20000; any other value is refused, because the engine
+answers it by printing an error and reporting no changepoints.</p></dd>
 
 
 <dt id="arg-startup">startup<a class="anchor" aria-label="anchor" href="#arg-startup"></a></dt>

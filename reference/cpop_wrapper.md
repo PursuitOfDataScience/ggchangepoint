@@ -22,6 +22,9 @@ cpop_wrapper(x, penalty = NULL, sd = NULL, ...)
 - penalty:
 
   Penalty for adding a changepoint. Defaults to `2 * log(length(x))`.
+  [`cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  resolves its own `"MBIC"` default to a stronger numeric value, so the
+  two entry points need not agree unless `penalty` is given.
 
 - sd:
 

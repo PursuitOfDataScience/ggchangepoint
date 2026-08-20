@@ -47,7 +47,14 @@ cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
   [`cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
   for how each engine interprets it; methods that use thresholds,
   significance levels, or posteriors instead of penalties ignore this
-  argument.
+  argument, and `"segneigh"` falls back to `"SIC"` because changepoint
+  does not implement MBIC for Segment Neighbourhood. Note also that the
+  default `"MBIC"` is resolved to a *numeric* value for the
+  numeric-penalty engines (`"fpop"`, `"cpop"`, `"decafs"`), and that
+  value is stronger than those wrappers' own `2 * log(n)` default — 19.9
+  against 11.8 at \\n = 360\\ — so `cpt_detect(x, method = "decafs")`
+  can report fewer changepoints than `decafs_wrapper(x)` on the same
+  series. Pass `penalty` explicitly to make the two entry points agree.
 
 - ...:
 
@@ -55,11 +62,41 @@ cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
   help page for engine-specific options). Where an argument is also
   derived from `change_in` (`not`'s `contrast`, `cpm`'s `cpm_type`,
   `kcp`'s `running_stat`, `sn`'s `parameter`, `fastcpd`'s `family`), a
-  value supplied here takes precedence.
+  value supplied here takes precedence. Check the spelling against the
+  wrapper's help page: several engines end their own signature in `...`
+  (wbs, not, Rbeast, strucchange, segmented, fastcpd), so for those a
+  misspelt argument name is silently discarded upstream and the engine
+  quietly uses its default rather than reporting the typo.
 
 ## Value
 
 A `ggcpt` object.
+
+## Scale sensitivity of the penalised change-in-mean engines
+
+`"pelt"`, `"binseg"`, `"segneigh"` and `"fpop"` compare a penalty
+against a *raw* segment cost when `change_in = "mean"`: changepoint's
+Normal cost assumes a noise standard deviation of 1, and fpop's `lambda`
+is an absolute penalty on the residual sum of squares. Neither rescales
+the data, so on a series whose noise is much wider than 1 the penalty is
+effectively negligible and the segmentation shatters. On one true
+changepoint with a jump of five standard deviations, `"pelt"` returns 1
+changepoint at \\\sigma = 1\\, 29 at \\\sigma = 3\\ and 138 at \\\sigma
+= 10\\. Three ways to avoid it, in order of convenience:
+
+- standardise the series first
+  (`cpt_detect(scale(x)[, 1], method = "pelt")`);
+
+- pass a penalty on the data's own scale, for example
+  `penalty = 2 * log(length(x)) * stats::var(diff(x)) / 2`;
+
+- use `change_in = "meanvar"`, which estimates a variance per segment
+  and is unaffected.
+
+The other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
+Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
+multivariate methods all estimate or cancel the noise scale internally,
+and return the same segmentation whatever the units.
 
 ## Examples
 

@@ -17,7 +17,19 @@ fpop_wrapper(x, penalty = NULL, ...)
 
 - penalty:
 
-  Penalty value. Defaults to `2 * log(length(x))` (BIC).
+  Penalty value. Defaults to `2 * log(length(x))` (BIC). This is an
+  *absolute* penalty on the residual sum of squares, so it is only
+  calibrated for noise of standard deviation 1: on wider data the
+  default under-penalises badly and the segmentation shatters.
+  Standardise the series, or scale the penalty by the noise variance
+  (for example `2 * log(length(x)) * stats::var(diff(x)) / 2`). See the
+  scale-sensitivity section of
+  [`cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md).
+  This default differs from the one
+  [`cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  applies, which resolves its `"MBIC"` default to a stronger numeric
+  value, so the two entry points need not agree unless `penalty` is
+  given.
 
 - ...:
 

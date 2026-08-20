@@ -41,7 +41,11 @@ rcpt(...)
   A list of parameters per segment. For `mean` changes, a vector of
   segment means. For `var` changes, a vector of segment sds. For
   `meanvar`, a list of lists with `mean` and `sd` per segment. For
-  `slope`, a list with `intercept` and `slope` per segment.
+  `slope`, a list with `intercept` and `slope` per segment. When `NULL`,
+  every segment gets the same neutral parameters, so the series has no
+  actual change. Supplying fewer entries than there are segments
+  recycles the last one and warns, because the trailing `changepoints`
+  would then be recorded as ground truth without a change behind them.
 
 - noise:
 
@@ -50,8 +54,8 @@ rcpt(...)
 
 - sd:
 
-  Noise standard deviation (for Gaussian and t; t-noise is rescaled so
-  its standard deviation is exactly `sd`). Defaults to 1.
+  Noise standard deviation, non-negative (for Gaussian and t; t-noise is
+  rescaled so its standard deviation is exactly `sd`). Defaults to 1.
 
 - df:
 
@@ -60,7 +64,8 @@ rcpt(...)
 
 - rho:
 
-  AR(1) autocorrelation parameter. Defaults to 0.
+  AR(1) autocorrelation parameter, strictly between -1 and 1 for
+  stationarity. Defaults to 0. Used only when `noise = "ar1"`.
 
 - seed:
 

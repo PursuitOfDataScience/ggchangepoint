@@ -74,8 +74,11 @@ needs to be installed.</p>
         <code>NA</code> for planned methods.</p></dd>
 
   <dt>target_release</dt>
-<dd><p>The release that plans to wire this method,
-        or <code>NA</code> for currently available methods.</p></dd>
+<dd><p>What a planned method is waiting on: a release,
+        or <code>"when on CRAN"</code> when the engine package itself is not
+        available from CRAN. <code>NA</code> for methods that are already
+        wired. Asking <code><a href="cpt_detect.html">cpt_detect()</a></code> for a planned method reports
+        this rather than claiming the name does not exist.</p></dd>
 
 
 </dl></div>

@@ -36,7 +36,13 @@ smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
   remaining `stepR` families (`"jsmurf"`, `"mDependentPS"`, ...) all
   require a filter or covariance specification; call
   [`stepR::stepFit()`](https://rdrr.io/pkg/stepR/man/stepFit.html)
-  directly for those.
+  directly for those. `"hsmuce"` additionally refuses a series whose
+  point-to-point variation lies more than about seven orders of
+  magnitude below its own scale — a globally flat series, or a step
+  whose segments are numerically constant, as `cpt_simulate(sd = 0)`
+  produces once any rounding is added. stepR's heterogeneous variance
+  estimator aborts the R session on such input rather than raising an
+  error, so it cannot be caught. `"gauss"` handles the whole range.
 
 - ...:
 

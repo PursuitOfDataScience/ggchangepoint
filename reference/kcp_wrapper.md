@@ -42,7 +42,10 @@ kcp_wrapper(
 
 - nperm:
 
-  Number of permutations for the significance test. Defaults to `1000`.
+  Number of permutations for the significance test, at least 2. Defaults
+  to `1000`. Fewer than two leaves the engine with no permutation
+  distribution: it reports no changepoints at all for 0, and fails
+  inside its own code for 1.
 
 - kmax:
 
