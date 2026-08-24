@@ -10,6 +10,5 @@
 ^docs$
 ^pkgdown$
 ^next_release\.md$
-^features\.md$
 ^README\.html$
 ^data-raw$
