@@ -54,7 +54,9 @@ Environment*, **232**, 111181.
 
 ``` r
 res <- beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
-#> Error: Rbeast::beast() returned an invalid (all-NaN) fit repeatedly; this is an intermittent upstream issue - retry the call.
 res$changepoints
-#> Error: object 'res' not found
+#> # A tibble: 1 × 3
+#>      cp cp_value posterior_prob
+#>   <int>    <dbl>          <dbl>
+#> 1    60    -1.79              1
 ```

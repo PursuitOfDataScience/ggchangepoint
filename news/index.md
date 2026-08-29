@@ -544,9 +544,11 @@ capability matrix was extended in lockstep.
 - `stats`, `tools` and `utils` are declared in `Imports`; the new
   engines and extras are in `Suggests` behind
   [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) guards, as
-  before — 35 engines inside a 55-package `Suggests` list, and the
+  before — 35 engines inside a 56-package `Suggests` list, and the
   package still checks clean with none of them installed. `withr` joins
-  `Suggests`, which the tests already used.
+  `Suggests`, which the tests already used, and `rjags`, which
+  [`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
+  tests for because having does not imply JAGS can be reached.
 - Every parallel entry point is now tested under a real
   `future::plan(multisession)`, and the wrappers that the suite only
   ever reached through
