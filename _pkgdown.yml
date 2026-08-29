@@ -27,6 +27,12 @@ navbar:
       href: articles/comparison.html
     - text: Feature tour
       href: articles/ggchangepoint.html
+    - text: Inference and diagnostics
+      href: articles/inference.html
+    - text: Supervised changepoint detection
+      href: articles/supervised.html
+    - text: Extending ggchangepoint
+      href: articles/extending.html
   - text: News
     href: news/index.html
   right:
@@ -41,9 +47,19 @@ reference:
   - cpt_methods
   - cpt_penalty
   - cpt_cite
+  - as_cpt_series
   - new_ggcpt
   - is_ggcpt
   - print.ggcpt
+- title: Extending the package
+  desc: >
+    Bring a detector this package does not wrap -- a non-CRAN engine, a
+    Python tool, a neural detector, or your own changepoints -- into the
+    same tidy, plottable grammar.
+  contents:
+  - as_ggcpt
+  - cpt_register_method
+  - cpt_install_engines
 - title: Original wrappers
   contents:
   - cpt_wrapper
@@ -61,7 +77,66 @@ reference:
   contents:
   - smuce_wrapper
   - cpop_wrapper
+  - nsp_wrapper
   - cpt_crops
+- title: Inference
+  desc: >
+    Where could this changepoint be, and is it real?
+  contents:
+  - cpt_confint
+  - cpt_test
+  - cpt_regions
+- title: Choosing the number of changepoints
+  contents:
+  - cpt_select
+- title: Diagnostics
+  desc: >
+    Which observation is driving this, which setting, and what did the
+    detector actually compute?
+  contents:
+  - cpt_influence
+  - cpt_leverage
+  - cpt_sensitivity
+  - cpt_statistic
+  - cpt_solution_path
+  - cpt_scale_space
+- title: Supervised detection
+  desc: >
+    Labelled regions as ground truth, label errors as the accuracy
+    measure, and a learned penalty.
+  contents:
+  - cpt_labels
+  - as_cpt_labels
+  - cpt_label_error
+  - cpt_label_error_curve
+  - cpt_learn_penalty
+- title: Choosing and combining methods
+  contents:
+  - cpt_recommend
+  - cpt_consensus
+- title: Communication
+  contents:
+  - cpt_annotate_events
+  - cpt_report
+  - cpt_gt
+- title: Benchmarking
+  contents:
+  - cpt_benchmark
+  - cpt_datasets
+  - cpt_load_tcpd
+  - cpt_annotations
+- title: Streaming and online monitoring
+  contents:
+  - cpt_monitor
+  - cpt_update
+  - alarms
+  - cpt_replay
+  - cpt_delay
+- title: Power and study design
+  contents:
+  - cpt_power
+  - cpt_min_detectable
+  - cpt_scenarios
 - title: Bayesian wrappers
   contents:
   - bcp_wrapper
@@ -83,10 +158,32 @@ reference:
   - inspect_wrapper
   - ocd_wrapper
   - geomcp_wrapper
+  - esac_wrapper
+  - pilliat_wrapper
+  - hdcov_wrapper
+  - network_wrapper
+  - var_wrapper
+  - hdreg_wrapper
+- title: Functional and network wrappers
+  contents:
+  - fmean_wrapper
+  - fcov_wrapper
+  - kwc_wrapper
+  - fabisearch_wrapper
 - title: Regression-break wrappers
   contents:
   - strucchange_wrapper
   - segmented_wrapper
+  - bfast_wrapper
+- title: Applied vocabularies and fast paths
+  contents:
+  - trend_wrapper
+  - taylor_wrapper
+  - wbsts_wrapper
+  - binsegrcpp_wrapper
+- title: Bayesian formula models
+  contents:
+  - mcp_wrapper
 - title: broom methods
   contents:
   - tidy.ggcpt
@@ -96,10 +193,12 @@ reference:
 - title: Additional S3 methods
   contents:
   - ggcpt_methods
-- title: Theming and helpers
+- title: Theming, palettes and accessibility
   contents:
   - theme_ggcpt
   - annotate_segments
+  - scale_colour_cpt
+  - scale_fill_cpt_label
 - title: Visualization
   contents:
   - autoplot.ggcpt
@@ -108,6 +207,9 @@ reference:
   - geom_changepoint
   - geom_cpt_segment
   - geom_cpt_ci
+  - geom_cpt_region
+  - geom_cpt_label
+  - geom_cpt_event
   - stat_changepoint
   - ggcpt_posterior
   - ggcpt_runlength

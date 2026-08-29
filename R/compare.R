@@ -50,9 +50,12 @@ ggcpt_compare <- function(x,
     # here, so the parallel branch passed one every time it ran without an
     # explicit seed. `cpt_batch()` already sent TRUE in that case, which is
     # what asks future.apply for parallel-safe L'Ecuyer streams.
-    results <- future.apply::future_lapply(methods, function(m) {
+    run_one <- function(m) {
       cpt_detect(data_vec, method = m, change_in = change_in, ...)
-    }, future.seed = seed %||% TRUE)
+    }
+    results <- future.apply::future_lapply(methods,
+                                           with_session_registry(run_one),
+                                           future.seed = seed %||% TRUE)
   } else {
     if (!is.null(seed)) set.seed(seed)
     results <- lapply(methods, function(m) {
@@ -151,9 +154,15 @@ ggcpt_compare_overlay <- function(data_vec, results, methods) {
     cp_data <- dplyr::mutate(cp_data, .ymin = ymin, .ymax = ymax)
     p <- p + ggplot2::geom_linerange(
       data = cp_data,
-      ggplot2::aes(x = index, ymin = .ymin, ymax = .ymax, color = method),
-      inherit.aes = FALSE, linewidth = 0.5, position = ggplot2::position_dodge(width = 1)
-    )
+      ggplot2::aes(x = index, ymin = .ymin, ymax = .ymax, color = method,
+                   linetype = method),
+      inherit.aes = FALSE, linewidth = 0.5,
+      position = ggplot2::position_dodge(width = 1)
+    ) +
+      # Colour-vision-safe hues, with linetype carrying the same information
+      # so the panel is readable in greyscale and to a colour-blind reader.
+      scale_colour_cpt(name = "Method") +
+      scale_linetype_cpt(name = "Method")
   }
 
   p

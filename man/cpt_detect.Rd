@@ -4,31 +4,39 @@
 \alias{cpt_detect}
 \title{Unified changepoint detection dispatcher}
 \usage{
-cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
+cpt_detect(
+  x,
+  method = "pelt",
+  change_in = "mean",
+  penalty = "MBIC",
+  index = NULL,
+  y = NULL,
+  ...
+)
 }
 \arguments{
-\item{x}{A numeric vector for univariate methods, or a numeric
-matrix/data frame (rows are time points) for the multivariate methods
-(\code{"ecp"}, \code{"inspect"}, \code{"geomcp"}, \code{"ocd"},
-\code{"npmojo"}, \code{"kcp"}, \code{"fastcpd"}).}
+\item{x}{The series. A numeric vector for univariate methods, or a
+numeric matrix/data frame (rows are time points) for the multivariate
+methods — run \code{subset(cpt_methods(), multivariate)$method} for the
+list. A \code{ts}, \code{xts}, \code{zoo} or (unkeyed) \code{tsibble}
+is accepted directly and its time index is carried through to
+\code{tidy()} and \code{autoplot()}; so is a data frame together with
+\code{y} (and optionally \code{index}).}
 
-\item{method}{Detection method. One of \code{"pelt"}, \code{"binseg"},
-\code{"segneigh"}, \code{"amoc"}, \code{"np"}, \code{"ecp"},
-\code{"fpop"}, \code{"wbs"}, \code{"wbs2"}, \code{"not"},
-\code{"mosum"}, \code{"idetect"}, \code{"tguh"}, \code{"smuce"},
-\code{"hsmuce"}, \code{"cpop"}, \code{"bcp"}, \code{"bocpd"},
-\code{"beast"}, \code{"cpm"}, \code{"kcp"}, \code{"npmojo"},
-\code{"decafs"}, \code{"sn"}, \code{"inspect"}, \code{"ocd"},
-\code{"geomcp"}, \code{"strucchange"}, \code{"segmented"},
-\code{"envcpt"}, or \code{"fastcpd"}. Methods whose engines live in
-\code{Suggests} prompt for installation when missing.}
+\item{method}{Detection method: any \code{method} in
+\code{cpt_methods()} whose \code{status} is \code{"available"} or
+\code{"registered"}. Methods whose engines live in \code{Suggests}
+report what to install when missing;
+\code{\link{cpt_register_method}()} adds detectors this package does
+not wrap.}
 
 \item{change_in}{What to detect change in. One of \code{"mean"},
-\code{"var"}, \code{"meanvar"}, \code{"slope"}, or
-\code{"distribution"}. Defaults to \code{"mean"}. The requested value
-is validated against the method's capabilities
-(see \code{cpt_methods()}); incompatible combinations error rather than
-silently running something else.}
+\code{"var"}, \code{"meanvar"}, \code{"slope"},
+\code{"distribution"}, \code{"covariance"}, \code{"network"},
+\code{"regression"} or \code{"seasonality"}. Defaults to
+\code{"mean"}. The requested value is validated against the method's
+capabilities (see \code{cpt_methods()}); incompatible combinations
+error rather than silently running something else.}
 
 \item{penalty}{Penalty type or value. Either a character string
 (\code{"MBIC"}, \code{"BIC"}, \code{"SIC"}, \code{"AIC"},
@@ -46,6 +54,22 @@ against 11.8 at \eqn{n = 360} — so \code{cpt_detect(x, method =
 "decafs")} can report fewer changepoints than \code{decafs_wrapper(x)}
 on the same series. Pass \code{penalty} explicitly to make the two
 entry points agree.}
+
+\item{index}{Optional time index, one value per observation (dates, say).
+Detection still runs on observation positions — every wrapped engine
+assumes an equally spaced sequence — but the index is stored on the
+result and threaded through \code{tidy()} (as \code{cp_index}),
+\code{augment()}, \code{autoplot()} and \code{\link{cpt_report}()},
+so the output speaks in the user's own units. An index that is not
+equally spaced warns. When \code{x} is a data frame and \code{y} is
+given, \code{index} selects a column of that data frame instead of
+being a vector.}
+
+\item{y}{Column selection for the data-frame interface:
+\code{cpt_detect(df, y = value, index = date, method = "pelt")}. A bare
+column name, a string, or a column position. Only meaningful when
+\code{x} is a data frame; a data frame passed without \code{y} keeps
+its 0.4.0 meaning (one column per coordinate).}
 
 \item{...}{Additional arguments passed to the specific wrapper (see the
 wrapper's help page for engine-specific options). Where an argument is
@@ -101,4 +125,13 @@ x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
 result <- cpt_detect(x, method = "pelt", change_in = "mean")
 result
 ggplot2::autoplot(result)
+
+# A date index: detection is unchanged, but the report speaks in dates.
+dates <- as.Date("2000-01-01") + 0:199
+dated <- cpt_detect(x, method = "pelt", index = dates)
+tidy(dated)
+
+# The data-frame interface.
+df <- data.frame(day = dates, value = x)
+cpt_detect(df, y = value, index = day, method = "pelt")
 }

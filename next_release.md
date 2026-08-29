@@ -3,13 +3,40 @@
 ### Expanding tidy, visualization-first changepoint detection in R
 
 **Author:** Youzhi Yu
-**Status:** Release ledger for `ggchangepoint` 0.4.0 (Part I) and design roadmap
-for 0.5.0 and beyond (Part II)
-**Current release:** 0.3.0 on CRAN; **0.4.0 complete and ready to submit**
+**Status:** Release ledger for `ggchangepoint` 0.5.0 (Part 0) and 0.4.0
+(Part I), and the residual design roadmap (Part II, now annotated with what
+0.5.0 delivered)
+**Current release:** 0.4.0 on CRAN; **0.5.0 complete and ready to submit**
 
 ---
 
 ## Abstract
+
+**0.5.0 is the release that answers Part II.** 0.4.0 closed the "not enough
+methods" gap; 0.5.0 closes the three that were left. *Inferential:*
+Narrowest Significance Pursuit brings significance **regions** — intervals
+each guaranteed to contain a change at a global level — and with them a new
+`regions` slot, a new `geom_cpt_region()` layer, a `cpt_confint()` generic
+that unifies four provenances behind one contract, and a `cpt_test()` that
+refuses to let a selection-unadjusted p-value pass for an adjusted one.
+*Grammatical:* the detector's own statistic, its solution path and its scale
+space are now first-class objects with accessors and plots, and
+`autoplot(type =)` reaches all three. *Boundary-shaped:* time indices
+(`ts`/`xts`/`zoo`/`tsibble` and a data-frame interface), streaming monitors
+with detection-delay accounting, functional data, dynamic networks,
+covariance and VAR changes, real-world event annotation — and, the
+highest-leverage item in the whole roadmap, an **extension mechanism**
+(`as_ggcpt()`, `cpt_register_method()`) that lets a detector this package
+neither wraps nor can depend on join the same grammar. Along the way
+`cpt_detect()` goes from 31 to **50 wired methods**, the three duplicated
+method tables collapse into one declarative registry, `cpt_select()` gives
+the package its first criterion that actually *selects*, supervised
+detection arrives with learned penalties, `cpt_benchmark()` runs the grid,
+`cpt_power()` answers the question that should precede an analysis, and the
+package gets its first visual-regression net. Part 0 is that ledger; Part II
+is now annotated with what it delivered and what it did not.
+
+---
 
 `ggchangepoint` 0.3.0 closed the documentation gap of the 0.2.0 cycle: the
 README introduces every export, the dispatcher is honest (only wired methods
@@ -72,6 +99,18 @@ a changelog, and not a commitment.
 
 ## Contents
 
+**Part 0 — The ledger: what 0.5.0 shipped**
+
+- [0.1 The shape of the release](#01-the-shape-of-the-release)
+- [0.2 The extension mechanism and the registry](#02-the-extension-mechanism-and-the-registry)
+- [0.3 Engine wave #2](#03-engine-wave-2)
+- [0.4 Inference, selection, diagnostics](#04-inference-selection-diagnostics)
+- [0.5 Supervised detection, communication, benchmarking, streaming, power](#05-supervised-detection-communication-benchmarking-streaming-power)
+- [0.6 The open questions, answered](#06-the-open-questions-answered)
+- [0.7 Corrections found while building](#07-corrections-found-while-building)
+- [0.8 Bugs found and fixed during the 0.5.0 build](#08-bugs-found-and-fixed-during-the-050-build)
+- [0.9 What Part II still leaves open](#09-what-part-ii-still-leaves-open)
+
 **Part I — The ledger: what 0.4.0 shipped**
 
 1. [Status: where 0.3.0 landed](#1-status-where-030-landed)
@@ -103,6 +142,391 @@ a changelog, and not a commitment.
 24. [Prioritisation](#24-prioritisation)
 25. [Open questions and decisions needed](#25-open-questions-and-decisions-needed)
 26. [References](#26-references)
+
+---
+
+# Part 0 — The ledger: what 0.5.0 shipped
+
+## 0.1 The shape of the release
+
+0.4.0 was an engine wave. 0.5.0 is a **surface** release: the detectors grow
+by nineteen, but the code around them roughly doubles, because that is where
+Part II said the gaps were.
+
+| | 0.4.0 | 0.5.0 |
+|---|---|---|
+| Wired methods | 31 | **50** |
+| Exported objects | 63 | **130** |
+| Registered S3 methods | 19 | **50** |
+| Help topics | 66 | **124** |
+| `change_in` levels | 5 | **9** (adds covariance, network, regression, seasonality) |
+| Test assertions | 695 | **1 235**, plus 25 visual snapshots |
+| Composable geoms | 4 | **7** |
+| Sources of the method table | 3 | **1** |
+
+The three commitments carry over unchanged — a tidy tibble inside a
+structured `ggcpt`, direct `ggplot2` rendering, and uncertainty carried on
+the object wherever a method quantifies it. 0.5.0 adds a fourth:
+**(iv) the package is extensible from the outside** — a detector it does not
+wrap, cannot wrap, or has never heard of can join the grammar in four lines,
+and is labelled as user-supplied wherever it appears.
+
+## 0.2 The extension mechanism and the registry
+
+Part II ranked §18 (Theme I) first, and building it first turned out to be
+right for a reason the roadmap only half-anticipated: it is not only the
+answer to "this engine is not on CRAN", it is also the *test harness* for
+the `ggcpt` contract. Every contract check in `as_ggcpt()` is exercised by
+the registration tests rather than only by whichever wrapper happens to hit
+it.
+
+- `as_ggcpt(cp, x, ...)` — a validating constructor for external
+  changepoints, running the same sorting, de-duplication, range and
+  alignment checks as every built-in wrapper, and accepting the optional
+  extras (`ci`, `regions`, `fitted`, `index`, `extra`).
+- `cpt_register_method()` / `cpt_unregister_method()` /
+  `cpt_registered_methods()` — session-scoped registration, deliberately not
+  persisted. A registered method's `fn` may return bare indices or a
+  finished `ggcpt`; either way the registration's name and engine win, so
+  `cpt_methods()` and the result agree.
+- **Labelling, not endorsement.** `status = "registered"` in
+  `cpt_methods()`, a line in `print.ggcpt()`, and a `cpt_cite()` that
+  returns the supplied citation or states plainly that none was given. The
+  package validates the shape of the output, not the statistics, and says
+  so.
+
+**The registry** (§23's refactor, done before the engine wave rather than
+after it, exactly as Part II advised). `builtin_registry()` is now the only
+place a method's capabilities are declared. `cpt_methods_table()`,
+`method_change_in_support()` and `cpt_detect()`'s dispatch all derive from
+it, and `cpt_register_method()` appends to the same structure — so a
+registered detector travels the identical code path as a built-in one.
+`cpt_methods()` gains nine capability columns (`multivariate`,
+`univariate`, `online`, `ci`, `fitted`, `posterior`, `statistic`, `path`,
+`scale_space`), which is what makes `cpt_recommend()` and the "these engines
+do expose it" error messages possible at all.
+
+`cpt_install_engines()` closes the other half of the `Suggests` question:
+the long tail stays optional, but installing a family is one call.
+
+## 0.3 Engine wave #2
+
+Nineteen methods, sequenced as Part II proposed — high-dimensional first
+(closest to what existed), then Bayesian, then functional, then the applied
+vocabularies.
+
+| Method | Engine | What it adds |
+|---|---|---|
+| `nsp` | `nsp` | significance **regions** with exact global coverage; self-normalised and AR variants |
+| `mcp` | `mcp` | Bayesian formula-based regression with full changepoint posteriors (JAGS) |
+| `esac`, `pilliat` | `HDCD` | sparsity-adaptive high-dimensional mean changes |
+| `hdcov` | `changepoints` | a change in the covariance operator with no change in any margin |
+| `network` | `changepoints` | a change in dynamic-network edge structure |
+| `var` | `changepoints` | a change in VAR(1) dynamics — invisible to every mean-change engine |
+| `hdreg` | `changepoints` | a change in the coefficients of a sparse high-dimensional regression |
+| `fmean`, `fcov` | `fChange` | functional mean, covariance, trace and eigenstructure |
+| `kwc` | `KWCChangepoint` | robust depth-rank segmentation for functional and multivariate data |
+| `fabisearch` | `fabisearch` | network structure via non-negative matrix factorisation |
+| `wbsts` | `wbsts` | second-order changes in a nonstationary series |
+| `bfast` | `bfast` | season-and-trend breaks (remote sensing) |
+| `pettitt`, `buishand`, `snht` | `trend` | the hydrology and climatology single-change tests |
+| `taylor` | `ChangePointTaylor` | the quality-control default, with bootstrap confidence per change |
+| `binsegrcpp` | `binsegRcpp` | a fast binary-segmentation path across several loss functions |
+
+Three of these needed something the roadmap did not anticipate, and each is
+documented where a user will hit it:
+
+- **`network`** takes two independent observations of the sequence, which
+  the theory needs for sample splitting. Given one, the wrapper builds the
+  second by independent edge thinning and **says so in a message**, rather
+  than silently handing the same data to both arguments.
+- **`fabisearch`** calls \pkg{NMF}'s multi-run machinery, which resolves
+  helpers through the search path and fails with "none of the packages are
+  loaded" when NMF is merely loaded. The wrapper attaches NMF for the
+  duration of the call and detaches it after. It also refuses negative
+  input up front, because NMF is undefined there and the engine's own
+  failure is buried inside a factorisation.
+- **`taylor`** reports its interval as the string `"(100 - 101)"` and its
+  locations on the *right* convention; both are parsed and converted on the
+  way in.
+
+## 0.4 Inference, selection, diagnostics
+
+**Theme A.** `nsp_wrapper()` plus the additive `regions` slot,
+`cpt_regions()`, `geom_cpt_region()` and `autoplot(show_regions =)` — on by
+default for a result that has regions, because for those methods the region
+*is* the result. `cpt_confint()` unifies native, posterior, bootstrap and
+NSP intervals behind one tibble with a `source` column. `cpt_test()` ships
+with the native tests (`strucchange`'s Chow F, `segmented`'s Davies) and an
+explicitly unadjusted fallback, with a `selection_adjusted` column and a
+warning.
+
+**Theme B.** `cpt_select()` over one candidate ladder, six criteria, and
+three plots — including the **ladder** of small multiples, which shows what
+each candidate K actually *is* rather than only what it scores. The
+`"mbic"` criterion is the genuine Zhang–Siegmund segment-length penalty,
+which `cpt_penalty()` documents itself as unable to express; this is where
+it lives.
+
+**Theme C.** `cpt_influence()` (delete and outlier perturbation, four
+plots, `changepoint.influence` where it applies and a generic recomputation
+everywhere else), `cpt_leverage()`, `cpt_sensitivity()`.
+
+**Theme E.** `cpt_statistic()`, `cpt_solution_path()`, `cpt_scale_space()`
+and their `ggcpt_*()` plots, reached from `autoplot(type =)`. Support is
+recorded in the registry, so an engine that exposes nothing errors with the
+list of engines that do — the behaviour Part II specified. The two-panel
+layout reuses `ggcpt_posterior()`'s faceted idiom rather than adding a
+`patchwork` dependency, following §8.3's correction.
+
+**Theme F.** `index` on `cpt_detect()`, direct `ts`/`xts`/`zoo`/`tsibble`
+input, the data-frame interface, and the index threaded through `tidy()`,
+`augment()`, `autoplot()`, `cpt_confint()`, `cpt_annotate_events()` and
+`cpt_report()`. Detection stays on positions — the correct separation, and
+the reason all 50 engines were untouched by this.
+
+## 0.5 Supervised detection, communication, benchmarking, streaming, power
+
+**Theme D.** `cpt_labels()`, `as_cpt_labels()`, `cpt_label_error()`,
+`cpt_label_error_curve()`, `cpt_learn_penalty()`, `geom_cpt_label()` and
+`scale_fill_cpt_label()`. Open question 5 is answered by construction:
+labels and `cpt_metrics_annotated()`'s ground truth are the same shape, and
+`as_cpt_labels()` converts between them. A learned penalty is usable
+wherever a number is — `cpt_detect()`, `cpt_penalty()`, and the wrappers
+that take a numeric penalty directly.
+
+**Theme J.** `cpt_consensus()` (reusing `cpt_metrics()`'s matching rule, so
+there is one notion of "the same changepoint") and `cpt_recommend()` (the
+capability matrix made printable, with the noise-structure knowledge the
+matrix cannot encode added on top). Both state prominently that agreement
+is not inference.
+
+**Theme L.** `cpt_annotate_events()` with its three-way output,
+`geom_cpt_event()`, `cpt_report()`, `cpt_gt()`, and the accessibility pass:
+an Okabe–Ito palette (`scale_colour_cpt()` and friends), redundant linetype
+encoding in the overlay comparison, and generated alt text on every
+`autoplot()`.
+
+**Theme K.** `cpt_benchmark()` with per-cell failure capture and three
+plots including the Demšar critical-difference diagram; `cpt_datasets()`
+(offline, deterministic, runs inside `R CMD check`); `cpt_load_tcpd()`
+(download-and-cache under `tools::R_user_dir()`, multi-annotator ground
+truth intact); `cpt_annotations()`.
+
+**Theme G.** `cpt_monitor()`, `cpt_update()`, `alarms()`, `cpt_replay()`,
+`cpt_delay()` — and one **native implementation**, the mixture
+Shiryaev–Roberts e-detector of Shin, Ramdas and Rinaldo. See §0.6.
+
+**Theme M.** `cpt_power()` (with Monte Carlo error reported, not hidden),
+`cpt_min_detectable()`, `cpt_scenarios()`, and the two `cpt_simulate()`
+gaps §8.3 identified: `seasonality` and a smooth `sd_trend`.
+
+## 0.6 The open questions, answered
+
+Part II's §25 listed eight decisions. All eight were taken.
+
+1. **Slots or new classes?** Additive optional slots (`regions`,
+   `diagnostics`, `index`) for things that are still "a segmentation of a
+   series"; new classes for the things that are not (`ggcpt_monitor`,
+   `ggcpt_benchmark`, `ggcpt_selection`, `ggcpt_influence`,
+   `ggcpt_sensitivity`, `ggcpt_events`, `ggcpt_power`, `ggcpt_consensus`,
+   `ggcpt_label_curve`, `ggcpt_penalty_model`, `ggcpt_delay`). As §8.3
+   predicted, the slot pattern was free: `data_wide` had already set the
+   precedent.
+2. **How honest can `cp` be for NSP?** Part II leaned toward
+   `cp = NA_integer_`. **Rejected, and this is a genuine departure.** An NA
+   `cp` breaks `augment()`, `cpt_metrics()`, `cpt_consensus()` and every
+   plot, and — worse — makes an NSP fit score as "found nothing" in a
+   benchmark, which is the opposite of the truth. The midpoint is populated
+   and labelled instead: a `cp_source` column reading `"region_midpoint"`,
+   a line in `print()`, a paragraph in `?nsp_wrapper`, and `autoplot()`
+   drawing the band by default. Labelling beats absence when every
+   downstream consumer needs the column.
+3. **`Suggests` strategy.** Both routes, not one. The engines that exist on
+   CRAN are in `Suggests` (35 engines inside a 53-package `Suggests` list),
+   because a wired method with a test-verified wrapper is worth the weight;
+   the ones that are not on CRAN are reached through registration, which is
+   now a documented, vignetted path rather than a blocker. The prediction in
+   §23 that this would "push past 45" was right about the number and wrong
+   about the consequence: every one is `requireNamespace()`-guarded, so the
+   package still checks clean with none of them installed.
+4. **JAGS.** Yes, with a guard. `mcp` is in `Suggests`, `mcp_wrapper()`
+   checks for `rjags` and names JAGS in the error, and the examples are
+   `@examplesIf`-gated on both.
+5. **One annotation representation or two?** One. See Theme D above.
+6. **Do we implement anything original?** Yes, once, deliberately, and
+   labelled. The e-detector has no R implementation, the construction is a
+   dozen lines, and optional stopping on the martingale $M_t - t$ gives
+   it a finite-sample lower bound of $1/\alpha$ on the in-control
+   average run length with no calibration run — so
+   `cpt_monitor("edetector")` is native, says so in `print()`, in
+   `?cpt_monitor`, in `cpt_cite("edetector")` and in NEWS. Nothing else in
+   the package is. Writing original mathematics also earned an original
+   bug, S11 below; the lesson recorded there is that a derivation the
+   package relies on needs a test that measures the quantity, not a test
+   that the code runs.
+7. **Benchmark data policy.** Download-and-cache, with `cpt_datasets()`
+   covering every offline example and test, as Part II leaned.
+8. **When to freeze.** After this release. See §0.9.
+
+## 0.7 Corrections found while building
+
+- **`hdbinseg` is archived on CRAN again.** Part II's opening correction
+  said it was back at 1.0.3 and that `sbs` therefore waited only on a
+  wrapper. Checked against the live index during this cycle: the package
+  page redirects to the archive, and the newest tarball there is 1.0.2.
+  `sbs` moves back to `"when on CRAN"`, and `planned_methods()` now reads
+  uniformly — every remaining planned method waits on CRAN, and nothing
+  waits on a wrapper. `changeforest` was added to the same table for the
+  same reason. This is precisely the situation §18 exists for, and the
+  extending vignette gives the recipe.
+- **`penaltyLearning::IntervalRegressionCV()` needs ten series.** Below
+  that its internal cross-validation cannot form folds. `cpt_learn_penalty()`
+  therefore ships a built-in squared-hinge interval regression and uses the
+  published implementation when the training set is large enough and the
+  package is installed — which also means the function works at all on the
+  two- or three-series examples people actually start with.
+- **AIC over-selects, visibly.** On the package's own three-segment test
+  signal, `criterion = "aic"` takes every rung of the ladder. That is the
+  criterion behaving as its definition requires (its penalty does not grow
+  with *n*), so it is documented rather than quietly dropped, and the test
+  suite asserts the honest thing rather than the convenient one.
+
+## 0.8 Bugs found and fixed during the 0.5.0 build
+
+Thirty-three defects were found and fixed in the same cycle. Three were
+introduced by this release's own code; S7–S8 and S12 are the kind that only
+surface when someone reads what an engine actually returns rather than what
+its documentation implies; S17–S33 came out of the post-implementation audit
+passes, which went after the surfaces the tests never reached — parallel
+execution, the `ggcpt` contract across every installed engine, degenerate
+input, and the claims the prose makes; and S11 is the one that matters most,
+because it was in the only piece of mathematics this package derives
+itself.
+
+Four of them are worth reading as a set, because none would have been
+caught by a test that only asks whether the code runs. S11's alarm rate was
+wrong by a factor of two while every call succeeded. S12 rendered a
+complete, plausible heatmap in which every value was `NA`. S14's fallback
+path worked so smoothly that the primary path was never once taken. And
+S15 is the sharpest of the four: the test *infrastructure* was deleting its
+own evidence, so the visual suite would have reported green forever. The
+tests written for all three now measure the quantity in question — the
+in-control alarm rate against $n\alpha$, that the statistics are
+finite and something crosses the threshold, and that the target intervals
+are bounded on both sides.
+
+The audit passes that produced S17–S22 were organised by *surface never
+exercised*, not by module. Four are worth naming because each was a
+different kind of blind spot. Parallel execution: every tool that fans out
+does so through `future.apply`, and nothing in the suite had ever run one
+under a non-sequential plan. The `ggcpt` contract: each engine had its own
+test, but nothing asserted the *same* invariants across all of them at
+once — one `glance()` row, $n$ `augment()` rows, segments that tile the
+series exactly, changepoints sorted, unique, integer and inside
+$[1, n)$, an index that survives to `cp_index`, and an `autoplot()` that
+builds. Sweeping all 49 installed methods against that list found no
+contract violations, which is the strongest single statement available
+about the dispatcher. Degenerate input: constant series, $n = 2$, embedded
+`NA`/`Inf`, and results with zero changepoints, through every accessor and
+print method. The prose: the README and vignettes make claims that code review does not
+check, which is how S20 and S21 survived. And the capability table itself:
+sweeping all 49 installed methods against all nine `change_in` values —
+441 calls — checked both directions of the registry's central claim, that
+every declared combination runs and every undeclared one refuses. Three
+declared combinations did not run (S25–S27). The twelve undeclared
+combinations that *do* run are deliberate: `change_in = "mean"` is accepted
+by every method, and each records its own native change type on the result,
+so no object claims to be a mean change when it is not — verified, not
+assumed. S28 is the reminder that an audit pass can introduce a defect of
+its own: it was caused by the fix for S23 and caught by `R CMD check`, not
+by the 2341-assertion suite.
+
+| # | Symptom | Cause and fix |
+|---|---|---|
+| S1 | Every multi-capability method silently lost its extra `change_in` values: `cpt_detect(x, method = "pelt", change_in = "var")` errored with `Supported: c("mean", "var", "meanvar")` | `tibble::tribble()` **deparses** a `list(c("a","b"))` cell into the string `'c("a", "b")'`. The registry's `supports` column is now a comma-separated string split on read, which is also more readable and diffable. Caught by asserting the column's type, not just its content. |
+| S2 | `geom_cpt_event()` produced a text layer with no `x`, so every event plot errored | `$` on a mapping does **partial matching**, so `mapping$x` returned the `xintercept` element and the alias was skipped. Fixed with `[[nm, exact = TRUE]]`; regression-tested by building the plot and reading the layer data. |
+| S3 | The same layer errored again once `x` was mapped, this time on the *series'* aesthetics | The text layer inherited the plot's mapping, which names columns the event frame does not have. `inherit.aes = FALSE` by default, exposed as an argument. |
+| S4 | The e-detector reported one persistent change as 137 alarms | Restarting against a stale pre-change baseline re-fires on the very next observation. Added a `relearn` window: after an alarm the detector adopts the new regime as its baseline and stays silent while it does. |
+| S5 | `ocd` monitoring printed an alarm at "statistic 1.10, threshold 16.4" | `normalisedStatistics()` is already divided by the threshold, so the raw thresholds were the wrong comparison point. Report 1. |
+| S6 | A one-coordinate `ecp` result with a time index started rendering as a multivariate facet grid | `autoplot()` tested `ncol(data_wide) > 2`, and the new `index_value` column pushed a single-coordinate frame over the line. Counts coordinates now, excluding the index columns. |
+| S7 | `fabisearch` returned **every** candidate split the search proposed as a changepoint whenever `alpha` was supplied | `detect.cps()`'s `stat_test` column has two shapes: a permutation *p-value* when `alpha = NULL`, and a *logical verdict* when `alpha` is a number. Reading the logical form as a number turns `FALSE` into 0, which clears any p-value threshold. The wrapper branches on the type; the filter is unit-tested against both shapes without paying for two engine runs. |
+| S8 | `fabisearch` could report "no changepoints" for a purely arithmetic reason | A permutation p-value cannot fall below `1 / n_reps`, so `n_reps = 5` with `alpha = 0.05` makes significance unreachable whatever the data. The wrapper now says so. The same guard was added to `hdcov_wrapper()` and `network_wrapper()`, whose permutation threshold is a `1 - alpha` quantile of `n_perm` values and is extrapolated when `n_perm < 1 / alpha`. |
+| S9 | `cpt_methods()` printed "RGL: unable to open X11 display" on every headless machine | Asking whether an engine is installed *loads its namespace*, and `fabisearch` pulls in `rgl`, which warns on load. That is information about the display, not about the installation. The status check now swallows it; a test asserts `cpt_methods()` is silent. |
+| S10 | `cpt_select()` reported a confidently "chosen" K off a one-point curve | The search-based methods tune themselves by an internal criterion and ignore `penalty`, so sweeping it returns the same segmentation at every rung and there is nothing to choose between. It now warns and names the methods that do give a full ladder. |
+| S12 | `cpt_scale_space(method = "npmojo")` refused a matrix, and produced an all-NA heatmap when reached through a `ggcpt` | Two faults in one path: the input was flattened with `as_uni_vector()` even though npmojo is a multivariate engine, and the extractor read `$stat`/`$threshold` when `np.mojo()` names them `test.stat` and `threshold.val` — `$threshold` holds the rule (`"bootstrap"`), not the number. The result was a uniform grey grid with nothing significant, which looks like a finding. The test now asserts the statistics are finite and that something crosses the threshold. |
+| S15 | **The visual regression net silently erased itself.** Any plain `test_dir()` deleted all 25 snapshots | The visual tests skip at the top of each block, so `expect_doppelganger()` was never reached, nothing was announced, and testthat pruned the files as unused. The next `NOT_CRAN=true` run then *recreated* them from whatever the code did at that moment — so the net would have passed forever and caught nothing. Each block now calls `announce_snapshot_file()` for its titles before skipping, which needs testthat edition 3; the package opts in (`Config/testthat/edition: 3`), and the whole suite passes unchanged under it. A test asserts the announced names match the files on disk, because a drift there would restore the original failure silently. |
+| S16 | A running monitor accepted a feed of the wrong width | `cpt_update()` coerced whatever it was given to a matrix without checking it against the baseline, so an `ocd` monitor built on three coordinates consumed two-column data and the univariate detectors silently read column 1 and dropped the rest. A monitor is dimensioned at construction; it now says so. |
+| S13 | Selecting columns off a result tibble kept its class, so printing the fragment warned "Unknown or uninitialised column" | `ggcpt_benchmark`, `ggcpt_batch`, `ggcpt_recommendation`, `ggcpt_label_curve`, `cpt_labels` and `cpt_label_error` are tibbles with a `print()` method that reads named columns. Base `[` preserves the class, so `bm[, c("dataset", "method")]` still claimed to be a benchmark. `[` methods now drop back to a plain tibble the moment a required column is selected away — which is also what makes these objects safe to hand to `dplyr::select()`. |
+| S14 | The `penaltyLearning` delegation in `cpt_learn_penalty()` was unreachable, and every target interval was one-sided | The default penalty grid for `cpt_label_error_curve()` was a fixed geometric span topping out near $40\log n$. On a series with a large change the detector still finds it there, so the label-error curve never turns back up, the minimum runs to the edge of the grid, and the target interval comes out unbounded above — which gives interval regression no margin to fit and makes `IntervalRegressionCV()` fail every time. The grid's top end is now found by doubling until the detector reports nothing. All twelve targets in the check series went from one-sided to bounded, and the published estimator is reached instead of the fallback. |
+| S11 | **The e-detector's average-run-length guarantee did not hold.** Measured in-control alarm rate was ~1.8x the bound at `alpha = 0.01` and ~3.5x at `alpha = 0.001` | The per-shift Shiryaev–Roberts statistics were combined with `max()`. The ARL bound comes from optional stopping on $M_t - t$, which needs $E_\infty[M_t] = t$; a convex combination of e-detectors preserves that and a maximum does not — a max over $K$ shifts crosses the threshold roughly $K$ times as often under the null. Changed to a uniform average. The regression test now *measures* the in-control alarm rate against $n\alpha$ rather than asserting that the code runs, which is what would have caught it the first time. |
+
+| S17 | **A method registered with `cpt_register_method()` was invisible to every parallel worker.** Under `future::plan(multisession)`, `cpt_batch()` on a registered method died with `'arg' should be one of "pelt", "binseg", ...` | The registry is an environment inside the package namespace, and a `future` worker loads the package fresh, so the parent's registrations do not exist there. The failure was silent about its real cause — it looked like the method name was wrong. Every parallel entry point (`cpt_batch()`, `cpt_benchmark()`, `cpt_consensus()`, `ggcpt_compare()`, `cpt_influence()`, `cpt_sensitivity()`, `cpt_power()`) now wraps its worker with `with_session_registry()`, which snapshots the registry in the parent and re-creates it on the far side. With nothing registered the wrapper returns the function untouched, so the common path keeps exactly the globals it had. |
+| S18 | `cpt_benchmark()` scored a labelled dataset as unlabelled, reporting `n_annotators = 0` and `NA` metrics, with no warning | Ground truth was read only from `annotations` or `truth`. A list built with `changepoints` — the name `cpt_simulate()` uses for the same thing — was silently ignored, and the result was a full, plausible benchmark table in which every metric was missing. `changepoints` is now accepted, a list-valued `truth` is treated as several annotators rather than flattened, extraction is exact (`$` partial-matches, so `annotations_raw` would have been read as ground truth), and a list dataset carrying none of the three names now warns and says what it did find. A bare numeric vector is legitimately unlabelled and stays quiet. |
+| S19 | `fabisearch_wrapper()` let NMF's own error through for an all-zero time point | The wrapper pre-checks non-negativity but not the other precondition NMF has, so a series with a zero row failed several layers down with a message that named neither the rows nor the fix. Caught at the wrapper now, with the offending row numbers. |
+| S20 | The introduction vignette said four engines were planned; there are five | `changeforest` was added to the planned list without the prose being updated. The count and the citation now match `cpt_methods()`. |
+| S21 | The README credited the e-detector's average-run-length bound to Ville's inequality | S11 corrected the derivation in the function's Details section but left the same wrong attribution in the README and in the `alpha` parameter's own documentation. The bound is optional stopping on $M_t - t$; Ville's inequality bounds the probability that a non-negative supermartingale ever exceeds a level, which is a different statement. All three places now agree. |
+| S22 | Fifteen exported functions appeared nowhere in the README, and the test that checks this only runs off CRAN | `test-doc-coverage.R` asserts every export is mentioned in the README; it skips on CRAN, so a plain `R CMD check` had been passing while it failed. The fifteen — the accessibility scales, `geom_cpt_region()`, `geom_cpt_event()`, `cpt_update()`, `cpt_scenarios()`, `cpt_annotations()`, `cpt_statistic()`, `ggcpt_statistic()`, `cpt_label_error_curve()`, `cpt_registered_methods()`, `as_cpt_series()` — were woven into the sections they belong to rather than listed, and the README was re-knitted. |
+
+| S23 | **`pilliat` reported a changepoint at every observation whenever the number of coordinates was an exact power of two** — on pure noise as readily as on a real change, at $p = 2, 4, 8, 16, 32, 64, 128$ | `HDCD` 1.1's `Pilliat()` builds its partial-sum threshold vector with `t <- 1; repeat { push(...); t <- 2 * t; if (t >= p) break }`, which yields $\lfloor\log_2(p-1)\rfloor + 1$ entries — one short of the $\lfloor\log_2 p\rfloor + 1$ sparsity scales the C routine then indexes. For a power-of-two $p$ the C code reads past the end of the vector, every candidate clears the garbage value, and the engine returns $n-1$ changepoints. A corrected vector cannot be injected (the analytic branch overwrites what is passed, and the empirical branch zeroes the Berk–Jones scale count unless it runs its own calibration), so the wrapper refuses those dimensions, names the engine bug, and points at `esac`, which is unaffected at every $p$. A version guard means the refusal lifts by itself once HDCD fixes it, and a post-hoc check on the returned count catches the fault if a later version moves rather than fixes it. Found by a reproducibility sweep that reported `pilliat` finding 299 changepoints in a 300-point series — the seed check was reproducible, and the *number* was the finding. |
+
+| S24 | `cpt_confint()` bootstrapped an NSP result 200 times instead of reading the interval already on it | `has_native` looked only for `ci_lower`/`ci_upper`. NSP reports an interval that *provably contains a change* — the strongest interval statement in the package — under `region_start`/`region_end`, so `method = "auto"` fell through to the bootstrap and produced a weaker answer slowly. A `native_bounds()` helper now reads either shape and labels the source (`"nsp_region"`), reporting NSP's own global level rather than `NA`. |
+| S25 | `bfast(change_in = "seasonality")` errored with `$ operator is invalid for atomic vectors` — i.e. it never worked | \pkg{bfast} reports "no breakpoints in this component" as a bare logical `NA`, not as a `breakpoints` object with an empty slot, so `bp$breakpoints` was `$` applied to an atomic vector. That is the *ordinary* outcome for a seasonal component of stable amplitude, so the declared capability failed on most series. The test now runs all three of `bfast`'s declared `change_in` values. Also added: `change_in = "seasonality"` with `season = "none"` is a contradiction and now says so. |
+| S26 | The registry claimed `binsegrcpp` detects a change in variance alone; it cannot | \pkg{binsegRcpp} 2025.5.13 offers `mean_norm`, `meanvar_norm`, `poisson`, `laplace` and `l1` — no variance-only cost. The wrapper mapped `change_in = "var"` to a nonexistent `"var_norm"` and died inside the engine with `unrecognized distribution`. Both the registry row and the wrapper's argument now stop at `mean` and `meanvar`, and the docs name the alternatives. |
+| S27 | `taylor` accepted a bootstrap count the engine rejects | `ChangePointTaylor` requires 100 to 1,000,000 resamples; the wrapper validated only `>= 1`, so `n_bootstraps = 60` failed several frames down with a message about `n_bootraps` — the engine's own misspelling of an argument the caller never typed. Validated at the wrapper with the real bounds. |
+| S28 | **`pilliat_wrapper()` silently stopped being exported.** `R CMD check` reported `Undocumented code objects: is_power_of_two` | The fix for S23 inserted two internal helpers *between* `pilliat_wrapper`'s roxygen block and its definition, so the `@export` attached to the helper instead. Dispatch through `cpt_detect(method = "pilliat")` kept working, every test kept passing, and the public entry point vanished — nothing in the suite asserted the export list. A new test now asserts that every wrapper named in the registry is exported and has a help page, and that a fixed list of internals is not exported. |
+
+
+| S29 | A baseline holding an `NA` was reported as a *flat* baseline | `sd()` of a vector with an `NA` is `NA`, and the `!is.finite(sd0) || sd0 <= 0` guard fired on it, so `cpt_monitor("edetector", baseline = <has NA>)` said "`baseline` has zero variability" — a diagnosis that sends the user looking at the wrong thing. Finiteness is checked first now, and says how many values are missing. |
+| S30 | `cpt_delay()` scored a true changepoint that occurs after the end of the stream | Nothing checked `truth` against the number of observations, so `cpt_delay(mon, truth = 10000)` on a 300-point stream returned a clean miss — a statement about the argument, not the detector. It now errors, as does a zero-length or non-positive `truth`; a missing `truth` says why it is required instead of emitting R's raw "argument is missing" message. |
+
+
+| S31 | Two tests asserted Suggests-only behaviour unconditionally | The package is right — `repel = TRUE` without \pkg{ggrepel} stops with an install hint, and the `NULL` default detects the package — but the test asserted only the installed-here branch, so the suite errored under a library holding the Imports and none of the Suggests. It now asserts the correct behaviour in *both* worlds rather than skipping one, which is what a Suggests-gated test should do. The monitor-equivalence test added in the same audit made the same mistake with \pkg{cpm} and was caught the same way. Found by running the check under R 4.6.0 against a minimal library; that environment is the only thing that exercises the no-Suggests path the DESCRIPTION promises, and it is now part of the release procedure rather than an occasional extra. |
+
+
+| S32 | `cpt_select()` dropped the time index, so a selection made from a dated fit came back in positions | It read `x$data$value` off a `ggcpt` and threw the rest away, and had no `index` argument of its own — an `index =` passed by a hopeful caller went into `...`, was forwarded to `cpt_detect()` at every rung of the ladder, and then vanished because the chosen fit was rebuilt with `as_ggcpt()` on the bare series. It now takes `index` explicitly, inherits it from an indexed `ggcpt`, checks its length, and attaches it to the fit. Found by sweeping the index across every tool that should carry one, not just `cpt_detect()`. |
+| S33 | Half the result classes had no `tidy()` method | `tidy(cpt_benchmark(...))` worked while `tidy(cpt_power(...))` failed with "no applicable method" — for an object that is *already* one row per scenario. Seven classes (`ggcpt_influence`, `ggcpt_power`, `ggcpt_monitor`, `ggcpt_delay`, `ggcpt_recommendation`, `cpt_labels`, `cpt_label_error`) now answer, and `glance()` reports the one-row summary a `ggcpt_delay` already holds as scalars. The tibble subclasses hand back a *plain* tibble with the extra attributes stripped, so nothing downstream re-enters a `print()` method that reads columns the caller may have dropped. |
+
+
+## 0.9 What Part II still leaves open
+
+Part II's six waves are complete except for six items, five deliberately
+left and one waiting on an upstream fix:
+
+1. **`cpt_test()` for engines with no native test** still has no
+   selection-adjusted route in-package, because `ChangepointInference` is
+   GitHub-only. §18's registration mechanism reaches it; the vignette says
+   so.
+2. **The performance table** (§23) — benchmarking all 50 methods at
+   n = 10⁴/10⁵/10⁶ and publishing the runtimes — is measurement work, not
+   code, and belongs with the software paper. **Chunked detection for very
+   long series**, proposed in the same section, is also not here: nothing in
+   0.5.0 needed it, and doing it without the runtime table would be guessing
+   at where the cliff is.
+3. **A scheduled CI job installing every suggested engine** (§23). Worth
+   doing and not done here.
+4. **The remaining §17 engines** — `jointseg`, `segMGarch`, `offlineChange`,
+   `onlineCOV`, `BayesProject`, `mbsts`, `bcpa`, `VARcpDetectOnline` — are
+   domain-specific and were sequenced last; none is a capability class the
+   package now lacks. Likewise §13's peak-detection engines
+   (`PeakSegOptimal`, `PeakSegDisk`, `FLOPART`): the supervised *framework*
+   is here, and those three would extend it to a new audience rather than
+   to a new idea.
+5. **The `covr` badge** (§23) needs a coverage service configured for the
+   repository, which is infrastructure rather than package work.
+6. **`pilliat` is unavailable at power-of-two dimensions** for as long as
+   `HDCD` 1.1 is the current release (S23). The wrapper refuses those
+   dimensions rather than returning the engine's degenerate answer, and the
+   refusal lifts by itself once a fixed `HDCD` is installed — but the fix
+   has to happen upstream, and reporting it there is the outstanding
+   action. `esac`, the other `HDCD` method, is unaffected.
+
+**The recommendation for 0.6.0 is Part II's own open question 8: freeze.**
+0.4.0 and 0.5.0 together took the API from 39 exported objects to 130 in two
+cycles. A release that adds no engines and only stabilises — the performance
+table, the scheduled CI matrix, the software paper, `inst/CITATION` already
+in place, a deprecation policy, and the 1.0 contract freeze including the
+`regions` and `diagnostics` slots — is worth more than a third wave.
 
 ---
 
@@ -635,6 +1059,14 @@ installs them.
 
 ## 10. Theme A — Inference: intervals, not just points
 
+> **Delivered in 0.5.0** (§0.4): `nsp_wrapper()`, the additive `regions`
+> slot, `cpt_regions()`, `geom_cpt_region()`, `autoplot(show_regions =)`,
+> `cpt_confint()` with four provenances, and `cpt_test()` with a
+> `selection_adjusted` column. Open question 2 was decided against this
+> section's `cp = NA` proposal — see §0.6. Not delivered: a
+> selection-adjusted test for engines with no native one, which needs
+> `ChangepointInference` and therefore §18.
+
 **Problem.** `show_ci = TRUE` works for exactly four methods across three
 engines (`smuce`/`hsmuce` via `stepR`, `strucchange`, `segmented`). For the
 other 27 the honest answer to "how sure are we about this location?" is
@@ -703,6 +1135,10 @@ defaulted-off, and `tidy()`'s row semantics need deciding before it ships.
 
 ## 11. Theme B — Choosing the number of changepoints
 
+> **Delivered in 0.5.0** (§0.4): `cpt_select()` with six criteria — including
+> the genuine Zhang–Siegmund mBIC and COPPS cross-validation — plus the
+> criterion, segmentation and **ladder** plots.
+
 **Problem.** Penalty choice is the single most consequential decision a user
 makes, and 0.4.0's answers are `cpt_penalty()` (a formula) and `cpt_crops()` (a
 path plot). Neither *selects*. The consistency literature has a selection
@@ -748,6 +1184,10 @@ autoplot(sel, type = c("criterion", "segmentation", "ladder"))
 ---
 
 ## 12. Theme C — Influence, stability and robustness diagnostics
+
+> **Delivered in 0.5.0** (§0.4): `cpt_influence()` with four renderings,
+> `cpt_leverage()`, `cpt_sensitivity()`, and both the
+> `changepoint.influence` and the generic-recomputation routes.
 
 **Problem.** `cpt_stability()` resamples within segments and reports detection
 frequencies. That answers "would I find this again?" but not "**which
@@ -797,6 +1237,13 @@ methodologically, medium on runtime ergonomics.
 ---
 
 ## 13. Theme D — Supervised changepoint detection
+
+> **Delivered in 0.5.0** (§0.5): `cpt_labels()`, `as_cpt_labels()`,
+> `cpt_label_error()`, `cpt_label_error_curve()`, `cpt_learn_penalty()`,
+> `geom_cpt_label()`, `scale_fill_cpt_label()`, penalty-as-model in
+> `cpt_detect()`/`cpt_penalty()`/the wrappers, and a dedicated vignette.
+> Open question 5 is answered by construction. Not delivered: the
+> peak-detection engines (`PeakSegOptimal`, `PeakSegDisk`, `FLOPART`).
 
 **Problem.** An entire paradigm is missing. Hocking's work treats changepoint
 detection as **supervised learning from labelled regions**: an expert marks
@@ -856,6 +1303,12 @@ needs a vignette of its own to land.
 
 ## 14. Theme E — Seeing the statistic
 
+> **Delivered in 0.5.0** (§0.4): `cpt_statistic()`, `cpt_solution_path()`,
+> `cpt_scale_space()` and their plots, reached from `autoplot(type =)`,
+> with per-engine support recorded in the registry and an error naming the
+> engines that do expose each one. The faceted-panel idiom was reused, so
+> `patchwork` stayed out of `Imports`.
+
 **Problem.** Every detector computes something — a CUSUM path, a MOSUM
 statistic at each bandwidth, a set of random intervals with contrast values, a
 cost-vs-K curve — and 0.4.0 throws almost all of it away, keeping only the
@@ -911,6 +1364,11 @@ medium — depends on engine internals, which can change upstream.
 
 ## 15. Theme F — Time indices and data structures
 
+> **Delivered in 0.5.0** (§0.4): `index` on `cpt_detect()`,
+> `as_cpt_series()`, direct `ts`/`xts`/`zoo`/`tsibble` input, the
+> data-frame interface, an irregular-spacing warning, and the index
+> threaded through every output.
+
 *Named as a 0.5.0 item in the 0.4.0 release notes.*
 
 **Problem.** `cpt_detect()` takes a numeric vector and returns integer indices.
@@ -958,6 +1416,11 @@ tracker.
 
 ## 16. Theme G — Streaming and online monitoring
 
+> **Delivered in 0.5.0** (§0.5): `cpt_monitor()`, `cpt_update()`,
+> `alarms()`, `cpt_replay()`, `cpt_delay()`, and the native e-detector —
+> the deliberate exception to wrap-don't-implement, decided in §0.6.
+> Not delivered: `VARcpDetectOnline` and `onlineCOV`.
+
 *Named as a 0.5.0 item in the 0.4.0 release notes.*
 
 **Problem.** `cpm`, `ocd` and BOCPD are *online* methods run in batch-replay
@@ -1004,6 +1467,11 @@ task).
 ---
 
 ## 17. Theme H — New data types
+
+> **Delivered in 0.5.0** (§0.3): fourteen of this section's engines, plus
+> the four new `change_in` levels and the capability-matrix entries that go
+> with them. Not delivered: `sbs`/`dcbs` (hdbinseg is archived again — see
+> §0.7) and the domain engines listed in §0.9.
 
 **Problem.** The 31 wired methods cover univariate and (some) multivariate
 numeric series. Three data types with active literatures and live CRAN engines
@@ -1068,6 +1536,12 @@ so each needs a decision, not a default.
 ---
 
 ## 18. Theme I — The extension mechanism
+
+> **Delivered in 0.5.0** (§0.2), and built first as this section argued:
+> `as_ggcpt()`, `cpt_register_method()`, `cpt_unregister_method()`,
+> `cpt_registered_methods()`, visible labelling everywhere a registered
+> method appears, and the `reticulate`/`ruptures` recipe in
+> `vignette("extending")`.
 
 **This is the highest-leverage feature in the roadmap.** Three separate
 problems have one solution:
@@ -1140,6 +1614,10 @@ CRAN-availability problem that §9.2 documents and that the 0.4.0 ledger
 
 ## 19. Theme J — Ensembles, consensus and method choice
 
+> **Delivered in 0.5.0** (§0.5): `cpt_consensus()` reusing
+> `cpt_metrics()`'s matching rule, with the agreement matrix, and
+> `cpt_recommend()` as a printable decision table.
+
 **Problem.** With 31 methods (and more coming), the user's real question is
 "which one?" — and 0.4.0's answer is `ggcpt_compare()`, which shows the
 disagreement without resolving it.
@@ -1184,6 +1662,10 @@ framing is prominent.
 ---
 
 ## 20. Theme K — Benchmarking and evaluation
+
+> **Delivered in 0.5.0** (§0.5): `cpt_benchmark()` with per-cell failure
+> capture, `cpt_datasets()`, `cpt_load_tcpd()`, `cpt_annotations()`, and
+> the critical-difference diagram.
 
 *Named as a 0.5.0 item in the 0.4.0 release notes.*
 
@@ -1235,6 +1717,10 @@ cpt_annotations(dataset)              # per-annotator ground truth, tidy
 
 ## 21. Theme L — Communication
 
+> **Delivered in 0.5.0** (§0.5): `cpt_annotate_events()`,
+> `geom_cpt_event()`, `cpt_report()`, `cpt_gt()`, and the accessibility
+> pass (Okabe–Ito palette, redundant linetype, generated alt text).
+
 **Problem.** The last mile — turning a detected changepoint into something a
 domain reader understands — is unsupported. The one thing every applied user
 does by hand is *label the changepoint with what happened*.
@@ -1284,6 +1770,9 @@ cpt_gt(object)                        # publication-ready segment table
 
 ## 22. Theme M — Simulation, power and study design
 
+> **Delivered in 0.5.0** (§0.5): `cpt_power()`, `cpt_min_detectable()`,
+> `cpt_scenarios()`, and `cpt_simulate()`'s `seasonality` and `sd_trend`.
+
 **Problem.** `cpt_simulate()` ships five canonical signals (blocks, fms, mix,
 stairs, teeth — the Donoho–Johnstone/Fryzlewicz test set) and four noise models
 (Gaussian, sd-exact Student-t, AR(1), random walk), which is enough to
@@ -1329,6 +1818,12 @@ cpt_simulate(..., seasonality = NULL, sd = <vector or function>)
 ---
 
 ## 23. Theme N — Performance, architecture, infrastructure
+
+> **Delivered in 0.5.0** (§0.2, §0.5): the declarative registry — done
+> *before* the engine wave, as this section advised — `binsegRcpp` as the
+> fast path, `progressr` support in `cpt_benchmark()`, `inst/CITATION`,
+> and `vdiffr` snapshots. Not delivered: the published performance table
+> and the scheduled all-engines CI job (§0.9).
 
 - **Wrapper-code duplication.** Twenty-six wrapper functions across twelve
   files share one shape (validate → guard `requireNamespace()` → call →
@@ -1427,6 +1922,10 @@ neural detectors in-package; a general time-series modelling framework
 ---
 
 ## 25. Open questions and decisions needed
+
+> **All eight were decided during the 0.5.0 cycle; the answers, and the
+> one place where the answer departs from the proposal below, are in
+> §0.6.**
 
 1. **Does `ggcpt` grow slots, or do new result kinds get new classes?** NSP
    regions (§10), solution-path diagnostics (§14) and functional/network results

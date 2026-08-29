@@ -14,49 +14,82 @@ for changepoint detection results, \code{broom}-style methods
 (\code{tidy()}, \code{glance()}, \code{augment()}), \code{ggplot2}
 integration via \code{autoplot()} and composable geoms
 (\code{geom_changepoint()}, \code{geom_cpt_segment()},
-\code{geom_cpt_ci()}, \code{stat_changepoint()}), and a unified dispatcher
-\code{cpt_detect()} that supports over thirty methods.
+\code{geom_cpt_ci()}, \code{geom_cpt_region()}, \code{geom_cpt_label()},
+\code{geom_cpt_event()}, \code{stat_changepoint()}), and a unified
+dispatcher \code{cpt_detect()} that reaches fifty methods.
 
-**Detection engines.** \code{cpt_detect()} currently dispatches to 31
-methods across six families (run \code{cpt_methods()} for the live
-table with installation status):
+**Detection engines.** \code{cpt_detect()} dispatches to the methods in
+\code{cpt_methods()}, across nine families:
 \itemize{
   \item \strong{Penalised/optimal:} PELT, BinSeg, SegNeigh, AMOC
-    (\pkg{changepoint}); FPOP (\pkg{fpop}); the CROPS penalty path
-    (\code{cpt_crops()}); fastcpd (\pkg{fastcpd}, incl. AR/ARMA/GARCH);
-    change-in-slope via CPOP (\pkg{cpop}).
+    (\pkg{changepoint}); FPOP (\pkg{fpop}); fast binary segmentation
+    (\pkg{binsegRcpp}); the CROPS penalty path (\code{cpt_crops()});
+    fastcpd (\pkg{fastcpd}, incl. AR/ARMA/GARCH); change-in-slope via
+    CPOP (\pkg{cpop}).
   \item \strong{Multiscale/search:} WBS (\pkg{wbs}), WBS2 and TGUH
     (\pkg{breakfast}), NOT (\pkg{not}), MOSUM incl. multiscale
     (\pkg{mosum}), Isolate-Detect (\pkg{IDetect}), SMUCE/HSMUCE with
-    confidence intervals (\pkg{stepR}).
+    confidence intervals (\pkg{stepR}), WBS for nonstationary series
+    (\pkg{wbsts}).
+  \item \strong{Inference:} Narrowest Significance Pursuit (\pkg{nsp}),
+    which returns intervals rather than points.
   \item \strong{Nonparametric/kernel:} NP (\pkg{changepoint.np}),
     E-Divisive/E-Agglo (\pkg{ecp}), kernel running statistics
     (\pkg{kcpRS}), NP-MOJO (\pkg{CptNonPar}), sequential CPM (\pkg{cpm}),
-    self-normalisation (\pkg{SNSeg}).
+    self-normalisation (\pkg{SNSeg}), depth ranks
+    (\pkg{KWCChangepoint}).
   \item \strong{Bayesian:} Barry-Hartigan posterior (\pkg{bcp}), online
-    BOCPD (\pkg{ocp}), BEAST model averaging (\pkg{Rbeast}).
-  \item \strong{Multivariate/high-dimensional:} sparse projection
+    BOCPD (\pkg{ocp}), BEAST model averaging (\pkg{Rbeast}),
+    formula-based regression with changepoints (\pkg{mcp}).
+  \item \strong{High-dimensional:} sparse projection
     (\pkg{InspectChangepoint}), online ocd (\pkg{ocd}), geometric mapping
-    (\pkg{changepoint.geo}).
-  \item \strong{Regression breaks and robust detection:} Bai-Perron breaks
-    with CIs (\pkg{strucchange}), broken-line regression
-    (\pkg{segmented}), changepoints-vs-autocorrelation model selection
-    (\pkg{EnvCpt}), drift+AR robust detection (\pkg{DeCAFS}).
+    (\pkg{changepoint.geo}), sparsity-adaptive ESAC and Pilliat
+    (\pkg{HDCD}), and covariance, network, VAR and
+    high-dimensional-regression changes (\pkg{changepoints}).
+  \item \strong{Functional and network:} functional mean and covariance
+    (\pkg{fChange}), NMF-based network structure (\pkg{fabisearch}).
+  \item \strong{Regression, trend and season:} Bai-Perron breaks with CIs
+    (\pkg{strucchange}), broken-line regression (\pkg{segmented}),
+    changepoints-vs-autocorrelation model selection (\pkg{EnvCpt}),
+    drift+AR robust detection (\pkg{DeCAFS}), BFAST season-and-trend
+    breaks (\pkg{bfast}).
+  \item \strong{Classical single-change tests:} Pettitt, Buishand and
+    SNHT (\pkg{trend}), Taylor's analyzer (\pkg{ChangePointTaylor}).
 }
 
-**Key features.** Every detector returns a \code{ggcpt} object with a stable
-\code{tibble(cp, cp_value)} contract (plus engine extras such as
-\code{ci_lower}/\code{ci_upper} and \code{posterior_prob}). Visualise any
-result directly with \code{autoplot()} (confidence intervals, fitted
-signals, multivariate facets), the Bayesian displays
-(\code{ggcpt_posterior()}, \code{ggcpt_runlength()}), or interactively
-via \code{ggcpt_interactive()}. Compare methods with
-\code{ggcpt_compare()}; run panels of series with \code{cpt_batch()};
-quantify uncertainty with \code{cpt_stability()}; sweep penalties with
-\code{cpt_crops()}. Evaluate accuracy with \code{cpt_metrics()} and
-\code{ggcpt_eval()}; simulate ground-truth data with
-\code{cpt_simulate()} and the canonical test signals; and cite the
-methodology behind any result with \code{cpt_cite()}.
+**What surrounds the detectors.** Every detector returns a \code{ggcpt}
+object with a stable \code{tibble(cp, cp_value)} contract, optionally
+carrying a time index, engine confidence intervals, a fitted signal,
+significance regions and diagnostics. Around that:
+\itemize{
+  \item \strong{Inference:} \code{cpt_confint()} (four provenances, one
+    contract), \code{cpt_test()}, \code{cpt_regions()}.
+  \item \strong{Choosing K:} \code{cpt_select()} (BIC, Zhang-Siegmund
+    mBIC, AIC, CROPS elbow, cross-validation, stability),
+    \code{cpt_crops()}, \code{cpt_penalty()}.
+  \item \strong{Diagnostics:} \code{cpt_influence()}, \code{cpt_leverage()},
+    \code{cpt_sensitivity()}, \code{cpt_stability()},
+    \code{cpt_statistic()}, \code{cpt_solution_path()},
+    \code{cpt_scale_space()}.
+  \item \strong{Supervised detection:} \code{cpt_labels()},
+    \code{cpt_label_error()}, \code{cpt_label_error_curve()},
+    \code{cpt_learn_penalty()}.
+  \item \strong{Choosing a method:} \code{cpt_recommend()},
+    \code{cpt_consensus()}, \code{ggcpt_compare()}.
+  \item \strong{Evaluation:} \code{cpt_metrics()},
+    \code{cpt_metrics_annotated()}, \code{cpt_benchmark()},
+    \code{cpt_datasets()}, \code{cpt_load_tcpd()}.
+  \item \strong{Streaming:} \code{cpt_monitor()}, \code{cpt_update()},
+    \code{alarms()}, \code{cpt_replay()}, \code{cpt_delay()}.
+  \item \strong{Study design:} \code{cpt_simulate()}, \code{cpt_power()},
+    \code{cpt_min_detectable()}, \code{cpt_scenarios()}.
+  \item \strong{Communication:} \code{cpt_annotate_events()},
+    \code{cpt_report()}, \code{cpt_gt()}, \code{ggcpt_interactive()},
+    \code{cpt_cite()}.
+  \item \strong{Extension:} \code{as_ggcpt()} and
+    \code{cpt_register_method()} bring detectors this package does not and
+    cannot depend on into the same grammar.
+}
 }
 \seealso{
 Useful links:

@@ -26,6 +26,21 @@
 #'   exists. Defaults to 3.
 #' @param rho AR(1) autocorrelation parameter, strictly between -1 and 1 for
 #'   stationarity. Defaults to 0. Used only when \code{noise = "ar1"}.
+#' @param seasonality Optional seasonal component added to the signal, as a
+#'   list with \code{period} and \code{amplitude} (and optionally
+#'   \code{phase}, in radians, and \code{shape}, either \code{"sine"} —
+#'   the default — or \code{"sawtooth"}). A seasonal series is where the
+#'   difference between a real level shift and a phase artefact starts to
+#'   matter, and it is what \code{\link{bfast_wrapper}()} is built for; a
+#'   detector that has never been shown one is untested against the case its
+#'   users have.
+#' @param sd_trend Optional smoothly varying noise scale: a length-2 numeric
+#'   giving the multiplier on \code{sd} at the first and last observation,
+#'   interpolated log-linearly in between. Distinct from
+#'   \code{change_in = "var"}, which is piecewise constant — this is the
+#'   \emph{gradual} heteroscedasticity that makes constant-variance
+#'   detectors shatter, and the condition HSMUCE, NSP-self-normalised and
+#'   \pkg{fastcpd}'s variance families exist to handle.
 #' @param seed Optional seed for reproducibility.
 #'
 #' @return A tibble with columns \code{index}, \code{value}, and \code{seg_id}.
@@ -36,6 +51,13 @@
 #' dat <- cpt_simulate(200, changepoints = c(100), change_in = "mean",
 #'                     params = c(0, 10), seed = 2022)
 #' attr(dat, "true_changepoints")
+#'
+#' # a seasonal series with a level shift, and one with drifting noise
+#' seasonal <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
+#'                          seasonality = list(period = 12, amplitude = 2),
+#'                          seed = 1)
+#' drifting <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
+#'                          sd_trend = c(0.5, 3), seed = 1)
 cpt_simulate <- function(n,
                          changepoints = integer(),
                          change_in = c("mean", "var", "meanvar", "slope"),
@@ -44,6 +66,8 @@ cpt_simulate <- function(n,
                          sd = 1,
                          df = 3,
                          rho = 0,
+                         seasonality = NULL,
+                         sd_trend = NULL,
                          seed = NULL) {
 
   change_in <- match.arg(change_in)
@@ -98,6 +122,20 @@ cpt_simulate <- function(n,
   # so a change in variance is genuinely simulated.
   signal <- numeric(n)
   sd_vec <- rep(sd, n)
+  # A smooth multiplier on the scale, log-linear so that c(0.5, 3) means
+  # "half at the start, triple at the end" on the multiplicative scale the
+  # eye reads a variance change on. Applied before the per-segment scales so
+  # the two compose rather than one overwriting the other.
+  if (!is.null(sd_trend)) {
+    if (!is.numeric(sd_trend) || length(sd_trend) != 2L ||
+        any(!is.finite(sd_trend)) || any(sd_trend <= 0)) {
+      stop("`sd_trend` must be two positive finite numbers: the noise-scale ",
+           "multiplier at the first and last observation.", call. = FALSE)
+    }
+    mult <- exp(seq(log(sd_trend[1]), log(sd_trend[2]), length.out = n))
+  } else {
+    mult <- rep(1, n)
+  }
 
   for (i in seq_len(n_seg)) {
     idx <- seg_starts[i]:seg_ends[i]
@@ -122,6 +160,15 @@ cpt_simulate <- function(n,
       signal[idx] <- p$intercept + p$slope * t_vals
     }
   }
+
+  # The seasonal component is part of the SIGNAL, not the noise: it is
+  # deterministic and it does not move the changepoints, so `params` and
+  # `true_changepoints` keep their meaning.
+  if (!is.null(seasonality)) {
+    signal <- signal + seasonal_component(seasonality, n)
+  }
+
+  sd_vec <- sd_vec * mult
 
   # Generate noise, honouring the per-observation scale sd_vec
   if (noise == "gauss") {
@@ -164,7 +211,37 @@ cpt_simulate <- function(n,
 
   attr(res, "true_changepoints") <- changepoints
   attr(res, "true_segments") <- seg_tbl
+  attr(res, "signal") <- signal
   res
+}
+
+# Internal: the deterministic seasonal component.
+#' @noRd
+seasonal_component <- function(seasonality, n) {
+  if (!is.list(seasonality)) {
+    stop("`seasonality` must be a list with `period` and `amplitude`.",
+         call. = FALSE)
+  }
+  period <- seasonality$period
+  amplitude <- seasonality$amplitude
+  phase <- seasonality$phase %||% 0
+  shape <- seasonality$shape %||% "sine"
+  validate_scalar(period, "seasonality$period", min = 2)
+  validate_scalar(amplitude, "seasonality$amplitude", min = 0)
+  validate_scalar(phase, "seasonality$phase")
+  shape <- match.arg(shape, c("sine", "sawtooth"))
+  if (period > n) {
+    warning("`seasonality$period` (", period, ") exceeds the series length (",
+            n, "), so less than one cycle is simulated.", call. = FALSE)
+  }
+  t <- seq_len(n)
+  if (shape == "sine") {
+    amplitude * sin(2 * pi * (t - 1) / period + phase)
+  } else {
+    # A sawtooth on [-amplitude, amplitude], phase-shifted in the same units.
+    frac <- ((t - 1) / period + phase / (2 * pi)) %% 1
+    amplitude * (2 * frac - 1)
+  }
 }
 
 #' @rdname cpt_simulate

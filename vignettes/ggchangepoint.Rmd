@@ -56,16 +56,33 @@ has_plotly    <- requireNamespace("plotly", quietly = TRUE)
 # Abstract
 
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface to
-changepoint detection in R: one dispatcher (`cpt_detect()`) covering 31
-methods across six methodological families, one result class (`ggcpt`) with
+changepoint detection in R: one dispatcher (`cpt_detect()`) covering 50
+methods across nine methodological families, one result class (`ggcpt`) with
 a stable tidy contract, and one visualisation entry point (`autoplot()`)
 that draws everything a method reports — including confidence intervals and
 posterior probabilities [@wickham2016ggplot2; @robinson2017broom]. This
 vignette is the *feature tour*: it visits **every exported function** in the
 package at the point where it belongs in the workflow, so a reader can map
-the full surface in one sitting. The companion vignettes develop the
-methodology in depth (`vignette("introduction")`) and treat method
-comparison and evaluation (`vignette("comparison")`).
+the full surface in one sitting.
+
+Four companion vignettes go deeper: `vignette("introduction")` develops the
+methodology, `vignette("comparison")` treats method comparison and
+evaluation, `vignette("inference")` covers confidence intervals,
+significance regions, selecting the number of changepoints and the
+diagnostic displays, `vignette("supervised")` covers labelled regions and
+learned penalties, and `vignette("extending")` shows how to bring an
+external detector into the same grammar.
+
+> **New in 0.5.0.** Nineteen further engines; a time index that survives
+> the round trip (`cpt_detect(x, index = dates)` and `ts`/`xts`/`zoo`/
+> `tsibble` input); significance regions and the `cpt_confint()` /
+> `cpt_test()` inference pair; `cpt_select()` for the number of
+> changepoints; influence, sensitivity, statistic, solution-path and
+> scale-space diagnostics; supervised detection; consensus and method
+> recommendation; event annotation and reports; benchmarking; sequential
+> monitoring; power analysis; and `as_ggcpt()` / `cpt_register_method()`
+> for detectors this package does not wrap. Each has its own section
+> below or its own vignette.
 
 ```{r data}
 set.seed(2026)
@@ -607,12 +624,166 @@ cpt_cite("pelt")
 cpt_cite(res)
 ```
 
+# The 0.5.0 surface
+
+The sections above are the 0.4.0 tour. What follows visits the rest of the
+exported surface, one example each; three companion vignettes develop these
+properly.
+
+## Time indices
+
+`cpt_detect(index = )` attaches a clock. Detection still runs on positions,
+because every engine assumes an equally spaced sequence, but `tidy()`,
+`augment()`, `autoplot()` and the reporting functions all speak in the
+user's units. `as_cpt_series()` is the coercion underneath, and it accepts
+`ts`, `xts`, `zoo` and `tsibble` directly.
+
+```{r index-tour}
+dates <- as.Date("2020-01-01") + seq_along(x) - 1
+dated <- cpt_detect(x, method = "pelt", index = dates)
+tidy(dated)
+cpt_detect(data.frame(day = dates, v = x), y = v, index = day,
+           method = "pelt")$changepoints$cp_index
+```
+
+## Inference
+
+`nsp_wrapper()` returns significance regions, read with `cpt_regions()` and
+drawn by `geom_cpt_region()`. `cpt_confint()` unifies four interval routes;
+`cpt_test()` attaches a test and flags whether it is selection-adjusted.
+
+```{r inference-tour}
+cpt_confint(res, method = "bootstrap", B = 30, seed = 1)
+suppressWarnings(cpt_test(res))[, c("cp", "estimate", "p_value",
+                                    "selection_adjusted")]
+```
+
+```{r nsp-tour, eval = requireNamespace("nsp", quietly = TRUE), fig.alt = "Series with a shaded band marking an NSP significance region"}
+autoplot(nsp_wrapper(x, M = 100, seed = 1))
+```
+
+## Selecting the number of changepoints
+
+```{r select-tour, fig.alt = "Criterion value against the number of changepoints, with the chosen model marked"}
+sel <- cpt_select(x3, criterion = "bic", k_max = 6)
+sel$k
+autoplot(sel)
+```
+
+## Diagnostics
+
+`cpt_influence()` and `cpt_leverage()` say which observation drives the
+answer; `cpt_sensitivity()` says which setting does; `cpt_statistic()`,
+`cpt_solution_path()` and `cpt_scale_space()` (with their `ggcpt_*()`
+plots, reachable from `autoplot(type = )`) say what the detector actually
+computed.
+
+```{r diag-tour}
+inf <- cpt_influence(res, engine = "recompute", subset = seq(1, 200, by = 20))
+head(cpt_leverage(inf), 3)
+cpt_sensitivity(x, method = "pelt", over = list(penalty = c(4, 40)))$grid[, 1:2]
+```
+
+```{r stat-tour, eval = has_mosum, fig.alt = "Two-panel display: the series above, the MOSUM statistic below"}
+autoplot(cpt_detect(x, method = "mosum"), type = "statistic")
+```
+
+## Supervised detection
+
+```{r supervised-tour}
+labs <- cpt_labels(c(80, 140), c(120, 190), c("one_change", "no_change"))
+cpt_label_error(res, labs)[, c("start", "end", "change", "status")]
+```
+
+`as_cpt_labels()` converts a plain ground-truth set into labels,
+`cpt_label_error_curve()` traces the errors across a penalty grid, and
+`cpt_learn_penalty()` fits a penalty from several labelled series — see
+`vignette("supervised", package = "ggchangepoint")`.
+
+## Choosing and combining methods
+
+```{r consensus-tour}
+cpt_recommend(noise = "heavy")
+tidy(cpt_consensus(x3, methods = c("pelt", "binseg", "amoc")))
+```
+
+## Communication
+
+```{r events-tour}
+cpt_annotate_events(dated,
+                    data.frame(when = as.Date("2020-04-10"),
+                               what = "policy change"))
+```
+
+`cpt_report()` assembles the whole analysis into markdown, and `cpt_gt()`
+renders a publication table. `geom_cpt_event()` draws the events;
+`scale_colour_cpt()`, `scale_fill_cpt()`, `scale_linetype_cpt()`,
+`scale_fill_cpt_label()` and `scale_colour_cpt_label()` are the
+colour-vision-safe scales; `theme_ggcpt()` is unchanged.
+
+## Benchmarking
+
+```{r benchmark-tour, fig.alt = "Heatmap of the covering metric for each method on each benchmark dataset"}
+bm <- cpt_benchmark(cpt_datasets(n = 200, seed = 1,
+                                 names = c("step", "teeth", "ar1")),
+                    methods = c("pelt", "binseg", "amoc"), progress = FALSE)
+autoplot(bm)
+cpt_annotations(cpt_datasets(n = 200, names = "step"))
+```
+
+`cpt_load_tcpd()` downloads and caches the Turing Change Point Dataset; it
+is not run here because it needs a network connection.
+
+## Streaming
+
+```{r monitor-tour}
+mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
+alarms(mon)
+cpt_delay(mon, truth = 200)
+```
+
+`cpt_monitor()` and `cpt_update()` are the incremental form:
+`mon <- cpt_update(mon, new_obs)` as data arrive.
+
+## Power and study design
+
+```{r power-tour, fig.alt = "Power curve: detection probability against change size"}
+pw <- cpt_power(n = 200, jump = c(0.5, 1, 2), n_sim = 30, seed = 1)
+autoplot(pw)
+```
+
+`cpt_min_detectable()` inverts the curve, and `cpt_scenarios()` builds a
+grid of settings as data.
+
+## Extending
+
+```{r extend-tour}
+fit_ext <- as_ggcpt(c(100), x, method = "external_detector")
+glance(fit_ext)[, c("method", "n_changepoints")]
+
+cpt_register_method("biggest_jump",
+                    fn = function(x, ...) which.max(abs(diff(x))),
+                    engine = "example")
+cpt_detect(x, method = "biggest_jump")$changepoints$cp
+subset(cpt_methods(), status == "registered")[, c("method", "engine")]
+cpt_unregister_method("biggest_jump")
+```
+
+`cpt_install_engines()` installs a family of engines at a time:
+
+```{r install-tour}
+cpt_install_engines("bayesian", dry_run = TRUE)[, c("package",
+                                                    "installed_before")]
+```
+
 # Closing note
 
 This tour visited every exported function in the package. For the
 framework's design, the mathematics of the wrapped methods, and worked
 analyses, see `vignette("introduction", package = "ggchangepoint")`; for
 method comparison and accuracy evaluation in depth, see
-`vignette("comparison", package = "ggchangepoint")`.
+`vignette("comparison", package = "ggchangepoint")`; and for the 0.5.0
+additions in depth, see `vignette("inference")`,
+`vignette("supervised")` and `vignette("extending")`.
 
 # References

@@ -1,0 +1,229 @@
+---
+title: "Extending ggchangepoint"
+author: "Youzhi Yu<br><span style='font-size:85%;'>University of Chicago</span>"
+bibliography: vignette_reference.bib
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Extending ggchangepoint}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5,
+  message = FALSE,
+  warning = FALSE,
+  fig.alt = "ggchangepoint plot of a result from an externally supplied detector"
+)
+library(ggchangepoint)
+library(ggplot2)
+theme_set(theme_ggcpt())
+```
+
+This package wraps fifty detectors. It will never wrap all of them,
+and some of the most interesting ones it *cannot* wrap: `changeforest`
+[@londschien2023changeforest] is on conda-forge only,
+`ChangepointInference` [@jewell2022testing] is on GitHub only, `gfpop` and
+`cpss` were removed from CRAN, deep-learning detectors live in Python, and
+your in-house method lives with you.
+
+That is a smaller problem than it looks, because almost nothing in this
+package is about the detectors. `autoplot()`, the geoms, `tidy()`,
+`glance()`, `augment()`, `cpt_metrics()`, `cpt_consensus()`,
+`cpt_stability()`, `cpt_benchmark()` and `cpt_report()` all speak to the
+`ggcpt` contract, not to any engine. Two functions let anything into it.
+
+# `as_ggcpt()`: changepoints in, result out
+
+The one-off case: you have locations from somewhere else and want the
+package's machinery.
+
+```{r as-ggcpt}
+set.seed(2026)
+x <- c(rnorm(100), rnorm(100, 4), rnorm(100, 1))
+
+# Pretend these came from a Python detector, a paper, or an analyst.
+external <- c(101, 199)
+
+fit <- as_ggcpt(external, x, method = "ruptures::Pelt",
+                cp_convention = "right")
+fit
+```
+
+`cp_convention = "right"` matters: some engines report the first index of
+the new segment and some the last index of the old one, and getting it
+wrong shifts every location by one. The conversion happens on the way in,
+so the stored result is always on this package's convention.
+
+Everything now works:
+
+```{r as-ggcpt-uses, fig.alt = "Series with the externally supplied changepoints drawn as vertical rules"}
+tidy(fit)
+glance(fit)
+cpt_metrics(tidy(fit)$cp, truth = c(100, 200), n = 300)
+autoplot(fit, show_segments = TRUE)
+```
+
+`as_ggcpt()` runs the same contract checks as every built-in wrapper —
+sorting, de-duplication, range checks, aligned extra columns, derived
+segments — so an external result cannot violate the invariants the rest of
+the package relies on:
+
+```{r as-ggcpt-contract}
+tidy(as_ggcpt(c(150, 150, 9999, NA, 50), x))$cp
+```
+
+It also takes the optional extras, so a detector that reports uncertainty
+does not have to throw it away:
+
+```{r as-ggcpt-extras}
+with_ci <- as_ggcpt(c(100, 200), x, method = "external",
+                    ci = cbind(c(95, 192), c(107, 205)),
+                    extra = list(score = c(12.4, 8.1)))
+tidy(with_ci)
+```
+
+# `cpt_register_method()`: dispatch by name
+
+The repeatable case: you want `cpt_detect(x, method = "yours")` and
+everything that keys off a method name.
+
+```{r register}
+cpt_register_method(
+  "biggest_jump",
+  fn = function(x, window = 1, ...) {
+    d <- abs(diff(as.numeric(x)))
+    which.max(stats::filter(d, rep(1, window) / window, sides = 2))
+  },
+  change_in = "mean",
+  engine = "example",
+  citation = "No citation supplied (illustration only)."
+)
+
+res <- cpt_detect(x, method = "biggest_jump", window = 5)
+res
+```
+
+Note what the print method says. A registered method is **visibly**
+user-supplied everywhere it appears:
+
+```{r register-visible}
+subset(cpt_methods(), status == "registered")
+cpt_cite("biggest_jump")
+```
+
+The package validates the *shape* of what your function returns; it does
+not and cannot validate the method. That distinction is the reason for the
+labelling, and it is why `cpt_cite()` says plainly when no citation was
+given rather than inventing one.
+
+Registered methods take part in everything that keys off a method name:
+
+```{r register-tools}
+cpt_consensus(x, methods = c("pelt", "binseg", "biggest_jump"),
+              min_votes = 2)
+cpt_benchmark(cpt_datasets(n = 200, seed = 1, names = c("step", "teeth")),
+              methods = c("pelt", "biggest_jump"), progress = FALSE)
+```
+
+```{r unregister}
+cpt_unregister_method("biggest_jump")
+```
+
+Registration is session state. It is deliberately not persisted to disk: a
+script that behaved differently depending on what some earlier script had
+run would be worse than the problem it solved.
+
+## Returning a finished result
+
+`fn` may return a bare vector of indices, as above, or a finished `ggcpt`
+built with `as_ggcpt()` — which is how you pass along an engine's
+confidence intervals, fitted signal or raw fit object:
+
+```{r register-full}
+cpt_register_method(
+  "smoothed_jump",
+  fn = function(x, ...) {
+    sm <- stats::filter(x, rep(1, 11) / 11, sides = 2)
+    sm[is.na(sm)] <- x[is.na(sm)]
+    as_ggcpt(which.max(abs(diff(sm))), x, fitted = as.numeric(sm))
+  },
+  engine = "example"
+)
+autoplot(cpt_detect(x, method = "smoothed_jump"), show_fit = TRUE)
+cpt_unregister_method("smoothed_jump")
+```
+
+# Recipe: a Python detector through reticulate
+
+`ruptures` is the standard Python changepoint library. The recipe is four
+lines, and this package never depends on `reticulate` to support it:
+
+```{r reticulate, eval = FALSE}
+library(reticulate)
+rpt <- import("ruptures")
+
+cpt_register_method(
+  "ruptures_pelt",
+  fn = function(x, model = "l2", pen = 10, ...) {
+    algo <- rpt$Pelt(model = model)$fit(matrix(as.numeric(x), ncol = 1))
+    # ruptures returns 1-based *right* endpoints, with n as the last entry
+    as.integer(unlist(algo$predict(pen = pen)))
+  },
+  change_in = "mean",
+  engine = "ruptures (Python)",
+  cp_convention = "left",
+  citation = paste("Truong, C., Oudre, L. and Vayatis, N. (2020).",
+                   "Selective review of offline change point detection",
+                   "methods. Signal Processing, 167, 107299.")
+)
+
+cpt_detect(x, method = "ruptures_pelt", pen = 20)
+```
+
+The same shape works for a detector loaded from GitHub, a compiled binary
+called through `system2()`, or a neural network scored in `torch`: if it
+returns changepoint indices, it joins the grammar.
+
+# Reducing the install
+
+The other side of extensibility is not needing everything. Only three
+engines are hard dependencies. `cpt_methods()` reports what is installed,
+and `cpt_install_engines()` installs a family at a time:
+
+```{r install, eval = FALSE}
+cpt_install_engines("bayesian")
+cpt_install_engines(c("highdim", "functional"), dry_run = TRUE)
+```
+
+```{r install-status}
+tab <- cpt_methods()
+table(status = tab$status, installed = tab$installed, useNA = "ifany")
+```
+
+# What the contract is
+
+If you are writing a wrapper of your own, this is the whole contract, and
+`as_ggcpt()` enforces all of it:
+
+- `$changepoints` is a tibble with at least `cp` (integer, sorted,
+  de-duplicated, in `1..n-1`, on the "left" convention) and `cp_value`;
+  engine extras such as `ci_lower`/`ci_upper` or `posterior_prob` are
+  additional columns aligned to those rows.
+- `$segments` has one row per segment (`seg_id`, `start`, `end`, `n`,
+  `param_estimate`) and always has one more row than `$changepoints`.
+- `$data` has `index` (positions `1..n`) and `value`, plus `fitted` when
+  an engine supplies a signal and `index_value` when the result carries a
+  time index.
+- `$method`, `$change_in`, `$penalty`, `$cp_convention` are length-one
+  metadata; `$fit` is the raw upstream object.
+- The optional slots — `data_wide`, `index`, `regions`, `diagnostics`,
+  `registered` — are absent unless something supplies them, so
+  `is.null(fit$regions)` is the test for "this engine does not do
+  regions".
+
+# References

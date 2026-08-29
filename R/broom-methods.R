@@ -31,6 +31,44 @@ tidy.ggcpt <- function(x, ...) {
   x$changepoints
 }
 
+#' Tidy the significance regions of a ggcpt object
+#'
+#' The interval-valued methods (currently \code{\link{nsp_wrapper}()})
+#' return regions rather than points: each is guaranteed to contain at least
+#' one changepoint at a prescribed \emph{global} significance level. A
+#' region is a different object from a confidence interval around an
+#' estimate, so it lives in its own slot and has its own accessor rather
+#' than being folded into \code{tidy()}.
+#'
+#' @param x A \code{ggcpt} object.
+#' @return A tibble with columns \code{start}, \code{end} (positions),
+#'   \code{length}, and — when the result carries a time index —
+#'   \code{start_index}/\code{end_index} on the original scale. A zero-row
+#'   tibble when the result carries no regions.
+#' @seealso \code{\link{nsp_wrapper}()}, \code{\link{geom_cpt_region}()},
+#'   \code{\link{cpt_confint}()}.
+#' @export
+#' @examples
+#' set.seed(2026)
+#' fit <- as_ggcpt(50, c(rnorm(50), rnorm(50, 4)),
+#'                 regions = data.frame(start = 45, end = 56))
+#' cpt_regions(fit)
+cpt_regions <- function(x) {
+  if (!is_ggcpt(x)) {
+    stop("`x` must be a ggcpt object.", call. = FALSE)
+  }
+  reg <- x$regions
+  if (is.null(reg) || nrow(reg) == 0) {
+    return(tibble::tibble(start = integer(), end = integer(),
+                          length = integer()))
+  }
+  out <- tibble::as_tibble(reg)
+  out$length <- out$end - out$start + 1L
+  front <- intersect(c("start", "end", "length", "start_index", "end_index"),
+                     names(out))
+  out[, c(front, setdiff(names(out), front)), drop = FALSE]
+}
+
 #' Glance at a ggcpt object
 #'
 #' Returns a one-row summary of a changepoint detection result.
@@ -175,7 +213,7 @@ augment.ggcpt <- function(x, ...) {
   # (the first coordinate for the wide multivariate frame).
   index_col <- data[["index"]]
   value_vec <- if (use_wide) {
-    coord_cols <- setdiff(names(data), "index")
+    coord_cols <- setdiff(names(data), c("index", "index_value"))
     as.numeric(data[[coord_cols[1]]])
   } else {
     data$value

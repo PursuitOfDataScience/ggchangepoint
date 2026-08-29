@@ -148,25 +148,40 @@ ggcpt_runlength <- function(x, prob_floor = 1e-3) {
 #' Interactive changepoint plot
 #'
 #' Renders a \code{ggcpt} result (or any ggplot built from one) as an
-#' interactive HTML widget via \pkg{plotly}, with values on hover. A thin
-#' convenience wrapper: the static \code{autoplot()} path is untouched.
+#' interactive HTML widget, with values on hover. A thin convenience
+#' wrapper: the static \code{autoplot()} path is untouched.
 #'
 #' @param x A \code{ggcpt} object or a ggplot object.
+#' @param engine Which renderer: \code{"plotly"} (the default) rebuilds the
+#'   plot in plotly's own model, which is richer but loses layers plotly
+#'   does not know; \code{"ggiraph"} renders the ggplot itself to
+#'   interactive SVG, so faceting and every layer survive and the result
+#'   composes with other htmlwidgets. Neither is a dependency; whichever you
+#'   ask for must be installed.
+#' @param width_svg,height_svg Figure size in inches for
+#'   \code{engine = "ggiraph"}.
 #' @param ... Additional arguments passed to \code{autoplot()} when \code{x}
 #'   is a \code{ggcpt} object.
-#' @return A \code{plotly} htmlwidget.
+#' @return A \pkg{plotly} or \pkg{ggiraph} htmlwidget.
 #' @export
 #' @examplesIf requireNamespace("plotly", quietly = TRUE) && interactive()
 #' res <- cpt_detect(c(rnorm(50), rnorm(50, 5)), method = "pelt")
 #' ggcpt_interactive(res)
-ggcpt_interactive <- function(x, ...) {
-  if (!requireNamespace("plotly", quietly = TRUE)) {
-    stop("Package 'plotly' is required. ",
-         "Install it with install.packages('plotly').", call. = FALSE)
+ggcpt_interactive <- function(x, engine = c("plotly", "ggiraph"),
+                              width_svg = 8, height_svg = 5, ...) {
+  engine <- match.arg(engine)
+  if (!requireNamespace(engine, quietly = TRUE)) {
+    stop("Package '", engine, "' is required for ",
+         "`engine = \"", engine, "\"`. Install it with ",
+         "install.packages('", engine, "').", call. = FALSE)
   }
   p <- if (is_ggcpt(x)) autoplot.ggcpt(x, ...) else x
   if (!inherits(p, "ggplot")) {
     stop("`x` must be a ggcpt object or a ggplot.", call. = FALSE)
   }
-  plotly::ggplotly(p)
+  if (engine == "plotly") {
+    return(plotly::ggplotly(p))
+  }
+  ggiraph::girafe(ggobj = p, width_svg = width_svg,
+                  height_svg = height_svg)
 }

@@ -4,7 +4,11 @@
 \alias{cpt_methods}
 \title{Introspect available changepoint detection methods}
 \usage{
-cpt_methods()
+cpt_methods(capabilities = TRUE)
+}
+\arguments{
+\item{capabilities}{Include the capability flag columns? Defaults to
+\code{TRUE}. Set \code{FALSE} for the compact 0.4.0-shaped table.}
 }
 \value{
 A tibble with columns:
@@ -12,23 +16,41 @@ A tibble with columns:
   \item{method}{Method name as passed to \code{cpt_detect()}.}
   \item{change_in}{What types of change the method can detect.}
   \item{engine}{The upstream R package that implements the method.}
-  \item{status}{\code{"available"} (wired in this release) or \code{"planned"} (future).}
+  \item{status}{\code{"available"} (wired in this release),
+        \code{"registered"} (supplied by the user this session — see
+        \code{\link{cpt_register_method}()}), or \code{"planned"}
+        (future).}
   \item{installed}{\code{TRUE} if the engine package is installed,
         \code{FALSE} if it is a \code{Suggests} engine that is missing,
-        \code{NA} for planned methods.}
+        \code{NA} for planned and registered methods.}
   \item{target_release}{What a planned method is waiting on: a release,
         or \code{"when on CRAN"} when the engine package itself is not
         available from CRAN. \code{NA} for methods that are already
         wired. Asking \code{cpt_detect()} for a planned method reports
         this rather than claiming the name does not exist.}
+  \item{multivariate, univariate, online, ci, fitted, posterior,
+        statistic, path, scale_space}{Capability flags (omitted when
+        \code{capabilities = FALSE}). \code{ci} means the engine
+        supplies changepoint-location confidence intervals; \code{fitted}
+        a length-\eqn{n} fitted signal; \code{posterior} a per-location
+        posterior probability; \code{statistic}, \code{path} and
+        \code{scale_space} the internals rendered by
+        \code{\link{ggcpt_statistic}()},
+        \code{\link{ggcpt_solution_path}()} and
+        \code{\link{ggcpt_scale_space}()}.}
 }
 }
 \description{
 Returns a tibble describing every method the package knows about — those
-that are wired and those that are planned — along with their capabilities
-and installation status. Useful for discovering what can be run and what
-needs to be installed.
+that are wired, those a user has registered with
+\code{\link{cpt_register_method}()}, and those that are planned — along
+with their capabilities and installation status. Useful for discovering
+what can be run, what needs to be installed, and which methods expose the
+extras the diagnostics need (confidence intervals, a fitted signal, a
+posterior, a detector statistic, a solution path, a bandwidth to sweep).
 }
 \examples{
 cpt_methods()
+# which methods can draw a confidence interval?
+subset(cpt_methods(), ci)$method
 }

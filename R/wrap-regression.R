@@ -34,7 +34,7 @@
 #' few hundred of them are, so when running this engine over a panel with
 #' \code{\link{cpt_batch}()} keep what you need
 #' (\code{res$changepoints}) rather than the whole list of results. No other
-#' engine here behaves this way: the median result across the other thirty is
+#' engine here behaves this way: the median result across the others is
 #' under ten times the size of the series it was given.
 #' @references
 #' \insertRef{bai2003computation}{ggchangepoint}

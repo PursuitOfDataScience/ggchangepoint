@@ -1,0 +1,199 @@
+---
+title: "Supervised Changepoint Detection"
+author: "Youzhi Yu<br><span style='font-size:85%;'>University of Chicago</span>"
+bibliography: vignette_reference.bib
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Supervised Changepoint Detection}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5,
+  message = FALSE,
+  warning = FALSE,
+  fig.alt = "ggchangepoint supervised detection plot"
+)
+library(ggchangepoint)
+library(ggplot2)
+theme_set(theme_ggcpt())
+has_pl <- requireNamespace("penaltyLearning", quietly = TRUE)
+```
+
+Almost every changepoint method in this package is *unsupervised*: it
+picks a penalty by an information criterion and hopes the criterion
+matches what you would have said. Supervised changepoint detection
+[@hocking2013penalties] does something different. An expert marks regions
+of the series as containing a change or not, accuracy is measured in
+**label errors** against those marks, and the penalty is **learned** from
+them.
+
+Three things make it worth a vignette of its own:
+
+- it consistently beats unsupervised penalties on labelled data;
+- it gives a defensible answer to "what penalty should I use?" that does
+  not depend on a modelling assumption;
+- its central object is a rectangle drawn over a time series, which is a
+  ggplot2-native idea with no ggplot2-native implementation elsewhere.
+
+# Labels
+
+A label is a stretch of the series with an assertion attached.
+
+```{r labels}
+set.seed(2026)
+x <- c(rnorm(80), rnorm(80, 4), rnorm(80, 1))
+
+labs <- cpt_labels(
+  start  = c(  1,  60, 100, 140, 190),
+  end    = c( 55,  95, 135, 185, 240),
+  change = c("no_change", "one_change", "no_change", "one_change",
+             "no_change")
+)
+labs
+```
+
+Three kinds, and the distinction matters:
+
+- `"change"` — at least one changepoint lies here.
+- `"one_change"` — exactly one does. Stricter, and the only one that makes
+  a false positive *inside* a positive region detectable.
+- `"no_change"` — none does. Without these, a detector is never penalised
+  for a false positive, and the learned penalty collapses to zero.
+
+Because labels are just a tidy tibble, they draw directly:
+
+```{r labels-plot, fig.alt = "Series with shaded label regions behind it, coloured by what each label asserts"}
+d <- data.frame(t = seq_along(x), y = x)
+ggplot(d, aes(t, y)) +
+  geom_cpt_label(aes(xmin = start, xmax = end, fill = change), data = labs) +
+  geom_line(colour = "grey30") +
+  scale_fill_cpt_label() +
+  labs(fill = "Label", x = "Index", y = "Value")
+```
+
+If you already have a plain ground-truth changepoint set — the kind
+`cpt_metrics()` takes — `as_cpt_labels()` converts it, positives and
+negatives together, so the package has one notion of an annotation rather
+than two:
+
+```{r as-labels}
+as_cpt_labels(c(80, 160), n = 240, margin = 5)
+```
+
+# Scoring a segmentation
+
+```{r label-error}
+fit <- cpt_detect(x, method = "pelt")
+err <- cpt_label_error(fit, labs)
+err
+```
+
+The three-colour status shading turns model evaluation into a picture:
+
+```{r label-error-plot, fig.alt = "Series with label regions shaded green for correct, orange for false positive and red for false negative"}
+ggplot(d, aes(t, y)) +
+  geom_cpt_label(aes(xmin = start, xmax = end, fill = status), data = err) +
+  geom_line(colour = "grey30") +
+  geom_changepoint(data = tidy(fit), aes(xintercept = cp),
+                   colour = "#0072B2", linewidth = 0.6) +
+  scale_fill_cpt_label() +
+  labs(fill = "Outcome", x = "Index", y = "Value")
+```
+
+# The label error curve
+
+Label errors are a function of the penalty, and the shape of that function
+is what penalty learning is fitted to. It also answers a question worth
+asking before any fitting: can **any** penalty satisfy these labels?
+
+```{r curve}
+curve <- cpt_label_error_curve(x, labs, method = "pelt")
+curve
+```
+
+```{r curve-plot, fig.alt = "False positives, false negatives and total label errors against the penalty on a log scale, with the target interval shaded"}
+autoplot(curve)
+```
+
+The shaded band is the **target interval**: the range of log-penalties
+achieving the minimum error. A wide interval means an easy series; a
+narrow one means the labels pin the penalty down tightly; an empty
+minimum at a non-zero error means no penalty satisfies all the labels, and
+the labels or the method need revisiting.
+
+# Learning the penalty
+
+With several labelled series, the target intervals become the response in
+a max-margin interval regression: features of each series predict a
+log-penalty that lands inside its interval.
+
+```{r learn}
+series <- list(
+  a = c(rnorm(60), rnorm(60, 4)),
+  b = c(rnorm(80), rnorm(80, 2)),
+  c = c(rnorm(70), rnorm(70, 6)),
+  d = c(rnorm(100, 0, 3), rnorm(100, 9, 3))
+)
+labels <- list(
+  a = as_cpt_labels(60, n = 120),
+  b = as_cpt_labels(80, n = 160),
+  c = as_cpt_labels(70, n = 140),
+  d = as_cpt_labels(100, n = 200)
+)
+model <- cpt_learn_penalty(series, labels, penalties = 2^(0:10))
+model
+```
+
+The features are scale-free summaries on the log scale, which is why the
+fourth series — the same jump measured in units three times as wide —
+does not simply demand a different penalty from the first.
+
+The model has a `predict()` method, and — the point of the whole exercise
+— `cpt_detect()` takes it wherever a penalty goes:
+
+```{r use-model}
+predict(model, series$d)
+cpt_detect(series$d, method = "pelt", penalty = model)
+```
+
+So does `cpt_penalty()`, and so do the wrappers that accept a numeric
+penalty:
+
+```{r use-model-2}
+cpt_penalty(model, series = series$d)
+```
+
+Compare that with the unsupervised default on the same series, which reads
+its penalty against a raw cost calibrated for unit noise:
+
+```{r compare-default}
+nrow(cpt_detect(series$d, method = "pelt")$changepoints)
+nrow(cpt_detect(series$d, method = "pelt", penalty = model)$changepoints)
+```
+
+When \pkg{penaltyLearning} is installed, `cpt_learn_penalty()` delegates
+the interval regression to `IntervalRegressionCV()` and keeps the built-in
+squared-hinge fit as a fallback, so the result is the published estimator
+whenever the published implementation is available:
+
+```{r engine, eval = has_pl}
+cpt_learn_penalty(series, labels, penalties = 2^(0:10),
+                  engine = "native")$fit$engine
+```
+
+# Where this fits
+
+Labels are annotations, and annotations are also what
+`cpt_metrics_annotated()` scores against. They are deliberately the same
+shape here, so a single set of expert marks can drive the metric, the
+plot and the penalty. The natural next step is
+`vignette("inference", package = "ggchangepoint")`, which covers what to
+do once the segmentation is fixed.
+
+# References

@@ -27,15 +27,18 @@ knitr::opts_chunk$set(
 [![Lifecycle: stable](https://img.shields.io/badge/lifecycle-stable-brightgreen.svg)](https://lifecycle.r-lib.org/articles/stages.html#stable)
 <!-- badges: end -->
 
-> **One interface. 31 changepoint methods. Every result tidy, every result plottable.**
+> **One interface. 50 changepoint methods. Every result tidy, every result plottable.**
 
 R has excellent changepoint packages, but each one takes its own input,
 returns its own result object, and has its own idea of a plot — so
 switching methods means rewriting your analysis. ggchangepoint puts them
-behind one interface: `cpt_detect()` runs any of 31 detection methods,
+behind one interface: `cpt_detect()` runs any of 50 detection methods,
 every result comes back as the same tidy `ggcpt` object, and `autoplot()`
-draws it, with confidence intervals, posteriors, penalty paths and
-accuracy metrics when you need them.
+draws it, with confidence intervals, significance regions, posteriors,
+detector statistics, penalty paths and accuracy metrics when you need
+them. When the detector you want is not one of the 50 — because it is not
+on CRAN, or lives in Python, or is your own — `cpt_register_method()`
+brings it into the same grammar.
 
 ## Installation
 
@@ -92,27 +95,38 @@ autoplot(res)
 ## Why ggchangepoint
 
 - **Detect with one call** — `cpt_detect(x, method = "...")` dispatches to
-  31 methods, from classic PELT to Bayesian online detection.
+  50 methods, from classic PELT to Bayesian online detection, functional
+  data and dynamic networks.
 - **Tidy everywhere** — every method returns the same `ggcpt` object, with
-  `tidy()`, `glance()`, and `augment()`.
+  `tidy()`, `glance()`, and `augment()`, and a time index that survives
+  the round trip.
 - **Plot everything** — `autoplot()` draws any result: changepoints,
-  confidence intervals, fitted signals, posteriors, multivariate facets.
-- **Trust the answer** — compare methods side by side, sweep the penalty
-  (CROPS), bootstrap stability, and score accuracy against ground truth.
+  confidence intervals, significance regions, fitted signals, posteriors,
+  multivariate facets, and (`type =`) the detector's own statistic,
+  solution path or scale space.
+- **Trust the answer** — intervals from four provenances, honest tests,
+  criteria that actually *select* K, influence and sensitivity
+  diagnostics, consensus across methods, and a benchmark harness.
+- **Extend it** — `as_ggcpt()` and `cpt_register_method()` bring any
+  external detector into the same tidy, plottable grammar.
 
 | Family | Methods |
 |---|---|
-| Penalised / optimal partitioning | PELT · BinSeg · SegNeigh · AMOC · FPOP · CPOP (slope) · fastcpd (mean/var/AR/ARMA/GARCH) |
-| Multiscale / search | WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE · HSMUCE (the last two with CIs) |
-| Nonparametric / kernel | ED-PELT · E-Divisive / E-Agglo · kernel running stats · NP-MOJO · sequential CPM · self-normalisation |
-| Bayesian | bcp posteriors · online BOCPD · BEAST model averaging |
-| High-dimensional / multivariate | inspect · ocd · geomcp |
-| Regression breaks / robust | Bai–Perron · segmented · EnvCpt · DeCAFS |
+| Penalised / optimal partitioning | PELT · BinSeg · SegNeigh · AMOC · FPOP · binsegRcpp (fast) · CPOP (slope) · fastcpd (mean/var/AR/ARMA/GARCH) |
+| Multiscale / search | WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE · HSMUCE (the last two with CIs) · WBSTS (nonstationary) |
+| Inference | NSP — significance *regions*, each guaranteed to contain a change at a global level |
+| Nonparametric / kernel | ED-PELT · E-Divisive / E-Agglo · kernel running stats · NP-MOJO · sequential CPM · self-normalisation · KWC depth ranks |
+| Bayesian | bcp posteriors · online BOCPD · BEAST model averaging · mcp (formula-based, full posteriors) |
+| High-dimensional | inspect · ocd · geomcp · ESAC · Pilliat · high-dimensional covariance · VAR(1) · high-dimensional regression |
+| Functional & network | functional mean · functional covariance · KWC · fabisearch (NMF network structure) · `changepoints` networks |
+| Regression, trend & season | Bai–Perron · segmented · EnvCpt · DeCAFS · BFAST (season + trend) |
+| Classical single-change tests | Pettitt · Buishand · SNHT · Taylor's analyzer |
 
-Run `cpt_methods()` for the live table with engines and installation
-status. Only three engines are required — `changepoint`, `changepoint.np`
-and `ecp`; every other engine lives in `Suggests` and is loaded on demand,
-so a plain install stays light.
+Run `cpt_methods()` for the live table with engines, installation status
+and capability flags. Only three engines are required — `changepoint`,
+`changepoint.np` and `ecp`; every other engine lives in `Suggests` and is
+loaded on demand, so a plain install stays light.
+`cpt_install_engines("bayesian")` installs a whole family at once.
 
 ## Unified detection across engines
 
@@ -129,6 +143,32 @@ packages and installation status:
 
 ```{r}
 cpt_methods()
+```
+
+## Dates, not indices
+
+Real series have dates, and "changepoint at index 147" is a translation
+step the analyst should not have to do. Pass an `index` — or a `ts`,
+`xts`, `zoo` or `tsibble` — and detection still runs on positions (every
+engine assumes an equally spaced sequence) while everything reported comes
+back on your scale:
+
+```{r, fig.alt = "Series with a date axis and a changepoint rule, detected with PELT"}
+dates <- as.Date("2020-01-01") + seq_along(x) - 1
+dated <- cpt_detect(x, method = "pelt", index = dates)
+tidy(dated)
+autoplot(dated)
+```
+
+`as_cpt_series()` is the same conversion on its own, for code that needs
+the values and the index before detection runs.
+
+There is a data-frame interface too, taking a bare column name, a string,
+or a position:
+
+```{r}
+df <- data.frame(day = dates, value = x)
+cpt_detect(df, y = value, index = day, method = "pelt")
 ```
 
 ## Detection with uncertainty: confidence intervals and posteriors
@@ -178,6 +218,247 @@ autoplot(path)                          # cost elbow
 ```{r, fig.alt = "Faceted small-multiples, one panel per candidate segmentation on the CROPS penalty path"}
 autoplot(path, type = "segmentations")  # see the actual candidate models
 ```
+
+## Inference: a region, not a point
+
+Narrowest Significance Pursuit (Fryzlewicz 2024) inverts the usual
+framing: instead of estimating locations and then asking whether they are
+real, it returns **intervals**, each guaranteed to contain at least one
+changepoint, with the guarantee holding globally across all of them. That
+is a different visual object, and it gets its own layer:
+
+```{r, eval = requireNamespace("nsp", quietly = TRUE), fig.alt = "Series with a shaded vertical band marking an NSP significance region"}
+res_nsp <- nsp_wrapper(x, M = 100, seed = 1)
+cpt_regions(res_nsp)
+autoplot(res_nsp)
+```
+
+The `cp` column of an NSP fit is the interval midpoint, is labelled as
+such in `cp_source`, and is never presented as an estimate — the region is
+the inferential object.
+
+For every other engine, `cpt_confint()` answers "where could this
+changepoint be?" behind one contract, and says which of four routes it
+used:
+
+```{r}
+cpt_confint(res, method = "bootstrap", B = 50, seed = 1)
+```
+
+`cpt_test()` attaches a test to each changepoint, using the engine's own
+where it has one and an explicitly unadjusted two-sample test where it
+does not — with a `selection_adjusted` column so the two are never
+confused:
+
+```{r}
+suppressWarnings(cpt_test(res))
+```
+
+## Choosing the number of changepoints
+
+`cpt_crops()` draws the penalty path; `cpt_select()` actually *chooses*,
+by BIC, the Zhang–Siegmund segment-length mBIC, AIC, an explicit knee rule
+on the CROPS curve, order-preserved cross-validation (the criterion with a
+consistency proof), or bootstrap stability:
+
+```{r, fig.alt = "Small multiples showing how the segmentation coarsens as the number of changepoints falls, with the chosen model marked"}
+x3 <- c(rnorm(120), rnorm(120, 4), rnorm(120, 1))
+sel <- cpt_select(x3, criterion = "mbic", k_max = 6)
+sel
+autoplot(sel, plot_type = "ladder", max_facets = 5)
+```
+
+## Seeing the statistic
+
+Every detector computes something — a MOSUM statistic at each bandwidth, a
+set of random intervals with contrast values, a nested sequence of splits
+— and keeping only the argmax throws away the explanation. Three
+accessors give it back:
+
+```{r, eval = requireNamespace("mosum", quietly = TRUE), fig.alt = "Two-panel display: the series above, the MOSUM statistic against its threshold below"}
+res_mosum <- cpt_detect(c(rnorm(200), rnorm(200, 3)), method = "mosum")
+autoplot(res_mosum, type = "statistic")
+```
+
+```{r, eval = requireNamespace("mosum", quietly = TRUE), fig.alt = "Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked"}
+ggcpt_scale_space(res_mosum, bandwidths = c(20, 40, 80))
+```
+
+`cpt_statistic()` returns the profile as a tibble and `ggcpt_statistic()`
+draws it on its own; `cpt_solution_path()` and `ggcpt_solution_path()` do
+the same for the order in which candidates entered a binary-segmentation or
+wild-binary-segmentation model.
+
+## Which observation is driving this?
+
+`cpt_stability()` answers "would I find this again?". `cpt_influence()`
+answers the sharper question — perturbing one observation at a time and
+re-fitting, the Wilms–Killick–Matteson diagnostic family rendered in
+ggplot2:
+
+```{r, fig.alt = "Series with each observation sized and coloured by how much perturbing it disturbs the segmentation"}
+inf <- cpt_influence(res, engine = "recompute", subset = seq(1, 200, by = 5))
+head(cpt_leverage(inf), 3)
+autoplot(inf)
+```
+
+`cpt_sensitivity()` is the tuning-parameter analogue, and the direct
+answer to "is this robust to the penalty?":
+
+```{r, fig.alt = "One facet per penalty setting, each showing the changepoints that setting finds"}
+autoplot(cpt_sensitivity(x3, method = "pelt", over = list(penalty = c(4, 20, 80))))
+```
+
+## Supervised detection: learn the penalty from labels
+
+An expert marks intervals as containing a change or not, accuracy is
+measured in *label errors*, and the penalty is learned rather than
+assumed (Hocking et al., 2013). The central object is a rectangle drawn
+over a time series — a ggplot2-native idea:
+
+```{r, fig.alt = "Series with shaded label regions behind it, coloured by whether the label asserts a change"}
+labs <- cpt_labels(c(80, 140), c(120, 190), c("one_change", "no_change"))
+ggplot(data.frame(t = seq_along(x), y = x), aes(t, y)) +
+  geom_cpt_label(aes(xmin = start, xmax = end, fill = change), data = labs) +
+  geom_line() +
+  scale_fill_cpt_label() +
+  theme_ggcpt()
+```
+
+```{r}
+cpt_label_error(res, labs)
+```
+
+`cpt_label_error_curve()` sweeps the penalty and reports false positives,
+false negatives and total label error at each value — the curve the
+learned penalty is chosen to minimise. `cpt_learn_penalty()` fits the
+max-margin interval regression over a set of labelled series, and the model
+plugs straight into `cpt_detect()`:
+
+```{r}
+series <- list(a = c(rnorm(60), rnorm(60, 4)), b = c(rnorm(80), rnorm(80, 2)))
+labels <- list(a = as_cpt_labels(60, n = 120), b = as_cpt_labels(80, n = 160))
+model <- cpt_learn_penalty(series, labels, penalties = c(1, 4, 16, 64, 256))
+cpt_detect(series$a, method = "pelt", penalty = model)
+```
+
+## Which method should I use?
+
+`cpt_recommend()` turns the capability matrix into advice, and is explicit
+about what each choice assumes:
+
+```{r}
+cpt_recommend(noise = "autocorrelated")
+```
+
+`cpt_consensus()` runs several detectors and reports the locations they
+agree on — a robustness display, not a significance test:
+
+```{r, fig.alt = "Dot matrix of method against location, with shaded bands marking the consensus changepoints"}
+cons <- cpt_consensus(x3, methods = c("pelt", "binseg", "wbs", "amoc"))
+tidy(cons)
+autoplot(cons, plot_type = "agreement")
+```
+
+## From a changepoint to a finding
+
+"Changepoint at index 147" is not a finding. `cpt_annotate_events()`
+matches detections to known events and reports all three outcomes — and
+the unexplained changepoints are where the interesting analysis starts:
+
+```{r}
+events <- data.frame(when = as.Date(c("2020-04-09", "2020-06-01")),
+                     what = c("policy change", "supply shock"))
+cpt_annotate_events(dated, events)
+```
+
+`cpt_report()` assembles the whole analysis — method, citation, penalty,
+locations with intervals, segments, the call and `sessionInfo()` — into
+one reproducible artifact, and `cpt_gt()` renders a publication-ready
+table.
+
+## Benchmarking
+
+`cpt_benchmark()` runs a method-by-dataset grid, scores every cell, and
+records an engine failure instead of losing the run:
+
+```{r, fig.alt = "Heatmap of the covering metric for each method on each benchmark dataset"}
+bm <- cpt_benchmark(cpt_datasets(n = 300, seed = 1),
+                    methods = c("pelt", "binseg", "wbs", "amoc"),
+                    progress = FALSE)
+bm
+autoplot(bm)
+```
+
+`cpt_datasets()` is offline and deterministic. For the real thing,
+`cpt_load_tcpd()` downloads and caches the Turing Change Point Dataset,
+multi-annotator ground truth intact, and `cpt_annotations()` lays that
+ground truth out one row per annotator per changepoint.
+
+## Online monitoring
+
+`cpm`, `ocd` and BOCPD are *online* methods, and for an online method
+"did you find the location?" is the wrong question. `cpt_monitor()` is a
+stateful detector you feed as data arrive; `cpt_delay()` scores it on
+detection delay and false alarms:
+
+```{r}
+mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
+alarms(mon)
+cpt_delay(mon, truth = 200)
+```
+
+`cpt_replay()` is the batch convenience; in production you build the
+monitor once with `cpt_monitor()` and push each new observation through
+`cpt_update()` as it arrives.
+
+`"edetector"` is a native implementation of the mixture Shiryaev–Roberts
+e-detector (Shin, Ramdas and Rinaldo, 2023) — the one method here that is
+implemented rather than wrapped, because no R package implements it and
+it carries a finite-sample average-run-length guarantee of at least
+`1 / alpha` with no calibration run: the shift mixture is a uniform
+*average*, so `M_t - t` is a mean-zero martingale under the null and
+optional stopping at the alarm time bounds the in-control run length.
+
+## Would I even detect it?
+
+The question that should precede the analysis:
+
+```{r, fig.alt = "Power curve: detection probability against change size, with a Monte Carlo interval"}
+pw <- cpt_power(n = 300, jump = c(0.25, 0.5, 1, 2), n_sim = 50, seed = 1)
+pw
+autoplot(pw)
+```
+
+`cpt_min_detectable()` inverts it and returns the smallest change reaching
+a target power — the number that belongs in a pre-registration.
+`cpt_scenarios()` builds the matching grid of labelled synthetic series, so
+the same design can be fed straight to `cpt_benchmark()`.
+
+## Bring your own detector
+
+Not every method is on CRAN, and some of the interesting ones never will
+be. `cpt_register_method()` teaches `cpt_detect()` about anything callable
+from R, and the whole toolchain follows:
+
+```{r}
+cpt_register_method(
+  "biggest_jump",
+  fn = function(x, ...) which.max(abs(diff(x))),
+  engine = "example",
+  citation = "No citation supplied (illustration only)."
+)
+cpt_detect(x, method = "biggest_jump")
+subset(cpt_methods(), status == "registered")
+cpt_unregister_method("biggest_jump")
+```
+
+Registered methods are visibly user-supplied: `cpt_registered_methods()`
+lists just those, `cpt_methods()` marks them,
+`print()` says so on every result, and `cpt_cite()` returns the citation
+you gave or states plainly that none was given. `as_ggcpt()` does the same
+job for a bare set of changepoints — a published paper's reported breaks,
+say — without registering anything.
 
 ## Compare methods
 
@@ -316,6 +597,13 @@ And the 0.4.0 wave (each behind its `Suggests` engine): `smuce_wrapper()`,
 `strucchange_wrapper()`, `segmented_wrapper()`, `envcpt_wrapper()`, and
 `fastcpd_wrapper()`.
 
+The 0.5.0 wave adds `nsp_wrapper()`, `mcp_wrapper()`, `esac_wrapper()`,
+`pilliat_wrapper()`, `hdcov_wrapper()`, `network_wrapper()`,
+`var_wrapper()`, `fmean_wrapper()`, `fcov_wrapper()`, `kwc_wrapper()`,
+`fabisearch_wrapper()`, `wbsts_wrapper()`, `bfast_wrapper()`,
+`trend_wrapper()`, `taylor_wrapper()`, `hdreg_wrapper()` and
+`binsegrcpp_wrapper()`.
+
 ```{r, eval = requireNamespace("cpop", quietly = TRUE), fig.alt = "Piecewise-linear series with the fitted broken line and a change-in-slope changepoint"}
 # change-in-slope: exact penalised broken-line estimation
 y_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
@@ -362,7 +650,25 @@ ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
   geom_line() +
   geom_cpt_ci(data = cp_ci,
               aes(x = cp, xmin = ci_lower, xmax = ci_upper, y = min(x) - 1))
+
+# Shade an interval that provably contains a change with geom_cpt_region,
+# and mark known external events with geom_cpt_event
+ggplot(data.frame(index = seq_along(x), value = x), aes(index, value)) +
+  geom_cpt_region(aes(xmin = start, xmax = end),
+                  data = cpt_regions(cpt_detect(x, method = "nsp"))) +
+  geom_line() +
+  geom_cpt_event(aes(xintercept = when, label = what),
+                 data = data.frame(when = 100, what = "policy change"))
 ```
+
+Colour is never the only channel carrying meaning. `scale_colour_cpt()`
+(and its `scale_color_cpt()` alias), `scale_fill_cpt()` and
+`scale_linetype_cpt()` are the Okabe-Ito palette used throughout, safe
+under deuteranopia, protanopia and tritanopia;
+`scale_colour_cpt_label()` is the matching discrete scale for the
+label-error vocabulary. Every `autoplot()` also carries generated alt text,
+so a rendered figure reaches a screen reader without the author writing
+anything.
 
 ## Interactive exploration and citations
 

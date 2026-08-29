@@ -12,3 +12,4 @@
 ^next_release\.md$
 ^README\.html$
 ^data-raw$
+^tests/testthat/_snaps$

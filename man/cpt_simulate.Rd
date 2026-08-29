@@ -14,6 +14,8 @@ cpt_simulate(
   sd = 1,
   df = 3,
   rho = 0,
+  seasonality = NULL,
+  sd_trend = NULL,
   seed = NULL
 )
 
@@ -51,6 +53,23 @@ exists. Defaults to 3.}
 \item{rho}{AR(1) autocorrelation parameter, strictly between -1 and 1 for
 stationarity. Defaults to 0. Used only when \code{noise = "ar1"}.}
 
+\item{seasonality}{Optional seasonal component added to the signal, as a
+list with \code{period} and \code{amplitude} (and optionally
+\code{phase}, in radians, and \code{shape}, either \code{"sine"} —
+the default — or \code{"sawtooth"}). A seasonal series is where the
+difference between a real level shift and a phase artefact starts to
+matter, and it is what \code{\link{bfast_wrapper}()} is built for; a
+detector that has never been shown one is untested against the case its
+users have.}
+
+\item{sd_trend}{Optional smoothly varying noise scale: a length-2 numeric
+giving the multiplier on \code{sd} at the first and last observation,
+interpolated log-linearly in between. Distinct from
+\code{change_in = "var"}, which is piecewise constant — this is the
+\emph{gradual} heteroscedasticity that makes constant-variance
+detectors shatter, and the condition HSMUCE, NSP-self-normalised and
+\pkg{fastcpd}'s variance families exist to handle.}
+
 \item{seed}{Optional seed for reproducibility.}
 
 \item{...}{Passed to \code{\link{cpt_simulate}}.}
@@ -67,4 +86,11 @@ benchmarking.
 dat <- cpt_simulate(200, changepoints = c(100), change_in = "mean",
                     params = c(0, 10), seed = 2022)
 attr(dat, "true_changepoints")
+
+# a seasonal series with a level shift, and one with drifting noise
+seasonal <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
+                         seasonality = list(period = 12, amplitude = 2),
+                         seed = 1)
+drifting <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
+                         sd_trend = c(0.5, 3), seed = 1)
 }

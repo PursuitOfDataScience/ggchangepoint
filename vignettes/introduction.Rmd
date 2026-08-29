@@ -261,6 +261,12 @@ Release 0.4.0 adds an eighth: **P8 — carry the uncertainty**. Where a method
 quantifies uncertainty, the `ggcpt` object records it and `autoplot()` can
 draw it.
 
+Release 0.5.0 adds a ninth: **P9 — be extensible from the outside**. A
+detector this package does not wrap, cannot wrap, or has never heard of can
+join the same grammar through `as_ggcpt()` and `cpt_register_method()`, and
+is labelled as user-supplied wherever it appears. See
+`vignette("extending", package = "ggchangepoint")`.
+
 # The unified dispatcher
 
 `cpt_detect()` dispatches by method name; `cpt_methods()` reports every
@@ -653,13 +659,13 @@ ggchangepoint does not contribute a new detection algorithm; it contributes a
 *surface*. The value of a common contract compounds with the number of
 methods behind it: the same `tidy()` pipeline, the same plot, and the same
 evaluation code now span penalised, multiscale, nonparametric, Bayesian,
-high-dimensional, and regression-based detection — 31 methods in this
-release. Four more, whose engines are not currently on CRAN
+high-dimensional, and regression-based detection — 50 methods in this
+release. Five more, whose engines are not currently on CRAN
 (graph-constrained gfpop [@hocking2020gfpop], robust segmentation under
-outliers [@fearnhead2019changepoint], FOCuS, and sparsified binary
-segmentation), are listed as *planned* in `cpt_methods()` and will slot into
-the same wrapper pattern once their engines return; until then they are not
-callable.
+outliers [@fearnhead2019changepoint], FOCuS, sparsified binary segmentation,
+and random-forest classification [@londschien2023changeforest]), are listed as
+*planned* in `cpt_methods()` and will slot into the same wrapper pattern once
+their engines return; until then they are not callable.
 
 Two practical notes. First, wrapped engines run with sensible defaults, but
 every wrapper forwards `...` to its engine and the raw fit is always in

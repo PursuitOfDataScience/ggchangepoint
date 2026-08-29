@@ -1,3 +1,408 @@
+# ggchangepoint 0.5.0
+
+The release that fills in what 0.4.0's engine wave left open: inference,
+selection, diagnostics, supervised detection, time indices, streaming,
+benchmarking, and an extension mechanism that makes the CRAN-availability
+question stop being a blocker. `cpt_detect()` goes from 31 to 50 wired
+methods, and the surface around the detectors roughly doubles.
+
+## The extension mechanism
+
+The highest-leverage addition, and the one everything else leans on.
+
+- New `cpt_register_method()` / `cpt_unregister_method()` /
+  `cpt_registered_methods()` teach `cpt_detect()` about a detector this
+  package does not (and often cannot) depend on: an engine that is not on
+  CRAN, a Python detector reached through `reticulate`, a neural detector, a
+  proprietary in-house method. The registered method then works with
+  `autoplot()`, the geoms, `tidy()`/`glance()`/`augment()`, `cpt_metrics()`,
+  `cpt_consensus()`, `cpt_benchmark()`, `cpt_stability()` and
+  `cpt_report()`.
+- New `as_ggcpt()` turns any set of changepoints — a published paper's
+  reported breaks, an analyst's annotations, another package's output — into
+  a validated `ggcpt`, running the same contract checks as every built-in
+  wrapper.
+- Registered methods are **visibly** user-supplied: `cpt_methods()` gives
+  them `status = "registered"`, `print()` marks their results, and
+  `cpt_cite()` returns the citation the registration supplied or states
+  plainly that none was given.
+
+## The engine registry
+
+- The wired-method table, the capability check and the dispatcher's routing
+  are now all derived from one declarative registry, so a new engine
+  declares its capabilities once instead of in three places that had to be
+  kept in agreement by hand.
+- `cpt_methods()` gains capability columns: `multivariate`, `univariate`,
+  `online`, `ci`, `fitted`, `posterior`, `statistic`, `path`,
+  `scale_space`. `subset(cpt_methods(), ci)$method` answers "which methods
+  give me a confidence interval?" directly.
+- New `cpt_install_engines()` installs a whole family of engines at once
+  (`"core"`, `"bayesian"`, `"nonparametric"`, `"highdim"`, `"functional"`,
+  `"regression"`, `"inference"`, `"applied"`, `"time"`, `"reporting"`, or
+  `"all"`), with a `dry_run`.
+
+## Time indices and data structures
+
+- `cpt_detect()` gains `index`: detection still runs on positions — every
+  wrapped engine assumes an equally spaced sequence — but the index is
+  stored on the result and threaded through `tidy()` (as `cp_index`),
+  `augment()`, `autoplot()` (axis and labels), `cpt_confint()`,
+  `cpt_annotate_events()` and `cpt_report()`. An index that is not equally
+  spaced warns rather than silently mislabelling the axis.
+- `ts`, `xts`, `zoo` and (unkeyed) `tsibble` objects are accepted directly
+  and their own index is carried through. New `as_cpt_series()` is the one
+  place that separates the values from the clock.
+- New data-frame interface: `cpt_detect(df, y = value, index = date)`, where
+  `y` and `index` accept a bare column name, a string or a position. A data
+  frame passed without `y` keeps its 0.4.0 meaning.
+
+## Inference
+
+- New `nsp_wrapper()` / `cpt_detect(method = "nsp")` wraps Narrowest
+  Significance Pursuit (Fryzlewicz 2024): intervals each guaranteed to
+  contain at least one changepoint at a prescribed **global** level, with
+  self-normalised and autoregressive variants for heavy tails,
+  heteroscedasticity and serial dependence.
+- New optional `regions` slot on `ggcpt`, read with `cpt_regions()`, drawn
+  by the new `geom_cpt_region()` layer and by `autoplot(show_regions =)` —
+  which is on by default for a result that has regions. NSP's `cp` column is
+  the interval midpoint and says so, in the `cp_source` column, in
+  `print()`, and in the documentation: the region is the inferential object,
+  the midpoint is not an estimate.
+- New `cpt_confint()` answers "where could this changepoint be?" for any
+  result, behind one contract with four provenances — `"native"` (the
+  engine's own interval), `"posterior"`, `"bootstrap"` (within-segment
+  resampling, available for every engine) and `"nsp"` — and reports which
+  one it used in a `source` column.
+- New `cpt_test()` attaches a test to each changepoint or segment, using the
+  engine's own test where it has one (`strucchange`'s Chow F, `segmented`'s
+  Davies test) and an explicitly unadjusted Welch two-sample test where it
+  does not. A `selection_adjusted` column and a warning make the difference
+  impossible to miss, because a p-value computed at a location chosen from
+  the same data is anti-conservative.
+
+## Choosing the number of changepoints
+
+- New `cpt_select()` builds one candidate ladder and scores it by any of six
+  criteria: `"bic"`, `"mbic"` (the real Zhang–Siegmund segment-length mBIC,
+  which `cpt_penalty()` cannot express), `"aic"`, `"crops_elbow"` (the knee
+  rule made explicit and citable rather than eyeballed), `"cv"`
+  (order-preserved cross-validation via `crossvalidationCP` — the criterion
+  with a consistency proof) and `"stability"`.
+- `autoplot()` on the result draws the criterion curve, the chosen
+  segmentation, or — the new display — a **ladder** of small multiples
+  showing how the segmentation coarsens as K falls.
+
+## Diagnostics
+
+- New `cpt_influence()` implements the Wilms–Killick–Matteson influence
+  family: delete and outlier perturbation, re-rendered in ggplot2 with
+  `plot_type = "overview" | "location" | "parameter" | "map"`. It uses
+  `changepoint.influence` where that applies and a generic recomputation
+  everywhere else, so it works for every wired and registered method.
+- New `cpt_leverage()` ranks observations by a composite influence score.
+- New `cpt_sensitivity()` sweeps tuning parameters and shows the detected
+  locations across the grid — the direct answer to "is this robust to the
+  penalty?".
+- New `cpt_statistic()` / `ggcpt_statistic()` return and draw the detector's
+  criterion as a function of location; new `cpt_solution_path()` /
+  `ggcpt_solution_path()` return and draw the order in which candidates
+  entered the model; new `cpt_scale_space()` / `ggcpt_scale_space()` sweep a
+  multiscale detector's bandwidth and draw the location-by-bandwidth
+  heatmap. `autoplot(fit, type = "statistic" | "path" | "scale_space")`
+  reaches all three. An engine that exposes nothing errors with the list of
+  engines that do.
+
+## Supervised detection
+
+- New `cpt_labels()` and `as_cpt_labels()` build labelled regions — the
+  ground-truth representation shared with `cpt_metrics_annotated()`, so the
+  package has one notion of an annotation rather than two.
+- New `cpt_label_error()` scores a segmentation in label errors;
+  `cpt_label_error_curve()` traces them across a penalty grid and reports
+  the target interval.
+- New `cpt_learn_penalty()` fits the max-margin interval regression of
+  Hocking et al. (2013), delegating to `penaltyLearning` when it is
+  installed and falling back to a built-in squared-hinge fit. The result has
+  `predict()`, and `cpt_detect(x, penalty = model)` and
+  `cpt_penalty(model, series = x)` accept it directly — as do the wrappers
+  that take a numeric penalty.
+- New `geom_cpt_label()` draws the labels, and `scale_fill_cpt_label()`
+  colours them by assertion or by correct / false-positive /
+  false-negative status.
+
+## Choosing and combining methods
+
+- New `cpt_consensus()` runs several detectors and reports the locations
+  they agree on, with a vote count and the methods behind each. Matching
+  reuses `cpt_metrics()`'s tolerance rule, so the package has one notion of
+  "the same changepoint". The documentation and the print method both state
+  that agreement is a robustness display and **not** a significance test.
+- New `cpt_recommend()` turns the capability matrix into advice: given the
+  dimension, the change type, the noise structure, the series length and
+  whether uncertainty or an online alarm is needed, it returns a ranked
+  shortlist with a reason and a caveat for each.
+
+## Communication
+
+- New `cpt_annotate_events()` matches detected changepoints to a table of
+  known events and reports all three outcomes: matched, unexplained
+  changepoints, and undetected events. Events may be given on the position
+  scale or on the result's own index. New `geom_cpt_event()` draws them.
+- New `cpt_report()` assembles a reproducible artifact — method, citation,
+  penalty, locations with intervals, regions, segments, optional stability
+  and events, the call, and `sessionInfo()` — as markdown or plain text.
+- New `cpt_gt()` renders a publication-ready changepoint table through
+  `gt`, degrading to a tibble with a note when `gt` is absent.
+
+## Benchmarking and evaluation
+
+- New `cpt_benchmark()` runs a method-by-dataset grid, scores every cell
+  with `cpt_metrics()` (or `cpt_metrics_annotated()` when a dataset has
+  several annotators), and records an engine failure as a message instead of
+  losing the run. `autoplot()` gives a heatmap, a rank plot, or the
+  Demšar critical-difference diagram.
+- New `cpt_datasets()` builds an offline, deterministic collection from the
+  package's own canonical signals — so the benchmark runs inside
+  `R CMD check`.
+- New `cpt_load_tcpd()` downloads and caches the Turing Change Point Dataset
+  under `tools::R_user_dir()`, with its multi-annotator ground truth intact;
+  new `cpt_annotations()` returns the per-annotator sets one row at a time,
+  so the disagreement between annotators stays visible.
+
+## Streaming and online monitoring
+
+- New `cpt_monitor()` creates a stateful sequential detector, fed by
+  `cpt_update()` and read with `alarms()`. Three methods: `cpm`, `ocd`, and
+  `edetector`.
+- Selecting columns off one of the new result tibbles (`ggcpt_benchmark`,
+  `ggcpt_batch`, `ggcpt_recommendation`, `ggcpt_label_curve`,
+  `cpt_labels`, `cpt_label_error`) now drops the class rather than keeping
+  a fragment that its own `print()` method cannot read. `dplyr::select()`
+  on one of these behaves the same way; `filter()` and row indexing keep
+  the class, as they should.
+- `edetector` is a **native** implementation of the mixture
+  Shiryaev–Roberts e-detector of Shin, Ramdas and Rinaldo (2023) — a
+  deliberate, separately scoped exception to this package's
+  wrap-don't-implement rule, taken because no R package implements
+  e-detectors and the construction is short enough to audit. Under the null
+  the mixed statistic `M_t` satisfies `E[M_t] = t`, so optional stopping at
+  the alarm time gives a finite-sample lower bound of `1 / alpha` on the
+  in-control average run length, with no calibration run. The shifts are
+  combined by **averaging**, not by taking a maximum: a convex combination
+  of e-detectors is an e-detector and a maximum is not, and the test suite
+  measures the in-control alarm rate against the bound rather than taking
+  the derivation on trust. It is labelled as native wherever it appears.
+- A monitor re-learns its baseline after an alarm (`relearn`), so a
+  persistent change is reported once rather than on every subsequent
+  observation. It is also dimensioned at construction: feeding
+  `cpt_update()` a different number of coordinates is an error rather than
+  a silent coercion.
+- New `cpt_replay()` runs a whole series through a monitor; new
+  `cpt_delay()` scores it the way the sequential literature does — detection
+  delay per change, false alarms, and the average run length — instead of
+  asking whether a location was recovered, which a sequential procedure
+  never claims.
+
+## Simulation, power and study design
+
+- New `cpt_power()` reports detection probability, location error and false
+  positives across a scenario grid, with the Monte Carlo standard error
+  attached and drawn as a band.
+- New `cpt_min_detectable()` inverts it: the smallest change reaching a
+  target power, for pre-registration and study design.
+- New `cpt_scenarios()` builds a reproducible grid of simulation settings as
+  data, ready for `cpt_benchmark()`.
+- `cpt_simulate()` gains `seasonality` (sine or sawtooth) and `sd_trend`
+  (smoothly varying noise scale, distinct from the piecewise-constant
+  `change_in = "var"`), so the conditions the dependence-aware and seasonal
+  engines exist for can actually be simulated.
+
+## Engine wave #2 — 19 new methods
+
+`cpt_detect()` reaches 50 wired methods. New `change_in` levels
+`"covariance"`, `"network"`, `"regression"` and `"seasonality"` come with
+them, and the capability matrix was extended in lockstep.
+
+- **Inference:** `nsp` (`nsp`).
+- **Bayesian:** `mcp` (`mcp`) — formula-based multiple-changepoint
+  regression with full posteriors. Needs JAGS, a system dependency, and
+  says so plainly when it is missing.
+- **High-dimensional:** `esac` and `pilliat` (`HDCD`) for sparsity-adaptive
+  mean changes; `hdcov`, `network`, `var` and `hdreg` (`changepoints`) for
+  changes in covariance, dynamic-network structure, VAR(1) dynamics and the
+  coefficients of a sparse high-dimensional regression — changes no
+  mean-change engine can see.
+- **Functional and network:** `fmean` and `fcov` (`fChange`); `kwc`
+  (`KWCChangepoint`), robust depth-rank segmentation; `fabisearch`
+  (`fabisearch`), network structure via non-negative matrix factorisation.
+- **Applied vocabularies:** `pettitt`, `buishand` and `snht` (`trend`) —
+  the hydrology and climatology standards, each with a valid p-value
+  because the location was not chosen from a model search; `taylor`
+  (`ChangePointTaylor`) — the quality-control default, with bootstrap
+  confidence per changepoint; `bfast` (`bfast`) — season-and-trend breaks
+  for remote sensing.
+- **Nonstationary and fast:** `wbsts` (`wbsts`) for second-order changes;
+  `binsegrcpp` (`binsegRcpp`) as a fast binary-segmentation path across
+  several loss functions.
+
+## Accessibility
+
+- `ggcpt_interactive()` gains `engine = "ggiraph"` alongside the existing
+  \pkg{plotly} path. ggiraph renders the ggplot itself to interactive SVG,
+  so facets and every layer survive — which \pkg{plotly}'s own model does
+  not always manage for a faceted multivariate result.
+- `autoplot()` gains `labels =`: pass a `cpt_labels()` set and the labelled
+  regions are shaded behind the series and coloured by outcome (correct,
+  false positive, false negative), so scoring against expert labels is a
+  picture rather than a table.
+
+- New `scale_colour_cpt()` / `scale_fill_cpt()` / `scale_linetype_cpt()`
+  provide an Okabe–Ito palette that stays distinguishable under the three
+  common forms of colour-vision deficiency. `ggcpt_compare(layout =
+  "overlay")` now maps linetype as well as colour, so the panel reads in
+  greyscale.
+- Every `autoplot()` on a `ggcpt` carries generated alt text, which knitr
+  and Quarto pass through to the rendered image.
+
+## Fixes found in the post-implementation audit
+
+- A method registered with `cpt_register_method()` is now visible inside
+  `future` workers. The registry lives in the package namespace and a worker
+  loads the package fresh, so `cpt_batch()`, `cpt_benchmark()`,
+  `cpt_consensus()`, `ggcpt_compare()`, `cpt_influence()`,
+  `cpt_sensitivity()` and `cpt_power()` used to fail on a registered method
+  under `plan(multisession)` with a misleading "'arg' should be one of"
+  error. Each now carries a snapshot of the registry to the worker.
+- `cpt_benchmark()` accepts `changepoints` as ground truth alongside `truth`
+  and `annotations`, treats a list-valued `truth` as several annotators
+  rather than flattening it, and **warns** when a list dataset carries none
+  of the three — previously it returned a full benchmark table in which
+  every metric was silently `NA`.
+- `pilliat_wrapper()` refuses a dimension that is an exact power of two.
+  `HDCD` 1.1's `Pilliat()` builds one fewer partial-sum threshold than it
+  uses at those dimensions, so it reported a changepoint at *every*
+  observation — on pure noise as readily as on a real change — for
+  p = 2, 4, 8, 16, 32, 64 and 128. The wrapper now says so and points at
+  `esac`, which is unaffected; the refusal lifts automatically once a fixed
+  `HDCD` is installed.
+- `fabisearch_wrapper()` rejects an all-zero time point with a message that
+  names the offending rows, instead of letting NMF's own error surface
+  several layers down.
+- `cpt_confint()` reads NSP's own intervals. NSP reports an interval that
+  provably contains a change, under `region_start`/`region_end`; `cpt_confint()`
+  looked only for `ci_lower`/`ci_upper` and so bootstrapped 200 re-runs of the
+  detector to produce a weaker statement than the one already on the object.
+  The `source` column now distinguishes `"nsp_region"` from `"native"`, and
+  reports NSP's global level.
+- `bfast_wrapper(change_in = "seasonality")` works. \pkg{bfast} reports "no
+  breakpoints in this component" as a bare `NA` rather than an empty
+  `breakpoints` object, so the declared capability errored with `$ operator is
+  invalid for atomic vectors` on any series whose seasonal amplitude is
+  stable. Asking for seasonal breaks with `season = "none"` is now an error
+  rather than a puzzle.
+- `binsegrcpp` no longer claims a variance-only change. \pkg{binsegRcpp} has
+  no variance-only cost, so `change_in = "var"` was mapped to a distribution
+  the engine does not have; `"mean"` and `"meanvar"` are what it offers.
+- `taylor_wrapper()` validates `n_bootstraps` against the engine's real range
+  (100 to 1,000,000) instead of letting a smaller value fail inside
+  `ChangePointTaylor` with a message about its own misspelled argument.
+- New `cpt_batch(keep_fit = FALSE)` drops each engine's raw fit. A few engines
+  return fits far larger than the data — measured on a 2000-point series,
+  `strucchange` costs about 135 MB (a triangular O(n^2) RSS matrix),
+  `bfast` 53 MB and `bocpd` 31 MB, while every other engine stays under 4 MB
+  — and a panel multiplies that by the number of series. `cpt_recommend()`
+  now carries both this and pilliat's dimension restriction as caveats.
+- `cpt_select()` gains an `index` argument and inherits one from an indexed
+  `ggcpt`. It previously read only the values off its input, so a selection
+  made from a dated fit came back reporting positions.
+- `tidy()` now works on every result class the package returns.
+  `ggcpt_influence`, `ggcpt_power`, `ggcpt_monitor`, `ggcpt_delay`,
+  `ggcpt_recommendation`, `cpt_labels` and `cpt_label_error` had no method,
+  so `tidy()` failed on half the surface; `glance()` also reports the
+  one-row summary a `ggcpt_delay` already carries.
+- `cpt_monitor()` names a missing value in the baseline instead of reporting
+  it as zero variability, and `cpt_delay()` refuses a `truth` that falls past
+  the end of the stream, is empty, or is non-positive — each of which used to
+  be scored as a clean miss.
+- The e-detector's average-run-length bound is attributed to optional
+  stopping on \(M_t - t\) everywhere it is described. The README and the
+  `alpha` parameter's documentation still credited Ville's inequality, which
+  is a different statement.
+
+## Corrections to the roadmap
+
+- `hdbinseg` is **archived on CRAN again**, contrary to the 0.5.0 roadmap's
+  note that it was back at 1.0.3. `sbs` therefore stays in the planned
+  table, alongside `gfpop`, `robseg`, `FOCuS` and `changeforest`, and all
+  five now read "when on CRAN". `cpt_register_method()` is the supported
+  route to any of them today.
+
+## Testing and infrastructure
+
+- New `inst/CITATION`.
+- The package opts into testthat edition 3 (`Config/testthat/edition: 3`).
+  The whole suite passes unchanged under it, and it is what makes
+  `announce_snapshot_file()` available — without which a plain `test_dir()`
+  deletes every visual snapshot as unused and the next run silently
+  regenerates them.
+- New `vdiffr` visual-regression snapshots for every `autoplot()` type and
+  every new layer — the package had no visual net at all, so a dropped
+  layer or an inverted axis could pass every existing test. They are a
+  local net: an SVG snapshot records the font stack of the machine that
+  made it, so they are skipped on CRAN and on CI rather than reporting a
+  failure on every platform but one.
+- Around 620 new expectations across seven test files
+  (`test-050-registry.R`, `-index`, `-inference`, `-diagnostics`,
+  `-supervised`, `-engines`, `-tools`) plus 25 visual snapshots in
+  `-visual`, all engine-dependent tests guarded with
+  `skip_if_not_installed()`. The suite runs about 2350 assertions with the
+  engines installed and about 1470 without them.
+- `stats`, `tools` and `utils` are declared in `Imports`; the new engines
+  and extras are in `Suggests` behind `requireNamespace()` guards, as
+  before — 35 engines inside a 55-package `Suggests` list, and the package
+  still checks clean with none of them installed. `withr` joins `Suggests`,
+  which the tests already used.
+- Every parallel entry point is now tested under a real
+  `future::plan(multisession)`, and the wrappers that the suite only ever
+  reached through `cpt_detect()` — `esac_wrapper()`, `pilliat_wrapper()`,
+  `kwc_wrapper()`, `not_wrapper()`, `wbs2_wrapper()`, `trend_wrapper()`,
+  `taylor_wrapper()`, `wbsts_wrapper()` — are now called directly, so their
+  own argument handling is covered.
+- The suite is checked in two environments: the full one, and R 4.6.0 against
+  a library holding the `Imports` and none of the `Suggests`. The second is
+  the only thing that exercises the no-`Suggests` path the DESCRIPTION
+  promises, and it caught a test that asserted `geom_cpt_event(repel = TRUE)`
+  builds — true only where \pkg{ggrepel} is installed. That assertion now
+  covers both worlds instead of one.
+- `tests/testthat/setup.R` sets `rgl.useNULL`. `fabisearch` imports `rgl`,
+  which warns twice about the X11 display the moment its namespace loads on
+  any headless machine; the option is rgl's own way to say no window is
+  needed, and it keeps the suite's output about the package.
+
+## Backward compatibility
+
+Everything from 0.4.0 keeps working. Almost all the additions are new
+functions, new optional arguments with their previous defaults, or new
+optional slots on `ggcpt` that are absent unless something supplies them —
+`is.null(fit$regions)` remains the test for "this engine does not do
+regions", exactly as `data_wide` has always worked. Three changes are worth
+naming rather than leaving to be discovered:
+
+- `autoplot()` now prefers a time index carried on the result over the
+  observation position. This affects only results built with the new
+  `index` argument, which did not exist before.
+- `cpt_methods()` returns nine capability columns by default. Code that
+  reads it by name is unaffected; code that reads it by position, or checks
+  `ncol()`, is not. `cpt_methods(capabilities = FALSE)` returns the 0.4.0
+  shape.
+- `cpt_detect()` gained `index` and `y` as its fifth and sixth formal
+  arguments, ahead of `...`. Named calls are unaffected. A call that passed
+  a wrapper's own argument *positionally* past `penalty` — which no example
+  or vignette ever did, because `...` arguments have always had to be named
+  to reach the right engine — would now bind it to `index`.
+
 # ggchangepoint 0.4.0
 
 ## The 0.4.0 engine wave

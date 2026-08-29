@@ -6,6 +6,9 @@
 #'
 #' @param x A \code{ggcpt} object, a method name (e.g. \code{"pelt"}), or
 #'   missing — in which case references for every known method are returned.
+#'   A method registered with \code{\link{cpt_register_method}()} returns
+#'   the citation that registration supplied, or a plain statement that none
+#'   was given.
 #' @return A tibble with columns \code{method} and \code{reference},
 #'   invisibly; the references are also printed.
 #' @export
@@ -32,9 +35,28 @@ cpt_cite <- function(x) {
     method <- tolower(method)
     out <- refs[refs$method == method, , drop = FALSE]
     if (nrow(out) == 0) {
-      stop("No reference recorded for method '", method, "'. ",
-           "Call cpt_cite() with no argument for the full table.",
-           call. = FALSE)
+      # A user-registered detector is cited from what the registration
+      # supplied -- or plainly not cited at all. Never invent one, and never
+      # let a registered method borrow the credibility of a wired one.
+      entry <- registry_get(method)
+      if (!is.null(entry)) {
+        out <- tibble::tibble(
+          method = method,
+          reference = entry$citation %||% paste0(
+            "No citation was supplied when `", method, "` was registered ",
+            "with cpt_register_method(). This method is user-supplied: ",
+            "ggchangepoint validated the shape of its output, not its ",
+            "statistics."
+          )
+        )
+      } else {
+        stop("No reference recorded for method '", method, "'. ",
+             "Call cpt_cite() with no argument for the full table. If this ",
+             "result came from as_ggcpt() or an external detector, the ",
+             "citation is yours to supply: register the detector with ",
+             "cpt_register_method(citation = ...), or cite it directly.",
+             call. = FALSE)
+      }
     }
   }
 
@@ -80,6 +102,36 @@ cpt_references <- function() {
     "strucchange", "Bai, J. and Perron, P. (2003). Computation and analysis of multiple structural change models. Journal of Applied Econometrics, 18(1), 1-22. See also Zeileis, A., Leisch, F., Hornik, K. and Kleiber, C. (2002). strucchange: An R package for testing for structural change in linear regression models. Journal of Statistical Software, 7(2), 1-38.",
     "segmented", "Muggeo, V. M. R. (2003). Estimating regression models with unknown break-points. Statistics in Medicine, 22(19), 3055-3071.",
     "envcpt", "Beaulieu, C. and Killick, R. (2018). Distinguishing trends and shifts from memory in climate data. Journal of Climate, 31(23), 9519-9543.",
-    "fastcpd", "Li, X. and Zhang, X. (2024). fastcpd: Fast change point detection in R. arXiv:2404.05933."
+    "fastcpd", "Li, X. and Zhang, X. (2024). fastcpd: Fast change point detection in R. arXiv:2404.05933.",
+
+    # ---- 0.5.0 engine wave -------------------------------------------------
+    "nsp", "Fryzlewicz, P. (2024). Narrowest Significance Pursuit: inference for multiple change-points in linear models. Journal of the American Statistical Association, 119(546), 1633-1646.",
+    "mcp", "Lindelov, J. K. (2020). mcp: An R package for regression with multiple change points. OSF Preprints. doi:10.31219/osf.io/fzqxv.",
+    "esac", "Moen, P. A. J., Glad, I. K. and Tveten, M. (2024). Efficient sparsity adaptive changepoint estimation. Electronic Journal of Statistics, 18(2), 3975-4038.",
+    "pilliat", "Pilliat, E., Carpentier, A. and Verzelen, N. (2023). Optimal multiple change-point detection for high-dimensional data. Electronic Journal of Statistics, 17(1), 1240-1315.",
+    "hdcov", "Wang, D., Yu, Y. and Rinaldo, A. (2021). Optimal covariance change point localization in high dimensions. Bernoulli, 27(1), 554-575.",
+    "network", "Yu, Y., Padilla, O. H. M., Wang, D. and Rinaldo, A. (2021). Optimal network online change point localisation. arXiv:2101.05477.",
+    "var", "Wang, D., Yu, Y., Rinaldo, A. and Willett, R. (2019). Localizing changes in high-dimensional vector autoregressive processes. arXiv:1909.06359.",
+    "hdreg", "Rinaldo, A., Wang, D., Wen, Q., Willett, R. and Yu, Y. (2021). Localizing changes in high-dimensional regression models. Proceedings of the 24th International Conference on Artificial Intelligence and Statistics, PMLR 130, 2089-2097.",
+    "fmean", "Aue, A., Rice, G. and Sonmez, O. (2018). Detecting and dating structural breaks in functional data without dimension reduction. Journal of the Royal Statistical Society: Series B, 80(3), 509-529.",
+    "fcov", "Aue, A., Rice, G. and Sonmez, O. (2020). Structural break analysis for spectrum and trace of covariance operators. Environmetrics, 31(1), e2617. See also Aue, Rice and Sonmez (2018), JRSS-B 80(3), 509-529.",
+    "kwc", "Ramsay, K. and Chenouri, S. (2025). Robust changepoint detection in the variability of multivariate functional data. Journal of Nonparametric Statistics. doi:10.1080/10485252.2025.2503891.",
+    "fabisearch", "Ondrus, M. and Cribben, I. (2024). fabisearch: a package for change point detection in and visualization of the network structure of multivariate high-dimensional time series in R. Neurocomputing, 578, 127321.",
+    "wbsts", "Korkas, K. K. and Fryzlewicz, P. (2017). Multiple change-point detection for non-stationary time series using wild binary segmentation. Statistica Sinica, 27(1), 287-311.",
+    "bfast", "Verbesselt, J., Hyndman, R., Newnham, G. and Culvenor, D. (2010). Detecting trend and seasonal changes in satellite image time series. Remote Sensing of Environment, 114(1), 106-115.",
+    "pettitt", "Pettitt, A. N. (1979). A non-parametric approach to the change-point problem. Journal of the Royal Statistical Society: Series C, 28(2), 126-135.",
+    "buishand", "Buishand, T. A. (1982). Some methods for testing the homogeneity of rainfall records. Journal of Hydrology, 58(1-2), 11-27.",
+    "snht", "Alexandersson, H. (1986). A homogeneity test applied to precipitation data. Journal of Climatology, 6(6), 661-675.",
+    "taylor", "Taylor, W. A. (2000). Change-Point Analysis: A Powerful New Tool for Detecting Changes. Taylor Enterprises, Libertyville, Illinois.",
+    "binsegrcpp", "Hocking, T. D. (2024). Finite sample complexity analysis of binary segmentation. arXiv:2410.08654.",
+
+    # ---- tools that are methods in their own right -------------------------
+    "copps", "Zou, C., Wang, G. and Li, R. (2020). Consistent selection of the number of change-points via sample-splitting. Annals of Statistics, 48(1), 413-439.",
+    "mbic", "Zhang, N. R. and Siegmund, D. O. (2007). A modified Bayes information criterion with applications to the analysis of comparative genomic hybridization data. Biometrics, 63(1), 22-32.",
+    "influence", "Wilms, I., Killick, R. and Matteson, D. S. (2022). Graphical influence diagnostics for changepoint models. Journal of Computational and Graphical Statistics, 31(3), 753-765.",
+    "penalty_learning", "Hocking, T. D., Rigaill, G., Vert, J.-P. and Bach, F. (2013). Learning sparse penalties for change-point detection using max margin interval regression. Proceedings of the 30th International Conference on Machine Learning, 28, 172-180.",
+    "edetector", "Shin, J., Ramdas, A. and Rinaldo, A. (2023). E-detectors: a nonparametric framework for sequential change detection. The New England Journal of Statistics in Data Science, 1(2), 229-260. (Implemented natively in ggchangepoint; every other method here wraps a separately maintained package.)",
+    "benchmark", "van den Burg, G. J. J. and Williams, C. K. I. (2020). An evaluation of change point detection algorithms. arXiv:2003.06222.",
+    "critical_difference", "Demsar, J. (2006). Statistical comparisons of classifiers over multiple data sets. Journal of Machine Learning Research, 7, 1-30."
   )
 }

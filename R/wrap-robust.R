@@ -32,6 +32,7 @@ decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
   validate_data(x)
   data_vec <- as_uni_vector(x, "decafs")
 
+  penalty <- resolve_penalty_model(penalty, data_vec)
   if (is.null(penalty)) {
     penalty <- 2 * log(length(data_vec))
   }

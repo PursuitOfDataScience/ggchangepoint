@@ -94,6 +94,12 @@ cpt_wrapper <- function(data,
   # SegNeigh; fall back to SIC unless the caller supplied a penalty.
   args <- list(data, method = cp_method, ...)
 
+  # A learned penalty (see cpt_learn_penalty()) is a model, not a number;
+  # resolve it against this series before anything else looks at it.
+  if (inherits(args$penalty, "ggcpt_penalty_model")) {
+    args$penalty <- resolve_penalty_model(args$penalty, data)
+  }
+
   # A numeric penalty is not a valid changepoint-package penalty name; the
   # engine requires penalty = "Manual" together with pen.value = <number>.
   if (is.numeric(args$penalty)) {

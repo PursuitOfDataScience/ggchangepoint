@@ -9,6 +9,7 @@
   show_segments = FALSE,
   show_ci = FALSE,
   show_fit = FALSE,
+  show_regions = NULL,
   cptline_alpha = 1,
   cptline_color = "blue",
   cptline_type = "solid",
@@ -16,6 +17,8 @@
   show_points = NULL,
   show_line = TRUE,
   index = NULL,
+  labels = NULL,
+  type = c("series", "statistic", "path", "scale_space"),
   ...
 )
 }
@@ -35,6 +38,13 @@ of the panel. Defaults to \code{FALSE}.}
 \code{fitted} column of \code{$data}, provided by SMUCE, DeCAFS, cpop,
 segmented, bcp, beast). Defaults to \code{FALSE}.}
 
+\item{show_regions}{Logical. Whether to shade the significance regions an
+interval-valued method returns (the \code{regions} slot — currently
+\code{\link{nsp_wrapper}()}). Each band is an interval that contains at
+least one changepoint at the stated global level; it is not a confidence
+interval around a point estimate. Defaults to \code{TRUE} when the
+result carries regions, and is ignored otherwise.}
+
 \item{cptline_alpha}{Alpha for changepoint lines. Defaults to \code{1}.}
 
 \item{cptline_color}{Color for changepoint lines. Defaults to \code{"blue"}.}
@@ -48,9 +58,26 @@ segmented, bcp, beast). Defaults to \code{FALSE}.}
 \item{show_line}{Logical. Whether to draw the line. Defaults to \code{TRUE}.}
 
 \item{index}{Optional vector of x-axis values (e.g. dates) of the same
-length as the series; defaults to the observation index.}
+length as the series. Defaults to the time index carried by the result
+(see the \code{index} argument of \code{\link{cpt_detect}()}), and to
+the observation position when there is none.}
 
-\item{...}{Unknown arguments are ignored with a warning.}
+\item{labels}{Optional \code{\link{cpt_labels}()} tibble. When supplied,
+the labelled regions are shaded behind the series and coloured by the
+outcome \code{\link{cpt_label_error}()} gives them — correct, false
+positive, false negative — so scoring a segmentation against expert
+labels becomes a picture rather than a table.}
+
+\item{type}{Which view to draw. \code{"series"} (default) is the series
+with its changepoints; \code{"statistic"}, \code{"path"} and
+\code{"scale_space"} delegate to \code{\link{ggcpt_statistic}()},
+\code{\link{ggcpt_solution_path}()} and
+\code{\link{ggcpt_scale_space}()}, which error with the list of
+supporting engines when this one does not expose the internals.}
+
+\item{...}{Unknown arguments are ignored with a warning, except when
+\code{type} is not \code{"series"}, in which case they are passed to
+the delegate.}
 }
 \value{
 A ggplot object.

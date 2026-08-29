@@ -41,7 +41,14 @@ because every other column would be recycled against it.)}
 matrix that is quadratic in the series length, so keeping it by
 default would make the result object explode on a long series. Call
 \code{ecp::e.divisive()} or \code{ecp::e.agglo()} directly if you
-need it.}
+need it. A few of the engines that \emph{are} kept are still large
+relative to the data — measured on a 2000-point series,
+\code{strucchange} costs about 135 MB (a triangular \eqn{O(n^2)} RSS
+matrix), \code{bfast} about 53 MB and \code{bocpd} about 31 MB, while
+every other engine stays under 4 MB. That is the engine's own object,
+not overhead this package adds, and it matters mainly when many results
+are held at once: \code{\link{cpt_batch}(keep_fit = FALSE)} drops
+them, or assign \code{res$fit <- NULL} yourself.}
 
 \item{call}{The matched call.}
 
@@ -59,3 +66,28 @@ An object of class \code{ggcpt}.
 \description{
 Create a ggcpt object
 }
+\section{Optional slots}{
+
+Beyond the components in the signature, a \code{ggcpt} may carry any of
+these, each present only when something supplied it and each safe to test
+for with \code{is.null()}:
+\describe{
+  \item{\code{data_wide}}{index plus one column per coordinate, for a
+    multivariate result.}
+  \item{\code{index}, \code{index_label}}{a time index (one value per
+    observation) and its axis label; see the \code{index} argument of
+    \code{\link{cpt_detect}()}.}
+  \item{\code{regions}}{a tibble of significance regions
+    (\code{start}, \code{end}, ...) for the interval-valued methods —
+    see \code{\link{nsp_wrapper}()} and \code{\link{geom_cpt_region}()}.}
+  \item{\code{diagnostics}}{a named list of engine internals rendered by
+    \code{\link{ggcpt_statistic}()},
+    \code{\link{ggcpt_solution_path}()} and
+    \code{\link{ggcpt_scale_space}()}.}
+  \item{\code{registered}}{\code{TRUE} when the result came from a
+    user-registered detector rather than a wired engine.}
+}
+\code{\link{as_ggcpt}()} is the validating way to build one of these from
+the outside; this constructor does not check its arguments.
+}
+

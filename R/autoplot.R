@@ -18,6 +18,12 @@
 #' @param show_fit Logical. Whether to draw the engine's fitted signal (the
 #'   \code{fitted} column of \code{$data}, provided by SMUCE, DeCAFS, cpop,
 #'   segmented, bcp, beast). Defaults to \code{FALSE}.
+#' @param show_regions Logical. Whether to shade the significance regions an
+#'   interval-valued method returns (the \code{regions} slot — currently
+#'   \code{\link{nsp_wrapper}()}). Each band is an interval that contains at
+#'   least one changepoint at the stated global level; it is not a confidence
+#'   interval around a point estimate. Defaults to \code{TRUE} when the
+#'   result carries regions, and is ignored otherwise.
 #' @param cptline_alpha Alpha for changepoint lines. Defaults to \code{1}.
 #' @param cptline_color Color for changepoint lines. Defaults to \code{"blue"}.
 #' @param cptline_type Linetype for changepoint lines. Defaults to \code{"solid"}.
@@ -25,8 +31,23 @@
 #' @param show_points Logical. Whether to draw data points. Auto-off above 500 obs.
 #' @param show_line Logical. Whether to draw the line. Defaults to \code{TRUE}.
 #' @param index Optional vector of x-axis values (e.g. dates) of the same
-#'   length as the series; defaults to the observation index.
-#' @param ... Unknown arguments are ignored with a warning.
+#'   length as the series. Defaults to the time index carried by the result
+#'   (see the \code{index} argument of \code{\link{cpt_detect}()}), and to
+#'   the observation position when there is none.
+#' @param labels Optional \code{\link{cpt_labels}()} tibble. When supplied,
+#'   the labelled regions are shaded behind the series and coloured by the
+#'   outcome \code{\link{cpt_label_error}()} gives them — correct, false
+#'   positive, false negative — so scoring a segmentation against expert
+#'   labels becomes a picture rather than a table.
+#' @param type Which view to draw. \code{"series"} (default) is the series
+#'   with its changepoints; \code{"statistic"}, \code{"path"} and
+#'   \code{"scale_space"} delegate to \code{\link{ggcpt_statistic}()},
+#'   \code{\link{ggcpt_solution_path}()} and
+#'   \code{\link{ggcpt_scale_space}()}, which error with the list of
+#'   supporting engines when this one does not expose the internals.
+#' @param ... Unknown arguments are ignored with a warning, except when
+#'   \code{type} is not \code{"series"}, in which case they are passed to
+#'   the delegate.
 #'
 #' @return A ggplot object.
 #' @importFrom ggplot2 autoplot
@@ -35,6 +56,7 @@ autoplot.ggcpt <- function(object,
                            show_segments = FALSE,
                            show_ci = FALSE,
                            show_fit = FALSE,
+                           show_regions = NULL,
                            cptline_alpha = 1,
                            cptline_color = "blue",
                            cptline_type = "solid",
@@ -42,7 +64,19 @@ autoplot.ggcpt <- function(object,
                            show_points = NULL,
                            show_line = TRUE,
                            index = NULL,
+                           labels = NULL,
+                           type = c("series", "statistic", "path",
+                                    "scale_space"),
                            ...) {
+
+  type <- match.arg(type)
+  if (type != "series") {
+    return(switch(type,
+      statistic = ggcpt_statistic(object, ...),
+      path = ggcpt_solution_path(object, ...),
+      scale_space = ggcpt_scale_space(object, ...)
+    ))
+  }
 
   data_vec <- object$data$value
   if (length(data_vec) == 0) {
@@ -52,13 +86,21 @@ autoplot.ggcpt <- function(object,
   validate_flag(show_ci, "show_ci")
   validate_flag(show_fit, "show_fit")
   validate_flag(show_line, "show_line")
+  validate_flag(show_regions, "show_regions", allow_null = TRUE)
   validate_flag(show_points, "show_points", allow_null = TRUE)
   if (is.null(show_points)) {
     show_points <- length(data_vec) <= 500
   }
+  # Regions are the inferential object for the methods that produce them, so
+  # a result that carries them draws them unless told not to.
+  if (is.null(show_regions)) {
+    show_regions <- !is.null(object$regions) && nrow(object$regions) > 0
+  }
 
-  # Multivariate results render as faceted small-multiples.
-  if (!is.null(object$data_wide) && ncol(object$data_wide) > 2) {
+  # Multivariate results render as faceted small-multiples. Count the
+  # coordinate columns rather than the frame's width: `data_wide` also
+  # carries `index`, and (when the result has a time index) `index_value`.
+  if (n_coordinates(object) > 1) {
     unsupported <- c(show_segments = isTRUE(show_segments),
                      show_ci = isTRUE(show_ci),
                      show_fit = isTRUE(show_fit))
@@ -75,6 +117,11 @@ autoplot.ggcpt <- function(object,
                              index = index))
   }
 
+  # x-axis values: an explicit argument, then the index the result carries,
+  # then the observation position.
+  idx_vals <- plot_index(object, index)
+  x_lab <- plot_index_label(object, index)
+
   p <- ggcptplot_internal(
     data = data_vec,
     result = object$changepoints,
@@ -82,14 +129,52 @@ autoplot.ggcpt <- function(object,
     cptline_color = cptline_color,
     cptline_type = cptline_type,
     cptline_linewidth = cptline_linewidth,
-    index = index %||% object$data$index,
+    index = idx_vals,
     show_points = show_points,
     show_line = show_line,
     ...
   )
 
-  # x-axis values for overlays: honour a custom index when supplied
-  idx_vals <- index %||% object$data$index
+  if (!is.null(labels)) {
+    err <- cpt_label_error(object, labels)
+    if (nrow(err) > 0) {
+      lab_df <- tibble::tibble(
+        xmin = idx_vals[pmax(1L, pmin(err$start, length(idx_vals)))],
+        xmax = idx_vals[pmax(1L, pmin(err$end, length(idx_vals)))],
+        status = err$status
+      )
+      # Drawn beneath everything else, like the regions below.
+      p$layers <- c(
+        list(geom_cpt_label(ggplot2::aes(xmin = xmin, xmax = xmax,
+                                         fill = status),
+                            data = lab_df)),
+        p$layers
+      )
+      p <- p + scale_fill_cpt_label(name = "Label")
+    }
+  }
+
+  if (isTRUE(show_regions)) {
+    if (is.null(object$regions) || nrow(object$regions) == 0) {
+      warning("`show_regions = TRUE` but this result carries no significance ",
+              "regions; nsp is the method that produces them.",
+              call. = FALSE)
+    } else {
+      reg_df <- tibble::tibble(
+        xmin = idx_vals[object$regions$start],
+        xmax = idx_vals[object$regions$end]
+      )
+      # Drawn first so the series and the rules stay on top of the shading.
+      p$layers <- c(
+        list(ggplot2::geom_rect(
+          data = reg_df,
+          ggplot2::aes(xmin = xmin, xmax = xmax, ymin = -Inf, ymax = Inf),
+          inherit.aes = FALSE, fill = cptline_color, alpha = 0.18
+        )),
+        p$layers
+      )
+    }
+  }
 
   if (isTRUE(show_segments) && nrow(object$segments) > 0) {
     seg_data <- object$segments
@@ -147,10 +232,13 @@ autoplot.ggcpt <- function(object,
     }
   }
 
-  p + ggplot2::labs(
-    title = paste0("Changepoint Detection (", object$method, ")"),
-    x = "Index",
-    y = "Value"
+  with_alt(
+    p + ggplot2::labs(
+      title = paste0("Changepoint Detection (", object$method, ")"),
+      x = x_lab,
+      y = "Value"
+    ),
+    cpt_alt_text(object)
   )
 }
 
@@ -162,11 +250,12 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
                               cptline_linewidth = 0.5,
                               index = NULL) {
   wide <- object$data_wide
-  vars <- setdiff(names(wide), "index")
+  vars <- setdiff(names(wide), c("index", "index_value"))
   validate_index(index, nrow(wide))
-  # Honour a custom index (e.g. dates) for the x-axis when supplied; default
-  # to the observation index otherwise.
-  x_vals <- index %||% wide$index
+  # Honour a custom index (e.g. dates) for the x-axis when supplied; fall back
+  # to the index the result carries, then to the observation position.
+  x_vals <- plot_index(object, index)
+  x_lab <- plot_index_label(object, index)
   # The facet column must not be called `variable`: plotly::ggplotly() melts
   # the built plot into a frame that already has a column of that name, so a
   # faceted plot using it fails with "Names must be unique" -- which would
@@ -181,7 +270,7 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
     ggplot2::geom_line(color = "grey40") +
     ggplot2::facet_wrap(~coordinate, scales = "free_y", ncol = 1) +
     ggplot2::labs(
-      x = "Index", y = "Value",
+      x = x_lab, y = "Value",
       title = paste0("Changepoint Detection (", object$method,
                      ", ", length(vars), " series)")
     )
@@ -193,7 +282,9 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
       linetype = cptline_type, linewidth = cptline_linewidth
     )
   }
-  p
+  with_alt(p, paste0(cpt_alt_text(object), " Drawn as ", length(vars),
+                     " stacked panels, one per coordinate, sharing the ",
+                     "changepoint rules."))
 }
 
 #' ggchangepoint theme
@@ -215,7 +306,13 @@ theme_ggcpt <- function(base_size = 11, base_family = "") {
       panel.grid.minor = ggplot2::element_blank(),
       plot.title = ggplot2::element_text(face = "bold", hjust = 0.5),
       axis.title = ggplot2::element_text(face = "bold"),
-      strip.text = ggplot2::element_text(face = "bold")
+      strip.text = ggplot2::element_text(face = "bold"),
+      # Legends read better beside the panel than under it when the labels
+      # are method names, and a slightly larger legend text is the cheapest
+      # accessibility win available in a theme.
+      legend.text = ggplot2::element_text(size = ggplot2::rel(0.95)),
+      plot.title.position = "plot",
+      plot.caption = ggplot2::element_text(colour = "grey30")
     )
 }
 
@@ -247,4 +344,13 @@ annotate_segments <- function(cp, n, fill = c("grey90", "white"),
     )
   }
   annotations
+}
+
+# Internal: how many coordinates a result has. 1 for a univariate result
+# (including a one-column matrix, which `data_wide` still records), more for
+# a genuinely multivariate one.
+#' @noRd
+n_coordinates <- function(object) {
+  if (is.null(object$data_wide)) return(1L)
+  length(setdiff(names(object$data_wide), c("index", "index_value")))
 }

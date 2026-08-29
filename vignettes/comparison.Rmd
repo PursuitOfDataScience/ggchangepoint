@@ -469,7 +469,7 @@ are how an analyst earns confidence in a segmentation. The design of
 **ggchangepoint**'s toolkit follows three principles. First, *a common
 representation makes comparison trivial*: because every engine returns the
 same `ggcpt` contract in the same location convention, `ggcpt_compare()` and
-the metrics module work for all 31 wired methods without special cases.
+the metrics module work for all 50 wired methods without special cases.
 Second, *metrics must agree with their pictures*: `ggcpt_eval()` and
 `cpt_metrics()` share one matching routine, so a plotted true positive is a
 counted true positive. Third, *uncertainty deserves first-class treatment*:

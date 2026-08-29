@@ -7,7 +7,15 @@
 \alias{autoplot.ggcpt_batch}
 \title{Batch changepoint detection over many series}
 \usage{
-cpt_batch(x, method = "pelt", change_in = "mean", seed = NULL, ...)
+cpt_batch(
+  x,
+  method = "pelt",
+  change_in = "mean",
+  index = NULL,
+  seed = NULL,
+  keep_fit = TRUE,
+  ...
+)
 
 \method{print}{ggcpt_batch}(x, ...)
 
@@ -25,9 +33,27 @@ are series) or a list of numeric vectors; for the \code{print()} and
 \item{change_in}{What to detect change in, passed to
 \code{\link{cpt_detect}()}.}
 
+\item{index}{Optional time index shared by every series in the panel (a
+vector of dates, say), or a named list of one index per series. Carried
+onto each result and used by \code{tidy()} and \code{autoplot()}, so a
+faceted plot of fifty series shows dates rather than positions.}
+
 \item{seed}{Optional seed for reproducible parallel execution (passed to
 \code{future.apply::future_lapply()} as \code{future.seed}; applied via
 \code{set.seed()} when running sequentially).}
+
+\item{keep_fit}{Keep each engine's raw fit in \code{result[[i]]$fit}?
+Defaults to \code{TRUE}, which is what makes a batch result as
+inspectable as a single one. Set it to \code{FALSE} for a large panel:
+a few engines return fits far bigger than the data they were given —
+\code{strucchange} keeps a triangular \eqn{O(n^2)} RSS matrix, so a
+single 2000-point series costs about 135 MB, and \code{bfast} and
+\code{bocpd} are in the tens of MB — and a panel multiplies that by the
+number of series. Everything else on the object, including
+\code{tidy()} and \code{autoplot()}, is unaffected; only accessors
+that read \code{$fit} (\code{cpt_statistic()},
+\code{ggcpt_posterior()}, \code{cpt_confint(engine = \"native\")})
+need it.}
 
 \item{...}{Additional arguments passed to every \code{cpt_detect()} call.}
 

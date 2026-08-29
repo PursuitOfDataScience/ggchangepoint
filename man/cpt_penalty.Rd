@@ -4,7 +4,7 @@
 \alias{cpt_penalty}
 \title{Construct changepoint penalties}
 \usage{
-cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01)
+cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01, series = NULL)
 }
 \arguments{
 \item{type}{Penalty type: \code{"None"}, \code{"BIC"} (or \code{"SIC"}),
@@ -24,6 +24,11 @@ placed, in its \eqn{\log{n \choose k}} term.}
 \item{alpha}{Exponent of the strengthened SIC (\code{"sSIC"}) penalty
 \eqn{k (\log n)^\alpha}; must exceed 1. Defaults to \code{1.01}
 (Fryzlewicz, 2014).}
+
+\item{series}{The series a learned penalty is predicted for. Required
+only when \code{type} is a \code{ggcpt_penalty_model} from
+\code{\link{cpt_learn_penalty}()}, in which case every other argument
+is ignored and the model's prediction for this series is returned.}
 }
 \value{
 A numeric penalty value.

@@ -1,0 +1,260 @@
+---
+title: "Inference, Selection and Diagnostics"
+author: "Youzhi Yu<br><span style='font-size:85%;'>University of Chicago</span>"
+bibliography: vignette_reference.bib
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{Inference, Selection and Diagnostics}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r setup, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>",
+  fig.width = 8,
+  fig.height = 5,
+  message = FALSE,
+  warning = FALSE,
+  fig.alt = "ggchangepoint inference and diagnostic plot"
+)
+library(ggchangepoint)
+library(ggplot2)
+theme_set(theme_ggcpt())
+
+has_nsp   <- requireNamespace("nsp", quietly = TRUE)
+has_mosum <- requireNamespace("mosum", quietly = TRUE)
+has_wbs   <- requireNamespace("wbs", quietly = TRUE)
+has_cvcp  <- requireNamespace("crossvalidationCP", quietly = TRUE)
+has_infl  <- requireNamespace("changepoint.influence", quietly = TRUE)
+```
+
+Detection gives you locations. This vignette is about the four questions
+that come next, and that a bare list of locations cannot answer:
+
+1. **How sure are we about *where*?** — `cpt_confint()`, `nsp_wrapper()`.
+2. **Is the change real at all?** — `cpt_test()`, and why the answer is
+   harder than it looks.
+3. **How many changes are there?** — `cpt_select()`.
+4. **What is driving this answer?** — `cpt_influence()`,
+   `cpt_sensitivity()`, `cpt_statistic()`.
+
+```{r data}
+set.seed(2026)
+x <- c(rnorm(120), rnorm(120, 3), rnorm(120, 0.5))
+fit <- cpt_detect(x, method = "pelt")
+fit
+```
+
+# 1. Where could the changepoint be?
+
+## Four provenances, one contract
+
+Only a handful of engines ship an interval of their own. `cpt_confint()`
+covers the rest, and — because the four routes mean genuinely different
+things — reports which one it used in a `source` column rather than
+presenting them as interchangeable.
+
+```{r confint-bootstrap}
+cpt_confint(fit, method = "bootstrap", B = 100, seed = 1)
+```
+
+The bootstrap route resamples residuals *within* the fitted segments,
+re-runs the detector, and takes quantiles of the re-detected location. It
+measures the sampling variability of the procedure conditional on the
+fitted segmentation. It is model-agnostic and available for every engine;
+it is not exact.
+
+When the engine has its own interval, `method = "auto"` uses it:
+
+```{r confint-native, eval = requireNamespace("stepR", quietly = TRUE)}
+sm <- smuce_wrapper(x)
+cpt_confint(sm)
+```
+
+Those are SMUCE's *simultaneous* confidence sets — a different object from
+a bootstrap frequency band, which is exactly why the `source` column
+exists.
+
+## A changepoint that is an interval
+
+Narrowest Significance Pursuit [@fryzlewicz2024nsp] inverts the usual
+framing. Rather than estimating locations and then asking whether they are
+real, it returns a set of intervals, each of which contains at least one
+changepoint, with the guarantee holding **globally** across all the
+intervals at level $\alpha$. The coverage is exact and finite-sample.
+
+```{r nsp, eval = has_nsp}
+res_nsp <- nsp_wrapper(x, alpha = 0.1, M = 200, seed = 1)
+cpt_regions(res_nsp)
+```
+
+```{r nsp-plot, eval = has_nsp, fig.alt = "Series with shaded vertical bands marking NSP significance regions"}
+autoplot(res_nsp)
+```
+
+Read the widths. A narrow band is a sharply located change; a wide one is
+the honest statement that the data pin the change down only loosely. Note
+what the result does **not** claim: NSP produces no point estimate, so the
+`cp` column holds the interval midpoint, is labelled `region_midpoint` in
+`cp_source`, and says so when the object prints. The region is the
+inferential object.
+
+The self-normalised and autoregressive variants keep the guarantee under
+heavy tails, heteroscedasticity and serial dependence:
+
+```{r nsp-ar, eval = has_nsp}
+y_ar <- as.numeric(stats::arima.sim(list(ar = 0.6), 300)) +
+  rep(c(0, 3), each = 150)
+cpt_regions(nsp_wrapper(y_ar, variant = "ar", ord = 1, M = 200, seed = 1))
+```
+
+# 2. Is the change real?
+
+This is where changepoint analysis is most often done wrong. Testing a
+change at a location that was *chosen because the data looked like it
+changed there* is circular, and the resulting p-values are
+anti-conservative, often severely.
+
+`cpt_test()` never hides that. It uses the engine's own test where one
+exists and an explicitly unadjusted two-sample test where none does, and
+the `selection_adjusted` column records which you got:
+
+```{r test}
+suppressWarnings(cpt_test(fit))
+```
+
+```{r test-native, eval = requireNamespace("strucchange", quietly = TRUE)}
+cpt_test(strucchange_wrapper(x))
+```
+
+If you need a guarantee that survives selection, the route is NSP (above)
+or `cpt_confint(method = "nsp")`, which maps each detected changepoint to
+the narrowest region covering it and returns `NA` for one that no region
+covers — because "no region supports this at level $\alpha$" is a finding,
+not a missing value.
+
+```{r confint-nsp, eval = has_nsp}
+cpt_confint(fit, method = "nsp", level = 0.9, seed = 1)
+```
+
+# 3. How many changepoints?
+
+`cpt_crops()` draws the penalty path. `cpt_select()` chooses from it, over
+one candidate ladder shared by every criterion — so "BIC says 2,
+cross-validation says 3" is a comparison of criteria and not of two
+different searches.
+
+```{r select}
+sel <- cpt_select(x, criterion = "mbic", k_max = 8)
+sel
+```
+
+`criterion = "mbic"` is the segment-length modified BIC of
+@zhang2007mbic — the real one, which reads the segment lengths and so
+cannot be expressed by `cpt_penalty()`'s function of $n$ and $k$ alone.
+
+```{r select-criterion, fig.alt = "Criterion value against the number of changepoints, with the chosen model highlighted"}
+autoplot(sel)
+```
+
+The ladder plot is more informative than the criterion curve, because it
+shows what each candidate actually *is*:
+
+```{r select-ladder, fig.height = 7, fig.alt = "Small multiples showing how the segmentation coarsens as the number of changepoints falls"}
+autoplot(sel, plot_type = "ladder", max_facets = 6)
+```
+
+Cross-validation is the criterion with a consistency proof
+[@zou2020copps]:
+
+```{r select-cv, eval = has_cvcp}
+cpt_select(x, criterion = "cv", k_max = 8)$k
+```
+
+A note on AIC: its $2k$ penalty does not grow with $n$, so it over-selects
+and will usually take every rung the ladder offers. It is available
+because people ask for it and because seeing the curve is instructive, not
+because it is a good default.
+
+# 4. What is driving the answer?
+
+## Which observation
+
+`cpt_stability()` answers "would I find this again?". `cpt_influence()`
+asks the sharper question — which single observation, if perturbed,
+changes the segmentation — following @wilms2022influence.
+
+```{r influence}
+inf <- cpt_influence(fit, engine = if (has_infl) "auto" else "recompute",
+                     subset = if (has_infl) NULL else seq(1, 360, by = 6))
+inf
+```
+
+```{r influence-overview, fig.alt = "Series with each observation sized and coloured by its influence on the segmentation"}
+autoplot(inf)
+```
+
+```{r influence-map, eval = has_infl, fig.alt = "Influence map: perturbed observation on the horizontal axis, position on the vertical, segment-parameter shift as fill"}
+autoplot(inf, plot_type = "map")
+```
+
+`cpt_leverage()` ranks the observations:
+
+```{r leverage}
+head(cpt_leverage(inf), 5)
+```
+
+## Which setting
+
+```{r sensitivity, fig.height = 7, fig.alt = "One facet per penalty setting, each showing the changepoints that setting finds"}
+sens <- cpt_sensitivity(x, method = "pelt",
+                        over = list(penalty = c(2, 8, 20, 60)))
+sens
+autoplot(sens)
+```
+
+This is the direct answer to the commonest reviewer question about a
+changepoint analysis, and it is worth running before the analysis is
+written up rather than after it is questioned.
+
+## What the detector computed
+
+Every detector evaluates something at every location and then keeps only
+the argmax. Three accessors give the discarded object back.
+
+```{r statistic, eval = has_mosum, fig.alt = "Two-panel display: the series above, the MOSUM statistic against its threshold below"}
+res_mosum <- cpt_detect(x, method = "mosum")
+autoplot(res_mosum, type = "statistic")
+```
+
+The scale-space view answers a question a single-bandwidth fit cannot:
+*at which resolutions does this feature exist?* A change visible only at a
+wide bandwidth is a slow shift; one visible only at a narrow bandwidth is a
+spike.
+
+```{r scale-space, eval = has_mosum, fig.alt = "Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked"}
+ggcpt_scale_space(res_mosum, bandwidths = c(15, 30, 60, 90))
+```
+
+And the solution path shows the order in which candidates entered the
+model, and how decisively each beat the next:
+
+```{r path, eval = has_wbs, fig.alt = "Solution path: each candidate changepoint against the step at which it entered, with the proposing interval drawn"}
+ggcpt_solution_path(cpt_detect(x, method = "wbs"), max_steps = 20)
+```
+
+An engine that exposes none of these says so, and names the ones that do:
+
+```{r statistic-error, error = TRUE}
+cpt_statistic(fit)
+```
+
+# Putting it together
+
+```{r report}
+cat(head(cpt_report(fit, session = FALSE), 20), sep = "\n")
+```
+
+# References

@@ -38,6 +38,7 @@ cpop_wrapper <- function(x, penalty = NULL, sd = NULL, ...) {
   data_vec <- as_uni_vector(x, "cpop")
   n <- length(data_vec)
 
+  penalty <- resolve_penalty_model(penalty, data_vec)
   if (is.null(penalty)) {
     penalty <- 2 * log(n)
   }

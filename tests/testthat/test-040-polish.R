@@ -1530,7 +1530,10 @@ test_that("R66: a planned method is named as planned, not denied", {
   # does not.
   tb <- as.data.frame(cpt_methods())
   planned <- tb$method[tb$status == "planned"]
-  expect_setequal(planned, c("gfpop", "robust", "focus", "sbs"))
+  # Updated in 0.5.0: `changeforest` joined the table, and every method that
+  # was waiting only on a wrapper got one.
+  expect_setequal(planned,
+                  c("gfpop", "robust", "focus", "sbs", "changeforest"))
   for (m in planned) {
     expect_error(cpt_detect(rnorm(50), method = m),
                  "planned but not wired", info = m)
@@ -1544,9 +1547,11 @@ test_that("R66: a planned method is named as planned, not denied", {
   # planned rows carry no installed flag and every wired row does
   expect_true(all(is.na(tb$installed[tb$status == "planned"])))
   expect_false(any(is.na(tb$installed[tb$status == "available"])))
-  # `sbs` waits on the wrapper, not on CRAN: hdbinseg is back on CRAN (1.0.3,
-  # September 2025), while gfpop was removed and robseg/FOCuS never appeared
-  expect_identical(tb$target_release[tb$method == "sbs"], "next release")
-  expect_true(all(tb$target_release[tb$method %in% c("gfpop", "robust", "focus")] ==
+  # 0.5.0: every remaining planned method waits on CRAN, and nothing waits
+  # on a wrapper. `hdbinseg` was back at 1.0.3 when the 0.5.0 roadmap was
+  # written and is in the archive again, so `sbs` moved from "next release"
+  # to "when on CRAN" rather than into the wired table.
+  expect_true(all(tb$target_release[tb$status == "planned"] ==
                     "when on CRAN"))
+  expect_identical(tb$target_release[tb$method == "sbs"], "when on CRAN")
 })

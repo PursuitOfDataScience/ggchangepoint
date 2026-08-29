@@ -4,21 +4,37 @@
 \alias{ggcpt_interactive}
 \title{Interactive changepoint plot}
 \usage{
-ggcpt_interactive(x, ...)
+ggcpt_interactive(
+  x,
+  engine = c("plotly", "ggiraph"),
+  width_svg = 8,
+  height_svg = 5,
+  ...
+)
 }
 \arguments{
 \item{x}{A \code{ggcpt} object or a ggplot object.}
+
+\item{engine}{Which renderer: \code{"plotly"} (the default) rebuilds the
+plot in plotly's own model, which is richer but loses layers plotly
+does not know; \code{"ggiraph"} renders the ggplot itself to
+interactive SVG, so faceting and every layer survive and the result
+composes with other htmlwidgets. Neither is a dependency; whichever you
+ask for must be installed.}
+
+\item{width_svg, height_svg}{Figure size in inches for
+\code{engine = "ggiraph"}.}
 
 \item{...}{Additional arguments passed to \code{autoplot()} when \code{x}
 is a \code{ggcpt} object.}
 }
 \value{
-A \code{plotly} htmlwidget.
+A \pkg{plotly} or \pkg{ggiraph} htmlwidget.
 }
 \description{
 Renders a \code{ggcpt} result (or any ggplot built from one) as an
-interactive HTML widget via \pkg{plotly}, with values on hover. A thin
-convenience wrapper: the static \code{autoplot()} path is untouched.
+interactive HTML widget, with values on hover. A thin convenience
+wrapper: the static \code{autoplot()} path is untouched.
 }
 \examples{
 \dontshow{if (requireNamespace("plotly", quietly = TRUE) && interactive()) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

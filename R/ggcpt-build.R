@@ -7,10 +7,23 @@
 # length-n engine-fitted signal stored as a `fitted` column on `$data` and used
 # by `autoplot(show_fit = TRUE)` and `augment()`. `data_wide` is an optional
 # tibble (index + one column per coordinate) for multivariate input.
+#
+# 0.5.0 adds two more optional slots, both defaulted off and both following
+# the `data_wide` precedent (present only when an engine supplies them, and
+# tested for before use):
+#   `regions`     a tibble of significance regions (start, end, ...) for the
+#                 interval-valued methods -- NSP returns intervals that must
+#                 each contain a change, which is not a point estimate and
+#                 must not be squeezed into one.
+#   `diagnostics` a named list of engine internals (the detector statistic,
+#                 the solution path, a scale-space grid) that
+#                 ggcpt_statistic() / ggcpt_solution_path() /
+#                 ggcpt_scale_space() render.
 #' @noRd
 ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
                         fit = NULL, call = NULL, extra_cp_cols = NULL,
-                        fitted = NULL, data_wide = NULL) {
+                        fitted = NULL, data_wide = NULL, regions = NULL,
+                        diagnostics = NULL) {
   n <- length(data_vec)
   data_vec <- as.numeric(data_vec)
 
@@ -44,6 +57,8 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
     res$call <- call
     res$data <- data_tbl
     res$data_wide <- data_wide
+    res$regions <- normalise_regions(regions, n)
+    res$diagnostics <- diagnostics
     return(res)
   }
 
@@ -59,7 +74,57 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
     cp_convention = "left"
   )
   res$data_wide <- data_wide
+  res$regions <- normalise_regions(regions, n)
+  res$diagnostics <- diagnostics
   res
+}
+
+# Internal: normalise the optional `regions` slot to a tibble with integer
+# `start`/`end` clipped to the series, dropping anything unusable. Returns
+# NULL when there is nothing to store, so `is.null(res$regions)` stays the
+# test for "this engine does not do regions".
+#' @noRd
+normalise_regions <- function(regions, n) {
+  if (is.null(regions)) return(NULL)
+  if (is.matrix(regions)) {
+    if (ncol(regions) < 2L) {
+      stop("`regions` must have at least two columns (start, end).",
+           call. = FALSE)
+    }
+    cn <- colnames(regions)
+    regions <- tibble::as_tibble(as.data.frame(regions),
+                                 .name_repair = "minimal")
+    if (is.null(cn)) names(regions)[1:2] <- c("start", "end")
+  }
+  regions <- tibble::as_tibble(regions)
+  if (!all(c("start", "end") %in% names(regions))) {
+    if (ncol(regions) < 2L) {
+      stop("`regions` must have `start` and `end` columns.", call. = FALSE)
+    }
+    names(regions)[1:2] <- c("start", "end")
+  }
+  if (nrow(regions) == 0) {
+    regions$start <- integer(0)
+    regions$end <- integer(0)
+    return(regions)
+  }
+  # as.integer() again after the clip: pmin() against a double `n` would
+  # silently widen the columns back to double, and `cpt_regions()` derives
+  # `length` from them.
+  regions$start <- as.integer(pmax(1L, pmin(as.integer(round(regions$start)),
+                                            n)))
+  regions$end <- as.integer(pmax(1L, pmin(as.integer(round(regions$end)), n)))
+  # An interval given the other way round is a data-entry slip, not a
+  # different meaning; ordering it is what every plotting call assumes.
+  flip <- regions$start > regions$end
+  if (any(flip)) {
+    tmp <- regions$start[flip]
+    regions$start[flip] <- regions$end[flip]
+    regions$end[flip] <- tmp
+  }
+  keep <- !is.na(regions$start) & !is.na(regions$end)
+  regions <- regions[keep, , drop = FALSE]
+  regions[order(regions$start, regions$end), , drop = FALSE]
 }
 
 # Internal: check that an optional engine package is installed.

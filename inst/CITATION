@@ -1,0 +1,15 @@
+citHeader("To cite ggchangepoint in publications, cite the package. Please also cite the changepoint method you used: cpt_cite(fit) prints its reference.")
+
+bibentry(
+  bibtype  = "Manual",
+  title    = "{ggchangepoint}: Combines Changepoint Analysis with {ggplot2}",
+  author   = person(given = "Youzhi", family = "Yu"),
+  year     = "2026",
+  note     = "R package version 0.5.0",
+  url      = "https://pursuitofdatascience.github.io/ggchangepoint/",
+  textVersion = paste(
+    "Yu, Y. (2026). ggchangepoint: Combines Changepoint Analysis with",
+    "ggplot2. R package version 0.5.0.",
+    "https://pursuitofdatascience.github.io/ggchangepoint/"
+  )
+)
