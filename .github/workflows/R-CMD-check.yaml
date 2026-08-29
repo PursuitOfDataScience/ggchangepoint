@@ -68,3 +68,20 @@ jobs:
         with:
           upload-snapshots: true
           build_args: 'c("--no-manual","--compact-vignettes=gs+qpdf")'
+
+      # R CMD check rebuilds vignettes in parallel and reports nothing at all
+      # when a worker dies: the ones still in flight print "re-building" and
+      # stop, with no chunk, no line number and no message. Rebuilding them
+      # one at a time on the runner that failed is the only way to see which
+      # one it is.
+      - name: Diagnose the vignette rebuild
+        if: failure()
+        run: |
+          R CMD INSTALL --no-manual .
+          Rscript -e 'for (v in list.files("vignettes", "[.]Rmd$", full.names = TRUE)) {
+            cat("\n=====", v, "=====\n")
+            r <- tryCatch({rmarkdown::render(v, output_dir = tempdir(), quiet = TRUE); "ok"},
+                          error = function(e) paste("ERROR:", conditionMessage(e)))
+            cat(r, "\n")
+          }'
+        shell: bash
