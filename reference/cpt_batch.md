@@ -11,7 +11,15 @@ parallel-safe RNG.
 ## Usage
 
 ``` r
-cpt_batch(x, method = "pelt", change_in = "mean", seed = NULL, ...)
+cpt_batch(
+  x,
+  method = "pelt",
+  change_in = "mean",
+  index = NULL,
+  seed = NULL,
+  keep_fit = TRUE,
+  ...
+)
 
 # S3 method for class 'ggcpt_batch'
 print(x, ...)
@@ -43,6 +51,15 @@ autoplot(object, ...)
   What to detect change in, passed to
   [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md).
 
+- index:
+
+  Optional time index shared by every series in the panel (a vector of
+  dates, say), or a named list of one index per series. Carried onto
+  each result and used by
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
+  so a faceted plot of fifty series shows dates rather than positions.
+
 - seed:
 
   Optional seed for reproducible parallel execution (passed to
@@ -50,6 +67,23 @@ autoplot(object, ...)
   as `future.seed`; applied via
   [`set.seed()`](https://rdrr.io/r/base/Random.html) when running
   sequentially).
+
+- keep_fit:
+
+  Keep each engine's raw fit in `result[[i]]$fit`? Defaults to `TRUE`,
+  which is what makes a batch result as inspectable as a single one. Set
+  it to `FALSE` for a large panel: a few engines return fits far bigger
+  than the data they were given — `strucchange` keeps a triangular
+  \\O(n^2)\\ RSS matrix, so a single 2000-point series costs about 135
+  MB, and `bfast` and `bocpd` are in the tens of MB — and a panel
+  multiplies that by the number of series. Everything else on the
+  object, including
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
+  is unaffected; only accessors that read `$fit`
+  ([`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md),
+  [`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md),
+  `cpt_confint(engine = \"native\")`) need it.
 
 - ...:
 

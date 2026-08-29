@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,9 @@
 <li><a class="dropdown-item" href="../articles/introduction.html">Introduction to ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Comparing changepoint methods</a></li>
     <li><a class="dropdown-item" href="../articles/ggchangepoint.html">Feature tour</a></li>
+    <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -705,7 +708,7 @@ The design of <strong>ggchangepoint</strong>’s toolkit follows three
 principles. First, <em>a common representation makes comparison
 trivial</em>: because every engine returns the same <code>ggcpt</code>
 contract in the same location convention, <code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code>
-and the metrics module work for all 31 wired methods without special
+and the metrics module work for all 50 wired methods without special
 cases. Second, <em>metrics must agree with their pictures</em>:
 <code><a href="../reference/ggcpt_eval.html">ggcpt_eval()</a></code> and <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> share one
 matching routine, so a plotted true positive is a counted true positive.

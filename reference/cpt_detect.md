@@ -9,31 +9,44 @@ for the full method table with engines and capabilities.
 ## Usage
 
 ``` r
-cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
+cpt_detect(
+  x,
+  method = "pelt",
+  change_in = "mean",
+  penalty = "MBIC",
+  index = NULL,
+  y = NULL,
+  ...
+)
 ```
 
 ## Arguments
 
 - x:
 
-  A numeric vector for univariate methods, or a numeric matrix/data
-  frame (rows are time points) for the multivariate methods (`"ecp"`,
-  `"inspect"`, `"geomcp"`, `"ocd"`, `"npmojo"`, `"kcp"`, `"fastcpd"`).
+  The series. A numeric vector for univariate methods, or a numeric
+  matrix/data frame (rows are time points) for the multivariate methods
+  — run `subset(cpt_methods(), multivariate)$method` for the list. A
+  `ts`, `xts`, `zoo` or (unkeyed) `tsibble` is accepted directly and its
+  time index is carried through to
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html);
+  so is a data frame together with `y` (and optionally `index`).
 
 - method:
 
-  Detection method. One of `"pelt"`, `"binseg"`, `"segneigh"`, `"amoc"`,
-  `"np"`, `"ecp"`, `"fpop"`, `"wbs"`, `"wbs2"`, `"not"`, `"mosum"`,
-  `"idetect"`, `"tguh"`, `"smuce"`, `"hsmuce"`, `"cpop"`, `"bcp"`,
-  `"bocpd"`, `"beast"`, `"cpm"`, `"kcp"`, `"npmojo"`, `"decafs"`,
-  `"sn"`, `"inspect"`, `"ocd"`, `"geomcp"`, `"strucchange"`,
-  `"segmented"`, `"envcpt"`, or `"fastcpd"`. Methods whose engines live
-  in `Suggests` prompt for installation when missing.
+  Detection method: any `method` in
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  whose `status` is `"available"` or `"registered"`. Methods whose
+  engines live in `Suggests` report what to install when missing;
+  [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  adds detectors this package does not wrap.
 
 - change_in:
 
   What to detect change in. One of `"mean"`, `"var"`, `"meanvar"`,
-  `"slope"`, or `"distribution"`. Defaults to `"mean"`. The requested
+  `"slope"`, `"distribution"`, `"covariance"`, `"network"`,
+  `"regression"` or `"seasonality"`. Defaults to `"mean"`. The requested
   value is validated against the method's capabilities (see
   [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md));
   incompatible combinations error rather than silently running something
@@ -55,6 +68,30 @@ cpt_detect(x, method = "pelt", change_in = "mean", penalty = "MBIC", ...)
   against 11.8 at \\n = 360\\ — so `cpt_detect(x, method = "decafs")`
   can report fewer changepoints than `decafs_wrapper(x)` on the same
   series. Pass `penalty` explicitly to make the two entry points agree.
+
+- index:
+
+  Optional time index, one value per observation (dates, say). Detection
+  still runs on observation positions — every wrapped engine assumes an
+  equally spaced sequence — but the index is stored on the result and
+  threaded through
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) (as
+  `cp_index`),
+  [`augment()`](https://generics.r-lib.org/reference/augment.html),
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  and
+  [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md),
+  so the output speaks in the user's own units. An index that is not
+  equally spaced warns. When `x` is a data frame and `y` is given,
+  `index` selects a column of that data frame instead of being a vector.
+
+- y:
+
+  Column selection for the data-frame interface:
+  `cpt_detect(df, y = value, index = date, method = "pelt")`. A bare
+  column name, a string, or a column position. Only meaningful when `x`
+  is a data frame; a data frame passed without `y` keeps its 0.4.0
+  meaning (one column per coordinate).
 
 - ...:
 
@@ -106,7 +143,7 @@ x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
 result <- cpt_detect(x, method = "pelt", change_in = "mean")
 result
 #> ggcpt (changepoint detection result)
-#>   Method:          pelt 
+#>   Method:         pelt
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -119,4 +156,32 @@ result
 #>   <int>    <dbl>
 #> 1   100    0.467
 ggplot2::autoplot(result)
+
+
+# A date index: detection is unchanged, but the report speaks in dates.
+dates <- as.Date("2000-01-01") + 0:199
+dated <- cpt_detect(x, method = "pelt", index = dates)
+tidy(dated)
+#> # A tibble: 1 × 3
+#>      cp cp_index   cp_value
+#>   <int> <date>        <dbl>
+#> 1   100 2000-04-09    0.467
+
+# The data-frame interface.
+df <- data.frame(day = dates, value = x)
+cpt_detect(df, y = value, index = day, method = "pelt")
+#> ggcpt (changepoint detection result)
+#>   Method:         pelt
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         MBIC 
+#>   Series length:   200 
+#>   Index:           2000-01-01 to 2000-07-18 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 3
+#>      cp cp_index   cp_value
+#>   <int> <date>        <dbl>
+#> 1   100 2000-04-09    0.467
 ```

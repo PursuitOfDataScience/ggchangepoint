@@ -15,71 +15,131 @@ and composable geoms
 ([`geom_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_changepoint.md),
 [`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md),
 [`geom_cpt_ci()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_ci.md),
+[`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md),
+[`geom_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_label.md),
+[`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md),
 [`stat_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.md)),
 and a unified dispatcher
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-that supports over thirty methods.
+that reaches fifty methods.
 
 \*\*Detection engines.\*\*
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-currently dispatches to 31 methods across six families (run
-[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-for the live table with installation status):
+dispatches to the methods in
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md),
+across nine families:
 
 - **Penalised/optimal:** PELT, BinSeg, SegNeigh, AMOC (changepoint);
-  FPOP (fpop); the CROPS penalty path
+  FPOP (fpop); fast binary segmentation (binsegRcpp); the CROPS penalty
+  path
   ([`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md));
   fastcpd (fastcpd, incl. AR/ARMA/GARCH); change-in-slope via CPOP
   (cpop).
 
 - **Multiscale/search:** WBS (wbs), WBS2 and TGUH (breakfast), NOT
   (not), MOSUM incl. multiscale (mosum), Isolate-Detect (IDetect),
-  SMUCE/HSMUCE with confidence intervals (stepR).
+  SMUCE/HSMUCE with confidence intervals (stepR), WBS for nonstationary
+  series (wbsts).
+
+- **Inference:** Narrowest Significance Pursuit (nsp), which returns
+  intervals rather than points.
 
 - **Nonparametric/kernel:** NP (changepoint.np), E-Divisive/E-Agglo
   (ecp), kernel running statistics (kcpRS), NP-MOJO (CptNonPar),
-  sequential CPM (cpm), self-normalisation (SNSeg).
+  sequential CPM (cpm), self-normalisation (SNSeg), depth ranks
+  (KWCChangepoint).
 
 - **Bayesian:** Barry-Hartigan posterior (bcp), online BOCPD (ocp),
-  BEAST model averaging (Rbeast).
+  BEAST model averaging (Rbeast), formula-based regression with
+  changepoints (mcp).
 
-- **Multivariate/high-dimensional:** sparse projection
-  (InspectChangepoint), online ocd (ocd), geometric mapping
-  (changepoint.geo).
+- **High-dimensional:** sparse projection (InspectChangepoint), online
+  ocd (ocd), geometric mapping (changepoint.geo), sparsity-adaptive ESAC
+  and Pilliat (HDCD), and covariance, network, VAR and
+  high-dimensional-regression changes (changepoints).
 
-- **Regression breaks and robust detection:** Bai-Perron breaks with CIs
+- **Functional and network:** functional mean and covariance (fChange),
+  NMF-based network structure (fabisearch).
+
+- **Regression, trend and season:** Bai-Perron breaks with CIs
   (strucchange), broken-line regression (segmented),
   changepoints-vs-autocorrelation model selection (EnvCpt), drift+AR
-  robust detection (DeCAFS).
+  robust detection (DeCAFS), BFAST season-and-trend breaks (bfast).
 
-\*\*Key features.\*\* Every detector returns a `ggcpt` object with a
-stable `tibble(cp, cp_value)` contract (plus engine extras such as
-`ci_lower`/`ci_upper` and `posterior_prob`). Visualise any result
-directly with
-[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-(confidence intervals, fitted signals, multivariate facets), the
-Bayesian displays
-([`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md),
-[`ggcpt_runlength()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_runlength.md)),
-or interactively via
-[`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md).
-Compare methods with
-[`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md);
-run panels of series with
-[`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md);
-quantify uncertainty with
-[`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md);
-sweep penalties with
-[`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md).
-Evaluate accuracy with
-[`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
-and
-[`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md);
-simulate ground-truth data with
-[`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
-and the canonical test signals; and cite the methodology behind any
-result with
-[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md).
+- **Classical single-change tests:** Pettitt, Buishand and SNHT (trend),
+  Taylor's analyzer (ChangePointTaylor).
+
+\*\*What surrounds the detectors.\*\* Every detector returns a `ggcpt`
+object with a stable `tibble(cp, cp_value)` contract, optionally
+carrying a time index, engine confidence intervals, a fitted signal,
+significance regions and diagnostics. Around that:
+
+- **Inference:**
+  [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  (four provenances, one contract),
+  [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md),
+  [`cpt_regions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_regions.md).
+
+- **Choosing K:**
+  [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  (BIC, Zhang-Siegmund mBIC, AIC, CROPS elbow, cross-validation,
+  stability),
+  [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md),
+  [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md).
+
+- **Diagnostics:**
+  [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md),
+  [`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md),
+  [`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md),
+  [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md),
+  [`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md),
+  [`cpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md),
+  [`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md).
+
+- **Supervised detection:**
+  [`cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_labels.md),
+  [`cpt_label_error()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md),
+  [`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md),
+  [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md).
+
+- **Choosing a method:**
+  [`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md),
+  [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md),
+  [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md).
+
+- **Evaluation:**
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md),
+  [`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md),
+  [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),
+  [`cpt_datasets()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_datasets.md),
+  [`cpt_load_tcpd()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_load_tcpd.md).
+
+- **Streaming:**
+  [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md),
+  [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md),
+  [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md),
+  [`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md),
+  [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md).
+
+- **Study design:**
+  [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md),
+  [`cpt_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md),
+  [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md),
+  [`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md).
+
+- **Communication:**
+  [`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md),
+  [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md),
+  [`cpt_gt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gt.md),
+  [`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md),
+  [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md).
+
+- **Extension:**
+  [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
+  and
+  [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  bring detectors this package does not and cannot depend on into the
+  same grammar.
 
 ## See also
 

@@ -10,12 +10,29 @@
   : Construct changepoint penalties
 - [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
   : Cite the method behind a result
+- [`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md)
+  : Coerce a time series object to values plus a time index
 - [`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
   : Create a ggcpt object
 - [`is_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/is_ggcpt.md)
   : Test if an object is a ggcpt object
 - [`print(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/print.ggcpt.md)
   : Print a ggcpt object
+
+## Extending the package
+
+Bring a detector this package does not wrap – a non-CRAN engine, a
+Python tool, a neural detector, or your own changepoints – into the same
+tidy, plottable grammar.
+
+- [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
+  : Turn external changepoints into a ggcpt result
+- [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  [`cpt_unregister_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  [`cpt_registered_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  : Register an external changepoint detector
+- [`cpt_install_engines()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_install_engines.md)
+  : Install the engines behind a family of methods
 
 ## Original wrappers
 
@@ -47,11 +64,152 @@
   : SMUCE / HSMUCE wrapper — multiscale changepoint inference
 - [`cpop_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpop_wrapper.md)
   : CPOP wrapper — optimal change-in-slope detection
+- [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
+  : NSP wrapper — Narrowest Significance Pursuit
 - [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
   [`autoplot(`*`<ggcpt_path>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
   [`print(`*`<ggcpt_path>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
   [`tidy(`*`<ggcpt_path>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
   : CROPS — the full penalty path of a penalised changepoint method
+
+## Inference
+
+Where could this changepoint be, and is it real?
+
+- [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  : Confidence intervals for changepoint locations
+- [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
+  : Test detected changepoints
+- [`cpt_regions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_regions.md)
+  : Tidy the significance regions of a ggcpt object
+
+## Choosing the number of changepoints
+
+- [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  [`print(`*`<ggcpt_selection>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  [`tidy(`*`<ggcpt_selection>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  [`autoplot(`*`<ggcpt_selection>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  : Choose the number of changepoints
+
+## Diagnostics
+
+Which observation is driving this, which setting, and what did the
+detector actually compute?
+
+- [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
+  [`print(`*`<ggcpt_influence>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
+  [`autoplot(`*`<ggcpt_influence>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
+  [`tidy(`*`<ggcpt_influence>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
+  : Influence diagnostics for a changepoint segmentation
+- [`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+  : Rank observations by influence
+- [`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
+  [`print(`*`<ggcpt_sensitivity>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
+  [`tidy(`*`<ggcpt_sensitivity>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
+  [`autoplot(`*`<ggcpt_sensitivity>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
+  : Sensitivity of a segmentation to its tuning parameters
+- [`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
+  [`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
+  : The detector's statistic as a function of location
+- [`cpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  [`ggcpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  : The solution path of a search-based detector
+- [`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
+  [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
+  : Scale space: the statistic across bandwidths
+
+## Supervised detection
+
+Labelled regions as ground truth, label errors as the accuracy measure,
+and a learned penalty.
+
+- [`cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_labels.md)
+  : Changepoint labels
+- [`as_cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_labels.md)
+  : Coerce annotations to changepoint labels
+- [`cpt_label_error()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md)
+  [`tidy(`*`<cpt_label_error>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md)
+  [`print(`*`<cpt_label_error>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md)
+  : Score a segmentation against labels
+- [`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
+  [`print(`*`<ggcpt_label_curve>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
+  [`autoplot(`*`<ggcpt_label_curve>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
+  : Label error as a function of the penalty
+- [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+  [`print(`*`<ggcpt_penalty_model>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+  [`coef(`*`<ggcpt_penalty_model>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+  [`predict(`*`<ggcpt_penalty_model>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+  : Learn a penalty from labelled series
+
+## Choosing and combining methods
+
+- [`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
+  [`tidy(`*`<ggcpt_recommendation>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
+  [`print(`*`<ggcpt_recommendation>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
+  : Recommend a detection method
+- [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md)
+  [`autoplot(`*`<ggcpt_consensus>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md)
+  [`print(`*`<ggcpt_consensus>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md)
+  : Consensus changepoints across several detectors
+
+## Communication
+
+- [`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
+  [`print(`*`<ggcpt_events>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
+  [`tidy(`*`<ggcpt_events>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
+  [`autoplot(`*`<ggcpt_events>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
+  : Match detected changepoints to known events
+- [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md)
+  : A reproducible report of a changepoint analysis
+- [`cpt_gt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gt.md)
+  : A publication-ready changepoint table
+
+## Benchmarking
+
+- [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
+  [`print(`*`<ggcpt_benchmark>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
+  [`tidy(`*`<ggcpt_benchmark>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
+  [`autoplot(`*`<ggcpt_benchmark>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
+  : Benchmark detectors across datasets
+- [`cpt_datasets()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_datasets.md)
+  : A catalogue of benchmark datasets
+- [`cpt_load_tcpd()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_load_tcpd.md)
+  : Download and cache the Turing Change Point Dataset
+- [`cpt_annotations()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotations.md)
+  : Per-annotator ground truth for a benchmark dataset
+
+## Streaming and online monitoring
+
+- [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  [`tidy(`*`<ggcpt_monitor>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  [`print(`*`<ggcpt_monitor>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  [`autoplot(`*`<ggcpt_monitor>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  : A stateful sequential changepoint monitor
+- [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md)
+  : Feed observations to a monitor
+- [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md)
+  : The alarm log of a monitor
+- [`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md)
+  : Replay a series through a sequential detector
+- [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  [`tidy(`*`<ggcpt_delay>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  [`glance(`*`<ggcpt_delay>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  [`print(`*`<ggcpt_delay>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  [`autoplot(`*`<ggcpt_delay>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  : Detection delay and false-alarm rate
+
+## Power and study design
+
+- [`cpt_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)
+  [`tidy(`*`<ggcpt_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)
+  [`print(`*`<ggcpt_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)
+  [`autoplot(`*`<ggcpt_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)
+  : Detection power for a changepoint scenario
+- [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
+  [`print(`*`<ggcpt_min_detectable>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
+  : The smallest detectable change
+- [`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md)
+  : A grid of simulation scenarios
 
 ## Bayesian wrappers
 
@@ -94,6 +252,30 @@
   : ocd wrapper — online high-dimensional changepoint detection
 - [`geomcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geomcp_wrapper.md)
   : Geometrically-inspired multivariate changepoint wrapper (geomcp)
+- [`esac_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/esac_wrapper.md)
+  : ESAC wrapper — sparsity-adaptive high-dimensional detection
+- [`pilliat_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/pilliat_wrapper.md)
+  : Pilliat wrapper — high-dimensional detection by three complementary
+  tests
+- [`hdcov_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/hdcov_wrapper.md)
+  : High-dimensional covariance changepoints
+- [`network_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/network_wrapper.md)
+  : Dynamic-network changepoints
+- [`var_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/var_wrapper.md)
+  : VAR(1) changepoints
+- [`hdreg_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/hdreg_wrapper.md)
+  : High-dimensional regression changepoints
+
+## Functional and network wrappers
+
+- [`fmean_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fmean_wrapper.md)
+  : Functional mean changepoints
+- [`fcov_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fcov_wrapper.md)
+  : Functional covariance changepoints
+- [`kwc_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/kwc_wrapper.md)
+  : Robust depth-based changepoints for functional and multivariate data
+- [`fabisearch_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fabisearch_wrapper.md)
+  : Network-structure changepoints via non-negative matrix factorisation
 
 ## Regression-break wrappers
 
@@ -101,6 +283,24 @@
   : Bai-Perron structural break wrapper (strucchange)
 - [`segmented_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/segmented_wrapper.md)
   : Broken-line regression wrapper (segmented)
+- [`bfast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bfast_wrapper.md)
+  : BFAST wrapper — breaks for additive season and trend
+
+## Applied vocabularies and fast paths
+
+- [`trend_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/trend_wrapper.md)
+  : Classical single-changepoint tests (Pettitt, Buishand, SNHT)
+- [`taylor_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/taylor_wrapper.md)
+  : Taylor's change point analyzer
+- [`wbsts_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/wbsts_wrapper.md)
+  : WBS for nonstationary time series
+- [`binsegrcpp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/binsegrcpp_wrapper.md)
+  : Fast binary segmentation across loss functions
+
+## Bayesian formula models
+
+- [`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
+  : Bayesian formula-based changepoint regression (mcp)
 
 ## broom methods
 
@@ -122,12 +322,20 @@
   [`plot(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_methods.md)
   : Coerce, format, and plot ggcpt objects
 
-## Theming and helpers
+## Theming, palettes and accessibility
 
 - [`theme_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/theme_ggcpt.md)
   : ggchangepoint theme
 - [`annotate_segments()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/annotate_segments.md)
   : Annotate segments with alternating shading
+- [`scale_colour_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md)
+  [`scale_color_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md)
+  [`scale_fill_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md)
+  [`scale_linetype_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md)
+  : Colour-vision-safe scales for changepoint methods
+- [`scale_fill_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
+  [`scale_colour_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
+  : Colour scales for changepoint labels and label errors
 
 ## Visualization
 
@@ -143,6 +351,12 @@
   : Changepoint segment level geom
 - [`geom_cpt_ci()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_ci.md)
   : Changepoint confidence interval geom
+- [`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md)
+  : Significance region geom
+- [`geom_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_label.md)
+  : Changepoint label geom
+- [`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md)
+  : Event annotation geom
 - [`stat_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.md)
   : Changepoint detection stat
 - [`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)

@@ -632,7 +632,7 @@ of **ggchangepoint**’s toolkit follows three principles. First, *a
 common representation makes comparison trivial*: because every engine
 returns the same `ggcpt` contract in the same location convention,
 [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
-and the metrics module work for all 31 wired methods without special
+and the metrics module work for all 50 wired methods without special
 cases. Second, *metrics must agree with their pictures*:
 [`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md)
 and

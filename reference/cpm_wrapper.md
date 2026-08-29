@@ -70,5 +70,5 @@ res$changepoints
 #> # A tibble: 1 × 3
 #>      cp cp_value detection_time
 #>   <int>    <dbl>          <int>
-#> 1   100    -1.02            104
+#> 1   100   -0.125            104
 ```

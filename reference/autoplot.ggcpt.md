@@ -16,6 +16,7 @@ autoplot(
   show_segments = FALSE,
   show_ci = FALSE,
   show_fit = FALSE,
+  show_regions = NULL,
   cptline_alpha = 1,
   cptline_color = "blue",
   cptline_type = "solid",
@@ -23,6 +24,8 @@ autoplot(
   show_points = NULL,
   show_line = TRUE,
   index = NULL,
+  labels = NULL,
+  type = c("series", "statistic", "path", "scale_space"),
   ...
 )
 ```
@@ -52,6 +55,16 @@ autoplot(
   column of `$data`, provided by SMUCE, DeCAFS, cpop, segmented, bcp,
   beast). Defaults to `FALSE`.
 
+- show_regions:
+
+  Logical. Whether to shade the significance regions an interval-valued
+  method returns (the `regions` slot — currently
+  [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)).
+  Each band is an interval that contains at least one changepoint at the
+  stated global level; it is not a confidence interval around a point
+  estimate. Defaults to `TRUE` when the result carries regions, and is
+  ignored otherwise.
+
 - cptline_alpha:
 
   Alpha for changepoint lines. Defaults to `1`.
@@ -79,11 +92,37 @@ autoplot(
 - index:
 
   Optional vector of x-axis values (e.g. dates) of the same length as
-  the series; defaults to the observation index.
+  the series. Defaults to the time index carried by the result (see the
+  `index` argument of
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)),
+  and to the observation position when there is none.
+
+- labels:
+
+  Optional
+  [`cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_labels.md)
+  tibble. When supplied, the labelled regions are shaded behind the
+  series and coloured by the outcome
+  [`cpt_label_error()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md)
+  gives them — correct, false positive, false negative — so scoring a
+  segmentation against expert labels becomes a picture rather than a
+  table.
+
+- type:
+
+  Which view to draw. `"series"` (default) is the series with its
+  changepoints; `"statistic"`, `"path"` and `"scale_space"` delegate to
+  [`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md),
+  [`ggcpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  and
+  [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md),
+  which error with the list of supporting engines when this one does not
+  expose the internals.
 
 - ...:
 
-  Unknown arguments are ignored with a warning.
+  Unknown arguments are ignored with a warning, except when `type` is
+  not `"series"`, in which case they are passed to the delegate.
 
 ## Value
 

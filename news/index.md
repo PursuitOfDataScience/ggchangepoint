@@ -1,6 +1,582 @@
 # Changelog
 
+## ggchangepoint 0.5.0
+
+The release that fills in what 0.4.0’s engine wave left open: inference,
+selection, diagnostics, supervised detection, time indices, streaming,
+benchmarking, and an extension mechanism that makes the
+CRAN-availability question stop being a blocker.
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+goes from 31 to 50 wired methods, and the surface around the detectors
+roughly doubles.
+
+### The extension mechanism
+
+The highest-leverage addition, and the one everything else leans on.
+
+- New
+  [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  /
+  [`cpt_unregister_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  /
+  [`cpt_registered_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  teach
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  about a detector this package does not (and often cannot) depend on:
+  an engine that is not on CRAN, a Python detector reached through
+  `reticulate`, a neural detector, a proprietary in-house method. The
+  registered method then works with
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
+  the geoms,
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html)/[`glance()`](https://generics.r-lib.org/reference/glance.html)/[`augment()`](https://generics.r-lib.org/reference/augment.html),
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md),
+  [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md),
+  [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),
+  [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
+  and
+  [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md).
+- New
+  [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
+  turns any set of changepoints — a published paper’s reported breaks,
+  an analyst’s annotations, another package’s output — into a validated
+  `ggcpt`, running the same contract checks as every built-in wrapper.
+- Registered methods are **visibly** user-supplied:
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  gives them `status = "registered"`,
+  [`print()`](https://rdrr.io/r/base/print.html) marks their results,
+  and
+  [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+  returns the citation the registration supplied or states plainly that
+  none was given.
+
+### The engine registry
+
+- The wired-method table, the capability check and the dispatcher’s
+  routing are now all derived from one declarative registry, so a new
+  engine declares its capabilities once instead of in three places that
+  had to be kept in agreement by hand.
+- [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  gains capability columns: `multivariate`, `univariate`, `online`,
+  `ci`, `fitted`, `posterior`, `statistic`, `path`, `scale_space`.
+  `subset(cpt_methods(), ci)$method` answers “which methods give me a
+  confidence interval?” directly.
+- New
+  [`cpt_install_engines()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_install_engines.md)
+  installs a whole family of engines at once (`"core"`, `"bayesian"`,
+  `"nonparametric"`, `"highdim"`, `"functional"`, `"regression"`,
+  `"inference"`, `"applied"`, `"time"`, `"reporting"`, or `"all"`), with
+  a `dry_run`.
+
+### Time indices and data structures
+
+- [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  gains `index`: detection still runs on positions — every wrapped
+  engine assumes an equally spaced sequence — but the index is stored on
+  the result and threaded through
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) (as
+  `cp_index`),
+  [`augment()`](https://generics.r-lib.org/reference/augment.html),
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  (axis and labels),
+  [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md),
+  [`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
+  and
+  [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md).
+  An index that is not equally spaced warns rather than silently
+  mislabelling the axis.
+- `ts`, `xts`, `zoo` and (unkeyed) `tsibble` objects are accepted
+  directly and their own index is carried through. New
+  [`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md)
+  is the one place that separates the values from the clock.
+- New data-frame interface: `cpt_detect(df, y = value, index = date)`,
+  where `y` and `index` accept a bare column name, a string or a
+  position. A data frame passed without `y` keeps its 0.4.0 meaning.
+
+### Inference
+
+- New
+  [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
+  / `cpt_detect(method = "nsp")` wraps Narrowest Significance Pursuit
+  (Fryzlewicz 2024): intervals each guaranteed to contain at least one
+  changepoint at a prescribed **global** level, with self-normalised and
+  autoregressive variants for heavy tails, heteroscedasticity and serial
+  dependence.
+- New optional `regions` slot on `ggcpt`, read with
+  [`cpt_regions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_regions.md),
+  drawn by the new
+  [`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md)
+  layer and by `autoplot(show_regions =)` — which is on by default for a
+  result that has regions. NSP’s `cp` column is the interval midpoint
+  and says so, in the `cp_source` column, in
+  [`print()`](https://rdrr.io/r/base/print.html), and in the
+  documentation: the region is the inferential object, the midpoint is
+  not an estimate.
+- New
+  [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  answers “where could this changepoint be?” for any result, behind one
+  contract with four provenances — `"native"` (the engine’s own
+  interval), `"posterior"`, `"bootstrap"` (within-segment resampling,
+  available for every engine) and `"nsp"` — and reports which one it
+  used in a `source` column.
+- New
+  [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
+  attaches a test to each changepoint or segment, using the engine’s own
+  test where it has one (`strucchange`’s Chow F, `segmented`’s Davies
+  test) and an explicitly unadjusted Welch two-sample test where it does
+  not. A `selection_adjusted` column and a warning make the difference
+  impossible to miss, because a p-value computed at a location chosen
+  from the same data is anti-conservative.
+
+### Choosing the number of changepoints
+
+- New
+  [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  builds one candidate ladder and scores it by any of six criteria:
+  `"bic"`, `"mbic"` (the real Zhang–Siegmund segment-length mBIC, which
+  [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+  cannot express), `"aic"`, `"crops_elbow"` (the knee rule made explicit
+  and citable rather than eyeballed), `"cv"` (order-preserved
+  cross-validation via `crossvalidationCP` — the criterion with a
+  consistency proof) and `"stability"`.
+- [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  on the result draws the criterion curve, the chosen segmentation, or —
+  the new display — a **ladder** of small multiples showing how the
+  segmentation coarsens as K falls.
+
+### Diagnostics
+
+- New
+  [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
+  implements the Wilms–Killick–Matteson influence family: delete and
+  outlier perturbation, re-rendered in ggplot2 with
+  `plot_type = "overview" | "location" | "parameter" | "map"`. It uses
+  `changepoint.influence` where that applies and a generic recomputation
+  everywhere else, so it works for every wired and registered method.
+- New
+  [`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+  ranks observations by a composite influence score.
+- New
+  [`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
+  sweeps tuning parameters and shows the detected locations across the
+  grid — the direct answer to “is this robust to the penalty?”.
+- New
+  [`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
+  /
+  [`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
+  return and draw the detector’s criterion as a function of location;
+  new
+  [`cpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  /
+  [`ggcpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  return and draw the order in which candidates entered the model; new
+  [`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
+  /
+  [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
+  sweep a multiscale detector’s bandwidth and draw the
+  location-by-bandwidth heatmap.
+  `autoplot(fit, type = "statistic" | "path" | "scale_space")` reaches
+  all three. An engine that exposes nothing errors with the list of
+  engines that do.
+
+### Supervised detection
+
+- New
+  [`cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_labels.md)
+  and
+  [`as_cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_labels.md)
+  build labelled regions — the ground-truth representation shared with
+  [`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md),
+  so the package has one notion of an annotation rather than two.
+- New
+  [`cpt_label_error()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md)
+  scores a segmentation in label errors;
+  [`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
+  traces them across a penalty grid and reports the target interval.
+- New
+  [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+  fits the max-margin interval regression of Hocking et al. (2013),
+  delegating to `penaltyLearning` when it is installed and falling back
+  to a built-in squared-hinge fit. The result has
+  [`predict()`](https://rdrr.io/r/stats/predict.html), and
+  `cpt_detect(x, penalty = model)` and `cpt_penalty(model, series = x)`
+  accept it directly — as do the wrappers that take a numeric penalty.
+- New
+  [`geom_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_label.md)
+  draws the labels, and
+  [`scale_fill_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
+  colours them by assertion or by correct / false-positive /
+  false-negative status.
+
+### Choosing and combining methods
+
+- New
+  [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md)
+  runs several detectors and reports the locations they agree on, with a
+  vote count and the methods behind each. Matching reuses
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)’s
+  tolerance rule, so the package has one notion of “the same
+  changepoint”. The documentation and the print method both state that
+  agreement is a robustness display and **not** a significance test.
+- New
+  [`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
+  turns the capability matrix into advice: given the dimension, the
+  change type, the noise structure, the series length and whether
+  uncertainty or an online alarm is needed, it returns a ranked
+  shortlist with a reason and a caveat for each.
+
+### Communication
+
+- New
+  [`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
+  matches detected changepoints to a table of known events and reports
+  all three outcomes: matched, unexplained changepoints, and undetected
+  events. Events may be given on the position scale or on the result’s
+  own index. New
+  [`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md)
+  draws them.
+- New
+  [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md)
+  assembles a reproducible artifact — method, citation, penalty,
+  locations with intervals, regions, segments, optional stability and
+  events, the call, and
+  [`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html) — as
+  markdown or plain text.
+- New
+  [`cpt_gt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gt.md)
+  renders a publication-ready changepoint table through `gt`, degrading
+  to a tibble with a note when `gt` is absent.
+
+### Benchmarking and evaluation
+
+- New
+  [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
+  runs a method-by-dataset grid, scores every cell with
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+  (or
+  [`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md)
+  when a dataset has several annotators), and records an engine failure
+  as a message instead of losing the run.
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  gives a heatmap, a rank plot, or the Demšar critical-difference
+  diagram.
+- New
+  [`cpt_datasets()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_datasets.md)
+  builds an offline, deterministic collection from the package’s own
+  canonical signals — so the benchmark runs inside `R CMD check`.
+- New
+  [`cpt_load_tcpd()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_load_tcpd.md)
+  downloads and caches the Turing Change Point Dataset under
+  [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html), with
+  its multi-annotator ground truth intact; new
+  [`cpt_annotations()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotations.md)
+  returns the per-annotator sets one row at a time, so the disagreement
+  between annotators stays visible.
+
+### Streaming and online monitoring
+
+- New
+  [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  creates a stateful sequential detector, fed by
+  [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md)
+  and read with
+  [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md).
+  Three methods: `cpm`, `ocd`, and `edetector`.
+- Selecting columns off one of the new result tibbles
+  (`ggcpt_benchmark`, `ggcpt_batch`, `ggcpt_recommendation`,
+  `ggcpt_label_curve`, `cpt_labels`, `cpt_label_error`) now drops the
+  class rather than keeping a fragment that its own
+  [`print()`](https://rdrr.io/r/base/print.html) method cannot read.
+  [`dplyr::select()`](https://dplyr.tidyverse.org/reference/select.html)
+  on one of these behaves the same way;
+  [`filter()`](https://rdrr.io/r/stats/filter.html) and row indexing
+  keep the class, as they should.
+- `edetector` is a **native** implementation of the mixture
+  Shiryaev–Roberts e-detector of Shin, Ramdas and Rinaldo (2023) — a
+  deliberate, separately scoped exception to this package’s
+  wrap-don’t-implement rule, taken because no R package implements
+  e-detectors and the construction is short enough to audit. Under the
+  null the mixed statistic `M_t` satisfies `E[M_t] = t`, so optional
+  stopping at the alarm time gives a finite-sample lower bound of
+  `1 / alpha` on the in-control average run length, with no calibration
+  run. The shifts are combined by **averaging**, not by taking a
+  maximum: a convex combination of e-detectors is an e-detector and a
+  maximum is not, and the test suite measures the in-control alarm rate
+  against the bound rather than taking the derivation on trust. It is
+  labelled as native wherever it appears.
+- A monitor re-learns its baseline after an alarm (`relearn`), so a
+  persistent change is reported once rather than on every subsequent
+  observation. It is also dimensioned at construction: feeding
+  [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md)
+  a different number of coordinates is an error rather than a silent
+  coercion.
+- New
+  [`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md)
+  runs a whole series through a monitor; new
+  [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  scores it the way the sequential literature does — detection delay per
+  change, false alarms, and the average run length — instead of asking
+  whether a location was recovered, which a sequential procedure never
+  claims.
+
+### Simulation, power and study design
+
+- New
+  [`cpt_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)
+  reports detection probability, location error and false positives
+  across a scenario grid, with the Monte Carlo standard error attached
+  and drawn as a band.
+- New
+  [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
+  inverts it: the smallest change reaching a target power, for
+  pre-registration and study design.
+- New
+  [`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md)
+  builds a reproducible grid of simulation settings as data, ready for
+  [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md).
+- [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
+  gains `seasonality` (sine or sawtooth) and `sd_trend` (smoothly
+  varying noise scale, distinct from the piecewise-constant
+  `change_in = "var"`), so the conditions the dependence-aware and
+  seasonal engines exist for can actually be simulated.
+
+### Engine wave [\#2](https://github.com/PursuitOfDataScience/ggchangepoint/issues/2) — 19 new methods
+
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+reaches 50 wired methods. New `change_in` levels `"covariance"`,
+`"network"`, `"regression"` and `"seasonality"` come with them, and the
+capability matrix was extended in lockstep.
+
+- **Inference:** `nsp` (`nsp`).
+- **Bayesian:** `mcp` (`mcp`) — formula-based multiple-changepoint
+  regression with full posteriors. Needs JAGS, a system dependency, and
+  says so plainly when it is missing.
+- **High-dimensional:** `esac` and `pilliat` (`HDCD`) for
+  sparsity-adaptive mean changes; `hdcov`, `network`, `var` and `hdreg`
+  (`changepoints`) for changes in covariance, dynamic-network structure,
+  VAR(1) dynamics and the coefficients of a sparse high-dimensional
+  regression — changes no mean-change engine can see.
+- **Functional and network:** `fmean` and `fcov` (`fChange`); `kwc`
+  (`KWCChangepoint`), robust depth-rank segmentation; `fabisearch`
+  (`fabisearch`), network structure via non-negative matrix
+  factorisation.
+- **Applied vocabularies:** `pettitt`, `buishand` and `snht` (`trend`) —
+  the hydrology and climatology standards, each with a valid p-value
+  because the location was not chosen from a model search; `taylor`
+  (`ChangePointTaylor`) — the quality-control default, with bootstrap
+  confidence per changepoint; `bfast` (`bfast`) — season-and-trend
+  breaks for remote sensing.
+- **Nonstationary and fast:** `wbsts` (`wbsts`) for second-order
+  changes; `binsegrcpp` (`binsegRcpp`) as a fast binary-segmentation
+  path across several loss functions.
+
+### Accessibility
+
+- [`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md)
+  gains `engine = "ggiraph"` alongside the existing path. ggiraph
+  renders the ggplot itself to interactive SVG, so facets and every
+  layer survive — which ’s own model does not always manage for a
+  faceted multivariate result.
+
+- [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  gains `labels =`: pass a
+  [`cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_labels.md)
+  set and the labelled regions are shaded behind the series and coloured
+  by outcome (correct, false positive, false negative), so scoring
+  against expert labels is a picture rather than a table.
+
+- New
+  [`scale_colour_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md)
+  /
+  [`scale_fill_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md)
+  /
+  [`scale_linetype_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md)
+  provide an Okabe–Ito palette that stays distinguishable under the
+  three common forms of colour-vision deficiency.
+  `ggcpt_compare(layout = "overlay")` now maps linetype as well as
+  colour, so the panel reads in greyscale.
+
+- Every
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  on a `ggcpt` carries generated alt text, which knitr and Quarto pass
+  through to the rendered image.
+
+### Fixes found in the post-implementation audit
+
+- A method registered with
+  [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  is now visible inside `future` workers. The registry lives in the
+  package namespace and a worker loads the package fresh, so
+  [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md),
+  [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),
+  [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md),
+  [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md),
+  [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md),
+  [`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
+  and
+  [`cpt_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)
+  used to fail on a registered method under `plan(multisession)` with a
+  misleading “‘arg’ should be one of” error. Each now carries a snapshot
+  of the registry to the worker.
+- [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
+  accepts `changepoints` as ground truth alongside `truth` and
+  `annotations`, treats a list-valued `truth` as several annotators
+  rather than flattening it, and **warns** when a list dataset carries
+  none of the three — previously it returned a full benchmark table in
+  which every metric was silently `NA`.
+- [`pilliat_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/pilliat_wrapper.md)
+  refuses a dimension that is an exact power of two. `HDCD` 1.1’s
+  `Pilliat()` builds one fewer partial-sum threshold than it uses at
+  those dimensions, so it reported a changepoint at *every* observation
+  — on pure noise as readily as on a real change — for p = 2, 4, 8, 16,
+  32, 64 and 128. The wrapper now says so and points at `esac`, which is
+  unaffected; the refusal lifts automatically once a fixed `HDCD` is
+  installed.
+- [`fabisearch_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fabisearch_wrapper.md)
+  rejects an all-zero time point with a message that names the offending
+  rows, instead of letting NMF’s own error surface several layers down.
+- [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  reads NSP’s own intervals. NSP reports an interval that provably
+  contains a change, under `region_start`/`region_end`;
+  [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  looked only for `ci_lower`/`ci_upper` and so bootstrapped 200 re-runs
+  of the detector to produce a weaker statement than the one already on
+  the object. The `source` column now distinguishes `"nsp_region"` from
+  `"native"`, and reports NSP’s global level.
+- `bfast_wrapper(change_in = "seasonality")` works. reports “no
+  breakpoints in this component” as a bare `NA` rather than an empty
+  `breakpoints` object, so the declared capability errored with
+  `$ operator is invalid for atomic vectors` on any series whose
+  seasonal amplitude is stable. Asking for seasonal breaks with
+  `season = "none"` is now an error rather than a puzzle.
+- `binsegrcpp` no longer claims a variance-only change. has no
+  variance-only cost, so `change_in = "var"` was mapped to a
+  distribution the engine does not have; `"mean"` and `"meanvar"` are
+  what it offers.
+- [`taylor_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/taylor_wrapper.md)
+  validates `n_bootstraps` against the engine’s real range (100 to
+  1,000,000) instead of letting a smaller value fail inside
+  `ChangePointTaylor` with a message about its own misspelled argument.
+- New `cpt_batch(keep_fit = FALSE)` drops each engine’s raw fit. A few
+  engines return fits far larger than the data — measured on a
+  2000-point series, `strucchange` costs about 135 MB (a triangular
+  O(n^2) RSS matrix), `bfast` 53 MB and `bocpd` 31 MB, while every other
+  engine stays under 4 MB — and a panel multiplies that by the number of
+  series.
+  [`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
+  now carries both this and pilliat’s dimension restriction as caveats.
+- [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  gains an `index` argument and inherits one from an indexed `ggcpt`. It
+  previously read only the values off its input, so a selection made
+  from a dated fit came back reporting positions.
+- [`tidy()`](https://generics.r-lib.org/reference/tidy.html) now works
+  on every result class the package returns. `ggcpt_influence`,
+  `ggcpt_power`, `ggcpt_monitor`, `ggcpt_delay`, `ggcpt_recommendation`,
+  `cpt_labels` and `cpt_label_error` had no method, so
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) failed on
+  half the surface;
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) also
+  reports the one-row summary a `ggcpt_delay` already carries.
+- [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  names a missing value in the baseline instead of reporting it as zero
+  variability, and
+  [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  refuses a `truth` that falls past the end of the stream, is empty, or
+  is non-positive — each of which used to be scored as a clean miss.
+- The e-detector’s average-run-length bound is attributed to optional
+  stopping on (M_t - t) everywhere it is described. The README and the
+  `alpha` parameter’s documentation still credited Ville’s inequality,
+  which is a different statement.
+
+### Corrections to the roadmap
+
+- `hdbinseg` is **archived on CRAN again**, contrary to the 0.5.0
+  roadmap’s note that it was back at 1.0.3. `sbs` therefore stays in the
+  planned table, alongside `gfpop`, `robseg`, `FOCuS` and
+  `changeforest`, and all five now read “when on CRAN”.
+  [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+  is the supported route to any of them today.
+
+### Testing and infrastructure
+
+- New `inst/CITATION`.
+- The package opts into testthat edition 3
+  (`Config/testthat/edition: 3`). The whole suite passes unchanged under
+  it, and it is what makes `announce_snapshot_file()` available —
+  without which a plain `test_dir()` deletes every visual snapshot as
+  unused and the next run silently regenerates them.
+- New `vdiffr` visual-regression snapshots for every
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  type and every new layer — the package had no visual net at all, so a
+  dropped layer or an inverted axis could pass every existing test. They
+  are a local net: an SVG snapshot records the font stack of the machine
+  that made it, so they are skipped on CRAN and on CI rather than
+  reporting a failure on every platform but one.
+- Around 620 new expectations across seven test files
+  (`test-050-registry.R`, `-index`, `-inference`, `-diagnostics`,
+  `-supervised`, `-engines`, `-tools`) plus 25 visual snapshots in
+  `-visual`, all engine-dependent tests guarded with
+  `skip_if_not_installed()`. The suite runs about 2350 assertions with
+  the engines installed and about 1470 without them.
+- `stats`, `tools` and `utils` are declared in `Imports`; the new
+  engines and extras are in `Suggests` behind
+  [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) guards, as
+  before — 35 engines inside a 55-package `Suggests` list, and the
+  package still checks clean with none of them installed. `withr` joins
+  `Suggests`, which the tests already used.
+- Every parallel entry point is now tested under a real
+  `future::plan(multisession)`, and the wrappers that the suite only
+  ever reached through
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  —
+  [`esac_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/esac_wrapper.md),
+  [`pilliat_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/pilliat_wrapper.md),
+  [`kwc_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/kwc_wrapper.md),
+  [`not_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/not_wrapper.md),
+  [`wbs2_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/wbs2_wrapper.md),
+  [`trend_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/trend_wrapper.md),
+  [`taylor_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/taylor_wrapper.md),
+  [`wbsts_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/wbsts_wrapper.md)
+  — are now called directly, so their own argument handling is covered.
+- The suite is checked in two environments: the full one, and R 4.6.0
+  against a library holding the `Imports` and none of the `Suggests`.
+  The second is the only thing that exercises the no-`Suggests` path the
+  DESCRIPTION promises, and it caught a test that asserted
+  `geom_cpt_event(repel = TRUE)` builds — true only where is installed.
+  That assertion now covers both worlds instead of one.
+- `tests/testthat/setup.R` sets `rgl.useNULL`. `fabisearch` imports
+  `rgl`, which warns twice about the X11 display the moment its
+  namespace loads on any headless machine; the option is rgl’s own way
+  to say no window is needed, and it keeps the suite’s output about the
+  package.
+
+### Backward compatibility
+
+Everything from 0.4.0 keeps working. Almost all the additions are new
+functions, new optional arguments with their previous defaults, or new
+optional slots on `ggcpt` that are absent unless something supplies them
+— `is.null(fit$regions)` remains the test for “this engine does not do
+regions”, exactly as `data_wide` has always worked. Three changes are
+worth naming rather than leaving to be discovered:
+
+- [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  now prefers a time index carried on the result over the observation
+  position. This affects only results built with the new `index`
+  argument, which did not exist before.
+- [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  returns nine capability columns by default. Code that reads it by name
+  is unaffected; code that reads it by position, or checks
+  [`ncol()`](https://rdrr.io/r/base/nrow.html), is not.
+  `cpt_methods(capabilities = FALSE)` returns the 0.4.0 shape.
+- [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  gained `index` and `y` as its fifth and sixth formal arguments, ahead
+  of `...`. Named calls are unaffected. A call that passed a wrapper’s
+  own argument *positionally* past `penalty` — which no example or
+  vignette ever did, because `...` arguments have always had to be named
+  to reach the right engine — would now bind it to `index`.
+
 ## ggchangepoint 0.4.0
+
+CRAN release: 2026-08-24
 
 ### The 0.4.0 engine wave
 

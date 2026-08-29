@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -21,6 +21,9 @@
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Comparing changepoint methods</a></li>
     <li><a class="dropdown-item" href="../articles/ggchangepoint.html">Feature tour</a></li>
+    <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -74,6 +77,13 @@
 
         <dt>
 
+          <code><a href="as_cpt_series.html">as_cpt_series()</a></code>
+
+        </dt>
+        <dd>Coerce a time series object to values plus a time index</dd>
+
+        <dt>
+
           <code><a href="new_ggcpt.html">new_ggcpt()</a></code>
 
         </dt>
@@ -92,6 +102,36 @@
 
         </dt>
         <dd>Print a ggcpt object</dd>
+      </dl></div><div class="section level2">
+      <h2 id="extending-the-package">Extending the package<a class="anchor" aria-label="anchor" href="#extending-the-package"></a></h2>
+
+      <div class="section-desc"><p>Bring a detector this package does not wrap – a non-CRAN engine, a Python tool, a neural detector, or your own changepoints – into the same tidy, plottable grammar.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="as_ggcpt.html">as_ggcpt()</a></code>
+
+        </dt>
+        <dd>Turn external changepoints into a ggcpt result</dd>
+
+        <dt>
+
+          <code><a href="cpt_register_method.html">cpt_register_method()</a></code> <code><a href="cpt_register_method.html">cpt_unregister_method()</a></code> <code><a href="cpt_register_method.html">cpt_registered_methods()</a></code>
+
+        </dt>
+        <dd>Register an external changepoint detector</dd>
+
+        <dt>
+
+          <code><a href="cpt_install_engines.html">cpt_install_engines()</a></code>
+
+        </dt>
+        <dd>Install the engines behind a family of methods</dd>
       </dl></div><div class="section level2">
       <h2 id="original-wrappers">Original wrappers<a class="anchor" aria-label="anchor" href="#original-wrappers"></a></h2>
 
@@ -199,10 +239,322 @@
 
         <dt>
 
+          <code><a href="nsp_wrapper.html">nsp_wrapper()</a></code>
+
+        </dt>
+        <dd>NSP wrapper — Narrowest Significance Pursuit</dd>
+
+        <dt>
+
           <code><a href="cpt_crops.html">cpt_crops()</a></code> <code><a href="cpt_crops.html">autoplot(<i>&lt;ggcpt_path&gt;</i>)</a></code> <code><a href="cpt_crops.html">print(<i>&lt;ggcpt_path&gt;</i>)</a></code> <code><a href="cpt_crops.html">tidy(<i>&lt;ggcpt_path&gt;</i>)</a></code>
 
         </dt>
         <dd>CROPS — the full penalty path of a penalised changepoint method</dd>
+      </dl></div><div class="section level2">
+      <h2 id="inference">Inference<a class="anchor" aria-label="anchor" href="#inference"></a></h2>
+
+      <div class="section-desc"><p>Where could this changepoint be, and is it real?</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_confint.html">cpt_confint()</a></code>
+
+        </dt>
+        <dd>Confidence intervals for changepoint locations</dd>
+
+        <dt>
+
+          <code><a href="cpt_test.html">cpt_test()</a></code>
+
+        </dt>
+        <dd>Test detected changepoints</dd>
+
+        <dt>
+
+          <code><a href="cpt_regions.html">cpt_regions()</a></code>
+
+        </dt>
+        <dd>Tidy the significance regions of a ggcpt object</dd>
+      </dl></div><div class="section level2">
+      <h2 id="choosing-the-number-of-changepoints">Choosing the number of changepoints<a class="anchor" aria-label="anchor" href="#choosing-the-number-of-changepoints"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_select.html">cpt_select()</a></code> <code><a href="cpt_select.html">print(<i>&lt;ggcpt_selection&gt;</i>)</a></code> <code><a href="cpt_select.html">tidy(<i>&lt;ggcpt_selection&gt;</i>)</a></code> <code><a href="cpt_select.html">autoplot(<i>&lt;ggcpt_selection&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Choose the number of changepoints</dd>
+      </dl></div><div class="section level2">
+      <h2 id="diagnostics">Diagnostics<a class="anchor" aria-label="anchor" href="#diagnostics"></a></h2>
+
+      <div class="section-desc"><p>Which observation is driving this, which setting, and what did the detector actually compute?</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_influence.html">cpt_influence()</a></code> <code><a href="cpt_influence.html">print(<i>&lt;ggcpt_influence&gt;</i>)</a></code> <code><a href="cpt_influence.html">autoplot(<i>&lt;ggcpt_influence&gt;</i>)</a></code> <code><a href="cpt_influence.html">tidy(<i>&lt;ggcpt_influence&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Influence diagnostics for a changepoint segmentation</dd>
+
+        <dt>
+
+          <code><a href="cpt_leverage.html">cpt_leverage()</a></code>
+
+        </dt>
+        <dd>Rank observations by influence</dd>
+
+        <dt>
+
+          <code><a href="cpt_sensitivity.html">cpt_sensitivity()</a></code> <code><a href="cpt_sensitivity.html">print(<i>&lt;ggcpt_sensitivity&gt;</i>)</a></code> <code><a href="cpt_sensitivity.html">tidy(<i>&lt;ggcpt_sensitivity&gt;</i>)</a></code> <code><a href="cpt_sensitivity.html">autoplot(<i>&lt;ggcpt_sensitivity&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Sensitivity of a segmentation to its tuning parameters</dd>
+
+        <dt>
+
+          <code><a href="cpt_statistic.html">cpt_statistic()</a></code> <code><a href="cpt_statistic.html">ggcpt_statistic()</a></code>
+
+        </dt>
+        <dd>The detector's statistic as a function of location</dd>
+
+        <dt>
+
+          <code><a href="cpt_solution_path.html">cpt_solution_path()</a></code> <code><a href="cpt_solution_path.html">ggcpt_solution_path()</a></code>
+
+        </dt>
+        <dd>The solution path of a search-based detector</dd>
+
+        <dt>
+
+          <code><a href="cpt_scale_space.html">cpt_scale_space()</a></code> <code><a href="cpt_scale_space.html">ggcpt_scale_space()</a></code>
+
+        </dt>
+        <dd>Scale space: the statistic across bandwidths</dd>
+      </dl></div><div class="section level2">
+      <h2 id="supervised-detection">Supervised detection<a class="anchor" aria-label="anchor" href="#supervised-detection"></a></h2>
+
+      <div class="section-desc"><p>Labelled regions as ground truth, label errors as the accuracy measure, and a learned penalty.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_labels.html">cpt_labels()</a></code>
+
+        </dt>
+        <dd>Changepoint labels</dd>
+
+        <dt>
+
+          <code><a href="as_cpt_labels.html">as_cpt_labels()</a></code>
+
+        </dt>
+        <dd>Coerce annotations to changepoint labels</dd>
+
+        <dt>
+
+          <code><a href="cpt_label_error.html">cpt_label_error()</a></code> <code><a href="cpt_label_error.html">tidy(<i>&lt;cpt_label_error&gt;</i>)</a></code> <code><a href="cpt_label_error.html">print(<i>&lt;cpt_label_error&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Score a segmentation against labels</dd>
+
+        <dt>
+
+          <code><a href="cpt_label_error_curve.html">cpt_label_error_curve()</a></code> <code><a href="cpt_label_error_curve.html">print(<i>&lt;ggcpt_label_curve&gt;</i>)</a></code> <code><a href="cpt_label_error_curve.html">autoplot(<i>&lt;ggcpt_label_curve&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Label error as a function of the penalty</dd>
+
+        <dt>
+
+          <code><a href="cpt_learn_penalty.html">cpt_learn_penalty()</a></code> <code><a href="cpt_learn_penalty.html">print(<i>&lt;ggcpt_penalty_model&gt;</i>)</a></code> <code><a href="cpt_learn_penalty.html">coef(<i>&lt;ggcpt_penalty_model&gt;</i>)</a></code> <code><a href="cpt_learn_penalty.html">predict(<i>&lt;ggcpt_penalty_model&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Learn a penalty from labelled series</dd>
+      </dl></div><div class="section level2">
+      <h2 id="choosing-and-combining-methods">Choosing and combining methods<a class="anchor" aria-label="anchor" href="#choosing-and-combining-methods"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_recommend.html">cpt_recommend()</a></code> <code><a href="cpt_recommend.html">tidy(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code> <code><a href="cpt_recommend.html">print(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Recommend a detection method</dd>
+
+        <dt>
+
+          <code><a href="cpt_consensus.html">cpt_consensus()</a></code> <code><a href="cpt_consensus.html">autoplot(<i>&lt;ggcpt_consensus&gt;</i>)</a></code> <code><a href="cpt_consensus.html">print(<i>&lt;ggcpt_consensus&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Consensus changepoints across several detectors</dd>
+      </dl></div><div class="section level2">
+      <h2 id="communication">Communication<a class="anchor" aria-label="anchor" href="#communication"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_annotate_events.html">cpt_annotate_events()</a></code> <code><a href="cpt_annotate_events.html">print(<i>&lt;ggcpt_events&gt;</i>)</a></code> <code><a href="cpt_annotate_events.html">tidy(<i>&lt;ggcpt_events&gt;</i>)</a></code> <code><a href="cpt_annotate_events.html">autoplot(<i>&lt;ggcpt_events&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Match detected changepoints to known events</dd>
+
+        <dt>
+
+          <code><a href="cpt_report.html">cpt_report()</a></code>
+
+        </dt>
+        <dd>A reproducible report of a changepoint analysis</dd>
+
+        <dt>
+
+          <code><a href="cpt_gt.html">cpt_gt()</a></code>
+
+        </dt>
+        <dd>A publication-ready changepoint table</dd>
+      </dl></div><div class="section level2">
+      <h2 id="benchmarking">Benchmarking<a class="anchor" aria-label="anchor" href="#benchmarking"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_benchmark.html">cpt_benchmark()</a></code> <code><a href="cpt_benchmark.html">print(<i>&lt;ggcpt_benchmark&gt;</i>)</a></code> <code><a href="cpt_benchmark.html">tidy(<i>&lt;ggcpt_benchmark&gt;</i>)</a></code> <code><a href="cpt_benchmark.html">autoplot(<i>&lt;ggcpt_benchmark&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Benchmark detectors across datasets</dd>
+
+        <dt>
+
+          <code><a href="cpt_datasets.html">cpt_datasets()</a></code>
+
+        </dt>
+        <dd>A catalogue of benchmark datasets</dd>
+
+        <dt>
+
+          <code><a href="cpt_load_tcpd.html">cpt_load_tcpd()</a></code>
+
+        </dt>
+        <dd>Download and cache the Turing Change Point Dataset</dd>
+
+        <dt>
+
+          <code><a href="cpt_annotations.html">cpt_annotations()</a></code>
+
+        </dt>
+        <dd>Per-annotator ground truth for a benchmark dataset</dd>
+      </dl></div><div class="section level2">
+      <h2 id="streaming-and-online-monitoring">Streaming and online monitoring<a class="anchor" aria-label="anchor" href="#streaming-and-online-monitoring"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_monitor.html">cpt_monitor()</a></code> <code><a href="cpt_monitor.html">tidy(<i>&lt;ggcpt_monitor&gt;</i>)</a></code> <code><a href="cpt_monitor.html">print(<i>&lt;ggcpt_monitor&gt;</i>)</a></code> <code><a href="cpt_monitor.html">autoplot(<i>&lt;ggcpt_monitor&gt;</i>)</a></code>
+
+        </dt>
+        <dd>A stateful sequential changepoint monitor</dd>
+
+        <dt>
+
+          <code><a href="cpt_update.html">cpt_update()</a></code>
+
+        </dt>
+        <dd>Feed observations to a monitor</dd>
+
+        <dt>
+
+          <code><a href="alarms.html">alarms()</a></code>
+
+        </dt>
+        <dd>The alarm log of a monitor</dd>
+
+        <dt>
+
+          <code><a href="cpt_replay.html">cpt_replay()</a></code>
+
+        </dt>
+        <dd>Replay a series through a sequential detector</dd>
+
+        <dt>
+
+          <code><a href="cpt_delay.html">cpt_delay()</a></code> <code><a href="cpt_delay.html">tidy(<i>&lt;ggcpt_delay&gt;</i>)</a></code> <code><a href="cpt_delay.html">glance(<i>&lt;ggcpt_delay&gt;</i>)</a></code> <code><a href="cpt_delay.html">print(<i>&lt;ggcpt_delay&gt;</i>)</a></code> <code><a href="cpt_delay.html">autoplot(<i>&lt;ggcpt_delay&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Detection delay and false-alarm rate</dd>
+      </dl></div><div class="section level2">
+      <h2 id="power-and-study-design">Power and study design<a class="anchor" aria-label="anchor" href="#power-and-study-design"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_power.html">cpt_power()</a></code> <code><a href="cpt_power.html">tidy(<i>&lt;ggcpt_power&gt;</i>)</a></code> <code><a href="cpt_power.html">print(<i>&lt;ggcpt_power&gt;</i>)</a></code> <code><a href="cpt_power.html">autoplot(<i>&lt;ggcpt_power&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Detection power for a changepoint scenario</dd>
+
+        <dt>
+
+          <code><a href="cpt_min_detectable.html">cpt_min_detectable()</a></code> <code><a href="cpt_min_detectable.html">print(<i>&lt;ggcpt_min_detectable&gt;</i>)</a></code>
+
+        </dt>
+        <dd>The smallest detectable change</dd>
+
+        <dt>
+
+          <code><a href="cpt_scenarios.html">cpt_scenarios()</a></code>
+
+        </dt>
+        <dd>A grid of simulation scenarios</dd>
       </dl></div><div class="section level2">
       <h2 id="bayesian-wrappers">Bayesian wrappers<a class="anchor" aria-label="anchor" href="#bayesian-wrappers"></a></h2>
 
@@ -330,6 +682,85 @@
 
         </dt>
         <dd>Geometrically-inspired multivariate changepoint wrapper (geomcp)</dd>
+
+        <dt>
+
+          <code><a href="esac_wrapper.html">esac_wrapper()</a></code>
+
+        </dt>
+        <dd>ESAC wrapper — sparsity-adaptive high-dimensional detection</dd>
+
+        <dt>
+
+          <code><a href="pilliat_wrapper.html">pilliat_wrapper()</a></code>
+
+        </dt>
+        <dd>Pilliat wrapper — high-dimensional detection by three complementary tests</dd>
+
+        <dt>
+
+          <code><a href="hdcov_wrapper.html">hdcov_wrapper()</a></code>
+
+        </dt>
+        <dd>High-dimensional covariance changepoints</dd>
+
+        <dt>
+
+          <code><a href="network_wrapper.html">network_wrapper()</a></code>
+
+        </dt>
+        <dd>Dynamic-network changepoints</dd>
+
+        <dt>
+
+          <code><a href="var_wrapper.html">var_wrapper()</a></code>
+
+        </dt>
+        <dd>VAR(1) changepoints</dd>
+
+        <dt>
+
+          <code><a href="hdreg_wrapper.html">hdreg_wrapper()</a></code>
+
+        </dt>
+        <dd>High-dimensional regression changepoints</dd>
+      </dl></div><div class="section level2">
+      <h2 id="functional-and-network-wrappers">Functional and network wrappers<a class="anchor" aria-label="anchor" href="#functional-and-network-wrappers"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="fmean_wrapper.html">fmean_wrapper()</a></code>
+
+        </dt>
+        <dd>Functional mean changepoints</dd>
+
+        <dt>
+
+          <code><a href="fcov_wrapper.html">fcov_wrapper()</a></code>
+
+        </dt>
+        <dd>Functional covariance changepoints</dd>
+
+        <dt>
+
+          <code><a href="kwc_wrapper.html">kwc_wrapper()</a></code>
+
+        </dt>
+        <dd>Robust depth-based changepoints for functional and multivariate data</dd>
+
+        <dt>
+
+          <code><a href="fabisearch_wrapper.html">fabisearch_wrapper()</a></code>
+
+        </dt>
+        <dd>Network-structure changepoints via non-negative matrix factorisation</dd>
       </dl></div><div class="section level2">
       <h2 id="regression-break-wrappers">Regression-break wrappers<a class="anchor" aria-label="anchor" href="#regression-break-wrappers"></a></h2>
 
@@ -353,6 +784,66 @@
 
         </dt>
         <dd>Broken-line regression wrapper (segmented)</dd>
+
+        <dt>
+
+          <code><a href="bfast_wrapper.html">bfast_wrapper()</a></code>
+
+        </dt>
+        <dd>BFAST wrapper — breaks for additive season and trend</dd>
+      </dl></div><div class="section level2">
+      <h2 id="applied-vocabularies-and-fast-paths">Applied vocabularies and fast paths<a class="anchor" aria-label="anchor" href="#applied-vocabularies-and-fast-paths"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="trend_wrapper.html">trend_wrapper()</a></code>
+
+        </dt>
+        <dd>Classical single-changepoint tests (Pettitt, Buishand, SNHT)</dd>
+
+        <dt>
+
+          <code><a href="taylor_wrapper.html">taylor_wrapper()</a></code>
+
+        </dt>
+        <dd>Taylor's change point analyzer</dd>
+
+        <dt>
+
+          <code><a href="wbsts_wrapper.html">wbsts_wrapper()</a></code>
+
+        </dt>
+        <dd>WBS for nonstationary time series</dd>
+
+        <dt>
+
+          <code><a href="binsegrcpp_wrapper.html">binsegrcpp_wrapper()</a></code>
+
+        </dt>
+        <dd>Fast binary segmentation across loss functions</dd>
+      </dl></div><div class="section level2">
+      <h2 id="bayesian-formula-models">Bayesian formula models<a class="anchor" aria-label="anchor" href="#bayesian-formula-models"></a></h2>
+
+
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="mcp_wrapper.html">mcp_wrapper()</a></code>
+
+        </dt>
+        <dd>Bayesian formula-based changepoint regression (mcp)</dd>
       </dl></div><div class="section level2">
       <h2 id="broom-methods">broom methods<a class="anchor" aria-label="anchor" href="#broom-methods"></a></h2>
 
@@ -407,7 +898,7 @@
         </dt>
         <dd>Coerce, format, and plot ggcpt objects</dd>
       </dl></div><div class="section level2">
-      <h2 id="theming-and-helpers">Theming and helpers<a class="anchor" aria-label="anchor" href="#theming-and-helpers"></a></h2>
+      <h2 id="theming-palettes-and-accessibility">Theming, palettes and accessibility<a class="anchor" aria-label="anchor" href="#theming-palettes-and-accessibility"></a></h2>
 
 
 
@@ -429,6 +920,20 @@
 
         </dt>
         <dd>Annotate segments with alternating shading</dd>
+
+        <dt>
+
+          <code><a href="scale_colour_cpt.html">scale_colour_cpt()</a></code> <code><a href="scale_colour_cpt.html">scale_color_cpt()</a></code> <code><a href="scale_colour_cpt.html">scale_fill_cpt()</a></code> <code><a href="scale_colour_cpt.html">scale_linetype_cpt()</a></code>
+
+        </dt>
+        <dd>Colour-vision-safe scales for changepoint methods</dd>
+
+        <dt>
+
+          <code><a href="scale_fill_cpt_label.html">scale_fill_cpt_label()</a></code> <code><a href="scale_fill_cpt_label.html">scale_colour_cpt_label()</a></code>
+
+        </dt>
+        <dd>Colour scales for changepoint labels and label errors</dd>
       </dl></div><div class="section level2">
       <h2 id="visualization">Visualization<a class="anchor" aria-label="anchor" href="#visualization"></a></h2>
 
@@ -480,6 +985,27 @@
 
         </dt>
         <dd>Changepoint confidence interval geom</dd>
+
+        <dt>
+
+          <code><a href="geom_cpt_region.html">geom_cpt_region()</a></code>
+
+        </dt>
+        <dd>Significance region geom</dd>
+
+        <dt>
+
+          <code><a href="geom_cpt_label.html">geom_cpt_label()</a></code>
+
+        </dt>
+        <dd>Changepoint label geom</dd>
+
+        <dt>
+
+          <code><a href="geom_cpt_event.html">geom_cpt_event()</a></code>
+
+        </dt>
+        <dd>Event annotation geom</dd>
 
         <dt>
 

@@ -197,7 +197,7 @@ x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
 res <- cpt_detect(x, method = "pelt", change_in = "mean")
 res
 #> ggcpt (changepoint detection result)
-#>   Method:          pelt 
+#>   Method:         pelt
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -284,6 +284,15 @@ method quantifies uncertainty, the `ggcpt` object records it and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 can draw it.
 
+Release 0.5.0 adds a ninth: **P9 — be extensible from the outside**. A
+detector this package does not wrap, cannot wrap, or has never heard of
+can join the same grammar through
+[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
+and
+[`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md),
+and is labelled as user-supplied wherever it appears. See
+[`vignette("extending", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/extending.md).
+
 ## The unified dispatcher
 
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
@@ -295,20 +304,22 @@ and whether the engine is installed:
 ``` r
 
 cpt_methods()
-#> # A tibble: 35 × 6
-#>    method   change_in                   engine   status target_release installed
-#>    <chr>    <chr>                       <chr>    <chr>  <chr>          <lgl>    
-#>  1 pelt     mean, var, meanvar          changep… avail… NA             TRUE     
-#>  2 binseg   mean, var, meanvar          changep… avail… NA             TRUE     
-#>  3 segneigh mean, var, meanvar          changep… avail… NA             TRUE     
-#>  4 amoc     mean, var, meanvar          changep… avail… NA             TRUE     
-#>  5 np       distribution                changep… avail… NA             TRUE     
-#>  6 ecp      distribution (multivariate) ecp      avail… NA             TRUE     
-#>  7 fpop     mean                        fpop     avail… NA             TRUE     
-#>  8 wbs      mean                        wbs      avail… NA             TRUE     
-#>  9 wbs2     mean                        breakfa… avail… NA             TRUE     
-#> 10 not      mean, var, slope            not      avail… NA             TRUE     
-#> # ℹ 25 more rows
+#> # A tibble: 55 × 15
+#>    method   change_in        engine status installed target_release multivariate
+#>    <chr>    <chr>            <chr>  <chr>  <lgl>     <chr>          <lgl>       
+#>  1 pelt     mean, var, mean… chang… avail… TRUE      NA             FALSE       
+#>  2 binseg   mean, var, mean… chang… avail… TRUE      NA             FALSE       
+#>  3 segneigh mean, var, mean… chang… avail… TRUE      NA             FALSE       
+#>  4 amoc     mean, var, mean… chang… avail… TRUE      NA             FALSE       
+#>  5 np       distribution     chang… avail… TRUE      NA             FALSE       
+#>  6 ecp      distribution (m… ecp    avail… TRUE      NA             TRUE        
+#>  7 fpop     mean             fpop   avail… TRUE      NA             FALSE       
+#>  8 wbs      mean             wbs    avail… TRUE      NA             FALSE       
+#>  9 wbs2     mean             break… avail… TRUE      NA             FALSE       
+#> 10 not      mean, var, slope not    avail… TRUE      NA             FALSE       
+#> # ℹ 45 more rows
+#> # ℹ 8 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
+#> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>
 ```
 
 Requests are validated against this capability matrix: asking a
@@ -946,10 +957,11 @@ the number of methods behind it: the same
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) pipeline, the
 same plot, and the same evaluation code now span penalised, multiscale,
 nonparametric, Bayesian, high-dimensional, and regression-based
-detection — 31 methods in this release. Four more, whose engines are not
+detection — 50 methods in this release. Five more, whose engines are not
 currently on CRAN (graph-constrained gfpop (Hocking et al. 2020), robust
-segmentation under outliers (Fearnhead and Rigaill 2019), FOCuS, and
-sparsified binary segmentation), are listed as *planned* in
+segmentation under outliers (Fearnhead and Rigaill 2019), FOCuS,
+sparsified binary segmentation, and random-forest classification
+(Londschien et al. 2023)), are listed as *planned* in
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
 and will slot into the same wrapper pattern once their engines return;
 until then they are not callable.
@@ -1095,6 +1107,10 @@ Detect Changes.” *Computational Statistics & Data Analysis* 48 (4):
 
 Li, Xingchi, and Xianyang Zhang. 2024. “Fastcpd: Fast Change Point
 Detection in r.” *arXiv Preprint arXiv:2404.05933*.
+
+Londschien, Malte, Peter Bühlmann, and Solt Kovács. 2023. “Random
+Forests for Change Point Detection.” *Journal of Machine Learning
+Research* 24 (216): 1–45.
 
 Maidstone, Robert, Toby Hocking, Guillem Rigaill, and Paul Fearnhead.
 2017. “On Optimal Multiple Changepoint Algorithms for Large Data.”

@@ -5,18 +5,46 @@
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface
 to changepoint detection in R: one dispatcher
 ([`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md))
-covering 31 methods across six methodological families, one result class
-(`ggcpt`) with a stable tidy contract, and one visualisation entry point
+covering 50 methods across nine methodological families, one result
+class (`ggcpt`) with a stable tidy contract, and one visualisation entry
+point
 ([`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html))
 that draws everything a method reports — including confidence intervals
 and posterior probabilities (Wickham 2016; Robinson 2017). This vignette
 is the *feature tour*: it visits **every exported function** in the
 package at the point where it belongs in the workflow, so a reader can
-map the full surface in one sitting. The companion vignettes develop the
-methodology in depth
-([`vignette("introduction")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md))
-and treat method comparison and evaluation
-([`vignette("comparison")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md)).
+map the full surface in one sitting.
+
+Four companion vignettes go deeper:
+[`vignette("introduction")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md)
+develops the methodology,
+[`vignette("comparison")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md)
+treats method comparison and evaluation,
+[`vignette("inference")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/inference.md)
+covers confidence intervals, significance regions, selecting the number
+of changepoints and the diagnostic displays,
+[`vignette("supervised")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/supervised.md)
+covers labelled regions and learned penalties, and
+[`vignette("extending")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/extending.md)
+shows how to bring an external detector into the same grammar.
+
+> **New in 0.5.0.** Nineteen further engines; a time index that survives
+> the round trip (`cpt_detect(x, index = dates)` and `ts`/`xts`/`zoo`/
+> `tsibble` input); significance regions and the
+> [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+> /
+> [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
+> inference pair;
+> [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+> for the number of changepoints; influence, sensitivity, statistic,
+> solution-path and scale-space diagnostics; supervised detection;
+> consensus and method recommendation; event annotation and reports;
+> benchmarking; sequential monitoring; power analysis; and
+> [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
+> /
+> [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+> for detectors this package does not wrap. Each has its own section
+> below or its own vignette.
 
 ``` r
 
@@ -44,7 +72,7 @@ is_ggcpt(res)
 #> [1] TRUE
 print(res)
 #> ggcpt (changepoint detection result)
-#>   Method:          pelt 
+#>   Method:         pelt
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -118,7 +146,7 @@ summary(res)
 #>   CP convention:            left 
 #>   Series length:            200 
 #>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.014 
+#>   Runtime (seconds):        0.017 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -165,7 +193,7 @@ substituted.
 
 cpt_detect(x, method = "binseg", change_in = "mean")
 #> ggcpt (changepoint detection result)
-#>   Method:          binseg 
+#>   Method:         binseg
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -204,44 +232,66 @@ documented as future work and are *not* wired to
 ``` r
 
 print(cpt_methods(), n = Inf)
-#> # A tibble: 35 × 6
-#>    method      change_in                  engine status target_release installed
-#>    <chr>       <chr>                      <chr>  <chr>  <chr>          <lgl>    
-#>  1 pelt        mean, var, meanvar         chang… avail… NA             TRUE     
-#>  2 binseg      mean, var, meanvar         chang… avail… NA             TRUE     
-#>  3 segneigh    mean, var, meanvar         chang… avail… NA             TRUE     
-#>  4 amoc        mean, var, meanvar         chang… avail… NA             TRUE     
-#>  5 np          distribution               chang… avail… NA             TRUE     
-#>  6 ecp         distribution (multivariat… ecp    avail… NA             TRUE     
-#>  7 fpop        mean                       fpop   avail… NA             TRUE     
-#>  8 wbs         mean                       wbs    avail… NA             TRUE     
-#>  9 wbs2        mean                       break… avail… NA             TRUE     
-#> 10 not         mean, var, slope           not    avail… NA             TRUE     
-#> 11 mosum       mean                       mosum  avail… NA             TRUE     
-#> 12 idetect     mean                       IDete… avail… NA             TRUE     
-#> 13 tguh        mean                       break… avail… NA             TRUE     
-#> 14 smuce       mean (with CIs)            stepR  avail… NA             TRUE     
-#> 15 hsmuce      mean (heteroskedastic, wi… stepR  avail… NA             TRUE     
-#> 16 cpop        slope                      cpop   avail… NA             TRUE     
-#> 17 bcp         mean (Bayesian)            bcp    avail… NA             TRUE     
-#> 18 bocpd       mean (Bayesian online)     ocp    avail… NA             TRUE     
-#> 19 beast       mean/trend (Bayesian)      Rbeast avail… NA             TRUE     
-#> 20 cpm         distribution (sequential)  cpm    avail… NA             TRUE     
-#> 21 kcp         running statistics (kerne… kcpRS  avail… NA             TRUE     
-#> 22 npmojo      distribution (multivariat… CptNo… avail… NA             TRUE     
-#> 23 decafs      mean (drift + AR noise)    DeCAFS avail… NA             TRUE     
-#> 24 sn          mean, var, acf, correlati… SNSeg  avail… NA             TRUE     
-#> 25 inspect     mean (high-dimensional)    Inspe… avail… NA             TRUE     
-#> 26 ocd         mean (high-dimensional, o… ocd    avail… NA             TRUE     
-#> 27 geomcp      distribution (multivariat… chang… avail… NA             TRUE     
-#> 28 strucchange mean, regression (with CI… struc… avail… NA             TRUE     
-#> 29 segmented   slope (with CIs)           segme… avail… NA             TRUE     
-#> 30 envcpt      mean/trend vs autocorrela… EnvCpt avail… NA             TRUE     
-#> 31 fastcpd     mean, var, meanvar, AR/AR… fastc… avail… NA             TRUE     
-#> 32 gfpop       mean (graph-constrained)   gfpop  plann… when on CRAN   NA       
-#> 33 robust      mean (robust loss)         robseg plann… when on CRAN   NA       
-#> 34 focus       mean (online)              FOCuS  plann… when on CRAN   NA       
-#> 35 sbs         mean (high-dimensional)    hdbin… plann… next release   NA
+#> # A tibble: 55 × 15
+#>    method       change_in    engine status installed target_release multivariate
+#>    <chr>        <chr>        <chr>  <chr>  <lgl>     <chr>          <lgl>       
+#>  1 pelt         mean, var, … chang… avail… TRUE      NA             FALSE       
+#>  2 binseg       mean, var, … chang… avail… TRUE      NA             FALSE       
+#>  3 segneigh     mean, var, … chang… avail… TRUE      NA             FALSE       
+#>  4 amoc         mean, var, … chang… avail… TRUE      NA             FALSE       
+#>  5 np           distribution chang… avail… TRUE      NA             FALSE       
+#>  6 ecp          distributio… ecp    avail… TRUE      NA             TRUE        
+#>  7 fpop         mean         fpop   avail… TRUE      NA             FALSE       
+#>  8 wbs          mean         wbs    avail… TRUE      NA             FALSE       
+#>  9 wbs2         mean         break… avail… TRUE      NA             FALSE       
+#> 10 not          mean, var, … not    avail… TRUE      NA             FALSE       
+#> 11 mosum        mean         mosum  avail… TRUE      NA             FALSE       
+#> 12 idetect      mean         IDete… avail… TRUE      NA             FALSE       
+#> 13 tguh         mean         break… avail… TRUE      NA             FALSE       
+#> 14 smuce        mean (with … stepR  avail… TRUE      NA             FALSE       
+#> 15 hsmuce       mean (heter… stepR  avail… TRUE      NA             FALSE       
+#> 16 cpop         slope        cpop   avail… TRUE      NA             FALSE       
+#> 17 bcp          mean (Bayes… bcp    avail… TRUE      NA             FALSE       
+#> 18 bocpd        mean (Bayes… ocp    avail… TRUE      NA             FALSE       
+#> 19 beast        mean/trend … Rbeast avail… TRUE      NA             FALSE       
+#> 20 cpm          distributio… cpm    avail… TRUE      NA             FALSE       
+#> 21 kcp          running sta… kcpRS  avail… TRUE      NA             TRUE        
+#> 22 npmojo       distributio… CptNo… avail… TRUE      NA             TRUE        
+#> 23 decafs       mean (drift… DeCAFS avail… TRUE      NA             FALSE       
+#> 24 sn           mean, var, … SNSeg  avail… TRUE      NA             FALSE       
+#> 25 inspect      mean (high-… Inspe… avail… TRUE      NA             TRUE        
+#> 26 ocd          mean (high-… ocd    avail… TRUE      NA             TRUE        
+#> 27 geomcp       distributio… chang… avail… TRUE      NA             TRUE        
+#> 28 strucchange  mean, regre… struc… avail… TRUE      NA             FALSE       
+#> 29 segmented    slope (with… segme… avail… TRUE      NA             FALSE       
+#> 30 envcpt       mean/trend … EnvCpt avail… TRUE      NA             FALSE       
+#> 31 fastcpd      mean, var, … fastc… avail… TRUE      NA             TRUE        
+#> 32 nsp          mean (signi… nsp    avail… TRUE      NA             FALSE       
+#> 33 mcp          mean, slope… mcp    avail… TRUE      NA             FALSE       
+#> 34 esac         mean (high-… HDCD   avail… TRUE      NA             TRUE        
+#> 35 pilliat      mean (high-… HDCD   avail… TRUE      NA             TRUE        
+#> 36 hdcov        covariance … chang… avail… TRUE      NA             TRUE        
+#> 37 network      network str… chang… avail… TRUE      NA             TRUE        
+#> 38 var          VAR(1) tran… chang… avail… TRUE      NA             TRUE        
+#> 39 hdreg        high-dimens… chang… avail… TRUE      NA             TRUE        
+#> 40 fmean        functional … fChan… avail… TRUE      NA             TRUE        
+#> 41 fcov         functional … fChan… avail… TRUE      NA             TRUE        
+#> 42 kwc          covariance … KWCCh… avail… TRUE      NA             TRUE        
+#> 43 fabisearch   network str… fabis… avail… TRUE      NA             TRUE        
+#> 44 wbsts        mean (nonst… wbsts  avail… TRUE      NA             FALSE       
+#> 45 bfast        trend and s… bfast  avail… TRUE      NA             FALSE       
+#> 46 pettitt      mean (singl… trend  avail… TRUE      NA             FALSE       
+#> 47 buishand     mean (singl… trend  avail… TRUE      NA             FALSE       
+#> 48 snht         mean (stand… trend  avail… TRUE      NA             FALSE       
+#> 49 taylor       mean (Taylo… Chang… avail… TRUE      NA             FALSE       
+#> 50 binsegrcpp   mean, meanv… binse… avail… TRUE      NA             FALSE       
+#> 51 gfpop        mean (graph… gfpop  plann… NA        when on CRAN   NA          
+#> 52 robust       mean (robus… robseg plann… NA        when on CRAN   NA          
+#> 53 focus        mean (onlin… FOCuS  plann… NA        when on CRAN   NA          
+#> 54 sbs          mean (high-… hdbin… plann… NA        when on CRAN   NA          
+#> 55 changeforest distributio… chang… plann… NA        when on CRAN   NA          
+#> # ℹ 8 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
+#> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>
 ```
 
 [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
@@ -299,7 +349,7 @@ Anastasiou and Fryzlewicz 2022; Maidstone et al. 2017), one call each:
 
 fpop_wrapper(x, penalty = 2 * log(length(x)))
 #> ggcpt (changepoint detection result)
-#>   Method:          fpop 
+#>   Method:         fpop
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -317,7 +367,7 @@ fpop_wrapper(x, penalty = 2 * log(length(x)))
 
 wbs_wrapper(x, n_intervals = 2000, seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:          wbs 
+#>   Method:         wbs
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -335,7 +385,7 @@ wbs_wrapper(x, n_intervals = 2000, seed = 1)
 
 wbs2_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:          wbs2 
+#>   Method:         wbs2
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -353,7 +403,7 @@ wbs2_wrapper(x)
 
 not_wrapper(x, contrast = "pcwsConstMean", seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:          not 
+#>   Method:         not
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -371,7 +421,7 @@ not_wrapper(x, contrast = "pcwsConstMean", seed = 1)
 
 mosum_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:          mosum 
+#>   Method:         mosum
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -385,7 +435,7 @@ mosum_wrapper(x)
 #> 1   100    0.369
 mosum_wrapper(x3, multiscale = TRUE)
 #> ggcpt (changepoint detection result)
-#>   Method:          mosum 
+#>   Method:         mosum
 #>   Change in:       mean 
 #>   Changepoints found: 2 
 #>   CP convention:   left 
@@ -404,7 +454,7 @@ mosum_wrapper(x3, multiscale = TRUE)
 
 idetect_wrapper(x, seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:          idetect 
+#>   Method:         idetect
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -422,7 +472,7 @@ idetect_wrapper(x, seed = 1)
 
 tguh_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:          tguh 
+#>   Method:         tguh
 #>   Change in:       mean 
 #>   Changepoints found: 1 
 #>   CP convention:   left 
@@ -1120,6 +1170,328 @@ cpt_cite(res)
 #> [pelt] Killick, R., Fearnhead, P. and Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. Journal of the American Statistical Association, 107(500), 1590-1598.
 ```
 
+## The 0.5.0 surface
+
+The sections above are the 0.4.0 tour. What follows visits the rest of
+the exported surface, one example each; three companion vignettes
+develop these properly.
+
+### Time indices
+
+`cpt_detect(index = )` attaches a clock. Detection still runs on
+positions, because every engine assumes an equally spaced sequence, but
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html),
+[`augment()`](https://generics.r-lib.org/reference/augment.html),
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+and the reporting functions all speak in the user’s units.
+[`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md)
+is the coercion underneath, and it accepts `ts`, `xts`, `zoo` and
+`tsibble` directly.
+
+``` r
+
+dates <- as.Date("2020-01-01") + seq_along(x) - 1
+dated <- cpt_detect(x, method = "pelt", index = dates)
+tidy(dated)
+#> # A tibble: 1 × 3
+#>      cp cp_index   cp_value
+#>   <int> <date>        <dbl>
+#> 1   100 2020-04-09    0.369
+cpt_detect(data.frame(day = dates, v = x), y = v, index = day,
+           method = "pelt")$changepoints$cp_index
+#> [1] "2020-04-09"
+```
+
+### Inference
+
+[`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
+returns significance regions, read with
+[`cpt_regions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_regions.md)
+and drawn by
+[`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md).
+[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+unifies four interval routes;
+[`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
+attaches a test and flags whether it is selection-adjusted.
+
+``` r
+
+cpt_confint(res, method = "bootstrap", B = 30, seed = 1)
+#> # A tibble: 1 × 6
+#>      cp ci_lower ci_upper level source    n_replicates
+#>   <int>    <int>    <int> <dbl> <chr>            <int>
+#> 1   100      100      100  0.95 bootstrap           30
+suppressWarnings(cpt_test(res))[, c("cp", "estimate", "p_value",
+                                    "selection_adjusted")]
+#> # A tibble: 1 × 4
+#>      cp estimate   p_value selection_adjusted
+#>   <int>    <dbl>     <dbl> <lgl>             
+#> 1   100     6.22 1.61e-105 FALSE
+```
+
+``` r
+
+autoplot(nsp_wrapper(x, M = 100, seed = 1))
+```
+
+![Series with a shaded band marking an NSP significance
+region](ggchangepoint_files/figure-html/nsp-tour-1.png)
+
+### Selecting the number of changepoints
+
+``` r
+
+sel <- cpt_select(x3, criterion = "bic", k_max = 6)
+sel$k
+#> [1] 2
+autoplot(sel)
+```
+
+![Criterion value against the number of changepoints, with the chosen
+model marked](ggchangepoint_files/figure-html/select-tour-1.png)
+
+### Diagnostics
+
+[`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
+and
+[`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+say which observation drives the answer;
+[`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
+says which setting does;
+[`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md),
+[`cpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+and
+[`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
+(with their `ggcpt_*()` plots, reachable from `autoplot(type = )`) say
+what the detector actually computed.
+
+``` r
+
+inf <- cpt_influence(res, engine = "recompute", subset = seq(1, 200, by = 20))
+head(cpt_leverage(inf), 3)
+#> # A tibble: 3 × 5
+#>   index delta_n_cp max_shift param_shift leverage
+#>   <int>      <int>     <dbl>       <dbl>    <dbl>
+#> 1   121          0         0      0.0180    1.75 
+#> 2   161          0         0      0.0130    0.832
+#> 3   101          0         0      0.0111    0.484
+cpt_sensitivity(x, method = "pelt", over = list(penalty = c(4, 40)))$grid[, 1:2]
+#> # A tibble: 2 × 2
+#>   penalty  n_cp
+#>     <dbl> <int>
+#> 1       4     7
+#> 2      40     1
+```
+
+``` r
+
+autoplot(cpt_detect(x, method = "mosum"), type = "statistic")
+```
+
+![Two-panel display: the series above, the MOSUM statistic
+below](ggchangepoint_files/figure-html/stat-tour-1.png)
+
+### Supervised detection
+
+``` r
+
+labs <- cpt_labels(c(80, 140), c(120, 190), c("one_change", "no_change"))
+cpt_label_error(res, labs)[, c("start", "end", "change", "status")]
+#> # A tibble: 2 × 4
+#>   start   end change     status 
+#>   <int> <int> <chr>      <chr>  
+#> 1    80   120 one_change correct
+#> 2   140   190 no_change  correct
+```
+
+[`as_cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_labels.md)
+converts a plain ground-truth set into labels,
+[`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
+traces the errors across a penalty grid, and
+[`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+fits a penalty from several labelled series — see
+[`vignette("supervised", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/supervised.md).
+
+### Choosing and combining methods
+
+``` r
+
+cpt_recommend(noise = "heavy")
+#> Recommended methods for: univariate series, change in mean, heavy noise
+#> 
+#> 1. cpm (cpm)
+#>    why: handles change_in = "mean"; built for heavy noise
+#> 2. kcp (kcpRS)
+#>    why: handles change_in = "mean"; built for heavy noise
+#> 3. nsp (nsp)
+#>    why: handles change_in = "mean"; built for heavy noise
+#> 4. sn (SNSeg)
+#>    why: handles change_in = "mean"; built for heavy noise
+#> 5. bcp (bcp)
+#>    why: handles change_in = "mean"
+#> 
+#> (27 further candidate(s); the full table is the return value.)
+#> 
+#> Cite the method you use with cpt_cite(). Cross-check the choice with
+#> cpt_consensus() and cpt_sensitivity().
+tidy(cpt_consensus(x3, methods = c("pelt", "binseg", "amoc")))
+#> # A tibble: 2 × 5
+#>      cp cp_value votes methods            spread
+#>   <int>    <dbl> <int> <chr>               <int>
+#> 1   100   -0.100     3 amoc, binseg, pelt      0
+#> 2   200    2.90      2 binseg, pelt            0
+```
+
+### Communication
+
+``` r
+
+cpt_annotate_events(dated,
+                    data.frame(when = as.Date("2020-04-10"),
+                               what = "policy change"))
+#> ggcpt_events (tolerance 5 position(s))
+#>   Changepoints explained by an event: 1
+#>   Changepoints with no event:         0
+#>   Events with no changepoint:         0
+#> 
+#> Matched:
+#> # A tibble: 1 × 6
+#>      cp cp_index   event         event_value event_position distance
+#>   <int> <date>     <chr>         <date>               <int>    <int>
+#> 1   100 2020-04-09 policy change 2020-04-10             101        1
+```
+
+[`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md)
+assembles the whole analysis into markdown, and
+[`cpt_gt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gt.md)
+renders a publication table.
+[`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md)
+draws the events;
+[`scale_colour_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md),
+[`scale_fill_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md),
+[`scale_linetype_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md),
+[`scale_fill_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
+and
+[`scale_colour_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
+are the colour-vision-safe scales;
+[`theme_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/theme_ggcpt.md)
+is unchanged.
+
+### Benchmarking
+
+``` r
+
+bm <- cpt_benchmark(cpt_datasets(n = 200, seed = 1,
+                                 names = c("step", "teeth", "ar1")),
+                    methods = c("pelt", "binseg", "amoc"), progress = FALSE)
+autoplot(bm)
+```
+
+![Heatmap of the covering metric for each method on each benchmark
+dataset](ggchangepoint_files/figure-html/benchmark-tour-1.png)
+
+``` r
+
+cpt_annotations(cpt_datasets(n = 200, names = "step"))
+#> # A tibble: 2 × 3
+#>   dataset annotator    cp
+#>   <chr>   <chr>     <int>
+#> 1 step    1            66
+#> 2 step    1           133
+```
+
+[`cpt_load_tcpd()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_load_tcpd.md)
+downloads and caches the Turing Change Point Dataset; it is not run here
+because it needs a network connection.
+
+### Streaming
+
+``` r
+
+mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
+alarms(mon)
+#> # A tibble: 2 × 3
+#>    time statistic threshold
+#>   <int>     <dbl>     <dbl>
+#> 1    38      127.       100
+#> 2   101      163.       100
+cpt_delay(mon, truth = 200)
+#> ggcpt_delay
+#>   True changes:      1
+#>   Detected:          1
+#>   Mean delay:        1
+#>   Median delay:      1
+#>   False alarms:      1
+#>   Average run length: 400
+#> 
+#> # A tibble: 1 × 4
+#>   truth alarm delay detected
+#>   <int> <int> <dbl> <lgl>   
+#> 1   200   201     1 TRUE
+```
+
+[`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+and
+[`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md)
+are the incremental form: `mon <- cpt_update(mon, new_obs)` as data
+arrive.
+
+### Power and study design
+
+``` r
+
+pw <- cpt_power(n = 200, jump = c(0.5, 1, 2), n_sim = 30, seed = 1)
+autoplot(pw)
+```
+
+![Power curve: detection probability against change
+size](ggchangepoint_files/figure-html/power-tour-1.png)
+
+[`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
+inverts the curve, and
+[`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md)
+builds a grid of settings as data.
+
+### Extending
+
+``` r
+
+fit_ext <- as_ggcpt(c(100), x, method = "external_detector")
+glance(fit_ext)[, c("method", "n_changepoints")]
+#> # A tibble: 1 × 2
+#>   method            n_changepoints
+#>   <chr>                      <int>
+#> 1 external_detector              1
+
+cpt_register_method("biggest_jump",
+                    fn = function(x, ...) which.max(abs(diff(x))),
+                    engine = "example")
+cpt_detect(x, method = "biggest_jump")$changepoints$cp
+#> [1] 100
+subset(cpt_methods(), status == "registered")[, c("method", "engine")]
+#> # A tibble: 1 × 2
+#>   method       engine 
+#>   <chr>        <chr>  
+#> 1 biggest_jump example
+cpt_unregister_method("biggest_jump")
+```
+
+[`cpt_install_engines()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_install_engines.md)
+installs a family of engines at a time:
+
+``` r
+
+cpt_install_engines("bayesian", dry_run = TRUE)[, c("package",
+                                                    "installed_before")]
+#> # A tibble: 4 × 2
+#>   package installed_before
+#>   <chr>   <lgl>           
+#> 1 bcp     TRUE            
+#> 2 ocp     TRUE            
+#> 3 Rbeast  TRUE            
+#> 4 mcp     TRUE
+```
+
 ## Closing note
 
 This tour visited every exported function in the package. For the
@@ -1127,7 +1499,12 @@ framework’s design, the mathematics of the wrapped methods, and worked
 analyses, see
 [`vignette("introduction", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md);
 for method comparison and accuracy evaluation in depth, see
-[`vignette("comparison", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md).
+[`vignette("comparison", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md);
+and for the 0.5.0 additions in depth, see
+[`vignette("inference")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/inference.md),
+[`vignette("supervised")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/supervised.md)
+and
+[`vignette("extending")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/extending.md).
 
 ## References
 

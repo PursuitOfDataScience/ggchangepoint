@@ -56,9 +56,8 @@ multivariate time series via joint characteristic functions.”
 ``` r
 res <- npmojo_wrapper(c(rnorm(100), rnorm(100, 3)))
 res$changepoints
-#> # A tibble: 2 × 2
+#> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1   100    0.369
-#> 2   122    5.13 
+#> 1   100    0.159
 ```

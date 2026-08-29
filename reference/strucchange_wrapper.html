@@ -19,7 +19,7 @@ and render via autoplot(show_ci = TRUE)."><meta property="og:image" content="htt
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,6 +33,9 @@ and render via autoplot(show_ci = TRUE)."><meta property="og:image" content="htt
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Comparing changepoint methods</a></li>
     <li><a class="dropdown-item" href="../articles/ggchangepoint.html">Feature tour</a></li>
+    <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -124,7 +127,7 @@ margin that widens as the series grows. A single fit is not a problem; a
 few hundred of them are, so when running this engine over a panel with
 <code><a href="cpt_batch.html">cpt_batch()</a></code> keep what you need
 (<code>res$changepoints</code>) rather than the whole list of results. No other
-engine here behaves this way: the median result across the other thirty is
+engine here behaves this way: the median result across the others is
 under ten times the size of the series it was given.</p>
     </div>
     <div class="section level2">

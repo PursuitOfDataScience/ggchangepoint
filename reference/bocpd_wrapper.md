@@ -50,6 +50,6 @@ res$changepoints
 #> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1    60     1.10
+#> 1    60   -0.554
 ggcpt_runlength(res)
 ```

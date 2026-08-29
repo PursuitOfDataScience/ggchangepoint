@@ -13,7 +13,7 @@ engines and capabilities."><meta property="og:image" content="https://pursuitofd
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,6 +27,9 @@ engines and capabilities."><meta property="og:image" content="https://pursuitofd
   <ul class="dropdown-menu" aria-labelledby="dropdown-vignettes"><li><a class="dropdown-item" href="../articles/introduction.html">Introduction to ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Comparing changepoint methods</a></li>
     <li><a class="dropdown-item" href="../articles/ggchangepoint.html">Feature tour</a></li>
+    <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -51,7 +54,15 @@ engines and capabilities.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_detect</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span>, penalty <span class="op">=</span> <span class="st">"MBIC"</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_detect</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"pelt"</span>,</span>
+<span>  change_in <span class="op">=</span> <span class="st">"mean"</span>,</span>
+<span>  penalty <span class="op">=</span> <span class="st">"MBIC"</span>,</span>
+<span>  index <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  y <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -59,32 +70,32 @@ engines and capabilities.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A numeric vector for univariate methods, or a numeric
-matrix/data frame (rows are time points) for the multivariate methods
-(<code>"ecp"</code>, <code>"inspect"</code>, <code>"geomcp"</code>, <code>"ocd"</code>,
-<code>"npmojo"</code>, <code>"kcp"</code>, <code>"fastcpd"</code>).</p></dd>
+<dd><p>The series. A numeric vector for univariate methods, or a
+numeric matrix/data frame (rows are time points) for the multivariate
+methods — run <code>subset(cpt_methods(), multivariate)$method</code> for the
+list. A <code>ts</code>, <code>xts</code>, <code>zoo</code> or (unkeyed) <code>tsibble</code>
+is accepted directly and its time index is carried through to
+<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>; so is a data frame together with
+<code>y</code> (and optionally <code>index</code>).</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Detection method. One of <code>"pelt"</code>, <code>"binseg"</code>,
-<code>"segneigh"</code>, <code>"amoc"</code>, <code>"np"</code>, <code>"ecp"</code>,
-<code>"fpop"</code>, <code>"wbs"</code>, <code>"wbs2"</code>, <code>"not"</code>,
-<code>"mosum"</code>, <code>"idetect"</code>, <code>"tguh"</code>, <code>"smuce"</code>,
-<code>"hsmuce"</code>, <code>"cpop"</code>, <code>"bcp"</code>, <code>"bocpd"</code>,
-<code>"beast"</code>, <code>"cpm"</code>, <code>"kcp"</code>, <code>"npmojo"</code>,
-<code>"decafs"</code>, <code>"sn"</code>, <code>"inspect"</code>, <code>"ocd"</code>,
-<code>"geomcp"</code>, <code>"strucchange"</code>, <code>"segmented"</code>,
-<code>"envcpt"</code>, or <code>"fastcpd"</code>. Methods whose engines live in
-<code>Suggests</code> prompt for installation when missing.</p></dd>
+<dd><p>Detection method: any <code>method</code> in
+<code><a href="cpt_methods.html">cpt_methods()</a></code> whose <code>status</code> is <code>"available"</code> or
+<code>"registered"</code>. Methods whose engines live in <code>Suggests</code>
+report what to install when missing;
+<code><a href="cpt_register_method.html">cpt_register_method()</a></code> adds detectors this package does
+not wrap.</p></dd>
 
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>
 <dd><p>What to detect change in. One of <code>"mean"</code>,
-<code>"var"</code>, <code>"meanvar"</code>, <code>"slope"</code>, or
-<code>"distribution"</code>. Defaults to <code>"mean"</code>. The requested value
-is validated against the method's capabilities
-(see <code><a href="cpt_methods.html">cpt_methods()</a></code>); incompatible combinations error rather than
-silently running something else.</p></dd>
+<code>"var"</code>, <code>"meanvar"</code>, <code>"slope"</code>,
+<code>"distribution"</code>, <code>"covariance"</code>, <code>"network"</code>,
+<code>"regression"</code> or <code>"seasonality"</code>. Defaults to
+<code>"mean"</code>. The requested value is validated against the method's
+capabilities (see <code><a href="cpt_methods.html">cpt_methods()</a></code>); incompatible combinations
+error rather than silently running something else.</p></dd>
 
 
 <dt id="arg-penalty">penalty<a class="anchor" aria-label="anchor" href="#arg-penalty"></a></dt>
@@ -104,6 +115,26 @@ against 11.8 at \(n = 360\) — so <code>cpt_detect(x, method =
 "decafs")</code> can report fewer changepoints than <code>decafs_wrapper(x)</code>
 on the same series. Pass <code>penalty</code> explicitly to make the two
 entry points agree.</p></dd>
+
+
+<dt id="arg-index">index<a class="anchor" aria-label="anchor" href="#arg-index"></a></dt>
+<dd><p>Optional time index, one value per observation (dates, say).
+Detection still runs on observation positions — every wrapped engine
+assumes an equally spaced sequence — but the index is stored on the
+result and threaded through <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> (as <code>cp_index</code>),
+<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>, <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and <code><a href="cpt_report.html">cpt_report()</a></code>,
+so the output speaks in the user's own units. An index that is not
+equally spaced warns. When <code>x</code> is a data frame and <code>y</code> is
+given, <code>index</code> selects a column of that data frame instead of
+being a vector.</p></dd>
+
+
+<dt id="arg-y">y<a class="anchor" aria-label="anchor" href="#arg-y"></a></dt>
+<dd><p>Column selection for the data-frame interface:
+<code>cpt_detect(df, y = value, index = date, method = "pelt")</code>. A bare
+column name, a string, or a column position. Only meaningful when
+<code>x</code> is a data frame; a data frame passed without <code>y</code> keeps
+its 0.4.0 meaning (one column per coordinate).</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -157,7 +188,7 @@ and return the same segmentation whatever the units.</p>
 <span class="r-in"><span><span class="va">result</span> <span class="op">&lt;-</span> <span class="fu">cpt_detect</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">result</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:          pelt </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:         pelt</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       mean </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
@@ -171,6 +202,33 @@ and return the same segmentation whatever the units.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100    0.467</span>
 <span class="r-in"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">result</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="cpt_detect-1.png" alt="" width="700" height="433"></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A date index: detection is unchanged, but the report speaks in dates.</span></span></span>
+<span class="r-in"><span><span class="va">dates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2000-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0</span><span class="op">:</span><span class="fl">199</span></span></span>
+<span class="r-in"><span><span class="va">dated</span> <span class="op">&lt;-</span> <span class="fu">cpt_detect</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, index <span class="op">=</span> <span class="va">dates</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">dated</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_index   cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100 2000-04-09    0.467</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># The data-frame interface.</span></span></span>
+<span class="r-in"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>day <span class="op">=</span> <span class="va">dates</span>, value <span class="op">=</span> <span class="va">x</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">cpt_detect</span><span class="op">(</span><span class="va">df</span>, y <span class="op">=</span> <span class="va">value</span>, index <span class="op">=</span> <span class="va">day</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:         pelt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       mean </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         MBIC </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:   200 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Index:           2000-01-01 to 2000-07-18 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_index   cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100 2000-04-09    0.467</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

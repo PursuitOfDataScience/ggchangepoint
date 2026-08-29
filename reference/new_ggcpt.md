@@ -61,7 +61,14 @@ new_ggcpt(
   series. Call
   [`ecp::e.divisive()`](https://rdrr.io/pkg/ecp/man/e.divisive.html) or
   [`ecp::e.agglo()`](https://rdrr.io/pkg/ecp/man/e.agglo.html) directly
-  if you need it.
+  if you need it. A few of the engines that *are* kept are still large
+  relative to the data — measured on a 2000-point series, `strucchange`
+  costs about 135 MB (a triangular \\O(n^2)\\ RSS matrix), `bfast` about
+  53 MB and `bocpd` about 31 MB, while every other engine stays under 4
+  MB. That is the engine's own object, not overhead this package adds,
+  and it matters mainly when many results are held at once:
+  [`cpt_batch`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)`(keep_fit = FALSE)`
+  drops them, or assign `res$fit <- NULL` yourself.
 
 - call:
 
@@ -82,3 +89,44 @@ new_ggcpt(
 ## Value
 
 An object of class `ggcpt`.
+
+## Optional slots
+
+Beyond the components in the signature, a `ggcpt` may carry any of
+these, each present only when something supplied it and each safe to
+test for with [`is.null()`](https://rdrr.io/r/base/NULL.html):
+
+- `data_wide`:
+
+  index plus one column per coordinate, for a multivariate result.
+
+- `index`, `index_label`:
+
+  a time index (one value per observation) and its axis label; see the
+  `index` argument of
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md).
+
+- `regions`:
+
+  a tibble of significance regions (`start`, `end`, ...) for the
+  interval-valued methods — see
+  [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
+  and
+  [`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md).
+
+- `diagnostics`:
+
+  a named list of engine internals rendered by
+  [`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md),
+  [`ggcpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  and
+  [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md).
+
+- `registered`:
+
+  `TRUE` when the result came from a user-registered detector rather
+  than a wired engine.
+
+[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
+is the validating way to build one of these from the outside; this
+constructor does not check its arguments.

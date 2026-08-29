@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.4.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -36,6 +36,9 @@
 <li><a class="dropdown-item" href="../articles/introduction.html">Introduction to ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/comparison.html">Comparing changepoint methods</a></li>
     <li><a class="dropdown-item" href="../articles/ggchangepoint.html">Feature tour</a></li>
+    <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
+    <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
+    <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -71,17 +74,37 @@ Yu<br><span style="font-size:85%;">University of Chicago</span>
 </h2>
 <p><strong>ggchangepoint</strong> provides a unified, tidy,
 <code>ggplot2</code>-native interface to changepoint detection in R: one
-dispatcher (<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>) covering 31 methods across six
+dispatcher (<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>) covering 50 methods across nine
 methodological families, one result class (<code>ggcpt</code>) with a
 stable tidy contract, and one visualisation entry point
 (<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>) that draws everything a method reports —
 including confidence intervals and posterior probabilities <span class="citation">(Wickham 2016; Robinson 2017)</span>. This vignette is
 the <em>feature tour</em>: it visits <strong>every exported
 function</strong> in the package at the point where it belongs in the
-workflow, so a reader can map the full surface in one sitting. The
-companion vignettes develop the methodology in depth
-(<code><a href="../articles/introduction.html">vignette("introduction")</a></code>) and treat method comparison and
-evaluation (<code><a href="../articles/comparison.html">vignette("comparison")</a></code>).</p>
+workflow, so a reader can map the full surface in one sitting.</p>
+<p>Four companion vignettes go deeper:
+<code><a href="../articles/introduction.html">vignette("introduction")</a></code> develops the methodology,
+<code><a href="../articles/comparison.html">vignette("comparison")</a></code> treats method comparison and
+evaluation, <code><a href="../articles/inference.html">vignette("inference")</a></code> covers confidence
+intervals, significance regions, selecting the number of changepoints
+and the diagnostic displays, <code><a href="../articles/supervised.html">vignette("supervised")</a></code> covers
+labelled regions and learned penalties, and
+<code><a href="../articles/extending.html">vignette("extending")</a></code> shows how to bring an external
+detector into the same grammar.</p>
+<blockquote>
+<p><strong>New in 0.5.0.</strong> Nineteen further engines; a time index
+that survives the round trip (<code>cpt_detect(x, index = dates)</code>
+and <code>ts</code>/<code>xts</code>/<code>zoo</code>/
+<code>tsibble</code> input); significance regions and the
+<code><a href="../reference/cpt_confint.html">cpt_confint()</a></code> / <code><a href="../reference/cpt_test.html">cpt_test()</a></code> inference pair;
+<code><a href="../reference/cpt_select.html">cpt_select()</a></code> for the number of changepoints; influence,
+sensitivity, statistic, solution-path and scale-space diagnostics;
+supervised detection; consensus and method recommendation; event
+annotation and reports; benchmarking; sequential monitoring; power
+analysis; and <code><a href="../reference/as_ggcpt.html">as_ggcpt()</a></code> /
+<code><a href="../reference/cpt_register_method.html">cpt_register_method()</a></code> for detectors this package does not
+wrap. Each has its own section below or its own vignette.</p>
+</blockquote>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">0</span>, <span class="fl">1</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">6</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span>    <span class="co"># one mean shift at t = 100</span></span>
@@ -105,7 +128,7 @@ directly.</p>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          pelt </span></span>
+<span><span class="co">#&gt;   Method:         pelt</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -163,7 +186,7 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <span><span class="co">#&gt;   CP convention:            left </span></span>
 <span><span class="co">#&gt;   Series length:            200 </span></span>
 <span><span class="co">#&gt;   Penalty:                  MBIC </span></span>
-<span><span class="co">#&gt;   Runtime (seconds):        0.014 </span></span>
+<span><span class="co">#&gt;   Runtime (seconds):        0.017 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
@@ -204,7 +227,7 @@ never silently substituted.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"binseg"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          binseg </span></span>
+<span><span class="co">#&gt;   Method:         binseg</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -235,44 +258,66 @@ on CRAN, so they are documented as future work and are <em>not</em>
 wired to <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_methods.html">cpt_methods</a></span><span class="op">(</span><span class="op">)</span>, n <span class="op">=</span> <span class="cn">Inf</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 35 × 6</span></span></span>
-<span><span class="co">#&gt;    method      change_in                  engine status target_release installed</span></span>
-<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> pelt        mean, var, meanvar         chang… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> binseg      mean, var, meanvar         chang… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> segneigh    mean, var, meanvar         chang… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> amoc        mean, var, meanvar         chang… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> np          distribution               chang… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ecp         distribution (multivariat… ecp    avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fpop        mean                       fpop   avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> wbs         mean                       wbs    avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> wbs2        mean                       break… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> not         mean, var, slope           not    avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> mosum       mean                       mosum  avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> idetect     mean                       IDete… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> tguh        mean                       break… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> smuce       mean (with CIs)            stepR  avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> hsmuce      mean (heteroskedastic, wi… stepR  avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> cpop        slope                      cpop   avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> bcp         mean (Bayesian)            bcp    avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> bocpd       mean (Bayesian online)     ocp    avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> beast       mean/trend (Bayesian)      Rbeast avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> cpm         distribution (sequential)  cpm    avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> kcp         running statistics (kerne… kcpRS  avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> npmojo      distribution (multivariat… CptNo… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> decafs      mean (drift + AR noise)    DeCAFS avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> sn          mean, var, acf, correlati… SNSeg  avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> inspect     mean (high-dimensional)    Inspe… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">26</span> ocd         mean (high-dimensional, o… ocd    avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">27</span> geomcp      distribution (multivariat… chang… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">28</span> strucchange mean, regression (with CI… struc… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">29</span> segmented   slope (with CIs)           segme… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">30</span> envcpt      mean/trend vs autocorrela… EnvCpt avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">31</span> fastcpd     mean, var, meanvar, AR/AR… fastc… avail… <span style="color: #BB0000;">NA</span>             TRUE     </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">32</span> gfpop       mean (graph-constrained)   gfpop  plann… when on CRAN   <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">33</span> robust      mean (robust loss)         robseg plann… when on CRAN   <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">34</span> focus       mean (online)              FOCuS  plann… when on CRAN   <span style="color: #BB0000;">NA</span>       </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">35</span> sbs         mean (high-dimensional)    hdbin… plann… next release   <span style="color: #BB0000;">NA</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 55 × 15</span></span></span>
+<span><span class="co">#&gt;    method       change_in    engine status installed target_release multivariate</span></span>
+<span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> pelt         mean, var, … chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> binseg       mean, var, … chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> segneigh     mean, var, … chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> amoc         mean, var, … chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> np           distribution chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> ecp          distributio… ecp    avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> fpop         mean         fpop   avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> wbs          mean         wbs    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> wbs2         mean         break… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> not          mean, var, … not    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> mosum        mean         mosum  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> idetect      mean         IDete… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">13</span> tguh         mean         break… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">14</span> smuce        mean (with … stepR  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">15</span> hsmuce       mean (heter… stepR  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">16</span> cpop         slope        cpop   avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">17</span> bcp          mean (Bayes… bcp    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">18</span> bocpd        mean (Bayes… ocp    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">19</span> beast        mean/trend … Rbeast avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">20</span> cpm          distributio… cpm    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">21</span> kcp          running sta… kcpRS  avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">22</span> npmojo       distributio… CptNo… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">23</span> decafs       mean (drift… DeCAFS avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">24</span> sn           mean, var, … SNSeg  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">25</span> inspect      mean (high-… Inspe… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">26</span> ocd          mean (high-… ocd    avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">27</span> geomcp       distributio… chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">28</span> strucchange  mean, regre… struc… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">29</span> segmented    slope (with… segme… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">30</span> envcpt       mean/trend … EnvCpt avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">31</span> fastcpd      mean, var, … fastc… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">32</span> nsp          mean (signi… nsp    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">33</span> mcp          mean, slope… mcp    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">34</span> esac         mean (high-… HDCD   avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">35</span> pilliat      mean (high-… HDCD   avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">36</span> hdcov        covariance … chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">37</span> network      network str… chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">38</span> var          VAR(1) tran… chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">39</span> hdreg        high-dimens… chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">40</span> fmean        functional … fChan… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">41</span> fcov         functional … fChan… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">42</span> kwc          covariance … KWCCh… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">43</span> fabisearch   network str… fabis… avail… TRUE      <span style="color: #BB0000;">NA</span>             TRUE        </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">44</span> wbsts        mean (nonst… wbsts  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">45</span> bfast        trend and s… bfast  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">46</span> pettitt      mean (singl… trend  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">47</span> buishand     mean (singl… trend  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">48</span> snht         mean (stand… trend  avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">49</span> taylor       mean (Taylo… Chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">50</span> binsegrcpp   mean, meanv… binse… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">51</span> gfpop        mean (graph… gfpop  plann… <span style="color: #BB0000;">NA</span>        when on CRAN   <span style="color: #BB0000;">NA</span>          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">52</span> robust       mean (robus… robseg plann… <span style="color: #BB0000;">NA</span>        when on CRAN   <span style="color: #BB0000;">NA</span>          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">53</span> focus        mean (onlin… FOCuS  plann… <span style="color: #BB0000;">NA</span>        when on CRAN   <span style="color: #BB0000;">NA</span>          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">54</span> sbs          mean (high-… hdbin… plann… <span style="color: #BB0000;">NA</span>        when on CRAN   <span style="color: #BB0000;">NA</span>          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">55</span> changeforest distributio… chang… plann… <span style="color: #BB0000;">NA</span>        when on CRAN   <span style="color: #BB0000;">NA</span>          </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 8 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;</span></span></span></code></pre></div>
 <p><code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> constructs standard penalty values for the
 engines that take numeric penalties; see its help for the per-engine
 penalty semantics.</p>
@@ -321,7 +366,7 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fpop_wrapper.html">fpop_wrapper</a></span><span class="op">(</span><span class="va">x</span>, penalty <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          fpop </span></span>
+<span><span class="co">#&gt;   Method:         fpop</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -336,7 +381,7 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/wbs_wrapper.html">wbs_wrapper</a></span><span class="op">(</span><span class="va">x</span>, n_intervals <span class="op">=</span> <span class="fl">2000</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          wbs </span></span>
+<span><span class="co">#&gt;   Method:         wbs</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -351,7 +396,7 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/wbs2_wrapper.html">wbs2_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          wbs2 </span></span>
+<span><span class="co">#&gt;   Method:         wbs2</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -366,7 +411,7 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/not_wrapper.html">not_wrapper</a></span><span class="op">(</span><span class="va">x</span>, contrast <span class="op">=</span> <span class="st">"pcwsConstMean"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          not </span></span>
+<span><span class="co">#&gt;   Method:         not</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -381,7 +426,7 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mosum_wrapper.html">mosum_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          mosum </span></span>
+<span><span class="co">#&gt;   Method:         mosum</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -395,7 +440,7 @@ al. 2017)</span>, one call each:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
 <span><span class="fu"><a href="../reference/mosum_wrapper.html">mosum_wrapper</a></span><span class="op">(</span><span class="va">x3</span>, multiscale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          mosum </span></span>
+<span><span class="co">#&gt;   Method:         mosum</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 2 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -411,7 +456,7 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/idetect_wrapper.html">idetect_wrapper</a></span><span class="op">(</span><span class="va">x</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          idetect </span></span>
+<span><span class="co">#&gt;   Method:         idetect</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -426,7 +471,7 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/tguh_wrapper.html">tguh_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:          tguh </span></span>
+<span><span class="co">#&gt;   Method:         tguh</span></span>
 <span><span class="co">#&gt;   Change in:       mean </span></span>
 <span><span class="co">#&gt;   Changepoints found: 1 </span></span>
 <span><span class="co">#&gt;   CP convention:   left </span></span>
@@ -919,6 +964,262 @@ method-to-reference table.</p>
 <span><span class="co">#&gt; [pelt] Killick, R., Fearnhead, P. and Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. Journal of the American Statistical Association, 107(500), 1590-1598.</span></span></code></pre></div>
 </div>
 <div class="section level2">
+<h2 id="the-0-5-0-surface">The 0.5.0 surface<a class="anchor" aria-label="anchor" href="#the-0-5-0-surface"></a>
+</h2>
+<p>The sections above are the 0.4.0 tour. What follows visits the rest
+of the exported surface, one example each; three companion vignettes
+develop these properly.</p>
+<div class="section level3">
+<h3 id="time-indices">Time indices<a class="anchor" aria-label="anchor" href="#time-indices"></a>
+</h3>
+<p><code>cpt_detect(index = )</code> attaches a clock. Detection still
+runs on positions, because every engine assumes an equally spaced
+sequence, but <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>,
+<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and the reporting functions all speak in the
+user’s units. <code><a href="../reference/as_cpt_series.html">as_cpt_series()</a></code> is the coercion underneath,
+and it accepts <code>ts</code>, <code>xts</code>, <code>zoo</code> and
+<code>tsibble</code> directly.</p>
+<div class="sourceCode" id="cb63"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">dates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span></span>
+<span><span class="va">dated</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, index <span class="op">=</span> <span class="va">dates</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">dated</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
+<span><span class="co">#&gt;      cp cp_index   cp_value</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100 2020-04-09    0.369</span></span>
+<span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>day <span class="op">=</span> <span class="va">dates</span>, v <span class="op">=</span> <span class="va">x</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">v</span>, index <span class="op">=</span> <span class="va">day</span>,</span>
+<span>           method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span><span class="op">$</span><span class="va">cp_index</span></span>
+<span><span class="co">#&gt; [1] "2020-04-09"</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="inference">Inference<a class="anchor" aria-label="anchor" href="#inference"></a>
+</h3>
+<p><code><a href="../reference/nsp_wrapper.html">nsp_wrapper()</a></code> returns significance regions, read with
+<code><a href="../reference/cpt_regions.html">cpt_regions()</a></code> and drawn by <code><a href="../reference/geom_cpt_region.html">geom_cpt_region()</a></code>.
+<code><a href="../reference/cpt_confint.html">cpt_confint()</a></code> unifies four interval routes;
+<code><a href="../reference/cpt_test.html">cpt_test()</a></code> attaches a test and flags whether it is
+selection-adjusted.</p>
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_confint.html">cpt_confint</a></span><span class="op">(</span><span class="va">res</span>, method <span class="op">=</span> <span class="st">"bootstrap"</span>, B <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;      cp ci_lower ci_upper level source    n_replicates</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100      100      100  0.95 bootstrap           30</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_test.html">cpt_test</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp"</span>, <span class="st">"estimate"</span>, <span class="st">"p_value"</span>,</span>
+<span>                                    <span class="st">"selection_adjusted"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
+<span><span class="co">#&gt;      cp estimate   p_value selection_adjusted</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     6.22 1.61<span style="color: #949494;">e</span><span style="color: #BB0000;">-105</span> FALSE</span></span></code></pre></div>
+<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="../reference/nsp_wrapper.html">nsp_wrapper</a></span><span class="op">(</span><span class="va">x</span>, M <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ggchangepoint_files/figure-html/nsp-tour-1.png" class="r-plt" alt="Series with a shaded band marking an NSP significance region" width="768"></p>
+</div>
+<div class="section level3">
+<h3 id="selecting-the-number-of-changepoints">Selecting the number of changepoints<a class="anchor" aria-label="anchor" href="#selecting-the-number-of-changepoints"></a>
+</h3>
+<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">sel</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_select.html">cpt_select</a></span><span class="op">(</span><span class="va">x3</span>, criterion <span class="op">=</span> <span class="st">"bic"</span>, k_max <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
+<span><span class="va">sel</span><span class="op">$</span><span class="va">k</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sel</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ggchangepoint_files/figure-html/select-tour-1.png" class="r-plt" alt="Criterion value against the number of changepoints, with the chosen model marked" width="768"></p>
+</div>
+<div class="section level3">
+<h3 id="diagnostics">Diagnostics<a class="anchor" aria-label="anchor" href="#diagnostics"></a>
+</h3>
+<p><code><a href="../reference/cpt_influence.html">cpt_influence()</a></code> and <code><a href="../reference/cpt_leverage.html">cpt_leverage()</a></code> say
+which observation drives the answer; <code><a href="../reference/cpt_sensitivity.html">cpt_sensitivity()</a></code> says
+which setting does; <code><a href="../reference/cpt_statistic.html">cpt_statistic()</a></code>,
+<code><a href="../reference/cpt_solution_path.html">cpt_solution_path()</a></code> and <code><a href="../reference/cpt_scale_space.html">cpt_scale_space()</a></code>
+(with their <code>ggcpt_*()</code> plots, reachable from
+<code>autoplot(type = )</code>) say what the detector actually
+computed.</p>
+<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_influence.html">cpt_influence</a></span><span class="op">(</span><span class="va">res</span>, engine <span class="op">=</span> <span class="st">"recompute"</span>, subset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">200</span>, by <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_leverage.html">cpt_leverage</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
+<span><span class="co">#&gt;   index delta_n_cp max_shift param_shift leverage</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   121          0         0      0.018<span style="text-decoration: underline;">0</span>    1.75 </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   161          0         0      0.013<span style="text-decoration: underline;">0</span>    0.832</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   101          0         0      0.011<span style="text-decoration: underline;">1</span>    0.484</span></span>
+<span><span class="fu"><a href="../reference/cpt_sensitivity.html">cpt_sensitivity</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, over <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">40</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">grid</span><span class="op">[</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt;   penalty  n_cp</span></span>
+<span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>       4     7</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      40     1</span></span></code></pre></div>
+<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"statistic"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ggchangepoint_files/figure-html/stat-tour-1.png" class="r-plt" alt="Two-panel display: the series above, the MOSUM statistic below" width="768"></p>
+</div>
+<div class="section level3">
+<h3 id="supervised-detection">Supervised detection<a class="anchor" aria-label="anchor" href="#supervised-detection"></a>
+</h3>
+<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">labs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_labels.html">cpt_labels</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">140</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">190</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"one_change"</span>, <span class="st">"no_change"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cpt_label_error.html">cpt_label_error</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">labs</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start"</span>, <span class="st">"end"</span>, <span class="st">"change"</span>, <span class="st">"status"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
+<span><span class="co">#&gt;   start   end change     status </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    80   120 one_change correct</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   140   190 no_change  correct</span></span></code></pre></div>
+<p><code><a href="../reference/as_cpt_labels.html">as_cpt_labels()</a></code> converts a plain ground-truth set into
+labels, <code><a href="../reference/cpt_label_error_curve.html">cpt_label_error_curve()</a></code> traces the errors across a
+penalty grid, and <code><a href="../reference/cpt_learn_penalty.html">cpt_learn_penalty()</a></code> fits a penalty from
+several labelled series — see
+<code><a href="../articles/supervised.html">vignette("supervised", package = "ggchangepoint")</a></code>.</p>
+</div>
+<div class="section level3">
+<h3 id="choosing-and-combining-methods">Choosing and combining methods<a class="anchor" aria-label="anchor" href="#choosing-and-combining-methods"></a>
+</h3>
+<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_recommend.html">cpt_recommend</a></span><span class="op">(</span>noise <span class="op">=</span> <span class="st">"heavy"</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Recommended methods for: univariate series, change in mean, heavy noise</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; 1. cpm (cpm)</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
+<span><span class="co">#&gt; 2. kcp (kcpRS)</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
+<span><span class="co">#&gt; 3. nsp (nsp)</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
+<span><span class="co">#&gt; 4. sn (SNSeg)</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
+<span><span class="co">#&gt; 5. bcp (bcp)</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; (27 further candidate(s); the full table is the return value.)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Cite the method you use with cpt_cite(). Cross-check the choice with</span></span>
+<span><span class="co">#&gt; cpt_consensus() and cpt_sensitivity().</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_consensus.html">cpt_consensus</a></span><span class="op">(</span><span class="va">x3</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
+<span><span class="co">#&gt;      cp cp_value votes methods            spread</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span>     3 amoc, binseg, pelt      0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    2.90      2 binseg, pelt            0</span></span></code></pre></div>
+</div>
+<div class="section level3">
+<h3 id="communication">Communication<a class="anchor" aria-label="anchor" href="#communication"></a>
+</h3>
+<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_annotate_events.html">cpt_annotate_events</a></span><span class="op">(</span><span class="va">dated</span>,</span>
+<span>                    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>when <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-04-10"</span><span class="op">)</span>,</span>
+<span>                               what <span class="op">=</span> <span class="st">"policy change"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ggcpt_events (tolerance 5 position(s))</span></span>
+<span><span class="co">#&gt;   Changepoints explained by an event: 1</span></span>
+<span><span class="co">#&gt;   Changepoints with no event:         0</span></span>
+<span><span class="co">#&gt;   Events with no changepoint:         0</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; Matched:</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
+<span><span class="co">#&gt;      cp cp_index   event         event_value event_position distance</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100 2020-04-09 policy change 2020-04-10             101        1</span></span></code></pre></div>
+<p><code><a href="../reference/cpt_report.html">cpt_report()</a></code> assembles the whole analysis into markdown,
+and <code><a href="../reference/cpt_gt.html">cpt_gt()</a></code> renders a publication table.
+<code><a href="../reference/geom_cpt_event.html">geom_cpt_event()</a></code> draws the events;
+<code><a href="../reference/scale_colour_cpt.html">scale_colour_cpt()</a></code>, <code><a href="../reference/scale_colour_cpt.html">scale_fill_cpt()</a></code>,
+<code><a href="../reference/scale_colour_cpt.html">scale_linetype_cpt()</a></code>, <code><a href="../reference/scale_fill_cpt_label.html">scale_fill_cpt_label()</a></code>
+and <code><a href="../reference/scale_fill_cpt_label.html">scale_colour_cpt_label()</a></code> are the colour-vision-safe
+scales; <code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code> is unchanged.</p>
+</div>
+<div class="section level3">
+<h3 id="benchmarking">Benchmarking<a class="anchor" aria-label="anchor" href="#benchmarking"></a>
+</h3>
+<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_benchmark.html">cpt_benchmark</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_datasets.html">cpt_datasets</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>                                 names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"step"</span>, <span class="st">"teeth"</span>, <span class="st">"ar1"</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                    methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bm</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ggchangepoint_files/figure-html/benchmark-tour-1.png" class="r-plt" alt="Heatmap of the covering metric for each method on each benchmark dataset" width="768"></p>
+<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_annotations.html">cpt_annotations</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_datasets.html">cpt_datasets</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, names <span class="op">=</span> <span class="st">"step"</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
+<span><span class="co">#&gt;   dataset annotator    cp</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> step    1            66</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> step    1           133</span></span></code></pre></div>
+<p><code><a href="../reference/cpt_load_tcpd.html">cpt_load_tcpd()</a></code> downloads and caches the Turing Change
+Point Dataset; it is not run here because it needs a network
+connection.</p>
+</div>
+<div class="section level3">
+<h3 id="streaming">Streaming<a class="anchor" aria-label="anchor" href="#streaming"></a>
+</h3>
+<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"edetector"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="va">mon</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
+<span><span class="co">#&gt;    time statistic threshold</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    38      127.       100</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   101      163.       100</span></span>
+<span><span class="fu"><a href="../reference/cpt_delay.html">cpt_delay</a></span><span class="op">(</span><span class="va">mon</span>, truth <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ggcpt_delay</span></span>
+<span><span class="co">#&gt;   True changes:      1</span></span>
+<span><span class="co">#&gt;   Detected:          1</span></span>
+<span><span class="co">#&gt;   Mean delay:        1</span></span>
+<span><span class="co">#&gt;   Median delay:      1</span></span>
+<span><span class="co">#&gt;   False alarms:      1</span></span>
+<span><span class="co">#&gt;   Average run length: 400</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
+<span><span class="co">#&gt;   truth alarm delay detected</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200   201     1 TRUE</span></span></code></pre></div>
+<p><code><a href="../reference/cpt_monitor.html">cpt_monitor()</a></code> and <code><a href="../reference/cpt_update.html">cpt_update()</a></code> are the
+incremental form: <code>mon &lt;- cpt_update(mon, new_obs)</code> as
+data arrive.</p>
+</div>
+<div class="section level3">
+<h3 id="power-and-study-design">Power and study design<a class="anchor" aria-label="anchor" href="#power-and-study-design"></a>
+</h3>
+<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_power.html">cpt_power</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, jump <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, n_sim <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ggchangepoint_files/figure-html/power-tour-1.png" class="r-plt" alt="Power curve: detection probability against change size" width="768"></p>
+<p><code><a href="../reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts the curve, and
+<code><a href="../reference/cpt_scenarios.html">cpt_scenarios()</a></code> builds a grid of settings as data.</p>
+</div>
+<div class="section level3">
+<h3 id="extending">Extending<a class="anchor" aria-label="anchor" href="#extending"></a>
+</h3>
+<div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">fit_ext</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_ggcpt.html">as_ggcpt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, <span class="va">x</span>, method <span class="op">=</span> <span class="st">"external_detector"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">fit_ext</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"method"</span>, <span class="st">"n_changepoints"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;   method            n_changepoints</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> external_detector              1</span></span>
+<span></span>
+<span><span class="fu"><a href="../reference/cpt_register_method.html">cpt_register_method</a></span><span class="op">(</span><span class="st">"biggest_jump"</span>,</span>
+<span>                    fn <span class="op">=</span> <span class="kw">function</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/which.min.html" class="external-link">which.max</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/diff.html" class="external-link">diff</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
+<span>                    engine <span class="op">=</span> <span class="st">"example"</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"biggest_jump"</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span><span class="op">$</span><span class="va">cp</span></span>
+<span><span class="co">#&gt; [1] 100</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_methods.html">cpt_methods</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">status</span> <span class="op">==</span> <span class="st">"registered"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"method"</span>, <span class="st">"engine"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt;   method       engine </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> biggest_jump example</span></span>
+<span><span class="fu"><a href="../reference/cpt_register_method.html">cpt_unregister_method</a></span><span class="op">(</span><span class="st">"biggest_jump"</span><span class="op">)</span></span></code></pre></div>
+<p><code><a href="../reference/cpt_install_engines.html">cpt_install_engines()</a></code> installs a family of engines at a
+time:</p>
+<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_install_engines.html">cpt_install_engines</a></span><span class="op">(</span><span class="st">"bayesian"</span>, dry_run <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"package"</span>,</span>
+<span>                                                    <span class="st">"installed_before"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 2</span></span></span>
+<span><span class="co">#&gt;   package installed_before</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> bcp     TRUE            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> ocp     TRUE            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> Rbeast  TRUE            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> mcp     TRUE</span></span></code></pre></div>
+</div>
+</div>
+<div class="section level2">
 <h2 id="closing-note">Closing note<a class="anchor" aria-label="anchor" href="#closing-note"></a>
 </h2>
 <p>This tour visited every exported function in the package. For the
@@ -926,7 +1227,10 @@ framework’s design, the mathematics of the wrapped methods, and worked
 analyses, see
 <code><a href="../articles/introduction.html">vignette("introduction", package = "ggchangepoint")</a></code>; for
 method comparison and accuracy evaluation in depth, see
-<code><a href="../articles/comparison.html">vignette("comparison", package = "ggchangepoint")</a></code>.</p>
+<code><a href="../articles/comparison.html">vignette("comparison", package = "ggchangepoint")</a></code>; and for
+the 0.5.0 additions in depth, see <code><a href="../articles/inference.html">vignette("inference")</a></code>,
+<code><a href="../articles/supervised.html">vignette("supervised")</a></code> and
+<code><a href="../articles/extending.html">vignette("extending")</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

@@ -72,7 +72,7 @@ running this engine over a panel with
 [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
 keep what you need (`res$changepoints`) rather than the whole list of
 results. No other engine here behaves this way: the median result across
-the other thirty is under ten times the size of the series it was given.
+the others is under ten times the size of the series it was given.
 
 ## References
 

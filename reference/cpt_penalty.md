@@ -6,7 +6,7 @@ detection methods. Returns a numeric penalty value.
 ## Usage
 
 ``` r
-cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01)
+cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01, series = NULL)
 ```
 
 ## Arguments
@@ -36,6 +36,14 @@ cpt_penalty(type, n = NULL, k = 1, value = NULL, alpha = 1.01)
 
   Exponent of the strengthened SIC (`"sSIC"`) penalty \\k (\log
   n)^\alpha\\; must exceed 1. Defaults to `1.01` (Fryzlewicz, 2014).
+
+- series:
+
+  The series a learned penalty is predicted for. Required only when
+  `type` is a `ggcpt_penalty_model` from
+  [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md),
+  in which case every other argument is ignored and the model's
+  prediction for this series is returned.
 
 ## Value
 
