@@ -381,9 +381,10 @@ them, and the capability matrix was extended in lockstep.
   engines installed and about 1470 without them.
 - `stats`, `tools` and `utils` are declared in `Imports`; the new engines
   and extras are in `Suggests` behind `requireNamespace()` guards, as
-  before — 35 engines inside a 55-package `Suggests` list, and the package
+  before — 35 engines inside a 56-package `Suggests` list, and the package
   still checks clean with none of them installed. `withr` joins `Suggests`,
-  which the tests already used.
+  which the tests already used, and `rjags`, which `mcp_wrapper()` tests for
+  because having \pkg{mcp} does not imply JAGS can be reached.
 - Every parallel entry point is now tested under a real
   `future::plan(multisession)`, and the wrappers that the suite only ever
   reached through `cpt_detect()` — `esac_wrapper()`, `pilliat_wrapper()`,

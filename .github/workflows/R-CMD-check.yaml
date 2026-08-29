@@ -34,6 +34,11 @@ jobs:
       # package that will not install is a NOTE here rather than an ERROR;
       # every use of it in the package is guarded with requireNamespace().
       _R_CHECK_FORCE_SUGGESTS_: false
+      # Print the whole vignette-rebuild log. R CMD check otherwise
+      # elides it behind "...", which on a parallel rebuild leaves a
+      # failure with no error text at all -- the vignettes still in
+      # flight when one dies just show "re-building" and stop.
+      _R_CHECK_VIGNETTES_NLINES_: 0
 
     steps:
       - uses: actions/checkout@v4

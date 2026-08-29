@@ -32,7 +32,7 @@ Registered methods are visibly user-supplied: `cpt_methods()` marks them,
 `print()` says so on every result, and `cpt_cite()` returns the citation the
 registration supplied or states plainly that none was given.
 
-**Dependencies.** Fifty-five packages are suggested; thirty-five of them are
+**Dependencies.** Fifty-six packages are suggested; thirty-five of them are
 detection engines and the rest are optional extras (time-index coercion,
 tables, interactivity, progress bars, the test toolchain). One of them, 'mcp', needs JAGS -- a system library -- so a machine
 without JAGS must check with `_R_CHECK_FORCE_SUGGESTS_=false`. 'mcp' is on
@@ -121,10 +121,13 @@ noted here so the difference is not a surprise:
 * `qpdf` is not installed on the R 4.4.1 machine, so `R CMD check --as-cran`
   reports that it cannot run its PDF size-reduction check. That is the
   machine, not the package.
-* the same machine reports 'mcp' as suggested-but-not-available, because
-  'mcp' imports 'rjags' and JAGS is not installed there. 'mcp' is on CRAN
-  and checks there; locally the run uses
-  `_R_CHECK_FORCE_SUGGESTS_=false`.
+* the same machine reports 'mcp' and 'rjags' as suggested-but-not-available,
+  because both need JAGS -- a system library -- and it is not installed
+  there. Both are on CRAN and check there; locally the run uses
+  `_R_CHECK_FORCE_SUGGESTS_=false`. 'rjags' is suggested because
+  `mcp_wrapper()` tests whether it can load: having 'mcp' installed does not
+  imply JAGS can be reached, and the wrapper reports that rather than
+  failing inside the engine.
 
 The no-Suggests run is a real one: the R 4.6.0 library above holds the
 Imports and not one of the suggested engines. It reports 0 errors,
