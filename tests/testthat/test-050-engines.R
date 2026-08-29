@@ -199,6 +199,29 @@ test_that("mcp reports the missing system dependency plainly", {
   expect_error(mcp_wrapper(x_step), "JAGS")
 })
 
+test_that("mcp fits the plateau-only default model", {
+  skip_on_cran()
+  skip_if_not_installed("mcp")
+  # The default model is `list(y ~ 1, ~ 1)` -- no predictor anywhere -- so
+  # mcp cannot derive its x-axis variable from the formulas and stops with
+  # "This is a plateau-only model" unless `par_x` is named. Nothing here
+  # covered that: the only mcp test was the negative one above, which skips
+  # precisely when mcp is installed, and the example is behind @examplesIf.
+  set.seed(2026)
+  y <- c(stats::rnorm(50), stats::rnorm(50, 5))
+  fit <- mcp_wrapper(y, iter = 300, adapt = 150, chains = 2, seed = 1)
+  expect_s3_class(fit, "ggcpt")
+  expect_identical(fit$method, "mcp")
+  expect_equal(nrow(fit$data), length(y))
+  expect_equal(nrow(fit$segments), nrow(fit$changepoints) + 1L)
+  expect_true(all(c("ci_lower", "ci_upper") %in% names(fit$changepoints)))
+  expect_true(any(abs(fit$changepoints$cp - 50) <= 10))
+
+  # a caller's own par_x is not overwritten
+  expect_no_error(mcp_wrapper(y, iter = 300, adapt = 150, chains = 2,
+                              par_x = "t", seed = 1))
+})
+
 test_that("every new method appears in cpt_methods with a citation", {
   new_methods <- c("nsp", "mcp", "esac", "pilliat", "hdcov", "network",
                    "var", "fmean", "fcov", "kwc", "fabisearch", "wbsts",

@@ -414,8 +414,11 @@ cpt_scale_space <- function(x, bandwidths = NULL,
     series <- x
   }
   method <- match.arg(method)
-  need_pkg(if (method == "mosum") "mosum" else "CptNonPar")
 
+  # Shape first, engine second: telling someone to install `mosum` for input
+  # `mosum` cannot accept anyway is the wrong complaint, and it makes the
+  # error depend on what happens to be installed.
+  #
   # mosum is univariate; npmojo is not, and refusing its matrix here would
   # make the scale-space view unavailable for the one multiscale engine that
   # needs it most.
@@ -439,6 +442,7 @@ cpt_scale_space <- function(x, bandwidths = NULL,
     stop("No usable bandwidth: a moving window needs `2 * G < n`, and the ",
          "series has ", n, " observations.", call. = FALSE)
   }
+  need_pkg(if (method == "mosum") "mosum" else "CptNonPar")
 
   rows <- lapply(bandwidths, function(G) {
     if (method == "mosum") {

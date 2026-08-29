@@ -81,8 +81,17 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
                rep(list(seg2), as.integer(n_changepoints)))
   }
 
-  fit <- mcp::mcp(model, data = df, prior = prior, iter = iter,
-                  adapt = adapt, chains = chains, ...)
+  # `mcp` derives the x-axis variable from the segment formulas, and the
+  # default models here are plateau-only (`list(y ~ 1, ~ 1)`), so there is
+  # nothing in them to derive it from: mcp::mcp() stops with "This is a
+  # plateau-only model so no x-axis variable could be derived". The data
+  # frame built above always calls that column `t`, so name it explicitly --
+  # unless the caller already passed their own `par_x` through `...`.
+  dots <- list(...)
+  if (is.null(dots[["par_x", exact = TRUE]])) dots$par_x <- "t"
+  fit <- do.call(mcp::mcp,
+                 c(list(model, data = df, prior = prior, iter = iter,
+                        adapt = adapt, chains = chains), dots))
 
   # The changepoint parameters are named cp_1, cp_2, ...
   smry <- as.data.frame(summary(fit))
