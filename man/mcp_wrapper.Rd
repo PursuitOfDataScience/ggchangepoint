@@ -58,21 +58,26 @@ which \code{\link{ggcpt_posterior}()} already knows how to draw.
 }
 \section{JAGS is a system dependency}{
 
-\pkg{mcp} samples through JAGS, which is a separate program that has to be
-installed outside R; \pkg{mcp} imports \pkg{rjags}, which is built
-against it, so if JAGS is missing \pkg{mcp} will not install at all and
-this wrapper reports that rather than failing obscurely. Everything else
-in the package works without it.
+\pkg{mcp} samples through JAGS, a separate program installed outside R.
+Having the \emph{package} is not the same as being able to \emph{run} it:
+\pkg{mcp} imports \pkg{rjags}, and on some platforms \pkg{rjags}
+installs happily and only fails when it looks for the JAGS library at run
+time — in which case \code{mcp::mcp()} returns a fit carrying no
+posterior samples, with a warning rather than an error. This wrapper
+checks for that and says so plainly instead of failing several frames
+later inside \code{summary()}. Everything else in the package works
+without JAGS.
 }
 
 \examples{
-\dontshow{if (requireNamespace("mcp", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
-\donttest{
+# Not run by R CMD check: whether this works depends on a *system*
+# library, and no test of installed R packages predicts that reliably --
+# `rjags` can be present and still fail to find JAGS at run time.
+\dontrun{
 set.seed(2026)
 fit <- mcp_wrapper(c(rnorm(60), rnorm(60, 4)), iter = 500, adapt = 200)
 fit
 }
-\dontshow{\}) # examplesIf}
 }
 \references{
 \insertRef{lindelov2020mcp}{ggchangepoint}

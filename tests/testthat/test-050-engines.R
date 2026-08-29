@@ -202,6 +202,12 @@ test_that("mcp reports the missing system dependency plainly", {
 test_that("mcp fits the plateau-only default model", {
   skip_on_cran()
   skip_if_not_installed("mcp")
+  # Having the package is not the same as being able to sample: rjags can be
+  # installed and still fail to find the JAGS library at run time, in which
+  # case mcp returns a fit with no posterior. Skip on that rather than
+  # asserting a system library is present.
+  skip_if_not(requireNamespace("rjags", quietly = TRUE),
+              "rjags cannot load, so JAGS is not usable here")
   # The default model is `list(y ~ 1, ~ 1)` -- no predictor anywhere -- so
   # mcp cannot derive its x-axis variable from the formulas and stops with
   # "This is a plateau-only model" unless `par_x` is named. Nothing here
@@ -209,7 +215,12 @@ test_that("mcp fits the plateau-only default model", {
   # precisely when mcp is installed, and the example is behind @examplesIf.
   set.seed(2026)
   y <- c(stats::rnorm(50), stats::rnorm(50, 5))
-  fit <- mcp_wrapper(y, iter = 300, adapt = 150, chains = 2, seed = 1)
+  fit <- tryCatch(mcp_wrapper(y, iter = 300, adapt = 150, chains = 2,
+                              seed = 1),
+                  error = function(e) e)
+  if (inherits(fit, "error") && grepl("JAGS", conditionMessage(fit))) {
+    skip("JAGS is installed but not reachable, so mcp cannot sample")
+  }
   expect_s3_class(fit, "ggcpt")
   expect_identical(fit$method, "mcp")
   expect_equal(nrow(fit$data), length(y))
@@ -220,6 +231,16 @@ test_that("mcp fits the plateau-only default model", {
   # a caller's own par_x is not overwritten
   expect_no_error(mcp_wrapper(y, iter = 300, adapt = 150, chains = 2,
                               par_x = "t", seed = 1))
+})
+
+test_that("mcp says JAGS is unreachable rather than failing inside summary()", {
+  # An mcpfit built without JAGS still looks like a fit; only the posterior
+  # is missing, and summary() on it dies with "subscript out of bounds".
+  expect_false(ggchangepoint:::mcp_has_samples(list(mcmc_post = NULL)))
+  expect_false(ggchangepoint:::mcp_has_samples(list(mcmc_post = list())))
+  expect_false(ggchangepoint:::mcp_has_samples(structure(list(), class = "x")))
+  expect_true(ggchangepoint:::mcp_has_samples(
+    list(mcmc_post = list(matrix(1, nrow = 10, ncol = 2)))))
 })
 
 test_that("every new method appears in cpt_methods with a citation", {

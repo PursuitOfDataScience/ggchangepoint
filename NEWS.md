@@ -280,14 +280,22 @@ them, and the capability matrix was extended in lockstep.
   rather than flattening it, and **warns** when a list dataset carries none
   of the three — previously it returned a full benchmark table in which
   every metric was silently `NA`.
-- `mcp_wrapper()` works. The default segment model is plateau-only
-  (`list(y ~ 1, ~ 1)`), so \pkg{mcp} could not derive its x-axis variable
-  from the formulas and stopped with "This is a plateau-only model"; the
-  wrapper now names the data frame's `t` column via `par_x`, unless the
-  caller supplies their own. The engine needs JAGS, which is why this was
-  never exercised locally, and its only test was the negative one that skips
-  when \pkg{mcp} *is* installed — there is now a positive test that runs
-  wherever JAGS is available.
+- `mcp_wrapper()` works, and says so honestly when it cannot. Two faults,
+  both of which had gone unnoticed because the engine needs JAGS and its only
+  test was the negative one that skips when \pkg{mcp} *is* installed. First,
+  the default segment model is plateau-only (`list(y ~ 1, ~ 1)`), so
+  \pkg{mcp} could not derive its x-axis variable from the formulas and
+  stopped with "This is a plateau-only model"; the wrapper now names the data
+  frame's `t` column via `par_x` unless the caller supplies their own.
+  Second, having the *package* is not the same as being able to *run* it —
+  \pkg{rjags} installs on some platforms and only fails when it looks for
+  the JAGS library at run time, in which case `mcp::mcp()` returns a fit with
+  no posterior samples and a warning, and `summary()` on that died with
+  "subscript out of bounds". The wrapper checks for the samples and reports
+  the real cause. The documented claim that \pkg{mcp} "will not install at
+  all" without JAGS was wrong, and is corrected; the example is `\dontrun{}`
+  because no test of installed R packages predicts whether a system library
+  can be reached.
 - `cpt_scale_space()` validates the shape of its input before requiring the
   engine, so asking for `method = "mosum"` with a matrix says that mosum is
   univariate rather than telling you to install a package that could not

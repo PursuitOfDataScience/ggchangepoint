@@ -1,3 +1,12 @@
+# Internal: did `mcp` actually sample? An `mcpfit` built without JAGS still
+# looks like a fit -- it carries the model, the priors and the JAGS code, and
+# only the posterior is missing.
+#' @noRd
+mcp_has_samples <- function(fit) {
+  post <- if (is.list(fit)) fit[["mcmc_post", exact = TRUE]] else NULL
+  !is.null(post) && length(post) > 0 && NROW(post[[1]]) > 0
+}
+
 #' Bayesian formula-based changepoint regression (mcp)
 #'
 #' Wraps \code{mcp::mcp()} (Lindeløv): a Bayesian multiple-changepoint
@@ -24,11 +33,15 @@
 #' @param ... Additional arguments passed to \code{mcp::mcp()}.
 #'
 #' @section JAGS is a system dependency:
-#' \pkg{mcp} samples through JAGS, which is a separate program that has to be
-#' installed outside R; \pkg{mcp} imports \pkg{rjags}, which is built
-#' against it, so if JAGS is missing \pkg{mcp} will not install at all and
-#' this wrapper reports that rather than failing obscurely. Everything else
-#' in the package works without it.
+#' \pkg{mcp} samples through JAGS, a separate program installed outside R.
+#' Having the \emph{package} is not the same as being able to \emph{run} it:
+#' \pkg{mcp} imports \pkg{rjags}, and on some platforms \pkg{rjags}
+#' installs happily and only fails when it looks for the JAGS library at run
+#' time — in which case \code{mcp::mcp()} returns a fit carrying no
+#' posterior samples, with a warning rather than an error. This wrapper
+#' checks for that and says so plainly instead of failing several frames
+#' later inside \code{summary()}. Everything else in the package works
+#' without JAGS.
 #'
 #' @return A \code{ggcpt} object. The changepoints tibble carries the
 #'   posterior mean location together with \code{ci_lower}/\code{ci_upper}
@@ -38,8 +51,11 @@
 #' @references
 #' \insertRef{lindelov2020mcp}{ggchangepoint}
 #' @export
-#' @examplesIf requireNamespace("mcp", quietly = TRUE)
-#' \donttest{
+#' @examples
+#' # Not run by R CMD check: whether this works depends on a *system*
+#' # library, and no test of installed R packages predicts that reliably --
+#' # `rjags` can be present and still fail to find JAGS at run time.
+#' \dontrun{
 #' set.seed(2026)
 #' fit <- mcp_wrapper(c(rnorm(60), rnorm(60, 4)), iter = 500, adapt = 200)
 #' fit
@@ -92,6 +108,19 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
   fit <- do.call(mcp::mcp,
                  c(list(model, data = df, prior = prior, iter = iter,
                         adapt = adapt, chains = chains), dots))
+
+  # `mcp` warns rather than errors when JAGS cannot be reached, and hands
+  # back an `mcpfit` with no posterior samples; `summary()` on that dies with
+  # "subscript out of bounds" several frames down. Checking the invariant --
+  # a fit either has samples or it is not a fit -- is what makes this
+  # reportable, and it holds however JAGS came to be unavailable.
+  if (!mcp_has_samples(fit)) {
+    stop("`mcp` returned a fit with no posterior samples, which means JAGS ",
+         "could not be reached. The 'mcp' package is installed, but JAGS ",
+         "itself is a separate program: install it from ",
+         "https://mcmc-jags.sourceforge.io and make sure 'rjags' can load ",
+         "(`requireNamespace(\"rjags\")`).", call. = FALSE)
+  }
 
   # The changepoint parameters are named cp_1, cp_2, ...
   smry <- as.data.frame(summary(fit))

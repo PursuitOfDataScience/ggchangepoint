@@ -394,10 +394,10 @@ Part II's §25 listed eight decisions. All eight were taken.
 
 ## 0.8 Bugs found and fixed during the 0.5.0 build
 
-Thirty-five defects were found and fixed in the same cycle. Three were
+Thirty-six defects were found and fixed in the same cycle. Three were
 introduced by this release's own code; S7–S8 and S12 are the kind that only
 surface when someone reads what an engine actually returns rather than what
-its documentation implies; S17–S35 came out of the post-implementation audit
+its documentation implies; S17–S36 came out of the post-implementation audit
 passes, which went after the surfaces the tests never reached — parallel
 execution, the `ggcpt` contract across every installed engine, degenerate
 input, and the claims the prose makes; and S11 is the one that matters most,
@@ -451,7 +451,9 @@ package is present. So the engine with the least local coverage also had the
 least remote coverage, and the wrapper had never once been run end to end
 anywhere. It was broken in every call. **An engine that cannot be exercised
 locally needs a test that runs where it can be, not a test of what happens
-when it is absent.**
+when it is absent.** S36 is its second half: when the dependency is a
+*system* library, package presence does not imply it works, so the honest
+guard is a post-hoc check of the result, not a pre-hoc check of the library.
 
 | # | Symptom | Cause and fix |
 |---|---|---|
@@ -500,6 +502,7 @@ when it is absent.**
 
 
 | S34 | **`mcp_wrapper()` never worked.** Every call stopped with `This is a plateau-only model so no x-axis variable could be derived from the segment formulas` | The default model for `change_in = "mean"` is `list(y ~ 1, ~ 1)`, which contains no predictor, so `mcp::mcp()` has nothing to infer its x-axis variable from and requires `par_x` to be named. The wrapper now passes `par_x = "t"` — the column its own data frame always carries — unless the caller supplied one. The reason this survived every local pass is structural: `mcp` imports `rjags`, JAGS is not installable on the development machine, the example is behind `@examplesIf`, and the *only* test was the negative one asserting the missing-dependency message, which skips exactly when `mcp` is installed. So the one engine that could not be run locally also had no test that would run anywhere else. Found by CI, on all five platforms at once, and now covered by a positive test that runs wherever JAGS is. |
+| S36 | **Having \pkg{mcp} is not the same as being able to run it.** With the S34 fix in, `mcp_wrapper()` still failed on macOS and Windows with `subscript out of bounds` inside `summary()` | The wrapper guarded on `requireNamespace("mcp")`, and its own documentation asserted that "if JAGS is missing \pkg{mcp} will not install at all" — which is false. \pkg{rjags} installs on Windows and only fails when it looks for the JAGS library at run time; on the macOS ARM runner `brew install jags` did not make it reachable either. In that state `mcp::mcp()` *warns* and returns an `mcpfit` carrying no posterior, so the failure surfaced several frames later. The wrapper now checks the invariant — a fit either has samples or it is not a fit — and names JAGS. The example is `\dontrun{}`, because no test of installed R packages predicts whether a system library can be reached, and the test skips on the same condition rather than asserting a system library is present. |
 | S35 | `cpt_scale_space()` demanded an engine before looking at the input | `need_pkg("mosum")` ran before the univariate check, so a matrix passed with `method = "mosum"` produced "install mosum" on a machine without it and "mosum is univariate" on a machine with it — an error that depends on the library rather than the call. Shape is validated first now. Surfaced as a macOS CI failure, where `mosum` happened not to be installed. |
 
 
