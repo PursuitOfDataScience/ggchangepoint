@@ -75,11 +75,16 @@ quantiles, and `$data$fitted` holds the posterior predictive mean, so
 
 ## JAGS is a system dependency
 
-mcp samples through JAGS, which is a separate program that has to be
-installed outside R; mcp imports rjags, which is built against it, so if
-JAGS is missing mcp will not install at all and this wrapper reports
-that rather than failing obscurely. Everything else in the package works
-without it.
+mcp samples through JAGS, a separate program installed outside R. Having
+the *package* is not the same as being able to *run* it: mcp imports
+rjags, and on some platforms rjags installs happily and only fails when
+it looks for the JAGS library at run time — in which case
+[`mcp::mcp()`](https://lindeloev.github.io/mcp/reference/mcp.html)
+returns a fit carrying no posterior samples, with a warning rather than
+an error. This wrapper checks for that and says so plainly instead of
+failing several frames later inside
+[`summary()`](https://rdrr.io/r/base/summary.html). Everything else in
+the package works without JAGS.
 
 ## References
 
@@ -90,45 +95,12 @@ change points.” *OSF Preprints*.
 ## Examples
 
 ``` r
-# \donttest{
+# Not run by R CMD check: whether this works depends on a *system*
+# library, and no test of installed R packages predicts that reliably --
+# `rjags` can be present and still fail to find JAGS at run time.
+if (FALSE) { # \dontrun{
 set.seed(2026)
 fit <- mcp_wrapper(c(rnorm(60), rnorm(60, 4)), iter = 500, adapt = 200)
-#> Compiling model graph
-#>    Resolving undeclared variables
-#>    Allocating nodes
-#> Graph information:
-#>    Observed stochastic nodes: 120
-#>    Unobserved stochastic nodes: 4
-#>    Total graph size: 1460
-#> 
-#> Initializing model
-#> 
-#> Finished sampling in 0.4 seconds
-#> Family: gaussian(link = 'identity')
-#> Iterations: 1500 from 3 chains.
-#> Segments:
-#>   1: ~, y, 1
-#>   2: ~, y ~ 1, 1
-#> 
-#> Population-level parameters:
-#>     name mean lower upper Rhat n.eff
-#>     cp_1 60.5 60.04 60.99    1  1125
-#>    int_1 -0.1 -0.33  0.14    1  1203
-#>    int_2  3.9  3.66  4.18    1  1118
-#>  sigma_1  1.0  0.90  1.17    1  1031
 fit
-#> ggcpt (changepoint detection result)
-#>   Method:         mcp
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         posterior 
-#>   Series length:   120 
-#> 
-#> Changepoints:
-#> # A tibble: 1 × 4
-#>      cp cp_value ci_lower ci_upper
-#>   <int>    <dbl>    <int>    <int>
-#> 1    61     3.86       60       61
-# }
+} # }
 ```

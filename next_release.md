@@ -529,10 +529,10 @@ Part II’s §25 listed eight decisions. All eight were taken.
 
 ## 0.8 Bugs found and fixed during the 0.5.0 build
 
-Thirty-five defects were found and fixed in the same cycle. Three were
+Thirty-six defects were found and fixed in the same cycle. Three were
 introduced by this release’s own code; S7–S8 and S12 are the kind that
 only surface when someone reads what an engine actually returns rather
-than what its documentation implies; S17–S35 came out of the
+than what its documentation implies; S17–S36 came out of the
 post-implementation audit passes, which went after the surfaces the
 tests never reached — parallel execution, the `ggcpt` contract across
 every installed engine, degenerate input, and the claims the prose
@@ -591,7 +591,10 @@ when the package is present. So the engine with the least local coverage
 also had the least remote coverage, and the wrapper had never once been
 run end to end anywhere. It was broken in every call. **An engine that
 cannot be exercised locally needs a test that runs where it can be, not
-a test of what happens when it is absent.**
+a test of what happens when it is absent.** S36 is its second half: when
+the dependency is a *system* library, package presence does not imply it
+works, so the honest guard is a post-hoc check of the result, not a
+pre-hoc check of the library.
 
 | \# | Symptom | Cause and fix |
 |----|----|----|
@@ -825,6 +828,24 @@ missing-dependency message, which skips exactly when `mcp` is installed.
 So the one engine that could not be run locally also had no test that
 would run anywhere else. Found by CI, on all five platforms at once, and
 now covered by a positive test that runs wherever JAGS is. \|  
+S36 \| **Having is not the same as being able to run it.** With the S34
+fix in,
+[`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
+still failed on macOS and Windows with `subscript out of bounds` inside
+[`summary()`](https://rdrr.io/r/base/summary.html) \| The wrapper
+guarded on
+[`requireNamespace("mcp")`](https://lindeloev.github.io/mcp/), and its
+own documentation asserted that “if JAGS is missing will not install at
+all” — which is false. installs on Windows and only fails when it looks
+for the JAGS library at run time; on the macOS ARM runner
+`brew install jags` did not make it reachable either. In that state
+[`mcp::mcp()`](https://lindeloev.github.io/mcp/reference/mcp.html)
+*warns* and returns an `mcpfit` carrying no posterior, so the failure
+surfaced several frames later. The wrapper now checks the invariant — a
+fit either has samples or it is not a fit — and names JAGS. The example
+is `\dontrun{}`, because no test of installed R packages predicts
+whether a system library can be reached, and the test skips on the same
+condition rather than asserting a system library is present. \|  
 S35 \|
 [`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
 demanded an engine before looking at the input \| `need_pkg("mosum")`

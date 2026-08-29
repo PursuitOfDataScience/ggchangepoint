@@ -424,13 +424,24 @@ capability matrix was extended in lockstep.
   none of the three — previously it returned a full benchmark table in
   which every metric was silently `NA`.
 - [`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
-  works. The default segment model is plateau-only (`list(y ~ 1, ~ 1)`),
-  so could not derive its x-axis variable from the formulas and stopped
-  with “This is a plateau-only model”; the wrapper now names the data
-  frame’s `t` column via `par_x`, unless the caller supplies their own.
-  The engine needs JAGS, which is why this was never exercised locally,
-  and its only test was the negative one that skips when *is* installed
-  — there is now a positive test that runs wherever JAGS is available.
+  works, and says so honestly when it cannot. Two faults, both of which
+  had gone unnoticed because the engine needs JAGS and its only test was
+  the negative one that skips when *is* installed. First, the default
+  segment model is plateau-only (`list(y ~ 1, ~ 1)`), so could not
+  derive its x-axis variable from the formulas and stopped with “This is
+  a plateau-only model”; the wrapper now names the data frame’s `t`
+  column via `par_x` unless the caller supplies their own. Second,
+  having the *package* is not the same as being able to *run* it —
+  installs on some platforms and only fails when it looks for the JAGS
+  library at run time, in which case
+  [`mcp::mcp()`](https://lindeloev.github.io/mcp/reference/mcp.html)
+  returns a fit with no posterior samples and a warning, and
+  [`summary()`](https://rdrr.io/r/base/summary.html) on that died with
+  “subscript out of bounds”. The wrapper checks for the samples and
+  reports the real cause. The documented claim that “will not install at
+  all” without JAGS was wrong, and is corrected; the example is
+  `\dontrun{}` because no test of installed R packages predicts whether
+  a system library can be reached.
 - [`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
   validates the shape of its input before requiring the engine, so
   asking for `method = "mosum"` with a matrix says that mosum is
