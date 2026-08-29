@@ -149,14 +149,43 @@ in the package works without it.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">mcp_wrapper</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span>, iter <span class="op">=</span> <span class="fl">500</span>, adapt <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span></span>
-<span class="r-err co"><span class="r-pr">#&gt;</span> <span class="error">Error in get_segment_table(model, data, family, par_x):</span> This is a plateau-only model so no x-axis variable could be derived from the segment formulas. Use argument 'par_x' to set it explicitly</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Compiling model graph</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Resolving undeclared variables</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Allocating nodes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Graph information:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Observed stochastic nodes: 120</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Unobserved stochastic nodes: 4</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    Total graph size: 1460</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Initializing model</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span> Finished sampling in 0.4 seconds</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Family: gaussian(link = 'identity')</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Iterations: 1500 from 3 chains.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Segments:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   1: ~, y, 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   2: ~, y ~ 1, 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Population-level parameters:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     name mean lower upper Rhat n.eff</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     cp_1 60.5 60.04 60.99    1  1125</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    int_1 -0.1 -0.33  0.14    1  1203</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    int_2  3.9  3.66  4.18    1  1118</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>  sigma_1  1.0  0.90  1.17    1  1031</span>
 <span class="r-in"><span><span class="va">fit</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> function (object, ...) </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> {</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>     UseMethod("fit")</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> }</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;bytecode: 0x55a52bf3b760&gt;</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> &lt;environment: namespace:generics&gt;</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:         mcp</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       mean </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         posterior </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:   120 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 4</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value ci_lower ci_upper</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    61     3.86       60       61</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

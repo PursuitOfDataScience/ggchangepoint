@@ -529,10 +529,10 @@ Part II’s §25 listed eight decisions. All eight were taken.
 
 ## 0.8 Bugs found and fixed during the 0.5.0 build
 
-Thirty-three defects were found and fixed in the same cycle. Three were
+Thirty-five defects were found and fixed in the same cycle. Three were
 introduced by this release’s own code; S7–S8 and S12 are the kind that
 only surface when someone reads what an engine actually returns rather
-than what its documentation implies; S17–S33 came out of the
+than what its documentation implies; S17–S35 came out of the
 post-implementation audit passes, which went after the surfaces the
 tests never reached — parallel execution, the `ggcpt` contract across
 every installed engine, degenerate input, and the claims the prose
@@ -581,6 +581,17 @@ the result, so no object claims to be a mean change when it is not —
 verified, not assumed. S28 is the reminder that an audit pass can
 introduce a defect of its own: it was caused by the fix for S23 and
 caught by `R CMD check`, not by the 2341-assertion suite.
+
+S34 is the sharpest lesson of the release, and the one that generalises.
+`mcp` is the single engine that cannot be installed on the development
+machine, because it imports `rjags` and JAGS is a system library that is
+not there. Its example is gated with `@examplesIf`, and its only test
+asserted the *missing-dependency* message — a test that skips precisely
+when the package is present. So the engine with the least local coverage
+also had the least remote coverage, and the wrapper had never once been
+run end to end anywhere. It was broken in every call. **An engine that
+cannot be exercised locally needs a test that runs where it can be, not
+a test of what happens when it is absent.**
 
 | \# | Symptom | Cause and fix |
 |----|----|----|
@@ -796,6 +807,32 @@ subclasses hand back a *plain* tibble with the extra attributes
 stripped, so nothing downstream re-enters a
 [`print()`](https://rdrr.io/r/base/print.html) method that reads columns
 the caller may have dropped. \|
+
+S34 \|
+**[`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
+never worked.** Every call stopped with
+`This is a plateau-only model so no x-axis variable could be derived from the segment formulas`
+\| The default model for `change_in = "mean"` is `list(y ~ 1, ~ 1)`,
+which contains no predictor, so
+[`mcp::mcp()`](https://lindeloev.github.io/mcp/reference/mcp.html) has
+nothing to infer its x-axis variable from and requires `par_x` to be
+named. The wrapper now passes `par_x = "t"` — the column its own data
+frame always carries — unless the caller supplied one. The reason this
+survived every local pass is structural: `mcp` imports `rjags`, JAGS is
+not installable on the development machine, the example is behind
+`@examplesIf`, and the *only* test was the negative one asserting the
+missing-dependency message, which skips exactly when `mcp` is installed.
+So the one engine that could not be run locally also had no test that
+would run anywhere else. Found by CI, on all five platforms at once, and
+now covered by a positive test that runs wherever JAGS is. \|  
+S35 \|
+[`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
+demanded an engine before looking at the input \| `need_pkg("mosum")`
+ran before the univariate check, so a matrix passed with
+`method = "mosum"` produced “install mosum” on a machine without it and
+“mosum is univariate” on a machine with it — an error that depends on
+the library rather than the call. Shape is validated first now. Surfaced
+as a macOS CI failure, where `mosum` happened not to be installed. \|
 
 ## 0.9 What Part II still leaves open
 

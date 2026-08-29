@@ -93,13 +93,42 @@ change points.” *OSF Preprints*.
 # \donttest{
 set.seed(2026)
 fit <- mcp_wrapper(c(rnorm(60), rnorm(60, 4)), iter = 500, adapt = 200)
-#> Error in get_segment_table(model, data, family, par_x): This is a plateau-only model so no x-axis variable could be derived from the segment formulas. Use argument 'par_x' to set it explicitly
+#> Compiling model graph
+#>    Resolving undeclared variables
+#>    Allocating nodes
+#> Graph information:
+#>    Observed stochastic nodes: 120
+#>    Unobserved stochastic nodes: 4
+#>    Total graph size: 1460
+#> 
+#> Initializing model
+#> 
+#> Finished sampling in 0.4 seconds
+#> Family: gaussian(link = 'identity')
+#> Iterations: 1500 from 3 chains.
+#> Segments:
+#>   1: ~, y, 1
+#>   2: ~, y ~ 1, 1
+#> 
+#> Population-level parameters:
+#>     name mean lower upper Rhat n.eff
+#>     cp_1 60.5 60.04 60.99    1  1125
+#>    int_1 -0.1 -0.33  0.14    1  1203
+#>    int_2  3.9  3.66  4.18    1  1118
+#>  sigma_1  1.0  0.90  1.17    1  1031
 fit
-#> function (object, ...) 
-#> {
-#>     UseMethod("fit")
-#> }
-#> <bytecode: 0x55a52bf3b760>
-#> <environment: namespace:generics>
+#> ggcpt (changepoint detection result)
+#>   Method:         mcp
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         posterior 
+#>   Series length:   120 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 4
+#>      cp cp_value ci_lower ci_upper
+#>   <int>    <dbl>    <int>    <int>
+#> 1    61     3.86       60       61
 # }
 ```
