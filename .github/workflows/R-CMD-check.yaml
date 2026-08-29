@@ -34,11 +34,10 @@ jobs:
       # package that will not install is a NOTE here rather than an ERROR;
       # every use of it in the package is guarded with requireNamespace().
       _R_CHECK_FORCE_SUGGESTS_: false
-      # Print the whole vignette-rebuild log. R CMD check otherwise
-      # elides it behind "...", which on a parallel rebuild leaves a
-      # failure with no error text at all -- the vignettes still in
-      # flight when one dies just show "re-building" and stop.
-      _R_CHECK_VIGNETTES_NLINES_: 0
+      # How many lines of the vignette-rebuild log R CMD check shows. It
+      # keeps the LAST n and prefixes "...", so the default of 10 hides the
+      # error and 0 hides everything -- make it big enough to show the lot.
+      _R_CHECK_VIGNETTES_NLINES_: 1000
 
     steps:
       - uses: actions/checkout@v4
@@ -78,10 +77,23 @@ jobs:
         if: failure()
         run: |
           R CMD INSTALL --no-manual .
+          echo "--- 1. rmarkdown::render(), one at a time ---"
           Rscript -e 'for (v in list.files("vignettes", "[.]Rmd$", full.names = TRUE)) {
             cat("\n=====", v, "=====\n")
             r <- tryCatch({rmarkdown::render(v, output_dir = tempdir(), quiet = TRUE); "ok"},
                           error = function(e) paste("ERROR:", conditionMessage(e)))
             cat(r, "\n")
           }'
+          echo "--- 2. tools::buildVignettes(), which is what R CMD check runs ---"
+          Rscript -e 'd <- file.path(tempdir(), "pkg"); dir.create(d)
+            file.copy(c("DESCRIPTION","NAMESPACE","R","vignettes","inst","man"), d,
+                      recursive = TRUE)
+            r <- tryCatch({tools::buildVignettes(dir = d, ser_elibs = NULL); "ok"},
+                          error = function(e) paste("ERROR:", conditionMessage(e)))
+            cat(r, "\n")
+            cat("produced:", paste(list.files(file.path(d, "vignettes"),
+                                              "[.]html$"), collapse = ", "), "\n")'
+          echo "--- 3. anything the check left behind ---"
+          find check -name "build_vignettes.log" -exec cat {} \; 2>/dev/null || true
+          find check -name "*.Rout.fail" -exec sh -c 'echo "== $1"; tail -60 "$1"' _ {} \; 2>/dev/null || true
         shell: bash
