@@ -120,11 +120,7 @@
 <p>Visualise with <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-6-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-6
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-6-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="why-ggchangepoint">Why ggchangepoint<a class="anchor" aria-label="anchor" href="#why-ggchangepoint"></a>
@@ -271,11 +267,7 @@ plot of chunk unnamed-chunk-6
 <span><span class="co">#&gt;   &lt;int&gt; &lt;date&gt;        &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100 2020-04-09    0.467</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">dated</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-9-1.png" alt="Series with a date axis and a changepoint rule, detected with PELT" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-9
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-9-1.png" alt="Series with a date axis and a changepoint rule, detected with PELT" width="100%"></p>
 <p><code><a href="reference/as_cpt_series.html">as_cpt_series()</a></code> is the same conversion on its own, for code that needs the values and the index before detection runs.</p>
 <p>There is a data-frame interface too, taking a bare column name, a string, or a position:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
@@ -309,11 +301,7 @@ plot of chunk unnamed-chunk-9
 <span><span class="co">#&gt; 1     7   -1.06         2       94</span></span>
 <span><span class="co">#&gt; 2   100    0.467      100      100</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_smuce</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-11-1.png" alt="Series with the SMUCE step fit, changepoint rules and horizontal confidence intervals for each changepoint location" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-11
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-11-1.png" alt="Series with the SMUCE step fit, changepoint rules and horizontal confidence intervals for each changepoint location" width="100%"></p>
 <p>Read the intervals, not just the locations: the genuine shift is pinned to a single index, while the spurious early changepoint carries an interval nearly a hundred observations wide — exactly the distinction a bare list of locations hides.</p>
 <p>Bayesian engines return posterior probabilities instead: <code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code> (posterior probability of a change at every location), <code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code> (Bayesian model averaging), and <code><a href="reference/bocpd_wrapper.html">bocpd_wrapper()</a></code> (online run-length posterior). Two dedicated displays accompany them — <code><a href="reference/ggcpt_posterior.html">ggcpt_posterior()</a></code> and <code><a href="reference/ggcpt_runlength.html">ggcpt_runlength()</a></code>:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -324,11 +312,7 @@ plot of chunk unnamed-chunk-11
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;dbl&gt;          &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100    0.467              1</span></span>
 <span><span class="fu"><a href="reference/ggcpt_posterior.html">ggcpt_posterior</a></span><span class="op">(</span><span class="va">res_bcp</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-12-1.png" alt="Two-panel Bayesian display: the series with its posterior mean above, the per-location posterior changepoint probability below" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-12
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-12-1.png" alt="Two-panel Bayesian display: the series with its posterior mean above, the per-location posterior changepoint probability below" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="the-penalty-path-crops">The penalty path: CROPS<a class="anchor" aria-label="anchor" href="#the-penalty-path-crops"></a>
@@ -349,18 +333,10 @@ plot of chunk unnamed-chunk-12
 <span><span class="co">#&gt; 1    7.68      2  274.</span></span>
 <span><span class="co">#&gt; 2    5.70      4  259.</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span>                          <span class="co"># cost elbow</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-13-1.png" alt="CROPS elbow diagnostic: segmentation cost against the number of changepoints" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-13
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-13-1.png" alt="CROPS elbow diagnostic: segmentation cost against the number of changepoints" width="100%"></p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span>, type <span class="op">=</span> <span class="st">"segmentations"</span><span class="op">)</span>  <span class="co"># see the actual candidate models</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-14-1.png" alt="Faceted small-multiples, one panel per candidate segmentation on the CROPS penalty path" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-14
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-14-1.png" alt="Faceted small-multiples, one panel per candidate segmentation on the CROPS penalty path" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="inference-a-region-not-a-point">Inference: a region, not a point<a class="anchor" aria-label="anchor" href="#inference-a-region-not-a-point"></a>
@@ -374,11 +350,7 @@ plot of chunk unnamed-chunk-14
 <span><span class="co">#&gt;   &lt;int&gt; &lt;int&gt;  &lt;int&gt; &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100   101      2  4.66</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_nsp</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-15-1.png" alt="Series with a shaded vertical band marking an NSP significance region" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-15
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-15-1.png" alt="Series with a shaded vertical band marking an NSP significance region" width="100%"></p>
 <p>The <code>cp</code> column of an NSP fit is the interval midpoint, is labelled as such in <code>cp_source</code>, and is never presented as an estimate — the region is the inferential object.</p>
 <p>For every other engine, <code><a href="reference/cpt_confint.html">cpt_confint()</a></code> answers “where could this changepoint be?” behind one contract, and says which of four routes it used:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
@@ -419,11 +391,7 @@ plot of chunk unnamed-chunk-15
 <span><span class="co">#&gt; 6     5  79.0   4.14  FALSE </span></span>
 <span><span class="co">#&gt; 7     6  89.5  -0.362 FALSE</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sel</span>, plot_type <span class="op">=</span> <span class="st">"ladder"</span>, max_facets <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-18-1.png" alt="Small multiples showing how the segmentation coarsens as the number of changepoints falls, with the chosen model marked" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-18
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-18-1.png" alt="Small multiples showing how the segmentation coarsens as the number of changepoints falls, with the chosen model marked" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="seeing-the-statistic">Seeing the statistic<a class="anchor" aria-label="anchor" href="#seeing-the-statistic"></a>
@@ -432,18 +400,10 @@ plot of chunk unnamed-chunk-18
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_mosum</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_mosum</span>, type <span class="op">=</span> <span class="st">"statistic"</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-19-1.png" alt="Two-panel display: the series above, the MOSUM statistic against its threshold below" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-19
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-19-1.png" alt="Two-panel display: the series above, the MOSUM statistic against its threshold below" width="100%"></p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_scale_space.html">ggcpt_scale_space</a></span><span class="op">(</span><span class="va">res_mosum</span>, bandwidths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">40</span>, <span class="fl">80</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-20-1.png" alt="Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-20
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-20-1.png" alt="Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked" width="100%"></p>
 <p><code><a href="reference/cpt_statistic.html">cpt_statistic()</a></code> returns the profile as a tibble and <code><a href="reference/cpt_statistic.html">ggcpt_statistic()</a></code> draws it on its own; <code><a href="reference/cpt_solution_path.html">cpt_solution_path()</a></code> and <code><a href="reference/cpt_solution_path.html">ggcpt_solution_path()</a></code> do the same for the order in which candidates entered a binary-segmentation or wild-binary-segmentation model.</p>
 </div>
 <div class="section level2">
@@ -460,19 +420,11 @@ plot of chunk unnamed-chunk-20
 <span><span class="co">#&gt; 2   141          0         0      0.0180     1.66</span></span>
 <span><span class="co">#&gt; 3   181          0         0      0.0179     1.64</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-21-1.png" alt="Series with each observation sized and coloured by how much perturbing it disturbs the segmentation" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-21
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-21-1.png" alt="Series with each observation sized and coloured by how much perturbing it disturbs the segmentation" width="100%"></p>
 <p><code><a href="reference/cpt_sensitivity.html">cpt_sensitivity()</a></code> is the tuning-parameter analogue, and the direct answer to “is this robust to the penalty?”:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="reference/cpt_sensitivity.html">cpt_sensitivity</a></span><span class="op">(</span><span class="va">x3</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, over <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">20</span>, <span class="fl">80</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-22-1.png" alt="One facet per penalty setting, each showing the changepoints that setting finds" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-22
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-22-1.png" alt="One facet per penalty setting, each showing the changepoints that setting finds" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="supervised-detection-learn-the-penalty-from-labels">Supervised detection: learn the penalty from labels<a class="anchor" aria-label="anchor" href="#supervised-detection-learn-the-penalty-from-labels"></a>
@@ -485,11 +437,7 @@ plot of chunk unnamed-chunk-22
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="reference/scale_fill_cpt_label.html">scale_fill_cpt_label</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="reference/theme_ggcpt.html">theme_ggcpt</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-23-1.png" alt="Series with shaded label regions behind it, coloured by whether the label asserts a change" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-23
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-23-1.png" alt="Series with shaded label regions behind it, coloured by whether the label asserts a change" width="100%"></p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_label_error.html">cpt_label_error</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">labs</span><span class="op">)</span></span>
 <span><span class="co">#&gt; cpt_label_error (2 label(s))</span></span>
@@ -554,11 +502,7 @@ plot of chunk unnamed-chunk-23
 <span><span class="co">#&gt; 1   120     1.90     4 amoc, binseg, pelt, wbs      1</span></span>
 <span><span class="co">#&gt; 2   240     6.01     3 binseg, pelt, wbs            0</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">cons</span>, plot_type <span class="op">=</span> <span class="st">"agreement"</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-27-1.png" alt="Dot matrix of method against location, with shaded bands marking the consensus changepoints" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-27
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-27-1.png" alt="Dot matrix of method against location, with shaded bands marking the consensus changepoints" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="from-a-changepoint-to-a-finding">From a changepoint to a finding<a class="anchor" aria-label="anchor" href="#from-a-changepoint-to-a-finding"></a>
@@ -623,11 +567,7 @@ plot of chunk unnamed-chunk-27
 <span><span class="co">#&gt; 12 mix      binseg    0.422 0    </span></span>
 <span><span class="co">#&gt; # ℹ 24 more rows</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bm</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-29-1.png" alt="Heatmap of the covering metric for each method on each benchmark dataset" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-29
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-29-1.png" alt="Heatmap of the covering metric for each method on each benchmark dataset" width="100%"></p>
 <p><code><a href="reference/cpt_datasets.html">cpt_datasets()</a></code> is offline and deterministic. For the real thing, <code><a href="reference/cpt_load_tcpd.html">cpt_load_tcpd()</a></code> downloads and caches the Turing Change Point Dataset, multi-annotator ground truth intact, and <code><a href="reference/cpt_annotations.html">cpt_annotations()</a></code> lays that ground truth out one row per annotator per changepoint.</p>
 </div>
 <div class="section level2">
@@ -680,11 +620,7 @@ plot of chunk unnamed-chunk-29
 <span><span class="co">#&gt; Monte Carlo standard errors are in `mc_se`; a power of 0.80 from 50</span></span>
 <span><span class="co">#&gt; replicates is only known to about +/- 0.11.</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-31-1.png" alt="Power curve: detection probability against change size, with a Monte Carlo interval" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-31
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-31-1.png" alt="Power curve: detection probability against change size, with a Monte Carlo interval" width="100%"></p>
 <p><code><a href="reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts it and returns the smallest change reaching a target power — the number that belongs in a pre-registration. <code><a href="reference/cpt_scenarios.html">cpt_scenarios()</a></code> builds the matching grid of labelled synthetic series, so the same design can be fed straight to <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code>.</p>
 </div>
 <div class="section level2">
@@ -731,11 +667,7 @@ plot of chunk unnamed-chunk-31
 <p><code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code> runs several detectors on the same series and facets the results, so agreement (and disagreement) is visible at a glance:</p>
 <div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"fpop"</span>, <span class="st">"wbs"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-33-1.png" alt="One facet per detection method, each showing the same series with that method's changepoints" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-33
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-33-1.png" alt="One facet per detection method, each showing the same series with that method's changepoints" width="100%"></p>
 <p>For a numeric summary, use <code><a href="reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code>:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ggcpt_compare_table.html">ggcpt_compare_table</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"fpop"</span>, <span class="st">"wbs"</span><span class="op">)</span><span class="op">)</span></span>
@@ -763,11 +695,7 @@ plot of chunk unnamed-chunk-33
 <span><span class="co">#&gt; 1 shifted              1</span></span>
 <span><span class="co">#&gt; 2 noise                0</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">batch</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-35-1.png" alt="One facet per series in the batch, each with its own detected changepoints" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-35
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-35-1.png" alt="One facet per series in the batch, each with its own detected changepoints" width="100%"></p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_stability.html">cpt_stability</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, B <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">st</span></span>
@@ -779,11 +707,7 @@ plot of chunk unnamed-chunk-35
 <span><span class="co">#&gt;   &lt;int&gt;     &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100         1</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-36-1.png" alt="Bootstrap re-detection frequency for each changepoint location" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-36
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-36-1.png" alt="Bootstrap re-detection frequency for each changepoint location" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="multivariate-and-high-dimensional-detection">Multivariate and high-dimensional detection<a class="anchor" aria-label="anchor" href="#multivariate-and-high-dimensional-detection"></a>
@@ -801,11 +725,7 @@ plot of chunk unnamed-chunk-36
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1    80   -0.590     21.9</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_hd</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-37-1.png" alt="One facet per coordinate of a multivariate series, sharing the changepoints detected across coordinates" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-37
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-37-1.png" alt="One facet per coordinate of a multivariate series, sharing the changepoints detected across coordinates" width="100%"></p>
 <p>Univariate methods never silently flatten a matrix: hand one to <code>pelt</code> and you get an error naming the multivariate alternatives instead. <code><a href="reference/ocd_wrapper.html">ocd_wrapper()</a></code> insists the other way — it projects across coordinates, so it needs a matrix with at least two columns.</p>
 </div>
 <div class="section level2">
@@ -962,11 +882,7 @@ plot of chunk unnamed-chunk-37
 <span><span class="va">y_slope</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.3</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span></span>
 <span><span class="va">res_slope</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpop_wrapper.html">cpop_wrapper</a></span><span class="op">(</span><span class="va">y_slope</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_slope</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-43-1.png" alt="Piecewise-linear series with the fitted broken line and a change-in-slope changepoint" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-43
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-43-1.png" alt="Piecewise-linear series with the fitted broken line and a change-in-slope changepoint" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="custom-geoms-stats-and-theming">Custom geoms, stats, and theming<a class="anchor" aria-label="anchor" href="#custom-geoms-stats-and-theming"></a>
@@ -1054,11 +970,7 @@ plot of chunk unnamed-chunk-43
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/ggcptplot.html">ggcptplot</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-49-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-49
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-49-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="additional-s3-methods">Additional S3 methods<a class="anchor" aria-label="anchor" href="#additional-s3-methods"></a>
@@ -1074,7 +986,7 @@ plot of chunk unnamed-chunk-49
 <span><span class="co">#&gt;   CP convention:            left </span></span>
 <span><span class="co">#&gt;   Series length:            200 </span></span>
 <span><span class="co">#&gt;   Penalty:                  MBIC </span></span>
-<span><span class="co">#&gt;   Runtime (seconds):        0.008 </span></span>
+<span><span class="co">#&gt;   Runtime (seconds):        0.007 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; # A tibble: 2 × 5</span></span>
@@ -1099,11 +1011,7 @@ plot of chunk unnamed-chunk-49
 <span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span>           <span class="co"># one-line summary string</span></span>
 <span><span class="co">#&gt; [1] "ggcpt [pelt] 1 changepoint(s) on 200 observations"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span>             <span class="co"># base-graphics fallback (delegates to autoplot)</span></span></code></pre></div>
-<div class="figure">
-<img src="reference/figures/README-unnamed-chunk-50-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"><p class="caption">
-plot of chunk unnamed-chunk-50
-</p>
-</div>
+<p><img src="reference/figures/README-unnamed-chunk-50-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>

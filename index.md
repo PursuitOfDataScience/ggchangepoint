@@ -107,8 +107,6 @@ autoplot(res)
 ![ggchangepoint plot of a time series with detected
 changepoints](reference/figures/README-unnamed-chunk-6-1.png)
 
-plot of chunk unnamed-chunk-6
-
 ## Why ggchangepoint
 
 - **Detect with one call** — `cpt_detect(x, method = "...")` dispatches
@@ -253,8 +251,6 @@ autoplot(dated)
 ![Series with a date axis and a changepoint rule, detected with
 PELT](reference/figures/README-unnamed-chunk-9-1.png)
 
-plot of chunk unnamed-chunk-9
-
 [`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md)
 is the same conversion on its own, for code that needs the values and
 the index before detection runs.
@@ -313,8 +309,6 @@ autoplot(res_smuce, show_ci = TRUE, show_fit = TRUE)
 confidence intervals for each changepoint
 location](reference/figures/README-unnamed-chunk-11-1.png)
 
-plot of chunk unnamed-chunk-11
-
 Read the intervals, not just the locations: the genuine shift is pinned
 to a single index, while the spurious early changepoint carries an
 interval nearly a hundred observations wide — exactly the distinction a
@@ -346,8 +340,6 @@ ggcpt_posterior(res_bcp)
 the per-location posterior changepoint probability
 below](reference/figures/README-unnamed-chunk-12-1.png)
 
-plot of chunk unnamed-chunk-12
-
 ## The penalty path: CROPS
 
 Instead of guessing one penalty,
@@ -377,8 +369,6 @@ autoplot(path)                          # cost elbow
 ![CROPS elbow diagnostic: segmentation cost against the number of
 changepoints](reference/figures/README-unnamed-chunk-13-1.png)
 
-plot of chunk unnamed-chunk-13
-
 ``` r
 
 autoplot(path, type = "segmentations")  # see the actual candidate models
@@ -386,8 +376,6 @@ autoplot(path, type = "segmentations")  # see the actual candidate models
 
 ![Faceted small-multiples, one panel per candidate segmentation on the
 CROPS penalty path](reference/figures/README-unnamed-chunk-14-1.png)
-
-plot of chunk unnamed-chunk-14
 
 ## Inference: a region, not a point
 
@@ -410,8 +398,6 @@ autoplot(res_nsp)
 
 ![Series with a shaded vertical band marking an NSP significance
 region](reference/figures/README-unnamed-chunk-15-1.png)
-
-plot of chunk unnamed-chunk-15
 
 The `cp` column of an NSP fit is the interval midpoint, is labelled as
 such in `cp_source`, and is never presented as an estimate — the region
@@ -482,8 +468,6 @@ autoplot(sel, plot_type = "ladder", max_facets = 5)
 changepoints falls, with the chosen model
 marked](reference/figures/README-unnamed-chunk-18-1.png)
 
-plot of chunk unnamed-chunk-18
-
 ## Seeing the statistic
 
 Every detector computes something — a MOSUM statistic at each bandwidth,
@@ -500,8 +484,6 @@ autoplot(res_mosum, type = "statistic")
 ![Two-panel display: the series above, the MOSUM statistic against its
 threshold below](reference/figures/README-unnamed-chunk-19-1.png)
 
-plot of chunk unnamed-chunk-19
-
 ``` r
 
 ggcpt_scale_space(res_mosum, bandwidths = c(20, 40, 80))
@@ -510,8 +492,6 @@ ggcpt_scale_space(res_mosum, bandwidths = c(20, 40, 80))
 ![Heatmap of the MOSUM statistic by location and bandwidth, with
 accepted changepoints
 marked](reference/figures/README-unnamed-chunk-20-1.png)
-
-plot of chunk unnamed-chunk-20
 
 [`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
 returns the profile as a tibble and
@@ -549,8 +529,6 @@ autoplot(inf)
 it disturbs the
 segmentation](reference/figures/README-unnamed-chunk-21-1.png)
 
-plot of chunk unnamed-chunk-21
-
 [`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
 is the tuning-parameter analogue, and the direct answer to “is this
 robust to the penalty?”:
@@ -562,8 +540,6 @@ autoplot(cpt_sensitivity(x3, method = "pelt", over = list(penalty = c(4, 20, 80)
 
 ![One facet per penalty setting, each showing the changepoints that
 setting finds](reference/figures/README-unnamed-chunk-22-1.png)
-
-plot of chunk unnamed-chunk-22
 
 ## Supervised detection: learn the penalty from labels
 
@@ -584,8 +560,6 @@ ggplot(data.frame(t = seq_along(x), y = x), aes(t, y)) +
 
 ![Series with shaded label regions behind it, coloured by whether the
 label asserts a change](reference/figures/README-unnamed-chunk-23-1.png)
-
-plot of chunk unnamed-chunk-23
 
 ``` r
 
@@ -678,8 +652,6 @@ autoplot(cons, plot_type = "agreement")
 ![Dot matrix of method against location, with shaded bands marking the
 consensus changepoints](reference/figures/README-unnamed-chunk-27-1.png)
 
-plot of chunk unnamed-chunk-27
-
 ## From a changepoint to a finding
 
 “Changepoint at index 147” is not a finding.
@@ -762,8 +734,6 @@ autoplot(bm)
 
 ![Heatmap of the covering metric for each method on each benchmark
 dataset](reference/figures/README-unnamed-chunk-29-1.png)
-
-plot of chunk unnamed-chunk-29
 
 [`cpt_datasets()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_datasets.md)
 is offline and deterministic. For the real thing,
@@ -849,8 +819,6 @@ autoplot(pw)
 ![Power curve: detection probability against change size, with a Monte
 Carlo interval](reference/figures/README-unnamed-chunk-31-1.png)
 
-plot of chunk unnamed-chunk-31
-
 [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
 inverts it and returns the smallest change reaching a target power — the
 number that belongs in a pre-registration.
@@ -929,8 +897,6 @@ ggcpt_compare(x, methods = c("pelt", "binseg", "fpop", "wbs"))
 ![One facet per detection method, each showing the same series with that
 method's changepoints](reference/figures/README-unnamed-chunk-33-1.png)
 
-plot of chunk unnamed-chunk-33
-
 For a numeric summary, use
 [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md):
 
@@ -976,8 +942,6 @@ autoplot(batch)
 ![One facet per series in the batch, each with its own detected
 changepoints](reference/figures/README-unnamed-chunk-35-1.png)
 
-plot of chunk unnamed-chunk-35
-
 ``` r
 
 st <- cpt_stability(x, method = "pelt", B = 50, seed = 1)
@@ -994,8 +958,6 @@ autoplot(st)
 
 ![Bootstrap re-detection frequency for each changepoint
 location](reference/figures/README-unnamed-chunk-36-1.png)
-
-plot of chunk unnamed-chunk-36
 
 ## Multivariate and high-dimensional detection
 
@@ -1022,8 +984,6 @@ autoplot(res_hd)
 ![One facet per coordinate of a multivariate series, sharing the
 changepoints detected across
 coordinates](reference/figures/README-unnamed-chunk-37-1.png)
-
-plot of chunk unnamed-chunk-37
 
 Univariate methods never silently flatten a matrix: hand one to `pelt`
 and you get an error naming the multivariate alternatives instead.
@@ -1279,8 +1239,6 @@ autoplot(res_slope, show_fit = TRUE)
 change-in-slope
 changepoint](reference/figures/README-unnamed-chunk-43-1.png)
 
-plot of chunk unnamed-chunk-43
-
 ## Custom geoms, stats, and theming
 
 The package provides composable ggplot2 layers for changepoint
@@ -1417,8 +1375,6 @@ ggcptplot(x)
 ![ggchangepoint plot of a time series with detected
 changepoints](reference/figures/README-unnamed-chunk-49-1.png)
 
-plot of chunk unnamed-chunk-49
-
 ## Additional S3 methods
 
 The `ggcpt` class also provides:
@@ -1434,7 +1390,7 @@ summary(res)          # human-readable digest
 #>   CP convention:            left 
 #>   Series length:            200 
 #>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.008 
+#>   Runtime (seconds):        0.007 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -1463,8 +1419,6 @@ plot(res)             # base-graphics fallback (delegates to autoplot)
 
 ![ggchangepoint plot of a time series with detected
 changepoints](reference/figures/README-unnamed-chunk-50-1.png)
-
-plot of chunk unnamed-chunk-50
 
 ## Learn more
 
