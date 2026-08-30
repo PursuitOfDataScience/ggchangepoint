@@ -411,15 +411,22 @@ cpt_methods <- function(capabilities = TRUE) {
   methods[, c(front, setdiff(names(methods), front)), drop = FALSE]
 }
 
-# Internal: is an engine installed? Asking loads its namespace, and a
-# namespace may talk on the way in -- `fabisearch` pulls in `rgl`, which
-# warns "unable to open X11 display" on every headless machine. That is
-# noise about the display, not information about the installation, so it is
-# swallowed here; `cpt_methods()` should be silent.
+# Internal: is an engine installed?
+#
+# This asks the library, it does not load the package. `requireNamespace()`
+# would be the obvious call, but loading is the wrong operation for a
+# question about installation, and it is not free: building the
+# `cpt_methods()` table would load thirty-five namespaces, and a namespace
+# can do anything on the way in. `fabisearch` pulls in `rgl`, which warns
+# about the X11 display on every headless machine, and on macOS fails in
+# `dyn.load()` outright because the runner has no `libGLU`. Neither is
+# information about whether the engine is installed.
+#
+# `find.package()` answers the actual question and touches nothing.
 #' @noRd
 engine_installed <- function(pkg) {
   if (pkg %in% c("changepoint", "changepoint.np", "ecp")) return(TRUE)  # Imports
-  suppressWarnings(suppressMessages(requireNamespace(pkg, quietly = TRUE)))
+  length(suppressWarnings(find.package(pkg, quiet = TRUE))) > 0L
 }
 
 # Internal: the wired-method table in its 0.4.0 shape, derived from the
