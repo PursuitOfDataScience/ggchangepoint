@@ -442,6 +442,16 @@ capability matrix was extended in lockstep.
   all” without JAGS was wrong, and is corrected; the example is
   `\dontrun{}` because no test of installed R packages predicts whether
   a system library can be reached.
+- [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  no longer loads every engine to find out which ones are installed. It
+  asked [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html),
+  which loads the package, so building the table pulled in all
+  thirty-five namespaces — including , by way of , which fails outright
+  on a machine with no OpenGL.
+  [`find.package()`](https://rdrr.io/r/base/find.package.html) answers
+  the question without touching anything: the call drops from seconds to
+  hundredths of a second and loads nothing. Wrappers still load their
+  engine when they actually need it.
 - [`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
   validates the shape of its input before requiring the engine, so
   asking for `method = "mosum"` with a matrix says that mosum is

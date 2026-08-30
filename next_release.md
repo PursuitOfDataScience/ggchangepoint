@@ -529,10 +529,10 @@ Part II’s §25 listed eight decisions. All eight were taken.
 
 ## 0.8 Bugs found and fixed during the 0.5.0 build
 
-Thirty-six defects were found and fixed in the same cycle. Three were
+Thirty-seven defects were found and fixed in the same cycle. Three were
 introduced by this release’s own code; S7–S8 and S12 are the kind that
 only surface when someone reads what an engine actually returns rather
-than what its documentation implies; S17–S36 came out of the
+than what its documentation implies; S17–S37 came out of the
 post-implementation audit passes, which went after the surfaces the
 tests never reached — parallel execution, the `ggcpt` contract across
 every installed engine, degenerate input, and the claims the prose
@@ -854,6 +854,32 @@ ran before the univariate check, so a matrix passed with
 “mosum is univariate” on a machine with it — an error that depends on
 the library rather than the call. Shape is validated first now. Surfaced
 as a macOS CI failure, where `mosum` happened not to be installed. \|
+
+S37 \|
+**[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+loaded all thirty-five engine namespaces to fill in one column**, and on
+macOS that killed the vignette rebuild with no error to show \| Asking
+[`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) whether a
+package is *installed* answers a different question — it loads it — and
+loading is not free or safe. Building the status table pulled in every
+engine, including `fabisearch`, which pulls in `rgl`, which on the macOS
+runner fails in [`dyn.load()`](https://rdrr.io/r/base/dynload.html)
+because there is no `libGLU`. The R CMD check step reported
+`Vignette re-building failed` with no chunk, no line and no message,
+because the failure was not an R condition: it was a namespace load
+dying in a subprocess. Four of the six vignettes were affected and the
+two either side of them survived, which is why no property of the
+individual files explained it — a `buildVignettes()` probe on the runner
+itself returned `"ok"` after two vignettes having produced no output at
+all. [`find.package()`](https://rdrr.io/r/base/find.package.html)
+answers the actual question and touches nothing:
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+drops from seconds to 0.03s, loads zero namespaces, stays silent, and
+the rgl `dyn.load` NOTE under “checking dependencies in R code” goes
+with it. `need_pkg()` still calls
+[`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) at the point
+a wrapper genuinely needs the engine loaded, which is where that
+belongs. \|
 
 ## 0.9 What Part II still leaves open
 
