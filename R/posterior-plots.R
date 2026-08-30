@@ -167,6 +167,7 @@ ggcpt_runlength <- function(x, prob_floor = 1e-3) {
 #' @examplesIf requireNamespace("plotly", quietly = TRUE) && interactive()
 #' res <- cpt_detect(c(rnorm(50), rnorm(50, 5)), method = "pelt")
 #' ggcpt_interactive(res)
+#' @family plotting
 ggcpt_interactive <- function(x, engine = c("plotly", "ggiraph"),
                               width_svg = 8, height_svg = 5, ...) {
   engine <- match.arg(engine)

@@ -31,3 +31,22 @@ A ggplot layer.
 Draws horizontal segments representing the estimated level of each segment
 between changepoints. Typically used with data from \code{augment()}.
 }
+\examples{
+library(ggplot2)
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(50), rnorm(50, 4)), method = "pelt")
+ggplot(fit$data, aes(index, value)) + geom_line(colour = "grey70") +
+  geom_cpt_segment(aes(x = start, xend = end, y = param_estimate,
+                       yend = param_estimate),
+                   data = fit$segments, colour = "blue", linewidth = 1)
+}
+\seealso{
+Other ggplot2 layers: 
+\code{\link{geom_changepoint}()},
+\code{\link{geom_cpt_ci}()},
+\code{\link{geom_cpt_event}()},
+\code{\link{geom_cpt_label}()},
+\code{\link{geom_cpt_region}()},
+\code{\link{stat_changepoint}()}
+}
+\concept{ggplot2 layers}

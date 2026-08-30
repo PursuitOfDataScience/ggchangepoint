@@ -58,6 +58,7 @@
 #'                          seed = 1)
 #' drifting <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
 #'                          sd_trend = c(0.5, 3), seed = 1)
+#' @family test signals
 cpt_simulate <- function(n,
                          changepoints = integer(),
                          change_in = c("mean", "var", "meanvar", "slope"),
@@ -262,6 +263,12 @@ rcpt <- function(...) cpt_simulate(...)
 #' @export
 #' @references Donoho, D. L. and Johnstone, I. M. (1994). Ideal spatial adaptation
 #'   by wavelet shrinkage. \emph{Biometrika}, 81(3), 425-455.
+#' @family test signals
+#' @examples
+#' x <- signal_blocks(seed = 2026)
+#' attr(x, "true_changepoints")
+#' # PELT recovers all eleven Donoho-Johnstone jumps
+#' cpt_detect(x$value, method = "pelt")$changepoints$cp
 signal_blocks <- function(n = 2048, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
   if (n < 100) {
@@ -305,6 +312,12 @@ signal_blocks <- function(n = 2048, seed = NULL) {
 #' @param seed Optional seed.
 #' @return A tibble with columns \code{index} and \code{value}.
 #' @export
+#' @family test signals
+#' @examples
+#' x <- signal_fms(seed = 2026)
+#' cp <- cpt_detect(x$value, method = "pelt")$changepoints$cp
+#' # the smallest jumps (0.5, against noise sd 0.5) are the ones missed
+#' cpt_metrics(cp, attr(x, "true_changepoints"), n = nrow(x))$covering
 signal_fms <- function(n = 2000, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
   if (n < 40) {
@@ -336,6 +349,13 @@ signal_fms <- function(n = 2000, seed = NULL) {
 #' @param seed Optional seed.
 #' @return A tibble with columns \code{index} and \code{value}.
 #' @export
+#' @family test signals
+#' @examples
+#' x <- signal_mix(seed = 2026)
+#' attr(x, "true_changepoints")
+#' # the linear ramps are not level shifts, so a mean-change detector puts
+#' # changepoints inside them rather than at the segment joins
+#' cpt_detect(x$value, method = "pelt")$changepoints$cp
 signal_mix <- function(n = 2000, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
   if (n < 40) {
@@ -371,6 +391,11 @@ signal_mix <- function(n = 2000, seed = NULL) {
 #' @param seed Optional seed.
 #' @return A tibble with columns \code{index} and \code{value}.
 #' @export
+#' @family test signals
+#' @examples
+#' x <- signal_teeth(n = 600, seed = 2026)
+#' attr(x, "true_changepoints")   # a change every 100 observations
+#' cpt_detect(x$value, method = "pelt")$changepoints$cp
 signal_teeth <- function(n = 2000, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
 
@@ -403,6 +428,11 @@ signal_teeth <- function(n = 2000, seed = NULL) {
 #' @param seed Optional seed.
 #' @return A tibble with columns \code{index} and \code{value}.
 #' @export
+#' @family test signals
+#' @examples
+#' x <- signal_stairs(n = 500, seed = 2026)
+#' attr(x, "true_changepoints")   # ten steps, so nine changes
+#' cpt_detect(x$value, method = "pelt")$changepoints$cp
 signal_stairs <- function(n = 2000, seed = NULL) {
   if (!is.null(seed)) set.seed(seed)
 

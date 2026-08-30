@@ -61,4 +61,13 @@ ggplot(d, aes(t, y)) +
 \seealso{
 \code{\link{cpt_labels}()}, \code{\link{cpt_label_error}()},
   \code{\link{scale_fill_cpt_label}()}.
+
+Other ggplot2 layers: 
+\code{\link{geom_changepoint}()},
+\code{\link{geom_cpt_ci}()},
+\code{\link{geom_cpt_event}()},
+\code{\link{geom_cpt_region}()},
+\code{\link{geom_cpt_segment}()},
+\code{\link{stat_changepoint}()}
 }
+\concept{ggplot2 layers}

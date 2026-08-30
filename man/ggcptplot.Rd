@@ -72,3 +72,11 @@ ggcptplot(c(rnorm(100,0,1),rnorm(100,0,10)))
 ggcptplot(c(rnorm(100,0,1),rnorm(100,10,1)))
 
 }
+\seealso{
+Other plotting: 
+\code{\link{ggcpt_compare_table}()},
+\code{\link{ggcpt_eval}()},
+\code{\link{ggcpt_interactive}()},
+\code{\link{ggecpplot}()}
+}
+\concept{plotting}

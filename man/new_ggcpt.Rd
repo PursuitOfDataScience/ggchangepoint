@@ -91,3 +91,20 @@ for with \code{is.null()}:
 the outside; this constructor does not check its arguments.
 }
 
+\examples{
+set.seed(2026)
+new_ggcpt(
+  changepoints = tibble::tibble(cp = 50L, cp_value = 0.1),
+  data = tibble::tibble(index = 1:100,
+                        value = c(rnorm(50), rnorm(50, 4))),
+  method = "manual", change_in = "mean")
+}
+\seealso{
+Other result class: 
+\code{\link{annotate_segments}()},
+\code{\link{as_cpt_series}()},
+\code{\link{as_ggcpt}()},
+\code{\link{cpt_annotations}()},
+\code{\link{is_ggcpt}()}
+}
+\concept{result class}

@@ -11,6 +11,12 @@
 #' @param ... Additional arguments passed to \code{wbs::wbs()}.
 #' @return A \code{ggcpt} object.
 #' @export
+#' @family changepoint engines
+#' @examplesIf requireNamespace("wbs", quietly = TRUE)
+#' set.seed(2026)
+#' res <- wbs_wrapper(c(rnorm(60), rnorm(60, 4)), n_intervals = 200)
+#' res$changepoints
+#' res$penalty$type   # sSIC selection, because `threshold` was not supplied
 wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ...) {
 
   need_pkg("wbs")
@@ -80,6 +86,11 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
 #' @param ... Additional arguments passed to \code{breakfast::breakfast()}.
 #' @return A \code{ggcpt} object.
 #' @export
+#' @family changepoint engines
+#' @examplesIf requireNamespace("breakfast", quietly = TRUE)
+#' set.seed(2026)
+#' res <- wbs2_wrapper(c(rnorm(60), rnorm(60, 4)))
+#' res$changepoints
 wbs2_wrapper <- function(x, ...) {
 
   need_pkg("breakfast")
@@ -126,6 +137,13 @@ breakfast_cpts <- function(fit) {
 #' @return A \code{ggcpt} object whose \code{change_in} reflects the
 #'   contrast: \code{"mean"}, \code{"meanvar"}, or \code{"slope"}.
 #' @export
+#' @family changepoint engines
+#' @examplesIf requireNamespace("not", quietly = TRUE)
+#' set.seed(2026)
+#' not_wrapper(c(rnorm(60), rnorm(60, 4)))$changepoints
+#' # a change in slope, not in level: pick the contrast to match
+#' trend <- c(1:60, 60 - 1:60) / 10 + rnorm(120)
+#' not_wrapper(trend, contrast = "pcwsLinContMean")$changepoints
 not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
 
   need_pkg("not")
@@ -193,6 +211,12 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
 #'   \code{mosum::multiscale.localPrune()}.
 #' @return A \code{ggcpt} object.
 #' @export
+#' @family changepoint engines
+#' @examplesIf requireNamespace("mosum", quietly = TRUE)
+#' set.seed(2026)
+#' x <- c(rnorm(100), rnorm(100, 3))
+#' mosum_wrapper(x, G = 20)$changepoints
+#' mosum_wrapper(x, multiscale = TRUE)$changepoints
 mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
 
   need_pkg("mosum")
@@ -266,6 +290,12 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
 #' equality, so a series with tiny but genuine variation still reaches the
 #' engine.
 #' @export
+#' @family changepoint engines
+#' @examplesIf requireNamespace("IDetect", quietly = TRUE)
+#' set.seed(2026)
+#' idetect_wrapper(c(rnorm(60), rnorm(60, 4)))$changepoints
+#' # a flat series has no changepoint; see "Constant input" above
+#' nrow(idetect_wrapper(rep(3, 100))$changepoints)
 idetect_wrapper <- function(x, seed = NULL, ...) {
 
   need_pkg("IDetect")
@@ -324,6 +354,12 @@ idetect_wrapper <- function(x, seed = NULL, ...) {
 #' @param ... Additional arguments passed to \code{breakfast::breakfast()}.
 #' @return A \code{ggcpt} object.
 #' @export
+#' @family changepoint engines
+#' @examplesIf requireNamespace("breakfast", quietly = TRUE)
+#' set.seed(2026)
+#' res <- tguh_wrapper(c(rnorm(60), rnorm(60, 4)))
+#' res$changepoints
+#' res$penalty$type
 tguh_wrapper <- function(x, ...) {
 
   need_pkg("breakfast")

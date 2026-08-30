@@ -52,6 +52,7 @@
 #' x <- c(rnorm(60), rnorm(60, 2))
 #' trend_wrapper(x, test = "pettitt")
 #' trend_wrapper(x, test = "snht")
+#' @family changepoint engines
 trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
                           alpha = 0.05, ...) {
   need_pkg("trend")
@@ -114,6 +115,7 @@ trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
 #' @examplesIf requireNamespace("ChangePointTaylor", quietly = TRUE)
 #' set.seed(2026)
 #' taylor_wrapper(c(rnorm(60), rnorm(60, 3)), n_bootstraps = 200, seed = 1)
+#' @family changepoint engines
 taylor_wrapper <- function(x, n_bootstraps = 1000, min_candidate_conf = 0.5,
                            min_conf = 0.9, conf_level = 0.95, seed = NULL) {
   need_pkg("ChangePointTaylor")
@@ -220,6 +222,7 @@ parse_taylor_ci <- function(v) {
 #'                frequency = 12, start = c(2000, 1))
 #' bfast_wrapper(y)
 #' }
+#' @family changepoint engines
 bfast_wrapper <- function(x, frequency = 12,
                           change_in = c("mean", "slope", "seasonality"),
                           h = 0.15, season = c("harmonic", "dummy", "none"),
@@ -318,6 +321,7 @@ bfast_wrapper <- function(x, frequency = 12,
 #'        as.numeric(stats::arima.sim(list(ar = 0.9), 250)))
 #' wbsts_wrapper(y)
 #' }
+#' @family changepoint engines
 wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
                           scales = NULL, seed = NULL, ...) {
   need_pkg("wbsts")
@@ -377,6 +381,7 @@ wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
 #' @examplesIf requireNamespace("binsegRcpp", quietly = TRUE)
 #' set.seed(2026)
 #' binsegrcpp_wrapper(c(rnorm(100), rnorm(100, 3)))
+#' @family changepoint engines
 binsegrcpp_wrapper <- function(x, change_in = c("mean", "meanvar"),
                                distribution = NULL, max_segments = NULL,
                                n_segments = NULL,

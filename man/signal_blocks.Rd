@@ -18,7 +18,22 @@ A tibble with columns \code{index} and \code{value}. The \code{true_changepoints
 \description{
 The classic Donoho-Johnstone blocks test signal with known changepoints.
 }
+\examples{
+x <- signal_blocks(seed = 2026)
+attr(x, "true_changepoints")
+# PELT recovers all eleven Donoho-Johnstone jumps
+cpt_detect(x$value, method = "pelt")$changepoints$cp
+}
 \references{
 Donoho, D. L. and Johnstone, I. M. (1994). Ideal spatial adaptation
   by wavelet shrinkage. \emph{Biometrika}, 81(3), 425-455.
 }
+\seealso{
+Other test signals: 
+\code{\link{cpt_simulate}()},
+\code{\link{signal_fms}()},
+\code{\link{signal_mix}()},
+\code{\link{signal_stairs}()},
+\code{\link{signal_teeth}()}
+}
+\concept{test signals}

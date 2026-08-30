@@ -33,3 +33,21 @@ but designed to work with the tidy changepoint data frames returned by
 the package. Can be used as a standalone layer:
 \code{geom_changepoint(data = cp_df, aes(xintercept = cp))}.
 }
+\examples{
+library(ggplot2)
+set.seed(2026)
+d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+cp <- data.frame(cp = cpt_detect(d$y, method = "pelt")$changepoints$cp)
+ggplot(d, aes(t, y)) + geom_line() +
+  geom_changepoint(aes(xintercept = cp), data = cp, colour = "blue")
+}
+\seealso{
+Other ggplot2 layers: 
+\code{\link{geom_cpt_ci}()},
+\code{\link{geom_cpt_event}()},
+\code{\link{geom_cpt_label}()},
+\code{\link{geom_cpt_region}()},
+\code{\link{geom_cpt_segment}()},
+\code{\link{stat_changepoint}()}
+}
+\concept{ggplot2 layers}

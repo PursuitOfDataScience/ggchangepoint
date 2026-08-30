@@ -13,3 +13,4 @@
 ^README\.html$
 ^data-raw$
 ^tests/testthat/_snaps$
+^vignettes/articles$

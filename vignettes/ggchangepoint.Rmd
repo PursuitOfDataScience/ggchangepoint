@@ -646,6 +646,14 @@ cpt_detect(data.frame(day = dates, v = x), y = v, index = day,
            method = "pelt")$changepoints$cp_index
 ```
 
+`as_cpt_series()` is that coercion on its own, returning the values, the
+index and a label for the axis:
+
+```{r as-cpt-series}
+str(as_cpt_series(x, index = dates), max.level = 1)
+as_cpt_series(ts(x, start = c(2020, 1), frequency = 12))$index_label
+```
+
 ## Inference
 
 `nsp_wrapper()` returns significance regions, read with `cpt_regions()` and
@@ -716,10 +724,34 @@ cpt_annotate_events(dated,
 ```
 
 `cpt_report()` assembles the whole analysis into markdown, and `cpt_gt()`
-renders a publication table. `geom_cpt_event()` draws the events;
-`scale_colour_cpt()`, `scale_fill_cpt()`, `scale_linetype_cpt()`,
-`scale_fill_cpt_label()` and `scale_colour_cpt_label()` are the
-colour-vision-safe scales; `theme_ggcpt()` is unchanged.
+renders a publication table (falling back to a tibble, with a note, when
+`gt` is not installed):
+
+```{r gt-tour, eval = requireNamespace("gt", quietly = TRUE)}
+cpt_gt(res, title = "Detected changepoints")
+```
+
+`geom_cpt_event()` draws the events. `scale_colour_cpt()`,
+`scale_fill_cpt()`, `scale_linetype_cpt()`, `scale_fill_cpt_label()` and
+`scale_colour_cpt_label()` are the colour-vision-safe scales — the
+Okabe-Ito palette, plus a linetype scale so that colour is never the only
+channel carrying a distinction. All three at once, on the fitted
+segmentation:
+
+```{r accessibility-tour, fig.alt = "Fitted segment levels drawn with the Okabe-Ito palette, a matching fill band and a redundant linetype per segment"}
+aug <- augment(res)
+ggplot(aug, aes(index, .fitted, colour = factor(seg_id),
+                linetype = factor(seg_id))) +
+  geom_line(aes(y = value), colour = "grey75", linetype = "solid") +
+  geom_ribbon(aes(ymin = .fitted - 1, ymax = .fitted + 1,
+                  fill = factor(seg_id)), alpha = 0.2, colour = NA) +
+  geom_line(linewidth = 1) +
+  scale_colour_cpt() + scale_fill_cpt() + scale_linetype_cpt() +
+  labs(x = "Index", y = "Value", colour = "Segment", fill = "Segment",
+       linetype = "Segment")
+```
+
+`theme_ggcpt()` is unchanged.
 
 ## Benchmarking
 
@@ -752,8 +784,20 @@ pw <- cpt_power(n = 200, jump = c(0.5, 1, 2), n_sim = 30, seed = 1)
 autoplot(pw)
 ```
 
-`cpt_min_detectable()` inverts the curve, and `cpt_scenarios()` builds a
-grid of settings as data.
+`cpt_min_detectable()` inverts the curve — it bisects for the change size
+that reaches a target power, which is the number a pre-registration needs:
+
+```{r min-detectable-tour}
+cpt_min_detectable(n = 150, n_sim = 15, max_iter = 3, seed = 1)$jump
+```
+
+`cpt_scenarios()` builds the grid a simulation study varies over as data
+rather than as nested loops, so it can be inspected, filtered and passed
+straight to `cpt_benchmark()`:
+
+```{r scenarios-tour}
+cpt_scenarios(n = c(200, 500), jump = c(1, 2), as_datasets = FALSE)
+```
 
 ## Extending
 
@@ -766,6 +810,7 @@ cpt_register_method("biggest_jump",
                     engine = "example")
 cpt_detect(x, method = "biggest_jump")$changepoints$cp
 subset(cpt_methods(), status == "registered")[, c("method", "engine")]
+cpt_registered_methods()
 cpt_unregister_method("biggest_jump")
 ```
 

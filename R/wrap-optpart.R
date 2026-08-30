@@ -17,6 +17,14 @@
 #' @param ... Additional arguments passed to \code{fpop::Fpop()}.
 #' @return A \code{ggcpt} object.
 #' @export
+#' @family changepoint engines
+#' @examplesIf requireNamespace("fpop", quietly = TRUE)
+#' set.seed(2026)
+#' x <- c(rnorm(60), rnorm(60, 4))
+#' fpop_wrapper(x)$changepoints
+#' # the default penalty assumes sd 1; scale it for wider noise
+#' y <- 5 * x
+#' fpop_wrapper(y, penalty = log(length(y)) * var(diff(y)))$changepoints
 fpop_wrapper <- function(x, penalty = NULL, ...) {
 
   need_pkg("fpop")

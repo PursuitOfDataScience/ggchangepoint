@@ -45,6 +45,7 @@
 #' fit <- as_ggcpt(c(60), x, method = "my_detector")
 #' fit
 #' tidy(fit)
+#' @family result class
 as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
                      change_in = "mean", ci = NULL, regions = NULL,
                      penalty = NULL, cp_convention = c("left", "right"),

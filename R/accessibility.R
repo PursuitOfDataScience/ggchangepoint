@@ -26,6 +26,7 @@
 #' library(ggplot2)
 #' ggplot(mtcars, aes(wt, mpg, colour = factor(cyl))) +
 #'   geom_point() + scale_colour_cpt() + theme_ggcpt()
+#' @family accessibility scales
 scale_colour_cpt <- function(..., na.value = "grey70") {
   ggplot2::discrete_scale("colour", palette = cpt_pal(),
                           na.value = na.value, ...)

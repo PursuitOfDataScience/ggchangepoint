@@ -214,6 +214,11 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
 #' @return The updated \code{ggcpt_monitor}.
 #' @seealso \code{\link{cpt_monitor}()}, \code{\link{alarms}()}.
 #' @export
+#' @examples
+#' set.seed(2026)
+#' mon <- cpt_monitor("edetector", baseline = rnorm(100))
+#' mon <- cpt_update(mon, c(rnorm(50), rnorm(50, 3)))
+#' alarms(mon)
 cpt_update <- function(monitor, new_obs) {
   if (!inherits(monitor, "ggcpt_monitor")) {
     stop("`monitor` must be a ggcpt_monitor from cpt_monitor().",

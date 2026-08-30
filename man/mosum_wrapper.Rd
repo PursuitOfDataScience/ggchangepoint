@@ -32,3 +32,57 @@ Wraps the \code{mosum} package for moving-sum-based changepoint
 detection, either at a single bandwidth or (with
 \code{multiscale = TRUE}) across a bandwidth grid with localised pruning.
 }
+\examples{
+\dontshow{if (requireNamespace("mosum", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
+set.seed(2026)
+x <- c(rnorm(100), rnorm(100, 3))
+mosum_wrapper(x, G = 20)$changepoints
+mosum_wrapper(x, multiscale = TRUE)$changepoints
+\dontshow{\}) # examplesIf}
+}
+\seealso{
+Other changepoint engines: 
+\code{\link{bcp_wrapper}()},
+\code{\link{beast_wrapper}()},
+\code{\link{bfast_wrapper}()},
+\code{\link{binsegrcpp_wrapper}()},
+\code{\link{bocpd_wrapper}()},
+\code{\link{cpm_wrapper}()},
+\code{\link{cpop_wrapper}()},
+\code{\link{cpt_wrapper}()},
+\code{\link{decafs_wrapper}()},
+\code{\link{ecp_wrapper}()},
+\code{\link{envcpt_wrapper}()},
+\code{\link{esac_wrapper}()},
+\code{\link{fabisearch_wrapper}()},
+\code{\link{fastcpd_wrapper}()},
+\code{\link{fcov_wrapper}()},
+\code{\link{fmean_wrapper}()},
+\code{\link{fpop_wrapper}()},
+\code{\link{geomcp_wrapper}()},
+\code{\link{hdcov_wrapper}()},
+\code{\link{hdreg_wrapper}()},
+\code{\link{idetect_wrapper}()},
+\code{\link{inspect_wrapper}()},
+\code{\link{kcp_wrapper}()},
+\code{\link{kwc_wrapper}()},
+\code{\link{mcp_wrapper}()},
+\code{\link{network_wrapper}()},
+\code{\link{not_wrapper}()},
+\code{\link{npmojo_wrapper}()},
+\code{\link{nsp_wrapper}()},
+\code{\link{ocd_wrapper}()},
+\code{\link{pilliat_wrapper}()},
+\code{\link{segmented_wrapper}()},
+\code{\link{smuce_wrapper}()},
+\code{\link{sn_wrapper}()},
+\code{\link{strucchange_wrapper}()},
+\code{\link{taylor_wrapper}()},
+\code{\link{tguh_wrapper}()},
+\code{\link{trend_wrapper}()},
+\code{\link{var_wrapper}()},
+\code{\link{wbs2_wrapper}()},
+\code{\link{wbs_wrapper}()},
+\code{\link{wbsts_wrapper}()}
+}
+\concept{changepoint engines}

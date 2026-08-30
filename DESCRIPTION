@@ -108,3 +108,4 @@ Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://pursuitofdatascience.github.io/ggchangepoint/
 BugReports: https://github.com/PursuitOfDataScience/ggchangepoint/issues
+Config/Needs/website: rmarkdown

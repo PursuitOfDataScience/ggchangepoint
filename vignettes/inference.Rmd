@@ -24,7 +24,9 @@ library(ggplot2)
 theme_set(theme_ggcpt())
 
 has_nsp   <- requireNamespace("nsp", quietly = TRUE)
-has_mosum <- requireNamespace("mosum", quietly = TRUE)
+# mosum pulls in plot3D -> misc3d -> tcltk, which warns "no DISPLAY variable
+# so Tk is not available" on a headless machine. Load it here, quietly.
+has_mosum <- suppressWarnings(requireNamespace("mosum", quietly = TRUE))
 has_wbs   <- requireNamespace("wbs", quietly = TRUE)
 has_cvcp  <- requireNamespace("crossvalidationCP", quietly = TRUE)
 has_infl  <- requireNamespace("changepoint.influence", quietly = TRUE)
@@ -229,6 +231,14 @@ res_mosum <- cpt_detect(x, method = "mosum")
 autoplot(res_mosum, type = "statistic")
 ```
 
+`autoplot(type = "statistic")` is a thin wrapper: `ggcpt_statistic()` is
+the plotting function itself, and `cpt_statistic()` returns the numbers
+behind it.
+
+```{r ggcpt-statistic, eval = has_mosum, fig.alt = "The same two-panel statistic display, drawn by ggcpt_statistic() directly"}
+ggcpt_statistic(res_mosum)
+```
+
 The scale-space view answers a question a single-bandwidth fit cannot:
 *at which resolutions does this feature exist?* A change visible only at a
 wide bandwidth is a slow shift; one visible only at a narrow bandwidth is a
@@ -238,11 +248,32 @@ spike.
 ggcpt_scale_space(res_mosum, bandwidths = c(15, 30, 60, 90))
 ```
 
+`cpt_scale_space()` returns the sweep as data, one row per
+(location, bandwidth) pair, so the picture can be counted rather than
+eyeballed. How many locations cross the threshold at each bandwidth:
+
+```{r scale-space-data, eval = has_mosum, warning = FALSE}
+ss <- cpt_scale_space(x, bandwidths = c(15, 30, 60, 90))
+aggregate(significant ~ bandwidth, data = ss, FUN = sum)
+```
+
+A wide bandwidth flags a broad neighbourhood of each change and a narrow
+one flags a few points, which is the resolution trade-off made numeric.
+
 And the solution path shows the order in which candidates entered the
 model, and how decisively each beat the next:
 
 ```{r path, eval = has_wbs, fig.alt = "Solution path: each candidate changepoint against the step at which it entered, with the proposing interval drawn"}
 ggcpt_solution_path(cpt_detect(x, method = "wbs"), max_steps = 20)
+```
+
+`cpt_solution_path()` is the same object as a tibble. The `contrast`
+column is the margin by which each candidate beat the next, and
+`selected` marks the ones the penalty kept — so the gap between the last
+selected row and the first rejected one is how close the decision was:
+
+```{r solution-path-data, eval = has_wbs}
+head(cpt_solution_path(cpt_detect(x, method = "wbs")), 5)
 ```
 
 An engine that exposes none of these says so, and names the ones that do:

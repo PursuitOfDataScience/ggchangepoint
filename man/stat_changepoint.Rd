@@ -48,3 +48,20 @@ quick exploration: \code{ggplot(df, aes(t, y)) + geom_line() +
 stat_changepoint(method = "pelt")}. Draws vertical lines at detected
 changepoint locations.
 }
+\examples{
+library(ggplot2)
+set.seed(2026)
+d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+ggplot(d, aes(t, y)) + geom_line() +
+  stat_changepoint(method = "pelt", colour = "blue")
+}
+\seealso{
+Other ggplot2 layers: 
+\code{\link{geom_changepoint}()},
+\code{\link{geom_cpt_ci}()},
+\code{\link{geom_cpt_event}()},
+\code{\link{geom_cpt_label}()},
+\code{\link{geom_cpt_region}()},
+\code{\link{geom_cpt_segment}()}
+}
+\concept{ggplot2 layers}

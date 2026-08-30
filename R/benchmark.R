@@ -565,6 +565,7 @@ tcpd_download <- function(url, dst) {
 #' @export
 #' @examples
 #' cpt_annotations(cpt_datasets(n = 200, names = "step"))
+#' @family result class
 cpt_annotations <- function(dataset) {
   if (!is.null(dataset$series)) dataset <- list(dataset = dataset)
   rows <- lapply(base::names(dataset), function(nm) {

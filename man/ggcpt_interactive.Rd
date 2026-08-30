@@ -42,3 +42,11 @@ res <- cpt_detect(c(rnorm(50), rnorm(50, 5)), method = "pelt")
 ggcpt_interactive(res)
 \dontshow{\}) # examplesIf}
 }
+\seealso{
+Other plotting: 
+\code{\link{ggcpt_compare_table}()},
+\code{\link{ggcpt_eval}()},
+\code{\link{ggcptplot}()},
+\code{\link{ggecpplot}()}
+}
+\concept{plotting}

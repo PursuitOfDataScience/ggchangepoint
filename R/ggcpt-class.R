@@ -57,6 +57,14 @@
 #'
 #' @return An object of class \code{ggcpt}.
 #' @export
+#' @family result class
+#' @examples
+#' set.seed(2026)
+#' new_ggcpt(
+#'   changepoints = tibble::tibble(cp = 50L, cp_value = 0.1),
+#'   data = tibble::tibble(index = 1:100,
+#'                         value = c(rnorm(50), rnorm(50, 4))),
+#'   method = "manual", change_in = "mean")
 new_ggcpt <- function(changepoints = tibble::tibble(cp = integer(), cp_value = numeric()),
                        segments = tibble::tibble(seg_id = integer(),
                                                   start = integer(),
@@ -107,6 +115,12 @@ format_penalty <- function(penalty) {
 #' @param x An object to test.
 #' @return \code{TRUE} if \code{x} inherits from \code{ggcpt}.
 #' @export
+#' @family result class
+#' @examples
+#' set.seed(2026)
+#' fit <- cpt_detect(c(rnorm(40), rnorm(40, 4)), method = "pelt")
+#' is_ggcpt(fit)
+#' is_ggcpt(fit$changepoints)
 is_ggcpt <- function(x) {
   inherits(x, "ggcpt")
 }

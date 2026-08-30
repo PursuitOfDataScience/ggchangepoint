@@ -42,6 +42,7 @@
 #' X <- matrix(rnorm(100 * 20), nrow = 100)
 #' X[51:100, 1:5] <- X[51:100, 1:5] + 3
 #' esac_wrapper(X)
+#' @family changepoint engines
 esac_wrapper <- function(x, threshold_d = 1.5, threshold_s = 1,
                          empirical = FALSE, N = 1000, seed = NULL, ...) {
   need_pkg("HDCD")
@@ -155,6 +156,7 @@ pilliat_dimension_guard <- function(p, p_supplied) {
 #' X <- matrix(rnorm(100 * 20), nrow = 100)
 #' X[51:100, 1:5] <- X[51:100, 1:5] + 3
 #' pilliat_wrapper(X)
+#' @family changepoint engines
 pilliat_wrapper <- function(x, threshold_d_const = 4,
                             threshold_bj_const = 6,
                             threshold_partial_const = 4,
@@ -233,6 +235,7 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
 #' B <- matrix(rnorm(100 * p), ncol = p)
 #' B[, 2] <- B[, 1] + 0.2 * B[, 2]        # correlation appears
 #' hdcov_wrapper(rbind(A, B), n_perm = 20, alpha = 0.05, seed = 1)
+#' @family changepoint engines
 hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
                           delta = NULL, seed = NULL) {
   need_pkg("changepoints")
@@ -350,6 +353,7 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
 #' }
 #' X <- rbind(mk(40, 0.2), mk(40, 0.6))
 #' network_wrapper(X, n_intervals = 20, n_perm = 20, seed = 1)
+#' @family changepoint engines
 network_wrapper <- function(x, copy2 = NULL, n_intervals = 100,
                             threshold = NULL, alpha = 0.05, n_perm = 20,
                             delta = NULL, seed = NULL) {
@@ -485,6 +489,7 @@ network_matrix <- function(x) {
 #' var_wrapper(rbind(step(50, 0.1), step(50, 0.8)),
 #'             gamma_set = c(1, 10), lambda_set = c(0.1, 1))
 #' }
+#' @family changepoint engines
 var_wrapper <- function(x, gamma_set = NULL, lambda_set = NULL,
                         delta = NULL, ...) {
   need_pkg("changepoints")
@@ -561,6 +566,7 @@ var_wrapper <- function(x, gamma_set = NULL, lambda_set = NULL,
 #' hdreg_wrapper(X, response = y, gamma_set = c(1, 10),
 #'               lambda_set = c(0.1, 1))
 #' }
+#' @family changepoint engines
 hdreg_wrapper <- function(x, response = NULL, gamma_set = NULL,
                           lambda_set = NULL, delta = NULL, ...) {
   need_pkg("changepoints")

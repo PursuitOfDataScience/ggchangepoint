@@ -17,3 +17,17 @@ A tibble with columns \code{index} and \code{value}.
 \description{
 A piecewise-constant signal with regularly spaced changepoints.
 }
+\examples{
+x <- signal_teeth(n = 600, seed = 2026)
+attr(x, "true_changepoints")   # a change every 100 observations
+cpt_detect(x$value, method = "pelt")$changepoints$cp
+}
+\seealso{
+Other test signals: 
+\code{\link{cpt_simulate}()},
+\code{\link{signal_blocks}()},
+\code{\link{signal_fms}()},
+\code{\link{signal_mix}()},
+\code{\link{signal_stairs}()}
+}
+\concept{test signals}

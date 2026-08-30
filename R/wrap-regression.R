@@ -45,6 +45,7 @@
 #' set.seed(2026)
 #' res <- strucchange_wrapper(c(rnorm(100), rnorm(100, 3)))
 #' res$changepoints
+#' @family changepoint engines
 strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
                                 conf_level = 0.95, ...) {
   need_pkg("strucchange")
@@ -136,6 +137,7 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
 #' res <- segmented_wrapper(y, npsi = 1)
 #' res$changepoints
 #' ggplot2::autoplot(res, show_fit = TRUE, show_ci = TRUE)
+#' @family changepoint engines
 segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
                               ...) {
   need_pkg("segmented")
@@ -231,6 +233,7 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
 #' set.seed(2026)
 #' res <- envcpt_wrapper(c(rnorm(100), rnorm(100, 3)))
 #' res$changepoints
+#' @family changepoint engines
 envcpt_wrapper <- function(x, models = c("mean", "meancpt", "meanar1",
                                          "meanar2", "meanar1cpt",
                                          "meanar2cpt", "trend", "trendcpt",

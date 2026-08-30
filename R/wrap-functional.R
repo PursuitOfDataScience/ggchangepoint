@@ -43,6 +43,7 @@
 #' X[31:60, ] <- X[31:60, ] + 2
 #' fmean_wrapper(X, M = 200)
 #' }
+#' @family changepoint engines
 fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
                           critical = c("simulation", "resample", "welch"),
                           type = c("segmentation", "single"), alpha = 0.05,
@@ -78,6 +79,7 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #' X[31:60, ] <- X[31:60, ] * 3
 #' fcov_wrapper(X, target = "trace", M = 200)
 #' }
+#' @family changepoint engines
 fcov_wrapper <- function(x,
                          target = c("covariance", "trace", "eigenjoint",
                                     "eigensingle"),
@@ -175,6 +177,7 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
 #' X <- matrix(rnorm(100 * 20), nrow = 100)
 #' X[51:100, ] <- X[51:100, ] * 3
 #' kwc_wrapper(X, seed = 1)
+#' @family changepoint engines
 kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
                         change_in = c("covariance", "distribution"),
                         seed = NULL, ...) {
@@ -272,6 +275,7 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 #' fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 4,
 #'                    alpha = 0.25, rank = 2)
 #' }
+#' @family changepoint engines
 fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
                                alpha = NULL, rank = NULL, n_core = 1,
                                seed = NULL, ...) {

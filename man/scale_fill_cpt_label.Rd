@@ -26,3 +26,18 @@ scoring a segmentation against it (\code{correct} / \code{false_positive}
 / \code{false_negative}). Unknown values fall back to grey rather than
 erroring, so a partially-scored frame still plots.
 }
+\examples{
+library(ggplot2)
+labs <- cpt_labels(c(40, 70), c(60, 90), c("change", "no_change"))
+ggplot(labs, aes(xmin = start, xmax = end, ymin = 0, ymax = 1,
+                 fill = change)) +
+  geom_rect() + scale_fill_cpt_label()
+# the same palette covers correct / false_positive / false_negative
+class(scale_colour_cpt_label())
+}
+\seealso{
+Other accessibility scales: 
+\code{\link{scale_colour_cpt}()},
+\code{\link{theme_ggcpt}()}
+}
+\concept{accessibility scales}

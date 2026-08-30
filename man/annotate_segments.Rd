@@ -24,3 +24,20 @@ A list of ggplot annotations.
 Adds alternating shaded rectangles to highlight segments between
 changepoints.
 }
+\examples{
+library(ggplot2)
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(50), rnorm(50, 4)), method = "pelt")
+ggplot(fit$data, aes(index, value)) +
+  annotate_segments(fit$changepoints$cp, n = nrow(fit$data)) +
+  geom_line()
+}
+\seealso{
+Other result class: 
+\code{\link{as_cpt_series}()},
+\code{\link{as_ggcpt}()},
+\code{\link{cpt_annotations}()},
+\code{\link{is_ggcpt}()},
+\code{\link{new_ggcpt}()}
+}
+\concept{result class}

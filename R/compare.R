@@ -204,6 +204,11 @@ compare_input <- function(x, fn) {
 #'
 #' @return A tibble with columns \code{method}, \code{cp}, \code{cp_value}.
 #' @export
+#' @family plotting
+#' @examples
+#' set.seed(2026)
+#' x <- c(rnorm(100), rnorm(100, 5))
+#' ggcpt_compare_table(x, methods = c("pelt", "binseg"))
 ggcpt_compare_table <- function(x,
                                 methods = c("pelt", "binseg", "amoc"),
                                 change_in = "mean",

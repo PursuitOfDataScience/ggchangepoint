@@ -20,6 +20,12 @@ Pushes new data through a \code{\link{cpt_monitor}()}, updating its
 internal state and appending to its alarm log. The monitor is returned, so
 the idiom is \code{mon <- cpt_update(mon, new_obs)}.
 }
+\examples{
+set.seed(2026)
+mon <- cpt_monitor("edetector", baseline = rnorm(100))
+mon <- cpt_update(mon, c(rnorm(50), rnorm(50, 3)))
+alarms(mon)
+}
 \seealso{
 \code{\link{cpt_monitor}()}, \code{\link{alarms}()}.
 }

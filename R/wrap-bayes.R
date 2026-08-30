@@ -27,6 +27,7 @@
 #' res <- bcp_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
 #' res$changepoints
 #' ggcpt_posterior(res)
+#' @family changepoint engines
 bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
                         seed = NULL, ...) {
   need_pkg("bcp")
@@ -88,6 +89,7 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
 #' res <- bocpd_wrapper(c(rnorm(60), rnorm(60, 4)))
 #' res$changepoints
 #' ggcpt_runlength(res)
+#' @family changepoint engines
 bocpd_wrapper <- function(x, hazard = 100, ...) {
   need_pkg("ocp")
   validate_scalar(hazard, "hazard", min = 0, min_open = TRUE)
@@ -139,6 +141,7 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
 #' @examplesIf requireNamespace("Rbeast", quietly = TRUE) && .Platform$OS.type != "windows"
 #' res <- beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
 #' res$changepoints
+#' @family changepoint engines
 beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
   need_pkg("Rbeast")
 

@@ -24,3 +24,17 @@ colouring true positives, false positives, and misses. Uses the same
 one-to-one matching as \code{\link{cpt_metrics}()}, so the plot and the
 metrics agree.
 }
+\examples{
+set.seed(2026)
+x <- c(rnorm(100), rnorm(100, 5))
+fit <- cpt_detect(x, method = "pelt")
+ggcpt_eval(fit$changepoints$cp, truth = 100, data_vec = x)
+}
+\seealso{
+Other plotting: 
+\code{\link{ggcpt_compare_table}()},
+\code{\link{ggcpt_interactive}()},
+\code{\link{ggcptplot}()},
+\code{\link{ggecpplot}()}
+}
+\concept{plotting}

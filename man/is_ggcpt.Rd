@@ -15,3 +15,18 @@ is_ggcpt(x)
 \description{
 Test if an object is a ggcpt object
 }
+\examples{
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(40), rnorm(40, 4)), method = "pelt")
+is_ggcpt(fit)
+is_ggcpt(fit$changepoints)
+}
+\seealso{
+Other result class: 
+\code{\link{annotate_segments}()},
+\code{\link{as_cpt_series}()},
+\code{\link{as_ggcpt}()},
+\code{\link{cpt_annotations}()},
+\code{\link{new_ggcpt}()}
+}
+\concept{result class}

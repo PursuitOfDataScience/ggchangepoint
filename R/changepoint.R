@@ -52,6 +52,7 @@
 #' cpt_wrapper(c(rnorm(100,0,1),rnorm(100,0,10)))
 #' cpt_wrapper(c(rnorm(100,0,1),rnorm(100,10,1)))
 #'
+#' @family changepoint engines
 cpt_wrapper <- function(data,
                         change_in = "mean_var",
                         cp_method = "PELT",
@@ -183,6 +184,7 @@ cpt_wrapper <- function(data,
 #' ggcptplot(c(rnorm(100,0,1),rnorm(100,0,10)))
 #' ggcptplot(c(rnorm(100,0,1),rnorm(100,10,1)))
 #'
+#' @family plotting
 ggcptplot <- function(data,
                       change_in = "mean_var",
                       cp_method = "PELT",

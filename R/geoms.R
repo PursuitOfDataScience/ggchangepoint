@@ -14,6 +14,14 @@
 #'
 #' @return A ggplot layer.
 #' @export
+#' @family ggplot2 layers
+#' @examples
+#' library(ggplot2)
+#' set.seed(2026)
+#' d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+#' cp <- data.frame(cp = cpt_detect(d$y, method = "pelt")$changepoints$cp)
+#' ggplot(d, aes(t, y)) + geom_line() +
+#'   geom_changepoint(aes(xintercept = cp), data = cp, colour = "blue")
 geom_changepoint <- function(mapping = NULL, data = NULL, ...,
                              na.rm = FALSE, show.legend = NA) {
   ggplot2::geom_vline(
@@ -39,6 +47,15 @@ geom_changepoint <- function(mapping = NULL, data = NULL, ...,
 #'
 #' @return A ggplot layer.
 #' @export
+#' @family ggplot2 layers
+#' @examples
+#' library(ggplot2)
+#' set.seed(2026)
+#' fit <- cpt_detect(c(rnorm(50), rnorm(50, 4)), method = "pelt")
+#' ggplot(fit$data, aes(index, value)) + geom_line(colour = "grey70") +
+#'   geom_cpt_segment(aes(x = start, xend = end, y = param_estimate,
+#'                        yend = param_estimate),
+#'                    data = fit$segments, colour = "blue", linewidth = 1)
 geom_cpt_segment <- function(mapping = NULL, data = NULL, ...,
                              na.rm = FALSE, show.legend = NA) {
   ggplot2::geom_segment(
@@ -68,6 +85,15 @@ geom_cpt_segment <- function(mapping = NULL, data = NULL, ...,
 #'
 #' @return A ggplot layer.
 #' @export
+#' @family ggplot2 layers
+#' @examples
+#' library(ggplot2)
+#' set.seed(2026)
+#' d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+#' ci <- data.frame(xmin = 45, xmax = 56, y = 0)
+#' ggplot(d, aes(t, y)) + geom_line() +
+#'   geom_cpt_ci(aes(xmin = xmin, xmax = xmax, y = y), data = ci,
+#'               inherit.aes = FALSE, width = 0.4, colour = "blue")
 geom_cpt_ci <- function(mapping = NULL, data = NULL, ...,
                         na.rm = FALSE, show.legend = NA) {
   # geom_errorbarh() is deprecated since ggplot2 3.5.0; geom_errorbar()
@@ -105,6 +131,13 @@ geom_cpt_ci <- function(mapping = NULL, data = NULL, ...,
 #'
 #' @return A ggplot layer.
 #' @export
+#' @family ggplot2 layers
+#' @examples
+#' library(ggplot2)
+#' set.seed(2026)
+#' d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+#' ggplot(d, aes(t, y)) + geom_line() +
+#'   stat_changepoint(method = "pelt", colour = "blue")
 stat_changepoint <- function(mapping = NULL, data = NULL,
                              geom = "vline", position = "identity",
                              ...,

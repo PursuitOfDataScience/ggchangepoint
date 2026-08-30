@@ -33,6 +33,7 @@
 #'            rnorm(160))
 #' res <- inspect_wrapper(X)
 #' res$changepoints
+#' @family changepoint engines
 inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
   need_pkg("InspectChangepoint")
 
@@ -136,6 +137,7 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #' res <- ocd_wrapper(X, mc_reps = 5)
 #' res$changepoints
 #' }
+#' @family changepoint engines
 ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
                         beta = 1, mc_reps = 100, ...) {
   need_pkg("ocd")
@@ -236,6 +238,7 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
 #' X <- rbind(matrix(rnorm(100 * 4), 100), matrix(rnorm(100 * 4, 2), 100))
 #' res <- geomcp_wrapper(X)
 #' res$changepoints
+#' @family changepoint engines
 geomcp_wrapper <- function(x, penalty = "MBIC",
                            mapping = c("both", "distance", "angle"), ...) {
   need_pkg("changepoint.geo")

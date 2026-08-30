@@ -17,3 +17,19 @@ A tibble with columns \code{index} and \code{value}.
 \description{
 A piecewise-constant/linear signal from the literature.
 }
+\examples{
+x <- signal_mix(seed = 2026)
+attr(x, "true_changepoints")
+# the linear ramps are not level shifts, so a mean-change detector puts
+# changepoints inside them rather than at the segment joins
+cpt_detect(x$value, method = "pelt")$changepoints$cp
+}
+\seealso{
+Other test signals: 
+\code{\link{cpt_simulate}()},
+\code{\link{signal_blocks}()},
+\code{\link{signal_fms}()},
+\code{\link{signal_stairs}()},
+\code{\link{signal_teeth}()}
+}
+\concept{test signals}

@@ -22,3 +22,9 @@ A tibble with averaged metrics.
 Computes averaged covering and F1 scores against multiple annotation sets,
 as used in the Turing Change Point Dataset benchmark.
 }
+\examples{
+# two annotators who disagree slightly about where the change is
+cpt_metrics_annotated(c(100, 200),
+                      annotations = list(c(98, 200), c(100, 203)),
+                      n = 300, margin = 5)
+}

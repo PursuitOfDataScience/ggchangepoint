@@ -27,3 +27,8 @@ movement of a changepoint, and the largest change in a segment parameter
 — so an observation that shifts a location without changing the count is
 still ranked.
 }
+\examples{
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(40), rnorm(40, 4)), method = "pelt")
+head(cpt_leverage(fit), 3)
+}

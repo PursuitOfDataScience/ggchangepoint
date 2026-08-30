@@ -99,6 +99,11 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
 #'
 #' @return A tibble with averaged metrics.
 #' @export
+#' @examples
+#' # two annotators who disagree slightly about where the change is
+#' cpt_metrics_annotated(c(100, 200),
+#'                       annotations = list(c(98, 200), c(100, 203)),
+#'                       n = 300, margin = 5)
 cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
 
   if (!is.list(annotations)) {
@@ -136,6 +141,12 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
 #'
 #' @return A ggplot object.
 #' @export
+#' @family plotting
+#' @examples
+#' set.seed(2026)
+#' x <- c(rnorm(100), rnorm(100, 5))
+#' fit <- cpt_detect(x, method = "pelt")
+#' ggcpt_eval(fit$changepoints$cp, truth = 100, data_vec = x)
 ggcpt_eval <- function(pred, truth, data_vec, margin = 5) {
 
   pred <- sort(unique(as.integer(pred)))

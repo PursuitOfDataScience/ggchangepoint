@@ -34,6 +34,7 @@
 #' @examplesIf requireNamespace("cpm", quietly = TRUE)
 #' res <- cpm_wrapper(c(rnorm(100), rnorm(100, 3)))
 #' res$changepoints
+#' @family changepoint engines
 cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
                         startup = 20, ...) {
   need_pkg("cpm")
@@ -128,6 +129,7 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
 #' @examplesIf requireNamespace("kcpRS", quietly = TRUE)
 #' res <- kcp_wrapper(c(rnorm(60), rnorm(60, 3)), nperm = 100, seed = 2026)
 #' res$changepoints
+#' @family changepoint engines
 kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
                         wsize = 25, nperm = 1000, kmax = 10, alpha = 0.05,
                         seed = NULL, ...) {
@@ -230,6 +232,7 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
 #' @examplesIf requireNamespace("CptNonPar", quietly = TRUE)
 #' res <- npmojo_wrapper(c(rnorm(100), rnorm(100, 3)))
 #' res$changepoints
+#' @family changepoint engines
 npmojo_wrapper <- function(x, G = NULL, lag = 0, ...) {
   need_pkg("CptNonPar")
 

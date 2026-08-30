@@ -94,3 +94,12 @@ seasonal <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
 drifting <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
                          sd_trend = c(0.5, 3), seed = 1)
 }
+\seealso{
+Other test signals: 
+\code{\link{signal_blocks}()},
+\code{\link{signal_fms}()},
+\code{\link{signal_mix}()},
+\code{\link{signal_stairs}()},
+\code{\link{signal_teeth}()}
+}
+\concept{test signals}

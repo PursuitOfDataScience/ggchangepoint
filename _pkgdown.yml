@@ -33,12 +33,36 @@ navbar:
       href: articles/supervised.html
     - text: Extending ggchangepoint
       href: articles/extending.html
+    - text: Streaming and online monitoring
+      href: articles/monitoring.html
+    - text: 'Benchmarks: runtime, size and coverage'
+      href: articles/benchmarks.html
   - text: News
     href: news/index.html
   right:
   - icon: fa-github fa-lg
     href: https://github.com/PursuitOfDataScience/ggchangepoint
     aria-label: GitHub repository
+
+articles:
+- title: Vignettes
+  desc: >
+    In reading order. Start with the introduction; each of the others goes
+    deeper on a single theme.
+  contents:
+  - introduction
+  - ggchangepoint
+  - inference
+  - comparison
+  - supervised
+  - extending
+  - monitoring
+- title: Web only
+  desc: >
+    Too slow to run at build time, so it ships on the site rather than in
+    the package tarball.
+  contents:
+  - articles/benchmarks
 
 reference:
 - title: Core API

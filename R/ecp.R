@@ -40,6 +40,7 @@
 #' ecp_wrapper(c(rnorm(100,0,1),rnorm(100,0,10)))
 #' ecp_wrapper(c(rnorm(100,0,1),rnorm(100,10,1)))
 #'
+#' @family changepoint engines
 ecp_wrapper <- function(data,
                         algorithm = "divisive",
                         min_size = 2,
@@ -108,6 +109,7 @@ ecp_wrapper <- function(data,
 #' ggecpplot(c(rnorm(100,0,1),rnorm(100,0,10)))
 #' ggecpplot(c(rnorm(100,0,1),rnorm(100,10,1)))
 #'
+#' @family plotting
 ggecpplot <- function(data,
                       algorithm = "divisive",
                       min_size = 2,

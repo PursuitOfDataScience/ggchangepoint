@@ -21,3 +21,9 @@ A minimal, publication-ready ggplot2 theme for changepoint plots.
 library(ggplot2)
 ggplot(mtcars, aes(wt, mpg)) + geom_point() + theme_ggcpt()
 }
+\seealso{
+Other accessibility scales: 
+\code{\link{scale_colour_cpt}()},
+\code{\link{scale_fill_cpt_label}()}
+}
+\concept{accessibility scales}

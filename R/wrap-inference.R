@@ -44,6 +44,7 @@
 #' res$changepoints
 #' ggplot2::autoplot(res, show_ci = TRUE)
 #' }
+#' @family changepoint engines
 smuce_wrapper <- function(x, alpha = 0.5,
                           family = c("gauss", "hsmuce"), ...) {
   need_pkg("stepR")

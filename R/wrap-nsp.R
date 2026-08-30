@@ -72,6 +72,7 @@
 #' fit <- nsp_wrapper(x, M = 100, seed = 1)
 #' cpt_regions(fit)
 #' ggplot2::autoplot(fit)
+#' @family changepoint engines
 nsp_wrapper <- function(x, alpha = 0.1,
                         variant = c("poly", "selfnorm", "ar", "tvreg"),
                         change_in = c("mean", "slope"), deg = NULL,

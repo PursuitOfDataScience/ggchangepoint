@@ -38,4 +38,9 @@ ggplot(mtcars, aes(wt, mpg, colour = factor(cyl))) +
 \seealso{
 \code{\link{theme_ggcpt}()},
   \code{\link{scale_fill_cpt_label}()}.
+
+Other accessibility scales: 
+\code{\link{scale_fill_cpt_label}()},
+\code{\link{theme_ggcpt}()}
 }
+\concept{accessibility scales}

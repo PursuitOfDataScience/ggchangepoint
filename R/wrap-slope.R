@@ -29,6 +29,7 @@
 #' res <- cpop_wrapper(y)
 #' res$changepoints
 #' ggplot2::autoplot(res, show_fit = TRUE)
+#' @family changepoint engines
 cpop_wrapper <- function(x, penalty = NULL, sd = NULL, ...) {
   need_pkg("cpop")
 

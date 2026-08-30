@@ -62,4 +62,13 @@ ggplot(d, aes(t, y)) +
 }
 \seealso{
 \code{\link{nsp_wrapper}()}, \code{\link{cpt_regions}()}.
+
+Other ggplot2 layers: 
+\code{\link{geom_changepoint}()},
+\code{\link{geom_cpt_ci}()},
+\code{\link{geom_cpt_event}()},
+\code{\link{geom_cpt_label}()},
+\code{\link{geom_cpt_segment}()},
+\code{\link{stat_changepoint}()}
 }
+\concept{ggplot2 layers}

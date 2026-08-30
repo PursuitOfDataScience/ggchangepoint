@@ -26,6 +26,7 @@
 #' set.seed(2026)
 #' res <- decafs_wrapper(c(rnorm(100), rnorm(100, 5)))
 #' res$changepoints
+#' @family changepoint engines
 decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
   need_pkg("DeCAFS")
 
@@ -82,6 +83,7 @@ decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
 #' res <- sn_wrapper(c(rnorm(150), rnorm(150, 3)))
 #' res$changepoints
 #' }
+#' @family changepoint engines
 sn_wrapper <- function(x, parameter = c("mean", "variance", "acf", "bivcor"),
                        confidence = 0.9, grid_size = NULL, ...) {
   need_pkg("SNSeg")

@@ -300,6 +300,7 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
 #' @examples
 #' library(ggplot2)
 #' ggplot(mtcars, aes(wt, mpg)) + geom_point() + theme_ggcpt()
+#' @family accessibility scales
 theme_ggcpt <- function(base_size = 11, base_family = "") {
   ggplot2::theme_minimal(base_size = base_size, base_family = base_family) +
     ggplot2::theme(
@@ -329,6 +330,14 @@ theme_ggcpt <- function(base_size = 11, base_family = "") {
 #'
 #' @return A list of ggplot annotations.
 #' @export
+#' @family result class
+#' @examples
+#' library(ggplot2)
+#' set.seed(2026)
+#' fit <- cpt_detect(c(rnorm(50), rnorm(50, 4)), method = "pelt")
+#' ggplot(fit$data, aes(index, value)) +
+#'   annotate_segments(fit$changepoints$cp, n = nrow(fit$data)) +
+#'   geom_line()
 annotate_segments <- function(cp, n, fill = c("grey90", "white"),
                                alpha = 0.5, ...) {
   breaks <- sort(unique(c(0, as.integer(cp), n)))

@@ -30,6 +30,7 @@
 #' as_cpt_series(1:10)$index
 #' s <- as_cpt_series(1:10, index = as.Date("2020-01-01") + 0:9)
 #' s$index
+#' @family result class
 as_cpt_series <- function(x, index = NULL, check_regular = TRUE) {
   validate_flag(check_regular, "check_regular")
   label <- "Index"

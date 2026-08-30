@@ -92,12 +92,30 @@ significance regions and diagnostics. Around that:
 }
 }
 \seealso{
-Useful links:
-\itemize{
-  \item \url{https://pursuitofdatascience.github.io/ggchangepoint/}
-  \item Report bugs at \url{https://github.com/PursuitOfDataScience/ggchangepoint/issues}
-}
+The entry points, by group:
+  \itemize{
+    \item \strong{Detect:} \code{\link{cpt_detect}()},
+      \code{\link{cpt_methods}()}, \code{\link{cpt_register_method}()}.
+    \item \strong{Visualise:} \code{\link{autoplot.ggcpt}()},
+      \code{\link{ggcptplot}()}, \code{\link{ggcpt_compare}()}.
+    \item \strong{Inference and selection:} \code{\link{cpt_confint}()},
+      \code{\link{cpt_test}()}, \code{\link{cpt_select}()}.
+    \item \strong{Choosing and combining methods:}
+      \code{\link{cpt_consensus}()}, \code{\link{cpt_recommend}()},
+      \code{\link{cpt_benchmark}()}.
+    \item \strong{Evaluation:} \code{\link{cpt_metrics}()}.
+    \item \strong{Streaming:} \code{\link{cpt_monitor}()}.
+    \item \strong{Study design:} \code{\link{cpt_simulate}()},
+      \code{\link{cpt_power}()}.
+    \item \strong{Communication:} \code{\link{cpt_report}()}.
+  }
 
+  Useful links:
+  \itemize{
+    \item \url{https://pursuitofdatascience.github.io/ggchangepoint/}
+    \item Report bugs at
+      \url{https://github.com/PursuitOfDataScience/ggchangepoint/issues}
+  }
 }
 \author{
 \strong{Maintainer}: Youzhi Yu \email{yuyouzhi666@icloud.com}

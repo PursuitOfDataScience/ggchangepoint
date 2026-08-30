@@ -65,6 +65,7 @@ full_height_params <- function(mapping) {
 #' ggplot(d, aes(t, y)) +
 #'   geom_cpt_region(aes(xmin = xmin, xmax = xmax), data = regions) +
 #'   geom_line()
+#' @family ggplot2 layers
 geom_cpt_region <- function(mapping = NULL, data = NULL, ..., alpha = 0.2,
                             fill = "steelblue", na.rm = FALSE,
                             show.legend = NA, inherit.aes = FALSE) {
@@ -112,6 +113,7 @@ geom_cpt_region <- function(mapping = NULL, data = NULL, ..., alpha = 0.2,
 #'                  data = labs) +
 #'   geom_line() +
 #'   scale_fill_cpt_label()
+#' @family ggplot2 layers
 geom_cpt_label <- function(mapping = NULL, data = NULL, ..., alpha = 0.25,
                            colour = NA, na.rm = FALSE, show.legend = NA,
                            inherit.aes = FALSE) {
@@ -137,6 +139,15 @@ geom_cpt_label <- function(mapping = NULL, data = NULL, ..., alpha = 0.25,
 #' @param na.value Fill for values outside the vocabulary.
 #' @return A ggplot2 scale.
 #' @export
+#' @family accessibility scales
+#' @examples
+#' library(ggplot2)
+#' labs <- cpt_labels(c(40, 70), c(60, 90), c("change", "no_change"))
+#' ggplot(labs, aes(xmin = start, xmax = end, ymin = 0, ymax = 1,
+#'                  fill = change)) +
+#'   geom_rect() + scale_fill_cpt_label()
+#' # the same palette covers correct / false_positive / false_negative
+#' class(scale_colour_cpt_label())
 scale_fill_cpt_label <- function(..., na.value = "grey70") {
   ggplot2::scale_fill_manual(values = cpt_label_palette(),
                              na.value = na.value, ...)
@@ -209,6 +220,7 @@ cpt_label_palette <- function() {
 #' ggplot(d, aes(t, y)) + geom_line() +
 #'   geom_cpt_event(aes(xintercept = x, label = label), data = ev,
 #'                  repel = FALSE)
+#' @family ggplot2 layers
 geom_cpt_event <- function(mapping = NULL, data = NULL, ...,
                            colour = "grey30", linetype = "dotted",
                            angle = 90, size = 3, vjust = -0.4, hjust = 0,

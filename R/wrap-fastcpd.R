@@ -26,6 +26,7 @@
 #' set.seed(2026)
 #' res <- fastcpd_wrapper(c(rnorm(100), rnorm(100, 4)))
 #' res$changepoints
+#' @family changepoint engines
 fastcpd_wrapper <- function(x, family = c("mean", "variance", "meanvariance",
                                           "ar", "arma", "garch"),
                             order = NULL, ...) {

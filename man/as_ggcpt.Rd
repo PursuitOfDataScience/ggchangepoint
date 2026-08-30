@@ -80,4 +80,12 @@ tidy(fit)
 \seealso{
 \code{\link{cpt_register_method}()} to make
   \code{\link{cpt_detect}()} dispatch to an external detector by name.
+
+Other result class: 
+\code{\link{annotate_segments}()},
+\code{\link{as_cpt_series}()},
+\code{\link{cpt_annotations}()},
+\code{\link{is_ggcpt}()},
+\code{\link{new_ggcpt}()}
 }
+\concept{result class}

@@ -29,3 +29,22 @@ A ggplot layer.
 Draws horizontal whiskers for changepoint-location confidence
 intervals (e.g. from MOSUM, stepR, strucchange, segmented).
 }
+\examples{
+library(ggplot2)
+set.seed(2026)
+d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+ci <- data.frame(xmin = 45, xmax = 56, y = 0)
+ggplot(d, aes(t, y)) + geom_line() +
+  geom_cpt_ci(aes(xmin = xmin, xmax = xmax, y = y), data = ci,
+              inherit.aes = FALSE, width = 0.4, colour = "blue")
+}
+\seealso{
+Other ggplot2 layers: 
+\code{\link{geom_changepoint}()},
+\code{\link{geom_cpt_event}()},
+\code{\link{geom_cpt_label}()},
+\code{\link{geom_cpt_region}()},
+\code{\link{geom_cpt_segment}()},
+\code{\link{stat_changepoint}()}
+}
+\concept{ggplot2 layers}

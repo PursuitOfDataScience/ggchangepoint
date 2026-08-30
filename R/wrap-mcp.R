@@ -60,6 +60,7 @@ mcp_has_samples <- function(fit) {
 #' fit <- mcp_wrapper(c(rnorm(60), rnorm(60, 4)), iter = 500, adapt = 200)
 #' fit
 #' }
+#' @family changepoint engines
 mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
                         n_changepoints = 1, model = NULL, prior = list(),
                         iter = 3000, adapt = 1000, chains = 3, seed = NULL,

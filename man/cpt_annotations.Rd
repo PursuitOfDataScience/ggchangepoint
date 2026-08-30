@@ -23,4 +23,12 @@ cpt_annotations(cpt_datasets(n = 200, names = "step"))
 }
 \seealso{
 \code{\link{cpt_metrics_annotated}()}.
+
+Other result class: 
+\code{\link{annotate_segments}()},
+\code{\link{as_cpt_series}()},
+\code{\link{as_ggcpt}()},
+\code{\link{is_ggcpt}()},
+\code{\link{new_ggcpt}()}
 }
+\concept{result class}

@@ -42,3 +42,12 @@ as_cpt_series(1:10)$index
 s <- as_cpt_series(1:10, index = as.Date("2020-01-01") + 0:9)
 s$index
 }
+\seealso{
+Other result class: 
+\code{\link{annotate_segments}()},
+\code{\link{as_ggcpt}()},
+\code{\link{cpt_annotations}()},
+\code{\link{is_ggcpt}()},
+\code{\link{new_ggcpt}()}
+}
+\concept{result class}

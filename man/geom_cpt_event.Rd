@@ -73,4 +73,13 @@ ggplot(d, aes(t, y)) + geom_line() +
 }
 \seealso{
 \code{\link{cpt_annotate_events}()}.
+
+Other ggplot2 layers: 
+\code{\link{geom_changepoint}()},
+\code{\link{geom_cpt_ci}()},
+\code{\link{geom_cpt_label}()},
+\code{\link{geom_cpt_region}()},
+\code{\link{geom_cpt_segment}()},
+\code{\link{stat_changepoint}()}
 }
+\concept{ggplot2 layers}

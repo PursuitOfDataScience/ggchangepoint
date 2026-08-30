@@ -273,6 +273,10 @@ print.ggcpt_influence <- function(x, ...) {
 #'   \code{delta_n_cp}, \code{max_shift}, \code{param_shift} and
 #'   \code{leverage}.
 #' @export
+#' @examples
+#' set.seed(2026)
+#' fit <- cpt_detect(c(rnorm(40), rnorm(40, 4)), method = "pelt")
+#' head(cpt_leverage(fit), 3)
 cpt_leverage <- function(object, ...) {
   if (is_ggcpt(object)) object <- cpt_influence(object, ...)
   if (!inherits(object, "ggcpt_influence")) {

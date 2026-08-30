@@ -30,3 +30,16 @@ A tibble with columns \code{method}, \code{cp}, \code{cp_value}.
 Returns a tidy tibble combining the results of multiple detectors on
 the same series.
 }
+\examples{
+set.seed(2026)
+x <- c(rnorm(100), rnorm(100, 5))
+ggcpt_compare_table(x, methods = c("pelt", "binseg"))
+}
+\seealso{
+Other plotting: 
+\code{\link{ggcpt_eval}()},
+\code{\link{ggcpt_interactive}()},
+\code{\link{ggcptplot}()},
+\code{\link{ggecpplot}()}
+}
+\concept{plotting}
