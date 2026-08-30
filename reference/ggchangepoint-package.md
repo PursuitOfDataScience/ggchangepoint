@@ -143,6 +143,41 @@ significance regions and diagnostics. Around that:
 
 ## See also
 
+The entry points, by group:
+
+- **Detect:**
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md),
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md),
+  [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md).
+
+- **Visualise:**
+  [`autoplot.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/autoplot.ggcpt.md),
+  [`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
+  [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md).
+
+- **Inference and selection:**
+  [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md),
+  [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md),
+  [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md).
+
+- **Choosing and combining methods:**
+  [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md),
+  [`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md),
+  [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md).
+
+- **Evaluation:**
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md).
+
+- **Streaming:**
+  [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md).
+
+- **Study design:**
+  [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md),
+  [`cpt_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md).
+
+- **Communication:**
+  [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md).
+
 Useful links:
 
 - <https://pursuitofdatascience.github.io/ggchangepoint/>

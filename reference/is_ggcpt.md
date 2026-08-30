@@ -17,3 +17,23 @@ is_ggcpt(x)
 ## Value
 
 `TRUE` if `x` inherits from `ggcpt`.
+
+## See also
+
+Other result class:
+[`annotate_segments()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/annotate_segments.md),
+[`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md),
+[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md),
+[`cpt_annotations()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotations.md),
+[`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
+
+## Examples
+
+``` r
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(40), rnorm(40, 4)), method = "pelt")
+is_ggcpt(fit)
+#> [1] TRUE
+is_ggcpt(fit$changepoints)
+#> [1] FALSE
+```

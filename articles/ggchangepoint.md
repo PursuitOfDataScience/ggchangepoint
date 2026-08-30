@@ -146,7 +146,7 @@ summary(res)
 #>   CP convention:            left 
 #>   Series length:            200 
 #>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.015 
+#>   Runtime (seconds):        0.017 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -1202,6 +1202,21 @@ cpt_detect(data.frame(day = dates, v = x), y = v, index = day,
 #> [1] "2020-04-09"
 ```
 
+[`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md)
+is that coercion on its own, returning the values, the index and a label
+for the axis:
+
+``` r
+
+str(as_cpt_series(x, index = dates), max.level = 1)
+#> List of 3
+#>  $ values     : num [1:200] 0.5206 -1.0797 0.1392 -0.0847 -0.6666 ...
+#>  $ index      : Date[1:200], format: "2020-01-01" "2020-01-02" ...
+#>  $ index_label: chr "Index"
+as_cpt_series(ts(x, start = c(2020, 1), frequency = 12))$index_label
+#> [1] "Time"
+```
+
 ### Inference
 
 [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
@@ -1364,16 +1379,50 @@ cpt_annotate_events(dated,
 [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md)
 assembles the whole analysis into markdown, and
 [`cpt_gt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gt.md)
-renders a publication table.
+renders a publication table (falling back to a tibble, with a note, when
+`gt` is not installed):
+
+``` r
+
+cpt_gt(res, title = "Detected changepoints")
+```
+
+| Detected changepoints |  |  |  |  |  |
+|----|----|----|----|----|----|
+| 1 changepoint(s) in mean over 200 observations; penalty MBIC |  |  |  |  |  |
+| \# | Location | Value at change | Level before | Level after | Change |
+| 1 | 100 | 0.369 | -0.098 | 6.122 | 6.22 |
+
 [`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md)
-draws the events;
+draws the events.
 [`scale_colour_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md),
 [`scale_fill_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md),
 [`scale_linetype_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md),
 [`scale_fill_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
 and
 [`scale_colour_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
-are the colour-vision-safe scales;
+are the colour-vision-safe scales — the Okabe-Ito palette, plus a
+linetype scale so that colour is never the only channel carrying a
+distinction. All three at once, on the fitted segmentation:
+
+``` r
+
+aug <- augment(res)
+ggplot(aug, aes(index, .fitted, colour = factor(seg_id),
+                linetype = factor(seg_id))) +
+  geom_line(aes(y = value), colour = "grey75", linetype = "solid") +
+  geom_ribbon(aes(ymin = .fitted - 1, ymax = .fitted + 1,
+                  fill = factor(seg_id)), alpha = 0.2, colour = NA) +
+  geom_line(linewidth = 1) +
+  scale_colour_cpt() + scale_fill_cpt() + scale_linetype_cpt() +
+  labs(x = "Index", y = "Value", colour = "Segment", fill = "Segment",
+       linetype = "Segment")
+```
+
+![Fitted segment levels drawn with the Okabe-Ito palette, a matching
+fill band and a redundant linetype per
+segment](ggchangepoint_files/figure-html/accessibility-tour-1.png)
+
 [`theme_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/theme_ggcpt.md)
 is unchanged.
 
@@ -1448,9 +1497,31 @@ autoplot(pw)
 size](ggchangepoint_files/figure-html/power-tour-1.png)
 
 [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
-inverts the curve, and
+inverts the curve — it bisects for the change size that reaches a target
+power, which is the number a pre-registration needs:
+
+``` r
+
+cpt_min_detectable(n = 150, n_sim = 15, max_iter = 3, seed = 1)$jump
+#> [1] 1.325
+```
+
 [`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md)
-builds a grid of settings as data.
+builds the grid a simulation study varies over as data rather than as
+nested loops, so it can be inspected, filtered and passed straight to
+[`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md):
+
+``` r
+
+cpt_scenarios(n = c(200, 500), jump = c(1, 2), as_datasets = FALSE)
+#> # A tibble: 4 × 7
+#>       n  jump location noise change_in   rho scenario          
+#>   <int> <dbl>    <dbl> <chr> <chr>     <dbl> <chr>             
+#> 1   200     1      0.5 gauss mean          0 mean_n200_j1_gauss
+#> 2   500     1      0.5 gauss mean          0 mean_n500_j1_gauss
+#> 3   200     2      0.5 gauss mean          0 mean_n200_j2_gauss
+#> 4   500     2      0.5 gauss mean          0 mean_n500_j2_gauss
+```
 
 ### Extending
 
@@ -1473,6 +1544,11 @@ subset(cpt_methods(), status == "registered")[, c("method", "engine")]
 #>   method       engine 
 #>   <chr>        <chr>  
 #> 1 biggest_jump example
+cpt_registered_methods()
+#> # A tibble: 1 × 4
+#>   method       change_in engine  has_citation
+#>   <chr>        <chr>     <chr>   <lgl>       
+#> 1 biggest_jump mean      example FALSE
 cpt_unregister_method("biggest_jump")
 ```
 

@@ -352,6 +352,20 @@ autoplot(res_mosum, type = "statistic")
 ![Two-panel display: the series above, the MOSUM statistic against its
 threshold below](inference_files/figure-html/statistic-1.png)
 
+`autoplot(type = "statistic")` is a thin wrapper:
+[`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
+is the plotting function itself, and
+[`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
+returns the numbers behind it.
+
+``` r
+
+ggcpt_statistic(res_mosum)
+```
+
+![The same two-panel statistic display, drawn by ggcpt_statistic()
+directly](inference_files/figure-html/ggcpt-statistic-1.png)
+
 The scale-space view answers a question a single-bandwidth fit cannot:
 *at which resolutions does this feature exist?* A change visible only at
 a wide bandwidth is a slow shift; one visible only at a narrow bandwidth
@@ -366,6 +380,25 @@ ggcpt_scale_space(res_mosum, bandwidths = c(15, 30, 60, 90))
 accepted changepoints
 marked](inference_files/figure-html/scale-space-1.png)
 
+[`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
+returns the sweep as data, one row per (location, bandwidth) pair, so
+the picture can be counted rather than eyeballed. How many locations
+cross the threshold at each bandwidth:
+
+``` r
+
+ss <- cpt_scale_space(x, bandwidths = c(15, 30, 60, 90))
+aggregate(significant ~ bandwidth, data = ss, FUN = sum)
+#>   bandwidth significant
+#> 1        15          20
+#> 2        30          61
+#> 3        60         171
+#> 4        90         302
+```
+
+A wide bandwidth flags a broad neighbourhood of each change and a narrow
+one flags a few points, which is the resolution trade-off made numeric.
+
 And the solution path shows the order in which candidates entered the
 model, and how decisively each beat the next:
 
@@ -377,6 +410,25 @@ ggcpt_solution_path(cpt_detect(x, method = "wbs"), max_steps = 20)
 ![Solution path: each candidate changepoint against the step at which it
 entered, with the proposing interval
 drawn](inference_files/figure-html/path-1.png)
+
+[`cpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+is the same object as a tibble. The `contrast` column is the margin by
+which each candidate beat the next, and `selected` marks the ones the
+penalty kept — so the gap between the last selected row and the first
+rejected one is how close the decision was:
+
+``` r
+
+head(cpt_solution_path(cpt_detect(x, method = "wbs")), 5)
+#> # A tibble: 5 × 6
+#>    step    cp contrast start   end selected
+#>   <int> <int>    <dbl> <int> <int> <lgl>   
+#> 1     1   120    25.0      1   360 TRUE    
+#> 2     2   240    20.2    121   360 TRUE    
+#> 3     3   318     4.01   241   360 FALSE   
+#> 4     4   314     3.65   241   318 FALSE   
+#> 5     5    15     3.35     1   120 FALSE
+```
 
 An engine that exposes none of these says so, and names the ones that
 do:
@@ -402,7 +454,7 @@ cat(head(cpt_report(fit, session = FALSE), 20), sep = "\n")
     #> - Penalty: MBIC
     #> - Series length: 360
     #> - Changepoints found: 2
-    #> - Detection runtime: 0.019 s
+    #> - Detection runtime: 0.024 s
     #> 
     #> ## Changepoints
     #> 

@@ -65,3 +65,23 @@ stat_changepoint(
 ## Value
 
 A ggplot layer.
+
+## See also
+
+Other ggplot2 layers:
+[`geom_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_changepoint.md),
+[`geom_cpt_ci()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_ci.md),
+[`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md),
+[`geom_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_label.md),
+[`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md),
+[`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md)
+
+## Examples
+
+``` r
+library(ggplot2)
+set.seed(2026)
+d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+ggplot(d, aes(t, y)) + geom_line() +
+  stat_changepoint(method = "pelt", colour = "blue")
+```

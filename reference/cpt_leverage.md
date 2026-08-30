@@ -33,3 +33,17 @@ cpt_leverage(object, ...)
 
 A tibble ordered by `leverage`, with columns `index`, `delta_n_cp`,
 `max_shift`, `param_shift` and `leverage`.
+
+## Examples
+
+``` r
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(40), rnorm(40, 4)), method = "pelt")
+head(cpt_leverage(fit), 3)
+#> # A tibble: 3 × 5
+#>   index delta_n_cp max_shift param_shift leverage
+#>   <int>      <int>     <dbl>       <dbl>    <dbl>
+#> 1    40          0         1      0.0201     8.90
+#> 2    15          0         0      0.0642     2.93
+#> 3     6          0         0      0.0635     2.88
+```

@@ -44,3 +44,24 @@ geom_changepoint(
 ## Value
 
 A ggplot layer.
+
+## See also
+
+Other ggplot2 layers:
+[`geom_cpt_ci()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_ci.md),
+[`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md),
+[`geom_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_label.md),
+[`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md),
+[`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md),
+[`stat_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.md)
+
+## Examples
+
+``` r
+library(ggplot2)
+set.seed(2026)
+d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+cp <- data.frame(cp = cpt_detect(d$y, method = "pelt")$changepoints$cp)
+ggplot(d, aes(t, y)) + geom_line() +
+  geom_changepoint(aes(xintercept = cp), data = cp, colour = "blue")
+```

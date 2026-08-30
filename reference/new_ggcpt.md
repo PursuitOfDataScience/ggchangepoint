@@ -130,3 +130,36 @@ test for with [`is.null()`](https://rdrr.io/r/base/NULL.html):
 [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
 is the validating way to build one of these from the outside; this
 constructor does not check its arguments.
+
+## See also
+
+Other result class:
+[`annotate_segments()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/annotate_segments.md),
+[`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md),
+[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md),
+[`cpt_annotations()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotations.md),
+[`is_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/is_ggcpt.md)
+
+## Examples
+
+``` r
+set.seed(2026)
+new_ggcpt(
+  changepoints = tibble::tibble(cp = 50L, cp_value = 0.1),
+  data = tibble::tibble(index = 1:100,
+                        value = c(rnorm(50), rnorm(50, 4))),
+  method = "manual", change_in = "mean")
+#> ggcpt (changepoint detection result)
+#>   Method:         manual
+#>   Change in:       mean 
+#>   Changepoints found: 1 
+#>   CP convention:   left 
+#>   Penalty:         NA 
+#>   Series length:   100 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1    50      0.1
+```

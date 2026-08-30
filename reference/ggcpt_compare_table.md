@@ -40,3 +40,24 @@ ggcpt_compare_table(
 ## Value
 
 A tibble with columns `method`, `cp`, `cp_value`.
+
+## See also
+
+Other plotting:
+[`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md),
+[`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md),
+[`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
+[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
+
+## Examples
+
+``` r
+set.seed(2026)
+x <- c(rnorm(100), rnorm(100, 5))
+ggcpt_compare_table(x, methods = c("pelt", "binseg"))
+#> # A tibble: 2 × 3
+#>   method    cp cp_value
+#>   <chr>  <int>    <dbl>
+#> 1 pelt     100    0.369
+#> 2 binseg   100    0.369
+```

@@ -102,6 +102,15 @@ rcpt(...)
 A tibble with columns `index`, `value`, and `seg_id`. The true
 changepoints are stored in the `true_changepoints` attribute.
 
+## See also
+
+Other test signals:
+[`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md),
+[`signal_fms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_fms.md),
+[`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md),
+[`signal_stairs()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_stairs.md),
+[`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md)
+
 ## Examples
 
 ``` r

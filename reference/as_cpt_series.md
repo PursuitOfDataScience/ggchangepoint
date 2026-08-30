@@ -42,6 +42,15 @@ A list with components `values` (a numeric vector, or a matrix for
 multivariate input), `index` (the time index, or `NULL` when there is
 none) and `index_label` (a name for the x axis).
 
+## See also
+
+Other result class:
+[`annotate_segments()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/annotate_segments.md),
+[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md),
+[`cpt_annotations()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotations.md),
+[`is_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/is_ggcpt.md),
+[`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
+
 ## Examples
 
 ``` r

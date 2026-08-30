@@ -47,6 +47,14 @@ ggcpt_interactive(
 
 A plotly or ggiraph htmlwidget.
 
+## See also
+
+Other plotting:
+[`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md),
+[`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md),
+[`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md),
+[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
+
 ## Examples
 
 ``` r

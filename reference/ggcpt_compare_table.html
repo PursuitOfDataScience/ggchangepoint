@@ -26,6 +26,8 @@ the same series."><meta property="og:image" content="https://pursuitofdatascienc
     <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
+    <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -83,7 +85,27 @@ every seam. Use <code><a href="cpt_batch.html">cpt_batch()</a></code> for a pane
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>method</code>, <code>cp</code>, <code>cp_value</code>.</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p>Other plotting:
+<code><a href="ggcpt_eval.html">ggcpt_eval()</a></code>,
+<code><a href="ggcpt_interactive.html">ggcpt_interactive()</a></code>,
+<code><a href="ggcptplot.html">ggcptplot()</a></code>,
+<code><a href="ggecpplot.html">ggecpplot()</a></code></p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">ggcpt_compare_table</span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   method    cp cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> pelt     100    0.369</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> binseg   100    0.369</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

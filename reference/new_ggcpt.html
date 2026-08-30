@@ -24,6 +24,8 @@
     <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
+    <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -163,7 +165,39 @@ for with <code><a href="https://rdrr.io/r/base/NULL.html" class="external-link">
 </dl><p><code><a href="as_ggcpt.html">as_ggcpt()</a></code> is the validating way to build one of these from
 the outside; this constructor does not check its arguments.</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p>Other result class:
+<code><a href="annotate_segments.html">annotate_segments()</a></code>,
+<code><a href="as_cpt_series.html">as_cpt_series()</a></code>,
+<code><a href="as_ggcpt.html">as_ggcpt()</a></code>,
+<code><a href="cpt_annotations.html">cpt_annotations()</a></code>,
+<code><a href="is_ggcpt.html">is_ggcpt()</a></code></p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">new_ggcpt</span><span class="op">(</span></span></span>
+<span class="r-in"><span>  changepoints <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>cp <span class="op">=</span> <span class="fl">50L</span>, cp_value <span class="op">=</span> <span class="fl">0.1</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  data <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>index <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">100</span>,</span></span>
+<span class="r-in"><span>                        value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>  method <span class="op">=</span> <span class="st">"manual"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:         manual</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       mean </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         NA </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:   100 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    50      0.1</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

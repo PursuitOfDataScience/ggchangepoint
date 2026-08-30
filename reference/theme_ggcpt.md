@@ -22,6 +22,12 @@ theme_ggcpt(base_size = 11, base_family = "")
 
 A ggplot2 theme object.
 
+## See also
+
+Other accessibility scales:
+[`scale_colour_cpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_colour_cpt.md),
+[`scale_fill_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
+
 ## Examples
 
 ``` r

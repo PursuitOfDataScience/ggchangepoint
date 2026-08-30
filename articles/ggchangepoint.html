@@ -39,6 +39,8 @@
     <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
+    <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -186,7 +188,7 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <span><span class="co">#&gt;   CP convention:            left </span></span>
 <span><span class="co">#&gt;   Series length:            200 </span></span>
 <span><span class="co">#&gt;   Penalty:                  MBIC </span></span>
-<span><span class="co">#&gt;   Runtime (seconds):        0.015 </span></span>
+<span><span class="co">#&gt;   Runtime (seconds):        0.017 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
@@ -990,6 +992,16 @@ and it accepts <code>ts</code>, <code>xts</code>, <code>zoo</code> and
 <span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>day <span class="op">=</span> <span class="va">dates</span>, v <span class="op">=</span> <span class="va">x</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">v</span>, index <span class="op">=</span> <span class="va">day</span>,</span>
 <span>           method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span><span class="op">$</span><span class="va">cp_index</span></span>
 <span><span class="co">#&gt; [1] "2020-04-09"</span></span></code></pre></div>
+<p><code><a href="../reference/as_cpt_series.html">as_cpt_series()</a></code> is that coercion on its own, returning
+the values, the index and a label for the axis:</p>
+<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu"><a href="../reference/as_cpt_series.html">as_cpt_series</a></span><span class="op">(</span><span class="va">x</span>, index <span class="op">=</span> <span class="va">dates</span><span class="op">)</span>, max.level <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="co">#&gt; List of 3</span></span>
+<span><span class="co">#&gt;  $ values     : num [1:200] 0.5206 -1.0797 0.1392 -0.0847 -0.6666 ...</span></span>
+<span><span class="co">#&gt;  $ index      : Date[1:200], format: "2020-01-01" "2020-01-02" ...</span></span>
+<span><span class="co">#&gt;  $ index_label: chr "Index"</span></span>
+<span><span class="fu"><a href="../reference/as_cpt_series.html">as_cpt_series</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/ts.html" class="external-link">ts</a></span><span class="op">(</span><span class="va">x</span>, start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2020</span>, <span class="fl">1</span><span class="op">)</span>, frequency <span class="op">=</span> <span class="fl">12</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">index_label</span></span>
+<span><span class="co">#&gt; [1] "Time"</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="inference">Inference<a class="anchor" aria-label="anchor" href="#inference"></a>
@@ -999,7 +1011,7 @@ and it accepts <code>ts</code>, <code>xts</code>, <code>zoo</code> and
 <code><a href="../reference/cpt_confint.html">cpt_confint()</a></code> unifies four interval routes;
 <code><a href="../reference/cpt_test.html">cpt_test()</a></code> attaches a test and flags whether it is
 selection-adjusted.</p>
-<div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_confint.html">cpt_confint</a></span><span class="op">(</span><span class="va">res</span>, method <span class="op">=</span> <span class="st">"bootstrap"</span>, B <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 6</span></span></span>
 <span><span class="co">#&gt;      cp ci_lower ci_upper level source    n_replicates</span></span>
@@ -1011,14 +1023,14 @@ selection-adjusted.</p>
 <span><span class="co">#&gt;      cp estimate   p_value selection_adjusted</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>             </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     6.22 1.61<span style="color: #949494;">e</span><span style="color: #BB0000;">-105</span> FALSE</span></span></code></pre></div>
-<div class="sourceCode" id="cb65"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="../reference/nsp_wrapper.html">nsp_wrapper</a></span><span class="op">(</span><span class="va">x</span>, M <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ggchangepoint_files/figure-html/nsp-tour-1.png" class="r-plt" alt="Series with a shaded band marking an NSP significance region" width="768"></p>
 </div>
 <div class="section level3">
 <h3 id="selecting-the-number-of-changepoints">Selecting the number of changepoints<a class="anchor" aria-label="anchor" href="#selecting-the-number-of-changepoints"></a>
 </h3>
-<div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sel</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_select.html">cpt_select</a></span><span class="op">(</span><span class="va">x3</span>, criterion <span class="op">=</span> <span class="st">"bic"</span>, k_max <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">sel</span><span class="op">$</span><span class="va">k</span></span>
 <span><span class="co">#&gt; [1] 2</span></span>
@@ -1035,7 +1047,7 @@ which setting does; <code><a href="../reference/cpt_statistic.html">cpt_statisti
 (with their <code>ggcpt_*()</code> plots, reachable from
 <code>autoplot(type = )</code>) say what the detector actually
 computed.</p>
-<div class="sourceCode" id="cb67"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_influence.html">cpt_influence</a></span><span class="op">(</span><span class="va">res</span>, engine <span class="op">=</span> <span class="st">"recompute"</span>, subset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">200</span>, by <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_leverage.html">cpt_leverage</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 5</span></span></span>
@@ -1050,14 +1062,14 @@ computed.</p>
 <span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>       4     7</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      40     1</span></span></code></pre></div>
-<div class="sourceCode" id="cb68"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"statistic"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ggchangepoint_files/figure-html/stat-tour-1.png" class="r-plt" alt="Two-panel display: the series above, the MOSUM statistic below" width="768"></p>
 </div>
 <div class="section level3">
 <h3 id="supervised-detection">Supervised detection<a class="anchor" aria-label="anchor" href="#supervised-detection"></a>
 </h3>
-<div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">labs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_labels.html">cpt_labels</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">140</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">190</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"one_change"</span>, <span class="st">"no_change"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/cpt_label_error.html">cpt_label_error</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">labs</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"start"</span>, <span class="st">"end"</span>, <span class="st">"change"</span>, <span class="st">"status"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
@@ -1074,7 +1086,7 @@ several labelled series — see
 <div class="section level3">
 <h3 id="choosing-and-combining-methods">Choosing and combining methods<a class="anchor" aria-label="anchor" href="#choosing-and-combining-methods"></a>
 </h3>
-<div class="sourceCode" id="cb70"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_recommend.html">cpt_recommend</a></span><span class="op">(</span>noise <span class="op">=</span> <span class="st">"heavy"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Recommended methods for: univariate series, change in mean, heavy noise</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -1103,7 +1115,7 @@ several labelled series — see
 <div class="section level3">
 <h3 id="communication">Communication<a class="anchor" aria-label="anchor" href="#communication"></a>
 </h3>
-<div class="sourceCode" id="cb71"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_annotate_events.html">cpt_annotate_events</a></span><span class="op">(</span><span class="va">dated</span>,</span>
 <span>                    <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>when <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-04-10"</span><span class="op">)</span>,</span>
 <span>                               what <span class="op">=</span> <span class="st">"policy change"</span><span class="op">)</span><span class="op">)</span></span>
@@ -1118,23 +1130,517 @@ several labelled series — see
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100 2020-04-09 policy change 2020-04-10             101        1</span></span></code></pre></div>
 <p><code><a href="../reference/cpt_report.html">cpt_report()</a></code> assembles the whole analysis into markdown,
-and <code><a href="../reference/cpt_gt.html">cpt_gt()</a></code> renders a publication table.
-<code><a href="../reference/geom_cpt_event.html">geom_cpt_event()</a></code> draws the events;
+and <code><a href="../reference/cpt_gt.html">cpt_gt()</a></code> renders a publication table (falling back to a
+tibble, with a note, when <code>gt</code> is not installed):</p>
+<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_gt.html">cpt_gt</a></span><span class="op">(</span><span class="va">res</span>, title <span class="op">=</span> <span class="st">"Detected changepoints"</span><span class="op">)</span></span></code></pre></div>
+<div id="ydgabwknrs" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#ydgabwknrs table {
+  font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+#ydgabwknrs thead, #ydgabwknrs tbody, #ydgabwknrs tfoot, #ydgabwknrs tr, #ydgabwknrs td, #ydgabwknrs th {
+  border-style: none;
+}
+
+#ydgabwknrs p {
+  margin: 0;
+  padding: 0;
+}
+
+#ydgabwknrs .gt_table {
+  display: table;
+  border-collapse: collapse;
+  line-height: normal;
+  margin-left: auto;
+  margin-right: auto;
+  color: #333333;
+  font-size: 16px;
+  font-weight: normal;
+  font-style: normal;
+  background-color: #FFFFFF;
+  width: auto;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #A8A8A8;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #A8A8A8;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_caption {
+  padding-top: 4px;
+  padding-bottom: 4px;
+}
+
+#ydgabwknrs .gt_title {
+  color: #333333;
+  font-size: 125%;
+  font-weight: initial;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-color: #FFFFFF;
+  border-bottom-width: 0;
+}
+
+#ydgabwknrs .gt_subtitle {
+  color: #333333;
+  font-size: 85%;
+  font-weight: initial;
+  padding-top: 3px;
+  padding-bottom: 5px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-color: #FFFFFF;
+  border-top-width: 0;
+}
+
+#ydgabwknrs .gt_heading {
+  background-color: #FFFFFF;
+  text-align: center;
+  border-bottom-color: #FFFFFF;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_bottom_border {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_col_headings {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_col_heading {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 6px;
+  padding-left: 5px;
+  padding-right: 5px;
+  overflow-x: hidden;
+}
+
+#ydgabwknrs .gt_column_spanner_outer {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: normal;
+  text-transform: inherit;
+  padding-top: 0;
+  padding-bottom: 0;
+  padding-left: 4px;
+  padding-right: 4px;
+}
+
+#ydgabwknrs .gt_column_spanner_outer:first-child {
+  padding-left: 0;
+}
+
+#ydgabwknrs .gt_column_spanner_outer:last-child {
+  padding-right: 0;
+}
+
+#ydgabwknrs .gt_column_spanner {
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: bottom;
+  padding-top: 5px;
+  padding-bottom: 5px;
+  overflow-x: hidden;
+  display: inline-block;
+  width: 100%;
+}
+
+#ydgabwknrs .gt_spanner_row {
+  border-bottom-style: hidden;
+}
+
+#ydgabwknrs .gt_group_heading {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  text-align: left;
+}
+
+#ydgabwknrs .gt_empty_group_heading {
+  padding: 0.5px;
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  vertical-align: middle;
+}
+
+#ydgabwknrs .gt_from_md > :first-child {
+  margin-top: 0;
+}
+
+#ydgabwknrs .gt_from_md > :last-child {
+  margin-bottom: 0;
+}
+
+#ydgabwknrs .gt_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  margin: 10px;
+  border-top-style: solid;
+  border-top-width: 1px;
+  border-top-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 1px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 1px;
+  border-right-color: #D3D3D3;
+  vertical-align: middle;
+  overflow-x: hidden;
+}
+
+#ydgabwknrs .gt_stub {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ydgabwknrs .gt_stub_row_group {
+  color: #333333;
+  background-color: #FFFFFF;
+  font-size: 100%;
+  font-weight: initial;
+  text-transform: inherit;
+  border-right-style: solid;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+  padding-left: 5px;
+  padding-right: 5px;
+  vertical-align: top;
+}
+
+#ydgabwknrs .gt_row_group_first td {
+  border-top-width: 2px;
+}
+
+#ydgabwknrs .gt_row_group_first th {
+  border-top-width: 2px;
+}
+
+#ydgabwknrs .gt_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ydgabwknrs .gt_first_summary_row {
+  border-top-style: solid;
+  border-top-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_first_summary_row.thick {
+  border-top-width: 2px;
+}
+
+#ydgabwknrs .gt_last_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_grand_summary_row {
+  color: #333333;
+  background-color: #FFFFFF;
+  text-transform: inherit;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ydgabwknrs .gt_first_grand_summary_row {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-top-style: double;
+  border-top-width: 6px;
+  border-top-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_last_grand_summary_row_top {
+  padding-top: 8px;
+  padding-bottom: 8px;
+  padding-left: 5px;
+  padding-right: 5px;
+  border-bottom-style: double;
+  border-bottom-width: 6px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_striped {
+  background-color: rgba(128, 128, 128, 0.05);
+}
+
+#ydgabwknrs .gt_table_body {
+  border-top-style: solid;
+  border-top-width: 2px;
+  border-top-color: #D3D3D3;
+  border-bottom-style: solid;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_footnotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_footnote {
+  margin: 0px;
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ydgabwknrs .gt_sourcenotes {
+  color: #333333;
+  background-color: #FFFFFF;
+  border-bottom-style: none;
+  border-bottom-width: 2px;
+  border-bottom-color: #D3D3D3;
+  border-left-style: none;
+  border-left-width: 2px;
+  border-left-color: #D3D3D3;
+  border-right-style: none;
+  border-right-width: 2px;
+  border-right-color: #D3D3D3;
+}
+
+#ydgabwknrs .gt_sourcenote {
+  font-size: 90%;
+  padding-top: 4px;
+  padding-bottom: 4px;
+  padding-left: 5px;
+  padding-right: 5px;
+}
+
+#ydgabwknrs .gt_left {
+  text-align: left;
+}
+
+#ydgabwknrs .gt_center {
+  text-align: center;
+}
+
+#ydgabwknrs .gt_right {
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+#ydgabwknrs .gt_font_normal {
+  font-weight: normal;
+}
+
+#ydgabwknrs .gt_font_bold {
+  font-weight: bold;
+}
+
+#ydgabwknrs .gt_font_italic {
+  font-style: italic;
+}
+
+#ydgabwknrs .gt_super {
+  font-size: 65%;
+}
+
+#ydgabwknrs .gt_footnote_marks {
+  font-size: 75%;
+  vertical-align: 0.4em;
+  position: initial;
+}
+
+#ydgabwknrs .gt_asterisk {
+  font-size: 100%;
+  vertical-align: 0;
+}
+
+#ydgabwknrs .gt_indent_1 {
+  text-indent: 5px;
+}
+
+#ydgabwknrs .gt_indent_2 {
+  text-indent: 10px;
+}
+
+#ydgabwknrs .gt_indent_3 {
+  text-indent: 15px;
+}
+
+#ydgabwknrs .gt_indent_4 {
+  text-indent: 20px;
+}
+
+#ydgabwknrs .gt_indent_5 {
+  text-indent: 25px;
+}
+
+#ydgabwknrs .katex-display {
+  display: inline-flex !important;
+  margin-bottom: 0.75em !important;
+}
+
+#ydgabwknrs div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+  height: 0px !important;
+}
+</style>
+<table class="table gt_table" data-quarto-disable-processing="false" data-quarto-bootstrap="false">
+<thead>
+<tr class="gt_heading">
+<td colspan="6" class="gt_heading gt_title gt_font_normal" style>Detected changepoints</td>
+    </tr>
+<tr class="gt_heading">
+<td colspan="6" class="gt_heading gt_subtitle gt_font_normal gt_bottom_border" style>1 changepoint(s) in mean over 200 observations; penalty MBIC</td>
+    </tr>
+<tr class="gt_col_headings">
+<th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="a#">#</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Location">Location</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Value-at-change">Value at change</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Level-before">Level before</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Level-after">Level after</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Change">Change</th>
+    </tr>
+</thead>
+<tbody class="gt_table_body"><tr>
+<td headers="#" class="gt_row gt_right">1</td>
+<td headers="Location" class="gt_row gt_right">100</td>
+<td headers="Value at change" class="gt_row gt_right">0.369</td>
+<td headers="Level before" class="gt_row gt_right">-0.098</td>
+<td headers="Level after" class="gt_row gt_right">6.122</td>
+<td headers="Change" class="gt_row gt_right">6.22</td>
+</tr></tbody>
+</table>
+</div>
+<p><code><a href="../reference/geom_cpt_event.html">geom_cpt_event()</a></code> draws the events.
 <code><a href="../reference/scale_colour_cpt.html">scale_colour_cpt()</a></code>, <code><a href="../reference/scale_colour_cpt.html">scale_fill_cpt()</a></code>,
 <code><a href="../reference/scale_colour_cpt.html">scale_linetype_cpt()</a></code>, <code><a href="../reference/scale_fill_cpt_label.html">scale_fill_cpt_label()</a></code>
 and <code><a href="../reference/scale_fill_cpt_label.html">scale_colour_cpt_label()</a></code> are the colour-vision-safe
-scales; <code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code> is unchanged.</p>
+scales — the Okabe-Ito palette, plus a linetype scale so that colour is
+never the only channel carrying a distinction. All three at once, on the
+fitted segmentation:</p>
+<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">aug</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">aug</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">index</span>, <span class="va">.fitted</span>, colour <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">seg_id</span><span class="op">)</span>,</span>
+<span>                linetype <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">seg_id</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>y <span class="op">=</span> <span class="va">value</span><span class="op">)</span>, colour <span class="op">=</span> <span class="st">"grey75"</span>, linetype <span class="op">=</span> <span class="st">"solid"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_ribbon.html" class="external-link">geom_ribbon</a></span><span class="op">(</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>ymin <span class="op">=</span> <span class="va">.fitted</span> <span class="op">-</span> <span class="fl">1</span>, ymax <span class="op">=</span> <span class="va">.fitted</span> <span class="op">+</span> <span class="fl">1</span>,</span>
+<span>                  fill <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/factor.html" class="external-link">factor</a></span><span class="op">(</span><span class="va">seg_id</span><span class="op">)</span><span class="op">)</span>, alpha <span class="op">=</span> <span class="fl">0.2</span>, colour <span class="op">=</span> <span class="cn">NA</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span>linewidth <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="../reference/scale_colour_cpt.html">scale_colour_cpt</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/scale_colour_cpt.html">scale_fill_cpt</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/scale_colour_cpt.html">scale_linetype_cpt</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Index"</span>, y <span class="op">=</span> <span class="st">"Value"</span>, colour <span class="op">=</span> <span class="st">"Segment"</span>, fill <span class="op">=</span> <span class="st">"Segment"</span>,</span>
+<span>       linetype <span class="op">=</span> <span class="st">"Segment"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="ggchangepoint_files/figure-html/accessibility-tour-1.png" class="r-plt" alt="Fitted segment levels drawn with the Okabe-Ito palette, a matching fill band and a redundant linetype per segment" width="768"></p>
+<p><code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code> is unchanged.</p>
 </div>
 <div class="section level3">
 <h3 id="benchmarking">Benchmarking<a class="anchor" aria-label="anchor" href="#benchmarking"></a>
 </h3>
-<div class="sourceCode" id="cb72"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">bm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_benchmark.html">cpt_benchmark</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_datasets.html">cpt_datasets</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">1</span>,</span>
 <span>                                 names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"step"</span>, <span class="st">"teeth"</span>, <span class="st">"ar1"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                    methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bm</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ggchangepoint_files/figure-html/benchmark-tour-1.png" class="r-plt" alt="Heatmap of the covering metric for each method on each benchmark dataset" width="768"></p>
-<div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_annotations.html">cpt_annotations</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_datasets.html">cpt_datasets</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, names <span class="op">=</span> <span class="st">"step"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;   dataset annotator    cp</span></span>
@@ -1148,7 +1654,7 @@ connection.</p>
 <div class="section level3">
 <h3 id="streaming">Streaming<a class="anchor" aria-label="anchor" href="#streaming"></a>
 </h3>
-<div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"edetector"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="va">mon</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
@@ -1176,17 +1682,33 @@ data arrive.</p>
 <div class="section level3">
 <h3 id="power-and-study-design">Power and study design<a class="anchor" aria-label="anchor" href="#power-and-study-design"></a>
 </h3>
-<div class="sourceCode" id="cb75"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_power.html">cpt_power</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, jump <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, n_sim <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ggchangepoint_files/figure-html/power-tour-1.png" class="r-plt" alt="Power curve: detection probability against change size" width="768"></p>
-<p><code><a href="../reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts the curve, and
-<code><a href="../reference/cpt_scenarios.html">cpt_scenarios()</a></code> builds a grid of settings as data.</p>
+<p><code><a href="../reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts the curve — it bisects for
+the change size that reaches a target power, which is the number a
+pre-registration needs:</p>
+<div class="sourceCode" id="cb79"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_min_detectable.html">cpt_min_detectable</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">150</span>, n_sim <span class="op">=</span> <span class="fl">15</span>, max_iter <span class="op">=</span> <span class="fl">3</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">$</span><span class="va">jump</span></span>
+<span><span class="co">#&gt; [1] 1.325</span></span></code></pre></div>
+<p><code><a href="../reference/cpt_scenarios.html">cpt_scenarios()</a></code> builds the grid a simulation study
+varies over as data rather than as nested loops, so it can be inspected,
+filtered and passed straight to <code><a href="../reference/cpt_benchmark.html">cpt_benchmark()</a></code>:</p>
+<div class="sourceCode" id="cb80"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_scenarios.html">cpt_scenarios</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">500</span><span class="op">)</span>, jump <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, as_datasets <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 7</span></span></span>
+<span><span class="co">#&gt;       n  jump location noise change_in   rho scenario          </span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200     1      0.5 gauss mean          0 mean_n200_j1_gauss</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   500     1      0.5 gauss mean          0 mean_n500_j1_gauss</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   200     2      0.5 gauss mean          0 mean_n200_j2_gauss</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>   500     2      0.5 gauss mean          0 mean_n500_j2_gauss</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="extending">Extending<a class="anchor" aria-label="anchor" href="#extending"></a>
 </h3>
-<div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb81"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">fit_ext</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/as_ggcpt.html">as_ggcpt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, <span class="va">x</span>, method <span class="op">=</span> <span class="st">"external_detector"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">fit_ext</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"method"</span>, <span class="st">"n_changepoints"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -1204,10 +1726,15 @@ data arrive.</p>
 <span><span class="co">#&gt;   method       engine </span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> biggest_jump example</span></span>
+<span><span class="fu"><a href="../reference/cpt_register_method.html">cpt_registered_methods</a></span><span class="op">(</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
+<span><span class="co">#&gt;   method       change_in engine  has_citation</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>       </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> biggest_jump mean      example FALSE</span></span>
 <span><span class="fu"><a href="../reference/cpt_register_method.html">cpt_unregister_method</a></span><span class="op">(</span><span class="st">"biggest_jump"</span><span class="op">)</span></span></code></pre></div>
 <p><code><a href="../reference/cpt_install_engines.html">cpt_install_engines()</a></code> installs a family of engines at a
 time:</p>
-<div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb82"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_install_engines.html">cpt_install_engines</a></span><span class="op">(</span><span class="st">"bayesian"</span>, dry_run <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"package"</span>,</span>
 <span>                                                    <span class="st">"installed_before"</span><span class="op">)</span><span class="op">]</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 2</span></span></span>

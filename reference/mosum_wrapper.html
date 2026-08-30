@@ -28,6 +28,8 @@ multiscale = TRUE) across a bandwidth grid with localised pruning."><meta proper
     <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
+    <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -89,7 +91,69 @@ Defaults to <code>FALSE</code>.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>ggcpt</code> object.</p>
     </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p>Other changepoint engines:
+<code><a href="bcp_wrapper.html">bcp_wrapper()</a></code>,
+<code><a href="beast_wrapper.html">beast_wrapper()</a></code>,
+<code><a href="bfast_wrapper.html">bfast_wrapper()</a></code>,
+<code><a href="binsegrcpp_wrapper.html">binsegrcpp_wrapper()</a></code>,
+<code><a href="bocpd_wrapper.html">bocpd_wrapper()</a></code>,
+<code><a href="cpm_wrapper.html">cpm_wrapper()</a></code>,
+<code><a href="cpop_wrapper.html">cpop_wrapper()</a></code>,
+<code><a href="cpt_wrapper.html">cpt_wrapper()</a></code>,
+<code><a href="decafs_wrapper.html">decafs_wrapper()</a></code>,
+<code><a href="ecp_wrapper.html">ecp_wrapper()</a></code>,
+<code><a href="envcpt_wrapper.html">envcpt_wrapper()</a></code>,
+<code><a href="esac_wrapper.html">esac_wrapper()</a></code>,
+<code><a href="fabisearch_wrapper.html">fabisearch_wrapper()</a></code>,
+<code><a href="fastcpd_wrapper.html">fastcpd_wrapper()</a></code>,
+<code><a href="fcov_wrapper.html">fcov_wrapper()</a></code>,
+<code><a href="fmean_wrapper.html">fmean_wrapper()</a></code>,
+<code><a href="fpop_wrapper.html">fpop_wrapper()</a></code>,
+<code><a href="geomcp_wrapper.html">geomcp_wrapper()</a></code>,
+<code><a href="hdcov_wrapper.html">hdcov_wrapper()</a></code>,
+<code><a href="hdreg_wrapper.html">hdreg_wrapper()</a></code>,
+<code><a href="idetect_wrapper.html">idetect_wrapper()</a></code>,
+<code><a href="inspect_wrapper.html">inspect_wrapper()</a></code>,
+<code><a href="kcp_wrapper.html">kcp_wrapper()</a></code>,
+<code><a href="kwc_wrapper.html">kwc_wrapper()</a></code>,
+<code><a href="mcp_wrapper.html">mcp_wrapper()</a></code>,
+<code><a href="network_wrapper.html">network_wrapper()</a></code>,
+<code><a href="not_wrapper.html">not_wrapper()</a></code>,
+<code><a href="npmojo_wrapper.html">npmojo_wrapper()</a></code>,
+<code><a href="nsp_wrapper.html">nsp_wrapper()</a></code>,
+<code><a href="ocd_wrapper.html">ocd_wrapper()</a></code>,
+<code><a href="pilliat_wrapper.html">pilliat_wrapper()</a></code>,
+<code><a href="segmented_wrapper.html">segmented_wrapper()</a></code>,
+<code><a href="smuce_wrapper.html">smuce_wrapper()</a></code>,
+<code><a href="sn_wrapper.html">sn_wrapper()</a></code>,
+<code><a href="strucchange_wrapper.html">strucchange_wrapper()</a></code>,
+<code><a href="taylor_wrapper.html">taylor_wrapper()</a></code>,
+<code><a href="tguh_wrapper.html">tguh_wrapper()</a></code>,
+<code><a href="trend_wrapper.html">trend_wrapper()</a></code>,
+<code><a href="var_wrapper.html">var_wrapper()</a></code>,
+<code><a href="wbs2_wrapper.html">wbs2_wrapper()</a></code>,
+<code><a href="wbs_wrapper.html">wbs_wrapper()</a></code>,
+<code><a href="wbsts_wrapper.html">wbsts_wrapper()</a></code></p></div>
+    </div>
 
+    <div class="section level2">
+    <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">mosum_wrapper</span><span class="op">(</span><span class="va">x</span>, G <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100    0.369</span>
+<span class="r-in"><span><span class="fu">mosum_wrapper</span><span class="op">(</span><span class="va">x</span>, multiscale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100    0.369</span>
+</code></pre></div>
+    </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside></div>
 

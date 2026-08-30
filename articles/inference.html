@@ -39,6 +39,8 @@
     <li><a class="dropdown-item" href="../articles/inference.html">Inference and diagnostics</a></li>
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
+    <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -355,21 +357,56 @@ only the argmax. Three accessors give the discarded object back.</p>
 <code class="sourceCode R"><span><span class="va">res_mosum</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_mosum</span>, type <span class="op">=</span> <span class="st">"statistic"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/statistic-1.png" class="r-plt" alt="Two-panel display: the series above, the MOSUM statistic against its threshold below" width="768"></p>
+<p><code>autoplot(type = "statistic")</code> is a thin wrapper:
+<code><a href="../reference/cpt_statistic.html">ggcpt_statistic()</a></code> is the plotting function itself, and
+<code><a href="../reference/cpt_statistic.html">cpt_statistic()</a></code> returns the numbers behind it.</p>
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_statistic.html">ggcpt_statistic</a></span><span class="op">(</span><span class="va">res_mosum</span><span class="op">)</span></span></code></pre></div>
+<p><img src="inference_files/figure-html/ggcpt-statistic-1.png" class="r-plt" alt="The same two-panel statistic display, drawn by ggcpt_statistic() directly" width="768"></p>
 <p>The scale-space view answers a question a single-bandwidth fit
 cannot: <em>at which resolutions does this feature exist?</em> A change
 visible only at a wide bandwidth is a slow shift; one visible only at a
 narrow bandwidth is a spike.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_scale_space.html">ggcpt_scale_space</a></span><span class="op">(</span><span class="va">res_mosum</span>, bandwidths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span>, <span class="fl">60</span>, <span class="fl">90</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/scale-space-1.png" class="r-plt" alt="Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked" width="768"></p>
+<p><code><a href="../reference/cpt_scale_space.html">cpt_scale_space()</a></code> returns the sweep as data, one row per
+(location, bandwidth) pair, so the picture can be counted rather than
+eyeballed. How many locations cross the threshold at each bandwidth:</p>
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ss</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_scale_space.html">cpt_scale_space</a></span><span class="op">(</span><span class="va">x</span>, bandwidths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span>, <span class="fl">60</span>, <span class="fl">90</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">significant</span> <span class="op">~</span> <span class="va">bandwidth</span>, data <span class="op">=</span> <span class="va">ss</span>, FUN <span class="op">=</span> <span class="va">sum</span><span class="op">)</span></span>
+<span><span class="co">#&gt;   bandwidth significant</span></span>
+<span><span class="co">#&gt; 1        15          20</span></span>
+<span><span class="co">#&gt; 2        30          61</span></span>
+<span><span class="co">#&gt; 3        60         171</span></span>
+<span><span class="co">#&gt; 4        90         302</span></span></code></pre></div>
+<p>A wide bandwidth flags a broad neighbourhood of each change and a
+narrow one flags a few points, which is the resolution trade-off made
+numeric.</p>
 <p>And the solution path shows the order in which candidates entered the
 model, and how decisively each beat the next:</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_solution_path.html">ggcpt_solution_path</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"wbs"</span><span class="op">)</span>, max_steps <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/path-1.png" class="r-plt" alt="Solution path: each candidate changepoint against the step at which it entered, with the proposing interval drawn" width="768"></p>
+<p><code><a href="../reference/cpt_solution_path.html">cpt_solution_path()</a></code> is the same object as a tibble. The
+<code>contrast</code> column is the margin by which each candidate beat
+the next, and <code>selected</code> marks the ones the penalty kept — so
+the gap between the last selected row and the first rejected one is how
+close the decision was:</p>
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_solution_path.html">cpt_solution_path</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"wbs"</span><span class="op">)</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
+<span><span class="co">#&gt;    step    cp contrast start   end selected</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1   120    25.0      1   360 TRUE    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2   240    20.2    121   360 TRUE    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3   318     4.01   241   360 FALSE   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4   314     3.65   241   318 FALSE   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5    15     3.35     1   120 FALSE</span></span></code></pre></div>
 <p>An engine that exposes none of these says so, and names the ones that
 do:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_statistic.html">cpt_statistic</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Engine `pelt` does not expose a per-location statistic. These do: amoc, wbs, not, mosum, bcp, beast, nsp, pettitt, buishand, snht.</span></span></code></pre></div>
@@ -378,7 +415,7 @@ do:</p>
 <div class="section level2">
 <h2 id="putting-it-together">Putting it together<a class="anchor" aria-label="anchor" href="#putting-it-together"></a>
 </h2>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_report.html">cpt_report</a></span><span class="op">(</span><span class="va">fit</span>, session <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="fl">20</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; # Changepoint analysis report</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -387,7 +424,7 @@ do:</p>
 <span><span class="co">#&gt; - Penalty: MBIC</span></span>
 <span><span class="co">#&gt; - Series length: 360</span></span>
 <span><span class="co">#&gt; - Changepoints found: 2</span></span>
-<span><span class="co">#&gt; - Detection runtime: 0.019 s</span></span>
+<span><span class="co">#&gt; - Detection runtime: 0.024 s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ## Changepoints</span></span>
 <span><span class="co">#&gt; </span></span>

@@ -38,3 +38,25 @@ geom_cpt_ci(mapping = NULL, data = NULL, ..., na.rm = FALSE, show.legend = NA)
 ## Value
 
 A ggplot layer.
+
+## See also
+
+Other ggplot2 layers:
+[`geom_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_changepoint.md),
+[`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md),
+[`geom_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_label.md),
+[`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md),
+[`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md),
+[`stat_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.md)
+
+## Examples
+
+``` r
+library(ggplot2)
+set.seed(2026)
+d <- data.frame(t = 1:100, y = c(rnorm(50), rnorm(50, 4)))
+ci <- data.frame(xmin = 45, xmax = 56, y = 0)
+ggplot(d, aes(t, y)) + geom_line() +
+  geom_cpt_ci(aes(xmin = xmin, xmax = xmax, y = y), data = ci,
+              inherit.aes = FALSE, width = 0.4, colour = "blue")
+```

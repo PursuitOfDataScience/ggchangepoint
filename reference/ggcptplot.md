@@ -89,6 +89,14 @@ ggcptplot(
 A line plot with data points along with the vertical lines representing
 changepoints.
 
+## See also
+
+Other plotting:
+[`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md),
+[`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md),
+[`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md),
+[`ggecpplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggecpplot.md)
+
 ## Examples
 
 ``` r

@@ -1,0 +1,206 @@
+# Benchmarks: Runtime, Size and Coverage
+
+Fifty methods share one interface in this package, which makes it easy
+to swap one for another and easy to forget that they do not cost the
+same thing. This article is the measured answer to four questions a
+reader choosing a method actually has:
+
+1.  **How long does it take**, and at what series length does it stop
+    being usable at all?
+2.  **How many changepoints does it report** when the truth is known?
+3.  **How often does it fire when there is nothing there?**
+4.  **Do the intervals cover?**
+
+## How these numbers were produced, and what they are not
+
+Every table below comes from **one replicate per cell** (except where a
+replicate count is stated) on a single Linux x86_64 machine running R
+4.4.1, with the engine versions current at the time of measurement. They
+are **indicative, not published rates**: a single timing on one machine,
+and a single detection count on one simulated series, are the right
+order of magnitude and the wrong thing to cite as a benchmark. Treat
+them as guidance for choosing a method and sizing a run, and re-measure
+on your own hardware and data before making a claim.
+
+The benchmarking machinery itself is
+[`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),
+documented in
+[`vignette("comparison", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md);
+the tables here are not regenerated when this page is built, because the
+full sweep takes over twenty minutes.
+
+## 1. Runtime
+
+Simulated Gaussian series with **four true changepoints**, default
+settings for each engine, wall-clock seconds for a single fit.
+
+| Method       | n = 100,000 |
+|--------------|-------------|
+| `amoc`       | 0.052       |
+| `binseg`     | 0.073       |
+| `fpop`       | 0.075       |
+| `pelt`       | 0.083       |
+| `mosum`      | 0.179       |
+| `binsegrcpp` | 0.216       |
+| `decafs`     | 0.600       |
+| `cpm`        | 0.720       |
+| `not`        | 2.084       |
+| `wbs`        | 2.448       |
+| `tguh`       | 4.150       |
+| `idetect`    | 6.395       |
+| `pettitt`    | 35.5        |
+| `np`         | 91.0        |
+
+The spread is four orders of magnitude across methods that all answer
+“where did the mean change”. The classical single-change test (`amoc`),
+the pruned optimal-partitioning family (`pelt`, `fpop`, `binsegrcpp`)
+and `binseg` are all fast enough that series length is simply not a
+consideration: a hundred thousand points in under a tenth of a second.
+The random-interval searches (`not`, `wbs`, `tguh`, `idetect`) cost
+seconds because they fit many sub-intervals by construction, which is
+also why they find changes the single-pass methods miss. `pettitt` and
+`np` are the two to watch — half a minute and a minute and a half
+respectively — and `np` is the one most likely to surprise, because
+nonparametric cost is paid per quantile.
+
+### What does not finish
+
+Nine methods exceeded a **120-second** limit at n = 100,000:
+
+> `cpop`, `strucchange`, `bocpd`, `taylor`, `ecp`, `smuce`, `hsmuce`,
+> `wbs2`, `segneigh`
+
+Five of those already exceed it at n = 10,000:
+
+> `cpop`, `strucchange`, `bocpd`, `taylor`, `ecp`
+
+This is the practical dividing line in the package. `ecp` and `bocpd`
+are quadratic or worse in n; `cpop` solves a continuous-piecewise-linear
+problem whose candidate set grows fast; `strucchange` and `taylor` were
+written for the series lengths their fields see, which are in the
+hundreds or low thousands. None of them is broken — they are simply
+methods for short series, and choosing one for a long series is a
+modelling error rather than a performance problem to be tuned around.
+
+Memory follows the same shape and is easier to overlook. At n = 10,000
+`segneigh` used **1,208 MB** against **42-62 MB** for `pelt` on the same
+data: segment-neighbourhood search stores a cost matrix, so its
+footprint is quadratic where `pelt`’s is linear. That is the reason to
+prefer `pelt` over `segneigh` even when both would finish.
+
+## 2. How many changepoints, against a truth of 4
+
+Runtime is the easy axis. The harder one is that a method can be fast
+and still report a number of changepoints that has nothing to do with
+the truth.
+
+| Method | n = 1,000 | n = 10,000 | n = 100,000 |
+|--------|-----------|------------|-------------|
+| truth  | 4         | 4          | 4           |
+| `cpm`  | 5         | 36         | 350         |
+| `np`   | —         | —          | 10          |
+
+`cpm`’s count grows *linearly in n*, and this is not a defect. `cpm` is
+a sequential monitor, and its `arl0 = 500` default asks for a false
+alarm every 500 in-control observations — so a stream of length n
+implies about `n / arl0` alarms by construction: 2 at n = 1,000, 20 at n
+= 10,000, 200 at n = 100,000, which is the order of what we see. The
+count is the parameterisation working as specified, read as though it
+were a segmentation.
+
+Setting `arl0 = 5 * n` returns **exactly the 4 real changepoints** at
+every length. The lesson generalises to every online method used in
+batch mode: its threshold is a rate per observation, so it must be
+scaled to the length of the series you are pointing it at. See
+[`vignette("monitoring", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/monitoring.md)
+for the alarm-and-delay accounting that makes this visible rather than
+confusing.
+
+`np` reports 10 at n = 100,000 — an over-count of six, small enough to
+be worth its nonparametric robustness, and much better behaved than
+`cpm`’s.
+
+## 3. Empirical size under the global null
+
+The complement of the previous table: pure iid Gaussian noise, **no
+changepoint at all**, 6 replicates. The right answer is zero.
+
+| Method       | n = 1,000 | n = 10,000 | n = 100,000 |
+|--------------|-----------|------------|-------------|
+| `amoc`       | 0         | 0          | 0           |
+| `binseg`     | 0         | 0          | 0           |
+| `fpop`       | 0         | 0          | 0           |
+| `pelt`       | 0         | 0          | 0           |
+| `binsegrcpp` | 0         | 0          | 0           |
+| `decafs`     | 0         | 0          | 0           |
+| `not`        | 0         | 0          | 0           |
+| `wbs`        | 0         | 0          | 0           |
+| `tguh`       | 0         | 0          | 0           |
+| `idetect`    | 0         | 0          | 0           |
+| `cpm`        | 1.50      | 33.83      | 365.83      |
+| `np`         | 1.17      | 6.17       | —           |
+
+Ten methods raise **zero** false alarms at all three lengths. That is a
+strong result and worth stating plainly: with default penalties, the
+penalised and search-based detectors in this package do not invent
+changepoints in noise, and the default settings are conservative rather
+than merely conventional.
+
+`cpm`’s row is the same `arl0` arithmetic as above, now with nothing
+real to find, and it lines up with the previous table almost exactly —
+33.83 false alarms at n = 10,000 against 36 total reported when four
+were real. `np`’s 1.17 and 6.17 are mild over-detection.
+
+Two cautions on reading this table. Zero false alarms in 6 replicates is
+consistent with a true rate anywhere below roughly 0.4 per series, so
+this measures “not obviously anti-conservative” rather than “exact
+size”. And it is measured on **iid Gaussian** noise; every one of those
+zeros can become a positive count under autocorrelation, which is the
+failure mode the `decafs`, `nsp` and robust routes exist for.
+
+## 4. Interval coverage
+
+[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+offers four provenances and reports which one it used, on the grounds
+that they mean different things. Here is what that difference costs, at
+nominal level 0.95, one changepoint, 20 replicates, on a 300-point
+series.
+
+| Provenance  | Coverage | Mean width |
+|-------------|----------|------------|
+| `native`    | 0.95     | 11.9       |
+| `bootstrap` | 0.95     | 6.2        |
+| `nsp`       | 1.00     | 33.0       |
+| `posterior` | 1.00     | 245.5      |
+
+`native` and `bootstrap` both hit the nominal level, and the bootstrap
+does it at roughly half the width — attractive, with the caveat that it
+conditions on the fitted segmentation and so is not exact.
+
+`nsp` covers 1.00 at nearly three times the native width. That is the
+price of a guarantee that holds *globally across all intervals* and
+survives selection; conservatism is the expected behaviour, not a
+surprise.
+
+`posterior` is the row to take seriously. A mean width of **245.5 on a
+300-point series** is a vacuous interval: it says the changepoint is
+somewhere in the series. The mechanism is specific and worth knowing —
+`bcp`’s posterior probability of a change is sharply peaked, so its 50%
+highest-density interval is one or two observations wide, but the tails
+are diffuse, so pushing the credible level out to 0.95 sweeps in almost
+the whole series. This is a real property of the posterior rather than a
+bug in the extraction, which is exactly why the `source` column exists:
+reporting a 245-wide posterior interval and an 11.9-wide native interval
+as interchangeable “95% confidence intervals” would be the misleading
+presentation.
+
+## Reading all four tables together
+
+If you want one recommendation from this page: **`pelt` for long
+series** (fast, linear memory, zero empirical size), **`wbs` or `not`
+when changes may be short or close together** and seconds are
+affordable, **`nsp` when the claim has to survive selection** and you
+can accept wide regions, and **`bootstrap` intervals as the default**
+when the engine has none of its own. Treat any online method used in
+batch mode as needing its threshold rescaled to the series length first,
+and re-measure before quoting a number.

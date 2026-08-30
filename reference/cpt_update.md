@@ -30,3 +30,16 @@ The updated `ggcpt_monitor`.
 
 [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md),
 [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md).
+
+## Examples
+
+``` r
+set.seed(2026)
+mon <- cpt_monitor("edetector", baseline = rnorm(100))
+mon <- cpt_update(mon, c(rnorm(50), rnorm(50, 3)))
+alarms(mon)
+#> # A tibble: 1 × 3
+#>    time statistic threshold
+#>   <int>     <dbl>     <dbl>
+#> 1    51      134.       100
+```
