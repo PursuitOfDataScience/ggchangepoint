@@ -202,3 +202,144 @@ test_that("cpt_methods is silent even when an engine talks on load", {
   # point of a dry run -- but it must not also leak an engine's load noise.
   expect_warning(invisible(cpt_install_engines("core", dry_run = TRUE)), NA)
 })
+
+test_that("as_ggcpt() drops what it documents and refuses what it cannot read", {
+  set.seed(3)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+  n <- length(x)
+
+  # The documented contract: out-of-range, duplicated and missing values are
+  # dropped and the result is sorted. All of this must keep working.
+  expect_equal(as_ggcpt(c(90, 30), x)$changepoints$cp, c(30L, 90L))
+  expect_equal(as_ggcpt(c(60, 60), x)$changepoints$cp, 60L)
+  expect_equal(as_ggcpt(c(60, NA), x)$changepoints$cp, 60L)
+  expect_equal(as_ggcpt(c(0, -5, 60, n, 500), x)$changepoints$cp, 60L)
+  expect_equal(as_ggcpt(60.5, x)$changepoints$cp, 60L)
+  expect_equal(nrow(as_ggcpt(integer(0), x)$changepoints), 0L)
+  expect_equal(nrow(as_ggcpt(NULL, x)$changepoints), 0L)
+  expect_equal(as_ggcpt("60", x)$changepoints$cp, 60L)
+
+  # What it must NOT do is swallow the coercion warning and report a clean
+  # "no changepoints" for input it could not read.
+  expect_error(as_ggcpt(c("a", "b"), x), "are not numbers")
+  expect_error(as_ggcpt(c("60", "x"), x), "are not numbers")
+  # as.integer() on a factor returns level codes: factor(c("60", "90"))
+  # used to become changepoints at 1 and 2.
+  expect_error(as_ggcpt(factor(c("60", "90")), x), "level codes")
+  # and a logical vector is a mask, not a set of positions
+  expect_error(as_ggcpt(c(TRUE, FALSE), x), "which\\(cp\\)")
+})
+
+test_that("as_ggcpt() reports a wrong-length fitted signal", {
+  set.seed(3)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+  # ggcpt_build() drops a wrong-length fitted signal silently, after which
+  # autoplot(show_fit = TRUE) says the result "carries no fitted signal" --
+  # about a signal the caller supplied. Every sibling slot (index, ci,
+  # regions, extra) reports its length mismatch, so this one does too.
+  expect_error(as_ggcpt(60, x, fitted = stats::rnorm(10)),
+               "one value per observation")
+  ok <- as_ggcpt(60, x, fitted = stats::rnorm(length(x)))
+  expect_true("fitted" %in% names(ok$data))
+  expect_length(ok$data$fitted, length(x))
+})
+
+test_that("ci and extra columns follow their changepoint through the drop", {
+  set.seed(3)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+  # ci/extra are validated against the SUPPLIED cp vector and the dropping
+  # happens afterwards, so the columns have to be filtered and reordered in
+  # step with cp or they end up describing a different changepoint.
+  front <- as_ggcpt(c(0, 60), x, ci = cbind(c(-5, 55), c(5, 65)),
+                    extra = list(score = c(111, 222)))
+  expect_equal(front$changepoints$cp, 60L)
+  expect_equal(front$changepoints$score, 222)
+  expect_equal(front$changepoints$ci_lower, 55L)
+
+  back <- as_ggcpt(c(60, 500), x, extra = list(score = c(111, 222)))
+  expect_equal(back$changepoints$score, 111)
+
+  sorted <- as_ggcpt(c(90, 30), x, extra = list(score = c(999, 111)))
+  expect_equal(sorted$changepoints$cp, c(30L, 90L))
+  expect_equal(sorted$changepoints$score, c(111, 999))
+})
+
+test_that("every engine that declares a fitted signal delivers a full one", {
+  # ggcpt_build() keeps `fitted` only when its length matches the series, so
+  # a wrapper that returned a short signal would advertise the capability in
+  # cpt_methods() and quietly not have it.
+  set.seed(5)
+  x <- c(stats::rnorm(150), stats::rnorm(150, 3))
+  reg <- ggchangepoint:::builtin_registry()
+  for (m in reg$method[reg$fitted]) {
+    fit <- tryCatch(cpt_detect(x, method = m), error = function(e) NULL)
+    if (is.null(fit)) next          # engine not installed here
+    expect_true("fitted" %in% names(fit$data), info = m)
+    expect_length(fit$data$fitted, length(x))
+  }
+})
+
+test_that("a registered method must detect on the series it is given", {
+  set.seed(9)
+  x <- c(stats::rnorm(80), stats::rnorm(80, 4))
+  withr::defer(try(cpt_unregister_method("shapeprobe"), silent = TRUE))
+
+  # A returned ggcpt used to be taken entirely on trust, so a function that
+  # built its result from some other series handed back a result whose
+  # $data, row count and n were about that series, not about `x`.
+  cpt_register_method(
+    "shapeprobe",
+    fn = function(x, ...) as_ggcpt(20, stats::rnorm(40), method = "inner")
+  )
+  expect_error(cpt_detect(x, method = "shapeprobe"),
+               "result for a different series")
+
+  # the honest version is accepted, and the registration's name wins
+  cpt_register_method(
+    "shapeprobe",
+    fn = function(x, ...) as_ggcpt(80, x, method = "inner"),
+    overwrite = TRUE
+  )
+  fit <- cpt_detect(x, method = "shapeprobe")
+  expect_equal(nrow(fit$data), length(x))
+  expect_equal(fit$method, "shapeprobe")
+  expect_true(isTRUE(fit$registered))
+
+  # and a multivariate result is measured in observations, not coordinates
+  X <- cbind(a = x, b = x)
+  cpt_register_method(
+    "shapeprobe",
+    fn = function(x, ...) as_ggcpt(80, x, method = "inner"),
+    capabilities = list(multivariate = TRUE), overwrite = TRUE
+  )
+  mv <- cpt_detect(X, method = "shapeprobe")
+  expect_equal(nrow(mv$data), nrow(X))
+})
+
+test_that("dispatch refuses every return shape that is not changepoints", {
+  set.seed(9)
+  x <- c(stats::rnorm(80), stats::rnorm(80, 4))
+  withr::defer(try(cpt_unregister_method("retprobe"), silent = TRUE))
+
+  bad <- list(
+    NULL_ = function(x, ...) NULL,
+    character = function(x, ...) "80",
+    factor = function(x, ...) factor(c("40", "80")),
+    logical = function(x, ...) seq_along(x) == 80,
+    list = function(x, ...) list(cp = 80),
+    frame = function(x, ...) data.frame(cp = 80)
+  )
+  for (nm in names(bad)) {
+    cpt_register_method("retprobe", fn = bad[[nm]], overwrite = TRUE)
+    expect_error(cpt_detect(x, method = "retprobe"),
+                 "must return a ggcpt object", info = nm)
+  }
+
+  # and the shapes that ARE changepoints go through as_ggcpt()'s contract
+  for (fn in list(function(x, ...) 80L, function(x, ...) 80.4,
+                  function(x, ...) c(0L, 80L, 500L))) {
+    cpt_register_method("retprobe", fn = fn, overwrite = TRUE)
+    fit <- cpt_detect(x, method = "retprobe")
+    expect_equal(fit$changepoints$cp, 80L)
+  }
+})

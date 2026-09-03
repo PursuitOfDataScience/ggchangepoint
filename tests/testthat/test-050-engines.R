@@ -15,20 +15,40 @@ X_func <- {
 }
 
 expect_ggcpt_contract <- function(res, method = NULL, change_in = NULL) {
+  # The whole ggcpt contract as the "What the contract is" section of
+  # vignettes/extending.Rmd states it. Kept identical in both files that
+  # define this helper, so strengthening one strengthens every wrapper test.
   expect_s3_class(res, "ggcpt")
   cp <- res$changepoints
+  n <- nrow(res$data)
   expect_true(all(c("cp", "cp_value") %in% names(cp)))
   expect_type(cp$cp, "integer")
   expect_false(is.unsorted(cp$cp))
   expect_false(anyDuplicated(cp$cp) > 0)
-  n <- nrow(res$data)
   expect_true(all(cp$cp >= 1 & cp$cp < n))
+  expect_identical(res$cp_convention, "left")
+
+  expect_true(all(c("seg_id", "start", "end", "n", "param_estimate") %in%
+                    names(res$segments)))
   expect_equal(nrow(res$segments), nrow(cp) + 1L)
   expect_type(res$segments$start, "integer")
   expect_type(res$segments$n, "integer")
   expect_equal(sum(res$segments$n), n)
+  expect_equal(res$segments$start[1], 1L)
+  expect_equal(res$segments$end[nrow(res$segments)], n)
+
+  expect_true(all(c("index", "value") %in% names(res$data)))
+  expect_identical(as.integer(res$data$index), seq_len(n))
+
+  # length-one metadata: a vector here would print and tidy() wrongly
+  for (f in c("method", "change_in", "cp_convention")) {
+    expect_length(res[[f]], 1L)
+  }
+
   if (!is.null(method)) expect_equal(res$method, method)
   if (!is.null(change_in)) expect_equal(res$change_in, change_in)
+  g <- glance(res)
+  expect_equal(nrow(g), 1)
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(res)))
   invisible(res)
 }
@@ -110,6 +130,15 @@ test_that("fmean and fcov segment a functional series", {
   fc <- fcov_wrapper(Xv, target = "trace")
   expect_ggcpt_contract(fc, "fcov", "covariance")
   expect_error(fmean_wrapper(x_step), "needs functional observations")
+
+  # Two columns clear the `ncol >= 2` guard and are still too coarse a grid
+  # for fChange's basis expansion, which stopped with base R's "subscript
+  # out of bounds" -- no argument named, no shape named. The upstream text
+  # is kept, because a coarse grid is the usual cause and not the only one.
+  X_coarse <- cbind(a = x_step, b = rev(x_step))
+  err <- tryCatch(fcov_wrapper(X_coarse), error = conditionMessage)
+  expect_match(err, "grid point\\(s\\)")
+  expect_match(err, "fChange reported")
 })
 
 test_that("kwc segments on depth ranks", {

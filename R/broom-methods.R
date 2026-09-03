@@ -43,8 +43,10 @@ tidy.ggcpt <- function(x, ...) {
 #' @param x A \code{ggcpt} object.
 #' @return A tibble with columns \code{start}, \code{end} (positions),
 #'   \code{length}, and — when the result carries a time index —
-#'   \code{start_index}/\code{end_index} on the original scale. A zero-row
-#'   tibble when the result carries no regions.
+#'   \code{start_index}/\code{end_index} on the original scale. Any further
+#'   columns the engine supplied are carried through after those --
+#'   \code{\link{nsp_wrapper}()} adds \code{value}, the region's statistic.
+#'   A zero-row tibble when the result carries no regions.
 #' @seealso \code{\link{nsp_wrapper}()}, \code{\link{geom_cpt_region}()},
 #'   \code{\link{cpt_confint}()}.
 #' @export
@@ -331,7 +333,7 @@ print.summary.ggcpt <- function(x, ...) {
 #' @param ... Additional arguments passed to methods.
 #' @return \code{as_tibble()} and \code{as.data.frame()} return the changepoints
 #'   table; \code{format()} returns a length-one character string; \code{plot()}
-#'   returns a \code{ggplot} object.
+#'   draws the default plot and returns the \code{ggplot} object invisibly.
 #' @name ggcpt_methods
 #' @examples
 #' set.seed(2022)
@@ -363,5 +365,5 @@ format.ggcpt <- function(x, ...) {
 #' @rdname ggcpt_methods
 #' @exportS3Method base::plot
 plot.ggcpt <- function(x, ...) {
-  autoplot.ggcpt(x, ...)
+  plot_via_autoplot(x, ...)
 }

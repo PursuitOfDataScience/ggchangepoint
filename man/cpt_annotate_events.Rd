@@ -48,11 +48,19 @@ factor column.}
 A \code{ggcpt_events} object: a list with
   \describe{
     \item{\code{matched}}{one row per matched pair: \code{cp},
-      \code{event}, \code{event_position}, \code{distance}.}
-    \item{\code{unexplained}}{detected changepoints with no event.}
-    \item{\code{undetected}}{events with no changepoint.}
+      \code{event}, \code{event_value} (the event's own location, on
+      the index scale when it was given as one), \code{event_position}
+      (that location as a position in the series) and \code{distance}.}
+    \item{\code{unexplained}}{detected changepoints with no event
+      (\code{cp}).}
+    \item{\code{undetected}}{events with no changepoint
+      (\code{event}, \code{event_value}, \code{event_position}).}
   }
-  with \code{print()}, \code{tidy()} and \code{autoplot()}.
+  \code{matched} and \code{unexplained} carry \code{cp_index}, the
+  changepoint on the original scale, when — and only when — the result
+  carries a time index, so \code{"cp_index" \%in\% names(x)} is the
+  test for it.
+  With \code{print()}, \code{tidy()} and \code{autoplot()}.
 }
 \description{
 Joins a table of real-world events to a detection result and reports all

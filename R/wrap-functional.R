@@ -115,10 +115,29 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
   data_vec <- as.numeric(rowMeans(X))
 
   # fChange takes curves down the columns (grid x time).
-  utils::capture.output(
-    fit <- fChange::fchange(t(X), method = method, statistic = statistic,
-                            critical = critical, type = type,
-                            alpha = alpha, ...)
+  #
+  # Two or three columns satisfy the ncol >= 2 guard above and are still too
+  # coarse a grid for the basis expansion: fChange then stops with base R's
+  # "subscript out of bounds", which names neither the argument nor the
+  # shape. The upstream message is passed through verbatim rather than
+  # replaced -- the grid is the usual cause, not the only one.
+  fit <- tryCatch(
+    {
+      utils::capture.output(
+        f <- fChange::fchange(t(X), method = method, statistic = statistic,
+                              critical = critical, type = type,
+                              alpha = alpha, ...)
+      )
+      f
+    },
+    error = function(e) {
+      stop("`", method_name, "` failed on ", n, " time point(s) x ",
+           ncol(X), " grid point(s). fChange reported: ",
+           conditionMessage(e),
+           ". A functional observation is a curve sampled on a grid, so `x` ",
+           "wants one column per grid location; a handful of columns is ",
+           "usually too coarse for the basis expansion.", call. = FALSE)
+    }
   )
 
   loc <- integer(0)

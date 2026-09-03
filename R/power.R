@@ -179,10 +179,22 @@ autoplot.ggcpt_power <- function(object, ...) {
     p <- p + ggplot2::aes(colour = factor(n), group = factor(n)) +
       ggplot2::labs(colour = "n")
   }
-  p +
+  # A single change size is one point per curve: a ribbon and a line both
+  # draw nothing there, and geom_line() advises adjusting the group
+  # aesthetic on a plot that is already right. Show the Monte Carlo interval
+  # as a range instead, so the one thing the figure promises is visible.
+  single <- length(unique(d$jump)) < 2
+  p <- p + if (single) {
+    ggplot2::geom_linerange(ggplot2::aes(ymin = lower, ymax = upper),
+                            linewidth = 0.7, na.rm = TRUE)
+  } else {
     ggplot2::geom_ribbon(ggplot2::aes(ymin = lower, ymax = upper),
-                         alpha = 0.15, colour = NA, na.rm = TRUE) +
-    ggplot2::geom_line(linewidth = 0.7, na.rm = TRUE) +
+                         alpha = 0.15, colour = NA, na.rm = TRUE)
+  }
+  if (!single) {
+    p <- p + ggplot2::geom_line(linewidth = 0.7, na.rm = TRUE)
+  }
+  p +
     ggplot2::geom_point(size = 1.8, na.rm = TRUE) +
     ggplot2::geom_hline(yintercept = 0.8, linetype = "dotted",
                         colour = "grey40") +
@@ -191,8 +203,9 @@ autoplot.ggcpt_power <- function(object, ...) {
                   y = "Detection probability",
                   title = paste0("Power curve (", attr(object, "method"),
                                  ")"),
-                  subtitle = paste0("Shaded band: 95% Monte Carlo interval; ",
-                                    "dotted line at 0.80"))
+                  subtitle = paste0(
+                    if (single) "Vertical range: " else "Shaded band: ",
+                    "95% Monte Carlo interval; dotted line at 0.80"))
 }
 
 #' The smallest detectable change
@@ -353,9 +366,17 @@ cpt_scenarios <- function(n = 500, jump = c(0.5, 1, 2), location = 0.5,
   if (!as_datasets) return(tibble::as_tibble(scen))
 
   out <- list()
+  clamped <- character()
   for (i in seq_len(nrow(scen))) {
-    cp <- max(2L, min(as.integer(round(scen$location[i] * scen$n[i])),
-                      scen$n[i] - 2L))
+    want <- as.integer(round(scen$location[i] * scen$n[i]))
+    cp <- max(2L, min(want, scen$n[i] - 2L))
+    # The table keeps the requested fraction, so a clamp makes the scenario
+    # row and the data it generated disagree about where the change is.
+    if (!identical(cp, want)) {
+      clamped <- c(clamped, sprintf("location %s x n %d -> %d, not %d",
+                                    format(scen$location[i]), scen$n[i],
+                                    cp, want))
+    }
     params <- switch(scen$change_in[i],
       mean = c(0, scen$jump[i]),
       var = c(1, 1 + scen$jump[i]),
@@ -375,6 +396,13 @@ cpt_scenarios <- function(n = 500, jump = c(0.5, 1, 2), location = 0.5,
       out[[nm]] <- list(series = as.numeric(d$value),
                         annotations = list(as.integer(cp)))
     }
+  }
+  if (length(clamped) > 0) {
+    warning("`location` is a fraction of `n`; ", length(clamped),
+            " scenario(s) asked for a position outside 2..(n - 2) and were ",
+            "moved: ", paste(unique(clamped), collapse = "; "),
+            ". The scenario table still reports the requested fraction.",
+            call. = FALSE)
   }
   out
 }

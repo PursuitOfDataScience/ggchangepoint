@@ -44,6 +44,7 @@
 #'
 #' @return A \code{ggcpt_benchmark} object: a tibble with one row per
 #'   (dataset, method) — \code{dataset}, \code{method}, \code{n},
+#'   \code{n_annotators} (how many ground-truth sets the dataset supplied),
 #'   \code{n_cp}, the requested metrics, \code{runtime}, \code{error} — with
 #'   \code{print()}, \code{tidy()} and \code{autoplot()}
 #'   (\code{"heatmap"}, \code{"ranks"}, \code{"critical_difference"}).
@@ -188,9 +189,9 @@ normalise_dataset <- function(d, name = NULL) {
   ann <- if (is.null(raw)) {
     list()
   } else if (is.list(raw)) {
-    lapply(raw, function(v) as.integer(unlist(v)))
+    lapply(raw, function(v) as_cp_locations(unlist(v), "annotations"))
   } else {
-    list(as.integer(raw))
+    list(as_cp_locations(raw, "annotations"))
   }
   if (length(ann) == 0 && length(setdiff(names(d), "series")) > 0) {
     warning("Dataset ", if (is.null(name)) "" else paste0("`", name, "` "),

@@ -86,7 +86,7 @@ cpt_simulate <- function(n,
 
   if (!is.null(seed)) set.seed(seed)
 
-  changepoints <- sort(unique(as.integer(changepoints)))
+  changepoints <- as_cp_locations(changepoints, "changepoints", sort = TRUE)
   changepoints <- changepoints[changepoints > 0 & changepoints < n]
 
   # Build segment boundaries

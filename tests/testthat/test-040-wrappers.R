@@ -8,16 +8,43 @@ X_mv <- cbind(a = c(rnorm(80), rnorm(80, 3)),
               b = c(rnorm(80), rnorm(80, -2)),
               c = rnorm(160))
 
-expect_ggcpt_contract <- function(res, method = NULL) {
+expect_ggcpt_contract <- function(res, method = NULL, change_in = NULL) {
+  # The whole ggcpt contract as the "What the contract is" section of
+  # vignettes/extending.Rmd states it. Kept identical in both files that
+  # define this helper, so strengthening one strengthens every wrapper test.
   expect_s3_class(res, "ggcpt")
-  expect_true(all(c("cp", "cp_value") %in% names(res$changepoints)))
-  expect_true(all(res$changepoints$cp >= 1))
-  expect_true(all(res$changepoints$cp < nrow(res$data)))
+  cp <- res$changepoints
+  n <- nrow(res$data)
+  expect_true(all(c("cp", "cp_value") %in% names(cp)))
+  expect_type(cp$cp, "integer")
+  expect_false(is.unsorted(cp$cp))
+  expect_false(anyDuplicated(cp$cp) > 0)
+  expect_true(all(cp$cp >= 1 & cp$cp < n))
   expect_identical(res$cp_convention, "left")
-  expect_equal(nrow(res$segments), nrow(res$changepoints) + 1)
-  if (!is.null(method)) expect_identical(res$method, method)
+
+  expect_true(all(c("seg_id", "start", "end", "n", "param_estimate") %in%
+                    names(res$segments)))
+  expect_equal(nrow(res$segments), nrow(cp) + 1L)
+  expect_type(res$segments$start, "integer")
+  expect_type(res$segments$n, "integer")
+  expect_equal(sum(res$segments$n), n)
+  expect_equal(res$segments$start[1], 1L)
+  expect_equal(res$segments$end[nrow(res$segments)], n)
+
+  expect_true(all(c("index", "value") %in% names(res$data)))
+  expect_identical(as.integer(res$data$index), seq_len(n))
+
+  # length-one metadata: a vector here would print and tidy() wrongly
+  for (f in c("method", "change_in", "cp_convention")) {
+    expect_length(res[[f]], 1L)
+  }
+
+  if (!is.null(method)) expect_equal(res$method, method)
+  if (!is.null(change_in)) expect_equal(res$change_in, change_in)
   g <- glance(res)
   expect_equal(nrow(g), 1)
+  expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(res)))
+  invisible(res)
 }
 
 test_that("smuce_wrapper returns CIs and a fitted signal", {

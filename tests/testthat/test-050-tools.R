@@ -847,3 +847,42 @@ test_that("knee_point finds the corner and refuses to invent one", {
   # too few rungs to have an interior point at all
   expect_equal(kn(1:2, c(5, 1)), 2L)
 })
+
+test_that("cpt_annotate_events adds cp_index only when there is an index", {
+  # The column used to be created unconditionally and filled with a bare
+  # `NA`, so the same column was a Date on an indexed fit and a *logical*
+  # on an unindexed one, and every unindexed result carried a mystery
+  # all-NA column. attach_index() and cpt_confint() both key on the
+  # column's presence, so this one does too.
+  set.seed(71)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 4))
+  d <- as.Date("2020-01-01") + seq_along(x) - 1
+  events <- data.frame(cp = 120, label = "e")
+
+  plain <- cpt_annotate_events(cpt_detect(x, method = "pelt"), events)
+  expect_false("cp_index" %in% names(plain$matched))
+  expect_false("cp_index" %in% names(plain$unexplained))
+  expect_equal(names(plain$matched),
+               c("cp", "event", "event_value", "event_position", "distance"))
+
+  dated <- cpt_annotate_events(cpt_detect(x, method = "pelt", index = d),
+                               events)
+  expect_true("cp_index" %in% names(dated$matched))
+  expect_s3_class(dated$matched$cp_index, "Date")
+  # and it sits next to `cp`, as it does on a ggcpt's changepoints
+  expect_equal(names(dated$matched)[1:2], c("cp", "cp_index"))
+  expect_true("cp_index" %in% names(dated$unexplained))
+
+  # the zero-match case keeps the column and its type
+  none <- cpt_annotate_events(
+    cpt_detect(stats::rnorm(200), method = "pelt",
+               index = as.Date("2020-01-01") + 0:199),
+    data.frame(cp = 100, label = "e"))
+  expect_equal(nrow(none$matched), 0L)
+  expect_s3_class(none$matched$cp_index, "Date")
+
+  for (ev in list(plain, dated, none)) {
+    expect_output(print(ev), "ggcpt_events")
+    expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(ev)))
+  }
+})

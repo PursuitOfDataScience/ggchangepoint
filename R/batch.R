@@ -50,6 +50,10 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
                       seed = NULL, keep_fit = TRUE, ...) {
   validate_flag(keep_fit, "keep_fit")
   series_list <- if (is.list(x) && !is.data.frame(x)) {
+    if (length(x) == 0L) {
+      stop("`x` is empty: `cpt_batch()` needs at least one series.",
+           call. = FALSE)
+    }
     lapply(x, as.numeric)
   } else {
     X <- as_mv_matrix(x)

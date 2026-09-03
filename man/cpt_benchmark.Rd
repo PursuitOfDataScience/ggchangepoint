@@ -78,6 +78,7 @@ Nemenyi critical distance, the standard way this literature says
 \value{
 A \code{ggcpt_benchmark} object: a tibble with one row per
   (dataset, method) — \code{dataset}, \code{method}, \code{n},
+  \code{n_annotators} (how many ground-truth sets the dataset supplied),
   \code{n_cp}, the requested metrics, \code{runtime}, \code{error} — with
   \code{print()}, \code{tidy()} and \code{autoplot()}
   (\code{"heatmap"}, \code{"ranks"}, \code{"critical_difference"}).

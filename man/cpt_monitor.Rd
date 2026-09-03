@@ -35,7 +35,10 @@ cpt_monitor(
     e-detector; see the section below.}
   \item{\code{"cpm"}}{\pkg{cpm}'s sequential change-point model, tuned
     by \code{ARL0}.}
-  \item{\code{"ocd"}}{\pkg{ocd}'s high-dimensional online detector.}
+  \item{\code{"ocd"}}{\pkg{ocd}'s high-dimensional online detector.
+    \strong{Multivariate only} -- it tracks a projection of the whole
+    vector and needs at least two coordinates, so it refuses a single
+    series rather than falling back to a univariate statistic.}
 }}
 
 \item{baseline}{A numeric vector (or, for \code{"ocd"}, a matrix with rows

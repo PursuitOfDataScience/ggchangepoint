@@ -287,6 +287,25 @@ run_registered_method <- function(entry, x, change_in, penalty, ...) {
   }
   out <- entry$fn(x, ...)
   if (is_ggcpt(out)) {
+    # A returned ggcpt used to be taken entirely on trust, which let
+    # cpt_detect(x, method = <registered>) hand back a result about a
+    # different series -- wrong `$data` to plot, wrong row count from
+    # augment(), wrong n for every metric. The bare-vector branch below goes
+    # through as_ggcpt(); this is the one shape check the other branch gets
+    # for free.
+    n_in <- if (is.matrix(x) || is.data.frame(x)) {
+      nrow(as.matrix(x))
+    } else {
+      length(x)
+    }
+    n_out <- nrow(out$data)
+    if (!identical(as.integer(n_out), as.integer(n_in))) {
+      stop("The function registered for `", entry$method, "` returned a ",
+           "result for a different series: `x` has ", n_in,
+           " observation(s), the ggcpt it returned has ", n_out,
+           ". A registered method must detect on the series it is given.",
+           call. = FALSE)
+    }
     out$method <- entry$method
     out$registered <- TRUE
     return(out)

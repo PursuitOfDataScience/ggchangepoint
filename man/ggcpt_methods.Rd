@@ -29,7 +29,7 @@ unique names); present for signature compatibility with the generic.}
 \value{
 \code{as_tibble()} and \code{as.data.frame()} return the changepoints
   table; \code{format()} returns a length-one character string; \code{plot()}
-  returns a \code{ggplot} object.
+  draws the default plot and returns the \code{ggplot} object invisibly.
 }
 \description{
 Convenience S3 methods for working with \code{ggcpt} objects: coerce the

@@ -383,8 +383,11 @@ scales_int_breaks <- function(v) {
 #' @param ... Additional arguments passed to the engine at each bandwidth.
 #'
 #' @return \code{cpt_scale_space()} returns a tibble with \code{index},
-#'   \code{bandwidth}, \code{statistic}, \code{threshold} and
-#'   \code{significant}. \code{ggcpt_scale_space()} draws the heatmap with
+#'   \code{bandwidth}, \code{statistic}, \code{threshold},
+#'   \code{significant} (the statistic at that location and bandwidth
+#'   exceeds the threshold) and \code{detected} (the engine reported a
+#'   changepoint there at that bandwidth). The two differ: a location can
+#'   clear the threshold without surviving the engine's own pruning. \code{ggcpt_scale_space()} draws the heatmap with
 #'   the accepted changepoints overlaid.
 #' @seealso \code{\link{cpt_statistic}()}.
 #' @export

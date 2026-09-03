@@ -24,9 +24,10 @@ positions.}
 \item{...}{Ignored.}
 }
 \value{
-A tibble with one row per label — \code{label_id}, \code{start},
-  \code{end}, \code{change}, \code{n_changes} (how many detections fell
-  inside), \code{status} (\code{"correct"}, \code{"false_positive"} or
+A tibble with one row per label — \code{label_id},
+  \code{series} (the label set's series identifier, \code{NA} for a
+  single unnamed series), \code{start}, \code{end}, \code{change},
+  \code{n_changes} (how many detections fell inside), \code{status} (\code{"correct"}, \code{"false_positive"} or
   \code{"false_negative"}) — carrying the totals in an \code{errors}
   attribute and printing them.
 }

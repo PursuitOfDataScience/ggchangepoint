@@ -70,8 +70,18 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
   validate_data(if (is_mv) X else data_vec)
   n <- length(data_vec)
 
-  cp <- suppressWarnings(as.integer(cp))
+  cp <- as_cp_locations(cp, "cp")
   if (cp_convention == "right") cp <- cp - 1L
+
+  # Every other optional slot below reports a length mismatch; `fitted` was
+  # the one that did not, and ggcpt_build() drops a wrong-length signal
+  # silently -- after which autoplot(show_fit = TRUE) tells the user the
+  # result "carries no fitted signal", about a signal they supplied.
+  if (!is.null(fitted) && length(fitted) != n) {
+    stop("`fitted` must have one value per observation: the series has ", n,
+         " observation(s) but `fitted` has ", length(fitted), ".",
+         call. = FALSE)
+  }
 
   extra_cols <- list()
   if (!is.null(ci)) {

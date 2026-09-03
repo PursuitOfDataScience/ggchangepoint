@@ -91,8 +91,15 @@ test_that("C9: cpt_detect forwards change_in to not (contrast mapping)", {
 
 test_that("C10: penalty = 'None' resolves to 0 for numeric-penalty engines", {
   skip_if_not_installed("fpop")
-  res <- cpt_detect(x_step, method = "fpop", penalty = "None")
+  # With no penalty, one segment per observation IS the optimum, so the fit
+  # says so rather than returning n - 1 changepoints without comment. The
+  # message has to name the penalty and not the series length: the same
+  # result from a positive penalty means something entirely different.
+  expect_warning(res <- cpt_detect(x_step, method = "fpop",
+                                   penalty = "None"),
+                 "penalty of 0 that is the unpenalised optimum")
   expect_equal(res$penalty$value, 0)
+  expect_equal(nrow(res$changepoints), length(x_step) - 1L)
 })
 
 test_that("C11: cpt_penalty sSIC is at least as strong as BIC", {

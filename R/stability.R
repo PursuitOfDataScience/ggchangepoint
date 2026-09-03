@@ -112,16 +112,26 @@ autoplot.ggcpt_stability <- function(object, ...) {
   freq <- object$frequency
   cp <- object$original$changepoints$cp
 
-  p <- ggplot2::ggplot(freq, ggplot2::aes(index, freq)) +
+  # This is the one plot in the package drawn against series position that
+  # did not honour a time index, so a dated series came back in positions
+  # here while autoplot(fit), ggcpt_statistic(), ggcpt_scale_space(),
+  # ggcpt_solution_path() and the influence and events plots all showed
+  # dates. plot_index() returns positions when there is no index, so an
+  # unindexed result is unchanged.
+  idx_vals <- plot_index(object$original)
+  d <- tibble::tibble(x = idx_vals[freq$index], freq = freq$freq)
+
+  p <- ggplot2::ggplot(d, ggplot2::aes(x, freq)) +
     ggplot2::geom_area(fill = "steelblue", alpha = 0.4) +
     ggplot2::geom_line(color = "steelblue") +
     ggplot2::scale_y_continuous(limits = c(0, 1)) +
-    ggplot2::labs(x = "Index", y = "Detection frequency",
+    ggplot2::labs(x = plot_index_label(object$original),
+                  y = "Detection frequency",
                   title = paste0("Changepoint stability (", object$B,
                                  " bootstrap replicates)"))
 
   if (length(cp) > 0) {
-    p <- p + ggplot2::geom_vline(xintercept = cp, color = "blue",
+    p <- p + ggplot2::geom_vline(xintercept = idx_vals[cp], color = "blue",
                                  linetype = "dashed", linewidth = 0.4)
   }
   p

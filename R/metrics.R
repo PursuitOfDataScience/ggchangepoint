@@ -31,10 +31,10 @@
 #' cpt_metrics(c(101, 205), c(100, 200), n = 300, margin = 5)
 cpt_metrics <- function(pred, truth, n, margin = 5) {
 
+  pred <- as_cp_locations(pred, "pred", sort = TRUE)
+  truth <- as_cp_locations(truth, "truth", sort = TRUE)
   validate_scalar(n, "n", min = 1)
   validate_scalar(margin, "margin", min = 0)
-  pred <- sort(unique(as.integer(pred)))
-  truth <- sort(unique(as.integer(truth)))
   n <- as.integer(n)
 
   # Changepoints follow the "left" convention, so valid locations are
@@ -106,9 +106,20 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
 #'                       n = 300, margin = 5)
 cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
 
+  # A `ggcpt` is a list, so it would be read as a set of annotators and its
+  # own fields scored one by one.
+  if (is_ggcpt(annotations)) {
+    stop("`annotations` takes changepoint indices, not a `ggcpt` object. ",
+         "Pass the locations instead, e.g. `fit$changepoints$cp` or ",
+         "`tidy(fit)$cp`.", call. = FALSE)
+  }
   if (!is.list(annotations)) {
     annotations <- list(annotations)
   }
+  # Checked here as well as inside cpt_metrics(), so the message names the
+  # argument the caller actually passed rather than the loop variable.
+  annotations <- lapply(annotations, as_cp_locations, arg = "annotations",
+                        sort = TRUE)
 
   results <- lapply(annotations, function(truth) {
     cpt_metrics(pred, truth, n, margin)
@@ -149,8 +160,12 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
 #' ggcpt_eval(fit$changepoints$cp, truth = 100, data_vec = x)
 ggcpt_eval <- function(pred, truth, data_vec, margin = 5) {
 
-  pred <- sort(unique(as.integer(pred)))
-  truth <- sort(unique(as.integer(truth)))
+  # cpt_metrics() validates `margin` and this plot is meant to agree with
+  # it; a negative margin also draws its tolerance rectangles inside out
+  # (xmin > xmax).
+  validate_scalar(margin, "margin", min = 0)
+  pred <- as_cp_locations(pred, "pred", sort = TRUE)
+  truth <- as_cp_locations(truth, "truth", sort = TRUE)
 
   data_tbl <- tibble::tibble(
     index = seq_along(data_vec),

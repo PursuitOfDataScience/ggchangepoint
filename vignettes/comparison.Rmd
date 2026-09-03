@@ -15,6 +15,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 8,
   fig.height = 6,
+  dpi = 72,
   message = FALSE,
   warning = FALSE,
   fig.alt = "ggchangepoint plot comparing changepoint detection methods on a time series"

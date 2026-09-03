@@ -41,8 +41,8 @@
 #' @examples
 #' cpt_labels(c(40, 70), c(60, 90), c("change", "no_change"))
 cpt_labels <- function(start, end, change = "change", series = NA_character_) {
-  start <- as.integer(start)
-  end <- as.integer(end)
+  start <- as_cp_locations(start, "start")
+  end <- as_cp_locations(end, "end")
   if (length(start) != length(end)) {
     stop("`start` and `end` must be the same length (", length(start),
          " vs ", length(end), ").", call. = FALSE)
@@ -110,7 +110,7 @@ as_cpt_labels <- function(truth, n, margin = 5, negatives = TRUE,
   validate_scalar(n, "n", min = 2)
   validate_scalar(margin, "margin", min = 0)
   validate_flag(negatives, "negatives")
-  truth <- sort(unique(as.integer(truth)))
+  truth <- as_cp_locations(truth, "truth", sort = TRUE)
   truth <- truth[truth >= 1 & truth < n]
   n <- as.integer(n)
   margin <- as.integer(margin)
@@ -148,9 +148,10 @@ as_cpt_labels <- function(truth, n, margin = 5, negatives = TRUE,
 #' @param labels A \code{cpt_labels} tibble (or anything with
 #'   \code{start}/\code{end}/\code{change} columns).
 #'
-#' @return A tibble with one row per label — \code{label_id}, \code{start},
-#'   \code{end}, \code{change}, \code{n_changes} (how many detections fell
-#'   inside), \code{status} (\code{"correct"}, \code{"false_positive"} or
+#' @return A tibble with one row per label — \code{label_id},
+#'   \code{series} (the label set's series identifier, \code{NA} for a
+#'   single unnamed series), \code{start}, \code{end}, \code{change},
+#'   \code{n_changes} (how many detections fell inside), \code{status} (\code{"correct"}, \code{"false_positive"} or
 #'   \code{"false_negative"}) — carrying the totals in an \code{errors}
 #'   attribute and printing them.
 #' @seealso \code{\link{cpt_labels}()},
@@ -162,7 +163,11 @@ as_cpt_labels <- function(truth, n, margin = 5, negatives = TRUE,
 #' labs <- cpt_labels(c(40, 70), c(60, 95), c("one_change", "no_change"))
 #' cpt_label_error(fit, labs)
 cpt_label_error <- function(object, labels) {
-  cp <- if (is_ggcpt(object)) object$changepoints$cp else as.integer(object)
+  cp <- if (is_ggcpt(object)) {
+    object$changepoints$cp
+  } else {
+    as_cp_locations(object, "object")
+  }
   labels <- check_labels(labels)
   if (nrow(labels) == 0) {
     return(new_label_error(tibble::tibble(

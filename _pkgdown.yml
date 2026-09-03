@@ -217,6 +217,7 @@ reference:
 - title: Additional S3 methods
   contents:
   - ggcpt_methods
+  - ggcpt_plot_methods
 - title: Theming, palettes and accessibility
   contents:
   - theme_ggcpt

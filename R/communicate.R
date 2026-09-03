@@ -31,11 +31,19 @@
 #' @return A \code{ggcpt_events} object: a list with
 #'   \describe{
 #'     \item{\code{matched}}{one row per matched pair: \code{cp},
-#'       \code{event}, \code{event_position}, \code{distance}.}
-#'     \item{\code{unexplained}}{detected changepoints with no event.}
-#'     \item{\code{undetected}}{events with no changepoint.}
+#'       \code{event}, \code{event_value} (the event's own location, on
+#'       the index scale when it was given as one), \code{event_position}
+#'       (that location as a position in the series) and \code{distance}.}
+#'     \item{\code{unexplained}}{detected changepoints with no event
+#'       (\code{cp}).}
+#'     \item{\code{undetected}}{events with no changepoint
+#'       (\code{event}, \code{event_value}, \code{event_position}).}
 #'   }
-#'   with \code{print()}, \code{tidy()} and \code{autoplot()}.
+#'   \code{matched} and \code{unexplained} carry \code{cp_index}, the
+#'   changepoint on the original scale, when — and only when — the result
+#'   carries a time index, so \code{"cp_index" \%in\% names(x)} is the
+#'   test for it.
+#'   With \code{print()}, \code{tidy()} and \code{autoplot()}.
 #' @seealso \code{\link{geom_cpt_event}()}, \code{\link{cpt_report}()}.
 #' @export
 #' @examples
@@ -111,28 +119,41 @@ cpt_annotate_events <- function(object, events, location = NULL,
   cp <- object$changepoints$cp
   m <- match_changepoints(cp, ev$event_position, tolerance)
 
+  # `cp_index` is present only when the result carries a time index --
+  # the same rule attach_index() uses for `$changepoints` and
+  # cpt_confint() for its bounds, so `"cp_index" %in% names(x)` is the
+  # test everywhere. It used to be added unconditionally and filled with a
+  # bare `NA`, which made the column a *logical* on an unindexed fit and a
+  # Date on an indexed one, and left a mystery all-NA column in the way.
+  with_index <- function(tbl, positions) {
+    if (is.null(idx)) return(tbl)
+    tbl$cp_index <- idx[positions]
+    tbl[, c("cp", "cp_index", setdiff(names(tbl), c("cp", "cp_index"))),
+        drop = FALSE]
+  }
+
   matched <- if (nrow(m) > 0) {
     rows <- lapply(seq_len(nrow(m)), function(i) {
       j <- which(ev$event_position == m$truth[i])[1]
       tibble::tibble(cp = as.integer(m$pred[i]),
-                     cp_index = if (is.null(idx)) NA else idx[m$pred[i]],
                      event = ev$event[j],
                      event_value = ev$event_value[j],
                      event_position = as.integer(m$truth[i]),
                      distance = as.integer(abs(m$pred[i] - m$truth[i])))
     })
-    do.call(rbind, rows)
+    with_index(do.call(rbind, rows), as.integer(m$pred))
   } else {
-    tibble::tibble(cp = integer(), cp_index = if (is.null(idx)) logical() else idx[0],
-                   event = character(), event_value = ev$event_value[0],
-                   event_position = integer(), distance = integer())
+    with_index(
+      tibble::tibble(cp = integer(), event = character(),
+                     event_value = ev$event_value[0],
+                     event_position = integer(), distance = integer()),
+      integer(0))
   }
 
   unexplained_cp <- setdiff(cp, matched$cp)
-  unexplained <- tibble::tibble(
-    cp = as.integer(unexplained_cp),
-    cp_index = if (is.null(idx)) NA else idx[unexplained_cp]
-  )
+  unexplained <- with_index(
+    tibble::tibble(cp = as.integer(unexplained_cp)),
+    as.integer(unexplained_cp))
   undetected <- ev[!ev$event_position %in% matched$event_position, ,
                    drop = FALSE]
 
@@ -320,7 +341,11 @@ cpt_report <- function(object, format = c("md", "text", "gt"), file = NULL,
   format <- match.arg(format)
   validate_flag(confint, "confint")
   validate_flag(session, "session")
+  # After the gt early return: `file` is documented as ignored for that
+  # format, so validating it there would refuse a call the help page says is
+  # fine.
   if (format == "gt") return(cpt_gt(object))
+  validate_report_path(file)
 
   h <- function(txt, lvl = 2) {
     if (format == "md") paste0(strrep("#", lvl), " ", txt) else toupper(txt)
@@ -411,6 +436,35 @@ cpt_report <- function(object, format = c("md", "text", "gt"), file = NULL,
     return(invisible(out))
   }
   out
+}
+
+# Internal: check the `file` path before building the report, so a bad path
+# fails immediately rather than after all the work and in base R's words.
+# writeLines() answers a missing directory or a directory path with "cannot
+# open the connection", an NA with "'con' is not a connection", and a
+# two-element vector with "invalid 'description' argument" -- none of which
+# names the argument. `file = ""` is worse than any of them: writeLines()
+# sends the report to the console and no file appears, so the caller has a
+# report they believe they saved.
+#' @noRd
+validate_report_path <- function(file) {
+  if (is.null(file)) return(invisible(TRUE))
+  if (!is.character(file) || length(file) != 1L || is.na(file) ||
+      !nzchar(file)) {
+    stop("`file` must be a single non-empty file path, or NULL to return ",
+         "the report lines.", call. = FALSE)
+  }
+  if (dir.exists(file)) {
+    stop("`file` is a directory: ", file,
+         ". Give the path of a file inside it.", call. = FALSE)
+  }
+  parent <- dirname(file)
+  if (!dir.exists(parent)) {
+    stop("The directory for `file` does not exist: ", parent,
+         ". Create it first, e.g. dir.create(\"", parent,
+         "\", recursive = TRUE).", call. = FALSE)
+  }
+  invisible(TRUE)
 }
 
 #' A publication-ready changepoint table

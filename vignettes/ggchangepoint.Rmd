@@ -15,6 +15,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 8,
   fig.height = 5,
+  dpi = 72,
   message = FALSE,
   warning = FALSE,
   fig.alt = "ggchangepoint feature tour plot"

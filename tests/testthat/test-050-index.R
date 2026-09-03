@@ -179,3 +179,80 @@ test_that("cpt_select carries the time index onto the fit it chooses", {
 
   expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(s)))
 })
+
+test_that("a factor index is read as labels, not as level codes", {
+  # as.numeric() on a factor returns LEVEL positions -- alphabetical unless
+  # the caller sets `levels` -- so the ordering check ran on the wrong
+  # numbers: factor(month.abb) has codes 5, 4, 8, 1, 9, ... and was refused
+  # as "not non-decreasing" while the identical labels as a character
+  # vector were accepted.
+  set.seed(31)
+  x <- c(stats::rnorm(6), stats::rnorm(6, 4))
+  labs <- month.abb
+
+  chr <- cpt_detect(x, method = "pelt", index = labs)
+  fct <- cpt_detect(x, method = "pelt", index = factor(labs))
+  lvl <- cpt_detect(x, method = "pelt", index = factor(labs, levels = labs))
+  # all three describe the same series, so they must agree
+  expect_equal(tidy(fct)$cp, tidy(chr)$cp)
+  expect_equal(as.character(tidy(fct)$cp_index),
+               as.character(tidy(chr)$cp_index))
+  expect_equal(as.character(tidy(lvl)$cp_index),
+               as.character(tidy(chr)$cp_index))
+
+  # An ORDERED factor does carry its order in its codes, so it keeps the
+  # check: increasing codes are accepted, scrambled ones refused.
+  expect_no_error(cpt_detect(x, method = "pelt",
+                             index = factor(labs, levels = labs,
+                                            ordered = TRUE)))
+  expect_error(cpt_detect(x, method = "pelt",
+                          index = factor(labs, levels = sort(labs),
+                                         ordered = TRUE)),
+               "non-decreasing")
+
+  # and a missing label is still refused
+  expect_error(cpt_detect(x, method = "pelt",
+                          index = factor(replace(labs, 3, NA))),
+               "must not contain NA")
+})
+
+test_that("every plot drawn against series position honours the index", {
+  # autoplot(ggcpt_stability) was the one that did not: a dated series came
+  # back in positions there while autoplot(fit), ggcpt_statistic(),
+  # ggcpt_scale_space(), ggcpt_solution_path() and the influence and events
+  # plots all showed dates.
+  set.seed(81)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 4))
+  d <- as.Date("2020-01-01") + seq_along(x) - 1
+  xscale <- function(p) {
+    class(ggplot2::ggplot_build(p)$layout$panel_scales_x[[1]])[1]
+  }
+
+  plots <- list(
+    ggcpt = ggplot2::autoplot(cpt_detect(x, method = "pelt", index = d)),
+    stability = ggplot2::autoplot(
+      cpt_stability(x, method = "pelt", B = 10, seed = 1, index = d)),
+    influence = ggplot2::autoplot(
+      cpt_influence(cpt_detect(x, method = "pelt", index = d), seed = 1)),
+    events = ggplot2::autoplot(cpt_annotate_events(
+      cpt_detect(x, method = "pelt", index = d),
+      data.frame(cp = 120, label = "e")))
+  )
+  if (requireNamespace("mosum", quietly = TRUE)) {
+    plots$scale_space <- ggcpt_scale_space(
+      cpt_detect(x, method = "pelt", index = d), bandwidths = c(20, 40))
+  }
+  for (nm in names(plots)) {
+    expect_equal(xscale(plots[[nm]]), "ScaleContinuousDate", info = nm)
+  }
+
+  # and without an index they all stay in positions
+  plain <- list(
+    ggcpt = ggplot2::autoplot(cpt_detect(x, method = "pelt")),
+    stability = ggplot2::autoplot(
+      cpt_stability(x, method = "pelt", B = 10, seed = 1))
+  )
+  for (nm in names(plain)) {
+    expect_equal(xscale(plain[[nm]]), "ScaleContinuousPosition", info = nm)
+  }
+})

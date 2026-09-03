@@ -287,7 +287,10 @@ validate_data <- function(x) {
     if (nrow(x_num) < 3) {
       stop("`x` must have at least 3 observations.", call. = FALSE)
     }
-  } else if (is.numeric(x)) {
+  } else if (is.numeric(x) || is.logical(x)) {
+    # A logical series is a legitimate 0/1 series, and cpt_detect() already
+    # coerces one before it gets here; accepting it makes the tools that
+    # validate first agree with the tools that coerce first.
     x <- as.numeric(x)
     if (anyNA(x) || any(!is.finite(x))) {
       stop("`x` must be finite (no NA/NaN/Inf).", call. = FALSE)
@@ -296,7 +299,98 @@ validate_data <- function(x) {
       stop("`x` must have at least 3 observations.", call. = FALSE)
     }
   } else {
+    # Not a series at all. coerce_series_values() names the specific trap --
+    # a factor's level codes, character input -- and rejects anything else
+    # with the general message; the stop() below is only a backstop.
+    coerce_series_values(x)
     stop("`x` must be a numeric vector, matrix, or data.frame.", call. = FALSE)
   }
   invisible(TRUE)
+}
+
+# Internal: user-supplied changepoint LOCATIONS, wherever they arrive --
+# `cp`, `pred`, `truth`, `annotations`, `changepoints`, a label's `start`
+# and `end`. Every one of these used to be read through a bare
+# `as.integer()`, and `as.integer()` on a factor returns LEVEL POSITIONS:
+# `cpt_metrics(factor(c("100", "150")), c(100, 150), n = 200)` read the
+# predictions as 1 and 2 and reported a recall of 0. That is worse than an
+# error, because it is a plausible number. A logical vector is a mask over
+# the series rather than a set of positions, and an NA the coercion invented
+# (from text that is not a number) is a wrong-type input rather than the
+# missing value the drop rules are about.
+#' @noRd
+as_cp_locations <- function(x, arg = "cp", sort = FALSE) {
+  if (is.null(x)) return(integer(0))
+  if (is_ggcpt(x)) {
+    stop("`", arg, "` takes changepoint indices, not a `ggcpt` object. ",
+         "Pass the locations instead, e.g. `fit$changepoints$cp` or ",
+         "`tidy(fit)$cp`.", call. = FALSE)
+  }
+  if (is.data.frame(x)) {
+    if ("cp" %in% names(x)) {
+      stop("`", arg, "` takes changepoint indices, not a table. Pass the ",
+           "column, e.g. `", arg, "$cp`.", call. = FALSE)
+    }
+    stop("`", arg, "` takes changepoint indices, not a table.", call. = FALSE)
+  }
+  if (is.factor(x)) {
+    stop("`", arg, "` is a factor. Coercing a factor gives its level codes ",
+         "(alphabetical positions), not the locations. Convert it first, ",
+         "e.g. as.integer(as.character(", arg, ")).", call. = FALSE)
+  }
+  if (is.logical(x)) {
+    stop("`", arg, "` is logical. Changepoint locations are positions, not ",
+         "a mask over the series; pass which(", arg, ").", call. = FALSE)
+  }
+  was_na <- is.na(x)
+  out <- suppressWarnings(as.integer(x))
+  invented <- is.na(out) & !was_na
+  if (any(invented)) {
+    bad <- unique(as.character(x)[invented])
+    stop("`", arg, "` must be changepoint locations; ", sum(invented),
+         " value(s) are not numbers: ",
+         paste0("\"", utils::head(bad, 5), "\"", collapse = ", "), ".",
+         call. = FALSE)
+  }
+  if (isTRUE(sort)) sort(unique(out)) else out
+}
+
+# Internal: turn a non-matrix series into the numeric vector the engines
+# take, refusing the coercions that answer a different question. as.numeric()
+# on a factor returns the LEVEL CODES, so a factor series would be detected
+# on an alphabetical ordering of its labels with nothing said about it; on
+# character it returns NAs with base R's "NAs introduced by coercion", after
+# which validate_data() blames non-finite data rather than the text.
+#' @noRd
+coerce_series_values <- function(x) {
+  if (is.factor(x)) {
+    stop("`x` is a factor. Detection needs numbers, and coercing a factor ",
+         "gives its level codes -- an alphabetical ordering of the labels, ",
+         "not the data. Convert it deliberately, e.g. ",
+         "as.numeric(as.character(x)).", call. = FALSE)
+  }
+  if (is.character(x)) {
+    stop("`x` is character. `x` must be a numeric vector, matrix, or ",
+         "data.frame; convert it first, e.g. as.numeric(x).", call. = FALSE)
+  }
+  # Everything else keeps whatever as.numeric() already did for it -- a ts,
+  # a zoo, a table, a difftime all convert cleanly -- and is refused only
+  # when R itself flags the conversion, which is what a list or any other
+  # unconvertible type does.
+  clean <- TRUE
+  num <- tryCatch(
+    withCallingHandlers(as.numeric(x), warning = function(w) {
+      clean <<- FALSE
+      invokeRestart("muffleWarning")
+    }),
+    error = function(e) {
+      clean <<- FALSE
+      NULL
+    }
+  )
+  if (!clean || is.null(num)) {
+    stop("`x` must be a numeric vector, matrix, or data.frame, not ",
+         class(x)[1], ".", call. = FALSE)
+  }
+  num
 }

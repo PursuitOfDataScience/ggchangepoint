@@ -15,6 +15,7 @@ knitr::opts_chunk$set(
   comment = "#>",
   fig.width = 8,
   fig.height = 5,
+  dpi = 72,
   message = FALSE,
   warning = FALSE,
   fig.alt = "ggchangepoint monitoring plot"
@@ -212,7 +213,7 @@ different currencies, and each ignores the other's. **`edetector` honours
 `alpha`** (its threshold is $1/\alpha$); **`cpm` honours `arl0`**. Setting
 `arl0` on an e-detector, or `alpha` on `cpm`, changes nothing.
 
-```{r alpha}
+```{r alpha, warning = TRUE}
 ic <- rnorm(400)
 vapply(c(0.05, 0.01, 0.001),
        function(a) nrow(alarms(cpt_replay(ic, method = "edetector",
@@ -223,7 +224,9 @@ nrow(alarms(cpt_replay(ic, method = "edetector", arl0 = 5000)))
 
 Three alphas, three false-alarm counts; then `arl0 = 5000` on the same
 stream, which reproduces the default-`alpha` result exactly because the
-argument is not read. The rough translation is $\mathrm{ARL}_0 \approx
+argument is not read -- and `cpt_monitor()` says so, because an argument
+that is accepted and then ignored is worth a warning rather than an
+unchanged answer. The rough translation is $\mathrm{ARL}_0 \approx
 1/\alpha$, so `alpha = 0.002` and `arl0 = 500` ask for comparable
 strictness.
 

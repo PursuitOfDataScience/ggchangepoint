@@ -12,8 +12,10 @@ cpt_regions(x)
 \value{
 A tibble with columns \code{start}, \code{end} (positions),
   \code{length}, and — when the result carries a time index —
-  \code{start_index}/\code{end_index} on the original scale. A zero-row
-  tibble when the result carries no regions.
+  \code{start_index}/\code{end_index} on the original scale. Any further
+  columns the engine supplied are carried through after those --
+  \code{\link{nsp_wrapper}()} adds \code{value}, the region's statistic.
+  A zero-row tibble when the result carries no regions.
 }
 \description{
 The interval-valued methods (currently \code{\link{nsp_wrapper}()})

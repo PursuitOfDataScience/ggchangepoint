@@ -358,6 +358,165 @@ them, and the capability matrix was extended in lockstep.
   `alpha` parameter's documentation still credited Ville's inequality, which
   is a different statement.
 
+## Fixes found in the pre-submission audit
+
+- `plot()` works on every result class. Thirteen `plot()` methods were
+  missing, so `plot()` on a selection, monitor, batch, benchmark, influence,
+  sensitivity, stability, path, power, delay, events or label-curve result
+  fell through to `plot.default()` and failed with base R's `'x' is a list,
+  but does not have components 'x' and 'y'` — a message that names neither
+  this package nor `autoplot()`, arriving at the moment a new user is most
+  likely to type `plot(result)`.
+- `plot()` on a subclass now draws the subclass's figure. `plot.ggcpt()`
+  called `autoplot.ggcpt()` by name rather than dispatching, so
+  `plot()` on a `cpt_consensus()` result silently produced the plain
+  changepoint plot instead of the consensus one.
+- Every `plot()` method now draws as a side effect and returns the `ggplot`
+  invisibly, so `plot()` works inside a loop or a function while
+  `p <- plot(result)` still gives you the object to add layers to.
+- A **factor** series is refused instead of being detected on its level
+  codes. `cpt_detect()` coerces the series before validating it, so
+  `cpt_detect(factor(...))` ran to completion and reported changepoints in
+  an alphabetical ordering of the labels with nothing said about it.
+  **Character** input is refused by name too, instead of warning "NAs
+  introduced by coercion" from base R and then blaming non-finite data.
+- A **logical** series is accepted everywhere. `cpt_detect()` coerced one
+  before validating and `cpt_select()` validated before coercing, so a 0/1
+  series worked in one and was refused by the other.
+- Empty input is reported by this package rather than by base R:
+  `cpt_batch(NULL)` gave `'data' must be of a vector type, was 'NULL'`,
+  `cpt_batch(list())` returned a batch of nothing at all, and a
+  zero-column data frame reached `X[, 1]` and gave `subscript out of
+  bounds`.
+- Loading an engine no longer warns about the machine. `mosum` reaches
+  `tcltk` through `plot3D` and `misc3d`, so the first `cpt_scale_space()`
+  or `cpt_statistic()` call on any headless box — a server, a container, a
+  CI runner, a cluster node — warned `no DISPLAY variable so Tk is not
+  available`. `need_pkg()` muffles a load-time warning while still
+  reporting a load that fails.
+- `cpt_power()` with a single change size plots something. One scenario is
+  one point per curve, so `geom_line()` drew nothing and advised adjusting
+  the group aesthetic — about a plot that was already right — and the
+  ribbon carrying the Monte Carlo interval was invisible while the
+  subtitle still announced it. A single change size now gets a vertical
+  range and a subtitle that says so; two or more are unchanged.
+- `cpt_metrics()`, `cpt_metrics_annotated()` and `ggcpt_eval()` say what is
+  wrong when handed a `ggcpt`. They are the only tools in the package that
+  take bare changepoint indices rather than the fit, so passing the fit is
+  the obvious mistake, and `as.integer()` answered it with `'list' object
+  cannot be coerced to type 'integer'`. A `ggcpt` is also a list, so
+  `cpt_metrics_annotated()` read one as a set of annotators and scored its
+  own fields. Each now names the argument and the fix
+  (`fit$changepoints$cp`), including for a `tidy()` table.
+- `cpt_monitor()` warns when a tuning argument the chosen detector ignores
+  is explicitly supplied. The three detectors are calibrated in different
+  currencies — `edetector` by `alpha`, `cpm` by `arl0`, `ocd` by
+  `patience` — and each ignores the others', so `cpt_monitor("edetector",
+  arl0 = 5000)` changed nothing at all. `?cpt_monitor` and the monitoring
+  vignette both said so; now the call does too. The knobs that apply, and
+  the defaults, stay silent.
+- `?cpt_monitor` marks `method = "ocd"` **multivariate only**, so the
+  requirement is visible where the method is chosen rather than only in the
+  error a univariate baseline eventually raises.
+- `cpt_scenarios()` warns when a requested `location` is clamped into
+  `2..(n - 2)`. The scenario table records the requested fraction, so a
+  clamped row and the data generated from it disagreed silently about where
+  the change is.
+- `ggcpt_eval()` validates `margin` the way `cpt_metrics()` does. A negative
+  margin was accepted and drew its tolerance rectangles inside out
+  (`xmin > xmax`) while the metrics function refused the same value.
+- A registered method must detect on the series it was given. When the
+  registered function returned a finished `ggcpt`, `cpt_detect()` took it
+  entirely on trust, so a function that built its result from some other
+  series handed back a result whose `$data`, row count and `n` described
+  that series instead of `x` — the wrong series to plot, the wrong number of
+  rows from `augment()`, the wrong `n` for every metric. The comment and
+  `?cpt_register_method` both claimed the returned object went through "the
+  same contract checks as every built-in wrapper"; only the bare-index
+  branch did.
+- `as_ggcpt()` refuses changepoint locations it cannot read instead of
+  reporting none. `cp` was coerced under `suppressWarnings()`, so
+  `as_ggcpt(c("a", "b"), x)` returned a clean-looking result with zero
+  changepoints, and `as_ggcpt(factor(c("60", "90")), x)` returned
+  changepoints at **1 and 2** — the factor's level codes. A logical vector
+  is refused too, pointing at `which(cp)`. The documented drops
+  (out-of-range, duplicated, missing) and the acceptance of a character
+  vector that converts cleanly are unchanged.
+- `as_ggcpt()` reports a wrong-length `fitted` signal. It was dropped
+  silently, after which `autoplot(show_fit = TRUE)` said the result "carries
+  no fitted signal" — about a signal the caller had supplied. Every sibling
+  slot (`index`, `ci`, `regions`, `extra`) already reported its length
+  mismatch.
+- `fmean_wrapper()` and `fcov_wrapper()` say what shape they got. Two or
+  three columns satisfy the "needs at least two" guard and are still too
+  coarse a grid for \pkg{fChange}'s basis expansion, which stopped with base
+  R's `subscript out of bounds` — naming neither the argument nor the shape.
+  The error now reports the time-points-by-grid-points shape and passes the
+  upstream message through verbatim, since a coarse grid is the usual cause
+  and not the only one.
+- A **factor** is refused wherever the package reads changepoint locations,
+  instead of being read as its level codes. `as.integer()` on a factor
+  returns level *positions* — alphabetical unless the caller set `levels` —
+  so `cpt_metrics(factor(c("100", "150")), c(100, 150), n = 200)` scored the
+  predictions as 1 and 2 and reported a **recall of 0** for predictions that
+  were exactly right. Ten entry points read locations through a bare
+  `as.integer()`: `cpt_metrics()` (`pred` and `truth`),
+  `cpt_metrics_annotated()`, `ggcpt_eval()`, `cpt_delay()`,
+  `as_cpt_labels()`, `cpt_labels()`, `cpt_label_error()`, `cpt_simulate()`,
+  `cpt_benchmark()`'s dataset annotations and `as_ggcpt()`. All ten now
+  refuse, each naming the argument the caller passed; a character vector
+  that converts cleanly is still accepted everywhere it was before.
+- A **factor time index** is read as labels rather than as level codes.
+  `cpt_detect(x, index = month.abb)` was accepted while
+  `cpt_detect(x, index = factor(month.abb))` was refused with "`index` must
+  be non-decreasing" — because the codes of an alphabetically levelled
+  factor are `5, 4, 8, 1, 9, ...`. An *ordered* factor does carry its order
+  in its codes and keeps the ordering and spacing checks.
+- `cpt_report()` validates `file` before building the report. A path in a
+  directory that does not exist, a directory, `NA` or a two-element vector
+  each produced a base-R connection error naming neither the argument nor
+  the package, and `file = ""` printed the report to the console and wrote
+  no file at all — leaving the caller with a report they believed they had
+  saved. `file` remains ignored for `format = "gt"`, as documented.
+- Four columns that were returned but never documented are now in their
+  `@return`: `cpt_regions()` carries through whatever extra columns the
+  engine supplied (`nsp_wrapper()` adds `value`, the region's statistic),
+  `cpt_scale_space()` returns `detected` alongside `significant` — a
+  location can clear the threshold without surviving the engine's own
+  pruning — `cpt_label_error()` returns `series`, and `cpt_benchmark()`
+  returns `n_annotators`.
+- `cpt_annotate_events()` adds `cp_index` only when the result carries a
+  time index. It was created unconditionally and filled with a bare `NA`,
+  so the same column was a `Date` on an indexed fit and a **logical** on an
+  unindexed one, and every unindexed result carried a mystery all-`NA`
+  column. `attach_index()` and `cpt_confint()` both key on the column's
+  presence, so this now does too. Its `@return` also documents `cp_index`
+  and `event_value`, which it had never named.
+- `autoplot()` on a `cpt_stability()` result honours a time index. It was
+  the one plot in the package drawn against series position that read the
+  positions directly instead of going through the shared index helpers, so
+  a dated series came back in positions there while `autoplot()` on the
+  fit, `ggcpt_statistic()`, `ggcpt_scale_space()`, `ggcpt_solution_path()`
+  and the influence and events plots all showed dates. An unindexed result
+  is unchanged.
+- A result in which every observation is its own segment now says so.
+  `validate_data()` accepts three observations, and at that length seven
+  engines (`pelt`, `fpop`, `wbs2`, `tguh`, `smuce`, `decafs`, `nsp`) return
+  a changepoint after every one — `k = n - 1`, every segment one point
+  long, which is a failure to segment rather than a segmentation; at
+  `n = 5`, three of them still do. The threshold is engine-specific, so the
+  check is on the result rather than a blanket minimum that would refuse
+  calls which work. The message distinguishes the two causes: with
+  `penalty = 0` (which is what `penalty = "None"` resolves to for the
+  numeric-penalty engines) one segment per observation is the correct
+  unpenalised optimum at any series length, and only a *positive* penalty
+  reaching the same place means the series is too short.
+- Vignette figures render at `dpi = 72` rather than rmarkdown's default 96.
+  The source tarball goes from 5.2 MB to 4.2 MB (CRAN's limit is 5 MB) and
+  the installed `doc` directory from 4.9 MB to 3.5 MB, with no visible
+  change to the figures: `html_vignette` displays them at their natural
+  size, so fewer pixels means a smaller file, not a smaller picture.
+
 ## Corrections to the roadmap
 
 - `hdbinseg` is **archived on CRAN again**, contrary to the 0.5.0 roadmap's

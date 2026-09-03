@@ -30,7 +30,10 @@
 #'       e-detector; see the section below.}
 #'     \item{\code{"cpm"}}{\pkg{cpm}'s sequential change-point model, tuned
 #'       by \code{ARL0}.}
-#'     \item{\code{"ocd"}}{\pkg{ocd}'s high-dimensional online detector.}
+#'     \item{\code{"ocd"}}{\pkg{ocd}'s high-dimensional online detector.
+#'       \strong{Multivariate only} -- it tracks a projection of the whole
+#'       vector and needs at least two coordinates, so it refuses a single
+#'       series rather than falling back to a univariate statistic.}
 #'   }
 #' @param baseline A numeric vector (or, for \code{"ocd"}, a matrix with rows
 #'   as time points) of pre-change training data used to estimate the
@@ -116,6 +119,29 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
                         deltas = c(0.5, 1, 2), reset = TRUE, relearn = 20,
                         thresh = "MC", mc_reps = 100, ...) {
   method <- match.arg(method)
+
+  # The three detectors are calibrated in different currencies and each
+  # ignores the others': setting `arl0` on an e-detector, or `alpha` on
+  # `cpm`, changes nothing at all. The documentation and the vignette both
+  # say so, which does not help the user who set one and is now reading an
+  # unchanged answer. Only an argument the caller supplied is reported --
+  # the defaults supply all of them.
+  governs <- c(alpha = "edetector", deltas = "edetector",
+               arl0 = "cpm", cpm_type = "cpm",
+               patience = "ocd", thresh = "ocd", mc_reps = "ocd")
+  supplied <- c(alpha = !missing(alpha), deltas = !missing(deltas),
+                arl0 = !missing(arl0), cpm_type = !missing(cpm_type),
+                patience = !missing(patience), thresh = !missing(thresh),
+                mc_reps = !missing(mc_reps))
+  ignored <- names(governs)[supplied[names(governs)] & governs != method]
+  if (length(ignored) > 0) {
+    warning("`", paste(ignored, collapse = "`, `"), "` ",
+            if (length(ignored) > 1) "do" else "does",
+            " not affect `method = \"", method, "\"`, which is tuned by `",
+            paste(names(governs)[governs == method], collapse = "`, `"),
+            "`. See ?cpt_monitor.", call. = FALSE)
+  }
+
   validate_scalar(alpha, "alpha", min = 0, max = 1,
                   min_open = TRUE, max_open = TRUE)
   validate_scalar(relearn, "relearn", min = 0)
@@ -586,7 +612,7 @@ cpt_delay <- function(object, truth, max_delay = Inf) {
     stop("`object` must be a ggcpt_monitor or a tibble with a `time` column.",
          call. = FALSE)
   }
-  truth <- sort(unique(as.integer(truth)))
+  truth <- as_cp_locations(truth, "truth", sort = TRUE)
   if (length(truth) == 0 || anyNA(truth) || any(truth < 1)) {
     stop("`truth` must be one or more positive changepoint locations.",
          call. = FALSE)

@@ -58,11 +58,9 @@ as_cpt_series <- function(x, index = NULL, check_regular = TRUE) {
   }
 
   if (is.matrix(values) && ncol(values) == 1L) {
-    nm <- colnames(values)
     values <- as.numeric(values[, 1])
-    if (!is.null(nm)) label <- label
   } else if (!is.matrix(values) && !is.data.frame(values)) {
-    values <- as.numeric(values)
+    values <- coerce_series_values(values)
   }
 
   idx <- index %||% carried
@@ -119,6 +117,16 @@ tsibble_parts <- function(x) {
 check_index_usable <- function(idx, check_regular = TRUE) {
   if (anyNA(idx)) {
     stop("`index` must not contain NA.", call. = FALSE)
+  }
+  if (is.factor(idx) && !is.ordered(idx)) {
+    # A factor's codes are LEVEL positions -- alphabetical unless the caller
+    # set `levels` -- so ordering them says nothing about whether the index
+    # increases in time. `factor(month.abb)` has codes 5, 4, 8, 1, 9, ...
+    # and was refused as "not non-decreasing" while the very same labels as
+    # a character vector were accepted. An unordered factor is a set of
+    # labels and is checked like one; an ORDERED factor does carry its order
+    # in its codes, so it keeps the checks below.
+    return(invisible(TRUE))
   }
   num <- suppressWarnings(as.numeric(idx))
   if (anyNA(num)) {

@@ -76,7 +76,44 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
   res$data_wide <- data_wide
   res$regions <- normalise_regions(regions, n)
   res$diagnostics <- diagnostics
+  warn_if_degenerate(res, method)
   res
+}
+
+# Internal: a segmentation in which every observation is its own segment is
+# not a segmentation, it is a failure to segment -- and several engines
+# produce exactly that on a series that is too short for them rather than
+# refusing it. Measured at n = 3: pelt, fpop, wbs2, tguh, smuce, decafs and
+# nsp all report a changepoint after every observation; at n = 5, wbs2,
+# decafs and nsp still do. The threshold is engine-specific, so a blanket
+# minimum in validate_data() would refuse calls that work; saying what
+# happened is the honest alternative to returning the number silently.
+#' @noRd
+warn_if_degenerate <- function(res, method) {
+  n <- nrow(res$data)
+  k <- nrow(res$changepoints)
+  if (n <= 2L || k != n - 1L) return(invisible(res))
+
+  # Two different situations produce it, and blaming the wrong one is worse
+  # than saying nothing: a zero penalty makes one segment per observation
+  # the *correct* unpenalised optimum (`penalty = "None"` on an fpop fit
+  # resolves to 0 and returns n - 1 changepoints on any length of series),
+  # whereas a positive penalty reaching the same place means the series is
+  # too short for the engine.
+  pen <- res$penalty$value
+  zero_penalty <- is.numeric(pen) && length(pen) == 1L &&
+    is.finite(pen) && pen == 0
+  warning("`", method, "` put a changepoint after every observation: ", k,
+          " changepoint(s) on ", n, " observation(s), so every segment is ",
+          "one point long. ",
+          if (zero_penalty) {
+            paste0("With a penalty of 0 that is the unpenalised optimum, ",
+                   "not a segmentation -- give `penalty` a positive value.")
+          } else {
+            paste0("That is a failure to segment rather than a ",
+                   "segmentation -- the series is too short for this engine.")
+          }, call. = FALSE)
+  invisible(res)
 }
 
 # Internal: normalise the optional `regions` slot to a tibble with integer
@@ -130,7 +167,13 @@ normalise_regions <- function(regions, n) {
 # Internal: check that an optional engine package is installed.
 #' @noRd
 need_pkg <- function(pkg) {
-  if (!requireNamespace(pkg, quietly = TRUE)) {
+  # Loading an engine's namespace can warn about the machine rather than the
+  # data: `mosum` reaches tcltk through plot3D and misc3d, so on any headless
+  # box -- a server, a container, a CI runner, a cluster node -- the first
+  # `cpt_scale_space()` call warns "no DISPLAY variable so Tk is not
+  # available". That is never actionable here, and a load that warns still
+  # succeeds; a load that fails returns FALSE and is reported below.
+  if (!suppressWarnings(requireNamespace(pkg, quietly = TRUE))) {
     stop("Package '", pkg, "' is required. ",
          "Install it with install.packages('", pkg, "').",
          call. = FALSE)
@@ -150,9 +193,15 @@ as_uni_vector <- function(x, method) {
            " columns. See cpt_methods() for multivariate methods.",
            call. = FALSE)
     }
+    # A zero-column frame reaches `X[, 1]` and stops with base R's
+    # "subscript out of bounds", which names neither the argument nor this
+    # package.
+    if (ncol(X) == 0L) {
+      stop("`x` is empty: it has no columns to detect on.", call. = FALSE)
+    }
     return(as.numeric(X[, 1]))
   }
-  as.numeric(x)
+  coerce_series_values(x)
 }
 
 # Internal: TRUE when a series carries no variation at all. Exact equality
@@ -196,6 +245,12 @@ drop_constant_cols <- function(X, method) {
 # wide data tibble stored on the ggcpt object.
 #' @noRd
 as_mv_matrix <- function(x) {
+  # as.matrix(NULL) stops with "'data' must be of a vector type, was 'NULL'",
+  # which says nothing about this package or which argument was empty.
+  if (is.null(x) || length(x) == 0L) {
+    stop("`x` is empty: a multivariate series needs at least one column ",
+         "with at least 3 observations.", call. = FALSE)
+  }
   X <- as.matrix(x)
   if (!is.numeric(X)) {
     stop("`x` must be numeric.", call. = FALSE)
