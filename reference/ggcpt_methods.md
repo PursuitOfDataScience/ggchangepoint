@@ -49,8 +49,8 @@ and [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)
 return the changepoints table;
 [`format()`](https://rdrr.io/r/base/format.html) returns a length-one
 character string;
-[`plot()`](https://rdrr.io/r/graphics/plot.default.html) returns a
-`ggplot` object.
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
+default plot and returns the `ggplot` object invisibly.
 
 ## Examples
 

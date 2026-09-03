@@ -95,9 +95,10 @@ positions.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble with one row per label — <code>label_id</code>, <code>start</code>,
-  <code>end</code>, <code>change</code>, <code>n_changes</code> (how many detections fell
-  inside), <code>status</code> (<code>"correct"</code>, <code>"false_positive"</code> or
+    <p>A tibble with one row per label — <code>label_id</code>,
+  <code>series</code> (the label set's series identifier, <code>NA</code> for a
+  single unnamed series), <code>start</code>, <code>end</code>, <code>change</code>,
+  <code>n_changes</code> (how many detections fell inside), <code>status</code> (<code>"correct"</code>, <code>"false_positive"</code> or
   <code>"false_negative"</code>) — carrying the totals in an <code>errors</code>
   attribute and printing them.</p>
     </div>

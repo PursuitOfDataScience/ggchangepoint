@@ -77,17 +77,23 @@ A `ggcpt_events` object: a list with
 
 - `matched`:
 
-  one row per matched pair: `cp`, `event`, `event_position`, `distance`.
+  one row per matched pair: `cp`, `event`, `event_value` (the event's
+  own location, on the index scale when it was given as one),
+  `event_position` (that location as a position in the series) and
+  `distance`.
 
 - `unexplained`:
 
-  detected changepoints with no event.
+  detected changepoints with no event (`cp`).
 
 - `undetected`:
 
-  events with no changepoint.
+  events with no changepoint (`event`, `event_value`, `event_position`).
 
-with [`print()`](https://rdrr.io/r/base/print.html),
+`matched` and `unexplained` carry `cp_index`, the changepoint on the
+original scale, when — and only when — the result carries a time index,
+so `"cp_index" %in% names(x)` is the test for it. With
+[`print()`](https://rdrr.io/r/base/print.html),
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
 

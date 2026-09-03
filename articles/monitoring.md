@@ -270,12 +270,18 @@ vapply(c(0.05, 0.01, 0.001),
        numeric(1))
 #> [1] 7 3 0
 nrow(alarms(cpt_replay(ic, method = "edetector", arl0 = 5000)))
+#> Warning: `arl0` does not affect `method = "edetector"`, which is tuned by
+#> `alpha`, `deltas`. See ?cpt_monitor.
 #> [1] 3
 ```
 
 Three alphas, three false-alarm counts; then `arl0 = 5000` on the same
 stream, which reproduces the default-`alpha` result exactly because the
-argument is not read. The rough translation is $`\mathrm{ARL}_0 \approx
+argument is not read – and
+[`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+says so, because an argument that is accepted and then ignored is worth
+a warning rather than an unchanged answer. The rough translation is
+$`\mathrm{ARL}_0 \approx
 1/\alpha`$, so `alpha = 0.002` and `arl0 = 500` ask for comparable
 strictness.
 

@@ -166,7 +166,7 @@ The coverage is exact and finite-sample.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   222   253     32  4.47</span></span></code></pre></div>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_nsp</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/nsp-plot-1.png" class="r-plt" alt="Series with shaded vertical bands marking NSP significance regions" width="768"></p>
+<p><img src="inference_files/figure-html/nsp-plot-1.png" class="r-plt" alt="Series with shaded vertical bands marking NSP significance regions" width="576"></p>
 <p>Read the widths. A narrow band is a sharply located change; a wide
 one is the honest statement that the data pin the change down only
 loosely. Note what the result does <strong>not</strong> claim: NSP
@@ -261,12 +261,12 @@ and
 alone.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sel</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/select-criterion-1.png" class="r-plt" alt="Criterion value against the number of changepoints, with the chosen model highlighted" width="768"></p>
+<p><img src="inference_files/figure-html/select-criterion-1.png" class="r-plt" alt="Criterion value against the number of changepoints, with the chosen model highlighted" width="576"></p>
 <p>The ladder plot is more informative than the criterion curve, because
 it shows what each candidate actually <em>is</em>:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sel</span>, plot_type <span class="op">=</span> <span class="st">"ladder"</span>, max_facets <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/select-ladder-1.png" class="r-plt" alt="Small multiples showing how the segmentation coarsens as the number of changepoints falls" width="768"></p>
+<p><img src="inference_files/figure-html/select-ladder-1.png" class="r-plt" alt="Small multiples showing how the segmentation coarsens as the number of changepoints falls" width="576"></p>
 <p>Cross-validation is the criterion with a consistency proof <span class="citation">(Zou et al. 2020)</span>:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_select.html">cpt_select</a></span><span class="op">(</span><span class="va">x</span>, criterion <span class="op">=</span> <span class="st">"cv"</span>, k_max <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">$</span><span class="va">k</span></span>
@@ -308,10 +308,10 @@ observation, if perturbed, changes the segmentation — following <span class="c
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>   132          0         0      0.020<span style="text-decoration: underline;">9</span>  -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/influence-overview-1.png" class="r-plt" alt="Series with each observation sized and coloured by its influence on the segmentation" width="768"></p>
+<p><img src="inference_files/figure-html/influence-overview-1.png" class="r-plt" alt="Series with each observation sized and coloured by its influence on the segmentation" width="576"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">inf</span>, plot_type <span class="op">=</span> <span class="st">"map"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/influence-map-1.png" class="r-plt" alt="Influence map: perturbed observation on the horizontal axis, position on the vertical, segment-parameter shift as fill" width="768"></p>
+<p><img src="inference_files/figure-html/influence-map-1.png" class="r-plt" alt="Influence map: perturbed observation on the horizontal axis, position on the vertical, segment-parameter shift as fill" width="576"></p>
 <p><code><a href="../reference/cpt_leverage.html">cpt_leverage()</a></code> ranks the observations:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_leverage.html">cpt_leverage</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span></span>
@@ -343,7 +343,7 @@ observation, if perturbed, changes the segmentation — following <span class="c
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      20     2</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>      60     2</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sens</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/sensitivity-1.png" class="r-plt" alt="One facet per penalty setting, each showing the changepoints that setting finds" width="768"></p>
+<p><img src="inference_files/figure-html/sensitivity-1.png" class="r-plt" alt="One facet per penalty setting, each showing the changepoints that setting finds" width="576"></p>
 <p>This is the direct answer to the commonest reviewer question about a
 changepoint analysis, and it is worth running before the analysis is
 written up rather than after it is questioned.</p>
@@ -356,20 +356,20 @@ only the argmax. Three accessors give the discarded object back.</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_mosum</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_mosum</span>, type <span class="op">=</span> <span class="st">"statistic"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/statistic-1.png" class="r-plt" alt="Two-panel display: the series above, the MOSUM statistic against its threshold below" width="768"></p>
+<p><img src="inference_files/figure-html/statistic-1.png" class="r-plt" alt="Two-panel display: the series above, the MOSUM statistic against its threshold below" width="576"></p>
 <p><code>autoplot(type = "statistic")</code> is a thin wrapper:
 <code><a href="../reference/cpt_statistic.html">ggcpt_statistic()</a></code> is the plotting function itself, and
 <code><a href="../reference/cpt_statistic.html">cpt_statistic()</a></code> returns the numbers behind it.</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_statistic.html">ggcpt_statistic</a></span><span class="op">(</span><span class="va">res_mosum</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/ggcpt-statistic-1.png" class="r-plt" alt="The same two-panel statistic display, drawn by ggcpt_statistic() directly" width="768"></p>
+<p><img src="inference_files/figure-html/ggcpt-statistic-1.png" class="r-plt" alt="The same two-panel statistic display, drawn by ggcpt_statistic() directly" width="576"></p>
 <p>The scale-space view answers a question a single-bandwidth fit
 cannot: <em>at which resolutions does this feature exist?</em> A change
 visible only at a wide bandwidth is a slow shift; one visible only at a
 narrow bandwidth is a spike.</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_scale_space.html">ggcpt_scale_space</a></span><span class="op">(</span><span class="va">res_mosum</span>, bandwidths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span>, <span class="fl">60</span>, <span class="fl">90</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/scale-space-1.png" class="r-plt" alt="Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked" width="768"></p>
+<p><img src="inference_files/figure-html/scale-space-1.png" class="r-plt" alt="Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked" width="576"></p>
 <p><code><a href="../reference/cpt_scale_space.html">cpt_scale_space()</a></code> returns the sweep as data, one row per
 (location, bandwidth) pair, so the picture can be counted rather than
 eyeballed. How many locations cross the threshold at each bandwidth:</p>
@@ -388,7 +388,7 @@ numeric.</p>
 model, and how decisively each beat the next:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_solution_path.html">ggcpt_solution_path</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"wbs"</span><span class="op">)</span>, max_steps <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></code></pre></div>
-<p><img src="inference_files/figure-html/path-1.png" class="r-plt" alt="Solution path: each candidate changepoint against the step at which it entered, with the proposing interval drawn" width="768"></p>
+<p><img src="inference_files/figure-html/path-1.png" class="r-plt" alt="Solution path: each candidate changepoint against the step at which it entered, with the proposing interval drawn" width="576"></p>
 <p><code><a href="../reference/cpt_solution_path.html">cpt_solution_path()</a></code> is the same object as a tibble. The
 <code>contrast</code> column is the margin by which each candidate beat
 the next, and <code>selected</code> marks the ones the penalty kept — so
@@ -424,7 +424,7 @@ do:</p>
 <span><span class="co">#&gt; - Penalty: MBIC</span></span>
 <span><span class="co">#&gt; - Series length: 360</span></span>
 <span><span class="co">#&gt; - Changepoints found: 2</span></span>
-<span><span class="co">#&gt; - Detection runtime: 0.024 s</span></span>
+<span><span class="co">#&gt; - Detection runtime: 0.019 s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ## Changepoints</span></span>
 <span><span class="co">#&gt; </span></span>

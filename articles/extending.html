@@ -143,7 +143,7 @@ convention.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">fit</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="extending_files/figure-html/as-ggcpt-uses-1.png" class="r-plt" alt="Series with the externally supplied changepoints drawn as vertical rules" width="768"></p>
+<p><img src="extending_files/figure-html/as-ggcpt-uses-1.png" class="r-plt" alt="Series with the externally supplied changepoints drawn as vertical rules" width="576"></p>
 <p><code><a href="../reference/as_ggcpt.html">as_ggcpt()</a></code> runs the same contract checks as every
 built-in wrapper — sorting, de-duplication, range checks, aligned extra
 columns, derived segments — so an external result cannot violate the
@@ -274,7 +274,7 @@ raw fit object:</p>
 <span>  engine <span class="op">=</span> <span class="st">"example"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"smoothed_jump"</span><span class="op">)</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="extending_files/figure-html/register-full-1.png" class="r-plt" alt="ggchangepoint plot of a result from an externally supplied detector" width="768"></p>
+<p><img src="extending_files/figure-html/register-full-1.png" class="r-plt" alt="ggchangepoint plot of a result from an externally supplied detector" width="576"></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_register_method.html">cpt_unregister_method</a></span><span class="op">(</span><span class="st">"smoothed_jump"</span><span class="op">)</span></span></code></pre></div>
 </div>

@@ -57,7 +57,10 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
 
   `"ocd"`
 
-  :   ocd's high-dimensional online detector.
+  :   ocd's high-dimensional online detector. **Multivariate only** – it
+      tracks a projection of the whole vector and needs at least two
+      coordinates, so it refuses a single series rather than falling
+      back to a univariate statistic.
 
 - baseline:
 

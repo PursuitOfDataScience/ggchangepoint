@@ -41,10 +41,11 @@ print(x, ...)
 
 ## Value
 
-A tibble with one row per label — `label_id`, `start`, `end`, `change`,
-`n_changes` (how many detections fell inside), `status` (`"correct"`,
-`"false_positive"` or `"false_negative"`) — carrying the totals in an
-`errors` attribute and printing them.
+A tibble with one row per label — `label_id`, `series` (the label set's
+series identifier, `NA` for a single unnamed series), `start`, `end`,
+`change`, `n_changes` (how many detections fell inside), `status`
+(`"correct"`, `"false_positive"` or `"false_negative"`) — carrying the
+totals in an `errors` attribute and printing them.
 
 ## See also
 

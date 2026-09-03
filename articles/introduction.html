@@ -361,7 +361,7 @@ the engine’s fitted signal (<code>show_fit</code>), and
 changepoint-location confidence intervals (<code>show_ci</code>):</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/contract-plot-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="768"></p>
+<p><img src="introduction_files/figure-html/contract-plot-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
 <p>Composable layers (<code><a href="../reference/geom_changepoint.html">geom_changepoint()</a></code>,
 <code><a href="../reference/geom_cpt_segment.html">geom_cpt_segment()</a></code>, <code><a href="../reference/geom_cpt_ci.html">geom_cpt_ci()</a></code>,
 <code><a href="../reference/stat_changepoint.html">stat_changepoint()</a></code>), a theme (<code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code>),
@@ -557,7 +557,7 @@ turns penalty selection into a diagnostic:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>    5.76      9  282.</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>    5.70     10  276.</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/crops-1.png" class="r-plt" alt="CROPS elbow plot: segmentation cost against the number of changepoints" width="768"></p>
+<p><img src="introduction_files/figure-html/crops-1.png" class="r-plt" alt="CROPS elbow plot: segmentation cost against the number of changepoints" width="576"></p>
 <p>The default plot puts segmentation cost against model size, and the
 usual reading takes the model beyond which the cost stops falling
 appreciably. The sweep over the default interval
@@ -569,7 +569,7 @@ models themselves, and <code>autoplot(path, type = "path")</code> the
 map from penalty to model size:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span>, type <span class="op">=</span> <span class="st">"segmentations"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/crops-segmentations-1.png" class="r-plt" alt="The series faceted by CROPS solution, each panel showing that solution's changepoints" width="768"></p>
+<p><img src="introduction_files/figure-html/crops-segmentations-1.png" class="r-plt" alt="The series faceted by CROPS solution, each panel showing that solution's changepoints" width="576"></p>
 <p>The modern <strong>fastcpd</strong> engine <span class="citation">(Li
 and Zhang 2024)</span> brings the same penalised formulation to a wide
 family of models — mean, variance, mean-and-variance, and AR/ARMA/GARCH
@@ -646,7 +646,7 @@ step fit is drawn by <code>show_fit = TRUE</code>):</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.100</span>       98      103</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   200    1.90       199      202</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_smuce</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/smuce-1.png" class="r-plt" alt="SMUCE step fit with changepoint-location confidence intervals drawn as horizontal whiskers" width="768"></p>
+<p><img src="introduction_files/figure-html/smuce-1.png" class="r-plt" alt="SMUCE step fit with changepoint-location confidence intervals drawn as horizontal whiskers" width="576"></p>
 <p>For heterogeneous noise,
 <code>smuce_wrapper(x, family = "hsmuce")</code> (or
 <code>cpt_detect(x, method = "hsmuce")</code>) runs HSMUCE <span class="citation">(Pein et al. 2017)</span>.</p>
@@ -669,17 +669,18 @@ penalty, returning a continuous piecewise-linear fit:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_cpop</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/cpop-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="768"></p>
+<p><img src="introduction_files/figure-html/cpop-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
 <p>NOT with its linear contrast <span class="citation">(Baranowski et
 al. 2019)</span> offers a search-based alternative; the dispatcher
 routes <code>cpt_detect(x, method = "not", change_in = "slope")</code>
 to it automatically:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_slope</span>, method <span class="op">=</span> <span class="st">"not"</span>, change_in <span class="op">=</span> <span class="st">"slope"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    85     36.8</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   101     40.7</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="bayesian-detection">Bayesian detection<a class="anchor" aria-label="anchor" href="#bayesian-detection"></a>
@@ -699,7 +700,7 @@ classic two-panel display:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369              1</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_posterior.html">ggcpt_posterior</a></span><span class="op">(</span><span class="va">res_bcp</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/bcp-1.png" class="r-plt" alt="Two-panel Bayesian display: the series with its posterior mean above, per-location posterior changepoint probability below" width="768"></p>
+<p><img src="introduction_files/figure-html/bcp-1.png" class="r-plt" alt="Two-panel Bayesian display: the series with its posterior mean above, per-location posterior changepoint probability below" width="576"></p>
 <p>Bayesian <em>online</em> changepoint detection <span class="citation">(Adams and MacKay 2007)</span> instead tracks the
 posterior over the current <strong>run length</strong> — the time
 elapsed since the last change — updating it recursively as each
@@ -714,7 +715,7 @@ length of zero:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_runlength.html">ggcpt_runlength</a></span><span class="op">(</span><span class="va">res_bocpd</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/bocpd-1.png" class="r-plt" alt="Run-length heatmap: posterior probability of each run length over time" width="768"></p>
+<p><img src="introduction_files/figure-html/bocpd-1.png" class="r-plt" alt="Run-length heatmap: posterior probability of each run length over time" width="576"></p>
 <p>A third Bayesian engine, BEAST <span class="citation">(<span class="nocase">Zhao et al.</span> 2019)</span> via
 <strong>Rbeast</strong>, averages over models rather than conditioning
 on one, and is wired as <code>cpt_detect(x, method = "beast")</code> (or
@@ -790,7 +791,7 @@ separates the two:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_decafs</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/decafs-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="768"></p>
+<p><img src="introduction_files/figure-html/decafs-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
 <p>EnvCpt <span class="citation">(Beaulieu and Killick 2018)</span>
 attacks the same confusion by model selection: it fits up to twelve
 competing descriptions — constant mean or linear trend, each with or
@@ -834,7 +835,7 @@ changepoint rules:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    80    0.785     21.9</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_hd</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/inspect-1.png" class="r-plt" alt="Faceted small-multiples, one panel per coordinate, sharing the detected changepoint rules" width="768"></p>
+<p><img src="introduction_files/figure-html/inspect-1.png" class="r-plt" alt="Faceted small-multiples, one panel per coordinate, sharing the detected changepoint rules" width="576"></p>
 <p>Two further engines complete the family.
 <code><a href="../reference/geomcp_wrapper.html">geomcp_wrapper()</a></code> (engine <strong>changepoint.geo</strong>)
 maps each observation to its distance from and its angle to a reference
@@ -868,7 +869,7 @@ regressions:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369       99      101</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_bp</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/strucchange-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="768"></p>
+<p><img src="introduction_files/figure-html/strucchange-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
 <p>Where the regression function is continuous — a kink rather than a
 jump — <strong>segmented</strong> <span class="citation">(Muggeo 2003,
 2008)</span> estimates broken-line relationships with standard errors
@@ -881,7 +882,7 @@ for the breakpoints:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6       98      101</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_seg</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/segmented-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="768"></p>
+<p><img src="introduction_files/figure-html/segmented-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
 </div>
 </div>
 <div class="section level2">
@@ -915,7 +916,7 @@ object in list-columns. With <strong>future</strong> and
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> shifted   100    0.369</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">batch</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/batch-1.png" class="r-plt" alt="Small-multiples of a panel of series, each with its own detected changepoints" width="768"></p>
+<p><img src="introduction_files/figure-html/batch-1.png" class="r-plt" alt="Small-multiples of a panel of series, each with its own detected changepoints" width="576"></p>
 </div>
 <div class="section level3">
 <h3 id="stability-diagnostics">Stability diagnostics<a class="anchor" aria-label="anchor" href="#stability-diagnostics"></a>
@@ -938,7 +939,7 @@ intervals of their own:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100         1</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/stability-1.png" class="r-plt" alt="Bootstrap detection-frequency profile across the series, with the original changepoints marked" width="768"></p>
+<p><img src="introduction_files/figure-html/stability-1.png" class="r-plt" alt="Bootstrap detection-frequency profile across the series, with the original changepoints marked" width="576"></p>
 </div>
 <div class="section level3">
 <h3 id="evaluation-interactivity-and-citations">Evaluation, interactivity, and citations<a class="anchor" aria-label="anchor" href="#evaluation-interactivity-and-citations"></a>

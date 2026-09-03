@@ -126,16 +126,24 @@ factor column.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>ggcpt_events</code> object: a list with</p><dl><dt><code>matched</code></dt>
 <dd><p>one row per matched pair: <code>cp</code>,
-      <code>event</code>, <code>event_position</code>, <code>distance</code>.</p></dd>
+      <code>event</code>, <code>event_value</code> (the event's own location, on
+      the index scale when it was given as one), <code>event_position</code>
+      (that location as a position in the series) and <code>distance</code>.</p></dd>
 
     <dt><code>unexplained</code></dt>
-<dd><p>detected changepoints with no event.</p></dd>
+<dd><p>detected changepoints with no event
+      (<code>cp</code>).</p></dd>
 
     <dt><code>undetected</code></dt>
-<dd><p>events with no changepoint.</p></dd>
+<dd><p>events with no changepoint
+      (<code>event</code>, <code>event_value</code>, <code>event_position</code>).</p></dd>
 
 
-</dl><p>with <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</p>
+</dl><p><code>matched</code> and <code>unexplained</code> carry <code>cp_index</code>, the
+  changepoint on the original scale, when — and only when — the result
+  carries a time index, so <code>"cp_index" %in% names(x)</code> is the
+  test for it.
+  With <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

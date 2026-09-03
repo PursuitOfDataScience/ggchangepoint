@@ -39,8 +39,12 @@ ggcpt_scale_space(x, bandwidths = NULL, method = c("mosum", "npmojo"), ...)
 ## Value
 
 `cpt_scale_space()` returns a tibble with `index`, `bandwidth`,
-`statistic`, `threshold` and `significant`. `ggcpt_scale_space()` draws
-the heatmap with the accepted changepoints overlaid.
+`statistic`, `threshold`, `significant` (the statistic at that location
+and bandwidth exceeds the threshold) and `detected` (the engine reported
+a changepoint there at that bandwidth). The two differ: a location can
+clear the threshold without surviving the engine's own pruning.
+`ggcpt_scale_space()` draws the heatmap with the accepted changepoints
+overlaid.
 
 ## See also
 

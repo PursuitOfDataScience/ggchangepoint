@@ -116,8 +116,9 @@ autoplot(
 ## Value
 
 A `ggcpt_benchmark` object: a tibble with one row per (dataset, method)
-— `dataset`, `method`, `n`, `n_cp`, the requested metrics, `runtime`,
-`error` — with [`print()`](https://rdrr.io/r/base/print.html),
+— `dataset`, `method`, `n`, `n_annotators` (how many ground-truth sets
+the dataset supplied), `n_cp`, the requested metrics, `runtime`, `error`
+— with [`print()`](https://rdrr.io/r/base/print.html),
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 (`"heatmap"`, `"ranks"`, `"critical_difference"`).

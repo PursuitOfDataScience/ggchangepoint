@@ -321,6 +321,20 @@ and a learned penalty.
   [`format(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_methods.md)
   [`plot(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_methods.md)
   : Coerce, format, and plot ggcpt objects
+- [`plot(`*`<ggcpt_selection>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_stability>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_sensitivity>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_influence>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_batch>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_benchmark>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_consensus>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_monitor>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_delay>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_path>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_events>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_label_curve>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  : Base plot() methods for ggchangepoint result objects
 
 ## Theming, palettes and accessibility
 

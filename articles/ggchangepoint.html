@@ -188,7 +188,7 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <span><span class="co">#&gt;   CP convention:            left </span></span>
 <span><span class="co">#&gt;   Series length:            200 </span></span>
 <span><span class="co">#&gt;   Penalty:                  MBIC </span></span>
-<span><span class="co">#&gt;   Runtime (seconds):        0.017 </span></span>
+<span><span class="co">#&gt;   Runtime (seconds):        0.016 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
@@ -214,7 +214,7 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <span><span class="co">#&gt; [1] "ggcpt [pelt] 1 changepoint(s) on 200 observations"</span></span></code></pre></div>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/plot-fallback-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/plot-fallback-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="unified-detection">Unified detection<a class="anchor" aria-label="anchor" href="#unified-detection"></a>
@@ -717,13 +717,13 @@ its own <code><a href="https://rdrr.io/r/base/print.html" class="external-link">
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>    5.70     10  276. <span style="color: #949494;">&lt;int [10]&gt;</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb39"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span>                          <span class="co"># the cost elbow</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/crops-elbow-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/crops-elbow-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb40"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span>, type <span class="op">=</span> <span class="st">"path"</span><span class="op">)</span>           <span class="co"># changepoints vs penalty</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/crops-path-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/crops-path-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb41"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span>, type <span class="op">=</span> <span class="st">"segmentations"</span><span class="op">)</span>  <span class="co"># the candidate models themselves</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/crops-seg-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/crops-seg-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="the-visualisation-layer">The visualisation layer<a class="anchor" aria-label="anchor" href="#the-visualisation-layer"></a>
@@ -742,14 +742,14 @@ supply warns rather than failing silently.</p>
 <div class="sourceCode" id="cb42"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span>, cptline_color <span class="op">=</span> <span class="st">"firebrick"</span>,</span>
 <span>         cptline_type <span class="op">=</span> <span class="st">"dashed"</span>, cptline_linewidth <span class="op">=</span> <span class="fl">0.8</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/autoplot-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/autoplot-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_smuce</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/autoplot-ci-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/autoplot-ci-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <p>Multivariate results facet automatically:</p>
 <div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_hd</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/autoplot-mv-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/autoplot-mv-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <p>The composable layers work inside any ggplot pipeline:
 <code><a href="../reference/geom_changepoint.html">geom_changepoint()</a></code> draws vertical rules,
 <code><a href="../reference/geom_cpt_segment.html">geom_cpt_segment()</a></code> draws segment levels,
@@ -771,12 +771,12 @@ supply warns rather than failing silently.</p>
 <span>    inherit.aes <span class="op">=</span> <span class="cn">FALSE</span>, color <span class="op">=</span> <span class="st">"darkred"</span>, linewidth <span class="op">=</span> <span class="fl">1</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/theme_ggcpt.html">theme_ggcpt</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/geoms-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/geoms-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="va">df</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">index</span>, <span class="va">value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/stat_changepoint.html">stat_changepoint</a></span><span class="op">(</span>method <span class="op">=</span> <span class="st">"pelt"</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/stat-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/stat-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb47"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ci_tbl</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_smuce</span><span class="op">)</span></span>
 <span><span class="va">ci_tbl</span><span class="op">$</span><span class="va">y_pos</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/Extremes.html" class="external-link">min</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span></span>
@@ -788,15 +788,15 @@ supply warns rather than failing silently.</p>
 <span>    width <span class="op">=</span> <span class="fl">0.6</span>, color <span class="op">=</span> <span class="st">"blue"</span>, inherit.aes <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span>  <span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="../reference/geom_changepoint.html">geom_changepoint</a></span><span class="op">(</span>data <span class="op">=</span> <span class="va">ci_tbl</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="va">cp</span><span class="op">)</span>, color <span class="op">=</span> <span class="st">"blue"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/geom-ci-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/geom-ci-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <p><code><a href="../reference/ggcptplot.html">ggcptplot()</a></code> and <code><a href="../reference/ggecpplot.html">ggecpplot()</a></code> are the
 original one-call plots for the two classical engines:</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcptplot.html">ggcptplot</a></span><span class="op">(</span><span class="va">x</span>, change_in <span class="op">=</span> <span class="st">"mean"</span>, cp_method <span class="op">=</span> <span class="st">"PELT"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/original-plots-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/original-plots-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb49"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggecpplot.html">ggecpplot</a></span><span class="op">(</span><span class="va">x</span>, algorithm <span class="op">=</span> <span class="st">"divisive"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/ggecpplot-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/ggecpplot-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <p>The Bayesian engines get the field’s signature displays:
 <code><a href="../reference/ggcpt_posterior.html">ggcpt_posterior()</a></code> shows the posterior mean over the series
 and the per-location changepoint probability (for <code>bcp</code> and
@@ -804,10 +804,10 @@ BEAST results); <code><a href="../reference/ggcpt_runlength.html">ggcpt_runlengt
 run-length posterior as a heatmap.</p>
 <div class="sourceCode" id="cb50"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_posterior.html">ggcpt_posterior</a></span><span class="op">(</span><span class="va">res_bcp</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/posterior-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/posterior-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb51"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_runlength.html">ggcpt_runlength</a></span><span class="op">(</span><span class="va">res_bocpd</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/runlength-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/runlength-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <p>Finally, <code><a href="../reference/ggcpt_interactive.html">ggcpt_interactive()</a></code> turns any result (or any
 ggplot built from one) into a <code>plotly</code> widget with values on
 hover. The widget itself is not embedded here, only its class:</p>
@@ -827,10 +827,10 @@ runs. A method that finds nothing keeps its panel and contributes an
 one.</p>
 <div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/compare-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/compare-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb54"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span><span class="op">)</span>, layout <span class="op">=</span> <span class="st">"overlay"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/compare-overlay-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/compare-overlay-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <div class="sourceCode" id="cb55"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare_table.html">ggcpt_compare_table</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
@@ -865,7 +865,7 @@ themselves:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> shifted   100    0.369</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">batch</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/batch-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/batch-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 <p><code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> quantifies how fragile a segmentation
 is: it resamples residuals within the fitted segments, re-runs the
 detector, and reports the re-detection frequency at every location — a
@@ -882,7 +882,7 @@ intervals:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100         1</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/stability-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/stability-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="evaluation-against-ground-truth">Evaluation against ground truth<a class="anchor" aria-label="anchor" href="#evaluation-against-ground-truth"></a>
@@ -911,7 +911,7 @@ positives, false positives, and misses):</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200            3      1         1      1     1    0.993</span></span></code></pre></div>
 <div class="sourceCode" id="cb59"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_eval.html">ggcpt_eval</a></span><span class="op">(</span><span class="va">pred</span>, <span class="va">truth</span>, <span class="va">x</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/eval-plot-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/eval-plot-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="simulation-and-canonical-signals">Simulation and canonical signals<a class="anchor" aria-label="anchor" href="#simulation-and-canonical-signals"></a>
@@ -950,7 +950,7 @@ Johnstone 1994)</span>), <code><a href="../reference/signal_fms.html">signal_fms
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">blocks</span>, <span class="st">"true_changepoints"</span><span class="op">)</span>,</span>
 <span>             color <span class="op">=</span> <span class="st">"blue"</span>, linewidth <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"The blocks test signal with its true changepoints"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/blocks-plot-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/blocks-plot-1.png" class="r-plt" alt="ggchangepoint feature tour plot" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="citing-the-methodology">Citing the methodology<a class="anchor" aria-label="anchor" href="#citing-the-methodology"></a>
@@ -1025,7 +1025,7 @@ selection-adjusted.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     6.22 1.61<span style="color: #949494;">e</span><span style="color: #BB0000;">-105</span> FALSE</span></span></code></pre></div>
 <div class="sourceCode" id="cb66"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="../reference/nsp_wrapper.html">nsp_wrapper</a></span><span class="op">(</span><span class="va">x</span>, M <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/nsp-tour-1.png" class="r-plt" alt="Series with a shaded band marking an NSP significance region" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/nsp-tour-1.png" class="r-plt" alt="Series with a shaded band marking an NSP significance region" width="576"></p>
 </div>
 <div class="section level3">
 <h3 id="selecting-the-number-of-changepoints">Selecting the number of changepoints<a class="anchor" aria-label="anchor" href="#selecting-the-number-of-changepoints"></a>
@@ -1035,7 +1035,7 @@ selection-adjusted.</p>
 <span><span class="va">sel</span><span class="op">$</span><span class="va">k</span></span>
 <span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sel</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/select-tour-1.png" class="r-plt" alt="Criterion value against the number of changepoints, with the chosen model marked" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/select-tour-1.png" class="r-plt" alt="Criterion value against the number of changepoints, with the chosen model marked" width="576"></p>
 </div>
 <div class="section level3">
 <h3 id="diagnostics">Diagnostics<a class="anchor" aria-label="anchor" href="#diagnostics"></a>
@@ -1064,7 +1064,7 @@ computed.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>      40     1</span></span></code></pre></div>
 <div class="sourceCode" id="cb69"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span>, type <span class="op">=</span> <span class="st">"statistic"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/stat-tour-1.png" class="r-plt" alt="Two-panel display: the series above, the MOSUM statistic below" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/stat-tour-1.png" class="r-plt" alt="Two-panel display: the series above, the MOSUM statistic below" width="576"></p>
 </div>
 <div class="section level3">
 <h3 id="supervised-detection">Supervised detection<a class="anchor" aria-label="anchor" href="#supervised-detection"></a>
@@ -1628,7 +1628,7 @@ fitted segmentation:</p>
 <span>  <span class="fu"><a href="../reference/scale_colour_cpt.html">scale_colour_cpt</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/scale_colour_cpt.html">scale_fill_cpt</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="../reference/scale_colour_cpt.html">scale_linetype_cpt</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Index"</span>, y <span class="op">=</span> <span class="st">"Value"</span>, colour <span class="op">=</span> <span class="st">"Segment"</span>, fill <span class="op">=</span> <span class="st">"Segment"</span>,</span>
 <span>       linetype <span class="op">=</span> <span class="st">"Segment"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/accessibility-tour-1.png" class="r-plt" alt="Fitted segment levels drawn with the Okabe-Ito palette, a matching fill band and a redundant linetype per segment" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/accessibility-tour-1.png" class="r-plt" alt="Fitted segment levels drawn with the Okabe-Ito palette, a matching fill band and a redundant linetype per segment" width="576"></p>
 <p><code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code> is unchanged.</p>
 </div>
 <div class="section level3">
@@ -1639,7 +1639,7 @@ fitted segmentation:</p>
 <span>                                 names <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"step"</span>, <span class="st">"teeth"</span>, <span class="st">"ar1"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                    methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span>, progress <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bm</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/benchmark-tour-1.png" class="r-plt" alt="Heatmap of the covering metric for each method on each benchmark dataset" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/benchmark-tour-1.png" class="r-plt" alt="Heatmap of the covering metric for each method on each benchmark dataset" width="576"></p>
 <div class="sourceCode" id="cb76"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_annotations.html">cpt_annotations</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_datasets.html">cpt_datasets</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, names <span class="op">=</span> <span class="st">"step"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
@@ -1685,7 +1685,7 @@ data arrive.</p>
 <div class="sourceCode" id="cb78"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_power.html">cpt_power</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, jump <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, n_sim <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span></span></code></pre></div>
-<p><img src="ggchangepoint_files/figure-html/power-tour-1.png" class="r-plt" alt="Power curve: detection probability against change size" width="768"></p>
+<p><img src="ggchangepoint_files/figure-html/power-tour-1.png" class="r-plt" alt="Power curve: detection probability against change size" width="576"></p>
 <p><code><a href="../reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts the curve — it bisects for
 the change size that reaches a target power, which is the number a
 pre-registration needs:</p>

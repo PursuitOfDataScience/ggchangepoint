@@ -77,8 +77,10 @@ than being folded into <code><a href="https://generics.r-lib.org/reference/tidy.
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>start</code>, <code>end</code> (positions),
   <code>length</code>, and — when the result carries a time index —
-  <code>start_index</code>/<code>end_index</code> on the original scale. A zero-row
-  tibble when the result carries no regions.</p>
+  <code>start_index</code>/<code>end_index</code> on the original scale. Any further
+  columns the engine supplied are carried through after those –
+  <code><a href="nsp_wrapper.html">nsp_wrapper()</a></code> adds <code>value</code>, the region's statistic.
+  A zero-row tibble when the result carries no regions.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

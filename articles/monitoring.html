@@ -199,10 +199,10 @@ claims: an alarm is deliberately late, so scoring it as a location
 estimate marks a correct detection wrong by exactly the delay.</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">mon</span><span class="op">)</span></span></code></pre></div>
-<p><img src="monitoring_files/figure-html/timeline-1.png" class="r-plt" alt="Monitored series with dashed vertical lines at each alarm" width="768"></p>
+<p><img src="monitoring_files/figure-html/timeline-1.png" class="r-plt" alt="Monitored series with dashed vertical lines at each alarm" width="576"></p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">d</span><span class="op">)</span></span></code></pre></div>
-<p><img src="monitoring_files/figure-html/delay-plot-1.png" class="r-plt" alt="Bar chart of the detection delay at the true changepoint" width="768"></p>
+<p><img src="monitoring_files/figure-html/delay-plot-1.png" class="r-plt" alt="Bar chart of the detection delay at the true changepoint" width="576"></p>
 </div>
 <div class="section level2">
 <h2 id="replaying-a-finished-series">3. Replaying a finished series<a class="anchor" aria-label="anchor" href="#replaying-a-finished-series"></a>
@@ -330,11 +330,15 @@ threshold is
 <span>       <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 7 3 0</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="va">ic</span>, method <span class="op">=</span> <span class="st">"edetector"</span>, arl0 <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; Warning: `arl0` does not affect `method = "edetector"`, which is tuned by</span></span>
+<span><span class="co">#&gt; `alpha`, `deltas`. See ?cpt_monitor.</span></span>
 <span><span class="co">#&gt; [1] 3</span></span></code></pre></div>
 <p>Three alphas, three false-alarm counts; then <code>arl0 = 5000</code>
 on the same stream, which reproduces the default-<code>alpha</code>
-result exactly because the argument is not read. The rough translation
-is
+result exactly because the argument is not read – and
+<code><a href="../reference/cpt_monitor.html">cpt_monitor()</a></code> says so, because an argument that is accepted
+and then ignored is worth a warning rather than an unchanged answer. The
+rough translation is
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mrow><mi mathvariant="normal">A</mi><mi mathvariant="normal">R</mi><mi mathvariant="normal">L</mi></mrow><mn>0</mn></msub><mo>≈</mo><mn>1</mn><mi>/</mi><mi>α</mi></mrow><annotation encoding="application/x-tex">\mathrm{ARL}_0 \approx
 1/\alpha</annotation></semantics></math>, so <code>alpha = 0.002</code>
 and <code>arl0 = 500</code> ask for comparable strictness.</p>

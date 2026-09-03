@@ -183,7 +183,7 @@ method:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2024</span><span class="op">)</span></span>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/compare-facet-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
+<p><img src="comparison_files/figure-html/compare-facet-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="576"></p>
 <p>A method that finds <em>no</em> changepoints keeps its panel — the
 series is drawn with no vertical lines on it — rather than silently
 disappearing. A method that ran and found nothing is a result, not a
@@ -192,14 +192,14 @@ missing value:</p>
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">7</span><span class="op">)</span></span>
 <span><span class="va">x_null</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">300</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x_null</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/compare-nochange-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
+<p><img src="comparison_files/figure-html/compare-nochange-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="576"></p>
 <p>The <code>layout = "overlay"</code> variant superimposes all methods
 in a single panel with colour-coded rules, which makes both kinds of
 disagreement easier to see: small differences in an estimated location,
 and outright differences in how many changepoints a method reports.</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span>, layout <span class="op">=</span> <span class="st">"overlay"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/compare-overlay-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="768"></p>
+<p><img src="comparison_files/figure-html/compare-overlay-1.png" class="r-plt" alt="ggchangepoint plot comparing changepoint detection methods on a time series" width="576"></p>
 <p>For a numeric rather than visual comparison,
 <code><a href="../reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code> returns one tidy tibble with a row
 per (method, changepoint) pair; a method that found nothing contributes
@@ -423,7 +423,7 @@ and the numbers always agree:</p>
 <code class="sourceCode R"><span><span class="va">truth</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">300</span><span class="op">)</span></span>
 <span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">151</span>, <span class="fl">240</span><span class="op">)</span>      <span class="co"># one hit, one false alarm, one miss</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_eval.html">ggcpt_eval</a></span><span class="op">(</span><span class="va">pred</span>, <span class="va">truth</span>, data_vec <span class="op">=</span> <span class="va">x</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/eval-plot-1.png" class="r-plt" alt="Series with predictions coloured as true positives and false positives, shaded tolerance windows around each true changepoint, and missed truths as dashed rules" width="768"></p>
+<p><img src="comparison_files/figure-html/eval-plot-1.png" class="r-plt" alt="Series with predictions coloured as true positives and false positives, shaded tolerance windows around each true changepoint, and missed truths as dashed rules" width="576"></p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span><span class="va">pred</span>, <span class="va">truth</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 12</span></span></span>
@@ -471,7 +471,7 @@ signal, available here and from <code>decafs</code>, <code>cpop</code>,
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   150     1.05      146      152</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   300     3.14      295      306</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_smuce</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/smuce-ci-1.png" class="r-plt" alt="Series with the SMUCE step fit overlaid and confidence-interval whiskers for each estimated changepoint location" width="768"></p>
+<p><img src="comparison_files/figure-html/smuce-ci-1.png" class="r-plt" alt="Series with the SMUCE step fit overlaid and confidence-interval whiskers for each estimated changepoint location" width="576"></p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_bp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/strucchange_wrapper.html">strucchange_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_bp</span><span class="op">)</span></span>
@@ -507,7 +507,7 @@ fragile.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   150         1</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   300         1</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/stability-1.png" class="r-plt" alt="Bootstrap detection-frequency profile along the series index, with the original changepoints marked as dashed rules" width="768"></p>
+<p><img src="comparison_files/figure-html/stability-1.png" class="r-plt" alt="Bootstrap detection-frequency profile along the series index, with the original changepoints marked as dashed rules" width="576"></p>
 <p>Both changepoints here are re-detected in every replicate, so the
 point estimate is as stable as this diagnostic can report. The profile
 is also informative where the print method is silent: a broad, low
@@ -553,10 +553,10 @@ among:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">path_wide</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="va">x</span>, pen_min <span class="op">=</span> <span class="fl">4</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path_wide</span><span class="op">)</span>                          <span class="co"># cost elbow</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/crops-elbow-1.png" class="r-plt" alt="CROPS cost elbow: segmentation cost plotted against the number of changepoints for each solution on the penalty path" width="768"></p>
+<p><img src="comparison_files/figure-html/crops-elbow-1.png" class="r-plt" alt="CROPS cost elbow: segmentation cost plotted against the number of changepoints for each solution on the penalty path" width="576"></p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path_wide</span>, type <span class="op">=</span> <span class="st">"segmentations"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/crops-segs-1.png" class="r-plt" alt="The candidate CROPS segmentations, faceted by number of changepoints, each panel showing the series with that solution's changepoints" width="768"></p>
+<p><img src="comparison_files/figure-html/crops-segs-1.png" class="r-plt" alt="The candidate CROPS segmentations, faceted by number of changepoints, each panel showing the series with that solution's changepoints" width="576"></p>
 <p>Both <code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> and <code><a href="../reference/cpt_crops.html">cpt_crops()</a></code>
 operate on a single numeric series and reject multi-column input; for a
 panel of series, loop over the columns (or use <code><a href="../reference/cpt_batch.html">cpt_batch()</a></code>
@@ -587,7 +587,7 @@ expects.</p>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_vline</a></span><span class="op">(</span>xintercept <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">blocks</span>, <span class="st">"true_changepoints"</span><span class="op">)</span>,</span>
 <span>             colour <span class="op">=</span> <span class="st">"blue"</span>, linewidth <span class="op">=</span> <span class="fl">0.3</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>title <span class="op">=</span> <span class="st">"signal_blocks(): Donoho-Johnstone blocks with true changepoints"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="comparison_files/figure-html/signals-1.png" class="r-plt" alt="Donoho-Johnstone blocks test signal with its eleven true changepoints marked by vertical rules" width="768"></p>
+<p><img src="comparison_files/figure-html/signals-1.png" class="r-plt" alt="Donoho-Johnstone blocks test signal with its eleven true changepoints marked by vertical rules" width="576"></p>
 <p>A minimal benchmark: three methods, two signal-to-noise regimes, ten
 replications each, scored by precision, recall, F1, and covering. The
 two regimes differ only in the size of the jumps — 2.5 noise standard
