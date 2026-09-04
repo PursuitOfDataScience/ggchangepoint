@@ -459,6 +459,9 @@ cpt_datasets <- function(source = c("simulated", "tcpd"), n = 500, seed = 1,
 #' \insertRef{vandenburg2020evaluation}{ggchangepoint}
 #' @export
 #' @examples
+#' # Not run by R CMD check: every call downloads from the Turing Change
+#' # Point Dataset's GitHub repository, and an example must not require
+#' # network access.
 #' \dontrun{
 #' cpt_load_tcpd()                       # the catalogue
 #' d <- cpt_load_tcpd("nile")            # one dataset

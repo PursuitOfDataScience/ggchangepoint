@@ -40,6 +40,9 @@ mosum_wrapper(x, G = 20)$changepoints
 mosum_wrapper(x, multiscale = TRUE)$changepoints
 \dontshow{\}) # examplesIf}
 }
+\references{
+\insertRef{eichinger2018mosum}{ggchangepoint}
+}
 \seealso{
 Other changepoint engines: 
 \code{\link{bcp_wrapper}()},

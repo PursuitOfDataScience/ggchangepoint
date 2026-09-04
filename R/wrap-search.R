@@ -10,6 +10,8 @@
 #' @param seed Optional seed for reproducibility.
 #' @param ... Additional arguments passed to \code{wbs::wbs()}.
 #' @return A \code{ggcpt} object.
+#' @references
+#' \insertRef{fryzlewicz2014wild}{ggchangepoint}
 #' @export
 #' @family changepoint engines
 #' @examplesIf requireNamespace("wbs", quietly = TRUE)
@@ -85,6 +87,8 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
 #' @param x A numeric vector.
 #' @param ... Additional arguments passed to \code{breakfast::breakfast()}.
 #' @return A \code{ggcpt} object.
+#' @references
+#' \insertRef{fryzlewicz2020detecting}{ggchangepoint}
 #' @export
 #' @family changepoint engines
 #' @examplesIf requireNamespace("breakfast", quietly = TRUE)
@@ -136,6 +140,8 @@ breakfast_cpts <- function(fit) {
 #' @param ... Additional arguments passed to \code{not::not()}.
 #' @return A \code{ggcpt} object whose \code{change_in} reflects the
 #'   contrast: \code{"mean"}, \code{"meanvar"}, or \code{"slope"}.
+#' @references
+#' \insertRef{baranowski2019narrowest}{ggchangepoint}
 #' @export
 #' @family changepoint engines
 #' @examplesIf requireNamespace("not", quietly = TRUE)
@@ -210,6 +216,8 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
 #' @param ... Additional arguments passed to \code{mosum::mosum()} or
 #'   \code{mosum::multiscale.localPrune()}.
 #' @return A \code{ggcpt} object.
+#' @references
+#' \insertRef{eichinger2018mosum}{ggchangepoint}
 #' @export
 #' @family changepoint engines
 #' @examplesIf requireNamespace("mosum", quietly = TRUE)
@@ -289,6 +297,8 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
 #' one short-circuits to the empty result. Constancy is decided by exact
 #' equality, so a series with tiny but genuine variation still reaches the
 #' engine.
+#' @references
+#' \insertRef{anastasiou2022idetect}{ggchangepoint}
 #' @export
 #' @family changepoint engines
 #' @examplesIf requireNamespace("IDetect", quietly = TRUE)
@@ -353,6 +363,8 @@ idetect_wrapper <- function(x, seed = NULL, ...) {
 #' @param x A numeric vector.
 #' @param ... Additional arguments passed to \code{breakfast::breakfast()}.
 #' @return A \code{ggcpt} object.
+#' @references
+#' \insertRef{fryzlewicz2018tail}{ggchangepoint}
 #' @export
 #' @family changepoint engines
 #' @examplesIf requireNamespace("breakfast", quietly = TRUE)

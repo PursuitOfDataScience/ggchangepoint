@@ -28,7 +28,9 @@ test_that("cpt_simulate applies per-segment standard deviations", {
 test_that("cpt_detect segneigh works with the default penalty", {
   set.seed(2022)
   x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
-  res <- cpt_detect(x, method = "segneigh")
+  # `changepoint` advises PELT on every segneigh call.
+  expect_warning(res <- cpt_detect(x, method = "segneigh"),
+                 "SegNeigh is computationally slow")
   expect_s3_class(res, "ggcpt")
   # SegNeigh cannot use MBIC upstream; the dispatcher falls back to SIC.
   expect_equal(res$penalty$type, "SIC")

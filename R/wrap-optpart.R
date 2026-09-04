@@ -16,6 +16,8 @@
 #'   two entry points need not agree unless \code{penalty} is given.
 #' @param ... Additional arguments passed to \code{fpop::Fpop()}.
 #' @return A \code{ggcpt} object.
+#' @references
+#' \insertRef{maidstone2017optimal}{ggchangepoint}
 #' @export
 #' @family changepoint engines
 #' @examplesIf requireNamespace("fpop", quietly = TRUE)

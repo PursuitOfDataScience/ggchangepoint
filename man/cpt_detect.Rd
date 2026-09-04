@@ -135,3 +135,11 @@ tidy(dated)
 df <- data.frame(day = dates, value = x)
 cpt_detect(df, y = value, index = day, method = "pelt")
 }
+\seealso{
+\code{\link{cpt_methods}()} for what is available and what each
+  method can do. To get the result out: \code{\link{tidy.ggcpt}()},
+  \code{\link{glance.ggcpt}()}, \code{\link{augment.ggcpt}()},
+  \code{\link{summary.ggcpt}()} and \code{\link{print.ggcpt}()}. To
+  draw it: \code{\link{autoplot.ggcpt}()}. For the penalty:
+  \code{\link{cpt_penalty}()}.
+}

@@ -62,7 +62,12 @@ test_that("cpt_detect dispatches methods", {
   res2 <- cpt_detect(x, method = "binseg", change_in = "mean")
   expect_s3_class(res2, "ggcpt")
 
-  res3 <- cpt_detect(x, method = "segneigh", change_in = "mean", penalty = "BIC")
+  # `changepoint` advises PELT on every segneigh call; asserting it keeps a
+  # known upstream notice out of the suite's warning report.
+  expect_warning(
+    res3 <- cpt_detect(x, method = "segneigh", change_in = "mean",
+                       penalty = "BIC"),
+    "SegNeigh is computationally slow")
   expect_s3_class(res3, "ggcpt")
 
   res4 <- cpt_detect(x, method = "np", change_in = "distribution")

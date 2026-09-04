@@ -36,6 +36,9 @@ trend <- c(1:60, 60 - 1:60) / 10 + rnorm(120)
 not_wrapper(trend, contrast = "pcwsLinContMean")$changepoints
 \dontshow{\}) # examplesIf}
 }
+\references{
+\insertRef{baranowski2019narrowest}{ggchangepoint}
+}
 \seealso{
 Other changepoint engines: 
 \code{\link{bcp_wrapper}()},

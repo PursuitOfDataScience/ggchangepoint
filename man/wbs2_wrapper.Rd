@@ -25,6 +25,9 @@ res <- wbs2_wrapper(c(rnorm(60), rnorm(60, 4)))
 res$changepoints
 \dontshow{\}) # examplesIf}
 }
+\references{
+\insertRef{fryzlewicz2020detecting}{ggchangepoint}
+}
 \seealso{
 Other changepoint engines: 
 \code{\link{bcp_wrapper}()},

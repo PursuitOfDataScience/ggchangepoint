@@ -50,6 +50,10 @@
 #'   the delegate.
 #'
 #' @return A ggplot object.
+#' @seealso \code{\link{ggcpt_plot_methods}} for the base \code{plot()}
+#'   methods that delegate here, and \code{\link{theme_ggcpt}()} and
+#'   \code{\link{geom_changepoint}()} for restyling and re-assembling the
+#'   layers by hand.
 #' @importFrom ggplot2 autoplot
 #' @export
 autoplot.ggcpt <- function(object,

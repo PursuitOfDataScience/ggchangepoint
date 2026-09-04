@@ -54,3 +54,8 @@ cpt_methods()
 # which methods can draw a confidence interval?
 subset(cpt_methods(), ci)$method
 }
+\seealso{
+\code{\link{cpt_install_engines}()} to install a whole family of
+  the engines this table reports on; \code{\link{cpt_detect}()} to run
+  one; \code{\link{cpt_register_method}()} to add your own.
+}

@@ -66,13 +66,14 @@ vignette is the *feature tour*: it visits **every exported function** in the
 package at the point where it belongs in the workflow, so a reader can map
 the full surface in one sitting.
 
-Four companion vignettes go deeper: `vignette("introduction")` develops the
+Six companion vignettes go deeper: `vignette("introduction")` develops the
 methodology, `vignette("comparison")` treats method comparison and
 evaluation, `vignette("inference")` covers confidence intervals,
 significance regions, selecting the number of changepoints and the
 diagnostic displays, `vignette("supervised")` covers labelled regions and
-learned penalties, and `vignette("extending")` shows how to bring an
-external detector into the same grammar.
+learned penalties, `vignette("extending")` shows how to bring an external
+detector into the same grammar, and `vignette("monitoring")` covers
+sequential detection on a stream and its detection-delay accounting.
 
 > **New in 0.5.0.** Nineteen further engines; a time index that survives
 > the round trip (`cpt_detect(x, index = dates)` and `ts`/`xts`/`zoo`/
@@ -136,7 +137,7 @@ head(as.data.frame(res))
 format(res)
 ```
 
-```{r plot-fallback}
+```{r plot-fallback, fig.alt = "The default plot: the series with its changepoint rules, drawn by plot() delegating to autoplot()"}
 plot(res)
 ```
 
@@ -162,9 +163,10 @@ tidy(cpt_detect(x, method = "not", contrast = "pcwsLinMean"))
 
 `cpt_methods()` is the live capability table: every method the package
 knows, its engine package, what it can detect, and whether the engine is
-installed. Four rows carry status `"planned"` rather than `"available"`:
-their engines (`gfpop`, `robseg`, `FOCuS`, `hdbinseg`) are not on CRAN, so
-they are documented as future work and are *not* wired to `cpt_detect()`.
+installed. Five rows carry status `"planned"` rather than `"available"`:
+their engines (`gfpop`, `robseg`, `FOCuS`, `hdbinseg`, `changeforest`) are
+not on CRAN, so they are documented as future work and are *not* wired to
+`cpt_detect()`.
 
 ```{r methods}
 print(cpt_methods(), n = Inf)
@@ -403,15 +405,15 @@ path
 tidy(path)
 ```
 
-```{r crops-elbow}
+```{r crops-elbow, fig.alt = "CROPS cost elbow: segmentation cost against the number of changepoints for each solution on the penalty path"}
 autoplot(path)                          # the cost elbow
 ```
 
-```{r crops-path}
+```{r crops-path, fig.alt = "Changepoint locations against the penalty, showing which locations survive as the penalty rises"}
 autoplot(path, type = "path")           # changepoints vs penalty
 ```
 
-```{r crops-seg}
+```{r crops-seg, fig.alt = "The candidate CROPS segmentations, faceted by number of changepoints, each panel showing the series with that solution's changepoints"}
 autoplot(path, type = "segmentations")  # the candidate models themselves
 ```
 
@@ -426,18 +428,18 @@ segmented), `show_points`/`show_line`, an `index` for a date axis, and the
 `cptline_type`, `cptline_linewidth`). Asking for an overlay the result
 cannot supply warns rather than failing silently.
 
-```{r autoplot}
+```{r autoplot, fig.alt = "Series with its changepoints drawn as firebrick rules and the fitted segment levels as horizontal steps"}
 autoplot(res, show_segments = TRUE, cptline_color = "firebrick",
          cptline_type = "dashed", cptline_linewidth = 0.8)
 ```
 
-```{r autoplot-ci, eval = has_stepR}
+```{r autoplot-ci, eval = has_stepR, fig.alt = "SMUCE step fit overlaid on the series, with horizontal whiskers giving each changepoint's confidence interval"}
 autoplot(res_smuce, show_ci = TRUE, show_fit = TRUE)
 ```
 
 Multivariate results facet automatically:
 
-```{r autoplot-mv, eval = has_inspect, fig.height = 6}
+```{r autoplot-mv, eval = has_inspect, fig.height = 6, fig.alt = "Faceted small-multiples, one panel per coordinate, sharing the detected changepoint rules"}
 autoplot(res_hd)
 ```
 
@@ -447,7 +449,7 @@ segment levels, `geom_cpt_ci()` draws horizontal interval whiskers, and
 `stat_changepoint()` runs detection *inside* the plot. `theme_ggcpt()` is a
 publication theme and `annotate_segments()` shades alternating segments.
 
-```{r geoms}
+```{r geoms, fig.alt = "The same plot assembled layer by layer: shaded segment bands behind the series, a red rule at each changepoint, and the fitted level drawn as a segment across each span"}
 cp_tbl <- tidy(res)
 df <- data.frame(index = seq_along(x), value = x)
 
@@ -463,13 +465,13 @@ ggplot(df, aes(index, value)) +
   theme_ggcpt()
 ```
 
-```{r stat}
+```{r stat, fig.alt = "Series with changepoints added by stat_changepoint(), which runs the detector inside the layer"}
 ggplot(df, aes(index, value)) +
   geom_line() +
   stat_changepoint(method = "pelt", color = "blue")
 ```
 
-```{r geom-ci, eval = has_stepR}
+```{r geom-ci, eval = has_stepR, fig.alt = "Series in grey with a row of blue horizontal whiskers below it, one per changepoint, each spanning that changepoint's confidence interval"}
 ci_tbl <- tidy(res_smuce)
 ci_tbl$y_pos <- min(x) - 1
 ggplot(df, aes(index, value)) +
@@ -485,11 +487,11 @@ ggplot(df, aes(index, value)) +
 `ggcptplot()` and `ggecpplot()` are the original one-call plots for the two
 classical engines:
 
-```{r original-plots}
+```{r original-plots, fig.alt = "The original one-call plot: the series with its PELT changepoints marked, drawn by ggcptplot()"}
 ggcptplot(x, change_in = "mean", cp_method = "PELT")
 ```
 
-```{r ggecpplot}
+```{r ggecpplot, fig.alt = "The original one-call ecp plot: the series with the divisive algorithm's changepoints marked"}
 ggecpplot(x, algorithm = "divisive", seed = 1)
 ```
 
@@ -498,11 +500,11 @@ The Bayesian engines get the field's signature displays:
 per-location changepoint probability (for `bcp` and BEAST results);
 `ggcpt_runlength()` shows the BOCPD run-length posterior as a heatmap.
 
-```{r posterior, eval = has_bcp, fig.height = 6}
+```{r posterior, eval = has_bcp, fig.height = 6, fig.alt = "Two-panel Bayesian display: the series with its posterior mean above, per-location posterior changepoint probability below"}
 ggcpt_posterior(res_bcp)
 ```
 
-```{r runlength, eval = has_ocp}
+```{r runlength, eval = has_ocp, fig.alt = "Run-length heatmap: posterior probability of each run length over time"}
 ggcpt_runlength(res_bocpd)
 ```
 
@@ -522,11 +524,11 @@ execution; `ggcpt_compare_table()` returns the tidy union of the same runs.
 A method that finds nothing keeps its panel and contributes an `NA` row —
 "no changepoints" is a result, not a missing one.
 
-```{r compare, fig.height = 6}
+```{r compare, fig.height = 6, fig.alt = "One panel per method, each showing the same series with that method's changepoints"}
 ggcpt_compare(x, methods = c("pelt", "binseg", "amoc"))
 ```
 
-```{r compare-overlay}
+```{r compare-overlay, fig.alt = "All three methods' changepoints overlaid on one copy of the series, coloured by method"}
 ggcpt_compare(x, methods = c("pelt", "binseg"), layout = "overlay")
 ```
 
@@ -541,7 +543,7 @@ list of vectors), also under `future::plan()`, and returns a tidy
 `ggcpt_batch` tibble with list-columns for the per-series changepoints and
 the `ggcpt` objects themselves:
 
-```{r batch}
+```{r batch, fig.alt = "Small-multiples of a panel of series, each with its own detected changepoints"}
 XB <- cbind(shifted = x, pure_noise = rnorm(200))
 batch <- cpt_batch(XB, method = "pelt")
 batch
@@ -554,7 +556,7 @@ residuals within the fitted segments, re-runs the detector, and reports the
 re-detection frequency at every location — a model-agnostic confidence
 signal for engines with no native intervals:
 
-```{r stability}
+```{r stability, fig.alt = "Bootstrap detection-frequency profile along the series, with the original changepoints marked as dashed rules"}
 st <- cpt_stability(x, method = "pelt", B = 30, seed = 1)
 st
 autoplot(st)
@@ -576,7 +578,7 @@ cpt_metrics(pred, truth, n = length(x), margin = 5)
 cpt_metrics_annotated(pred, list(100, 101, 99), n = length(x))
 ```
 
-```{r eval-plot}
+```{r eval-plot, fig.alt = "Series with predictions coloured as true positives and false positives, shaded tolerance windows around each true changepoint, and missed truths as dashed rules"}
 ggcpt_eval(pred, truth, x, margin = 5)
 ```
 
@@ -605,7 +607,7 @@ signals <- list(blocks = signal_blocks(1024, seed = 1),
 vapply(signals, function(s) length(attr(s, "true_changepoints")), integer(1))
 ```
 
-```{r blocks-plot}
+```{r blocks-plot, fig.alt = "The Donoho-Johnstone blocks test signal, with its true changepoints marked by thin blue rules"}
 blocks <- signals$blocks
 ggplot(blocks, aes(index, value)) +
   geom_line(color = "grey50") +
@@ -628,7 +630,7 @@ cpt_cite(res)
 # The 0.5.0 surface
 
 The sections above are the 0.4.0 tour. What follows visits the rest of the
-exported surface, one example each; three companion vignettes develop these
+exported surface, one example each; four companion vignettes develop these
 properly.
 
 ## Time indices
@@ -830,6 +832,7 @@ analyses, see `vignette("introduction", package = "ggchangepoint")`; for
 method comparison and accuracy evaluation in depth, see
 `vignette("comparison", package = "ggchangepoint")`; and for the 0.5.0
 additions in depth, see `vignette("inference")`,
-`vignette("supervised")` and `vignette("extending")`.
+`vignette("supervised")`, `vignette("extending")` and
+`vignette("monitoring")`.
 
 # References

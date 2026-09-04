@@ -43,7 +43,10 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
   }
   if (!is.null(seed)) set.seed(seed)
 
-  fit <- bcp::bcp(data_vec, burnin = burnin, mcmc = mcmc, ...)
+  # Loading bcp attaches `package:bcp` and `package:grid`; a detection call
+  # should not change where the caller's names resolve from.
+  fit <- with_search_path_restored(
+    bcp::bcp(data_vec, burnin = burnin, mcmc = mcmc, ...))
 
   # bcp's posterior.prob[i] is the posterior probability of a changepoint
   # between i and i + 1, i.e. location i in the "left" convention. The last

@@ -492,12 +492,21 @@ test_that("R24: one flat coordinate among real signal is dropped with a
   X <- cbind(a = c(rnorm(75), rnorm(75, 5)), b = rep(2, 150), c = rnorm(150))
   for (pkg in c("InspectChangepoint", "CptNonPar", "kcpRS")) {
     if (!requireNamespace(pkg, quietly = TRUE)) next
-    expect_warning(
-      res <- switch(pkg,
-        InspectChangepoint = inspect_wrapper(X),
-        CptNonPar          = npmojo_wrapper(X),
-        kcpRS              = kcp_wrapper(X, nperm = 20, seed = 1)),
-      "Dropping constant coordinate", info = pkg)
+    # kcpRS additionally objects to `nperm = 20`, which this test chose to
+    # keep the run short. Muffle that one message -- by text, so nothing
+    # else is hidden -- and the report stays about this package.
+    withCallingHandlers(
+      expect_warning(
+        res <- switch(pkg,
+          InspectChangepoint = inspect_wrapper(X),
+          CptNonPar          = npmojo_wrapper(X),
+          kcpRS              = kcp_wrapper(X, nperm = 20, seed = 1)),
+        "Dropping constant coordinate", info = pkg),
+      warning = function(w) {
+        if (grepl("Very low number of permuted", conditionMessage(w))) {
+          invokeRestart("muffleWarning")
+        }
+      })
     # the real change is still found, in the ORIGINAL row index space
     expect_true(any(abs(res$changepoints$cp - 75) <= 20), info = pkg)
     # and the dropped coordinate is still available for plotting

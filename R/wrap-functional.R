@@ -70,7 +70,7 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #'   \code{"eigenjoint"} or \code{"eigensingle"}.
 #' @return A \code{ggcpt} object with \code{change_in = "covariance"}.
 #' @references
-#' \insertRef{aue2018fchange}{ggchangepoint}
+#' \insertRef{aue2020covariance}{ggchangepoint}
 #' @export
 #' @examplesIf requireNamespace("fChange", quietly = TRUE)
 #' \donttest{
@@ -298,6 +298,15 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
                                alpha = NULL, rank = NULL, n_core = 1,
                                seed = NULL, ...) {
+  # Recorded before need_pkg(): loading fabisearch is itself what attaches
+  # Biobase and BiocGenerics, so a baseline taken afterwards contains them
+  # and they are never given back.
+  before_path <- search()
+  on.exit({
+    for (pkg in setdiff(search(), before_path)) {
+      try(detach(pkg, character.only = TRUE, unload = FALSE), silent = TRUE)
+    }
+  }, add = TRUE)
   need_pkg("fabisearch")
   validate_data(x)
   X <- as_mv_matrix(x)
@@ -327,11 +336,12 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
   min_dist <- min(as.integer(min_dist), max(2L, floor(n / 3)))
   if (!is.null(seed)) set.seed(seed)
 
-  # See the "attached namespace" note in the docs.
+  # See the "attached namespace" note in the docs. The on.exit above gives
+  # back everything this call attached -- NMF, its Depends, and the
+  # foreach/doParallel/doRNG stack the engine registers -- where detaching
+  # NMF alone left eight packages on the caller's search path.
   if (!"package:NMF" %in% search()) {
     suppressPackageStartupMessages(attachNamespace("NMF"))
-    on.exit(try(detach("package:NMF", unload = FALSE), silent = TRUE),
-            add = TRUE)
   }
 
   # The engine prints its search progress and, with ncore = 1, foreach

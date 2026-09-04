@@ -378,3 +378,53 @@ test_that("the degenerate warning names the penalty, not the series length", {
   # a positive penalty on a long series is not degenerate at all
   expect_no_warning(cpt_detect(long, method = "fpop", penalty = 5))
 })
+
+test_that("cpt_methods() answers 'is it installed' without loading anything", {
+  # S37: the `installed` column was filled with requireNamespace(), which
+  # LOADS the package. Building the table therefore loaded all 35 engine
+  # namespaces, including fabisearch -> rgl, which on the macOS runner dies
+  # in dyn.load() for want of libGLU -- reported by R CMD check as
+  # "Vignette re-building failed" with no chunk, no line and no message. The
+  # fix was find.package(), and it took five CI rounds to find.
+  #
+  # The probe is any installed package that is not yet loaded, NOT one of
+  # the engines: by the time this file runs, every installed engine has been
+  # loaded by an earlier test, so keying on engines made the test skip in
+  # the full suite while passing when run alone -- a guard that only guards
+  # when you are already looking at it.
+  loaded <- loadedNamespaces()
+  cand <- setdiff(rownames(utils::installed.packages()), loaded)
+  skip_if(length(cand) == 0, "every installed package is already loaded")
+  probe <- cand[[1]]
+
+  expect_true(ggchangepoint:::engine_installed(probe))
+  expect_false(probe %in% loadedNamespaces())
+  # and a package that is not there is FALSE rather than an error
+  expect_false(ggchangepoint:::engine_installed("ggchangepoint.no.such.engine"))
+
+  # the table itself must add no namespace either
+  before <- loadedNamespaces()
+  invisible(cpt_methods())
+  expect_equal(setdiff(loadedNamespaces(), before), character(0))
+})
+
+test_that("a detection call leaves the caller's search path alone", {
+  # Two engines mutate it. Loading `bcp` attaches `package:bcp` and
+  # `package:grid`; `fabisearch` needs NMF *attached* rather than loaded,
+  # and that brings NMF's Depends (Biobase, BiocGenerics) plus the
+  # foreach/doParallel/doRNG stack the engine registers -- eight packages
+  # measured, where the wrapper previously detached only NMF itself.
+  # `bcp` is the cheap one to assert; fabisearch is the slowest engine in
+  # the package, so it is checked here only when it is installed.
+  set.seed(1)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+
+  skip_if_not_installed("bcp")
+  before <- search()
+  invisible(bcp_wrapper(x))
+  expect_equal(setdiff(search(), before), character(0))
+
+  # and the same call twice must not leave anything either
+  invisible(bcp_wrapper(x))
+  expect_equal(setdiff(search(), before), character(0))
+})

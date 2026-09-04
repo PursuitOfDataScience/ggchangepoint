@@ -145,7 +145,7 @@ run would be worse than the problem it solved.
 built with `as_ggcpt()` — which is how you pass along an engine's
 confidence intervals, fitted signal or raw fit object:
 
-```{r register-full}
+```{r register-full, fig.alt = "Series with the registered detector's changepoint marked and the smoothed signal it fitted overlaid"}
 cpt_register_method(
   "smoothed_jump",
   fn = function(x, ...) {

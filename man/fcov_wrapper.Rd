@@ -53,7 +53,7 @@ fcov_wrapper(X, target = "trace", M = 200)
 \dontshow{\}) # examplesIf}
 }
 \references{
-\insertRef{aue2018fchange}{ggchangepoint}
+\insertRef{aue2020covariance}{ggchangepoint}
 }
 \seealso{
 Other changepoint engines: 

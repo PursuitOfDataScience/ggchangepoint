@@ -96,21 +96,41 @@ The 0.1.0-0.4.0 function signatures keep working unchanged.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 1 note.
+0 errors | 0 warnings | 0 notes on ubuntu-latest (devel, release and
+oldrel-1) and on windows-latest; macos-latest reports one note, which is
+the runner's and not the package's (see below).
 
-The note is the installed size:
+**The installed-size note that 0.4.0 carried is gone.** The seven package
+vignettes now render their figures at `dpi = 72` rather than rmarkdown's
+default 96, which takes the source tarball from 5.2 MB to 4.2 MB and cuts
+the installed `doc` directory by about a quarter. `html_vignette` displays
+the figures at their natural size, so this removes pixels rather than
+shrinking the pictures, and `checking installed package size` no longer
+raises a note on any platform we check on. The `vdiffr` snapshots are test
+fixtures, excluded from the build, and were never part of the installed
+package.
+
+The one macOS note is `checking dependencies in R code`, and its entire
+body is a failure to `dlopen` 'rgl':
 
 ```
-* checking installed package size ... NOTE
-  installed size is  5.4Mb
-  sub-directories of 1Mb or more:
-    doc   4.7Mb
+unable to load shared object '.../rgl/libs/rgl.so':
+  Library not loaded: /opt/X11/lib/libGLU.1.dylib
 ```
 
-It carries over from 0.4.0 and is understood: the vignettes embed their
-figures, and a package whose subject is plotting changepoints is hard to
-explain without showing the plots. The `vdiffr` snapshots are test fixtures,
-excluded from the build, and are not part of the installed package.
+'rgl' is not a dependency of this package. It arrives three levels down from
+the suggested engine 'fabisearch', which imports 'NMF' and 'plot3D';
+'plot3D' reaches 'misc3d', and 'misc3d' imports 'rgl' for interactive 3-D
+rendering that neither of the other two needs. The macOS runner has no
+XQuartz, so `libGLU` is absent and the namespace cannot load when the check
+step tries to. Every other macOS check line, including the examples,
+`--run-donttest`, the tests and the vignette rebuild, is OK. Nothing in this
+package loads 'rgl': `cpt_methods()` answers "is this engine installed?"
+with `find.package()` rather than `requireNamespace()` precisely so that no
+engine namespace is loaded to build a table, and `need_pkg()` -- the single
+point at which a wrapper does load its engine -- suppresses load-time
+warnings about the machine so a headless user is not told about their
+display.
 
 Depending on when this is submitted, the incoming-feasibility check may add
 a "days since last update" note; 0.4.0 was published on 2026-08-24.

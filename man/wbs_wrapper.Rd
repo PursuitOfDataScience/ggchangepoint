@@ -33,6 +33,9 @@ res$changepoints
 res$penalty$type   # sSIC selection, because `threshold` was not supplied
 \dontshow{\}) # examplesIf}
 }
+\references{
+\insertRef{fryzlewicz2014wild}{ggchangepoint}
+}
 \seealso{
 Other changepoint engines: 
 \code{\link{bcp_wrapper}()},

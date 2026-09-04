@@ -90,3 +90,9 @@ changepoint-location confidence intervals are overlaid. Multivariate
 results (from \code{ecp}, \code{inspect}, \code{geomcp}, ...) are drawn as
 faceted small-multiples with shared changepoint rules.
 }
+\seealso{
+\code{\link{ggcpt_plot_methods}} for the base \code{plot()}
+  methods that delegate here, and \code{\link{theme_ggcpt}()} and
+  \code{\link{geom_changepoint}()} for restyling and re-assembling the
+  layers by hand.
+}

@@ -50,7 +50,7 @@ has_envcpt      <- requireNamespace("EnvCpt", quietly = TRUE)
 **ggchangepoint** provides a unified, tidy interface to changepoint detection
 across the methodological spectrum. It introduces a single S3 result class,
 `ggcpt`, with `broom`-style methods (`tidy()`, `glance()`, `augment()`)
-[@robinson2017broom], a central dispatcher `cpt_detect()` covering 31
+[@robinson2017broom], a central dispatcher `cpt_detect()` covering 50
 detection methods across six algorithmic families, and native `ggplot2`
 [@wickham2016ggplot2] visualisation through `autoplot()` and a set of
 composable geoms. Where a method quantifies its uncertainty — the
@@ -233,7 +233,7 @@ head(augment(res))
 the fitted segment means (`show_segments`), the engine's fitted signal
 (`show_fit`), and changepoint-location confidence intervals (`show_ci`):
 
-```{r contract-plot}
+```{r contract-plot, fig.alt = "Series with its changepoint rules and the fitted segment levels drawn as horizontal steps"}
 autoplot(res, show_segments = TRUE)
 ```
 
@@ -337,8 +337,9 @@ x_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200) # kink at 100
 ## Penalised and optimal partitioning
 
 PELT [@killick2012pelt], binary segmentation [@scott1974cluster], segment
-neighbourhoods (Auger and Lawrence, 1989), and at-most-one-change (AMOC;
-Hinkley, 1970) come from the **changepoint** package [@killick2014changepoint];
+neighbourhoods [@auger1989segment], and at-most-one-change (AMOC)
+[@hinkley1970inference] come from the **changepoint** package
+[@killick2014changepoint];
 FPOP [@maidstone2017optimal] from **fpop**:
 
 ```{r penalised}
@@ -431,7 +432,7 @@ detector on a trending series over-detects notoriously. CPOP
 *exactly* under an $L_0$ penalty, returning a continuous piecewise-linear
 fit:
 
-```{r cpop, eval = has_cpop}
+```{r cpop, eval = has_cpop, fig.alt = "Series with the CPOP piecewise-linear fit overlaid and its changepoints marked"}
 res_cpop <- cpop_wrapper(x_slope)
 tidy(res_cpop)
 autoplot(res_cpop, show_fit = TRUE)
@@ -521,7 +522,7 @@ changepoint wherever the model is wrong. DeCAFS [@romano2022decafs] models
 exactly this regime — abrupt changes superimposed on random-walk drift and
 AR(1) noise — and separates the two:
 
-```{r decafs, eval = has_decafs}
+```{r decafs, eval = has_decafs, fig.alt = "Series with the DeCAFS fit overlaid, which separates gradual drift from abrupt change"}
 res_decafs <- decafs_wrapper(x_mean)
 tidy(res_decafs)
 autoplot(res_decafs, show_fit = TRUE)
@@ -582,7 +583,7 @@ Bai–Perron estimator [@bai1998estimating; @bai2003computation], via
 confidence intervals*; called on a bare series it dates mean shifts, and
 called with a formula it dates breaks in arbitrary regressions:
 
-```{r strucchange, eval = has_strucchange}
+```{r strucchange, eval = has_strucchange, fig.alt = "Series with the Bai-Perron breakpoints and their confidence intervals drawn as horizontal whiskers"}
 res_bp <- strucchange_wrapper(x_mean)
 tidy(res_bp)
 autoplot(res_bp, show_ci = TRUE)
@@ -592,7 +593,7 @@ Where the regression function is continuous — a kink rather than a jump —
 **segmented** [@muggeo2003segmented; @muggeo2008segmented] estimates
 broken-line relationships with standard errors for the breakpoints:
 
-```{r segmented, eval = has_segmented}
+```{r segmented, eval = has_segmented, fig.alt = "Series with the broken-line fit, its breakpoint, and the breakpoint's confidence interval"}
 res_seg <- segmented_wrapper(x_slope, npsi = 1, seed = 1)
 tidy(res_seg)
 autoplot(res_seg, show_fit = TRUE, show_ci = TRUE)

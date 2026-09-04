@@ -44,3 +44,7 @@ as_tibble(res)
 as.data.frame(res)
 format(res)
 }
+\seealso{
+\code{\link{ggcpt_plot_methods}} for \code{plot()} on the other
+  result classes, and \code{\link{tidy.ggcpt}()} for the tidy accessors.
+}

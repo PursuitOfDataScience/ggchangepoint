@@ -164,6 +164,28 @@ normalise_regions <- function(regions, n) {
   regions[order(regions$start, regions$end), , drop = FALSE]
 }
 
+# Internal: leave the caller's search path as we found it. Two engines
+# mutate it. `fabisearch` needs NMF *attached* rather than loaded, and
+# attaching NMF brings its own Depends (Biobase, BiocGenerics) and its
+# foreach/doParallel/doRNG stack with it -- eight packages measured, where
+# the wrapper only ever detached NMF itself. `bcp` attaches itself and grid
+# when its namespace loads. Neither is something a detection call should do
+# to a user's session.
+#
+# Only what *this* call added is detached, so a package the user had already
+# attached is untouched, and `search()` lists the most recently attached
+# first, which is the order they have to go in.
+#' @noRd
+with_search_path_restored <- function(expr) {
+  before <- search()
+  on.exit({
+    for (p in setdiff(search(), before)) {
+      try(detach(p, character.only = TRUE, unload = FALSE), silent = TRUE)
+    }
+  }, add = TRUE)
+  force(expr)
+}
+
 # Internal: check that an optional engine package is installed.
 #' @noRd
 need_pkg <- function(pkg) {

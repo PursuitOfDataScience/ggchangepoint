@@ -43,6 +43,9 @@ idetect_wrapper(c(rnorm(60), rnorm(60, 4)))$changepoints
 nrow(idetect_wrapper(rep(3, 100))$changepoints)
 \dontshow{\}) # examplesIf}
 }
+\references{
+\insertRef{anastasiou2022idetect}{ggchangepoint}
+}
 \seealso{
 Other changepoint engines: 
 \code{\link{bcp_wrapper}()},

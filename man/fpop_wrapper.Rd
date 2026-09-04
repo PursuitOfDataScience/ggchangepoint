@@ -39,6 +39,9 @@ y <- 5 * x
 fpop_wrapper(y, penalty = log(length(y)) * var(diff(y)))$changepoints
 \dontshow{\}) # examplesIf}
 }
+\references{
+\insertRef{maidstone2017optimal}{ggchangepoint}
+}
 \seealso{
 Other changepoint engines: 
 \code{\link{bcp_wrapper}()},

@@ -26,6 +26,9 @@ res$changepoints
 res$penalty$type
 \dontshow{\}) # examplesIf}
 }
+\references{
+\insertRef{fryzlewicz2018tail}{ggchangepoint}
+}
 \seealso{
 Other changepoint engines: 
 \code{\link{bcp_wrapper}()},

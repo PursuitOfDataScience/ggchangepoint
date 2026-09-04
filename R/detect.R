@@ -93,6 +93,12 @@
 #' and return the same segmentation whatever the units.
 #'
 #' @return A \code{ggcpt} object.
+#' @seealso \code{\link{cpt_methods}()} for what is available and what each
+#'   method can do. To get the result out: \code{\link{tidy.ggcpt}()},
+#'   \code{\link{glance.ggcpt}()}, \code{\link{augment.ggcpt}()},
+#'   \code{\link{summary.ggcpt}()} and \code{\link{print.ggcpt}()}. To
+#'   draw it: \code{\link{autoplot.ggcpt}()}. For the penalty:
+#'   \code{\link{cpt_penalty}()}.
 #' @export
 #'
 #' @examples
@@ -391,6 +397,9 @@ planned_methods <- function() {
 #'         \code{\link{ggcpt_solution_path}()} and
 #'         \code{\link{ggcpt_scale_space}()}.}
 #' }
+#' @seealso \code{\link{cpt_install_engines}()} to install a whole family of
+#'   the engines this table reports on; \code{\link{cpt_detect}()} to run
+#'   one; \code{\link{cpt_register_method}()} to add your own.
 #' @export
 #'
 #' @examples

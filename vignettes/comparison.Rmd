@@ -128,7 +128,7 @@ the raw series and a vector of method names, runs `cpt_detect()` for each,
 and renders the results. The default `layout = "facet"` draws one panel per
 method:
 
-```{r compare-facet}
+```{r compare-facet, fig.alt = "One panel per method, each showing the same series with that method's changepoints"}
 set.seed(2024)
 x <- c(rnorm(150, 0), rnorm(150, 3), rnorm(200, 1))
 ggcpt_compare(x, methods = cmp_methods)
@@ -138,7 +138,7 @@ A method that finds *no* changepoints keeps its panel — the series is drawn
 with no vertical lines on it — rather than silently disappearing. A method
 that ran and found nothing is a result, not a missing value:
 
-```{r compare-nochange}
+```{r compare-nochange, fig.alt = "The same comparison on a series with no change: one panel per method, showing whatever each reports"}
 set.seed(7)
 x_null <- rnorm(300)
 ggcpt_compare(x_null, methods = c("pelt", "binseg"))
@@ -149,7 +149,7 @@ with colour-coded rules, which makes both kinds of disagreement easier to
 see: small differences in an estimated location, and outright differences in
 how many changepoints a method reports.
 
-```{r compare-overlay}
+```{r compare-overlay, fig.alt = "Every method's changepoints overlaid on one copy of the series, coloured by method"}
 ggcpt_compare(x, methods = cmp_methods, layout = "overlay")
 ```
 

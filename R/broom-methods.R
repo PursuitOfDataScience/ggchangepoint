@@ -334,6 +334,8 @@ print.summary.ggcpt <- function(x, ...) {
 #' @return \code{as_tibble()} and \code{as.data.frame()} return the changepoints
 #'   table; \code{format()} returns a length-one character string; \code{plot()}
 #'   draws the default plot and returns the \code{ggplot} object invisibly.
+#' @seealso \code{\link{ggcpt_plot_methods}} for \code{plot()} on the other
+#'   result classes, and \code{\link{tidy.ggcpt}()} for the tidy accessors.
 #' @name ggcpt_methods
 #' @examples
 #' set.seed(2022)
