@@ -24,6 +24,12 @@ wbs2_wrapper(x, ...)
 
 A `ggcpt` object.
 
+## References
+
+Fryzlewicz P (2020). “Detecting Multiple Change-Point Features via
+Narrowest-Over-Threshold.” *Journal of the Royal Statistical Society
+Series B*, **82**(5), 1377–1418.
+
 ## See also
 
 Other changepoint engines:

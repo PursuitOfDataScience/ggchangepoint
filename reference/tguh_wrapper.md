@@ -24,6 +24,12 @@ tguh_wrapper(x, ...)
 
 A `ggcpt` object.
 
+## References
+
+Fryzlewicz P (2018). “Tail-Greedy Bottom-Up Data Decompositions and Fast
+Multiple Change-Point Detection.” *The Annals of Statistics*,
+**46**(6B), 3390–3421.
+
 ## See also
 
 Other changepoint engines:

@@ -127,3 +127,13 @@ autoplot(
 ## Value
 
 A ggplot object.
+
+## See also
+
+[`ggcpt_plot_methods`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+for the base [`plot()`](https://rdrr.io/r/graphics/plot.default.html)
+methods that delegate here, and
+[`theme_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/theme_ggcpt.md)
+and
+[`geom_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_changepoint.md)
+for restyling and re-assembling the layers by hand.

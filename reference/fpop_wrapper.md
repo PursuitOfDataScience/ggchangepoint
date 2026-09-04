@@ -40,6 +40,14 @@ fpop_wrapper(x, penalty = NULL, ...)
 
 A `ggcpt` object.
 
+## References
+
+Maidstone R, Hocking T, Rigaill G, Fearnhead P (2017). “On Optimal
+Multiple Changepoint Algorithms for Large Data.” *Statistics and
+Computing*, **27**(2), 519–533.
+[doi:10.1007/s11222-016-9636-3](https://doi.org/10.1007/s11222-016-9636-3)
+.
+
 ## See also
 
 Other changepoint engines:

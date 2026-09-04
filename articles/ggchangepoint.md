@@ -15,7 +15,7 @@ is the *feature tour*: it visits **every exported function** in the
 package at the point where it belongs in the workflow, so a reader can
 map the full surface in one sitting.
 
-Four companion vignettes go deeper:
+Six companion vignettes go deeper:
 [`vignette("introduction")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md)
 develops the methodology,
 [`vignette("comparison")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md)
@@ -24,9 +24,12 @@ treats method comparison and evaluation,
 covers confidence intervals, significance regions, selecting the number
 of changepoints and the diagnostic displays,
 [`vignette("supervised")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/supervised.md)
-covers labelled regions and learned penalties, and
+covers labelled regions and learned penalties,
 [`vignette("extending")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/extending.md)
-shows how to bring an external detector into the same grammar.
+shows how to bring an external detector into the same grammar, and
+[`vignette("monitoring")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/monitoring.md)
+covers sequential detection on a stream and its detection-delay
+accounting.
 
 > **New in 0.5.0.** Nineteen further engines; a time index that survives
 > the round trip (`cpt_detect(x, index = dates)` and `ts`/`xts`/`zoo`/
@@ -146,7 +149,7 @@ summary(res)
 #>   CP convention:            left 
 #>   Series length:            200 
 #>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.016 
+#>   Runtime (seconds):        0.015 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -177,8 +180,9 @@ format(res)
 plot(res)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/plot-fallback-1.png)
+![The default plot: the series with its changepoint rules, drawn by
+plot() delegating to
+autoplot()](ggchangepoint_files/figure-html/plot-fallback-1.png)
 
 ## Unified detection
 
@@ -223,10 +227,10 @@ tidy(cpt_detect(x, method = "not", contrast = "pcwsLinMean"))
 
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
 is the live capability table: every method the package knows, its engine
-package, what it can detect, and whether the engine is installed. Four
+package, what it can detect, and whether the engine is installed. Five
 rows carry status `"planned"` rather than `"available"`: their engines
-(`gfpop`, `robseg`, `FOCuS`, `hdbinseg`) are not on CRAN, so they are
-documented as future work and are *not* wired to
+(`gfpop`, `robseg`, `FOCuS`, `hdbinseg`, `changeforest`) are not on
+CRAN, so they are documented as future work and are *not* wired to
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md).
 
 ``` r
@@ -797,24 +801,27 @@ tidy(path)
 autoplot(path)                          # the cost elbow
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/crops-elbow-1.png)
+![CROPS cost elbow: segmentation cost against the number of changepoints
+for each solution on the penalty
+path](ggchangepoint_files/figure-html/crops-elbow-1.png)
 
 ``` r
 
 autoplot(path, type = "path")           # changepoints vs penalty
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/crops-path-1.png)
+![Changepoint locations against the penalty, showing which locations
+survive as the penalty
+rises](ggchangepoint_files/figure-html/crops-path-1.png)
 
 ``` r
 
 autoplot(path, type = "segmentations")  # the candidate models themselves
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/crops-seg-1.png)
+![The candidate CROPS segmentations, faceted by number of changepoints,
+each panel showing the series with that solution's
+changepoints](ggchangepoint_files/figure-html/crops-seg-1.png)
 
 ## The visualisation layer
 
@@ -834,16 +841,18 @@ autoplot(res, show_segments = TRUE, cptline_color = "firebrick",
          cptline_type = "dashed", cptline_linewidth = 0.8)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/autoplot-1.png)
+![Series with its changepoints drawn as firebrick rules and the fitted
+segment levels as horizontal
+steps](ggchangepoint_files/figure-html/autoplot-1.png)
 
 ``` r
 
 autoplot(res_smuce, show_ci = TRUE, show_fit = TRUE)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/autoplot-ci-1.png)
+![SMUCE step fit overlaid on the series, with horizontal whiskers giving
+each changepoint's confidence
+interval](ggchangepoint_files/figure-html/autoplot-ci-1.png)
 
 Multivariate results facet automatically:
 
@@ -852,8 +861,9 @@ Multivariate results facet automatically:
 autoplot(res_hd)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/autoplot-mv-1.png)
+![Faceted small-multiples, one panel per coordinate, sharing the
+detected changepoint
+rules](ggchangepoint_files/figure-html/autoplot-mv-1.png)
 
 The composable layers work inside any ggplot pipeline:
 [`geom_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_changepoint.md)
@@ -886,8 +896,10 @@ ggplot(df, aes(index, value)) +
   theme_ggcpt()
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/geoms-1.png)
+![The same plot assembled layer by layer: shaded segment bands behind
+the series, a red rule at each changepoint, and the fitted level drawn
+as a segment across each
+span](ggchangepoint_files/figure-html/geoms-1.png)
 
 ``` r
 
@@ -896,8 +908,8 @@ ggplot(df, aes(index, value)) +
   stat_changepoint(method = "pelt", color = "blue")
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/stat-1.png)
+![Series with changepoints added by stat_changepoint(), which runs the
+detector inside the layer](ggchangepoint_files/figure-html/stat-1.png)
 
 ``` r
 
@@ -913,8 +925,9 @@ ggplot(df, aes(index, value)) +
   geom_changepoint(data = ci_tbl, aes(xintercept = cp), color = "blue")
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/geom-ci-1.png)
+![Series in grey with a row of blue horizontal whiskers below it, one
+per changepoint, each spanning that changepoint's confidence
+interval](ggchangepoint_files/figure-html/geom-ci-1.png)
 
 [`ggcptplot()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcptplot.md)
 and
@@ -926,16 +939,18 @@ are the original one-call plots for the two classical engines:
 ggcptplot(x, change_in = "mean", cp_method = "PELT")
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/original-plots-1.png)
+![The original one-call plot: the series with its PELT changepoints
+marked, drawn by
+ggcptplot()](ggchangepoint_files/figure-html/original-plots-1.png)
 
 ``` r
 
 ggecpplot(x, algorithm = "divisive", seed = 1)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/ggecpplot-1.png)
+![The original one-call ecp plot: the series with the divisive
+algorithm's changepoints
+marked](ggchangepoint_files/figure-html/ggecpplot-1.png)
 
 The Bayesian engines get the field’s signature displays:
 [`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)
@@ -949,16 +964,17 @@ shows the BOCPD run-length posterior as a heatmap.
 ggcpt_posterior(res_bcp)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/posterior-1.png)
+![Two-panel Bayesian display: the series with its posterior mean above,
+per-location posterior changepoint probability
+below](ggchangepoint_files/figure-html/posterior-1.png)
 
 ``` r
 
 ggcpt_runlength(res_bocpd)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/runlength-1.png)
+![Run-length heatmap: posterior probability of each run length over
+time](ggchangepoint_files/figure-html/runlength-1.png)
 
 Finally,
 [`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md)
@@ -989,16 +1005,17 @@ result, not a missing one.
 ggcpt_compare(x, methods = c("pelt", "binseg", "amoc"))
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/compare-1.png)
+![One panel per method, each showing the same series with that method's
+changepoints](ggchangepoint_files/figure-html/compare-1.png)
 
 ``` r
 
 ggcpt_compare(x, methods = c("pelt", "binseg"), layout = "overlay")
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/compare-overlay-1.png)
+![All three methods' changepoints overlaid on one copy of the series,
+coloured by
+method](ggchangepoint_files/figure-html/compare-overlay-1.png)
 
 ``` r
 
@@ -1040,8 +1057,8 @@ tidy(batch)
 autoplot(batch)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/batch-1.png)
+![Small-multiples of a panel of series, each with its own detected
+changepoints](ggchangepoint_files/figure-html/batch-1.png)
 
 [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
 quantifies how fragile a segmentation is: it resamples residuals within
@@ -1063,8 +1080,9 @@ st
 autoplot(st)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/stability-1.png)
+![Bootstrap detection-frequency profile along the series, with the
+original changepoints marked as dashed
+rules](ggchangepoint_files/figure-html/stability-1.png)
 
 ## Evaluation against ground truth
 
@@ -1101,8 +1119,10 @@ cpt_metrics_annotated(pred, list(100, 101, 99), n = length(x))
 ggcpt_eval(pred, truth, x, margin = 5)
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/eval-plot-1.png)
+![Series with predictions coloured as true positives and false
+positives, shaded tolerance windows around each true changepoint, and
+missed truths as dashed
+rules](ggchangepoint_files/figure-html/eval-plot-1.png)
 
 ## Simulation and canonical signals
 
@@ -1152,8 +1172,9 @@ ggplot(blocks, aes(index, value)) +
   labs(title = "The blocks test signal with its true changepoints")
 ```
 
-![ggchangepoint feature tour
-plot](ggchangepoint_files/figure-html/blocks-plot-1.png)
+![The Donoho-Johnstone blocks test signal, with its true changepoints
+marked by thin blue
+rules](ggchangepoint_files/figure-html/blocks-plot-1.png)
 
 ## Citing the methodology
 
@@ -1173,8 +1194,8 @@ cpt_cite(res)
 ## The 0.5.0 surface
 
 The sections above are the 0.4.0 tour. What follows visits the rest of
-the exported surface, one example each; three companion vignettes
-develop these properly.
+the exported surface, one example each; four companion vignettes develop
+these properly.
 
 ### Time indices
 
@@ -1578,9 +1599,10 @@ for method comparison and accuracy evaluation in depth, see
 [`vignette("comparison", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md);
 and for the 0.5.0 additions in depth, see
 [`vignette("inference")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/inference.md),
-[`vignette("supervised")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/supervised.md)
+[`vignette("supervised")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/supervised.md),
+[`vignette("extending")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/extending.md)
 and
-[`vignette("extending")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/extending.md).
+[`vignette("monitoring")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/monitoring.md).
 
 ## References
 

@@ -74,6 +74,15 @@ A tibble with columns:
   and
   [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md).
 
+## See also
+
+[`cpt_install_engines()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_install_engines.md)
+to install a whole family of the engines this table reports on;
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+to run one;
+[`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
+to add your own.
+
 ## Examples
 
 ``` r

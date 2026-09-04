@@ -90,14 +90,14 @@ there?</strong></li>
 <h2 id="how-these-numbers-were-produced-and-what-they-are-not">How these numbers were produced, and what they are not<a class="anchor" aria-label="anchor" href="#how-these-numbers-were-produced-and-what-they-are-not"></a>
 </h2>
 <p>Every table below comes from <strong>one replicate per cell</strong>
-(except where a replicate count is stated) on a single Linux x86_64
-machine running R 4.4.1, with the engine versions current at the time of
-measurement. They are <strong>indicative, not published rates</strong>:
-a single timing on one machine, and a single detection count on one
-simulated series, are the right order of magnitude and the wrong thing
-to cite as a benchmark. Treat them as guidance for choosing a method and
-sizing a run, and re-measure on your own hardware and data before making
-a claim.</p>
+(except where a replicate count is stated), measured against
+ggchangepoint 0.5.0 in August 2026 on a single Linux x86_64 machine
+running R 4.4.1, with the engine versions current then. They are
+<strong>indicative, not published rates</strong>: a single timing on one
+machine, and a single detection count on one simulated series, are the
+right order of magnitude and the wrong thing to cite as a benchmark.
+Treat them as guidance for choosing a method and sizing a run, and
+re-measure on your own hardware and data before making a claim.</p>
 <p>The benchmarking machinery itself is <code><a href="../reference/cpt_benchmark.html">cpt_benchmark()</a></code>,
 documented in
 <code><a href="../articles/comparison.html">vignette("comparison", package = "ggchangepoint")</a></code>; the

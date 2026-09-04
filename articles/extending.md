@@ -244,8 +244,9 @@ cpt_register_method(
 autoplot(cpt_detect(x, method = "smoothed_jump"), show_fit = TRUE)
 ```
 
-![ggchangepoint plot of a result from an externally supplied
-detector](extending_files/figure-html/register-full-1.png)
+![Series with the registered detector's changepoint marked and the
+smoothed signal it fitted
+overlaid](extending_files/figure-html/register-full-1.png)
 
 ``` r
 

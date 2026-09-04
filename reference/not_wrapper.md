@@ -36,6 +36,13 @@ not_wrapper(x, contrast = "pcwsConstMean", seed = NULL, ...)
 A `ggcpt` object whose `change_in` reflects the contrast: `"mean"`,
 `"meanvar"`, or `"slope"`.
 
+## References
+
+Baranowski R, Chen Y, Fryzlewicz P (2019). “Narrowest-Over-Threshold
+Detection of Multiple Change Points and Change-Point-Like Features.”
+*Journal of the Royal Statistical Society Series B*, **81**(3), 649–672.
+[doi:10.1111/rssb.12322](https://doi.org/10.1111/rssb.12322) .
+
 ## See also
 
 Other changepoint engines:

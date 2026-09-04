@@ -52,6 +52,14 @@ character string;
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) draws the
 default plot and returns the `ggplot` object invisibly.
 
+## See also
+
+[`ggcpt_plot_methods`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+for [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on the
+other result classes, and
+[`tidy.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/tidy.ggcpt.md)
+for the tidy accessors.
+
 ## Examples
 
 ``` r

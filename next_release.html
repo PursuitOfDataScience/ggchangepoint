@@ -9914,7 +9914,7 @@ Warning: `arl0` does not affect `method = "edetector"`, which is tuned by
 <p>One entry point already refused: <code><a href="reference/cpt_annotate_events.html">cpt_annotate_events()</a></code> looks for a location <em>column</em> and rejects a factor one (“Could not find a location column in <code>events</code>”), because it tests the column rather than coercing it.</p>
 <div class="section level3">
 <h3 id="id_2661-the-fix-is-one-helper-and-it-replaced-two-of-my-own">266.1 The fix is one helper, and it replaced two of my own<a class="anchor" aria-label="anchor" href="#id_2661-the-fix-is-one-helper-and-it-replaced-two-of-my-own"></a></h3>
-<p>Rounds one and three each added a local guard — <code>as_cp_input()</code> in <code>R/as-ggcpt.R</code> and <code>as_cp_indices()</code> in <code>R/metrics.R</code> — with overlapping rejections and different sorting behaviour. That is the same drift §263.1 found in the two test helpers, one round after criticising it, so both are now a single <code>as_cp_locations(x, arg, sort)</code> beside the other validators, refusing: a <code>ggcpt</code>, a data frame, a <strong>factor</strong>, a <strong>logical mask</strong>, and an NA the coercion <em>invented</em> (as opposed to one that arrived as NA, which the documented drop rules cover). Applied at eleven sites.</p>
+<p>Rounds one and three each added a local guard — <code>as_cp_input()</code> in <code>R/as-ggcpt.R</code> and <code>as_cp_indices()</code> in <code>R/metrics.R</code> — with overlapping rejections and different sorting behaviour. That is the same drift §263.1 found in the two test helpers, one round after criticising it, so both are now a single <code>as_cp_locations(x, arg, sort)</code> beside the other validators, refusing: a <code>ggcpt</code>, a data frame, a <strong>factor</strong>, a <strong>logical mask</strong>, and an NA the coercion <em>invented</em> (as opposed to one that arrived as NA, which the documented drop rules cover). Applied at <strong>thirteen call sites</strong> across ten entry points – <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> and <code><a href="reference/ggcpt_eval.html">ggcpt_eval()</a></code> take two each – plus one more passed to <code><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply()</a></code> rather than called directly, in <code><a href="reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code>. (Corrected in §305: this said “eleven”.)</p>
 <p>Verified in both directions: ten factor calls refused, each naming the caller’s own argument (<code>pred</code>, <code>truth</code>, <code>annotations</code>, <code>start</code>, <code>changepoints</code>, <code>cp</code>), and thirteen honest calls unchanged — including <code>cpt_metrics(c("100", "150"), ...)</code>, since character that converts cleanly was accepted before and still is.</p>
 </div>
 </div>
@@ -9932,7 +9932,7 @@ Warning: `arl0` does not affect `method = "edetector"`, which is tuned by
 <strong>eight entry points read a factor’s level codes as locations</strong>, and four of them returned a metric: recall 0 for exact predictions, f1 0, covering 0.5</td>
 <td>one factor call per entry point</td>
 </tr><tr><td>266.1</td>
-<td>the two local guards from rounds one and three had already drifted apart; now one helper at eleven sites</td>
+<td>the two local guards from rounds one and three had already drifted apart; now one helper at thirteen call sites</td>
 <td>read both, then merged</td>
 </tr><tr><td>—</td>
 <td>200 of 205 <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> calls and 25 of 25 <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code> calls use <code>call. = FALSE</code>; the five exceptions are deliberate <code>stop(e)</code> re-raises of an upstream condition</td>
@@ -10281,6 +10281,943 @@ Warning: `arl0` does not affect `method = "edetector"`, which is tuned by
 <td>full suite</td>
 </tr></tbody></table><p>New actions: none opened. One fix, and one message corrected before release.</p>
 <p><strong>What this pass adds.</strong> A check that reports a <em>result</em> rather than an input found, on its first run, a case its own explanation got wrong. Worth generalising: a diagnostic that names a cause is itself a claim, and it needs the same treatment as any other claim in this document — state the observation, and branch on what the code actually knows rather than on the situation you had in mind when you wrote it.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xiv--the-prose-and-the-description-checked-against-the-package">Part XIV — the prose and the DESCRIPTION, checked against the package<a class="anchor" aria-label="anchor" href="#part-xiv--the-prose-and-the-description-checked-against-the-package"></a></h1>
+<p>A read-only pass, run while the pushed tree was being validated by CI, on the two surfaces where a claim can rot without any test noticing: the sentences in <code>README.md</code> and the vignettes, and the dependency lists in <code>DESCRIPTION</code>. The 0.5.0 audit found a stale planned-engine count and a misattributed ARL bound in exactly this surface (S30), so it is worth re-checking rather than assuming.</p>
+<div class="section level2">
+<h2 id="id_285-every-name-in-the-prose-exists-and-every-count-is-right">285. Every name in the prose exists, and every count is right<a class="anchor" aria-label="anchor" href="#id_285-every-name-in-the-prose-exists-and-every-count-is-right"></a></h2>
+<p><strong>127 package-looking names</strong> — <code>cpt_*</code>, <code>ggcpt_*</code>, <code>*_wrapper</code>, the geoms, the scales, the signal generators — appear across <code>README.md</code>, <code>README.Rmd</code> and the eight vignettes. <strong>All 127 are exported.</strong> No stale reference to a function that was renamed or removed.</p>
+<p>The countable claims, against the live package:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>claim</th>
+<th>where</th>
+<th>live value</th>
+</tr></thead><tbody><tr><td>“50 methods”</td>
+<td>
+<code>README.md</code>, <code>introduction.Rmd</code>
+</td>
+<td>50 rows with <code>status == "available"</code>
+</td>
+</tr><tr><td>“50 wired”</td>
+<td><code>comparison.Rmd</code></td>
+<td>same</td>
+</tr><tr><td>“fifty detectors”</td>
+<td><code>extending.Rmd</code></td>
+<td>same</td>
+</tr><tr><td>“fifty methods”</td>
+<td><code>DESCRIPTION</code></td>
+<td>same</td>
+</tr><tr><td>“five canonical test signals”</td>
+<td><code>introduction.Rmd</code></td>
+<td>
+<code>signal_blocks</code>, <code>signal_fms</code>, <code>signal_teeth</code>, <code>signal_stairs</code>, <code>signal_mix</code>
+</td>
+</tr><tr><td>“six families … plus two concerns”</td>
+<td><code>introduction.Rmd</code></td>
+<td>all eight sections present and named as listed</td>
+</tr></tbody></table><div class="section level3">
+<h3 id="id_2851-the-one-claim-that-needed-running-not-reading">285.1 The one claim that needed running, not reading<a class="anchor" aria-label="anchor" href="#id_2851-the-one-claim-that-needed-running-not-reading"></a></h3>
+<p>Four documents tell the reader to use <code>subset(cpt_methods(), status == "registered")</code>. Called on a clean session, <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> returns only <code>available</code> (50) and <code>planned</code> (5) — no <code>registered</code> row exists, so the documented idiom cannot be verified by reading the table. Registering a method and re-calling it:</p>
+<pre><code>status values: available=50  planned=5  registered=1
+the registered row: proseprobe | user | registered | NA
+subset(cpt_methods(), status == "registered")$method -&gt; proseprobe</code></pre>
+<p>The claim holds exactly. Worth recording because a <em>reader</em> of the live table would conclude the documentation was wrong.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_286-description-is-tight-in-both-directions">286. <code>DESCRIPTION</code> is tight in both directions<a class="anchor" aria-label="anchor" href="#id_286-description-is-tight-in-both-directions"></a></h2>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>direction</th>
+<th>result</th>
+</tr></thead><tbody><tr><td>all <strong>56</strong> <code>Suggests</code> referenced somewhere in <code>R/</code>, <code>tests/</code> or <code>vignettes/</code>
+</td>
+<td>yes, 0 unused</td>
+</tr><tr><td>every <code>pkg::</code> call in <code>R/</code> declared in <code>Imports</code> or <code>Suggests</code>
+</td>
+<td>yes, 0 undeclared</td>
+</tr></tbody></table><p>Neither direction is checked by <code>R CMD check</code> — an unused <code>Suggests</code> entry passes silently and costs every checking machine an install — so this is worth the one command it takes.</p>
+</div>
+<div class="section level2">
+<h2 id="id_287-what-this-pass-changes">287. What this pass changes<a class="anchor" aria-label="anchor" href="#id_287-what-this-pass-changes"></a></h2>
+<p>Nothing in the package: three audits, no findings.</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>audit</th>
+<th>result</th>
+</tr></thead><tbody><tr><td>285</td>
+<td>127 package names in the prose</td>
+<td>all exported</td>
+</tr><tr><td>285</td>
+<td>six countable claims in the prose</td>
+<td>all match the live package</td>
+</tr><tr><td>285.1</td>
+<td>
+<code>status == "registered"</code>, which the live table cannot show</td>
+<td>verified by registering a method</td>
+</tr><tr><td>286</td>
+<td>56 <code>Suggests</code> used / every <code>::</code> declared</td>
+<td>clean both ways</td>
+</tr></tbody></table><p><strong>What this pass adds.</strong> §285.1 is the reusable bit: a documented idiom that queries a <em>state the package is not in by default</em> cannot be checked by inspecting the default state, and reading the table would have made the documentation look wrong. The check has to put the package into the state the sentence describes.</p>
+</div>
+<div class="section level2">
+<h2 id="id_288-ci-is-green-and-the-cover-letter-had-gone-stale">288. CI is green, and the cover letter had gone stale<a class="anchor" aria-label="anchor" href="#id_288-ci-is-green-and-the-cover-letter-had-gone-stale"></a></h2>
+<p><code>b94c612</code> pushed to <code>master</code>. GitHub Actions R-CMD-check:</p>
+<table class="table"><thead><tr><th>job</th>
+<th>result</th>
+</tr></thead><tbody><tr><td>ubuntu-latest devel / release / oldrel-1</td>
+<td><code>Status: OK</code></td>
+</tr><tr><td>windows-latest release</td>
+<td><code>Status: OK</code></td>
+</tr><tr><td>macos-latest release</td>
+<td>1 NOTE</td>
+</tr></tbody></table><p>pkgdown and the pages deployment are green too. The test suite reports <strong>0 failures on every platform</strong> — 3119 passing on Ubuntu, 3079 on Windows, 3065 on macOS.</p>
+<p>The macOS note is <code>checking dependencies in R code</code>, and its whole body is <code>rgl.so</code> failing to <code>dlopen</code> for want of <code>/opt/X11/lib/libGLU.1.dylib</code>. That is S37’s chain seen from the other end: <code>fabisearch</code> -&gt; <code>NMF</code> / <code>plot3D</code> -&gt; <code>misc3d</code> -&gt; <code>rgl</code>, on a runner with no XQuartz. S37 was the <em>package</em> loading that chain through <code><a href="reference/cpt_methods.html">cpt_methods()</a></code>; this is <code>R CMD check</code>’s own dependency step doing it, which nothing in this package can prevent short of dropping a suggested engine. Every other macOS line, examples and tests and vignette rebuild included, is OK.</p>
+<div class="section level3">
+<h3 id="id_2881-the-submission-note-the-fix-invalidated">288.1 The submission note the fix invalidated<a class="anchor" aria-label="anchor" href="#id_2881-the-submission-note-the-fix-invalidated"></a></h3>
+<p><code>cran-comments.md</code> still said:</p>
+<blockquote>
+<p>0 errors | 0 warnings | 1 note. … <code>installed size is 5.4Mb</code> / <code>doc 4.7Mb</code></p>
+</blockquote>
+<p><strong>That note no longer exists.</strong> §249’s <code>dpi = 72</code> removed it, and the cover letter is the one document in the repository that no check reads, so nothing caught the contradiction: the file would have told CRAN to expect a note the package does not raise, alongside numbers from before the change. Rewritten to state what the checks now report, plus the macOS <code>rgl</code> explanation above.</p>
+<p>One claim was narrowed while writing it. The draft said the installed <code>doc</code> directory drops “to under 4 MB”, from §249’s local measurement of 3.66 MB — but CI reports <code>doc</code> at 4.0-4.4 Mb, because <code>R CMD check</code>’s size accounting and <code>du</code> do not agree and platforms differ. A cover letter is the worst place for a number that holds on one machine, so it now says “cuts the installed <code>doc</code> directory by about a quarter” and cites only the tarball, which was measured directly: 4,445,958 bytes.</p>
+<p><strong>What this adds.</strong> <code>cran-comments.md</code> is <code>.Rbuildignore</code>d and therefore outside every audit this document has run: the <code>@return</code> sweep (§272), the prose sweep (§285) and the two-directional Rd checks all stop at files the package ships. The one file written <em>for</em> the reviewer is the one file nothing verifies. Worth re-reading against a fresh check log before every submission, because it goes stale exactly when a check result improves.</p>
+</div>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xv--the-guard-for-the-defect-ci-cannot-see">Part XV — the guard for the defect CI cannot see<a class="anchor" aria-label="anchor" href="#part-xv--the-guard-for-the-defect-ci-cannot-see"></a></h1>
+<div class="section level2">
+<h2 id="id_289-four-more-clean-audits">289. Four more clean audits<a class="anchor" aria-label="anchor" href="#id_289-four-more-clean-audits"></a></h2>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>audit</th>
+<th>result</th>
+</tr></thead><tbody><tr><td>
+<code>README.md</code> in sync with <code>README.Rmd</code>
+</td>
+<td>yes – the <code>.md</code> was rebuilt one commit <em>after</em> the last <code>.Rmd</code> edit (<code>abf04c6</code> after <code>ae4cf68</code>), and nothing in this loop’s nine rounds changed any output the README prints: it shows no <code><a href="reference/cpt_annotate_events.html">cpt_annotate_events()</a></code> output, no <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on a result, and no stability plot</td>
+</tr><tr><td>vdiffr snapshots orphaned or missing</td>
+<td>none: 25 <code>expect_doppelganger()</code> calls, 25 distinct standardised names, 25 files</td>
+</tr><tr><td>GitHub Actions action versions</td>
+<td>all current: <code>actions/checkout@v4</code>, <code>r-lib/actions/*@v2</code>, <code>github-pages-deploy-action@v4.5.0</code>
+</td>
+</tr><tr><td>the failure-only vignette diagnostic step</td>
+<td>present and valid – <code>tools::buildVignettes(dir = , ser_elibs = NULL)</code> looked like a typo and <strong>is a real argument</strong> in R 4.4.1, verified by calling it</td>
+</tr></tbody></table><p>The snapshot audit gave a false alarm first: comparing file names against test titles reported 19 orphans, because vdiffr’s <code>str_standardise()</code> maps <em>any</em> non-alphanumeric run to <code>-</code>, and my first pass only mapped underscores. Second instrument error in three rounds (§268 was the first), same shape: the sweep was wrong before the package was.</p>
+</div>
+<div class="section level2">
+<h2 id="id_290-ci-cannot-catch-the-mistake-that-has-been-made-three-times-running">290. CI cannot catch the mistake that has been made three times running<a class="anchor" aria-label="anchor" href="#id_290-ci-cannot-catch-the-mistake-that-has-been-made-three-times-running"></a></h2>
+<p>The DESCRIPTION promises the package works with its Imports alone. <strong>CI installs every suggested package</strong>, so a test that calls a Suggests engine without a guard passes all five jobs and fails only in an Imports-only check. That has now happened three times: <code>ggrepel</code> (S31), then <code>cpm</code>, then this loop’s own <code>fpop</code> – which passed ubuntu devel/release/oldrel-1, windows and macOS, and was caught by the local R 4.6.0 run minutes before the push.</p>
+<p>So the guard belongs in the suite, where it runs everywhere. It is exact in three ways, each of which a naive version got wrong:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>The engine comes from the registry.</strong> A method whose engine is an Imports package needs no guard; 6 of the 50 qualify (<code>pelt</code>, <code>binseg</code>, <code>segneigh</code>, <code>amoc</code>, <code>np</code>, <code>ecp</code>), and the other 44 need one.</li>
+<li>
+<strong>Only call forms count</strong>, not the bare name. The first version matched any <code>"&lt;method&gt;"</code> string and flagged twelve blocks, of which ten were noise: <code>"var"</code> is a method <em>and</em> the <code>change_in = "var"</code> value, and several tests list method names as data (<code>test-050-engines.R:275</code> “used” eighteen engines it was only enumerating).</li>
+<li>
+<strong>A call inside <code>expect_error()</code> is exempt.</strong> Two blocks survived the tightening and both are correct as they stand: <code>cpt_detect(&lt;matrix&gt;, method = "sn")</code> asserting “univariate” and <code>cpt_detect(x, method = "fpop", change_in = "var")</code> asserting “not supported”. Both refusals fire <em>before</em> the engine is needed – that is the shape-first ordering the 0.5.0 audit fixed – so they have to work without it, and guarding them would delete the coverage that matters most on a minimal installation. My <code>fpop</code> slip was inside <code>expect_warning()</code>, which is the opposite: it needs the engine to run.</li>
+</ol><p><strong>Validated in both directions before being trusted</strong>, which is the part worth copying: the rule reports 0 blocks on the current suite, and re-injecting the <code>fpop</code> line reports exactly <code>test-hardening.R:334 -&gt; fpop</code>. A guard that has not been shown to fire on the bug it exists for is a guess.</p>
+</div>
+<div class="section level2">
+<h2 id="id_291-what-this-pass-changes">291. What this pass changes<a class="anchor" aria-label="anchor" href="#id_291-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>289</td>
+<td>README in sync, snapshots in sync, actions current, the CI diagnostic valid</td>
+<td>four checks, one of which needed the argument list read rather than guessed</td>
+</tr><tr><td>290</td>
+<td>
+<strong>CI structurally cannot see an unguarded Suggests call</strong>; three occurrences to date</td>
+<td>the <code>fpop</code> slip passed 5 CI jobs</td>
+</tr><tr><td>290</td>
+<td>the guard now catches it, with 0 false positives on 25 test files</td>
+<td>run clean, then run against the re-injected slip</td>
+</tr></tbody></table><p>New actions: none opened. One test added; no package code touched.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xvi--twenty-figures-one-description-between-them">Part XVI — twenty figures, one description between them<a class="anchor" aria-label="anchor" href="#part-xvi--twenty-figures-one-description-between-them"></a></h1>
+<div class="section level2">
+<h2 id="id_292-the-hypothesis-was-backwards-and-measuring-said-so-twice">292. The hypothesis was backwards, and measuring said so twice<a class="anchor" aria-label="anchor" href="#id_292-the-hypothesis-was-backwards-and-measuring-said-so-twice"></a></h2>
+<p><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> attaches a real description to every plot it draws – <code>cpt_alt_text()</code> builds it and <code>with_alt()</code> applies it as <code>labs(alt = )</code>:</p>
+<blockquote>
+<p>“Line chart of a time series of 120 observations ranging from -2.21 to 6.4, with 1 changepoint at 60 marked by vertical rules. Detected with the pelt method on a change in mean.”</p>
+</blockquote>
+<p>Each vignette also sets a single generic <code>fig.alt</code> in <code>opts_chunk$set()</code>, so the working hypothesis was that the vignettes were overriding the good text with a placeholder, and the fix was to delete the global option and let each plot speak for itself. <strong>Both halves of that were wrong.</strong></p>
+<p><strong>First measurement – the scale of the problem is real.</strong> Counting <code>&lt;img&gt;</code> alt attributes in the built <code>inst/doc</code>: <strong>29 of 67 figures carried the generic per-vignette string</strong>, and <code>ggchangepoint.html</code> was the worst at <strong>20 of 26</strong> – twenty different figures all announced as “ggchangepoint feature tour plot”, which for a screen-reader user is indistinguishable from no alt text at all.</p>
+<p><strong>Second measurement – the proposed fix makes it worse.</strong> Rendering the feature tour with the global <code>fig.alt</code> removed produced 26 <code>&lt;img&gt;</code> tags of which only 6 had an <code>alt</code> attribute; the other <strong>20 had none at all</strong>. knitr 1.50 does not read a ggplot’s <code>alt</code> label: with <code>fig.alt</code> unset the attribute is simply absent, for a package plot and a bare <code>ggplot2</code> plot alike (<code>knitr:::get_alt_text</code> does not exist in this version). The global option is not overriding good text – it is the only thing standing between those figures and nothing.</p>
+<p><strong>And the first count of the removal was wrong too.</strong> The regex matched <code>&lt;img ... alt="..."&gt;</code>, so an image with <em>no</em> alt attribute did not match, and the first reading was “0 empty alts” – exactly backwards. Counting <code>&lt;img</code> tags and alt attributes separately is what showed the gap. Third instrument error in four rounds; the pattern is always the same, a sweep that cannot see the thing it is looking for.</p>
+</div>
+<div class="section level2">
+<h2 id="id_293-so-the-fix-is-the-work-the-vignettes-were-already-half-doing">293. So the fix is the work the vignettes were already half doing<a class="anchor" aria-label="anchor" href="#id_293-so-the-fix-is-the-work-the-vignettes-were-already-half-doing"></a></h2>
+<p>38 of the 67 figures already had hand-written per-chunk <code>fig.alt</code> – “Series with shaded label regions behind it, coloured by what each label asserts”, and so on. The remaining 29 just had not been done. Written, one per figure, describing what that figure shows:</p>
+<table class="table"><thead><tr><th>vignette</th>
+<th>chunks given specific alt text</th>
+</tr></thead><tbody><tr><td><code>ggchangepoint.Rmd</code></td>
+<td>20</td>
+</tr><tr><td><code>introduction.Rmd</code></td>
+<td>5</td>
+</tr><tr><td><code>comparison.Rmd</code></td>
+<td>3</td>
+</tr><tr><td><code>extending.Rmd</code></td>
+<td>1</td>
+</tr></tbody></table><p>Existing chunk options are preserved (<code>eval = has_stepR</code>, <code>fig.height = 6</code>), and the global <code>fig.alt</code> <strong>stays</strong> as the fallback for any figure chunk added later without one – which is the opposite of where this section started.</p>
+<p>The twentieth was found only by re-rendering: the scan looked for <code>autoplot</code>/<code>ggcpt_*</code>/<code>ggplot</code> and missed the chunk that calls bare <code>plot(res)</code> – the one demonstrating the <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> methods added in §248. After adding it, the feature tour renders <strong>26 images: 0 without alt, 0 generic, 26 specific</strong>. The only chunks still on the fallback across all eight vignettes are three that draw nothing: two <code><a href="reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code> calls and the <code><a href="reference/ggcpt_interactive.html">ggcpt_interactive()</a></code> class check.</p>
+</div>
+<div class="section level2">
+<h2 id="id_294-what-this-pass-changes">294. What this pass changes<a class="anchor" aria-label="anchor" href="#id_294-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>292</td>
+<td>
+<strong>29 of 67 vignette figures shared a generic alt string</strong>, 20 of them in one document</td>
+<td>
+<code>&lt;img alt&gt;</code> count in the built <code>inst/doc</code>
+</td>
+</tr><tr><td>292</td>
+<td>knitr 1.50 does not use a ggplot’s <code>alt</code> label, so removing the global fallback leaves <strong>no</strong> alt attribute</td>
+<td>render with it removed, counting <code>&lt;img</code> against <code>alt=</code>
+</td>
+</tr><tr><td>293</td>
+<td>29 figures now carry a description of what they show; 0 without alt, 0 generic</td>
+<td>re-render</td>
+</tr></tbody></table><p>New actions: none opened. No package code touched – 29 chunk options.</p>
+<p><strong>What this pass adds.</strong> The measurement order mattered more than the fix. Had I edited first, I would have deleted the only alt text twenty figures had, on the theory that something better would take its place – and the first count would have appeared to confirm it, because the regex could not represent the failure. Two different measurements of the same change disagreed, and the one that could see absence was the right one.</p>
+</div>
+<div class="section level2">
+<h2 id="id_295-the-web-only-article-three-checks-one-gap">295. The web-only article: three checks, one gap<a class="anchor" aria-label="anchor" href="#id_295-the-web-only-article-three-checks-one-gap"></a></h2>
+<p><code>vignettes/articles/benchmarks.Rmd</code> had never been looked at. It is <code>.Rbuildignore</code>d, so it ships on the pkgdown site and not in the tarball, which puts it outside <code>R CMD check</code> entirely – the same blind spot <code>cran-comments.md</code> sat in (§288.1).</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>check</th>
+<th>result</th>
+</tr></thead><tbody><tr><td>does §292’s alt-text gap apply to it?</td>
+<td>
+<strong>no figures at all</strong> – the article has exactly one chunk, the <code>include = FALSE</code> setup, and every number in it is hard-coded prose</td>
+</tr><tr><td>did §249’s <code>dpi = 72</code> invalidate its “Size” section?</td>
+<td>no – “size” there is <em>empirical size</em> under the null, a false-positive rate, and the memory figures (<code>segneigh</code> at 1,208 MB) are unaffected</td>
+</tr><tr><td>do its four <code><a href="reference/cpt_confint.html">cpt_confint()</a></code> provenances still exist?</td>
+<td>yes, and the shipped documentation is the more careful of the two</td>
+</tr></tbody></table><div class="section level3">
+<h3 id="id_2951-a-near-miss-worth-recording">295.1 A near-miss worth recording<a class="anchor" aria-label="anchor" href="#id_2951-a-near-miss-worth-recording"></a></h3>
+<p>The coverage table lists the provenances as <code>native</code>, <code>bootstrap</code>, <code>nsp</code>, <code>posterior</code>, and <code><a href="reference/cpt_confint.html">cpt_confint()</a></code> reports <code>source = "nsp_region"</code> – not <code>nsp</code>. That looked like §285.1’s shape: a token a reader would try and find missing. It is not a defect: the table names the values of the <code>method</code> argument, which are exactly those four, and <code><a href="reference/cpt_confint.html">?cpt_confint</a></code> already spells out that a changepoint inside a region gets <code>source = "nsp_region"</code>. The Rd is precise where the article is loose, and the article is loose about the right thing.</p>
+</div>
+<div class="section level3">
+<h3 id="id_2952-the-gap-measurements-with-no-date">295.2 The gap: measurements with no date<a class="anchor" aria-label="anchor" href="#id_2952-the-gap-measurements-with-no-date"></a></h3>
+<p>The provenance paragraph said the numbers came from “a single Linux x86_64 machine running R 4.4.1, with the engine versions current at the time of measurement” – honest about <em>what</em> they are and silent about <em>when</em>. For a published page of measured numbers that is the one piece of provenance a reader cannot reconstruct: nothing on the page distinguishes 0.4.0’s engine wave from 0.5.0’s. Now says “measured against ggchangepoint 0.5.0 in August 2026”.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_296-what-this-pass-changes">296. What this pass changes<a class="anchor" aria-label="anchor" href="#id_296-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>295</td>
+<td>the web-only article has no figures, so §292 does not reach it; its “Size” section is statistical size, not file size</td>
+<td>read it</td>
+</tr><tr><td>295.1</td>
+<td>the <code>nsp</code> / <code>nsp_region</code> mismatch is a documented distinction, not staleness</td>
+<td>
+<code><a href="reference/cpt_confint.html">cpt_confint()</a></code> on four fits, against the Rd</td>
+</tr><tr><td>295.2</td>
+<td>a page of measured numbers with no version or date on it</td>
+<td>read the provenance paragraph</td>
+</tr></tbody></table><p>New actions: none opened. One provenance line.</p>
+<p><strong>What this pass adds.</strong> Two files now have the same story: <code>cran-comments.md</code> (§288.1) and <code>benchmarks.Rmd</code> are both <code>.Rbuildignore</code>d, both written for a human reader, and both outside every automated check this document has run. That is the whole category – the files the package does not ship are the files nothing verifies, and both of them had drifted. The other members of that set (<code>README.Rmd</code>, <code>_pkgdown.yml</code>, the workflows) have now been checked too (§285, §289), so the category is covered rather than merely noticed.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xvii--the-help-system-as-a-graph">Part XVII — the help system as a graph<a class="anchor" aria-label="anchor" href="#part-xvii--the-help-system-as-a-graph"></a></h1>
+<div class="section level2">
+<h2 id="id_297-seven-topics-could-not-be-reached-from-any-other-help-page">297. Seven topics could not be reached from any other help page<a class="anchor" aria-label="anchor" href="#id_297-seven-topics-could-not-be-reached-from-any-other-help-page"></a></h2>
+<p>The commit before this loop closed a documentation gap it described as “inbound links 71-&gt;124”. Measured again, as a graph over <code>man/*.Rd</code> – resolve every <code>\link{}</code> through the alias table and count arrivals per topic, ignoring self-links:</p>
+<table class="table"><thead><tr><th></th>
+<th>count</th>
+</tr></thead><tbody><tr><td>topics</td>
+<td>125</td>
+</tr><tr><td>with at least one inbound link</td>
+<td>116</td>
+</tr><tr><td>
+<strong>unreachable</strong> (non-internal, zero inbound)</td>
+<td><strong>7</strong></td>
+</tr></tbody></table><p>The seven: <code>tidy.ggcpt</code>, <code>glance.ggcpt</code>, <code>augment.ggcpt</code>, <code>summary.ggcpt</code>, <code>print.ggcpt</code>, <code>cpt_install_engines</code>, and <code>ggcpt_plot_methods</code>.</p>
+<p><strong>The cause is one omission repeated four times: none of the package’s four hub pages had a <code>@seealso</code> at all.</strong> <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> – the central function, the page a reader lands on first – had none, and its prose mentions <code>\code{tidy()}</code> and <code>\code{augment()}</code> in code font without linking either. So the five accessors that exist to get a result <em>out</em> of <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> were unreachable from the page that produces it. Same for <code>autoplot.ggcpt</code>, <code>ggcpt_methods</code> and <code>cpt_methods</code>.</p>
+<p><code>ggcpt_plot_methods</code> is mine, from §248: I gave it a <code>@seealso</code> pointing <em>out</em> to <code>autoplot.ggcpt</code> and <code>ggcpt_methods</code> and never made either point back. A new page is a leaf until something links it.</p>
+<p>Fixed by adding the four missing <code>@seealso</code> blocks, each pointing where a reader would actually want to go next – <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> to the five accessors, the plot method and <code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code>; <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> to the installer that fills its <code>installed</code> column; <code>autoplot.ggcpt</code> and <code>ggcpt_methods</code> to each other’s plot documentation. Re-measured: <strong>123 of 123 non-internal topics reachable, 0 unreachable.</strong></p>
+<div class="section level3">
+<h3 id="id_2971-two-verifications-one-of-them-of-a-false-alarm">297.1 Two verifications, one of them of a false alarm<a class="anchor" aria-label="anchor" href="#id_2971-two-verifications-one-of-them-of-a-false-alarm"></a></h3>
+<p>Every new <code>\link{}</code> target resolves to a documented alias – checked by running the same alias table over the four edited files: 0 unresolved.</p>
+<p><code><a href="https://rdrr.io/r/tools/checkRd.html" class="external-link">tools::checkRd()</a></code> on those files then reported twelve issues, all “Non-ASCII contents without declared encoding” on em-dashes in prose I did not touch. Not defects: <code>checkRd()</code> called on a bare file cannot see <code>Encoding: UTF-8</code> in the DESCRIPTION, and both full <code>R CMD check</code> logs contain <strong>zero</strong> <code>Non-ASCII</code> lines. Worth recording because the natural reaction to twelve new-looking issues is to start replacing em-dashes.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_298-what-this-pass-changes">298. What this pass changes<a class="anchor" aria-label="anchor" href="#id_298-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>297</td>
+<td>
+<strong>7 topics unreachable from any other help page</strong>, because all four hub pages lacked a <code>@seealso</code>
+</td>
+<td>link graph over <code>man/*.Rd</code>, resolved through aliases</td>
+</tr><tr><td>297</td>
+<td>now 0 unreachable</td>
+<td>re-measured after the edit</td>
+</tr><tr><td>297.1</td>
+<td>
+<code>checkRd()</code>’s twelve encoding issues are an artifact of calling it standalone</td>
+<td>
+<code>grep -c Non-ASCII</code> over both full check logs; <code>Encoding: UTF-8</code> in DESCRIPTION</td>
+</tr></tbody></table><p>New actions: none opened. Four <code>@seealso</code> blocks; no package code touched.</p>
+<p><strong>What this pass adds.</strong> Reachability is a property of the <em>graph</em>, not of any page, so it cannot be seen while reading pages one at a time – which is how documentation gets reviewed. Every one of the seven topics is well written and correctly cross-referenced <em>outward</em>; they were invisible because nothing pointed in. The measurement is four lines of alias resolution and it is the only way this gap shows up at all.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xviii--the--surface-and-the-example-gating">Part XVIII — the <code>...</code> surface, and the example gating<a class="anchor" aria-label="anchor" href="#part-xviii--the--surface-and-the-example-gating"></a></h1>
+<div class="section level2">
+<h2 id="id_299-every--goes-where-its-documentation-says">299. Every <code>...</code> goes where its documentation says<a class="anchor" aria-label="anchor" href="#id_299-every--goes-where-its-documentation-says"></a></h2>
+<p>86 exports take <code>...</code>. Six never reference it in their body – <code>alarms</code>, <code>as_tibble</code>, <code>augment</code>, <code>autoplot</code>, <code>glance</code>, <code>tidy</code> – and all six are <strong>generics</strong>, whose body is <code><a href="https://rdrr.io/r/base/UseMethod.html" class="external-link">UseMethod()</a></code>: <code>...</code> travels by dispatch, so not naming it is correct. That leaves 80 functions that actually forward it, and <strong>all 80 document it</strong>; none has an undocumented <code>...</code>.</p>
+<p>Then the harder question: does the documented destination match the actual one? Extracting the <code>\arguments</code> entry for <code>...</code> from each Rd and the calls that receive <code>...</code> from each body flagged <strong>16 apparent mismatches</strong> – and all sixteen were the extractor’s fault. The receiver pattern required <code>...</code> to sit inside a call with no nested parentheses before it, which misses every real idiom in this package:</p>
+<div class="sourceCode" id="cb47"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" tabindex="-1"></a>ocp<span class="sc">::</span><span class="fu">onlineCPD</span>(data_vec, <span class="at">getR =</span> <span class="cn">TRUE</span>, <span class="sc">&lt;</span>a multi<span class="sc">-</span>line list<span class="sc">&gt;</span>, ...)</span>
+<span id="cb47-2"><a href="#cb47-2" tabindex="-1"></a><span class="fu">do.call</span>(ggplot2<span class="sc">::</span>geom_rect, <span class="fu">c</span>(<span class="sc">&lt;</span>...<span class="sc">&gt;</span>, <span class="fu">full_height_params</span>(mapping), <span class="fu">list</span>(...)))</span>
+<span id="cb47-3"><a href="#cb47-3" tabindex="-1"></a>ggplot2<span class="sc">::</span><span class="fu">discrete_scale</span>(<span class="st">"colour"</span>, <span class="at">palette =</span> <span class="fu">cpt_pal</span>(), <span class="at">na.value =</span> na.value, ...)</span></code></pre></div>
+<p>Read directly, all three send <code>...</code> exactly where the documentation says. <strong>Fourth instrument error in five rounds</strong> (§268, §289, §292, now this), and the same shape every time: a sweep that cannot represent the thing it is looking for reports its own blindness as a finding. The habit that keeps catching it is reading the code before filing, not a better regex.</p>
+</div>
+<div class="section level2">
+<h2 id="id_300-example-gating-is-already-textbook-correct-with-one-omission">300. Example gating is already textbook-correct, with one omission<a class="anchor" aria-label="anchor" href="#id_300-example-gating-is-already-textbook-correct-with-one-omission"></a></h2>
+<p>CRAN reviewers ask specifically about <code>\dontrun</code>, so it is worth knowing exactly where it is used:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>mechanism</th>
+<th>count</th>
+<th>why</th>
+</tr></thead><tbody><tr><td><code>@examplesIf</code></td>
+<td>46</td>
+<td>the engine may not be installed – the right tool, and the one used most</td>
+</tr><tr><td><code>\donttest</code></td>
+<td>13 topics</td>
+<td>slow but runnable; CI runs them with <code>--run-donttest</code>
+</td>
+</tr><tr><td><code>\dontrun</code></td>
+<td><strong>2 topics</strong></td>
+<td>genuinely cannot run</td>
+</tr></tbody></table><p>Both <code>\dontrun</code> uses are the textbook-correct cases: <code><a href="reference/mcp_wrapper.html">mcp_wrapper()</a></code> needs JAGS, a <em>system</em> library that no R-package check predicts, and <code><a href="reference/cpt_load_tcpd.html">cpt_load_tcpd()</a></code> downloads from the network, which an example must not do.</p>
+<p><code><a href="reference/mcp_wrapper.html">mcp_wrapper()</a></code> explains itself above the block:</p>
+<blockquote>
+<p>Not run by R CMD check: whether this works depends on a <em>system</em> library, and no test of installed R packages predicts that reliably.</p>
+</blockquote>
+<p><code><a href="reference/cpt_load_tcpd.html">cpt_load_tcpd()</a></code> had <strong>no explanation at all</strong> – a reviewer would meet a bare <code>\dontrun{}</code> and have to infer the reason. It now says the same kind of thing in the same place: the calls download from the Turing Change Point Dataset’s repository, and an example must not require network access.</p>
+</div>
+<div class="section level2">
+<h2 id="id_301-what-this-pass-changes">301. What this pass changes<a class="anchor" aria-label="anchor" href="#id_301-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>299</td>
+<td>all 80 forwarding functions document <code>...</code>; the 6 that ignore it are generics</td>
+<td>formals and bodies over every export</td>
+</tr><tr><td>299</td>
+<td>the 16 “documented destination not used” hits were all extractor false negatives</td>
+<td>read three of them in the source</td>
+</tr><tr><td>300</td>
+<td>
+<code>\dontrun</code> is used twice, both correctly; one had no justification</td>
+<td>grep over <code>man/</code>, then read both blocks</td>
+</tr></tbody></table><p>New actions: none opened. One example comment; no package code touched.</p>
+<p><strong>What this pass adds.</strong> §300 is a reminder that an audit can also confirm a <em>good</em> state precisely, and that precision is worth having: “we use <code>\dontrun</code> twice, here is each reason” is a sentence that answers a reviewer’s question directly, and it took a grep to be able to say it.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xix--guarding-the-fix-that-cost-five-ci-rounds">Part XIX — guarding the fix that cost five CI rounds<a class="anchor" aria-label="anchor" href="#part-xix--guarding-the-fix-that-cost-five-ci-rounds"></a></h1>
+<div class="section level2">
+<h2 id="id_302-load-time-behaviour-measured">302. Load-time behaviour, measured<a class="anchor" aria-label="anchor" href="#id_302-load-time-behaviour-measured"></a></h2>
+<p>S37 is the worst bug in this package’s history to diagnose: <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> filled its <code>installed</code> column with <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code>, which <strong>loads</strong> the package, so building a table loaded all 35 engine namespaces – including <code>fabisearch</code> -&gt; <code>rgl</code>, which dies in <code><a href="https://rdrr.io/r/base/dynload.html" class="external-link">dyn.load()</a></code> on macOS for want of <code>libGLU</code>. <code>R CMD check</code> reported it as <code>Vignette re-building failed</code> with no chunk, no line and no message, and it took five CI rounds to find. The fix was <code><a href="https://rdrr.io/r/base/find.package.html" class="external-link">find.package()</a></code>.</p>
+<p>Measured now, in a fresh session:</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th></th>
+<th>value</th>
+</tr></thead><tbody><tr><td><code><a href="https://pursuitofdatascience.github.io/ggchangepoint/">library(ggchangepoint)</a></code></td>
+<td>1.09s, 30 namespaces – the Imports and their transitive dependencies, no Suggests engine</td>
+</tr><tr><td><code><a href="reference/cpt_methods.html">cpt_methods()</a></code></td>
+<td><strong>0.030s, 55 rows, and zero further namespaces loaded</strong></td>
+</tr><tr><td>engine namespaces loaded after both</td>
+<td>
+<strong>3 of 38</strong>, and all three are the Imports engines (<code>changepoint</code>, <code>changepoint.np</code>, <code>ecp</code>)</td>
+</tr></tbody></table><p>The fix holds exactly. Nothing in the package loads a suggested engine until a wrapper actually needs it.</p>
+<div class="section level3">
+<h3 id="id_3021-nothing-guarded-it-so-now-something-does">302.1 Nothing guarded it, so now something does<a class="anchor" aria-label="anchor" href="#id_3021-nothing-guarded-it-so-now-something-does"></a></h3>
+<p>The suite had no assertion on this at all – the only uses of <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">loadedNamespaces()</a></code> were in §290’s <code>need_pkg</code> test. The new test is order-independent, which matters because by the time it runs most engines are already loaded by earlier files: it picks an engine that is <strong>installed and not yet loaded</strong>, calls <code><a href="reference/cpt_methods.html">cpt_methods()</a></code>, and asserts both that the row says <code>installed = TRUE</code> and that the engine is <em>still</em> not loaded. That is the S37 lesson stated as an executable property – answering “is it installed” must not load it.</p>
+<p><strong>Proved to fire before being trusted</strong>, the same way as §290. Reverting <code>engine_installed()</code> to the pre-S37 <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> form makes the hardening suite fail, and the side effect is visible in the very same run:</p>
+<pre><code>hardening: ..........Registered S3 methods overwritten by 'strucchangeRcpp':
+══ Failed ══</code></pre>
+<p>Building the table loaded <code>strucchange</code> on the way past. Restored immediately; <code><a href="https://rdrr.io/r/base/find.package.html" class="external-link">find.package()</a></code> is back at <code>R/detect.R:457</code>.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_303-and-the-cross-references-from-297-validate">303. And the cross-references from §297 validate<a class="anchor" aria-label="anchor" href="#id_303-and-the-cross-references-from-297-validate"></a></h2>
+<p>The four <code>@seealso</code> blocks added last pass introduced eleven new <code>\link{}</code> targets, which only <code>R CMD check</code> verifies – and getting one wrong is exactly the mistake of §248 (<code>\link[base]{plot.default}</code>, which lives in <strong>graphics</strong>). Full check on the current tree:</p>
+<pre><code>* checking Rd cross-references ... OK</code></pre>
+<p>Status <code>1 ERROR, 2 WARNINGs, 3 NOTEs</code> – the documented environmental baseline – with examples, <code>--run-donttest</code>, tests, the vignette rebuild and installed size all OK.</p>
+</div>
+<div class="section level2">
+<h2 id="id_304-what-this-pass-changes">304. What this pass changes<a class="anchor" aria-label="anchor" href="#id_304-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>302</td>
+<td>
+<code><a href="reference/cpt_methods.html">cpt_methods()</a></code> runs in 0.030s and loads <strong>nothing</strong>; 3 of 38 engine namespaces loaded after startup, all of them Imports</td>
+<td>fresh session, <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">loadedNamespaces()</a></code> before and after</td>
+</tr><tr><td>302.1</td>
+<td>no test guarded the S37 property; one now does, and it fails when the fix is reverted</td>
+<td>temporary revert, then restore</td>
+</tr><tr><td>303</td>
+<td>§297’s eleven new <code>\link{}</code> targets all resolve</td>
+<td><code>checking Rd cross-references ... OK</code></td>
+</tr></tbody></table><p>New actions: none opened. One test; no package code changed.</p>
+<p><strong>What this pass adds.</strong> The regression guards worth writing are for the bugs that were <em>hard to see</em>, not the ones that were hard to fix. S37 was a one-line fix after five rounds of looking in the wrong place, and the reason it hid so well is that its symptom appeared in a different subsystem entirely – a vignette failing to rebuild on one platform. A test that states the property directly (“asking must not load”) would have turned five rounds into one.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xx--auditing-my-own-release-notes">Part XX — auditing my own release notes<a class="anchor" aria-label="anchor" href="#part-xx--auditing-my-own-release-notes"></a></h1>
+<div class="section level2">
+<h2 id="id_305-all-25-news-claims-hold-and-one-ledger-number-did-not">305. All 25 NEWS claims hold, and one ledger number did not<a class="anchor" aria-label="anchor" href="#id_305-all-25-news-claims-hold-and-one-ledger-number-did-not"></a></h2>
+<p><code>NEWS.md</code>’s “Fixes found in the pre-submission audit” section now carries <strong>25 bullets</strong>, written across fifteen passes from memory of what had just been done. That makes them the newest and least-verified claims in the repository – and the release notes are what a user and a CRAN reviewer actually read. So each bullet was turned into a live assertion:</p>
+<table class="table"><thead><tr><th></th>
+<th>result</th>
+</tr></thead><tbody><tr><td>bullets asserted</td>
+<td>25</td>
+</tr><tr><td><strong>PASS</strong></td>
+<td><strong>25</strong></td>
+</tr><tr><td>FAIL</td>
+<td>0</td>
+</tr><tr><td>skipped for a missing engine</td>
+<td>0</td>
+</tr></tbody></table><p>Every one holds. A sample of what was checked rather than taken on trust: <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> on a <code>ggcpt_consensus</code> produces the same <code>$labels</code> as <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> on it (bullet 2); <code>withVisible(plot(fit))$visible</code> is <code>FALSE</code> (3); <code>validate_data()</code> accepts a logical vector <em>and</em> <code><a href="reference/cpt_select.html">cpt_select()</a></code> runs on one (5); <code><a href="reference/cpt_monitor.html">?cpt_monitor</a></code>’s Rd contains “Multivariate only” (11); <code><a href="reference/cpt_annotate_events.html">cpt_annotate_events()</a></code> omits <code>cp_index</code> without an index and types it <code>Date</code> with one (22); <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> on an indexed stability result renders a <code>ScaleContinuousDate</code> (23); and <code>dpi = 72</code> appears in exactly seven vignette files (25).</p>
+<div class="section level3">
+<h3 id="id_3051-the-one-wrong-number-was-in-this-document">305.1 The one wrong number was in this document<a class="anchor" aria-label="anchor" href="#id_3051-the-one-wrong-number-was-in-this-document"></a></h3>
+<p>Bullet 18 says “Ten entry points read locations through a bare <code><a href="https://rdrr.io/r/base/integer.html" class="external-link">as.integer()</a></code>” and lists them. Counted from the code: <code>as_cp_locations()</code> is called at <strong>thirteen</strong> places – <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> and <code><a href="reference/ggcpt_eval.html">ggcpt_eval()</a></code> take two each, for <code>pred</code> and <code>truth</code> – plus a fourteenth use where it is passed to <code><a href="https://rdrr.io/r/base/lapply.html" class="external-link">lapply()</a></code> inside <code><a href="reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code> rather than called directly. Those thirteen sites sit in exactly <strong>ten</strong> distinct entry-point functions, so the NEWS bullet is right.</p>
+<p>§266.1 of this ledger said “applied at eleven sites”, which is neither number. Corrected in both places it appeared. The error is small and the direction is worth noting: the shipped document was accurate and the working notes were not, because the working notes were written while the edits were still in flight and never recounted afterwards.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_306-what-this-pass-changes">306. What this pass changes<a class="anchor" aria-label="anchor" href="#id_306-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>305</td>
+<td><strong>25 of 25 NEWS claims verified against the running package</strong></td>
+<td>one live assertion per bullet</td>
+</tr><tr><td>305.1</td>
+<td>
+<code>as_cp_locations()</code> is at 13 call sites in 10 entry points; the ledger said 11</td>
+<td>
+<code>grep -c</code> over <code>R/</code>, then reading each site</td>
+</tr></tbody></table><p>New actions: none opened. One number corrected in this document; no code and no NEWS text changed.</p>
+<p><strong>What this pass adds.</strong> Fifteen passes of this loop have applied one rule to the codebase – a claim deserves a measurement – and had never applied it to the loop’s own output. Doing so found the release notes clean and the ledger’s arithmetic wrong, which is the right way round but not a coincidence: NEWS was written last, after the code settled, while §266.1 was written mid-change. <strong>A claim made while the thing it describes is still moving is the one to re-check.</strong></p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxi--do-the-tests-assert-anything">Part XXI — do the tests assert anything?<a class="anchor" aria-label="anchor" href="#part-xxi--do-the-tests-assert-anything"></a></h1>
+<p>§305.1 found one of my own guards passing under a filter and <strong>skipping</strong> in the full suite. That is a failure mode, not an accident, so the question generalises: how many of the 327 test blocks run without asserting anything?</p>
+<div class="section level2">
+<h2 id="id_307-none-of-them">307. None of them<a class="anchor" aria-label="anchor" href="#id_307-none-of-them"></a></h2>
+<p>Measured by collecting per-test results from <code>test_local()</code> rather than reading the files – the count that matters is expectations that <em>executed</em>, not <code>expect_*</code> calls that appear in the source:</p>
+<table class="table"><thead><tr><th></th>
+<th>value</th>
+</tr></thead><tbody><tr><td>
+<code>test_that</code> blocks</td>
+<td>327</td>
+</tr><tr><td>passing expectations</td>
+<td>3,234</td>
+</tr><tr><td>failed</td>
+<td>0</td>
+</tr><tr><td>skipped blocks</td>
+<td>2 (<code>mcp</code> absent, the TCPD download)</td>
+</tr><tr><td><strong>blocks that ran and asserted nothing</strong></td>
+<td><strong>0</strong></td>
+</tr></tbody></table><p>The thinnest blocks assert one expectation each, and all six are single-fact regressions from the 0.4.0 audit (<code>C4</code>, <code>C8</code>, <code>C11</code>, <code>C16</code>, the SegNeigh penalty fallback, <code>np</code>’s <code>change_in</code>). One assertion is thin; zero would have been the defect, and there are none.</p>
+</div>
+<div class="section level2">
+<h2 id="id_308-three-of-the-five-recurring-warnings-were-the-suites-own-noise">308. Three of the five recurring warnings were the suite’s own noise<a class="anchor" aria-label="anchor" href="#id_308-three-of-the-five-recurring-warnings-were-the-suites-own-noise"></a></h2>
+<p>Every pass of this loop has reported “5 upstream warnings” as a constant. Looked at properly, they are two different things.</p>
+<p><strong>Three were escaping because the test asserts a <em>different</em> warning.</strong> <code>expect_warning()</code> captures the one that matches its pattern and lets the rest bubble up to the report:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>site</th>
+<th>escaping warning</th>
+<th>now</th>
+</tr></thead><tbody><tr><td><code>test-new-infrastructure.R:65</code></td>
+<td><code>SegNeigh is computationally slow, use PELT instead</code></td>
+<td>asserted</td>
+</tr><tr><td><code>test-wrappers.R:31</code></td>
+<td>same</td>
+<td>asserted</td>
+</tr><tr><td><code>test-040-bugfixes.R:495</code></td>
+<td>
+<code>Very low number of permuted data sets</code> from kcpRS at <code>nperm = 20</code>
+</td>
+<td>muffled <strong>by message text</strong>
+</td>
+</tr></tbody></table><p><code>changepoint</code> advises PELT on every <code>segneigh</code> call, so asserting it both documents the upstream behaviour and takes it out of the report. The kcpRS complaint is about a parameter the <em>test</em> chose for speed, and the block already asserts a different warning it must keep, so a text-scoped <code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">withCallingHandlers()</a></code> muffle is the precise instrument – nothing else is hidden. (The first attempt nested <code>expect_warning(..., NA)</code> around it, which fails: the second warning only occurs for one of the three engines the loop covers.)</p>
+<p><strong>Two are staying, because the existing test already argues for them.</strong> <code>R52</code> deliberately does not assert <code>envcpt</code>’s convergence warning, and says why:</p>
+<blockquote>
+<p>whether a given series also triggers an upstream convergence <em>warning</em> is data-dependent, so it is not asserted here; warnings are deferred past the diversion by construction and reach the user unchanged.</p>
+</blockquote>
+<p>That is a substantive point about what the test is checking – the test diverts the <em>message</em> stream and the comment records that warnings survive the diversion. Muffling them for a tidier report would overrule a documented decision to gain nothing.</p>
+<p>Suite report: <strong>FAIL 0 | WARN 2 | SKIP 2</strong>, down from WARN 5, and both remaining warnings are the ones a reader is meant to see.</p>
+</div>
+<div class="section level2">
+<h2 id="id_309-what-this-pass-changes">309. What this pass changes<a class="anchor" aria-label="anchor" href="#id_309-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>307</td>
+<td>
+<strong>0 of 327 blocks assert nothing</strong>; 3,234 expectations execute</td>
+<td>per-test results from <code>test_local()</code>
+</td>
+</tr><tr><td>308</td>
+<td>3 of the 5 standing warnings were the suite’s own, escaping past an <code>expect_warning()</code> for a different pattern</td>
+<td>read each site</td>
+</tr><tr><td>308</td>
+<td>the other 2 are deliberate and documented in the test</td>
+<td>read the comment</td>
+</tr></tbody></table><p>New actions: none opened. Three test sites; no package code touched.</p>
+<p><strong>What this pass adds.</strong> A standing number in a status report stops being information once you repeat it – “5 upstream warnings” was in every pass of this document and nobody, including me, had opened them. Three were noise the suite made itself. The other two were load-bearing, and the difference was only visible by reading the test that emits them.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxii--what-a-detection-call-does-to-your-session">Part XXII — what a detection call does to your session<a class="anchor" aria-label="anchor" href="#part-xxii--what-a-detection-call-does-to-your-session"></a></h1>
+<div class="section level2">
+<h2 id="id_310-two-engines-were-rewriting-the-callers-search-path">310. Two engines were rewriting the caller’s search path<a class="anchor" aria-label="anchor" href="#id_310-two-engines-were-rewriting-the-callers-search-path"></a></h2>
+<p>Instrumenting a full suite run for global state – options, attached packages, the registry, the RNG – turned up four packages on the search path afterwards that had not been there before. Traced per wrapper, in a fresh session each time:</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>wrapper</th>
+<th>attached and left behind</th>
+</tr></thead><tbody><tr><td><code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code></td>
+<td>
+<code>package:bcp</code>, <code>package:grid</code>
+</td>
+</tr><tr><td><code><a href="reference/fabisearch_wrapper.html">fabisearch_wrapper()</a></code></td>
+<td>
+<code>doRNG</code>, <code>rngtools</code>, <code>doParallel</code>, <code>parallel</code>, <code>iterators</code>, <code>foreach</code>, <code>Biobase</code>, <code>BiocGenerics</code> – <strong>eight</strong>
+</td>
+</tr><tr><td>
+<code><a href="reference/bocpd_wrapper.html">bocpd_wrapper()</a></code>, <code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code>
+</td>
+<td>none</td>
+</tr></tbody></table><p>Nothing in this package calls <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code>. <code>bcp</code> attaches itself and <code>grid</code> when its namespace loads, and <code>fabisearch</code> needs NMF <em>attached</em> rather than loaded – which the wrapper does deliberately, and documents – so NMF’s Depends and the engine’s own <code>foreach</code>/<code>doParallel</code>/<code>doRNG</code> registration come with it.</p>
+<p><strong>The 0.5.0 audit checked this and reported it clean.</strong> Its claim was “no option, no attached package, no RNG leak – the fabisearch NMF attach does detach”, and the last clause is exactly what was verified: the wrapper’s <code>on.exit</code> detached <code>package:NMF</code>. What it never checked was what came <em>with</em> NMF. One of eight is a pass if you look only at the package you named.</p>
+<p>Both wrappers now record <code><a href="https://rdrr.io/r/base/search.html" class="external-link">search()</a></code> and give back whatever the call added, detaching in <code><a href="https://rdrr.io/r/base/search.html" class="external-link">search()</a></code> order (most recently attached first, which is the only order that works). Measured after: <strong><code>bcp</code> 2 -&gt; 0, <code>fabisearch</code> 8 -&gt; 0</strong>, with the same results as before in each case.</p>
+<div class="section level3">
+<h3 id="id_3101-the-first-attempt-fixed-six-of-eight-and-the-reason-is-instructive">310.1 The first attempt fixed six of eight, and the reason is instructive<a class="anchor" aria-label="anchor" href="#id_3101-the-first-attempt-fixed-six-of-eight-and-the-reason-is-instructive"></a></h3>
+<p><code>fabisearch</code> went from eight to two: <code>Biobase</code> and <code>BiocGenerics</code> survived, and the <code><a href="https://rdrr.io/r/base/try.html" class="external-link">try()</a></code> around the detach swallowed whatever refused. In isolation all three of <code>NMF</code>, <code>Biobase</code>, <code>BiocGenerics</code> detach cleanly – so it was not a refusal at all. The baseline was in the wrong place: I recorded <code><a href="https://rdrr.io/r/base/search.html" class="external-link">search()</a></code> after <code>need_pkg("fabisearch")</code>, and <strong>loading fabisearch is itself what attaches Biobase</strong>, so those two were already in the baseline and were never candidates for removal. Moving the record above <code>need_pkg()</code> takes it to zero.</p>
+<p>The <code><a href="https://rdrr.io/r/base/try.html" class="external-link">try()</a></code> is what made this look like a permissions problem instead of an arithmetic one. A swallowed error is a bad place to keep a diagnosis.</p>
+</div>
+<div class="section level3">
+<h3 id="id_3102-what-was-deliberately-not-done">310.2 What was deliberately not done<a class="anchor" aria-label="anchor" href="#id_3102-what-was-deliberately-not-done"></a></h3>
+<p>Loading <code>bcp</code> also prints “Loading required package: bcp” and “Loading required package: grid”, because it attaches them itself. Wrapping <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> in <code><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressPackageStartupMessages()</a></code> does <strong>not</strong> silence them – they are plain messages from <code><a href="https://rdrr.io/r/base/library.html" class="external-link">library()</a></code> calls inside bcp’s own load – and the next tool up, <code><a href="https://rdrr.io/r/base/message.html" class="external-link">suppressMessages()</a></code>, would hide anything an engine says at load time for a cosmetic gain. Reverted. §252’s fix targeted a <em>warning</em>, which is louder, appears in <code>R CMD check</code> output, and was about the machine; conventional load chatter is neither, and escalating the instrument to win the point would have been the wrong trade.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_311-the-rest-of-the-suites-global-state-is-clean">311. The rest of the suite’s global state is clean<a class="anchor" aria-label="anchor" href="#id_311-the-rest-of-the-suites-global-state-is-clean"></a></h2>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>property</th>
+<th>after a full suite run</th>
+</tr></thead><tbody><tr><td>registered methods left behind</td>
+<td><strong>0</strong></td>
+</tr><tr><td>options changed</td>
+<td>45 – all created by loading engines (<code>bfast.*</code>, <code>datatable.*</code>, <code>BioC</code>), none set by this package</td>
+</tr><tr><td>RNG seed</td>
+<td>unchanged</td>
+</tr></tbody></table><p>And the timing, since check time matters at submission: 249.6s across 327 blocks. The three slowest are <code>ocd</code> at ~21s each, a quarter of the suite – and they already pass <code>mc_reps = 10</code> with a comment explaining that <code>mc_reps</code> only calibrates the threshold. The cost is the engine’s per-observation streaming loop, not a test parameter, so there is nothing to trim without shortening the series the assertions depend on. Worth knowing before optimising it.</p>
+</div>
+<div class="section level2">
+<h2 id="id_312-what-this-pass-changes">312. What this pass changes<a class="anchor" aria-label="anchor" href="#id_312-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>310</td>
+<td>
+<strong><code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code> left 2 packages attached, <code><a href="reference/fabisearch_wrapper.html">fabisearch_wrapper()</a></code> left 8</strong>; the 0.5.0 audit verified only that NMF itself detached</td>
+<td>search path before and after, per wrapper, fresh session</td>
+</tr><tr><td>310.1</td>
+<td>the first fix reached six of eight because the baseline was recorded after the load that attaches the other two</td>
+<td>detaching them by hand, which worked</td>
+</tr><tr><td>311</td>
+<td>0 registered methods leak, 0 options set by this package, RNG unchanged; the suite’s slowest tests are already minimal</td>
+<td>instrumented full run</td>
+</tr></tbody></table><p>New actions: none opened. Two wrappers and one test.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxiii--the-vignettes-citations-and-a-count-that-contradicted-the-table-below-it">Part XXIII — the vignettes: citations, and a count that contradicted the table below it<a class="anchor" aria-label="anchor" href="#part-xxiii--the-vignettes-citations-and-a-count-that-contradicted-the-table-below-it"></a></h1>
+<p>A new standing instruction: verify the vignettes every round – prose, citations, claims, cross-references. This is the first pass.</p>
+<div class="section level2">
+<h2 id="id_313-citations-resolve-and-the-bibliography-had-nine-dead-entries">313. Citations resolve, and the bibliography had nine dead entries<a class="anchor" aria-label="anchor" href="#id_313-citations-resolve-and-the-bibliography-had-nine-dead-entries"></a></h2>
+<p><strong>61 distinct citation keys</strong> are used across the eight vignettes.</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>check</th>
+<th>result</th>
+</tr></thead><tbody><tr><td>keys that resolve in <code>vignette_reference.bib</code>
+</td>
+<td><strong>61 of 61 – 0 broken</strong></td>
+</tr><tr><td>
+<code>\insertRef</code> keys in <code>R/*.R</code> present in <code>inst/REFERENCES.bib</code>
+</td>
+<td><strong>50 of 50 – 0 missing</strong></td>
+</tr><tr><td>entries missing author, title, year or venue</td>
+<td>0 (<code>rcore</code> is a <code>@Manual</code>, which carries <code>organization</code>)</td>
+</tr><tr><td>prose years contradicting the <code>year</code> field</td>
+<td><strong>0</strong></td>
+</tr><tr><td>multi-word surnames and LaTeX escapes</td>
+<td>render correctly – <code>van den Burg GJJ</code>, <code>Demšar</code>, <code>Lindeløv</code>
+</td>
+</tr></tbody></table><p>Two things looked like defects and were not. <code>{van den Burg}</code> is braced in one entry and unbraced in another; both parse to <code>family = "van den Burg"</code> through <code>rbibutils</code> and render identically, so the unbraced form needed no “fix”. And 29 of 77 rendered entries repeat the DOI URL (<code>doi:10.4855... &lt;https://doi.org/...&gt;, &lt;https://doi.org/...&gt;</code>) – that is <code>rbibutils</code>’ own formatting of a <code>doi</code> field, not something in this bibliography.</p>
+<p><strong>What was real: nine entries nothing cites anywhere.</strong> Eight are cited by no vignette, no Rd and no code – <code>chen2009information</code>, <code>gneiting2006geostatistical</code>, <code>hariz2007classification</code>, <code>lai2005comparative</code>, <code>meinshausen2006estimating</code>, <code>olshausen1997sparse</code>, <code>rigaill2020fpop</code>, <code>wang2022overview</code>. Sparse coding and geostatistical space-time models are not changepoint references; these look like the residue of a broader library. The ninth is <code>vandenburg2020evaluation</code>, a <strong>duplicate of <code>van2020evaluation</code></strong> – the same paper, same DOI, in the same file under two keys, one for the vignettes and one for the Rd (which reads <code>inst/REFERENCES.bib</code>, where it also lives, so the Rd path is unaffected).</p>
+<p>Removed: 77 entries -&gt; <strong>68</strong>, still 61 cited, still 0 broken. The seven that remain uncited by a vignette are all <code>\insertRef</code>’d from the Rd, so the vignette bibliography being a superset of the Rd’s is a maintenance choice rather than dead weight.</p>
+<p><code><a href="reference/cpt_cite.html">cpt_cite()</a></code> deserves a note: the Demšar (2006) reference behind the critical-difference diagram is uncited in the vignette bib and looked like an attribution gap, but it is named in <code><a href="reference/cpt_benchmark.html">?cpt_benchmark</a></code>’s prose <em>and</em> returned in full by <code>cpt_cite("critical_difference")</code>. The package’s own citation mechanism covers it.</p>
+</div>
+<div class="section level2">
+<h2 id="id_314-four-rows-carry-status-planned--the-table-below-says-five">314. “Four rows carry status planned” – the table below says five<a class="anchor" aria-label="anchor" href="#id_314-four-rows-carry-status-planned--the-table-below-says-five"></a></h2>
+<p><code>vignettes/ggchangepoint.Rmd</code> claimed:</p>
+<blockquote>
+<p><code><a href="reference/cpt_methods.html">cpt_methods()</a></code> is the live capability table … <strong>Four rows</strong> carry status <code>"planned"</code> rather than <code>"available"</code>: their engines (<code>gfpop</code>, <code>robseg</code>, <code>FOCuS</code>, <code>hdbinseg</code>) are not on CRAN</p>
+</blockquote>
+<p><code>planned_methods()</code> has <strong>five</strong> rows: those four engines plus <code>changeforest</code>. And the chunk on the very next line is <code>print(cpt_methods(), n = Inf)</code> – so a reader is told “four” and then shown five, on the same screen.</p>
+<p><code>vignettes/introduction.Rmd</code> gets it right (“<strong>Five</strong> more, whose engines are not currently on CRAN”, listing all five including random-forest classification), so the two vignettes contradicted each other. Corrected.</p>
+<p><strong>This is the second time this exact claim has gone stale</strong>: the 0.5.0 audit’s S30 recorded “a stale planned-engine count” as one of its findings. So it is now guarded – a test extracts the engines named in that sentence and the number word in front of it, and compares both to <code>planned_methods()</code>. Proved to fire: changing “Five” back to “Four” fails the suite.</p>
+<div class="section level3">
+<h3 id="id_3141-a-check-i-designed-badly-recorded-so-it-is-not-repeated">314.1 A check I designed badly, recorded so it is not repeated<a class="anchor" aria-label="anchor" href="#id_3141-a-check-i-designed-badly-recorded-so-it-is-not-repeated"></a></h3>
+<p>Before that, I compared per-capability engine lists (<code>ci</code>, <code>fitted</code>, <code>posterior</code>, <code>statistic</code>, <code>path</code>) against the registry – using a list I had <strong>invented</strong>, not one taken from the vignettes. The mismatches it reported said nothing about the package. What the exercise did establish, by accident, is the useful fact: the vignettes do not hard-code capability lists at all. They write <code>subset(cpt_methods(), ci)$method</code> and let the chunk execute, so there is nothing there to go stale. A claim generated by running code cannot rot; that is why §314’s hand-written count is the one that did.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_315-what-this-pass-changes">315. What this pass changes<a class="anchor" aria-label="anchor" href="#id_315-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>313</td>
+<td>61 of 61 vignette citations resolve; 50 of 50 Rd <code>\insertRef</code> keys resolve; 0 prose years wrong</td>
+<td>key extraction against both bibs</td>
+</tr><tr><td>313</td>
+<td>
+<strong>9 bibliography entries cited nowhere</strong>, one of them a duplicate of an entry in the same file</td>
+<td>literal search for each key across every non-bib file</td>
+</tr><tr><td>314</td>
+<td><strong>the feature-tour vignette said “four planned rows” where the table it prints shows five</strong></td>
+<td><code>planned_methods()</code></td>
+</tr><tr><td>314.1</td>
+<td>the vignettes query capabilities rather than hard-coding them</td>
+<td>grep for <code>subset(cpt_methods(), ...)</code>
+</td>
+</tr></tbody></table><p>New actions: none opened. One prose correction, nine bib entries removed, one guard added.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxiv--a-whole-vignette-nothing-linked-to">Part XXIV — a whole vignette nothing linked to<a class="anchor" aria-label="anchor" href="#part-xxiv--a-whole-vignette-nothing-linked-to"></a></h1>
+<div class="section level2">
+<h2 id="id_316-the-same-defect-as-314-one-sentence-away">316. The same defect as §314, one sentence away<a class="anchor" aria-label="anchor" href="#id_316-the-same-defect-as-314-one-sentence-away"></a></h2>
+<p>The feature tour’s opening reads:</p>
+<blockquote>
+<p><strong>Four companion vignettes</strong> go deeper: <code><a href="articles/introduction.html">vignette("introduction")</a></code> … <code><a href="articles/comparison.html">vignette("comparison")</a></code> … <code><a href="articles/inference.html">vignette("inference")</a></code> … <code><a href="articles/supervised.html">vignette("supervised")</a></code> … and <code><a href="articles/extending.html">vignette("extending")</a></code> …</p>
+</blockquote>
+<p>Three numbers, none of which agree: the sentence says <strong>four</strong>, it lists <strong>five</strong>, and there are <strong>six</strong> companion vignettes. The one it omits is <code>monitoring</code> – and it was the only vignette in the package that <strong>no other vignette referenced at all</strong>:</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>vignette</th>
+<th>referenced by (before)</th>
+</tr></thead><tbody><tr><td>comparison, extending, inference, introduction, supervised</td>
+<td>one or two others</td>
+</tr><tr><td>ggchangepoint</td>
+<td>comparison</td>
+</tr><tr><td><strong>monitoring</strong></td>
+<td><strong>nothing</strong></td>
+</tr></tbody></table><p>The closing “next steps” paragraph omits it too, so streaming and online monitoring – an entire 0.5.0 feature area, with its own <code><a href="reference/cpt_monitor.html">cpt_monitor()</a></code>, <code><a href="reference/cpt_update.html">cpt_update()</a></code>, <code><a href="reference/alarms.html">alarms()</a></code>, <code><a href="reference/cpt_replay.html">cpt_replay()</a></code> and <code><a href="reference/cpt_delay.html">cpt_delay()</a></code> – was unreachable by a reader working through the vignettes in R. <code>_pkgdown.yml</code> lists it, so the website was fine; the offline path was not.</p>
+<p>Corrected in both places, and the count now reads six. Re-measured: all seven vignettes are referenced by at least one other.</p>
+</div>
+<div class="section level2">
+<h2 id="id_317-guarded-because-this-is-now-twice-in-two-rounds">317. Guarded, because this is now twice in two rounds<a class="anchor" aria-label="anchor" href="#id_317-guarded-because-this-is-now-twice-in-two-rounds"></a></h2>
+<p>§314’s guard was specific to the planned-engine sentence. This one generalises the class: <strong>every vignette must be referenced by another vignette</strong>, and the tour’s own count of its companions must equal the number of companions that exist.</p>
+<p>Both halves proved to fire before being trusted:</p>
+<ul><li>changing “Six” to “Five” -&gt; the suite fails</li>
+<li>replacing both <code><a href="articles/monitoring.html">vignette("monitoring")</a></code> references -&gt; the suite fails, and the failure prints <code>"monitoring"</code> by name</li>
+</ul><p>The first attempt at the second half did <strong>not</strong> fire, because I removed the reference from the opening sentence only and the closing paragraph still had one – so the assertion was right and my test of it was wrong. Worth recording: a guard that “does not fire” needs the same scepticism as one that fires.</p>
+</div>
+<div class="section level2">
+<h2 id="id_318-the-rest-of-this-rounds-vignette-pass">318. The rest of this round’s vignette pass<a class="anchor" aria-label="anchor" href="#id_318-the-rest-of-this-rounds-vignette-pass"></a></h2>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>check</th>
+<th>result</th>
+</tr></thead><tbody><tr><td>
+<code>%\VignetteIndexEntry{}</code> vs the YAML <code>title</code>
+</td>
+<td>
+<strong>7 of 7 match</strong> (a mismatch is an <code>R CMD check</code> warning)</td>
+</tr><tr><td>
+<code>vignette("...")</code> targets that do not exist</td>
+<td><strong>0</strong></td>
+</tr><tr><td>citations, after §313’s cleanup</td>
+<td>61 cited, 68 entries, 0 broken</td>
+</tr></tbody></table></div>
+<div class="section level2">
+<h2 id="id_319-what-this-pass-changes">319. What this pass changes<a class="anchor" aria-label="anchor" href="#id_319-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>316</td>
+<td>
+<strong>the tour said four companions, listed five, and six exist</strong>; <code>monitoring</code> was linked from nothing</td>
+<td>reachability graph over <code>vignette("...")</code> calls</td>
+</tr><tr><td>317</td>
+<td>the class is now guarded, both halves proved to fire</td>
+<td>deliberate breakage, then restore</td>
+</tr><tr><td>318</td>
+<td>index entries, cross-reference targets and citations all clean</td>
+<td>direct comparison</td>
+</tr></tbody></table><p>New actions: none opened. Two prose corrections and one guard.</p>
+<p><strong>What this pass adds.</strong> Both §314 and §316 are the same failure: a number written by hand next to a list maintained by hand, in a document nothing checks. The vignettes’ <em>executed</em> claims cannot drift – §314.1 established that they query <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> rather than hard-coding it – so every remaining risk in them is prose of exactly this shape. Enumerating those sentences is now a cheap, finite job, and two of them have been wrong.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxv--the-census-and-the-040-number-in-the-opening-sentence">Part XXV — the census, and the 0.4.0 number in the opening sentence<a class="anchor" aria-label="anchor" href="#part-xxv--the-census-and-the-040-number-in-the-opening-sentence"></a></h1>
+<p>§316 said enumerating the vignettes’ hand-written numbers was “a cheap, finite job”. Done: every number word or numeral in vignette <em>prose</em> (chunks excluded) followed within three words by a package noun – methods, engines, vignettes, rows, families, provenances, geoms, criteria. <strong>50 claims.</strong> Most are structural and cannot rot (“one row per changepoint”, “one more row than <code>$changepoints</code>”). Six state a total, and one of those was wrong.</p>
+<div class="section level2">
+<h2 id="id_320-the-introduction-advertised-31-methods">320. The introduction advertised 31 methods<a class="anchor" aria-label="anchor" href="#id_320-the-introduction-advertised-31-methods"></a></h2>
+<p><code>vignettes/introduction.Rmd</code>, third line of the opening paragraph:</p>
+<blockquote>
+<p>a central dispatcher <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> covering <strong>31</strong> detection methods across six algorithmic families</p>
+</blockquote>
+<p><strong>31 is the 0.4.0 number.</strong> It is 50 – and 31 -&gt; 50 is the headline of the release this vignette introduces. The first sentence of the first vignette a reader opens advertised the previous version’s capability.</p>
+<p>Corrected. The “six algorithmic families” beside it stays: the vignette’s own §325 sentence enumerates six and §285 verified all eight sections it names, so that number is internally consistent even though the feature tour counts nine methodological families – the two are different groupings, one of the introduction’s sections and one of the registry’s.</p>
+<p>Also corrected, and self-inflicted: the tour’s 0.5.0 section said “<strong>three</strong> companion vignettes develop these properly” while the closing paragraph – which §316 had just changed – lists four. Fixing one count exposed the other.</p>
+</div>
+<div class="section level2">
+<h2 id="id_321-guarded-after-five-wrong-versions-of-the-guard">321. Guarded, after five wrong versions of the guard<a class="anchor" aria-label="anchor" href="#id_321-guarded-after-five-wrong-versions-of-the-guard"></a></h2>
+<p>The total-method count changes every release, so it is worth a test rather than a proofread. Getting the test right took more attempts than the fix:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Too broad.</strong> “Any number before <code>methods</code>” flagged the benchmarks article’s “<strong>Ten</strong> methods raise <strong>zero</strong> false alarms” – a measured subset, not a claim about the package. Narrowed to the five <em>totalising</em> constructions the vignettes actually use: <code>covering N methods</code>, <code>all N wired methods</code>, <code>wraps N detectors</code>, <code>N methods share one interface</code>, <code>N methods in this</code>.</li>
+<li>
+<strong><code>[[</code> on a missing name errors</strong> rather than returning <code>NULL</code>, so <code>words[[tok]] %||% NA</code> threw on “wrapped methods” instead of skipping it.</li>
+<li>
+<strong>The guard silently never fired.</strong> <code>regmatches(m, regexpr(pat, sub(...)))</code> applies the offsets from the <em>substituted</em> string to the <em>original</em>, so it extracted <code>"co"</code> from <code>"covering 31 detection methods"</code> – never a number, always skipped. Replaced with plain <code><a href="https://rdrr.io/r/base/grep.html" class="external-link">sub()</a></code> calls.</li>
+<li>
+<strong>My verification of it was also wrong</strong>: <code>sed 's/covering 50 detection/.../'</code> matched nothing, because the vignette has “covering 50” and “detection methods” on different lines. The test reads the file joined with spaces; <code>sed</code> works line by line. Two clean runs looked like proof and were proof of nothing.</li>
+</ol><p>Final state, verified in both directions: the clean tree passes, and breaking the count in <strong>each of the four vignettes that state a total</strong> fails the suite – <code>introduction.Rmd</code>, <code>comparison.Rmd</code>, <code>extending.Rmd</code> and <code>benchmarks.Rmd</code> – while the benchmarks article’s subset counts stay quiet.</p>
+</div>
+<div class="section level2">
+<h2 id="id_322-what-this-pass-changes">322. What this pass changes<a class="anchor" aria-label="anchor" href="#id_322-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>320</td>
+<td>
+<strong>the introduction’s opening paragraph claimed 31 methods</strong>; it is 50</td>
+<td>census of 50 prose numbers, then the registry</td>
+</tr><tr><td>320</td>
+<td>the tour said three 0.5.0 companion vignettes where its own closing list now names four</td>
+<td>reading both after §316’s edit</td>
+</tr><tr><td>321</td>
+<td>the guard was wrong four different ways before it worked, including one version that could never fire</td>
+<td>deliberate breakage in four files</td>
+</tr></tbody></table><p>New actions: none opened. Two prose corrections and one guard.</p>
+<p><strong>What this pass adds.</strong> Fifth instrument error in this document, and the most instructive: version 3 of the guard <em>passed on a clean tree and passed on a broken one</em>. A test that cannot fail is worse than no test, because it reports safety. The only thing that caught it was breaking the file on purpose – which is now the standing rule for every guard added here, and it has paid for itself four times (§290, §302.1, §314, §321).</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxvi--attribution-are-the-citations-pointing-at-the-right-work">Part XXVI — attribution: are the citations pointing at the right work?<a class="anchor" aria-label="anchor" href="#part-xxvi--attribution-are-the-citations-pointing-at-the-right-work"></a></h1>
+<p>The standing instruction asks whether citations are “attributed to the right work”. Keys resolving (§313) is a weaker property than that. The package carries its own answer: <code>cpt_cite(method)</code> returns, per method, the paper the package says introduced it. So the two can be checked against each other.</p>
+<div class="section level2">
+<h2 id="id_323-a-check-that-had-to-be-redesigned-before-it-said-anything">323. A check that had to be redesigned before it said anything<a class="anchor" aria-label="anchor" href="#id_323-a-check-that-had-to-be-redesigned-before-it-said-anything"></a></h2>
+<p><strong>First attempt: co-location.</strong> For each method, collect the <code>@keys</code> on prose lines that mention the method’s name, and compare their first author with <code><a href="reference/cpt_cite.html">cpt_cite()</a></code>’s. It paired only <strong>4 of 50</strong> methods – method names mostly appear inside chunks, and citations mostly sit in different sentences – and its single flag was <code>ecp</code> “citing” <code>@grundy2020geomcp</code>, which is one sentence mentioning two engines. Useless in both directions.</p>
+<p><strong>Second attempt, well-defined:</strong> does the paper <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> names exist <em>anywhere</em> in the two bibliographies – matching on first-author surname and year across all 123 pooled entries? That question has an answer, and it found four.</p>
+</div>
+<div class="section level2">
+<h2 id="id_324-two-founding-papers-were-named-in-prose-and-in-no-bibliography">324. Two founding papers were named in prose and in no bibliography<a class="anchor" aria-label="anchor" href="#id_324-two-founding-papers-were-named-in-prose-and-in-no-bibliography"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>method</th>
+<th>
+<code><a href="reference/cpt_cite.html">cpt_cite()</a></code> says</th>
+<th>status</th>
+</tr></thead><tbody><tr><td><code>segneigh</code></td>
+<td>Auger and Lawrence (1989)</td>
+<td><strong>absent from both bibs</strong></td>
+</tr><tr><td><code>amoc</code></td>
+<td>Hinkley (1970)</td>
+<td><strong>absent from both bibs</strong></td>
+</tr><tr><td><code>mcp</code></td>
+<td>Lindelov (2020)</td>
+<td>present as <code>lindelov2020mcp</code>; the matcher cannot equate <code>Lindel{\o}v</code> with ASCII</td>
+</tr><tr><td><code>fcov</code></td>
+<td>Aue, Rice and Sonmez (2020)</td>
+<td>absent, and correctly so</td>
+</tr></tbody></table><p><code>introduction.Rmd</code> names the first two <strong>as bare parentheticals</strong> – “segment neighbourhoods (Auger and Lawrence, 1989), and at-most-one-change (AMOC; Hinkley, 1970)” – in a sentence where every other method carries a real citation (<code>[@killick2012pelt]</code>, <code>[@scott1974cluster]</code>, <code>[@maidstone2017optimal]</code>). So two of the four <code>changepoint</code> methods the package has wrapped since 0.1.0 appeared in the text and <strong>never in the References</strong>.</p>
+<p>Fixed: both added to <code>vignette_reference.bib</code> with the metadata <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> already carries – volume, issue, pages – and <strong>no invented DOIs</strong> – and the parentheticals replaced with <code>[@auger1989segment]</code> and <code>[@hinkley1970inference]</code>. Verified by rendering: <strong>0 unresolved citation markers</strong>, each new key appearing twice in the HTML, once as “(Auger and Lawrence 1989)” in the text and once in the bibliography block.</p>
+<p><code>fcov</code> is the interesting non-fix. <code>cpt_cite("fcov")</code> cites Aue, Rice and Sönmez (2020) on covariance operators and adds “See also … (2018)”, while <code>fmean</code> cites the 2018 functional-mean paper – two different papers, correctly distinguished. The 2020 one is in no bibliography because <strong>no vignette discusses <code>fcov</code> at all</strong>: every “functional” in the vignettes means functional <em>pruning</em> (<code>fpop</code>, <code>cpop</code>, <code>decafs</code>), a different idea. Adding an entry nothing cites would just recreate §313’s dead weight, and <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> already gives the reference in full – the same conclusion Demšar reached in §313.</p>
+</div>
+<div class="section level2">
+<h2 id="id_325-what-this-pass-changes">325. What this pass changes<a class="anchor" aria-label="anchor" href="#id_325-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>323</td>
+<td>the co-location design paired 4 of 50 methods and its one flag was spurious; withdrawn</td>
+<td>ran it</td>
+</tr><tr><td>324</td>
+<td><strong><code>segneigh</code> and <code>amoc</code> were cited in prose and in neither bibliography</strong></td>
+<td>50 methods’ <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> authors and years against 123 pooled bib entries</td>
+</tr><tr><td>324</td>
+<td>0 unresolved citations after the fix; both render in text and bibliography</td>
+<td>
+<code><a href="https://pkgs.rstudio.com/rmarkdown/reference/render.html" class="external-link">rmarkdown::render()</a></code>, counting <code>???</code>
+</td>
+</tr></tbody></table><p>New actions: none opened. Two bibliography entries, two prose citations.</p>
+<p><strong>What this pass adds.</strong> <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> turned out to be the right oracle for a question the bibliography cannot answer about itself. “Does every key resolve” is a closed loop – the bibliography checked against the text that cites it. “Does the package’s own record of who invented each method appear in the bibliography” compares two independently maintained lists, and that is where the gap was.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxvii--the-help-pages-and-cpt_cite-disagreed-about-seven-methods">Part XXVII — the help pages and <code>cpt_cite()</code> disagreed about seven methods<a class="anchor" aria-label="anchor" href="#part-xxvii--the-help-pages-and-cpt_cite-disagreed-about-seven-methods"></a></h1>
+<p>§324 compared <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> against the <em>bibliographies</em>. The same oracle compared against the <em>help pages</em> – for each of the 50 methods, the <code>\insertRef</code> keys in its wrapper’s roxygen block versus the author and year <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> gives – flags <strong>15</strong>.</p>
+<div class="section level2">
+<h2 id="id_326-eight-of-the-fifteen-are-correct-by-design">326. Eight of the fifteen are correct by design<a class="anchor" aria-label="anchor" href="#id_326-eight-of-the-fifteen-are-correct-by-design"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>pattern</th>
+<th>methods</th>
+<th>why it is right</th>
+</tr></thead><tbody><tr><td>one Rd covers five methods</td>
+<td>
+<code>pelt</code>, <code>binseg</code>, <code>segneigh</code>, <code>amoc</code>, <code>np</code>
+</td>
+<td>
+<code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code> documents all five, so its <code>@references</code> cites the <strong>software</strong> paper (<code>killick2014changepoint</code>) while <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> resolves each <strong>method</strong> paper – Killick 2012, Scott and Knott 1974, Auger and Lawrence 1989, Hinkley 1970, Haynes 2017</td>
+</tr><tr><td>software paper on the Rd</td>
+<td><code>ecp</code></td>
+<td>Rd cites <code>james2014ecp</code>, <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> gives Matteson and James 2014</td>
+</tr><tr><td>LaTeX escape</td>
+<td><code>mcp</code></td>
+<td>
+<code>Lindel{\o}v</code> versus ASCII <code>Lindelov</code>
+</td>
+</tr></tbody></table><p>That is the division of labour the package intends: the help page names the package you are calling, <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> names the paper you should cite.</p>
+</div>
+<div class="section level2">
+<h2 id="id_327-seven-wrappers-cited-nothing-at-all">327. Seven wrappers cited nothing at all<a class="anchor" aria-label="anchor" href="#id_327-seven-wrappers-cited-nothing-at-all"></a></h2>
+<p><code><a href="reference/fpop_wrapper.html">fpop_wrapper()</a></code>, <code><a href="reference/wbs_wrapper.html">wbs_wrapper()</a></code>, <code><a href="reference/wbs2_wrapper.html">wbs2_wrapper()</a></code>, <code><a href="reference/not_wrapper.html">not_wrapper()</a></code>, <code><a href="reference/mosum_wrapper.html">mosum_wrapper()</a></code>, <code><a href="reference/idetect_wrapper.html">idetect_wrapper()</a></code> and <code><a href="reference/tguh_wrapper.html">tguh_wrapper()</a></code> had <strong>no <code>@references</code> block and no <code>\insertRef</code></strong> – seven method help pages with no reference, where the other forty-three have one.</p>
+<p>The cause is upstream of the roxygen: none of the seven keys existed in <code>inst/REFERENCES.bib</code>. They were in <code>vignettes/vignette_reference.bib</code> only, and <code>\insertRef{key}{ggchangepoint}</code> reads the <em>installed</em> bibliography, so the reference could not have been inserted even if someone had tried. Copied across – <code>maidstone2017optimal</code>, <code>fryzlewicz2014wild</code>, <code>fryzlewicz2020detecting</code>, <code>baranowski2019narrowest</code>, <code>eichinger2018mosum</code>, <code>anastasiou2022idetect</code>, <code>fryzlewicz2018tail</code> – and each wrapper given the <code>@references</code> block its siblings have.</p>
+</div>
+<div class="section level2">
+<h2 id="id_328-and-one-help-page-credited-the-wrong-paper">328. And one help page credited the wrong paper<a class="anchor" aria-label="anchor" href="#id_328-and-one-help-page-credited-the-wrong-paper"></a></h2>
+<p><code><a href="reference/fcov_wrapper.html">fcov_wrapper()</a></code> detects changes in the <strong>covariance operator</strong> of a functional series. Its Rd cited <code>aue2018fchange</code> – “Detecting and dating structural breaks in functional data without dimension reduction” – which is <code><a href="reference/fmean_wrapper.html">fmean_wrapper()</a></code>’s paper, cited from the same file eleven lines above. <code>cpt_cite("fcov")</code> has the right one and always did: Aue, Rice and Sönmez (2020), “Structural break analysis for spectrum and trace of covariance operators”, <em>Environmetrics</em> 31(1), e2617.</p>
+<p>So a reader of <code><a href="reference/fcov_wrapper.html">?fcov_wrapper</a></code> was sent to a paper about the functional <em>mean</em> for a method about <em>covariance</em>. Added <code>aue2020covariance</code> to <code>inst/REFERENCES.bib</code> and repointed the reference.</p>
+<p>This is the entry §324 deliberately did <strong>not</strong> add to the vignette bibliography, on the grounds that nothing cited it. That reasoning still holds and this is not a reversal: the entry belongs in the bibliography where it is cited, and it is cited from an Rd, so it goes in the Rd’s bibliography.</p>
+<p>Re-measured: <strong>15 flags -&gt; 7</strong>, all seven the design cases above. All <strong>58</strong> <code>\insertRef</code> keys across <code>R/</code> resolve, 0 missing.</p>
+</div>
+<div class="section level2">
+<h2 id="id_329-what-this-pass-changes">329. What this pass changes<a class="anchor" aria-label="anchor" href="#id_329-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>326</td>
+<td>8 of 15 flags are the intended software-versus-method split</td>
+<td>read each</td>
+</tr><tr><td>327</td>
+<td>
+<strong>7 wrappers had no reference at all</strong>, because their keys were only in the vignette bibliography and <code>\insertRef</code> cannot see that file</td>
+<td>roxygen blocks against <code>inst/REFERENCES.bib</code>
+</td>
+</tr><tr><td>328</td>
+<td><strong><code><a href="reference/fcov_wrapper.html">?fcov_wrapper</a></code> cited the functional-mean paper for a covariance method</strong></td>
+<td>
+<code>cpt_cite("fcov")</code> against the Rd</td>
+</tr></tbody></table><p>New actions: none opened. Eight bibliography entries, seven <code>@references</code> blocks, one corrected reference.</p>
+<p><strong>What this pass adds.</strong> §327’s cause is worth the note: the seven missing references were not an oversight in the roxygen, they were <em>impossible</em>. <code>\insertRef</code> reads <code>inst/REFERENCES.bib</code>; the keys lived in <code>vignettes/vignette_reference.bib</code>; two bibliographies that look interchangeable are not, and the failure is silent – no warning, no check note, just a help page with no reference. Which bibliography a citation mechanism reads is worth knowing before wondering why nothing renders.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxviii--two-bibliographies-one-paper-two-author-lists">Part XXVIII — two bibliographies, one paper, two author lists<a class="anchor" aria-label="anchor" href="#part-xxviii--two-bibliographies-one-paper-two-author-lists"></a></h1>
+<div class="section level2">
+<h2 id="id_330-47-shared-keys-one-divergence">330. 47 shared keys, one divergence<a class="anchor" aria-label="anchor" href="#id_330-47-shared-keys-one-divergence"></a></h2>
+<p>The two bibliographies overlap by <strong>47 keys</strong>, and a key present in both with different content renders one way in a vignette’s References and another in a help page. Compared entry by entry – author list plus title, journal, volume, number, pages, year, doi, publisher:</p>
+<p><strong>One divergence.</strong> <code>zhao2019beast</code>:</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>file</th>
+<th>authors</th>
+</tr></thead><tbody><tr><td><code>vignette_reference.bib</code></td>
+<td>
+<code>Zhao, Wulder, Hu and others</code> – three named, then <code>et al.</code>
+</td>
+</tr><tr><td><code>inst/REFERENCES.bib</code></td>
+<td>all <strong>eleven</strong>: Zhao, Wulder, Hu, Bright, Wu, Qin, Li, Toman, Mallick, Zhang, Brown</td>
+</tr></tbody></table><p>Everything else about the entry is identical, so the same paper printed a three-author list in the vignette bibliography and an eleven-author list in the help pages. The full list is the accurate one; the vignette bib now carries it too. Re-measured: 47 shared keys, <strong>0</strong> with differing author lists.</p>
+<p><code>cpt_cite("beast")</code> renders “Zhao, K., Wulder, M. A., Hu, T., et al. (2019)”, which is a citation <em>string</em> and correctly abbreviates – that is a different artifact from a bibliography entry and needs no change.</p>
+</div>
+<div class="section level2">
+<h2 id="id_331-instcitation-hard-coded-the-version-twice">331. <code>inst/CITATION</code> hard-coded the version twice<a class="anchor" aria-label="anchor" href="#id_331-instcitation-hard-coded-the-version-twice"></a></h2>
+<p><code>citation("ggchangepoint")</code> is reader-visible and the file agreed with <code>DESCRIPTION</code> on every field – title, author, URL, and version 0.5.0. But the version was <strong>written out twice as a literal</strong>, in <code>note</code> and again in <code>textVersion</code>, so the next bump would leave <code><a href="https://rdrr.io/r/utils/citation.html" class="external-link">citation()</a></code> advertising the previous release. That is §320’s defect (the introduction’s stale “31 methods”) waiting to happen in the citation a user pastes into a paper.</p>
+<p>Both now read <code>meta$Version</code>, which is what R passes to a CITATION file and what <em>Writing R Extensions</em> recommends. Verified by bumping <code>DESCRIPTION</code> to 0.6.0 in place: both fields report 0.6.0 and <strong>no 0.5.0 remains</strong> anywhere in the rendered entry. Restored.</p>
+</div>
+<div class="section level2">
+<h2 id="id_332-what-this-pass-changes">332. What this pass changes<a class="anchor" aria-label="anchor" href="#id_332-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>330</td>
+<td><strong>the same paper carried a 3-author list in one bibliography and 11 in the other</strong></td>
+<td>47 shared keys x 9 fields, both files parsed with <code>rbibutils</code>
+</td>
+</tr><tr><td>331</td>
+<td>
+<code>inst/CITATION</code> hard-coded the version in two places</td>
+<td>read it against <code>DESCRIPTION</code>, then bumped the version to see what moved</td>
+</tr></tbody></table><p>New actions: none opened. One author list, one self-updating version.</p>
+<p><strong>What this pass adds.</strong> §331 is a defect that does not exist yet, which is a category this document has not knowingly worked in before: every claim audited so far was already true or already false. A literal that must be edited in lock-step with another file is <em>guaranteed</em> to go stale, and the cost of finding it later is a wrong citation in someone’s paper. Worth looking for the rest of them – the version string is the obvious one, and the year <code>2026</code> in the same file is the next.</p>
+</div>
+</div>
+<div class="section level1">
+<h1 id="part-xxix--the-lock-step-literals-and-a-guard-debugged-three-ways">Part XXIX — the lock-step literals, and a guard debugged three ways<a class="anchor" aria-label="anchor" href="#part-xxix--the-lock-step-literals-and-a-guard-debugged-three-ways"></a></h1>
+<p>§331 ended by asking where the rest of the “must be edited in lock-step” literals are. Answer: two, both unavoidable, now guarded.</p>
+<div class="section level2">
+<h2 id="id_333-the-own-version-thread-closes-clean">333. The own-version thread closes clean<a class="anchor" aria-label="anchor" href="#id_333-the-own-version-thread-closes-clean"></a></h2>
+<p>Every <code>0.5.0</code> in <code>R/</code> and <code>tests/</code> is a <strong>historical comment</strong> – “0.5.0: diagnostics, selection and influence”, “0.5.0 layers: the objects the package could not draw before” – which stays true forever. The only code that reads a version uses <code><a href="https://rdrr.io/r/utils/packageDescription.html" class="external-link">packageVersion()</a></code>, and the one version <em>comparison</em> (<code>packageVersion("HDCD") &lt;= "1.1"</code>, the Pilliat guard) is about an upstream package and documented. Nothing to fix.</p>
+</div>
+<div class="section level2">
+<h2 id="id_334-two-files-state-the-method-total-and-cannot-compute-it">334. Two files state the method total and cannot compute it<a class="anchor" aria-label="anchor" href="#id_334-two-files-state-the-method-total-and-cannot-compute-it"></a></h2>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>file</th>
+<th>text</th>
+</tr></thead><tbody><tr><td><code>DESCRIPTION</code></td>
+<td>“a ‘cpt_detect()’ dispatcher covering fifty methods”</td>
+</tr><tr><td>
+<code>R/ggchangepoint.R</code> -&gt; <code>man/ggchangepoint-package.Rd</code>
+</td>
+<td>“dispatcher  that reaches fifty methods”</td>
+</tr></tbody></table><p>Both are correct today. Neither can be computed – <code>DESCRIPTION</code> and Rd are static text – so the literal has to stay, which makes them precisely the shape that goes stale on the next engine wave, exactly as §320’s “31 detection methods” did in a vignette. §321’s guard now covers them alongside the four vignettes that state a total.</p>
+</div>
+<div class="section level2">
+<h2 id="id_335-three-bugs-between-writing-the-guard-and-having-one">335. Three bugs between writing the guard and having one<a class="anchor" aria-label="anchor" href="#id_335-three-bugs-between-writing-the-guard-and-having-one"></a></h2>
+<p>Extending a working guard to two more files took three fixes, and all three presented as “the guard does not fire”:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Indented continuation lines.</strong> <code>DESCRIPTION</code> wraps as “dispatcher coveringfifty methods”, so joining lines with a single space leaves a <em>run</em> of blanks and a pattern written with literal spaces never matches. Fixed by normalising whitespace before matching – which also retires the line-wrap trap that bit §321’s verification.</li>
+<li>
+<strong>My verification, again.</strong> Breaking the Rd with a plain string replace looked like it had worked and the guard stayed silent, so I concluded the path was unresolved. The path was fine.</li>
+<li>
+<strong>The real bug: a half-added pattern.</strong> The new <code>reaches ([A-Za-z0-9]+) methods</code> pattern was added to the pattern list but <code>reaches</code> was never added to the alternation that strips the leading word before reading the number. So <code>tok</code> came out as <code>"reaches"</code>, which is not a numeral and not a number word, and every match was silently skipped. A pattern and its parser are two edits, and only one of them was made.</li>
+</ol><p>Final state: clean tree passes; breaking the count fires in <code>DESCRIPTION</code>, <code>man/ggchangepoint-package.Rd</code> and the four vignettes, with the offending phrase quoted – <code>"ggchangepoint-package.Rd: 'reaches thirty methods' but the registry has 50"</code>.</p>
+</div>
+<div class="section level2">
+<h2 id="id_336-standing-vignette-check">336. Standing vignette check<a class="anchor" aria-label="anchor" href="#id_336-standing-vignette-check"></a></h2>
+<table class="table"><tbody><tr><td>bibliography entries / cited / broken</td>
+<td>70 / 63 / <strong>0</strong>
+</td>
+</tr><tr><td>uncited (all <code>\insertRef</code>’d from Rd)</td>
+<td>7</td>
+</tr><tr><td>
+<code>\insertRef</code> keys in <code>R/</code> / unresolved</td>
+<td>58 / <strong>0</strong>
+</td>
+</tr><tr><td>available / planned methods, against the guarded prose</td>
+<td>50 / 5</td>
+</tr></tbody></table></div>
+<div class="section level2">
+<h2 id="id_337-what-this-pass-changes">337. What this pass changes<a class="anchor" aria-label="anchor" href="#id_337-what-this-pass-changes"></a></h2>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>§</th>
+<th>finding</th>
+<th>measured how</th>
+</tr></thead><tbody><tr><td>333</td>
+<td>no rotting own-version literal; every <code>0.5.0</code> in code is a historical comment</td>
+<td>grep over <code>R/</code>, <code>tests/</code>, <code>inst/</code>, <code>.github/</code>
+</td>
+</tr><tr><td>334</td>
+<td>
+<strong><code>DESCRIPTION</code> and the package Rd state the method total as a literal</strong>, uncomputable and unguarded</td>
+<td>grep, then the registry</td>
+</tr><tr><td>335</td>
+<td>the extended guard failed three different ways, twice looking like a path problem</td>
+<td>deliberate breakage per file</td>
+</tr></tbody></table><p>New actions: none opened. One guard extended; no package behaviour changed.</p>
+<p><strong>What this pass adds.</strong> §335.3 is the sharpest version of a lesson this document keeps relearning: <strong>a guard that reports “pass” is making a claim, and it is the claim least likely to be checked.</strong> Three of the four guards added in this loop needed a deliberate breakage to reveal that they could not fail. The discipline is cheap – break the input, watch the failure name the input – and it has now caught more defects in the guards than the guards have caught in the package.</p>
 </div>
 </div>
 

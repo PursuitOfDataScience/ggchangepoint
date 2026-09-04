@@ -14706,8 +14706,16 @@ rejections and different sorting behaviour. That is the same drift
 both are now a single `as_cp_locations(x, arg, sort)` beside the other
 validators, refusing: a `ggcpt`, a data frame, a **factor**, a **logical
 mask**, and an NA the coercion *invented* (as opposed to one that
-arrived as NA, which the documented drop rules cover). Applied at eleven
-sites.
+arrived as NA, which the documented drop rules cover). Applied at
+**thirteen call sites** across ten entry points –
+[`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+and
+[`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md)
+take two each – plus one more passed to
+[`lapply()`](https://rdrr.io/r/base/lapply.html) rather than called
+directly, in
+[`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md).
+(Corrected in §305: this said “eleven”.)
 
 Verified in both directions: ten factor calls refused, each naming the
 caller’s own argument (`pred`, `truth`, `annotations`, `start`,
@@ -14721,7 +14729,7 @@ cleanly was accepted before and still is.
 |----|----|----|
 | 265 | `factor(month.abb)` as an index was **refused** while the identical character labels were accepted | three index forms, codes printed |
 | 266 | **eight entry points read a factor’s level codes as locations**, and four of them returned a metric: recall 0 for exact predictions, f1 0, covering 0.5 | one factor call per entry point |
-| 266.1 | the two local guards from rounds one and three had already drifted apart; now one helper at eleven sites | read both, then merged |
+| 266.1 | the two local guards from rounds one and three had already drifted apart; now one helper at thirteen call sites | read both, then merged |
 | — | 200 of 205 [`stop()`](https://rdrr.io/r/base/stop.html) calls and 25 of 25 [`warning()`](https://rdrr.io/r/base/warning.html) calls use `call. = FALSE`; the five exceptions are deliberate `stop(e)` re-raises of an upstream condition | paren-balanced scan of `R/` |
 | — | the rest of the index surface is sound: unsorted, decreasing, NA, wrong-length and length-1 indices all refused with clear messages; Date and POSIXct get date/datetime scales; irregular spacing warns; character labels give a discrete axis; `cp_index` and `index_value` are carried through | 15 index forms x tidy/augment/autoplot |
 
@@ -15238,3 +15246,1426 @@ Worth generalising: a diagnostic that names a cause is itself a claim,
 and it needs the same treatment as any other claim in this document —
 state the observation, and branch on what the code actually knows rather
 than on the situation you had in mind when you wrote it.
+
+# Part XIV — the prose and the DESCRIPTION, checked against the package
+
+A read-only pass, run while the pushed tree was being validated by CI,
+on the two surfaces where a claim can rot without any test noticing: the
+sentences in `README.md` and the vignettes, and the dependency lists in
+`DESCRIPTION`. The 0.5.0 audit found a stale planned-engine count and a
+misattributed ARL bound in exactly this surface (S30), so it is worth
+re-checking rather than assuming.
+
+## 285. Every name in the prose exists, and every count is right
+
+**127 package-looking names** — `cpt_*`, `ggcpt_*`, `*_wrapper`, the
+geoms, the scales, the signal generators — appear across `README.md`,
+`README.Rmd` and the eight vignettes. **All 127 are exported.** No stale
+reference to a function that was renamed or removed.
+
+The countable claims, against the live package:
+
+| claim | where | live value |
+|----|----|----|
+| “50 methods” | `README.md`, `introduction.Rmd` | 50 rows with `status == "available"` |
+| “50 wired” | `comparison.Rmd` | same |
+| “fifty detectors” | `extending.Rmd` | same |
+| “fifty methods” | `DESCRIPTION` | same |
+| “five canonical test signals” | `introduction.Rmd` | `signal_blocks`, `signal_fms`, `signal_teeth`, `signal_stairs`, `signal_mix` |
+| “six families … plus two concerns” | `introduction.Rmd` | all eight sections present and named as listed |
+
+### 285.1 The one claim that needed running, not reading
+
+Four documents tell the reader to use
+`subset(cpt_methods(), status == "registered")`. Called on a clean
+session,
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+returns only `available` (50) and `planned` (5) — no `registered` row
+exists, so the documented idiom cannot be verified by reading the table.
+Registering a method and re-calling it:
+
+    status values: available=50  planned=5  registered=1
+    the registered row: proseprobe | user | registered | NA
+    subset(cpt_methods(), status == "registered")$method -> proseprobe
+
+The claim holds exactly. Worth recording because a *reader* of the live
+table would conclude the documentation was wrong.
+
+## 286. `DESCRIPTION` is tight in both directions
+
+| direction | result |
+|----|----|
+| all **56** `Suggests` referenced somewhere in `R/`, `tests/` or `vignettes/` | yes, 0 unused |
+| every `pkg::` call in `R/` declared in `Imports` or `Suggests` | yes, 0 undeclared |
+
+Neither direction is checked by `R CMD check` — an unused `Suggests`
+entry passes silently and costs every checking machine an install — so
+this is worth the one command it takes.
+
+## 287. What this pass changes
+
+Nothing in the package: three audits, no findings.
+
+| § | audit | result |
+|----|----|----|
+| 285 | 127 package names in the prose | all exported |
+| 285 | six countable claims in the prose | all match the live package |
+| 285.1 | `status == "registered"`, which the live table cannot show | verified by registering a method |
+| 286 | 56 `Suggests` used / every `::` declared | clean both ways |
+
+**What this pass adds.** §285.1 is the reusable bit: a documented idiom
+that queries a *state the package is not in by default* cannot be
+checked by inspecting the default state, and reading the table would
+have made the documentation look wrong. The check has to put the package
+into the state the sentence describes.
+
+## 288. CI is green, and the cover letter had gone stale
+
+`b94c612` pushed to `master`. GitHub Actions R-CMD-check:
+
+| job                                      | result       |
+|------------------------------------------|--------------|
+| ubuntu-latest devel / release / oldrel-1 | `Status: OK` |
+| windows-latest release                   | `Status: OK` |
+| macos-latest release                     | 1 NOTE       |
+
+pkgdown and the pages deployment are green too. The test suite reports
+**0 failures on every platform** — 3119 passing on Ubuntu, 3079 on
+Windows, 3065 on macOS.
+
+The macOS note is `checking dependencies in R code`, and its whole body
+is `rgl.so` failing to `dlopen` for want of
+`/opt/X11/lib/libGLU.1.dylib`. That is S37’s chain seen from the other
+end: `fabisearch` -\> `NMF` / `plot3D` -\> `misc3d` -\> `rgl`, on a
+runner with no XQuartz. S37 was the *package* loading that chain through
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md);
+this is `R CMD check`’s own dependency step doing it, which nothing in
+this package can prevent short of dropping a suggested engine. Every
+other macOS line, examples and tests and vignette rebuild included, is
+OK.
+
+### 288.1 The submission note the fix invalidated
+
+`cran-comments.md` still said:
+
+> 0 errors \| 0 warnings \| 1 note. … `installed size is 5.4Mb` /
+> `doc 4.7Mb`
+
+**That note no longer exists.** §249’s `dpi = 72` removed it, and the
+cover letter is the one document in the repository that no check reads,
+so nothing caught the contradiction: the file would have told CRAN to
+expect a note the package does not raise, alongside numbers from before
+the change. Rewritten to state what the checks now report, plus the
+macOS `rgl` explanation above.
+
+One claim was narrowed while writing it. The draft said the installed
+`doc` directory drops “to under 4 MB”, from §249’s local measurement of
+3.66 MB — but CI reports `doc` at 4.0-4.4 Mb, because `R CMD check`’s
+size accounting and `du` do not agree and platforms differ. A cover
+letter is the worst place for a number that holds on one machine, so it
+now says “cuts the installed `doc` directory by about a quarter” and
+cites only the tarball, which was measured directly: 4,445,958 bytes.
+
+**What this adds.** `cran-comments.md` is `.Rbuildignore`d and therefore
+outside every audit this document has run: the `@return` sweep (§272),
+the prose sweep (§285) and the two-directional Rd checks all stop at
+files the package ships. The one file written *for* the reviewer is the
+one file nothing verifies. Worth re-reading against a fresh check log
+before every submission, because it goes stale exactly when a check
+result improves.
+
+# Part XV — the guard for the defect CI cannot see
+
+## 289. Four more clean audits
+
+| audit | result |
+|----|----|
+| `README.md` in sync with `README.Rmd` | yes – the `.md` was rebuilt one commit *after* the last `.Rmd` edit (`abf04c6` after `ae4cf68`), and nothing in this loop’s nine rounds changed any output the README prints: it shows no [`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md) output, no [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on a result, and no stability plot |
+| vdiffr snapshots orphaned or missing | none: 25 `expect_doppelganger()` calls, 25 distinct standardised names, 25 files |
+| GitHub Actions action versions | all current: `actions/checkout@v4`, `r-lib/actions/*@v2`, `github-pages-deploy-action@v4.5.0` |
+| the failure-only vignette diagnostic step | present and valid – `tools::buildVignettes(dir = , ser_elibs = NULL)` looked like a typo and **is a real argument** in R 4.4.1, verified by calling it |
+
+The snapshot audit gave a false alarm first: comparing file names
+against test titles reported 19 orphans, because vdiffr’s
+`str_standardise()` maps *any* non-alphanumeric run to `-`, and my first
+pass only mapped underscores. Second instrument error in three rounds
+(§268 was the first), same shape: the sweep was wrong before the package
+was.
+
+## 290. CI cannot catch the mistake that has been made three times running
+
+The DESCRIPTION promises the package works with its Imports alone. **CI
+installs every suggested package**, so a test that calls a Suggests
+engine without a guard passes all five jobs and fails only in an
+Imports-only check. That has now happened three times: `ggrepel` (S31),
+then `cpm`, then this loop’s own `fpop` – which passed ubuntu
+devel/release/oldrel-1, windows and macOS, and was caught by the local R
+4.6.0 run minutes before the push.
+
+So the guard belongs in the suite, where it runs everywhere. It is exact
+in three ways, each of which a naive version got wrong:
+
+1.  **The engine comes from the registry.** A method whose engine is an
+    Imports package needs no guard; 6 of the 50 qualify (`pelt`,
+    `binseg`, `segneigh`, `amoc`, `np`, `ecp`), and the other 44 need
+    one.
+2.  **Only call forms count**, not the bare name. The first version
+    matched any `"<method>"` string and flagged twelve blocks, of which
+    ten were noise: `"var"` is a method *and* the `change_in = "var"`
+    value, and several tests list method names as data
+    (`test-050-engines.R:275` “used” eighteen engines it was only
+    enumerating).
+3.  **A call inside `expect_error()` is exempt.** Two blocks survived
+    the tightening and both are correct as they stand:
+    `cpt_detect(<matrix>, method = "sn")` asserting “univariate” and
+    `cpt_detect(x, method = "fpop", change_in = "var")` asserting “not
+    supported”. Both refusals fire *before* the engine is needed – that
+    is the shape-first ordering the 0.5.0 audit fixed – so they have to
+    work without it, and guarding them would delete the coverage that
+    matters most on a minimal installation. My `fpop` slip was inside
+    `expect_warning()`, which is the opposite: it needs the engine to
+    run.
+
+**Validated in both directions before being trusted**, which is the part
+worth copying: the rule reports 0 blocks on the current suite, and
+re-injecting the `fpop` line reports exactly
+`test-hardening.R:334 -> fpop`. A guard that has not been shown to fire
+on the bug it exists for is a guess.
+
+## 291. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 289 | README in sync, snapshots in sync, actions current, the CI diagnostic valid | four checks, one of which needed the argument list read rather than guessed |
+| 290 | **CI structurally cannot see an unguarded Suggests call**; three occurrences to date | the `fpop` slip passed 5 CI jobs |
+| 290 | the guard now catches it, with 0 false positives on 25 test files | run clean, then run against the re-injected slip |
+
+New actions: none opened. One test added; no package code touched.
+
+# Part XVI — twenty figures, one description between them
+
+## 292. The hypothesis was backwards, and measuring said so twice
+
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+attaches a real description to every plot it draws – `cpt_alt_text()`
+builds it and `with_alt()` applies it as `labs(alt = )`:
+
+> “Line chart of a time series of 120 observations ranging from -2.21 to
+> 6.4, with 1 changepoint at 60 marked by vertical rules. Detected with
+> the pelt method on a change in mean.”
+
+Each vignette also sets a single generic `fig.alt` in
+`opts_chunk$set()`, so the working hypothesis was that the vignettes
+were overriding the good text with a placeholder, and the fix was to
+delete the global option and let each plot speak for itself. **Both
+halves of that were wrong.**
+
+**First measurement – the scale of the problem is real.** Counting
+`<img>` alt attributes in the built `inst/doc`: **29 of 67 figures
+carried the generic per-vignette string**, and `ggchangepoint.html` was
+the worst at **20 of 26** – twenty different figures all announced as
+“ggchangepoint feature tour plot”, which for a screen-reader user is
+indistinguishable from no alt text at all.
+
+**Second measurement – the proposed fix makes it worse.** Rendering the
+feature tour with the global `fig.alt` removed produced 26 `<img>` tags
+of which only 6 had an `alt` attribute; the other **20 had none at
+all**. knitr 1.50 does not read a ggplot’s `alt` label: with `fig.alt`
+unset the attribute is simply absent, for a package plot and a bare
+`ggplot2` plot alike (`knitr:::get_alt_text` does not exist in this
+version). The global option is not overriding good text – it is the only
+thing standing between those figures and nothing.
+
+**And the first count of the removal was wrong too.** The regex matched
+`<img ... alt="...">`, so an image with *no* alt attribute did not
+match, and the first reading was “0 empty alts” – exactly backwards.
+Counting `<img` tags and alt attributes separately is what showed the
+gap. Third instrument error in four rounds; the pattern is always the
+same, a sweep that cannot see the thing it is looking for.
+
+## 293. So the fix is the work the vignettes were already half doing
+
+38 of the 67 figures already had hand-written per-chunk `fig.alt` –
+“Series with shaded label regions behind it, coloured by what each label
+asserts”, and so on. The remaining 29 just had not been done. Written,
+one per figure, describing what that figure shows:
+
+| vignette            | chunks given specific alt text |
+|---------------------|--------------------------------|
+| `ggchangepoint.Rmd` | 20                             |
+| `introduction.Rmd`  | 5                              |
+| `comparison.Rmd`    | 3                              |
+| `extending.Rmd`     | 1                              |
+
+Existing chunk options are preserved (`eval = has_stepR`,
+`fig.height = 6`), and the global `fig.alt` **stays** as the fallback
+for any figure chunk added later without one – which is the opposite of
+where this section started.
+
+The twentieth was found only by re-rendering: the scan looked for
+`autoplot`/`ggcpt_*`/`ggplot` and missed the chunk that calls bare
+`plot(res)` – the one demonstrating the
+[`plot()`](https://rdrr.io/r/graphics/plot.default.html) methods added
+in §248. After adding it, the feature tour renders **26 images: 0
+without alt, 0 generic, 26 specific**. The only chunks still on the
+fallback across all eight vignettes are three that draw nothing: two
+[`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md)
+calls and the
+[`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md)
+class check.
+
+## 294. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 292 | **29 of 67 vignette figures shared a generic alt string**, 20 of them in one document | `<img alt>` count in the built `inst/doc` |
+| 292 | knitr 1.50 does not use a ggplot’s `alt` label, so removing the global fallback leaves **no** alt attribute | render with it removed, counting `<img` against `alt=` |
+| 293 | 29 figures now carry a description of what they show; 0 without alt, 0 generic | re-render |
+
+New actions: none opened. No package code touched – 29 chunk options.
+
+**What this pass adds.** The measurement order mattered more than the
+fix. Had I edited first, I would have deleted the only alt text twenty
+figures had, on the theory that something better would take its place –
+and the first count would have appeared to confirm it, because the regex
+could not represent the failure. Two different measurements of the same
+change disagreed, and the one that could see absence was the right one.
+
+## 295. The web-only article: three checks, one gap
+
+`vignettes/articles/benchmarks.Rmd` had never been looked at. It is
+`.Rbuildignore`d, so it ships on the pkgdown site and not in the
+tarball, which puts it outside `R CMD check` entirely – the same blind
+spot `cran-comments.md` sat in (§288.1).
+
+| check | result |
+|----|----|
+| does §292’s alt-text gap apply to it? | **no figures at all** – the article has exactly one chunk, the `include = FALSE` setup, and every number in it is hard-coded prose |
+| did §249’s `dpi = 72` invalidate its “Size” section? | no – “size” there is *empirical size* under the null, a false-positive rate, and the memory figures (`segneigh` at 1,208 MB) are unaffected |
+| do its four [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md) provenances still exist? | yes, and the shipped documentation is the more careful of the two |
+
+### 295.1 A near-miss worth recording
+
+The coverage table lists the provenances as `native`, `bootstrap`,
+`nsp`, `posterior`, and
+[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+reports `source = "nsp_region"` – not `nsp`. That looked like §285.1’s
+shape: a token a reader would try and find missing. It is not a defect:
+the table names the values of the `method` argument, which are exactly
+those four, and
+[`?cpt_confint`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+already spells out that a changepoint inside a region gets
+`source = "nsp_region"`. The Rd is precise where the article is loose,
+and the article is loose about the right thing.
+
+### 295.2 The gap: measurements with no date
+
+The provenance paragraph said the numbers came from “a single Linux
+x86_64 machine running R 4.4.1, with the engine versions current at the
+time of measurement” – honest about *what* they are and silent about
+*when*. For a published page of measured numbers that is the one piece
+of provenance a reader cannot reconstruct: nothing on the page
+distinguishes 0.4.0’s engine wave from 0.5.0’s. Now says “measured
+against ggchangepoint 0.5.0 in August 2026”.
+
+## 296. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 295 | the web-only article has no figures, so §292 does not reach it; its “Size” section is statistical size, not file size | read it |
+| 295.1 | the `nsp` / `nsp_region` mismatch is a documented distinction, not staleness | [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md) on four fits, against the Rd |
+| 295.2 | a page of measured numbers with no version or date on it | read the provenance paragraph |
+
+New actions: none opened. One provenance line.
+
+**What this pass adds.** Two files now have the same story:
+`cran-comments.md` (§288.1) and `benchmarks.Rmd` are both
+`.Rbuildignore`d, both written for a human reader, and both outside
+every automated check this document has run. That is the whole category
+– the files the package does not ship are the files nothing verifies,
+and both of them had drifted. The other members of that set
+(`README.Rmd`, `_pkgdown.yml`, the workflows) have now been checked too
+(§285, §289), so the category is covered rather than merely noticed.
+
+# Part XVII — the help system as a graph
+
+## 297. Seven topics could not be reached from any other help page
+
+The commit before this loop closed a documentation gap it described as
+“inbound links 71-\>124”. Measured again, as a graph over `man/*.Rd` –
+resolve every `\link{}` through the alias table and count arrivals per
+topic, ignoring self-links:
+
+|                                              | count |
+|----------------------------------------------|-------|
+| topics                                       | 125   |
+| with at least one inbound link               | 116   |
+| **unreachable** (non-internal, zero inbound) | **7** |
+
+The seven: `tidy.ggcpt`, `glance.ggcpt`, `augment.ggcpt`,
+`summary.ggcpt`, `print.ggcpt`, `cpt_install_engines`, and
+`ggcpt_plot_methods`.
+
+**The cause is one omission repeated four times: none of the package’s
+four hub pages had a `@seealso` at all.**
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+– the central function, the page a reader lands on first – had none, and
+its prose mentions `\code{tidy()}` and `\code{augment()}` in code font
+without linking either. So the five accessors that exist to get a result
+*out* of
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+were unreachable from the page that produces it. Same for
+`autoplot.ggcpt`, `ggcpt_methods` and `cpt_methods`.
+
+`ggcpt_plot_methods` is mine, from §248: I gave it a `@seealso` pointing
+*out* to `autoplot.ggcpt` and `ggcpt_methods` and never made either
+point back. A new page is a leaf until something links it.
+
+Fixed by adding the four missing `@seealso` blocks, each pointing where
+a reader would actually want to go next –
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+to the five accessors, the plot method and
+[`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md);
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+to the installer that fills its `installed` column; `autoplot.ggcpt` and
+`ggcpt_methods` to each other’s plot documentation. Re-measured: **123
+of 123 non-internal topics reachable, 0 unreachable.**
+
+### 297.1 Two verifications, one of them of a false alarm
+
+Every new `\link{}` target resolves to a documented alias – checked by
+running the same alias table over the four edited files: 0 unresolved.
+
+[`tools::checkRd()`](https://rdrr.io/r/tools/checkRd.html) on those
+files then reported twelve issues, all “Non-ASCII contents without
+declared encoding” on em-dashes in prose I did not touch. Not defects:
+`checkRd()` called on a bare file cannot see `Encoding: UTF-8` in the
+DESCRIPTION, and both full `R CMD check` logs contain **zero**
+`Non-ASCII` lines. Worth recording because the natural reaction to
+twelve new-looking issues is to start replacing em-dashes.
+
+## 298. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 297 | **7 topics unreachable from any other help page**, because all four hub pages lacked a `@seealso` | link graph over `man/*.Rd`, resolved through aliases |
+| 297 | now 0 unreachable | re-measured after the edit |
+| 297.1 | `checkRd()`’s twelve encoding issues are an artifact of calling it standalone | `grep -c Non-ASCII` over both full check logs; `Encoding: UTF-8` in DESCRIPTION |
+
+New actions: none opened. Four `@seealso` blocks; no package code
+touched.
+
+**What this pass adds.** Reachability is a property of the *graph*, not
+of any page, so it cannot be seen while reading pages one at a time –
+which is how documentation gets reviewed. Every one of the seven topics
+is well written and correctly cross-referenced *outward*; they were
+invisible because nothing pointed in. The measurement is four lines of
+alias resolution and it is the only way this gap shows up at all.
+
+# Part XVIII — the `...` surface, and the example gating
+
+## 299. Every `...` goes where its documentation says
+
+86 exports take `...`. Six never reference it in their body – `alarms`,
+`as_tibble`, `augment`, `autoplot`, `glance`, `tidy` – and all six are
+**generics**, whose body is
+[`UseMethod()`](https://rdrr.io/r/base/UseMethod.html): `...` travels by
+dispatch, so not naming it is correct. That leaves 80 functions that
+actually forward it, and **all 80 document it**; none has an
+undocumented `...`.
+
+Then the harder question: does the documented destination match the
+actual one? Extracting the `\arguments` entry for `...` from each Rd and
+the calls that receive `...` from each body flagged **16 apparent
+mismatches** – and all sixteen were the extractor’s fault. The receiver
+pattern required `...` to sit inside a call with no nested parentheses
+before it, which misses every real idiom in this package:
+
+``` r
+ocp::onlineCPD(data_vec, getR = TRUE, <a multi-line list>, ...)
+do.call(ggplot2::geom_rect, c(<...>, full_height_params(mapping), list(...)))
+ggplot2::discrete_scale("colour", palette = cpt_pal(), na.value = na.value, ...)
+```
+
+Read directly, all three send `...` exactly where the documentation
+says. **Fourth instrument error in five rounds** (§268, §289, §292, now
+this), and the same shape every time: a sweep that cannot represent the
+thing it is looking for reports its own blindness as a finding. The
+habit that keeps catching it is reading the code before filing, not a
+better regex.
+
+## 300. Example gating is already textbook-correct, with one omission
+
+CRAN reviewers ask specifically about `\dontrun`, so it is worth knowing
+exactly where it is used:
+
+| mechanism | count | why |
+|----|----|----|
+| `@examplesIf` | 46 | the engine may not be installed – the right tool, and the one used most |
+| `\donttest` | 13 topics | slow but runnable; CI runs them with `--run-donttest` |
+| `\dontrun` | **2 topics** | genuinely cannot run |
+
+Both `\dontrun` uses are the textbook-correct cases:
+[`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
+needs JAGS, a *system* library that no R-package check predicts, and
+[`cpt_load_tcpd()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_load_tcpd.md)
+downloads from the network, which an example must not do.
+
+[`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
+explains itself above the block:
+
+> Not run by R CMD check: whether this works depends on a *system*
+> library, and no test of installed R packages predicts that reliably.
+
+[`cpt_load_tcpd()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_load_tcpd.md)
+had **no explanation at all** – a reviewer would meet a bare
+`\dontrun{}` and have to infer the reason. It now says the same kind of
+thing in the same place: the calls download from the Turing Change Point
+Dataset’s repository, and an example must not require network access.
+
+## 301. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 299 | all 80 forwarding functions document `...`; the 6 that ignore it are generics | formals and bodies over every export |
+| 299 | the 16 “documented destination not used” hits were all extractor false negatives | read three of them in the source |
+| 300 | `\dontrun` is used twice, both correctly; one had no justification | grep over `man/`, then read both blocks |
+
+New actions: none opened. One example comment; no package code touched.
+
+**What this pass adds.** §300 is a reminder that an audit can also
+confirm a *good* state precisely, and that precision is worth having:
+“we use `\dontrun` twice, here is each reason” is a sentence that
+answers a reviewer’s question directly, and it took a grep to be able to
+say it.
+
+# Part XIX — guarding the fix that cost five CI rounds
+
+## 302. Load-time behaviour, measured
+
+S37 is the worst bug in this package’s history to diagnose:
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+filled its `installed` column with
+[`requireNamespace()`](https://rdrr.io/r/base/ns-load.html), which
+**loads** the package, so building a table loaded all 35 engine
+namespaces – including `fabisearch` -\> `rgl`, which dies in
+[`dyn.load()`](https://rdrr.io/r/base/dynload.html) on macOS for want of
+`libGLU`. `R CMD check` reported it as `Vignette re-building failed`
+with no chunk, no line and no message, and it took five CI rounds to
+find. The fix was
+[`find.package()`](https://rdrr.io/r/base/find.package.html).
+
+Measured now, in a fresh session:
+
+|  | value |
+|----|----|
+| [`library(ggchangepoint)`](https://pursuitofdatascience.github.io/ggchangepoint/) | 1.09s, 30 namespaces – the Imports and their transitive dependencies, no Suggests engine |
+| [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md) | **0.030s, 55 rows, and zero further namespaces loaded** |
+| engine namespaces loaded after both | **3 of 38**, and all three are the Imports engines (`changepoint`, `changepoint.np`, `ecp`) |
+
+The fix holds exactly. Nothing in the package loads a suggested engine
+until a wrapper actually needs it.
+
+### 302.1 Nothing guarded it, so now something does
+
+The suite had no assertion on this at all – the only uses of
+[`loadedNamespaces()`](https://rdrr.io/r/base/ns-load.html) were in
+§290’s `need_pkg` test. The new test is order-independent, which matters
+because by the time it runs most engines are already loaded by earlier
+files: it picks an engine that is **installed and not yet loaded**,
+calls
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md),
+and asserts both that the row says `installed = TRUE` and that the
+engine is *still* not loaded. That is the S37 lesson stated as an
+executable property – answering “is it installed” must not load it.
+
+**Proved to fire before being trusted**, the same way as §290. Reverting
+`engine_installed()` to the pre-S37
+[`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) form makes
+the hardening suite fail, and the side effect is visible in the very
+same run:
+
+    hardening: ..........Registered S3 methods overwritten by 'strucchangeRcpp':
+    ══ Failed ══
+
+Building the table loaded `strucchange` on the way past. Restored
+immediately;
+[`find.package()`](https://rdrr.io/r/base/find.package.html) is back at
+`R/detect.R:457`.
+
+## 303. And the cross-references from §297 validate
+
+The four `@seealso` blocks added last pass introduced eleven new
+`\link{}` targets, which only `R CMD check` verifies – and getting one
+wrong is exactly the mistake of §248 (`\link[base]{plot.default}`, which
+lives in **graphics**). Full check on the current tree:
+
+    * checking Rd cross-references ... OK
+
+Status `1 ERROR, 2 WARNINGs, 3 NOTEs` – the documented environmental
+baseline – with examples, `--run-donttest`, tests, the vignette rebuild
+and installed size all OK.
+
+## 304. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 302 | [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md) runs in 0.030s and loads **nothing**; 3 of 38 engine namespaces loaded after startup, all of them Imports | fresh session, [`loadedNamespaces()`](https://rdrr.io/r/base/ns-load.html) before and after |
+| 302.1 | no test guarded the S37 property; one now does, and it fails when the fix is reverted | temporary revert, then restore |
+| 303 | §297’s eleven new `\link{}` targets all resolve | `checking Rd cross-references ... OK` |
+
+New actions: none opened. One test; no package code changed.
+
+**What this pass adds.** The regression guards worth writing are for the
+bugs that were *hard to see*, not the ones that were hard to fix. S37
+was a one-line fix after five rounds of looking in the wrong place, and
+the reason it hid so well is that its symptom appeared in a different
+subsystem entirely – a vignette failing to rebuild on one platform. A
+test that states the property directly (“asking must not load”) would
+have turned five rounds into one.
+
+# Part XX — auditing my own release notes
+
+## 305. All 25 NEWS claims hold, and one ledger number did not
+
+`NEWS.md`’s “Fixes found in the pre-submission audit” section now
+carries **25 bullets**, written across fifteen passes from memory of
+what had just been done. That makes them the newest and least-verified
+claims in the repository – and the release notes are what a user and a
+CRAN reviewer actually read. So each bullet was turned into a live
+assertion:
+
+|                              | result |
+|------------------------------|--------|
+| bullets asserted             | 25     |
+| **PASS**                     | **25** |
+| FAIL                         | 0      |
+| skipped for a missing engine | 0      |
+
+Every one holds. A sample of what was checked rather than taken on
+trust: [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on a
+`ggcpt_consensus` produces the same `$labels` as
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html) on
+it (bullet 2); `withVisible(plot(fit))$visible` is `FALSE` (3);
+`validate_data()` accepts a logical vector *and*
+[`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+runs on one (5);
+[`?cpt_monitor`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)’s
+Rd contains “Multivariate only” (11);
+[`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
+omits `cp_index` without an index and types it `Date` with one (22);
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html) on
+an indexed stability result renders a `ScaleContinuousDate` (23); and
+`dpi = 72` appears in exactly seven vignette files (25).
+
+### 305.1 The one wrong number was in this document
+
+Bullet 18 says “Ten entry points read locations through a bare
+[`as.integer()`](https://rdrr.io/r/base/integer.html)” and lists them.
+Counted from the code: `as_cp_locations()` is called at **thirteen**
+places –
+[`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+and
+[`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md)
+take two each, for `pred` and `truth` – plus a fourteenth use where it
+is passed to [`lapply()`](https://rdrr.io/r/base/lapply.html) inside
+[`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md)
+rather than called directly. Those thirteen sites sit in exactly **ten**
+distinct entry-point functions, so the NEWS bullet is right.
+
+§266.1 of this ledger said “applied at eleven sites”, which is neither
+number. Corrected in both places it appeared. The error is small and the
+direction is worth noting: the shipped document was accurate and the
+working notes were not, because the working notes were written while the
+edits were still in flight and never recounted afterwards.
+
+## 306. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 305 | **25 of 25 NEWS claims verified against the running package** | one live assertion per bullet |
+| 305.1 | `as_cp_locations()` is at 13 call sites in 10 entry points; the ledger said 11 | `grep -c` over `R/`, then reading each site |
+
+New actions: none opened. One number corrected in this document; no code
+and no NEWS text changed.
+
+**What this pass adds.** Fifteen passes of this loop have applied one
+rule to the codebase – a claim deserves a measurement – and had never
+applied it to the loop’s own output. Doing so found the release notes
+clean and the ledger’s arithmetic wrong, which is the right way round
+but not a coincidence: NEWS was written last, after the code settled,
+while §266.1 was written mid-change. **A claim made while the thing it
+describes is still moving is the one to re-check.**
+
+# Part XXI — do the tests assert anything?
+
+§305.1 found one of my own guards passing under a filter and
+**skipping** in the full suite. That is a failure mode, not an accident,
+so the question generalises: how many of the 327 test blocks run without
+asserting anything?
+
+## 307. None of them
+
+Measured by collecting per-test results from `test_local()` rather than
+reading the files – the count that matters is expectations that
+*executed*, not `expect_*` calls that appear in the source:
+
+|  | value |
+|----|----|
+| `test_that` blocks | 327 |
+| passing expectations | 3,234 |
+| failed | 0 |
+| skipped blocks | 2 (`mcp` absent, the TCPD download) |
+| **blocks that ran and asserted nothing** | **0** |
+
+The thinnest blocks assert one expectation each, and all six are
+single-fact regressions from the 0.4.0 audit (`C4`, `C8`, `C11`, `C16`,
+the SegNeigh penalty fallback, `np`’s `change_in`). One assertion is
+thin; zero would have been the defect, and there are none.
+
+## 308. Three of the five recurring warnings were the suite’s own noise
+
+Every pass of this loop has reported “5 upstream warnings” as a
+constant. Looked at properly, they are two different things.
+
+**Three were escaping because the test asserts a *different* warning.**
+`expect_warning()` captures the one that matches its pattern and lets
+the rest bubble up to the report:
+
+| site | escaping warning | now |
+|----|----|----|
+| `test-new-infrastructure.R:65` | `SegNeigh is computationally slow, use PELT instead` | asserted |
+| `test-wrappers.R:31` | same | asserted |
+| `test-040-bugfixes.R:495` | `Very low number of permuted data sets` from kcpRS at `nperm = 20` | muffled **by message text** |
+
+`changepoint` advises PELT on every `segneigh` call, so asserting it
+both documents the upstream behaviour and takes it out of the report.
+The kcpRS complaint is about a parameter the *test* chose for speed, and
+the block already asserts a different warning it must keep, so a
+text-scoped
+[`withCallingHandlers()`](https://rdrr.io/r/base/conditions.html) muffle
+is the precise instrument – nothing else is hidden. (The first attempt
+nested `expect_warning(..., NA)` around it, which fails: the second
+warning only occurs for one of the three engines the loop covers.)
+
+**Two are staying, because the existing test already argues for them.**
+`R52` deliberately does not assert `envcpt`’s convergence warning, and
+says why:
+
+> whether a given series also triggers an upstream convergence *warning*
+> is data-dependent, so it is not asserted here; warnings are deferred
+> past the diversion by construction and reach the user unchanged.
+
+That is a substantive point about what the test is checking – the test
+diverts the *message* stream and the comment records that warnings
+survive the diversion. Muffling them for a tidier report would overrule
+a documented decision to gain nothing.
+
+Suite report: **FAIL 0 \| WARN 2 \| SKIP 2**, down from WARN 5, and both
+remaining warnings are the ones a reader is meant to see.
+
+## 309. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 307 | **0 of 327 blocks assert nothing**; 3,234 expectations execute | per-test results from `test_local()` |
+| 308 | 3 of the 5 standing warnings were the suite’s own, escaping past an `expect_warning()` for a different pattern | read each site |
+| 308 | the other 2 are deliberate and documented in the test | read the comment |
+
+New actions: none opened. Three test sites; no package code touched.
+
+**What this pass adds.** A standing number in a status report stops
+being information once you repeat it – “5 upstream warnings” was in
+every pass of this document and nobody, including me, had opened them.
+Three were noise the suite made itself. The other two were load-bearing,
+and the difference was only visible by reading the test that emits them.
+
+# Part XXII — what a detection call does to your session
+
+## 310. Two engines were rewriting the caller’s search path
+
+Instrumenting a full suite run for global state – options, attached
+packages, the registry, the RNG – turned up four packages on the search
+path afterwards that had not been there before. Traced per wrapper, in a
+fresh session each time:
+
+| wrapper | attached and left behind |
+|----|----|
+| [`bcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bcp_wrapper.md) | `package:bcp`, `package:grid` |
+| [`fabisearch_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fabisearch_wrapper.md) | `doRNG`, `rngtools`, `doParallel`, `parallel`, `iterators`, `foreach`, `Biobase`, `BiocGenerics` – **eight** |
+| [`bocpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bocpd_wrapper.md), [`beast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/beast_wrapper.md) | none |
+
+Nothing in this package calls
+[`library()`](https://rdrr.io/r/base/library.html). `bcp` attaches
+itself and `grid` when its namespace loads, and `fabisearch` needs NMF
+*attached* rather than loaded – which the wrapper does deliberately, and
+documents – so NMF’s Depends and the engine’s own
+`foreach`/`doParallel`/`doRNG` registration come with it.
+
+**The 0.5.0 audit checked this and reported it clean.** Its claim was
+“no option, no attached package, no RNG leak – the fabisearch NMF attach
+does detach”, and the last clause is exactly what was verified: the
+wrapper’s `on.exit` detached `package:NMF`. What it never checked was
+what came *with* NMF. One of eight is a pass if you look only at the
+package you named.
+
+Both wrappers now record
+[`search()`](https://rdrr.io/r/base/search.html) and give back whatever
+the call added, detaching in
+[`search()`](https://rdrr.io/r/base/search.html) order (most recently
+attached first, which is the only order that works). Measured after:
+**`bcp` 2 -\> 0, `fabisearch` 8 -\> 0**, with the same results as before
+in each case.
+
+### 310.1 The first attempt fixed six of eight, and the reason is instructive
+
+`fabisearch` went from eight to two: `Biobase` and `BiocGenerics`
+survived, and the [`try()`](https://rdrr.io/r/base/try.html) around the
+detach swallowed whatever refused. In isolation all three of `NMF`,
+`Biobase`, `BiocGenerics` detach cleanly – so it was not a refusal at
+all. The baseline was in the wrong place: I recorded
+[`search()`](https://rdrr.io/r/base/search.html) after
+`need_pkg("fabisearch")`, and **loading fabisearch is itself what
+attaches Biobase**, so those two were already in the baseline and were
+never candidates for removal. Moving the record above `need_pkg()` takes
+it to zero.
+
+The [`try()`](https://rdrr.io/r/base/try.html) is what made this look
+like a permissions problem instead of an arithmetic one. A swallowed
+error is a bad place to keep a diagnosis.
+
+### 310.2 What was deliberately not done
+
+Loading `bcp` also prints “Loading required package: bcp” and “Loading
+required package: grid”, because it attaches them itself. Wrapping
+[`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) in
+[`suppressPackageStartupMessages()`](https://rdrr.io/r/base/message.html)
+does **not** silence them – they are plain messages from
+[`library()`](https://rdrr.io/r/base/library.html) calls inside bcp’s
+own load – and the next tool up,
+[`suppressMessages()`](https://rdrr.io/r/base/message.html), would hide
+anything an engine says at load time for a cosmetic gain. Reverted.
+§252’s fix targeted a *warning*, which is louder, appears in
+`R CMD check` output, and was about the machine; conventional load
+chatter is neither, and escalating the instrument to win the point would
+have been the wrong trade.
+
+## 311. The rest of the suite’s global state is clean
+
+| property | after a full suite run |
+|----|----|
+| registered methods left behind | **0** |
+| options changed | 45 – all created by loading engines (`bfast.*`, `datatable.*`, `BioC`), none set by this package |
+| RNG seed | unchanged |
+
+And the timing, since check time matters at submission: 249.6s across
+327 blocks. The three slowest are `ocd` at ~21s each, a quarter of the
+suite – and they already pass `mc_reps = 10` with a comment explaining
+that `mc_reps` only calibrates the threshold. The cost is the engine’s
+per-observation streaming loop, not a test parameter, so there is
+nothing to trim without shortening the series the assertions depend on.
+Worth knowing before optimising it.
+
+## 312. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 310 | **[`bcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bcp_wrapper.md) left 2 packages attached, [`fabisearch_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fabisearch_wrapper.md) left 8**; the 0.5.0 audit verified only that NMF itself detached | search path before and after, per wrapper, fresh session |
+| 310.1 | the first fix reached six of eight because the baseline was recorded after the load that attaches the other two | detaching them by hand, which worked |
+| 311 | 0 registered methods leak, 0 options set by this package, RNG unchanged; the suite’s slowest tests are already minimal | instrumented full run |
+
+New actions: none opened. Two wrappers and one test.
+
+# Part XXIII — the vignettes: citations, and a count that contradicted the table below it
+
+A new standing instruction: verify the vignettes every round – prose,
+citations, claims, cross-references. This is the first pass.
+
+## 313. Citations resolve, and the bibliography had nine dead entries
+
+**61 distinct citation keys** are used across the eight vignettes.
+
+| check | result |
+|----|----|
+| keys that resolve in `vignette_reference.bib` | **61 of 61 – 0 broken** |
+| `\insertRef` keys in `R/*.R` present in `inst/REFERENCES.bib` | **50 of 50 – 0 missing** |
+| entries missing author, title, year or venue | 0 (`rcore` is a `@Manual`, which carries `organization`) |
+| prose years contradicting the `year` field | **0** |
+| multi-word surnames and LaTeX escapes | render correctly – `van den Burg GJJ`, `Demšar`, `Lindeløv` |
+
+Two things looked like defects and were not. `{van den Burg}` is braced
+in one entry and unbraced in another; both parse to
+`family = "van den Burg"` through `rbibutils` and render identically, so
+the unbraced form needed no “fix”. And 29 of 77 rendered entries repeat
+the DOI URL
+(`doi:10.4855... <https://doi.org/...>, <https://doi.org/...>`) – that
+is `rbibutils`’ own formatting of a `doi` field, not something in this
+bibliography.
+
+**What was real: nine entries nothing cites anywhere.** Eight are cited
+by no vignette, no Rd and no code – `chen2009information`,
+`gneiting2006geostatistical`, `hariz2007classification`,
+`lai2005comparative`, `meinshausen2006estimating`,
+`olshausen1997sparse`, `rigaill2020fpop`, `wang2022overview`. Sparse
+coding and geostatistical space-time models are not changepoint
+references; these look like the residue of a broader library. The ninth
+is `vandenburg2020evaluation`, a **duplicate of `van2020evaluation`** –
+the same paper, same DOI, in the same file under two keys, one for the
+vignettes and one for the Rd (which reads `inst/REFERENCES.bib`, where
+it also lives, so the Rd path is unaffected).
+
+Removed: 77 entries -\> **68**, still 61 cited, still 0 broken. The
+seven that remain uncited by a vignette are all `\insertRef`’d from the
+Rd, so the vignette bibliography being a superset of the Rd’s is a
+maintenance choice rather than dead weight.
+
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+deserves a note: the Demšar (2006) reference behind the
+critical-difference diagram is uncited in the vignette bib and looked
+like an attribution gap, but it is named in
+[`?cpt_benchmark`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)’s
+prose *and* returned in full by `cpt_cite("critical_difference")`. The
+package’s own citation mechanism covers it.
+
+## 314. “Four rows carry status planned” – the table below says five
+
+`vignettes/ggchangepoint.Rmd` claimed:
+
+> [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+> is the live capability table … **Four rows** carry status `"planned"`
+> rather than `"available"`: their engines (`gfpop`, `robseg`, `FOCuS`,
+> `hdbinseg`) are not on CRAN
+
+`planned_methods()` has **five** rows: those four engines plus
+`changeforest`. And the chunk on the very next line is
+`print(cpt_methods(), n = Inf)` – so a reader is told “four” and then
+shown five, on the same screen.
+
+`vignettes/introduction.Rmd` gets it right (“**Five** more, whose
+engines are not currently on CRAN”, listing all five including
+random-forest classification), so the two vignettes contradicted each
+other. Corrected.
+
+**This is the second time this exact claim has gone stale**: the 0.5.0
+audit’s S30 recorded “a stale planned-engine count” as one of its
+findings. So it is now guarded – a test extracts the engines named in
+that sentence and the number word in front of it, and compares both to
+`planned_methods()`. Proved to fire: changing “Five” back to “Four”
+fails the suite.
+
+### 314.1 A check I designed badly, recorded so it is not repeated
+
+Before that, I compared per-capability engine lists (`ci`, `fitted`,
+`posterior`, `statistic`, `path`) against the registry – using a list I
+had **invented**, not one taken from the vignettes. The mismatches it
+reported said nothing about the package. What the exercise did
+establish, by accident, is the useful fact: the vignettes do not
+hard-code capability lists at all. They write
+`subset(cpt_methods(), ci)$method` and let the chunk execute, so there
+is nothing there to go stale. A claim generated by running code cannot
+rot; that is why §314’s hand-written count is the one that did.
+
+## 315. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 313 | 61 of 61 vignette citations resolve; 50 of 50 Rd `\insertRef` keys resolve; 0 prose years wrong | key extraction against both bibs |
+| 313 | **9 bibliography entries cited nowhere**, one of them a duplicate of an entry in the same file | literal search for each key across every non-bib file |
+| 314 | **the feature-tour vignette said “four planned rows” where the table it prints shows five** | `planned_methods()` |
+| 314.1 | the vignettes query capabilities rather than hard-coding them | grep for `subset(cpt_methods(), ...)` |
+
+New actions: none opened. One prose correction, nine bib entries
+removed, one guard added.
+
+# Part XXIV — a whole vignette nothing linked to
+
+## 316. The same defect as §314, one sentence away
+
+The feature tour’s opening reads:
+
+> **Four companion vignettes** go deeper:
+> [`vignette("introduction")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md)
+> …
+> [`vignette("comparison")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md)
+> …
+> [`vignette("inference")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/inference.md)
+> …
+> [`vignette("supervised")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/supervised.md)
+> … and
+> [`vignette("extending")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/extending.md)
+> …
+
+Three numbers, none of which agree: the sentence says **four**, it lists
+**five**, and there are **six** companion vignettes. The one it omits is
+`monitoring` – and it was the only vignette in the package that **no
+other vignette referenced at all**:
+
+| vignette | referenced by (before) |
+|----|----|
+| comparison, extending, inference, introduction, supervised | one or two others |
+| ggchangepoint | comparison |
+| **monitoring** | **nothing** |
+
+The closing “next steps” paragraph omits it too, so streaming and online
+monitoring – an entire 0.5.0 feature area, with its own
+[`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md),
+[`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md),
+[`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md),
+[`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md)
+and
+[`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+– was unreachable by a reader working through the vignettes in R.
+`_pkgdown.yml` lists it, so the website was fine; the offline path was
+not.
+
+Corrected in both places, and the count now reads six. Re-measured: all
+seven vignettes are referenced by at least one other.
+
+## 317. Guarded, because this is now twice in two rounds
+
+§314’s guard was specific to the planned-engine sentence. This one
+generalises the class: **every vignette must be referenced by another
+vignette**, and the tour’s own count of its companions must equal the
+number of companions that exist.
+
+Both halves proved to fire before being trusted:
+
+- changing “Six” to “Five” -\> the suite fails
+- replacing both
+  [`vignette("monitoring")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/monitoring.md)
+  references -\> the suite fails, and the failure prints `"monitoring"`
+  by name
+
+The first attempt at the second half did **not** fire, because I removed
+the reference from the opening sentence only and the closing paragraph
+still had one – so the assertion was right and my test of it was wrong.
+Worth recording: a guard that “does not fire” needs the same scepticism
+as one that fires.
+
+## 318. The rest of this round’s vignette pass
+
+| check | result |
+|----|----|
+| `%\VignetteIndexEntry{}` vs the YAML `title` | **7 of 7 match** (a mismatch is an `R CMD check` warning) |
+| `vignette("...")` targets that do not exist | **0** |
+| citations, after §313’s cleanup | 61 cited, 68 entries, 0 broken |
+
+## 319. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 316 | **the tour said four companions, listed five, and six exist**; `monitoring` was linked from nothing | reachability graph over `vignette("...")` calls |
+| 317 | the class is now guarded, both halves proved to fire | deliberate breakage, then restore |
+| 318 | index entries, cross-reference targets and citations all clean | direct comparison |
+
+New actions: none opened. Two prose corrections and one guard.
+
+**What this pass adds.** Both §314 and §316 are the same failure: a
+number written by hand next to a list maintained by hand, in a document
+nothing checks. The vignettes’ *executed* claims cannot drift – §314.1
+established that they query
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+rather than hard-coding it – so every remaining risk in them is prose of
+exactly this shape. Enumerating those sentences is now a cheap, finite
+job, and two of them have been wrong.
+
+# Part XXV — the census, and the 0.4.0 number in the opening sentence
+
+§316 said enumerating the vignettes’ hand-written numbers was “a cheap,
+finite job”. Done: every number word or numeral in vignette *prose*
+(chunks excluded) followed within three words by a package noun –
+methods, engines, vignettes, rows, families, provenances, geoms,
+criteria. **50 claims.** Most are structural and cannot rot (“one row
+per changepoint”, “one more row than `$changepoints`”). Six state a
+total, and one of those was wrong.
+
+## 320. The introduction advertised 31 methods
+
+`vignettes/introduction.Rmd`, third line of the opening paragraph:
+
+> a central dispatcher
+> [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+> covering **31** detection methods across six algorithmic families
+
+**31 is the 0.4.0 number.** It is 50 – and 31 -\> 50 is the headline of
+the release this vignette introduces. The first sentence of the first
+vignette a reader opens advertised the previous version’s capability.
+
+Corrected. The “six algorithmic families” beside it stays: the
+vignette’s own §325 sentence enumerates six and §285 verified all eight
+sections it names, so that number is internally consistent even though
+the feature tour counts nine methodological families – the two are
+different groupings, one of the introduction’s sections and one of the
+registry’s.
+
+Also corrected, and self-inflicted: the tour’s 0.5.0 section said
+“**three** companion vignettes develop these properly” while the closing
+paragraph – which §316 had just changed – lists four. Fixing one count
+exposed the other.
+
+## 321. Guarded, after five wrong versions of the guard
+
+The total-method count changes every release, so it is worth a test
+rather than a proofread. Getting the test right took more attempts than
+the fix:
+
+1.  **Too broad.** “Any number before `methods`” flagged the benchmarks
+    article’s “**Ten** methods raise **zero** false alarms” – a measured
+    subset, not a claim about the package. Narrowed to the five
+    *totalising* constructions the vignettes actually use:
+    `covering N methods`, `all N wired methods`, `wraps N detectors`,
+    `N methods share one interface`, `N methods in this`.
+2.  **`[[` on a missing name errors** rather than returning `NULL`, so
+    `words[[tok]] %||% NA` threw on “wrapped methods” instead of
+    skipping it.
+3.  **The guard silently never fired.**
+    `regmatches(m, regexpr(pat, sub(...)))` applies the offsets from the
+    *substituted* string to the *original*, so it extracted `"co"` from
+    `"covering 31 detection methods"` – never a number, always skipped.
+    Replaced with plain [`sub()`](https://rdrr.io/r/base/grep.html)
+    calls.
+4.  **My verification of it was also wrong**:
+    `sed 's/covering 50 detection/.../'` matched nothing, because the
+    vignette has “covering 50” and “detection methods” on different
+    lines. The test reads the file joined with spaces; `sed` works line
+    by line. Two clean runs looked like proof and were proof of nothing.
+
+Final state, verified in both directions: the clean tree passes, and
+breaking the count in **each of the four vignettes that state a total**
+fails the suite – `introduction.Rmd`, `comparison.Rmd`, `extending.Rmd`
+and `benchmarks.Rmd` – while the benchmarks article’s subset counts stay
+quiet.
+
+## 322. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 320 | **the introduction’s opening paragraph claimed 31 methods**; it is 50 | census of 50 prose numbers, then the registry |
+| 320 | the tour said three 0.5.0 companion vignettes where its own closing list now names four | reading both after §316’s edit |
+| 321 | the guard was wrong four different ways before it worked, including one version that could never fire | deliberate breakage in four files |
+
+New actions: none opened. Two prose corrections and one guard.
+
+**What this pass adds.** Fifth instrument error in this document, and
+the most instructive: version 3 of the guard *passed on a clean tree and
+passed on a broken one*. A test that cannot fail is worse than no test,
+because it reports safety. The only thing that caught it was breaking
+the file on purpose – which is now the standing rule for every guard
+added here, and it has paid for itself four times (§290, §302.1, §314,
+§321).
+
+# Part XXVI — attribution: are the citations pointing at the right work?
+
+The standing instruction asks whether citations are “attributed to the
+right work”. Keys resolving (§313) is a weaker property than that. The
+package carries its own answer: `cpt_cite(method)` returns, per method,
+the paper the package says introduced it. So the two can be checked
+against each other.
+
+## 323. A check that had to be redesigned before it said anything
+
+**First attempt: co-location.** For each method, collect the `@keys` on
+prose lines that mention the method’s name, and compare their first
+author with
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)’s.
+It paired only **4 of 50** methods – method names mostly appear inside
+chunks, and citations mostly sit in different sentences – and its single
+flag was `ecp` “citing” `@grundy2020geomcp`, which is one sentence
+mentioning two engines. Useless in both directions.
+
+**Second attempt, well-defined:** does the paper
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+names exist *anywhere* in the two bibliographies – matching on
+first-author surname and year across all 123 pooled entries? That
+question has an answer, and it found four.
+
+## 324. Two founding papers were named in prose and in no bibliography
+
+| method | [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md) says | status |
+|----|----|----|
+| `segneigh` | Auger and Lawrence (1989) | **absent from both bibs** |
+| `amoc` | Hinkley (1970) | **absent from both bibs** |
+| `mcp` | Lindelov (2020) | present as `lindelov2020mcp`; the matcher cannot equate `Lindel{\o}v` with ASCII |
+| `fcov` | Aue, Rice and Sonmez (2020) | absent, and correctly so |
+
+`introduction.Rmd` names the first two **as bare parentheticals** –
+“segment neighbourhoods (Auger and Lawrence, 1989), and
+at-most-one-change (AMOC; Hinkley, 1970)” – in a sentence where every
+other method carries a real citation (`[@killick2012pelt]`,
+`[@scott1974cluster]`, `[@maidstone2017optimal]`). So two of the four
+`changepoint` methods the package has wrapped since 0.1.0 appeared in
+the text and **never in the References**.
+
+Fixed: both added to `vignette_reference.bib` with the metadata
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+already carries – volume, issue, pages – and **no invented DOIs** – and
+the parentheticals replaced with `[@auger1989segment]` and
+`[@hinkley1970inference]`. Verified by rendering: **0 unresolved
+citation markers**, each new key appearing twice in the HTML, once as
+“(Auger and Lawrence 1989)” in the text and once in the bibliography
+block.
+
+`fcov` is the interesting non-fix. `cpt_cite("fcov")` cites Aue, Rice
+and Sönmez (2020) on covariance operators and adds “See also … (2018)”,
+while `fmean` cites the 2018 functional-mean paper – two different
+papers, correctly distinguished. The 2020 one is in no bibliography
+because **no vignette discusses `fcov` at all**: every “functional” in
+the vignettes means functional *pruning* (`fpop`, `cpop`, `decafs`), a
+different idea. Adding an entry nothing cites would just recreate §313’s
+dead weight, and
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+already gives the reference in full – the same conclusion Demšar reached
+in §313.
+
+## 325. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 323 | the co-location design paired 4 of 50 methods and its one flag was spurious; withdrawn | ran it |
+| 324 | **`segneigh` and `amoc` were cited in prose and in neither bibliography** | 50 methods’ [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md) authors and years against 123 pooled bib entries |
+| 324 | 0 unresolved citations after the fix; both render in text and bibliography | [`rmarkdown::render()`](https://pkgs.rstudio.com/rmarkdown/reference/render.html), counting `???` |
+
+New actions: none opened. Two bibliography entries, two prose citations.
+
+**What this pass adds.**
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+turned out to be the right oracle for a question the bibliography cannot
+answer about itself. “Does every key resolve” is a closed loop – the
+bibliography checked against the text that cites it. “Does the package’s
+own record of who invented each method appear in the bibliography”
+compares two independently maintained lists, and that is where the gap
+was.
+
+# Part XXVII — the help pages and `cpt_cite()` disagreed about seven methods
+
+§324 compared
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+against the *bibliographies*. The same oracle compared against the *help
+pages* – for each of the 50 methods, the `\insertRef` keys in its
+wrapper’s roxygen block versus the author and year
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+gives – flags **15**.
+
+## 326. Eight of the fifteen are correct by design
+
+| pattern | methods | why it is right |
+|----|----|----|
+| one Rd covers five methods | `pelt`, `binseg`, `segneigh`, `amoc`, `np` | [`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md) documents all five, so its `@references` cites the **software** paper (`killick2014changepoint`) while [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md) resolves each **method** paper – Killick 2012, Scott and Knott 1974, Auger and Lawrence 1989, Hinkley 1970, Haynes 2017 |
+| software paper on the Rd | `ecp` | Rd cites `james2014ecp`, [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md) gives Matteson and James 2014 |
+| LaTeX escape | `mcp` | `Lindel{\o}v` versus ASCII `Lindelov` |
+
+That is the division of labour the package intends: the help page names
+the package you are calling,
+[`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
+names the paper you should cite.
+
+## 327. Seven wrappers cited nothing at all
+
+[`fpop_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fpop_wrapper.md),
+[`wbs_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/wbs_wrapper.md),
+[`wbs2_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/wbs2_wrapper.md),
+[`not_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/not_wrapper.md),
+[`mosum_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mosum_wrapper.md),
+[`idetect_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/idetect_wrapper.md)
+and
+[`tguh_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/tguh_wrapper.md)
+had **no `@references` block and no `\insertRef`** – seven method help
+pages with no reference, where the other forty-three have one.
+
+The cause is upstream of the roxygen: none of the seven keys existed in
+`inst/REFERENCES.bib`. They were in `vignettes/vignette_reference.bib`
+only, and `\insertRef{key}{ggchangepoint}` reads the *installed*
+bibliography, so the reference could not have been inserted even if
+someone had tried. Copied across – `maidstone2017optimal`,
+`fryzlewicz2014wild`, `fryzlewicz2020detecting`,
+`baranowski2019narrowest`, `eichinger2018mosum`,
+`anastasiou2022idetect`, `fryzlewicz2018tail` – and each wrapper given
+the `@references` block its siblings have.
+
+## 328. And one help page credited the wrong paper
+
+[`fcov_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fcov_wrapper.md)
+detects changes in the **covariance operator** of a functional series.
+Its Rd cited `aue2018fchange` – “Detecting and dating structural breaks
+in functional data without dimension reduction” – which is
+[`fmean_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fmean_wrapper.md)’s
+paper, cited from the same file eleven lines above. `cpt_cite("fcov")`
+has the right one and always did: Aue, Rice and Sönmez (2020),
+“Structural break analysis for spectrum and trace of covariance
+operators”, *Environmetrics* 31(1), e2617.
+
+So a reader of
+[`?fcov_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fcov_wrapper.md)
+was sent to a paper about the functional *mean* for a method about
+*covariance*. Added `aue2020covariance` to `inst/REFERENCES.bib` and
+repointed the reference.
+
+This is the entry §324 deliberately did **not** add to the vignette
+bibliography, on the grounds that nothing cited it. That reasoning still
+holds and this is not a reversal: the entry belongs in the bibliography
+where it is cited, and it is cited from an Rd, so it goes in the Rd’s
+bibliography.
+
+Re-measured: **15 flags -\> 7**, all seven the design cases above. All
+**58** `\insertRef` keys across `R/` resolve, 0 missing.
+
+## 329. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 326 | 8 of 15 flags are the intended software-versus-method split | read each |
+| 327 | **7 wrappers had no reference at all**, because their keys were only in the vignette bibliography and `\insertRef` cannot see that file | roxygen blocks against `inst/REFERENCES.bib` |
+| 328 | **[`?fcov_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fcov_wrapper.md) cited the functional-mean paper for a covariance method** | `cpt_cite("fcov")` against the Rd |
+
+New actions: none opened. Eight bibliography entries, seven
+`@references` blocks, one corrected reference.
+
+**What this pass adds.** §327’s cause is worth the note: the seven
+missing references were not an oversight in the roxygen, they were
+*impossible*. `\insertRef` reads `inst/REFERENCES.bib`; the keys lived
+in `vignettes/vignette_reference.bib`; two bibliographies that look
+interchangeable are not, and the failure is silent – no warning, no
+check note, just a help page with no reference. Which bibliography a
+citation mechanism reads is worth knowing before wondering why nothing
+renders.
+
+# Part XXVIII — two bibliographies, one paper, two author lists
+
+## 330. 47 shared keys, one divergence
+
+The two bibliographies overlap by **47 keys**, and a key present in both
+with different content renders one way in a vignette’s References and
+another in a help page. Compared entry by entry – author list plus
+title, journal, volume, number, pages, year, doi, publisher:
+
+**One divergence.** `zhao2019beast`:
+
+| file | authors |
+|----|----|
+| `vignette_reference.bib` | `Zhao, Wulder, Hu and others` – three named, then `et al.` |
+| `inst/REFERENCES.bib` | all **eleven**: Zhao, Wulder, Hu, Bright, Wu, Qin, Li, Toman, Mallick, Zhang, Brown |
+
+Everything else about the entry is identical, so the same paper printed
+a three-author list in the vignette bibliography and an eleven-author
+list in the help pages. The full list is the accurate one; the vignette
+bib now carries it too. Re-measured: 47 shared keys, **0** with
+differing author lists.
+
+`cpt_cite("beast")` renders “Zhao, K., Wulder, M. A., Hu, T., et al.
+(2019)”, which is a citation *string* and correctly abbreviates – that
+is a different artifact from a bibliography entry and needs no change.
+
+## 331. `inst/CITATION` hard-coded the version twice
+
+`citation("ggchangepoint")` is reader-visible and the file agreed with
+`DESCRIPTION` on every field – title, author, URL, and version 0.5.0.
+But the version was **written out twice as a literal**, in `note` and
+again in `textVersion`, so the next bump would leave
+[`citation()`](https://rdrr.io/r/utils/citation.html) advertising the
+previous release. That is §320’s defect (the introduction’s stale “31
+methods”) waiting to happen in the citation a user pastes into a paper.
+
+Both now read `meta$Version`, which is what R passes to a CITATION file
+and what *Writing R Extensions* recommends. Verified by bumping
+`DESCRIPTION` to 0.6.0 in place: both fields report 0.6.0 and **no 0.5.0
+remains** anywhere in the rendered entry. Restored.
+
+## 332. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 330 | **the same paper carried a 3-author list in one bibliography and 11 in the other** | 47 shared keys x 9 fields, both files parsed with `rbibutils` |
+| 331 | `inst/CITATION` hard-coded the version in two places | read it against `DESCRIPTION`, then bumped the version to see what moved |
+
+New actions: none opened. One author list, one self-updating version.
+
+**What this pass adds.** §331 is a defect that does not exist yet, which
+is a category this document has not knowingly worked in before: every
+claim audited so far was already true or already false. A literal that
+must be edited in lock-step with another file is *guaranteed* to go
+stale, and the cost of finding it later is a wrong citation in someone’s
+paper. Worth looking for the rest of them – the version string is the
+obvious one, and the year `2026` in the same file is the next.
+
+# Part XXIX — the lock-step literals, and a guard debugged three ways
+
+§331 ended by asking where the rest of the “must be edited in lock-step”
+literals are. Answer: two, both unavoidable, now guarded.
+
+## 333. The own-version thread closes clean
+
+Every `0.5.0` in `R/` and `tests/` is a **historical comment** – “0.5.0:
+diagnostics, selection and influence”, “0.5.0 layers: the objects the
+package could not draw before” – which stays true forever. The only code
+that reads a version uses
+[`packageVersion()`](https://rdrr.io/r/utils/packageDescription.html),
+and the one version *comparison* (`packageVersion("HDCD") <= "1.1"`, the
+Pilliat guard) is about an upstream package and documented. Nothing to
+fix.
+
+## 334. Two files state the method total and cannot compute it
+
+| file | text |
+|----|----|
+| `DESCRIPTION` | “a ‘cpt_detect()’ dispatcher covering fifty methods” |
+| `R/ggchangepoint.R` -\> `man/ggchangepoint-package.Rd` | “dispatcher that reaches fifty methods” |
+
+Both are correct today. Neither can be computed – `DESCRIPTION` and Rd
+are static text – so the literal has to stay, which makes them precisely
+the shape that goes stale on the next engine wave, exactly as §320’s “31
+detection methods” did in a vignette. §321’s guard now covers them
+alongside the four vignettes that state a total.
+
+## 335. Three bugs between writing the guard and having one
+
+Extending a working guard to two more files took three fixes, and all
+three presented as “the guard does not fire”:
+
+1.  **Indented continuation lines.** `DESCRIPTION` wraps as “dispatcher
+    coveringfifty methods”, so joining lines with a single space leaves
+    a *run* of blanks and a pattern written with literal spaces never
+    matches. Fixed by normalising whitespace before matching – which
+    also retires the line-wrap trap that bit §321’s verification.
+2.  **My verification, again.** Breaking the Rd with a plain string
+    replace looked like it had worked and the guard stayed silent, so I
+    concluded the path was unresolved. The path was fine.
+3.  **The real bug: a half-added pattern.** The new
+    `reaches ([A-Za-z0-9]+) methods` pattern was added to the pattern
+    list but `reaches` was never added to the alternation that strips
+    the leading word before reading the number. So `tok` came out as
+    `"reaches"`, which is not a numeral and not a number word, and every
+    match was silently skipped. A pattern and its parser are two edits,
+    and only one of them was made.
+
+Final state: clean tree passes; breaking the count fires in
+`DESCRIPTION`, `man/ggchangepoint-package.Rd` and the four vignettes,
+with the offending phrase quoted –
+`"ggchangepoint-package.Rd: 'reaches thirty methods' but the registry has 50"`.
+
+## 336. Standing vignette check
+
+|                                                        |                 |
+|--------------------------------------------------------|-----------------|
+| bibliography entries / cited / broken                  | 70 / 63 / **0** |
+| uncited (all `\insertRef`’d from Rd)                   | 7               |
+| `\insertRef` keys in `R/` / unresolved                 | 58 / **0**      |
+| available / planned methods, against the guarded prose | 50 / 5          |
+
+## 337. What this pass changes
+
+| § | finding | measured how |
+|----|----|----|
+| 333 | no rotting own-version literal; every `0.5.0` in code is a historical comment | grep over `R/`, `tests/`, `inst/`, `.github/` |
+| 334 | **`DESCRIPTION` and the package Rd state the method total as a literal**, uncomputable and unguarded | grep, then the registry |
+| 335 | the extended guard failed three different ways, twice looking like a path problem | deliberate breakage per file |
+
+New actions: none opened. One guard extended; no package behaviour
+changed.
+
+**What this pass adds.** §335.3 is the sharpest version of a lesson this
+document keeps relearning: **a guard that reports “pass” is making a
+claim, and it is the claim least likely to be checked.** Three of the
+four guards added in this loop needed a deliberate breakage to reveal
+that they could not fail. The discipline is cheap – break the input,
+watch the failure name the input – and it has now caught more defects in
+the guards than the guards have caught in the package.

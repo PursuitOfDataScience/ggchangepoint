@@ -135,6 +135,22 @@ Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
 multivariate methods all estimate or cancel the noise scale internally,
 and return the same segmentation whatever the units.
 
+## See also
+
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+for what is available and what each method can do. To get the result
+out:
+[`tidy.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/tidy.ggcpt.md),
+[`glance.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/glance.ggcpt.md),
+[`augment.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/augment.ggcpt.md),
+[`summary.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/summary.ggcpt.md)
+and
+[`print.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/print.ggcpt.md).
+To draw it:
+[`autoplot.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/autoplot.ggcpt.md).
+For the penalty:
+[`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md).
+
 ## Examples
 
 ``` r

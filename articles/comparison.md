@@ -108,8 +108,8 @@ x <- c(rnorm(150, 0), rnorm(150, 3), rnorm(200, 1))
 ggcpt_compare(x, methods = cmp_methods)
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/compare-facet-1.png)
+![One panel per method, each showing the same series with that method's
+changepoints](comparison_files/figure-html/compare-facet-1.png)
 
 A method that finds *no* changepoints keeps its panel — the series is
 drawn with no vertical lines on it — rather than silently disappearing.
@@ -122,8 +122,9 @@ x_null <- rnorm(300)
 ggcpt_compare(x_null, methods = c("pelt", "binseg"))
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/compare-nochange-1.png)
+![The same comparison on a series with no change: one panel per method,
+showing whatever each
+reports](comparison_files/figure-html/compare-nochange-1.png)
 
 The `layout = "overlay"` variant superimposes all methods in a single
 panel with colour-coded rules, which makes both kinds of disagreement
@@ -135,8 +136,8 @@ differences in how many changepoints a method reports.
 ggcpt_compare(x, methods = cmp_methods, layout = "overlay")
 ```
 
-![ggchangepoint plot comparing changepoint detection methods on a time
-series](comparison_files/figure-html/compare-overlay-1.png)
+![Every method's changepoints overlaid on one copy of the series,
+coloured by method](comparison_files/figure-html/compare-overlay-1.png)
 
 For a numeric rather than visual comparison,
 [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md)

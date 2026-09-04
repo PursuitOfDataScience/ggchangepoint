@@ -37,6 +37,12 @@ wbs_wrapper(x, n_intervals = 5000, threshold = NULL, seed = NULL, ...)
 
 A `ggcpt` object.
 
+## References
+
+Fryzlewicz P (2014). “Wild Binary Segmentation for Multiple Change-Point
+Detection.” *The Annals of Statistics*, **42**(6), 2243–2281.
+[doi:10.1214/14-AOS1245](https://doi.org/10.1214/14-AOS1245) .
+
 ## See also
 
 Other changepoint engines:

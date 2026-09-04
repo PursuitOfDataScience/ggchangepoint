@@ -14,13 +14,14 @@ reader choosing a method actually has:
 ## How these numbers were produced, and what they are not
 
 Every table below comes from **one replicate per cell** (except where a
-replicate count is stated) on a single Linux x86_64 machine running R
-4.4.1, with the engine versions current at the time of measurement. They
-are **indicative, not published rates**: a single timing on one machine,
-and a single detection count on one simulated series, are the right
-order of magnitude and the wrong thing to cite as a benchmark. Treat
-them as guidance for choosing a method and sizing a run, and re-measure
-on your own hardware and data before making a claim.
+replicate count is stated), measured against ggchangepoint 0.5.0 in
+August 2026 on a single Linux x86_64 machine running R 4.4.1, with the
+engine versions current then. They are **indicative, not published
+rates**: a single timing on one machine, and a single detection count on
+one simulated series, are the right order of magnitude and the wrong
+thing to cite as a benchmark. Treat them as guidance for choosing a
+method and sizing a run, and re-measure on your own hardware and data
+before making a claim.
 
 The benchmarking machinery itself is
 [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),

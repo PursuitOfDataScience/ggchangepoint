@@ -44,6 +44,12 @@ mosum_wrapper(x, G = NULL, multiscale = FALSE, seed = NULL, ...)
 
 A `ggcpt` object.
 
+## References
+
+Eichinger B, Kirch C (2018). “A MOSUM Procedure for the Estimation of
+Multiple Random Change Points.” *Bernoulli*, **24**(1), 526–564.
+[doi:10.3150/16-BEJ887](https://doi.org/10.3150/16-BEJ887) .
+
 ## See also
 
 Other changepoint engines:

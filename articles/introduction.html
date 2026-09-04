@@ -79,7 +79,7 @@ changepoint detection across the methodological spectrum. It introduces
 a single S3 result class, <code>ggcpt</code>, with
 <code>broom</code>-style methods (<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>,
 <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>) <span class="citation">(Robinson 2017)</span>, a central dispatcher
-<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> covering 31 detection methods across six
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> covering 50 detection methods across six
 algorithmic families, and native <code>ggplot2</code> <span class="citation">(Wickham 2016)</span> visualisation through
 <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and a set of composable geoms. Where a method
 quantifies its uncertainty — the simultaneous confidence intervals of
@@ -263,13 +263,12 @@ joint characteristic functions <span class="citation">(McGonigle and Cho
 2025)</span>, self-normalisation <span class="citation">(Zhao et al.
 2022)</span>) detect distributional change without likelihood
 assumptions; Bayesian engines <span class="citation">(Barry and Hartigan
-1993; Adams and MacKay 2007; <span class="nocase">Zhao et al.</span>
-2019)</span> return posteriors instead of point sets; high-dimensional
-engines <span class="citation">(Wang and Samworth 2018; Chen et al.
-2022; Grundy et al. 2020)</span> aggregate evidence across coordinates;
-and regression engines <span class="citation">(Bai and Perron 1998;
-Muggeo 2003)</span> date breaks in model coefficients. The tour below
-visits each family with runnable code.</p>
+1993; Adams and MacKay 2007; Zhao et al. 2019)</span> return posteriors
+instead of point sets; high-dimensional engines <span class="citation">(Wang and Samworth 2018; Chen et al. 2022; Grundy et
+al. 2020)</span> aggregate evidence across coordinates; and regression
+engines <span class="citation">(Bai and Perron 1998; Muggeo 2003)</span>
+date breaks in model coefficients. The tour below visits each family
+with runnable code.</p>
 </div>
 </div>
 <div class="section level2">
@@ -361,7 +360,7 @@ the engine’s fitted signal (<code>show_fit</code>), and
 changepoint-location confidence intervals (<code>show_ci</code>):</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/contract-plot-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
+<p><img src="introduction_files/figure-html/contract-plot-1.png" class="r-plt" alt="Series with its changepoint rules and the fitted segment levels drawn as horizontal steps" width="576"></p>
 <p>Composable layers (<code><a href="../reference/geom_changepoint.html">geom_changepoint()</a></code>,
 <code><a href="../reference/geom_cpt_segment.html">geom_cpt_segment()</a></code>, <code><a href="../reference/geom_cpt_ci.html">geom_cpt_ci()</a></code>,
 <code><a href="../reference/stat_changepoint.html">stat_changepoint()</a></code>), a theme (<code><a href="../reference/theme_ggcpt.html">theme_ggcpt()</a></code>),
@@ -506,8 +505,8 @@ robustness to drift, autocorrelation and model ambiguity.</p>
 </h3>
 <p>PELT <span class="citation">(Killick et al. 2012)</span>, binary
 segmentation <span class="citation">(Scott and Knott 1974)</span>,
-segment neighbourhoods (Auger and Lawrence, 1989), and
-at-most-one-change (AMOC; Hinkley, 1970) come from the
+segment neighbourhoods <span class="citation">(Auger and Lawrence
+1989)</span>, and at-most-one-change (AMOC) <span class="citation">(Hinkley 1970)</span> come from the
 <strong>changepoint</strong> package <span class="citation">(Killick and
 Eckley 2014)</span>; FPOP <span class="citation">(Maidstone et al.
 2017)</span> from <strong>fpop</strong>:</p>
@@ -669,18 +668,17 @@ penalty, returning a continuous piecewise-linear fit:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_cpop</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/cpop-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
+<p><img src="introduction_files/figure-html/cpop-1.png" class="r-plt" alt="Series with the CPOP piecewise-linear fit overlaid and its changepoints marked" width="576"></p>
 <p>NOT with its linear contrast <span class="citation">(Baranowski et
 al. 2019)</span> offers a search-based alternative; the dispatcher
 routes <code>cpt_detect(x, method = "not", change_in = "slope")</code>
 to it automatically:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_slope</span>, method <span class="op">=</span> <span class="st">"not"</span>, change_in <span class="op">=</span> <span class="st">"slope"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    85     36.8</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   101     40.7</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="bayesian-detection">Bayesian detection<a class="anchor" aria-label="anchor" href="#bayesian-detection"></a>
@@ -716,9 +714,10 @@ length of zero:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_runlength.html">ggcpt_runlength</a></span><span class="op">(</span><span class="va">res_bocpd</span><span class="op">)</span></span></code></pre></div>
 <p><img src="introduction_files/figure-html/bocpd-1.png" class="r-plt" alt="Run-length heatmap: posterior probability of each run length over time" width="576"></p>
-<p>A third Bayesian engine, BEAST <span class="citation">(<span class="nocase">Zhao et al.</span> 2019)</span> via
-<strong>Rbeast</strong>, averages over models rather than conditioning
-on one, and is wired as <code>cpt_detect(x, method = "beast")</code> (or
+<p>A third Bayesian engine, BEAST <span class="citation">(Zhao et al.
+2019)</span> via <strong>Rbeast</strong>, averages over models rather
+than conditioning on one, and is wired as
+<code>cpt_detect(x, method = "beast")</code> (or
 <code><a href="../reference/beast_wrapper.html">beast_wrapper()</a></code>); it too reports
 <code>posterior_prob</code> and renders with
 <code><a href="../reference/ggcpt_posterior.html">ggcpt_posterior()</a></code>.</p>
@@ -791,7 +790,7 @@ separates the two:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_decafs</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/decafs-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
+<p><img src="introduction_files/figure-html/decafs-1.png" class="r-plt" alt="Series with the DeCAFS fit overlaid, which separates gradual drift from abrupt change" width="576"></p>
 <p>EnvCpt <span class="citation">(Beaulieu and Killick 2018)</span>
 attacks the same confusion by model selection: it fits up to twelve
 competing descriptions — constant mean or linear trend, each with or
@@ -869,7 +868,7 @@ regressions:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369       99      101</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_bp</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/strucchange-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
+<p><img src="introduction_files/figure-html/strucchange-1.png" class="r-plt" alt="Series with the Bai-Perron breakpoints and their confidence intervals drawn as horizontal whiskers" width="576"></p>
 <p>Where the regression function is continuous — a kink rather than a
 jump — <strong>segmented</strong> <span class="citation">(Muggeo 2003,
 2008)</span> estimates broken-line relationships with standard errors
@@ -882,7 +881,7 @@ for the breakpoints:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6       98      101</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_seg</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="introduction_files/figure-html/segmented-1.png" class="r-plt" alt="ggchangepoint plot of a time series with its detected changepoints" width="576"></p>
+<p><img src="introduction_files/figure-html/segmented-1.png" class="r-plt" alt="Series with the broken-line fit, its breakpoint, and the breakpoint's confidence interval" width="576"></p>
 </div>
 </div>
 <div class="section level2">
@@ -1023,6 +1022,11 @@ Athey, Susan, Mohsen Bayati, Guido Imbens, and Zhaonan Qu. 2022.
 <span>“Detecting Change Points in High-Dimensional Time Series.”</span>
 <em>Journal of Econometrics</em> 227 (2): 367–89.
 </div>
+<div id="ref-auger1989segment" class="csl-entry">
+Auger, Ivan E, and Charles E Lawrence. 1989. <span>“Algorithms for the
+Optimal Identification of Segment Neighborhoods.”</span> <em>Bulletin of
+Mathematical Biology</em> 51 (1): 39–54.
+</div>
 <div id="ref-bai1998estimating" class="csl-entry">
 Bai, Jushan, and Pierre Perron. 1998. <span>“Estimating and Testing
 Linear Models with Multiple Structural Changes.”</span>
@@ -1127,6 +1131,10 @@ C</em> 38 (1): 1–21.
 Haynes, Kaylea, Paul Fearnhead, and Idris A Eckley. 2017. <span>“A
 Computationally Efficient Nonparametric Approach for Changepoint
 Detection.”</span> <em>Statistics and Computing</em> 27 (5): 1313–29. <a href="https://doi.org/10.1007/s11222-016-9687-5" class="external-link">https://doi.org/10.1007/s11222-016-9687-5</a>.
+</div>
+<div id="ref-hinkley1970inference" class="csl-entry">
+Hinkley, David V. 1970. <span>“Inference about the Change-Point in a
+Sequence of Random Variables.”</span> <em>Biometrika</em> 57 (1): 1–17.
 </div>
 <div id="ref-hocking2020gfpop" class="csl-entry">
 Hocking, Toby Dylan, Guillem Rigaill, Paul Fearnhead, and Guillaume
@@ -1267,11 +1275,11 @@ in Linear Regression Models.”</span> <em>Journal of Statistical
 Software</em> 7 (2): 1–38.
 </div>
 <div id="ref-zhao2019beast" class="csl-entry">
-<span class="nocase">Zhao, Kaiguang, Michael A Wulder, Tongxi Hu, et
-al.</span> 2019. <span>“Detecting Change-Point, Trend, and Seasonality
-in Satellite Time Series Data to Track Abrupt Changes and Nonlinear
-Dynamics: A Bayesian Ensemble Algorithm.”</span> <em>Remote Sensing of
-Environment</em> 232: 111181.
+Zhao, Kaiguang, Michael A Wulder, Tongxi Hu, et al. 2019.
+<span>“Detecting Change-Point, Trend, and Seasonality in Satellite Time
+Series Data to Track Abrupt Changes and Nonlinear Dynamics: A Bayesian
+Ensemble Algorithm.”</span> <em>Remote Sensing of Environment</em> 232:
+111181.
 </div>
 <div id="ref-zhao2022snseg" class="csl-entry">
 Zhao, Zifeng, Feiyu Jiang, and Xiaofeng Shao. 2022. <span>“Segmenting

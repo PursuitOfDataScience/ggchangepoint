@@ -42,6 +42,13 @@ wrapper here reports none, so this one short-circuits to the empty
 result. Constancy is decided by exact equality, so a series with tiny
 but genuine variation still reaches the engine.
 
+## References
+
+Anastasiou A, Fryzlewicz P (2022). “Detecting Multiple Generalized
+Change-Points by Isolating Single Ones.” *Metrika*, **85**, 141–174.
+[doi:10.1007/s00184-021-00821-6](https://doi.org/10.1007/s00184-021-00821-6)
+.
+
 ## See also
 
 Other changepoint engines:

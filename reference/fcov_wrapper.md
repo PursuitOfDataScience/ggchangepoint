@@ -61,10 +61,8 @@ A `ggcpt` object with `change_in = "covariance"`.
 
 ## References
 
-Aue A, Rice G, Sönmez O (2018). “Detecting and dating structural breaks
-in functional data without dimension reduction.” *Journal of the Royal
-Statistical Society: Series B*, **80**(3), 509–529.
-[doi:10.1111/rssb.12257](https://doi.org/10.1111/rssb.12257) .
+Aue A, Rice G, Sönmez O (2020). “Structural break analysis for spectrum
+and trace of covariance operators.” *Environmetrics*, **31**(1), e2617.
 
 ## See also
 

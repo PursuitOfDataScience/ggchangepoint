@@ -10,7 +10,7 @@ result class, `ggcpt`, with `broom`-style methods
 [`augment()`](https://generics.r-lib.org/reference/augment.html))
 (Robinson 2017), a central dispatcher
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-covering 31 detection methods across six algorithmic families, and
+covering 50 detection methods across six algorithmic families, and
 native `ggplot2` (Wickham 2016) visualisation through
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 and a set of composable geoms. Where a method quantifies its uncertainty
@@ -242,8 +242,8 @@ segment means (`show_segments`), the engine’s fitted signal
 autoplot(res, show_segments = TRUE)
 ```
 
-![ggchangepoint plot of a time series with its detected
-changepoints](introduction_files/figure-html/contract-plot-1.png)
+![Series with its changepoint rules and the fitted segment levels drawn
+as horizontal steps](introduction_files/figure-html/contract-plot-1.png)
 
 Composable layers
 ([`geom_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_changepoint.md),
@@ -397,10 +397,9 @@ x_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200) # kink at 100
 ### Penalised and optimal partitioning
 
 PELT (Killick et al. 2012), binary segmentation (Scott and Knott 1974),
-segment neighbourhoods (Auger and Lawrence, 1989), and
-at-most-one-change (AMOC; Hinkley, 1970) come from the **changepoint**
-package (Killick and Eckley 2014); FPOP (Maidstone et al. 2017) from
-**fpop**:
+segment neighbourhoods (Auger and Lawrence 1989), and at-most-one-change
+(AMOC) (Hinkley 1970) come from the **changepoint** package (Killick and
+Eckley 2014); FPOP (Maidstone et al. 2017) from **fpop**:
 
 ``` r
 
@@ -597,8 +596,8 @@ tidy(res_cpop)
 autoplot(res_cpop, show_fit = TRUE)
 ```
 
-![ggchangepoint plot of a time series with its detected
-changepoints](introduction_files/figure-html/cpop-1.png)
+![Series with the CPOP piecewise-linear fit overlaid and its
+changepoints marked](introduction_files/figure-html/cpop-1.png)
 
 NOT with its linear contrast (Baranowski et al. 2019) offers a
 search-based alternative; the dispatcher routes
@@ -608,11 +607,10 @@ automatically:
 ``` r
 
 tidy(cpt_detect(x_slope, method = "not", change_in = "slope"))
-#> # A tibble: 2 × 2
+#> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1    85     36.8
-#> 2   101     40.7
+#> 1   100     38.6
 ```
 
 ### Bayesian detection
@@ -744,8 +742,8 @@ tidy(res_decafs)
 autoplot(res_decafs, show_fit = TRUE)
 ```
 
-![ggchangepoint plot of a time series with its detected
-changepoints](introduction_files/figure-html/decafs-1.png)
+![Series with the DeCAFS fit overlaid, which separates gradual drift
+from abrupt change](introduction_files/figure-html/decafs-1.png)
 
 EnvCpt (Beaulieu and Killick 2018) attacks the same confusion by model
 selection: it fits up to twelve competing descriptions — constant mean
@@ -832,8 +830,9 @@ tidy(res_bp)
 autoplot(res_bp, show_ci = TRUE)
 ```
 
-![ggchangepoint plot of a time series with its detected
-changepoints](introduction_files/figure-html/strucchange-1.png)
+![Series with the Bai-Perron breakpoints and their confidence intervals
+drawn as horizontal
+whiskers](introduction_files/figure-html/strucchange-1.png)
 
 Where the regression function is continuous — a kink rather than a jump
 — **segmented** (Muggeo 2003, 2008) estimates broken-line relationships
@@ -850,8 +849,8 @@ tidy(res_seg)
 autoplot(res_seg, show_fit = TRUE, show_ci = TRUE)
 ```
 
-![ggchangepoint plot of a time series with its detected
-changepoints](introduction_files/figure-html/segmented-1.png)
+![Series with the broken-line fit, its breakpoint, and the breakpoint's
+confidence interval](introduction_files/figure-html/segmented-1.png)
 
 ## Beyond detection
 
@@ -1000,6 +999,10 @@ Athey, Susan, Mohsen Bayati, Guido Imbens, and Zhaonan Qu. 2022.
 “Detecting Change Points in High-Dimensional Time Series.” *Journal of
 Econometrics* 227 (2): 367–89.
 
+Auger, Ivan E, and Charles E Lawrence. 1989. “Algorithms for the Optimal
+Identification of Segment Neighborhoods.” *Bulletin of Mathematical
+Biology* 51 (1): 39–54.
+
 Bai, Jushan, and Pierre Perron. 1998. “Estimating and Testing Linear
 Models with Multiple Structural Changes.” *Econometrica* 66 (1): 47–78.
 
@@ -1082,6 +1085,9 @@ Haynes, Kaylea, Paul Fearnhead, and Idris A Eckley. 2017. “A
 Computationally Efficient Nonparametric Approach for Changepoint
 Detection.” *Statistics and Computing* 27 (5): 1313–29.
 <https://doi.org/10.1007/s11222-016-9687-5>.
+
+Hinkley, David V. 1970. “Inference about the Change-Point in a Sequence
+of Random Variables.” *Biometrika* 57 (1): 1–17.
 
 Hocking, Toby Dylan, Guillem Rigaill, Paul Fearnhead, and Guillaume
 Bourque. 2020. “Gfpop: An R Package for Unsupervised Graph-Constrained
