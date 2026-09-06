@@ -30,7 +30,7 @@ shows how to bring an external detector into the same grammar, and
 covers sequential detection on a stream and its detection-delay
 accounting.
 
-> **New in 0.5.0.** Nineteen further engines; a time index that survives
+> **New in 0.5.0.** Nineteen further methods; a time index that survives
 > the round trip (`cpt_detect(x, index = dates)` and `ts`/`xts`/`zoo`/
 > `tsibble` input); significance regions and the
 > [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
@@ -148,7 +148,7 @@ summary(res)
 #>   CP convention:            left 
 #>   Series length:            200 
 #>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.018 
+#>   Runtime (seconds):        0.014 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5

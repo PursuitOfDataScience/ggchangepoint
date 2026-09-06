@@ -122,9 +122,13 @@ more importantly it runs where R cannot look: a <code><a href="https://rdrr.io/r
 elapsed-time limits and keyboard interrupts at the same points, which
 means <strong>Ctrl-C will not stop it either</strong>.</p>
 <p>So size the call before starting it rather than after. <code>n_bootstraps</code>
-is the knob – the cost is roughly linear in it – and
-<code>vignette("benchmarks", package = "ggchangepoint")</code> lists the
-methods that do scale to long series.</p>
+is the knob – the cost is roughly linear in it – and the
+“Benchmarks” article lists the methods that do scale to long
+series. That page is web-only, because the sweep behind it takes
+over twenty minutes: it is published at
+<a href="https://pursuitofdatascience.github.io/ggchangepoint/articles/benchmarks.html">https://pursuitofdatascience.github.io/ggchangepoint/articles/benchmarks.html</a>
+rather than built into the package, so <code><a href="https://rdrr.io/r/utils/vignette.html" class="external-link">vignette()</a></code> will not
+find it.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>

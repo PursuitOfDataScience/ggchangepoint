@@ -69,9 +69,13 @@ elapsed-time limits and keyboard interrupts at the same points, which
 means **Ctrl-C will not stop it either**.
 
 So size the call before starting it rather than after. `n_bootstraps` is
-the knob – the cost is roughly linear in it – and
-`vignette("benchmarks", package = "ggchangepoint")` lists the methods
-that do scale to long series.
+the knob – the cost is roughly linear in it – and the “Benchmarks”
+article lists the methods that do scale to long series. That page is
+web-only, because the sweep behind it takes over twenty minutes: it is
+published at
+<https://pursuitofdatascience.github.io/ggchangepoint/articles/benchmarks.html>
+rather than built into the package, so
+[`vignette()`](https://rdrr.io/r/utils/vignette.html) will not find it.
 
 ## References
 
