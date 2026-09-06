@@ -389,14 +389,14 @@ test_that("an engine argument the wrapper manages is refused by name", {
   # a true observation rather than a regression. Skip instead of asserting
   # -- the R-devel run learned this the hard way.
   if (!any(vapply(unique(vapply(managed, function(z) z$eng, character(1))),
-                  engine_installed, logical(1)))) {
+                  engine_usable, logical(1)))) {
     skip("none of the engines with a managed argument is installed")
   }
   set.seed(7)
   y <- c(rnorm(50), rnorm(50, 5))
   tested <- 0L
   for (z in managed) {
-    if (!engine_installed(z$eng)) next
+    if (!engine_usable(z$eng)) next
     tested <- tested + 1L
     args <- list(y, method = z$m); args[[z$a]] <- TRUE
     err <- tryCatch({ do.call(cpt_detect, args); NULL },
@@ -600,14 +600,14 @@ test_that("an engine argument the wrapper renames redirects to the right name", 
   # fired on a sweep that had correctly tested everything available. This
   # is the third time that shape of assertion has misfired, so it is now
   # proportional: test every case whose engine exists, and say so.
-  available <- sum(vapply(cases, function(z) engine_installed(z$eng),
+  available <- sum(vapply(cases, function(z) engine_usable(z$eng),
                           logical(1)))
   set.seed(7)
   v <- c(rnorm(50), rnorm(50, 5))
   mv <- cbind(a = v, b = rev(v) + rnorm(100, 0, .3))
   tested <- 0L
   for (z in cases) {
-    if (!engine_installed(z$eng)) next
+    if (!engine_usable(z$eng)) next
     tested <- tested + 1L
     dat <- if (z$m %in% c("ocd")) mv else v
     if (z$m == "fabisearch") dat <- matrix(abs(rnorm(50 * 6)) + 0.5, nrow = 50)
@@ -682,7 +682,7 @@ test_that("a bad wrapper argument value names the argument, not engine internals
               "non-numeric argument to binary operator",
               "subscript out of bounds")
 
-  available <- sum(vapply(cases, function(z) engine_installed(z$eng),
+  available <- sum(vapply(cases, function(z) engine_usable(z$eng),
                           logical(1)))
   if (available == 0L) skip("none of the engines with a probed argument is installed")
 
@@ -693,7 +693,7 @@ test_that("a bad wrapper argument value names the argument, not engine internals
   reg <- builtin_registry()
   tested <- 0L
   for (z in cases) {
-    if (!engine_installed(z$eng)) next
+    if (!engine_usable(z$eng)) next
     i <- match(z$m, reg$method)
     dat <- if (isTRUE(reg$univariate[i])) v else mv
     if (z$m == "fmean") dat <- matrix(rnorm(100 * 24), nrow = 100)

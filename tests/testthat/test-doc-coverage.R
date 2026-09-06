@@ -184,13 +184,22 @@ test_that("no test reaches a Suggests engine outside a guarded block", {
     for (i in seq_along(starts)) {
       lines <- src[starts[i]:ends[i]]
       body <- paste(lines, collapse = "\n")
-      # `engine_installed()` counts too: it is this package's own
-      # availability predicate, and for a loop over methods it is the
-      # better guard -- it skips the one method rather than aborting the
-      # whole test. (This check caught the capability and supports guards
-      # the moment they were added, which is the detector working; it just
-      # did not know that spelling.)
-      if (grepl("skip_if_not_installed|requireNamespace|skip_if\\(|engine_installed",
+      # `engine_usable()` counts too: it is the suite's own availability
+      # predicate, and for a loop over methods it is the better guard -- it
+      # skips the one method rather than aborting the whole test. (This
+      # check caught the capability and supports guards the moment they
+      # were added, which is the detector working; it just did not know
+      # that spelling.)
+      #
+      # `engine_installed()` deliberately does NOT count. It answers "is
+      # this on disk", via find.package(), and a package can be on disk and
+      # unloadable -- which is how {mosum} passed the guard and then failed
+      # to load on the macOS runner, turning a Suggests engine's broken
+      # system library into one red CI job. Gating a run on it is the bug
+      # this check exists to prevent, so recognising it as a guard would
+      # license the mistake. Both blocks that still name it carry a real
+      # guard as well, so nothing is grandfathered in.
+      if (grepl("skip_if_not_installed|requireNamespace|skip_if\\(|engine_usable",
                 body)) next
       hits <- character()
       probe <- function(pats, label) {
@@ -213,6 +222,146 @@ test_that("no test reaches a Suggests engine outside a guarded block", {
     }
   }
   expect_equal(offenders, character(0))
+})
+
+test_that("a registry sweep that asserts success gates on engine_usable()", {
+  skip_on_cran()
+  # The check above finds *literal* engine calls -- `method = "mosum"`,
+  # `mosum_wrapper()`. It cannot see a loop over the registry that
+  # dispatches on a variable, and that form reaches every Suggests engine
+  # while naming none of them, so it was invisible to every guard the suite
+  # had. It is also the form that failed on the macOS CI runner: the
+  # change_in sweep asserted `expect_false(is.null(res))` for mosum on a
+  # machine where mosum cannot be loaded at all.
+  #
+  # Most registry sweeps are safe by construction. They wrap the call in
+  # tryCatch(error = function(e) NULL) and `next` on NULL, so an engine
+  # that cannot load is skipped rather than reported -- three blocks do
+  # exactly that and need nothing further. The dangerous shape is the one
+  # that turns NULL into a failed expectation, because there "engine
+  # unavailable" and "engine broke its contract" become the same result.
+  # Those, and only those, must gate each iteration on engine_usable().
+  files <- list.files(test_path(), pattern = "^test-.*[.]R$",
+                      full.names = TRUE)
+  offenders <- character()
+  for (f in files) {
+    src <- readLines(f, warn = FALSE)
+    starts <- grep("^test_that\\(", src)
+    if (length(starts) == 0) next
+    ends <- c(starts[-1] - 1L, length(src))
+    for (i in seq_along(starts)) {
+      body <- paste(src[starts[i]:ends[i]], collapse = "\n")
+      if (!grepl("builtin_registry()", body, fixed = TRUE)) next
+      # dispatch on a variable, not on a quoted method name
+      if (!grepl("method\\s*=\\s*[a-zA-Z_.]", body)) next
+      # ... and an assertion that the dispatch succeeded
+      if (!grepl(paste0("expect_false\\(\\s*is\\.null\\(",
+                        "|expect_true\\(\\s*!\\s*is\\.null\\("),
+                 body)) next
+      if (!grepl("engine_usable(", body, fixed = TRUE)) {
+        offenders <- c(offenders,
+                       sprintf("%s:%d asserts a variable-dispatch result without engine_usable()",
+                               basename(f), starts[i]))
+      }
+    }
+  }
+  expect_equal(offenders, character(0))
+  # the sweep must be finding blocks at all, or it proves nothing
+  n_sweeps <- 0L
+  for (f in files) {
+    src <- readLines(f, warn = FALSE)
+    n_sweeps <- n_sweeps + sum(grepl("engine_usable(", src, fixed = TRUE))
+  }
+  expect_gt(n_sweeps, 20L)
+})
+
+test_that("no shipped page points at a vignette that is not shipped", {
+  skip_on_cran()
+  # vignettes/articles/ is excluded from the tarball by .Rbuildignore, so
+  # the "Benchmarks" article is never installed:
+  # vignette("benchmarks", package = "ggchangepoint") warns "not found",
+  # and the built tarball holds seven vignette sources and no articles/
+  # entry at all. ?taylor_wrapper sent the reader there anyway, with a call
+  # that cannot work anywhere off the website. Being web-only is correct --
+  # _pkgdown.yml files it that way because the sweep behind it runs for
+  # over twenty minutes -- so the fix was the pointer, not the exclusion.
+  root <- normalizePath(file.path("..", ".."), mustWork = FALSE)
+  vdir <- file.path(root, "vignettes")
+  if (!dir.exists(vdir)) skip("vignette sources not available")
+  # top level only: that is exactly what ships
+  shipped <- sub("\\.Rmd$", "", list.files(vdir, "\\.Rmd$"))
+  expect_gte(length(shipped), 7L)
+  # and the article really is excluded, or this guards nothing
+  ignore <- readLines(file.path(root, ".Rbuildignore"), warn = FALSE)
+  expect_true(any(grepl("vignettes/articles", ignore, fixed = TRUE)))
+  expect_true(dir.exists(file.path(vdir, "articles")))
+
+  files <- c(list.files(file.path(root, "R"), "\\.R$", full.names = TRUE),
+             list.files(file.path(root, "man"), "\\.Rd$", full.names = TRUE),
+             list.files(vdir, "\\.Rmd$", full.names = TRUE))
+  bad <- character()
+  for (f in files) {
+    l <- readLines(f, warn = FALSE)
+    refs <- unlist(regmatches(l, gregexpr(
+      "vignette\\(\\s*\"[A-Za-z0-9_.-]+\"", l)))
+    refs <- gsub("vignette\\(\\s*\"|\"", "", refs)
+    miss <- setdiff(unique(refs), shipped)
+    if (length(miss)) {
+      bad <- c(bad, sprintf("%s -> %s", basename(f),
+                            paste(miss, collapse = ", ")))
+    }
+  }
+  expect_equal(bad, character(0))
+})
+
+test_that("the 0.5.0 method count agrees across registry, NEWS and the tour", {
+  skip_on_cran()
+  # The feature tour's "New in 0.5.0" box said "Nineteen further engines".
+  # The number was right and the noun was not. This package uses `engine`
+  # for the upstream package -- a registry column with 38 distinct values,
+  # 35 of them in Suggests and 3 Imports -- whereas 19 is the delta in
+  # *methods*: 31 at 0.4.0, 50 now. NEWS.md gets it right in its own
+  # heading ("Engine wave #2 - 19 new methods"), so the two documents
+  # disagreed about what was being counted, and a reader checking
+  # `length(unique(cpt_methods()$engine))` got 38 with no way to reach 19.
+  #
+  # No magic numbers below: every figure comes from the live registry or
+  # from NEWS.md's own sentences, so the three can only drift together.
+  root <- normalizePath(file.path("..", ".."), mustWork = FALSE)
+  news_p <- file.path(root, "NEWS.md")
+  vig_p <- file.path(root, "vignettes", "ggchangepoint.Rmd")
+  if (!file.exists(news_p) || !file.exists(vig_p)) {
+    skip("NEWS.md / vignette sources not available")
+  }
+  news <- readLines(news_p, warn = FALSE)
+  reg <- ggchangepoint:::builtin_registry()
+  live <- sum(reg$status == "available")
+
+  grab <- function(pat) {
+    h <- grep(pat, news, value = TRUE)[1]
+    if (is.na(h)) return(NA_integer_)
+    as.integer(sub(pat, "\\1", h))
+  }
+  reached  <- grab(".*reaches ([0-9]+) wired methods.*")
+  baseline <- grab(".*from 13 to ([0-9]+) wired methods.*")
+  delta    <- grab(".*Engine wave #2 . ([0-9]+) new methods.*")
+  expect_false(anyNA(c(reached, baseline, delta)))
+
+  expect_identical(reached, live)
+  expect_identical(baseline + delta, live)
+
+  # the tour's number word, and the noun it attaches to
+  words <- c("Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen",
+             "Eighteen", "Nineteen", "Twenty", "Twenty-one")
+  box <- grep("New in 0[.]5[.]0", readLines(vig_p, warn = FALSE), value = TRUE)
+  expect_length(box, 1L)
+  w <- words[vapply(words, function(z) grepl(z, box, fixed = TRUE),
+                    logical(1))]
+  expect_length(w, 1L)
+  expect_identical((13:21)[match(w, words)], delta)
+  expect_match(box, paste0(w, " further methods"), fixed = TRUE)
+  # and the quantity it is not: engines are a different, larger count
+  expect_gt(length(unique(reg$engine)), delta)
 })
 
 test_that("the vignette's planned-engine list matches the registry", {
@@ -389,7 +538,7 @@ test_that("cpt_detect()'s list of typo-swallowing engines matches behaviour", {
   # R-devel run is done -- none of the six installed engines is one that
   # swallows, so "nothing swallowed" would be a true observation and a
   # false failure.
-  n_installed <- sum(vapply(unique(reg$engine), engine_installed, logical(1)))
+  n_installed <- sum(vapply(unique(reg$engine), engine_usable, logical(1)))
   if (n_installed < 20) {
     skip(paste("only", n_installed, "engines installed; the swallow sweep",
                "needs the Suggests engines to be meaningful"))
@@ -401,7 +550,7 @@ test_that("cpt_detect()'s list of typo-swallowing engines matches behaviour", {
   swallows <- character()
   for (i in seq_len(nrow(reg))) {
     m <- reg$method[i]
-    if (!engine_installed(reg$engine[i])) next
+    if (!engine_usable(reg$engine[i])) next
     # kcp and the functional engines are slow enough to dominate the suite,
     # and hdreg/fabisearch need a shape this generic input does not give;
     # they are covered by the recorded measurement in ?cpt_detect instead.
@@ -523,11 +672,11 @@ test_that("every registry capability flag is delivered by the accessor", {
   # Proportional, not a fixed minimum -- see the note in the renamed-argument
   # test in test-050-registry.R for why a magic threshold is wrong here.
   available <- sum(vapply(which(wanted), function(i)
-    engine_installed(reg$engine[i]) && isTRUE(reg$univariate[i]), logical(1)))
+    engine_usable(reg$engine[i]) && isTRUE(reg$univariate[i]), logical(1)))
   tested <- 0L
   for (i in which(wanted)) {
     m <- reg$method[i]
-    if (!engine_installed(reg$engine[i])) next
+    if (!engine_usable(reg$engine[i])) next
     # the multivariate-only and slow engines carry none of these flags, so
     # a univariate series suffices for every row reached here
     if (!isTRUE(reg$univariate[i])) next
@@ -569,7 +718,7 @@ test_that("every registry capability flag is delivered by the accessor", {
   # The exemptions must stay exemptions: if upstream or this package ever
   # starts delivering the narrow form, this test should be the thing that
   # says so rather than the list quietly becoming wrong.
-  if (engine_installed("nsp")) {
+  if (engine_usable("nsp")) {
     r <- tryCatch(suppressWarnings(cpt_detect(v, method = "nsp")),
                   error = function(e) NULL)
     if (!is.null(r)) {
@@ -577,7 +726,7 @@ test_that("every registry capability flag is delivered by the accessor", {
       expect_false(is.null(r$regions))
     }
   }
-  if (engine_installed("ocp")) {
+  if (engine_usable("ocp")) {
     r <- tryCatch(suppressWarnings(cpt_detect(v, method = "bocpd")),
                   error = function(e) NULL)
     if (!is.null(r)) {
@@ -624,7 +773,7 @@ test_that("every change_in a method claims to support actually works", {
   for (i in seq_len(nrow(reg))) {
     m <- reg$method[i]
     if (m %in% skip_slow || !isTRUE(reg$univariate[i])) next
-    if (!engine_installed(reg$engine[i])) next
+    if (!engine_usable(reg$engine[i])) next
     for (ci in reg$supports[[i]]) {
       res <- tryCatch(
         suppressWarnings(suppressMessages({
@@ -648,7 +797,7 @@ test_that("every change_in a method claims to support actually works", {
   reachable <- Filter(function(z) {
     i <- match(z[1], reg$method)
     !is.na(i) && !(z[1] %in% skip_slow) && isTRUE(reg$univariate[i]) &&
-      engine_installed(reg$engine[i])
+      engine_usable(reg$engine[i])
   }, routed)
   fmt <- function(l) sort(vapply(l, paste, character(1), collapse = "|"))
   expect_setequal(fmt(seen_routes), fmt(reachable))
@@ -677,7 +826,7 @@ test_that("a multivariate-only engine refuses a single series by name", {
   tested <- 0L
   for (m in refuses_by_name) {
     i <- match(m, reg$method)
-    if (!engine_installed(reg$engine[i])) next
+    if (!engine_usable(reg$engine[i])) next
     tested <- tested + 1L
     err <- tryCatch({
       suppressWarnings(suppressMessages(
@@ -702,12 +851,12 @@ test_that("a multivariate-only engine refuses a single series by name", {
   X <- cbind(a = v, b = c(rnorm(110), rnorm(110, 4)),
              c = c(rnorm(110), rnorm(110, 3)))
   for (m in c("hdcov", "var", "kwc")) {
-    if (!engine_installed(reg$engine[match(m, reg$method)])) next
+    if (!engine_usable(reg$engine[match(m, reg$method)])) next
     expect_s3_class(
       suppressWarnings(suppressMessages(cpt_detect(X, method = m))), "ggcpt")
   }
   # a one-column *matrix* is refused too, not just a bare vector
-  if (engine_installed("changepoints")) {
+  if (engine_usable("changepoints")) {
     expect_error(cpt_detect(matrix(v, ncol = 1), method = "hdcov"),
                  "needs at least two")
   }

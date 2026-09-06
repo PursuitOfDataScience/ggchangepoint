@@ -250,6 +250,28 @@ test_that("R35: the changepoint engines keep their upstream fit and report a
     expect_no_warning(g <- glance(res))
     expect_true(is.na(g$total_cost), info = m)
   }
+
+  # ?glance.ggcpt names four NA cases and one class of exception. Two of the
+  # NAs and the exception were unpinned, and the first is the most fragile
+  # claim in the package: it is not a property of `changepoint` at all but
+  # of a *collision between two of this package's own Imports*. Loading
+  # changepoint.np replaces changepoint's logLik method for `cpt` objects
+  # with one that errors on exactly change_in = "mean" under the default
+  # MBIC penalty. Both packages are Imports, so the collision is always
+  # present -- and if either upstream changes, this NA quietly becomes a
+  # number and the help page is wrong with nothing to report it.
+  expect_true(is.na(glance(suppressWarnings(
+    cpt_detect(x, method = "pelt", change_in = "mean")))$total_cost))
+  # np is NA for an unrelated reason: changepoint.np defines no logLik
+  expect_true(is.na(glance(suppressWarnings(
+    cpt_detect(x, method = "np")))$total_cost))
+  # and the other half of the sentence -- a *named* penalty reports
+  # normally, where only numeric ones were covered above
+  for (p in c("BIC", "AIC")) {
+    expect_true(is.finite(glance(suppressWarnings(
+      cpt_detect(x, method = "pelt", change_in = "mean",
+                 penalty = p)))$total_cost), info = p)
+  }
 })
 
 test_that("R36: every plot the package produces survives ggcpt_interactive()", {
@@ -713,6 +735,75 @@ test_that("R44: the three citation sources agree with each other", {
   # its own consumer cites.
   expect_setequal(names(inst), unique(used))
   expect_setequal(names(vig), unique(cited))
+
+  # This test is named for three citation sources, but only two were ever
+  # compared: the two .bib files. The third -- the free-text table behind
+  # cpt_cite() -- was never checked against either, which is precisely
+  # where the TGUH year drifted. Compare it now, for every method whose
+  # wrapper serves it alone and cites exactly one key, so the mapping from
+  # method to publication is unambiguous. (`cpt_wrapper` is deliberately
+  # excluded: it serves five `changepoint` methods and its help page cites
+  # the software paper, while cpt_cite() names each method's own paper.)
+  refs <- ggchangepoint:::cpt_references()
+  reg <- ggchangepoint:::builtin_registry()
+  shared <- names(which(table(reg$wrapper) > 1))
+  bib_author <- function(key) {
+    l <- readLines(inst_bib, warn = FALSE)
+    st <- grep("^@", l)
+    k <- sub(",$", "", sub("^@[a-zA-Z]+\\{", "", l[st]))
+    i <- match(key, k)
+    if (is.na(i)) return(NA_character_)
+    b <- l[st[i]:c(st[-1] - 1, length(l))[i]]
+    j <- grep("^\\s*author\\s*=", b)
+    if (!length(j)) return(NA_character_)
+    txt <- paste(b[j[1]:min(length(b), j[1] + 3)], collapse = " ")
+    trimws(sub("\\}\\s*,?\\s*[a-z]+\\s*=.*$", "",
+               gsub("[{}]", "", sub("^[^=]*=\\s*", "", txt))))
+  }
+  surnames <- function(z) unique(tolower(unlist(regmatches(z,
+    gregexpr("[A-Z][a-zA-Z'-]{2,}", z)))))
+  compared <- 0L
+  for (i in seq_len(nrow(reg))) {
+    w <- reg$wrapper[i]
+    if (w %in% shared) next
+    txt <- refs$reference[refs$method == reg$method[i]]
+    rd <- file.path(root, "man", paste0(w, ".Rd"))
+    if (!length(txt) || !file.exists(rd)) next
+    rl <- readLines(rd, warn = FALSE)
+    ks <- gsub("insertRef\\{|\\}.*", "",
+               regmatches(rl, regexpr("insertRef\\{[^}]+\\}", rl)))
+    if (length(ks) != 1L || is.null(inst[[ks]])) next
+    compared <- compared + 1L
+    # the same people, and the same year, in both places
+    expect_true(length(intersect(surnames(bib_author(ks)), surnames(txt))) > 0,
+                info = paste(reg$method[i], ks, sep = " / "))
+    ty <- unlist(regmatches(txt, gregexpr("(18|19|20)[0-9]{2}", txt)))
+    if (!is.na(inst[[ks]]$year) && length(ty)) {
+      expect_true(inst[[ks]]$year %in% ty,
+                  info = paste(reg$method[i], ks, inst[[ks]]$year, sep = " / "))
+    }
+  }
+  # a proportional tripwire: this compared 35 methods when written, and a
+  # refactor that stops resolving wrappers would silently compare none
+  expect_gt(compared, 30L)
+
+  # Finally, the pairing that makes a citation render at all. A vignette
+  # with @keys and no `bibliography:` field does not fail to build -- pandoc
+  # emits the key as literal text, so "@killick2012" reaches the reader.
+  # vignettes/articles/ is scanned here and nowhere else in this test:
+  # benchmarks.Rmd declares no bibliography, which is correct only while it
+  # cites nothing.
+  all_rmd <- list.files(file.path(root, "vignettes"), "\\.Rmd$",
+                        full.names = TRUE, recursive = TRUE)
+  expect_gte(length(all_rmd), 8L)
+  for (f in all_rmd) {
+    l <- readLines(f, warn = FALSE)
+    has_bib <- any(grepl("^bibliography:", l))
+    n_cite <- length(unlist(regmatches(l, gregexpr(
+      "(?<![A-Za-z0-9_])@[A-Za-z0-9_][A-Za-z0-9_:.#&+?<>~/-]*", l,
+      perl = TRUE))))
+    expect_identical(n_cite > 0L, has_bib, info = basename(f))
+  }
 })
 
 test_that("R45: exported surface that the suite never exercised", {

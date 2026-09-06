@@ -272,7 +272,7 @@ test_that("a seed makes a stochastic detector reproducible", {
   reg <- builtin_registry()
   available <- fast[vapply(fast, function(m) {
     i <- match(m, reg$method)
-    !is.na(i) && engine_installed(reg$engine[i])
+    !is.na(i) && engine_usable(reg$engine[i])
   }, logical(1))]
   if (length(available) == 0L) skip("no seed-taking engine installed")
 
@@ -311,7 +311,7 @@ test_that("an index is threaded through to every method's result", {
 
   available <- spread[vapply(spread, function(m) {
     i <- match(m, reg$method)
-    !is.na(i) && engine_installed(reg$engine[i])
+    !is.na(i) && engine_usable(reg$engine[i])
   }, logical(1))]
   if (length(available) == 0L) skip("no engine in the spread is installed")
 

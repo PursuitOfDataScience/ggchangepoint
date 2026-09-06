@@ -401,6 +401,23 @@ test_that("cpt_methods() answers 'is it installed' without loading anything", {
   expect_false(probe %in% loadedNamespaces())
   # and a package that is not there is FALSE rather than an error
   expect_false(ggchangepoint:::engine_installed("ggchangepoint.no.such.engine"))
+  # the suite's engine_usable() is the deliberate opposite -- it loads, on
+  # purpose, because "can I run this engine" is a different question
+  expect_true(engine_usable(probe))
+  expect_false(engine_usable("ggchangepoint.no.such.engine"))
+
+  # and the case the two predicates must disagree on, which is the whole
+  # reason the second one exists: installed, and not loadable. A directory
+  # with a DESCRIPTION is enough for find.package() and not enough for the
+  # loader -- the same split that made {mosum} pass engine_installed() and
+  # fail to load on the macOS CI runner.
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "brokenpkg"))
+  writeLines(c("Package: brokenpkg", "Version: 0.0.1"),
+             file.path(lib, "brokenpkg", "DESCRIPTION"))
+  withr::local_libpaths(lib, action = "prefix")
+  expect_true(ggchangepoint:::engine_installed("brokenpkg"))
+  expect_false(engine_usable("brokenpkg"))
 
   # the table itself must add no namespace either
   before <- loadedNamespaces()
@@ -889,7 +906,7 @@ test_that("multivariate results satisfy the contract, data_wide included", {
   # these two.
   no_wide <- c("network", "hdreg")
 
-  # engine_installed() rather than a bare tryCatch: the package's own
+  # engine_usable() rather than a bare tryCatch: the package's own
   # availability predicate skips the one absent engine instead of the whole
   # test, and -- the reason the shipped Suggests guard insists on it -- it
   # distinguishes "engine not installed" from "the call failed", which a
@@ -904,7 +921,7 @@ test_that("multivariate results satisfy the contract, data_wide included", {
   available <- tested <- 0L
   for (nm in names(calls)) {
     pkg <- engine_of(nm)
-    if (!is.na(pkg) && !ggchangepoint:::engine_installed(pkg)) next
+    if (!is.na(pkg) && !engine_usable(pkg)) next
     available <- available + 1L
     r <- suppressWarnings(suppressMessages(calls[[nm]]()))
     cp <- r$changepoints$cp
@@ -1098,7 +1115,7 @@ test_that("the result contract holds across every shipped signal shape", {
 
     for (m in methods) {
       pkg <- reg$engine[reg$method == m][1]
-      if (!is.na(pkg) && !ggchangepoint:::engine_installed(pkg)) next
+      if (!is.na(pkg) && !engine_usable(pkg)) next
       r <- tryCatch(suppressWarnings(suppressMessages(
         cpt_detect(x, method = m))), error = function(e) NULL)
       if (is.null(r)) next          # refused this shape, which is its right
@@ -1156,7 +1173,7 @@ test_that("the tidy() -> as_ggcpt() round trip is lossless", {
   checked <- 0L
   for (m in reg$method[reg$status == "available" & reg$univariate]) {
     pkg <- reg$engine[reg$method == m][1]
-    if (!is.na(pkg) && !ggchangepoint:::engine_installed(pkg)) next
+    if (!is.na(pkg) && !engine_usable(pkg)) next
     r <- tryCatch(suppressWarnings(suppressMessages(
       cpt_detect(x, method = m))), error = function(e) NULL)
     if (is.null(r)) next
@@ -1197,4 +1214,129 @@ test_that("as_ggcpt() converts a right-convention location on the way in", {
   # the vignette's own metric line, which depends on the conversion
   m <- cpt_metrics(tidy(R)$cp, truth = c(100, 200), n = 300)
   expect_equal(m$f1, 1)
+})
+
+test_that("every plot() method delegates to autoplot(), as documented", {
+  # README.md shows the same figure twice, and that is deliberate: chunk 6
+  # is autoplot(res) and chunk 50 is plot(res), captioned "base-graphics
+  # fallback (delegates to autoplot)". The two PNGs are byte-identical,
+  # which is the evidence the delegation works -- and nothing asserted it.
+  # The suite only checked that each returns *a* ggplot, which a divergent
+  # implementation would also satisfy.
+  #
+  # Structural half: every plot method in the package routes through the
+  # one helper. This is exact and costs nothing, and it covers all
+  # fourteen classes rather than the handful a live comparison can afford.
+  # R/ is not installed, so this half runs from the source tree only. The
+  # live half below needs no sources and always runs. (Asserting on an
+  # empty `defs` is what failed the first R CMD check of this test: the
+  # local gate uses pkgload from the source tree, where ../../R exists.)
+  # test_path() aborts when the path is absent, so it cannot be used to ask
+  # whether the source tree is there. normalizePath(mustWork = FALSE) is
+  # the pattern the rest of this suite uses for exactly that reason.
+  rdir <- file.path(normalizePath(file.path("..", ".."), mustWork = FALSE), "R")
+  src <- if (dir.exists(rdir)) {
+    unlist(lapply(list.files(rdir, "\\.R$", full.names = TRUE),
+                  readLines, warn = FALSE))
+  } else character(0)
+  defs <- grep("^plot\\.[A-Za-z_.]+ <- function", src, value = TRUE)
+  if (!dir.exists(rdir)) {
+    expect_length(defs, 0L)          # installed package: nothing to read
+  } else {
+    expect_gte(length(defs), 13L)
+  }
+  # each is either a one-liner delegating, or opens a body that does
+  bad <- character()
+  for (d in defs) {
+    nm <- sub(" <- function.*", "", d)
+    i <- grep(paste0("^", gsub("\\.", "\\\\.", nm), " <- function"), src)[1]
+    # These are one-liners. Reading a fixed window past the definition
+    # walks into the *next* method, which does delegate -- so a divergent
+    # method looked compliant and the guard could not fail. Take the
+    # definition line alone unless it opens a brace.
+    body <- src[i]
+    if (grepl("\\{\\s*$", body)) {
+      j <- i
+      repeat {
+        j <- j + 1L
+        if (j > length(src) || grepl("^\\}", src[j])) break
+      }
+      body <- paste(src[i:min(j, length(src))], collapse = " ")
+    }
+    if (!grepl("plot_via_autoplot(", body, fixed = TRUE)) bad <- c(bad, nm)
+  }
+  expect_equal(bad, character(0))
+
+  # Live half: the built plots must actually agree, not merely share a class
+  set.seed(70)
+  x <- c(stats::rnorm(80), stats::rnorm(80, 5))
+  res <- cpt_detect(x, method = "pelt")
+  pa <- ggplot2::autoplot(res)
+  pp <- plot(res)
+  expect_s3_class(pp, "ggplot")
+  expect_identical(pp$labels, pa$labels)
+  expect_identical(
+    vapply(pp$layers, function(l) class(l$geom)[1], character(1)),
+    vapply(pa$layers, function(l) class(l$geom)[1], character(1)))
+  expect_equal(ggplot2::ggplot_build(pp)$data,
+               ggplot2::ggplot_build(pa)$data)
+})
+
+test_that("only the two pre-class wrappers return a bare tibble", {
+  # The feature tour states the compatibility contract exactly: "Every
+  # wrapper from 0.2.0 onwards returns a `ggcpt` object; only the two
+  # original wrappers below predate the class and still return a bare
+  # tibble." Individual assertions covered ecp_wrapper(); nothing checked
+  # that the exception set is *closed*, so a new wrapper returning a
+  # tibble would falsify the sentence and break every accessor a caller
+  # expects to work on a result.
+  #
+  # Checked against the documentation rather than by calling all 43
+  # engines, which took minutes. The first attempt asked whether each
+  # \value mentions "ggcpt" anywhere -- and both exceptions do, in
+  # passing: cpt_wrapper names the "ggcpt_fit" attribute and ecp_wrapper
+  # explains that $fit is NULL on a ggcpt from cpt_detect(). So it must be
+  # what the section *opens* with.
+  reg <- ggchangepoint:::builtin_registry()
+  exported <- sort(grep("_wrapper$", getNamespaceExports("ggchangepoint"),
+                        value = TRUE))
+  expect_setequal(sort(unique(reg$wrapper)), exported)
+
+  man <- file.path(normalizePath(file.path("..", ".."), mustWork = FALSE), "man")
+  if (dir.exists(man)) {
+    tibble_docs <- character()
+    ggcpt_docs <- character()
+    for (w in exported) {
+      f <- file.path(man, paste0(w, ".Rd"))
+      expect_true(file.exists(f), info = w)
+      L <- readLines(f, warn = FALSE)
+      i <- which(startsWith(L, "\\value{"))[1]
+      expect_false(is.na(i), info = w)
+      opening <- paste(L[(i + 1):min(i + 2, length(L))], collapse = " ")
+      if (grepl("^\\s*A tibble", opening)) {
+        tibble_docs <- c(tibble_docs, w)
+      } else {
+        expect_match(opening, "ggcpt", info = w)
+        ggcpt_docs <- c(ggcpt_docs, w)
+      }
+    }
+    expect_setequal(tibble_docs, c("cpt_wrapper", "ecp_wrapper"))
+    expect_gt(length(ggcpt_docs), 35L)
+  }
+
+  # and the two exceptions really do behave that way. Both are Imports
+  # engines, so this needs no availability guard.
+  set.seed(5)
+  uni <- c(stats::rnorm(90), stats::rnorm(90, 5))
+  expect_s3_class(suppressWarnings(cpt_wrapper(uni)), "tbl_df")
+  expect_false(inherits(suppressWarnings(cpt_wrapper(uni)), "ggcpt"))
+  expect_s3_class(suppressWarnings(ecp_wrapper(uni)), "tbl_df")
+  expect_false(inherits(suppressWarnings(ecp_wrapper(uni)), "ggcpt"))
+  # a wrapper on the other side of the line, for contrast. fpop is a
+  # Suggests engine, so this needs a guard -- the meta-test above caught
+  # its absence, which is that check doing exactly its job: unguarded, it
+  # would have failed only the Imports-only run.
+  if (engine_usable("fpop")) {
+    expect_s3_class(suppressWarnings(fpop_wrapper(uni)), "ggcpt")
+  }
 })

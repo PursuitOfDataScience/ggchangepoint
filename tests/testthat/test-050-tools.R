@@ -1080,7 +1080,7 @@ test_that("streaming one observation at a time equals a bulk update", {
   rest <- v[51:n]
   take_v <- function(z, i) z[i]
   for (meth in c("edetector", "cpm")) {
-    if (meth == "cpm" && !engine_installed("cpm")) next
+    if (meth == "cpm" && !engine_usable("cpm")) next
     mk <- function() suppressWarnings(suppressMessages(
       cpt_monitor(meth, baseline = base)))
     r <- three_ways(mk, rest, take_v)

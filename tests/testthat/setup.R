@@ -24,3 +24,29 @@ withr::defer(grDevices::dev.off(), teardown_env())
 if (length(find.package("mosum", quiet = TRUE)) > 0) {
   suppressWarnings(requireNamespace("mosum", quietly = TRUE))
 }
+
+# `engine_installed()` asks whether a package is on disk, with
+# find.package(). That is the right question for the package's own code,
+# which uses it to tell a user what to install -- but it is the wrong
+# question for a test that is about to *run* an engine, because a package
+# can be installed and still not load.
+#
+# The macOS CI runner is exactly that case: {mosum} is installed, and
+# loading it fails because rgl cannot find libGLU.1.dylib. Nine tests
+# already skipped there via skip_if_not_installed(), which tries the load;
+# the change_in contract sweep guarded with engine_installed() instead, so
+# it went ahead and asserted that mosum honours change_in = "mean" on a
+# machine where mosum cannot be loaded at all. One red job, no defect in
+# the package.
+#
+# So the suite gets a predicate for the question it actually asks. This is
+# requireNamespace() used deliberately for what it does answer -- "can this
+# be loaded here" -- rather than as a stand-in for "is it installed".
+engine_usable <- function(pkg) {
+  if (!ggchangepoint:::engine_installed(pkg)) {
+    return(FALSE)
+  }
+  isTRUE(suppressWarnings(suppressMessages(
+    requireNamespace(pkg, quietly = TRUE)
+  )))
+}

@@ -20048,3 +20048,768 @@ machine, so a future round should compare against the shape above instead.
 
 The installed-size NOTE flickered back on 4.4.1 after four consecutive OKs,
 which is the boundary behaviour Part LX measured rather than a regression.
+
+# Part LXV -- The third citation source, which the test was named for
+
+The standing brief asks every round whether every `\citep`/`@key` resolves,
+whether every bib entry is used, and whether entries are attributed to the
+right work. R44 is the shipped authority for that, and reading it rather
+than re-deriving it -- the lesson of §440 -- shows it covers more than its
+name suggests and less than its comment claims.
+
+## 543. What R44 already guarantees
+
+Confirmed, and stated once: both bibliographies are exactly balanced.
+
+| | entries | consumers |
+|---|---|---|
+| `inst/REFERENCES.bib` | 58 | 58 `\insertRef` keys |
+| `vignettes/vignette_reference.bib` | 63 | 63 `@key` citations |
+
+Zero unused, zero duplicate keys, every key resolving. Both directions are
+guarded -- `expect_setequal(names(inst), unique(used))` closed the
+defined-to-used direction in an earlier part, when ten dead entries came
+out. Re-deriving that was wasted motion.
+
+## 544. But "the three citation sources agree" compared two
+
+R44's own comment names three: `cpt_cite()`, the `\insertRef` keys, and the
+vignette bibliography. Its assertions compare the two `.bib` files to each
+other and check that every key resolves. **The free-text table behind
+`cpt_cite()` is never compared to either** -- and that table is exactly
+where the drift the comment describes lived: "the TGUH paper was dated 2018
+in `cpt_cite()` and 2022 in the vignette bib".
+
+So the one source that had been wrong was the one left unguarded.
+
+`cpt_references()` is a hand-maintained tribble, 58 rows of prose. Checked
+directly, it is currently correct: every one of the 50 available methods has
+an entry, no duplicates, no entry for a method the registry does not have
+(the eight non-method rows -- `crops`, `edetector`, `benchmark`,
+`critical_difference` and four more -- are feature topics, reachable as
+`cpt_cite("crops")`), and for the 35 methods whose wrapper serves them alone
+and cites exactly one key, the surnames and the year in the prose match the
+bib entry the help page cites.
+
+The comparison needs the 1:1 restriction, and the reason is worth recording
+because the first pass without it reported five mismatches that were all
+correct. `cpt_wrapper` serves five `changepoint` methods; its help page
+cites the *software* (Killick 2014) while `cpt_cite()` names each method's
+own paper -- Killick 2012 for `pelt`, Scott and Knott 1974 for `binseg`,
+Auger and Lawrence 1989 for `segneigh`, Hinkley 1970 for `amoc`, Haynes
+2017 for `np`. Both are right; a shared wrapper simply has no single
+publication. The sweep was measuring an invariant that does not hold.
+
+## 545. A citation that does not render, in the one vignette nothing scans
+
+R44 scans `vignettes/*.Rmd` non-recursively, so `vignettes/articles/` -- the
+web-only `benchmarks.Rmd` -- is outside every citation check in the package.
+It also declares no `bibliography:` field.
+
+That combination is currently harmless because the article cites nothing,
+and it is a trap rather than a defect: **a vignette with `@keys` and no
+`bibliography:` does not fail to build.** Pandoc emits the key as literal
+text, so `@killick2012optimal` reaches the reader as those characters. The
+invariant that matters is the pairing, and it holds across all eight files:
+
+| | declares `bibliography:` | `@` citations |
+|---|---|---|
+| introduction | yes | 74 |
+| ggchangepoint | yes | 28 |
+| comparison | yes | 17 |
+| inference | yes | 4 |
+| monitoring | yes | 4 |
+| extending | yes | 2 |
+| supervised | yes | 1 |
+| articles/benchmarks | no | 0 |
+
+## 546. What was added
+
+Two guards in R44, implementing what its comment already promised:
+
+- for every 1:1-wrapper single-key method, the surnames and the year in
+  `cpt_references()` must match the `inst/REFERENCES.bib` entry the help
+  page cites, with `expect_gt(compared, 30L)` so a refactor that stops
+  resolving wrappers cannot silently compare nothing;
+- across `vignettes/` **recursively**, a file has `@` citations if and only
+  if it declares a `bibliography:`.
+
+Proved in both directions, which §540 established as the minimum. Two
+independent breaks -- restoring the historical TGUH year drift in
+`cpt_references()`, and appending `See @killick2012optimal ...` to the
+article that declares no bibliography -- produce **exactly two failures, one
+each**; with both reverted, R44 passes 164 assertions.
+
+## 547. Verification
+
+Full local suite clean; both checks at the shape §542 recorded, with
+`checking installed package size ... OK` on both.
+
+| | R 4.4.1 | R 4.6.0 |
+|---|---|---|
+| `checking tests` | OK, 366s | OK, 117s |
+| `checking examples` | OK, 54s | OK, 36s |
+| `--run-donttest` | OK, 132s | OK, 49s |
+| re-building vignettes | OK, 117s | OK, 69s |
+| installed package size | OK | OK |
+
+# Part LXVI -- The one platform that disagreed
+
+The 0.5.0 work to this point was committed and pushed as `bfa2677`, and
+GitHub Actions ran the matrix `cran-comments.md` advertises. Five of six
+jobs green: pkgdown, `windows-latest` release, and all three Ubuntu
+flavours (devel, release, oldrel-1). **`macos-latest` release failed**, and
+it found something no local check could.
+
+## 548. One assertion, out of 5,633
+
+```
+── Failure ('test-doc-coverage.R:635:7'): every change_in a method
+   claims to support actually works ──
+Expected `is.null(res)` to be FALSE.
+mosum claims change_in = mean but errored
+
+[ FAIL 1 | WARN 0 | SKIP 34 | PASS 5633 ]
+```
+
+The same log explains it. On that runner `{mosum}` cannot be loaded --
+`rgl.so` needs `libGLU.1.dylib`, which is absent -- and **nine other tests
+already skip for exactly that reason**, reported by testthat as
+"{mosum} cannot be loaded (9)". Those nine use `skip_if_not_installed()`,
+which attempts the load. The change_in sweep did not.
+
+Nothing is wrong with the package. `mosum` is a Suggests engine, and a
+machine where it cannot load is a machine where it should be skipped.
+
+## 549. Two predicates, one question each
+
+`engine_installed()` is the package's own availability predicate:
+
+```r
+engine_installed <- function(pkg) {
+  if (pkg %in% c("changepoint", "changepoint.np", "ecp")) return(TRUE)
+  length(suppressWarnings(find.package(pkg, quiet = TRUE))) > 0L
+}
+```
+
+`find.package()`, deliberately -- and there is a shipped test asserting it
+adds no namespace, `expect_false(probe %in% loadedNamespaces())`. That is
+right for package code, which uses it to tell a user what to install, and
+it must not load 35 engines to answer.
+
+But **28 places in the test suite had borrowed it to mean "can I run
+this"**, and those are different questions. A package can be on disk and
+unloadable. Constructed locally, the divergence is exact:
+
+| | `engine_installed()` | `engine_usable()` |
+|---|---|---|
+| `brokenpkg` (DESCRIPTION only, no loadable namespace) | TRUE | FALSE |
+| `mosum` (here) | TRUE | TRUE |
+| `ggchangepoint.no.such.engine` | FALSE | FALSE |
+
+So the suite gets the predicate for the question it actually asks, in
+`setup.R`, and this is `requireNamespace()` used for what it does answer --
+"can this be loaded here" -- rather than as a stand-in for "is it
+installed", which is the misuse the 0.5.0 audit warned about.
+
+All 28 test-suite uses now call it. `engine_installed()` is untouched, and
+the test that is *about* it keeps calling it, because its subject is the
+non-loading guarantee.
+
+## 550. Three things the blind rename broke, and how they surfaced
+
+Replacing an identifier across five files is not a safe refactor, and this
+one had three casualties -- worth recording because each was silent:
+
+1. **Five sites read `ggchangepoint:::engine_usable(...)`.** The helper
+   lives in `setup.R`, not in the package namespace, so every one of those
+   would have errored. Caught by grepping for `:::engine_usable` rather
+   than by trusting the rename.
+2. **The predicate's own test got rewritten**, so the assertion that
+   `find.package()` adds no namespace would have been made about the
+   function that deliberately does load one -- inverting the thing it
+   exists to prove. Restored, with the `engine_usable()` half added
+   alongside as the deliberate opposite.
+3. **The guard-recognition meta-test carries the predicate names in a
+   regex string**, which the rename also edited. It now recognises both
+   spellings, since a test about `engine_installed()` is correctly guarded
+   by `engine_installed()`.
+
+The divergence case is now a shipped guard as well: a temp libpath holding
+a directory with nothing but a `DESCRIPTION`, which `find.package()`
+accepts and the loader cannot use.
+
+## 551. Verification
+
+Full local suite clean, and both checks unchanged from §547's shape.
+
+| | R 4.4.1 | R 4.6.0 |
+|---|---|---|
+| `checking tests` | OK, 387s | OK, 118s |
+| `checking examples` | OK, 53s | OK, 35s |
+| `--run-donttest` | OK, 139s | OK, 48s |
+| re-building vignettes | OK, 113s | OK, 67s |
+| installed package size | OK | OK |
+
+`mosum` loads on this machine, so the sweep still reaches it here and no
+coverage was traded for the fix -- the skip only engages where the engine
+genuinely cannot load. That is the point: the failure was never
+reproducible locally, and the fix must not be either.
+
+**This fix is in the working tree and not in `bfa2677`.** CI for that
+commit stands at five green and one red; the red job is the one this part
+repairs.
+
+# Part LXVII -- Guarding the shape that was invisible, and a pointer to nothing
+
+## 552. The literal-call detector could not see the failing form
+
+Part LXVI fixed the macOS job by giving the suite a loadability predicate.
+That leaves the question of why nothing caught it, and the answer is in the
+shipped meta-test `"no test reaches a Suggests engine outside a guarded
+block"`. It is exact rather than heuristic, and its own comment says so: it
+matches **literal** call forms only --
+
+```r
+sprintf("method\\s*=\\s*\"%s\"", m)      # method = "mosum"
+sprintf("%s\\(", wp)                     # mosum_wrapper(
+```
+
+-- "because the bare name collides with other vocabulary". Correct, and it
+means a loop over the registry calling `cpt_detect(v, method = m)` names no
+engine at all. Ten such blocks exist, including the one that failed. All ten
+were outside every guard the suite had, guarded or not.
+
+The first attempt at hardening was to stop recognising `engine_installed()`
+as a guard. Reverting the change_in sweep to it proved that does nothing:
+the block is invisible to the detector, so what it is guarded *by* never
+comes up. A tightening that cannot fail is not a guard, which §540 had
+already said once.
+
+## 553. Tolerance versus prediction
+
+Twelve blocks drive dispatch from the registry with a variable. Three of
+them use no availability predicate, and inspecting them was the useful part
+of the round: they wrap the call in `tryCatch(error = function(e) NULL)` and
+`next` on `NULL`. An engine that cannot load simply drops out. They are
+safe by construction and need nothing.
+
+The change_in sweep wraps the call the same way -- and then asserts:
+
+```r
+expect_false(is.null(res),
+             info = paste(m, "claims change_in =", ci, "but errored"))
+```
+
+That is the whole difference. **For every other sweep `NULL` means "not
+here"; for this one it means "broke its contract".** Nine of the ten
+sole-guard blocks tolerate absence; the tenth reports it as a defect.
+
+So the new guard is narrow on purpose: a block that drives dispatch from
+`builtin_registry()` with a variable `method =` *and* asserts the call
+succeeded must gate each iteration on `engine_usable()`. Blocks that `next`
+on `NULL` are left alone, because they are already right.
+
+Proved both ways. Reverting **both** of the change_in block's
+`engine_usable()` calls -- the loop guard and the later `reachable` filter,
+and the first attempt reverted only one, which is why it appeared not to
+fire -- flags exactly `test-doc-coverage.R:600`; restored, it flags nothing.
+
+## 554. `?taylor_wrapper` sent readers to a vignette that cannot exist
+
+The round's vignette pass took the cross-reference axis: every
+`vignette("...")` and every `\link{}` in the vignettes and the 205 Rd
+topics. All resolve -- and the check was wrong in a way worth keeping.
+
+It built the list of valid vignette names from `vignettes/` **recursively**,
+which includes `articles/benchmarks.Rmd`. That file is excluded from the
+tarball by `.Rbuildignore:16`, so it is never installed. The built tarball
+holds seven vignette sources and zero `articles` entries, and
+`vignette("benchmarks", package = "ggchangepoint")` warns *vignette
+'benchmarks' not found*.
+
+`R/wrap-applied.R:124`, propagated to `man/taylor_wrapper.Rd:58`, told the
+reader to run exactly that call -- in the paragraph explaining that
+`taylor` cannot be interrupted and that sizing the run beforehand is the
+only option. The reader most in need of that page was sent to a warning.
+
+Being web-only is correct: `_pkgdown.yml` files it under "Web only" because
+the sweep behind it takes over twenty minutes. So the pointer was the
+defect, and it now names the published URL and says plainly that
+`vignette()` will not find it.
+
+Guarded, in the direction that generalises: no file in `R/`, `man/` or the
+shipped vignettes may reference a vignette absent from the top level of
+`vignettes/`. The guard also asserts that `.Rbuildignore` still excludes
+`articles/` and that the directory still exists -- otherwise it would pass
+by guarding nothing. Reintroducing the bad pointer produces exactly one
+failure.
+
+## 555. Verification
+
+Full local suite clean; both checks at §542's shape.
+
+| | R 4.4.1 | R 4.6.0 |
+|---|---|---|
+| `checking tests` | OK, 372s | OK, 119s |
+| `checking examples` | OK, 54s | OK, 36s |
+| `--run-donttest` | OK, 138s | OK, 49s |
+| re-building vignettes | OK, 116s | OK, 70s |
+| `checking Rd files` | OK | OK |
+| `checking Rd cross-references` | OK | OK |
+| installed package size | OK | OK |
+
+`Rd cross-references ... OK` is the line that matters this round: it covers
+the `\url{}` that replaced the `vignette()` call, and the removal did not
+orphan anything.
+
+Status is `1 ERROR, 2 WARNINGs, 3 NOTEs` on 4.4.1 and `1 ERROR, 1 WARNING,
+2 NOTEs` on 4.6.0 -- the environmental set §542 enumerated, with the
+installed-size NOTE off again on both.
+
+## 556. State of the tree
+
+`bfa2677` is pushed and carries Parts XXX-LXIV. CI for it is **five green,
+one red**: pkgdown, Windows release and all three Ubuntu flavours passed;
+`macos-latest` release failed on the change_in sweep.
+
+Parts LXV, LXVI and LXVII are in the working tree and not in any commit.
+LXVI is the fix for that red job.
+
+# Part LXVIII -- What the return values promise
+
+The axes this loop has swept all sit on one side of a function call:
+arguments, documentation prose, tests, data shape, artefacts, citations,
+platform. This part takes the other side -- the `\value` sections, which
+promise the caller specific named things.
+
+## 557. Two surfaces confirmed once, and not re-derived
+
+`DESCRIPTION` asks a checker to install 56 Suggests, and nothing verifies
+each is used. All 56 are referenced outside the dependency fields. Clean.
+
+The vignette pass took the count-claims axis: every sentence in vignette
+prose asserting a number of methods, engines, rows, families or provenances
+-- eleven of them. All correct. `extending.Rmd`'s "fifty detectors",
+`ggchangepoint.Rmd`'s "Five rows carry status planned",
+`inference.Rmd`'s "Four provenances", `introduction.Rmd`'s "50 methods" and
+its "six families", which enumerates exactly six.
+
+Numbered sections run 1-4 in `inference.Rmd` and 1-7 in `monitoring.Rmd`,
+both sequential; and all seven shipped vignettes have a
+`%\VignetteIndexEntry{}` identical to their `title:`, so the vignette index
+and the rendered page agree.
+
+One near-miss worth recording as a discipline note rather than a finding.
+The registry's `online` flag marks `bocpd`, `cpm`, `ocd` while
+`cpt_monitor()` accepts `edetector`, `cpm`, `ocd` -- sets that differ in two
+of three members, which reads like a defect. It is documented on
+`?cpt_methods` ("`online` means the *algorithm* is sequential ... the sets
+overlap without coinciding") and pinned by a shipped test whose name is
+`"the online flag and cpt_monitor()'s methods are distinct sets"`. **Third
+time this loop that a "finding" was already a shipped test.** Grep the
+suite before measuring anything.
+
+## 558. Every named column the manual promises
+
+122 Rd pages carry a `\value` section; 102 name lowercase `\code{}` tokens,
+413 in total. Most are argument or package names. The mechanically
+checkable subset is the claim "a `\code{x}` column", which 16 pages make
+about 19 columns. Run each method and look for the column in
+`changepoints`, in `data`, and in `augment()` output:
+
+| claim | where it actually is |
+|---|---|
+| `bcp` `posterior_prob` | changepoints |
+| `cpm` `detection_time` | changepoints |
+| `inspect` `strength` | changepoints |
+| `taylor` `confidence` | changepoints |
+| `segmented`/`smuce`/`strucchange` `ci_upper` | changepoints |
+| `fitted`, seven engines | data + augment |
+
+All 14 reachable claims honoured, each in the place its page implies.
+
+The `penalty$type` strings are also promises, and 17 distinct ones are set
+literally in `R/`. Two live values are not among them -- `SIC` from
+`segneigh` and `AIC: meanar1cpt` from `envcpt` -- and both are correct:
+the first is `changepoint`'s own default passed through, the second is
+composed by `envcpt` from the model it selected. Not literals, not defects.
+
+## 559. The most fragile claim in the package had no test
+
+`?glance.ggcpt` explains why `total_cost` is `NA` in four cases and reports
+normally otherwise. Measured against the live package, every case holds:
+
+| | `total_cost` |
+|---|---|
+| `pelt`, mean, default (MBIC) | NA |
+| `pelt`, mean, `penalty = "BIC"` | 544.4 |
+| `pelt`, mean, `penalty = "AIC"` | 511.9 |
+| `pelt`, mean, `penalty = 10` | 544.4 |
+| `pelt`, `change_in = "var"` | 904.8 |
+| `pelt`, `change_in = "meanvar"` | 543.9 |
+| `binseg` / `segneigh` / `np` | NA |
+
+The shipped test covered the binseg/segneigh NAs, the numeric penalties and
+the two other `change_in` values. Three of the page's claims were unpinned,
+and one of them is the most upstream-fragile statement in the package: the
+mean-under-MBIC `NA` **is not a property of `changepoint` at all**. It is a
+collision between two of this package's own Imports -- loading
+`changepoint.np` replaces `changepoint`'s `logLik` method for `cpt` objects
+with one that errors on exactly that combination. Both are Imports, so the
+collision is always present, and if either upstream changes the `NA`
+quietly becomes a number while the help page keeps saying otherwise.
+
+Now pinned, along with `np` being `NA` for the unrelated reason that
+`changepoint.np` defines no `logLik`, and named penalties reporting
+normally. Inverting the headline assertion produces exactly one failure, so
+it is checking the quantity rather than passing vacuously.
+
+## 560. The one number that cannot be reproduced, and why that is fine
+
+The same page says that for one and the same segmentation `cpt.range`
+reports 219.7 where PELT reports 659.9. That pair cannot come from
+`glance()`, which returns `NA` for `binseg` by construction -- it describes
+the raw engine costs, on the author's own data, which no seed in the
+sources reproduces.
+
+The *relationship* is reproducible, and that is the part the sentence is
+making a claim about. Forcing both engines onto an identical segmentation
+(`penalty = "BIC"`, both reporting a single changepoint at 100) gives
+-341.4 against -1071.8, a ratio of 0.319 where the documented pair is
+0.333. Same phenomenon, different data, and the engine emits its own
+"Not changed to be -2*logLik" warning while doing it -- which the shipped
+test already asserts does not leak. Left as written.
+
+## 561. Verification
+
+Full local suite clean; both checks otherwise at §542's shape.
+
+| | R 4.4.1 | R 4.6.0 |
+|---|---|---|
+| `checking tests` | OK, 379s | OK, 119s |
+| re-building vignettes | OK, 117s | OK, 70s |
+| `checking Rd cross-references` | OK | OK |
+| installed package size | NOTE, 6.4Mb | INFO, 5.4Mb |
+
+## 562. The installed-size flicker, finally explained
+
+Ten parts of this loop have watched that NOTE appear and vanish -- 5.2Mb
+NOTE, OK, 5.1Mb NOTE, OK, 6.6Mb NOTE, then five consecutive OK, now 6.4Mb
+NOTE. Reading the two runs of the *same round* side by side gives the
+answer, because they disagree:
+
+| | total | `doc` | `help` |
+|---|---|---|---|
+| R 4.4.1, full Suggests | 6.4Mb | 3.8Mb | 1.8Mb |
+| R 4.6.0, Imports only | 5.4Mb | 2.7Mb | 1.8Mb |
+
+`help` is constant. **`doc` is not, and it is the whole variance**: the
+Imports-only run skips the chunks that need a Suggests engine, so it draws
+1.1Mb fewer vignette figures. The package therefore straddles CRAN's 5Mb
+line, and which side it lands on is decided by how many engines the
+checking machine happens to have. That is not flakiness in the package and
+it is not a defect -- but it does mean the NOTE will appear on some CRAN
+platforms and not others, and `cran-comments.md` already describes it as
+marginal rather than gone.
+
+No waste behind it. `man/figures` is 1.3Mb across 24 files, the largest a
+112K plot at 672x480 and 8-bit RGB, plus a 96K logo. Nothing oversized,
+nothing at the wrong bit depth.
+
+## 563. The one duplicate figure is the point
+
+Hashing the figures turned up exactly one byte-identical pair,
+`README-unnamed-chunk-6-1.png` and `README-unnamed-chunk-50-1.png`, which
+reads like 40K of waste. It is the opposite. Chunk 6 is `autoplot(res)`;
+chunk 50 is `plot(res)`, captioned *"base-graphics fallback (delegates to
+autoplot)"*. **The two files being byte-identical is the evidence that the
+delegation works.** Deleting either would delete the demonstration.
+
+And nothing asserted it. `plot_via_autoplot()` backs **fourteen** classes,
+and the suite only checked that `plot()` and `autoplot()` each return *a*
+`"ggplot"` -- which a completely divergent implementation also satisfies.
+Now guarded in two halves: structurally, every `plot.*` method in `R/`
+routes through the one helper, which is exact and covers all fourteen; and
+live, `plot(res)` and `autoplot(res)` must agree on labels, on layer geoms,
+and on the full `ggplot_build()$data`.
+
+The structural half was broken on the first attempt, in the way §540
+predicts. These methods are one-liners, and reading a fixed five-line
+window past a definition walks into the *next* method -- which does
+delegate. So a divergent `plot.ggcpt_delay()` looked compliant and the
+guard could not fail. It now takes the definition line alone unless it
+opens a brace. Divergent method: 1 failure. Compliant tree: 6 assertions
+pass. **Third guard this loop that needed the passing direction to reveal
+it was inert.**
+
+## 564. And the guard failed the check it was meant to survive
+
+`r74` came back `2 ERRORs` on both R versions, tests failing, after a local
+suite that was clean. The cause is the gap between the two, and it is worth
+stating because the loop has now met it twice in different clothes:
+
+```
+── Failure ('test-hardening.R:1233:3'): every plot() method delegates ──
+Expected `length(defs)` >= 13L.
+Actual comparison: 0 < 13
+```
+
+**`R/` is not installed.** The local gate runs under `pkgload::load_all()`
+from the source tree, where `../../R` exists; `R CMD check` installs the
+package and runs the tests from `.Rcheck/tests/testthat`, where it does
+not. So `defs` was empty and the structural assertion fired against
+nothing. The live half needs no sources, so only the structural half is now
+conditional -- and it asserts `expect_length(defs, 0L)` in the installed
+case rather than silently doing nothing, so the branch is still saying
+something.
+
+Fixing it turned up a second trap. The obvious guard,
+`dir.exists(test_path("..", "..", "R"))`, cannot work: **`test_path()`
+aborts** with "Can't find path" when the target is missing, so the
+`dir.exists()` never runs. `normalizePath(file.path("..", ".."),
+mustWork = FALSE)` is what the rest of the suite uses, and now this test
+does too. Verified in both contexts: 6 assertions pass from the source
+tree, and 6 pass from a directory whose `../../R` is absent.
+
+A local suite being clean is not evidence a test survives `R CMD check`.
+Any test that reads the source tree has to be run from somewhere the source
+tree is not.
+
+## 565. Verification, after the fix
+
+| | R 4.4.1 | R 4.6.0 |
+|---|---|---|
+| `checking tests` | OK, 376s | OK, 119s |
+| installed package size | OK | OK |
+| Status | 1 ERROR, 2 WARNINGs, 3 NOTEs | 1 ERROR, 1 WARNING, 2 NOTEs |
+
+Back to §542's environmental shape on both, with the size NOTE off again --
+consistent with §562: it tracks how many engines drew figures, not anything
+the round changed.
+
+# Part LXIX -- Counting the right noun
+
+## 566. Two clauses of the brief, answered and closed
+
+The standing brief asks whether bib entries are **complete**, which no
+round had tested -- earlier parts checked that keys resolve, that no entry
+is unused, that the two files agree on year and journal, and that authors
+match `cpt_cite()`. Completeness is a different question: does each entry
+carry the fields its own type requires?
+
+Checked against BibTeX's requirements per type:
+
+| | entries | types | incomplete |
+|---|---|---|---|
+| `inst/REFERENCES.bib` | 58 | 55 article, 1 book, 2 inproceedings | 0 |
+| `vignettes/vignette_reference.bib` | 63 | 60 article, 1 book, 1 inproceedings, 1 manual | 0 |
+
+Zero across 121 entries. Every `@article` has author, title, journal and
+year; the books have publishers; the proceedings have booktitles.
+
+Figure alt text, also unswept and a thing CRAN comments on. All seven
+vignettes set `fig.alt` (72 occurrences), and the rendered HTML settles it:
+**67 `<img>` tags across eight built pages, none without an `alt`**. Nor is
+the text perfunctory -- no page repeats an alt string, the only strings
+under 50 characters are the template's own `[Top]` and `[R logo]`
+navigation, and the five that appear twice appear in two *different*
+vignettes, where the same figure is legitimately shown again.
+
+## 567. "Nineteen further engines" counted methods
+
+The feature tour's `New in 0.5.0` box opened with:
+
+> **New in 0.5.0.** Nineteen further engines; ...
+
+The number is right. The noun is not, and this package is precise about it:
+`engine` is a **registry column holding the upstream package name**. There
+are 38 distinct values -- 35 in `Suggests` and the 3 Imports, which is
+exactly what `NEWS.md` means by "35 engines inside a 56-package Suggests
+list". Nothing in the package yields 19 engines. Measured from the `v0.4.0`
+tag, the engine set grew from roughly 25 packages to 38, a delta near 13.
+
+19 is the delta in **methods**, and `NEWS.md` says so itself, in a heading:
+
+> ## Engine wave #2 — 19 new methods
+
+So the two documents disagreed about what was being counted, and the
+disagreement was resolvable from the repository. Corroborated by 0.4.0's own
+NEWS, which was careful with the same distinction -- "grows from 13 to 31
+wired methods. Eighteen new wrappers" -- and by the wrapper exports, which
+went 26 to 43 at the tag, a delta of 17, matching neither.
+
+The arithmetic closes exactly:
+
+| source | value |
+|---|---|
+| live registry, `status == "available"` | 50 |
+| NEWS, "reaches N wired methods" | 50 |
+| NEWS, 0.4.0's "from 13 to N wired methods" | 31 |
+| NEWS, "Engine wave #2 — N new methods" | 19 |
+| 31 + 19 | 50 |
+
+One word changed: *engines* to *methods*.
+
+## 568. Guarded with no magic numbers
+
+The guard reads every figure from either the live registry or `NEWS.md`'s
+own sentences, so the three can only drift together rather than apart. It
+asserts `reached == live`, `baseline + delta == live`, that the tour's
+number *word* maps to `delta`, that it is attached to "further methods" --
+and, separately, that the count of distinct engines is **greater** than
+`delta`, which is the fact the old wording contradicted.
+
+Proved in three states rather than two, because the sentence can fail in
+two independent ways:
+
+| tour text | R44-style outcome |
+|---|---|
+| "Nineteen further methods" | 8 assertions pass |
+| "Nineteen further engines" (the original) | 1 failure |
+| "Seventeen further methods" | 1 failure |
+
+## 569. Inter-vignette claims, verified
+
+While looking for the count claim: the tour asserts "**Six** companion
+vignettes go deeper" and then describes each. Seven vignettes ship, minus
+the host is six, and the six named are the six that exist -- with each
+description matching its target's own title and subject, from
+`introduction` "develops the methodology" through `monitoring` "covers
+sequential detection on a stream and its detection-delay accounting". No
+drift.
+
+## 570. Verification
+
+Full local suite clean; both checks at §542's shape.
+
+| | R 4.4.1 | R 4.6.0 |
+|---|---|---|
+| `checking tests` | OK, 365s | OK, 119s |
+| re-building vignettes | OK, 116s | OK, 69s |
+| installed package size | NOTE | INFO |
+
+The vignette rebuild is the line that matters, since a vignette source
+changed. The size NOTE is on 4.4.1 and off on 4.6.0 in the same round --
+§562's finding restated once: it tracks how many engines drew figures, not
+anything this round touched.
+
+# Part LXX -- The rest of the box, and a contract nobody had closed
+
+§567 fixed one word in the feature tour's `New in 0.5.0` box. The box makes
+a dozen more claims, and the paragraph after it describes the result object.
+This part checks the rest of it.
+
+## 571. The object, as described
+
+The tour says a `ggcpt` carries "the tidy `changepoints` tibble (`cp` = last
+index of the left segment, `cp_value` = series value there, plus any
+method-specific columns), a `segments` table, the `data`, the raw engine
+`fit`, and metadata (method, `change_in`, penalty, convention, runtime)".
+
+Live, a `ggcpt` has ten components: `changepoints`, `segments`, `data`,
+`method`, `change_in`, `penalty`, `fit`, `call`, `cp_convention`,
+`runtime`. Every one the sentence names is there, with the described
+contents -- `changepoints` is `cp`/`cp_value`, `segments` is
+`seg_id`/`start`/`end`/`n`/`param_estimate`, `fit` is the upstream `cpt`.
+
+The parenthetical omits `call`. That is an abbreviation rather than an
+error: `?new_ggcpt` documents it, `\item{call}{The matched call.}`, and the
+sentence is a tour rather than a specification. Left alone.
+
+## 572. "Each has its own section below or its own vignette"
+
+The box closes with that promise, about twelve named features. It holds:
+
+| box claim | section |
+|---|---|
+| a time index that survives the round trip | `## Time indices` |
+| significance regions, `cpt_confint()`/`cpt_test()` | `## Inference` |
+| `cpt_select()` | `## Selecting the number of changepoints` |
+| influence, sensitivity, statistic, path, scale-space | `## Diagnostics` |
+| supervised detection | `## Supervised detection` (+ its own vignette) |
+| consensus and recommendation | `## Choosing and combining methods` |
+| event annotation and reports | `## Communication` |
+| benchmarking | `## Benchmarking` |
+| sequential monitoring | `## Streaming` (+ its own vignette) |
+| power analysis | `## Power and study design` |
+| `as_ggcpt()` / `cpt_register_method()` | `## Extending` (+ its own vignette) |
+
+Eleven subsections under `# The 0.5.0 surface`, one per claim, and the
+methods claim is served by `# Engine wrappers`.
+
+A sweep along the way reported that 32 of the 50 methods are "named nowhere
+in the feature tour", which for a vignette subtitled *A Complete Map of the
+Package* is the tell that the sweep is wrong -- it was matching quoted
+strings only. With word boundaries it is 35 of 50 named in prose, and the
+tour calls `cpt_methods()` five times, so the full table renders and the
+map is complete. **Fourth time this loop that a large "finding" was a
+broken measurement.** The ratio itself is the warning sign.
+
+## 573. A closed set that nothing checked was closed
+
+`# Engine wrappers` opens with a compatibility contract, stated exactly:
+
+> Every wrapper from 0.2.0 onwards returns a `ggcpt` object; only the two
+> original wrappers below predate the class and still return a bare tibble.
+
+Measured across all 43 exported wrappers: 43 in the registry, 43 exported,
+neither set holding anything the other lacks; **exactly two return a bare
+tibble, and they are exactly `cpt_wrapper` and `ecp_wrapper`**; 38 of the
+rest return `ggcpt`, with `fabisearch` and `hdreg` needing a shape the
+generic probe does not supply.
+
+So the sentence is true -- and nothing checked that the *exception set is
+closed*. The suite asserted `ecp_wrapper()` returns a `tbl_df` in three
+places and never asked whether a third wrapper had joined it. A new wrapper
+returning a tibble would falsify the vignette and break every accessor a
+caller expects to work on a result, silently.
+
+Guarded now, and the first two attempts are the interesting part:
+
+1. **Calling all 43 engines took over ten minutes** -- unacceptable in a
+   suite that already runs 365s inside the check. Replaced with the
+   documentation surface, which is exact and instant: 135 assertions in
+   **2 seconds**.
+2. **Asking whether each `\value` mentions "ggcpt" anywhere passes for
+   everything**, because both exceptions mention it in passing --
+   `cpt_wrapper` names the `"ggcpt_fit"` attribute, and `ecp_wrapper`
+   explains that `$fit` is `NULL` on a `ggcpt` from `cpt_detect()`. All 43
+   "named ggcpt", which briefly looked like two wrong help pages. It has to
+   be what the section *opens* with.
+
+Both directions proved: as shipped, 135 assertions pass; documenting a
+third wrapper (`fpop_wrapper`) as returning a tibble produces exactly one
+failure.
+
+## 574. Verification
+
+The first run of this round's gate **failed**, and the failure is the
+tightened guard from §552 doing its job on my own test:
+
+```
+── Failure ('test-doc-coverage.R:224:3'): no test reaches a Suggests
+   engine outside a guarded block ──
+```
+
+The new wrapper test used `fpop_wrapper()` as its contrast case -- a
+wrapper on the `ggcpt` side of the line. `fpop` is a **Suggests** engine,
+and the call was unguarded, so it would have passed here and on all five
+CI jobs and failed only the Imports-only run. That is the precise failure
+mode the meta-test was written for, three releases running. Guarded with
+`engine_usable("fpop")`.
+
+Worth stating plainly: the check that caught this is the one §552 could not
+make fail on a registry-driven loop, and it caught a *literal* call
+immediately. The two halves cover different shapes and both were needed.
+
+Second run, after guarding the call:
+
+| | R 4.4.1 | R 4.6.0 |
+|---|---|---|
+| `checking tests` | OK, 360s | OK, 120s |
+| re-building vignettes | OK, 116s | OK, 70s |
+| installed package size | OK | OK |
+| Status | 1 ERROR, 2 WARNINGs, 3 NOTEs | 1 ERROR, 1 WARNING, 2 NOTEs |
+
+§542's environmental shape on both, size NOTE off on both.
