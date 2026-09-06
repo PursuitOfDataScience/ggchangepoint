@@ -23201,3 +23201,100 @@ Second run, after guarding the call:
 | Status | 1 ERROR, 2 WARNINGs, 3 NOTEs | 1 ERROR, 1 WARNING, 2 NOTEs |
 
 §542’s environmental shape on both, size NOTE off on both.
+
+# Part LXXI – The failure that hid behind its own noise
+
+`af544bf` fixed the macOS job – **`macos-latest (release)` is green** –
+and `windows-latest (release)` failed instead. Four Ubuntu jobs and
+pkgdown passed.
+
+## 575. Thirteen identical lines, none of them the error
+
+The whole visible failure was this, repeated:
+
+    Failed with error:  'there is no package called 'RSpectra''
+
+`RSpectra` is not in this package’s `DESCRIPTION` at all, directly or
+transitively. It is **suggested by `InspectChangepoint`** – a suggestion
+of a suggestion, which `r-lib/actions` does not install – and
+[`InspectChangepoint::inspect()`](https://rdrr.io/pkg/InspectChangepoint/man/inspect.html)
+and `sparse.svd()` both call
+[`requireNamespace("RSpectra")`](https://github.com/yixuan/RSpectra)
+without `quietly = TRUE`. The engine handles the absence itself, falling
+back to [`base::svd`](https://rdrr.io/r/base/svd.html), so **these lines
+are a loading diagnostic and not the failure at all.**
+
+They are, however, the reason the failure could not be read.
+`R CMD check` keeps the **LAST** n lines of the test log, default 13,
+and thirteen repetitions of one diagnostic is exactly the tail. The
+testthat failure names were pushed off the top and appear in neither
+`gh run view --log-failed` nor the complete 43,772-line job log – they
+were never written.
+
+This is the trap commit `fcd3083` already fixed once, for a different
+variable: *“Show the vignette error: `_R_CHECK_VIGNETTES_NLINES_` keeps
+the LAST n lines”*. The workflow sets that one and not
+`_R_CHECK_TESTS_NLINES_`. Now it sets both, at 1000.
+
+## 576. Two wrong fixes before the right one
+
+The noise is worth silencing on its own account – it is upstream’s
+diagnostic printed through our function, and
+[`inspect_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/inspect_wrapper.md)
+already declares the intent in a comment: *“The engine prints Monte
+Carlo progress; keep the console clean.”* That comment was written for
+[`utils::capture.output()`](https://rdrr.io/r/utils/capture.output.html),
+which takes **stdout only**.
+
+1.  **[`suppressMessages()`](https://rdrr.io/r/base/message.html) does
+    not work**, and the probe said so rather than my assuming it. Only
+    “Loading required namespace” is a condition;
+    [`requireNamespace()`](https://rdrr.io/r/base/ns-load.html) writes
+    the “Failed with error” line **straight to stderr**, so it printed
+    anyway from inside
+    [`suppressMessages()`](https://rdrr.io/r/base/message.html).
+2.  **Capturing the message stream without assigning the result**
+    silences the engine and then prints the captured lines, because the
+    inner
+    [`capture.output()`](https://rdrr.io/r/utils/capture.output.html)’s
+    value gets auto-printed by the outer one.
+
+The form that works assigns both:
+
+``` r
+
+ignore <- utils::capture.output(
+  inner <- utils::capture.output(
+    fit <- do.call(InspectChangepoint::inspect, args),
+    type = "message"))
+```
+
+Three properties checked rather than assumed, because redirecting a
+stream next to the condition system is easy to get wrong:
+
+|  |  |
+|----|----|
+| the stderr diagnostic | silenced |
+| a genuine [`warning()`](https://rdrr.io/r/base/warning.html) inside | still delivered to `tryCatch(warning=)` |
+| a genuine [`stop()`](https://rdrr.io/r/base/stop.html) inside | still propagates |
+| `fit` inside a function body | lands in the function env, not a capture frame |
+
+Only the stream is redirected; the condition system is untouched.
+
+## 577. What this did not fix
+
+**The Windows failure is still unidentified.** The noise explains why it
+was unreadable, not what it was, and no test in the suite asserts
+silence around `inspect` – the nine `expect_silent()` calls are about
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md),
+[`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md),
+ggplot builds,
+[`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md)
+and
+[`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),
+none of which touch that engine. So this part buys observability and a
+cleaner console, and the next run is what names the defect.
+
+Stated plainly because it would be easy to present a green-looking fix
+here: two edits went in, one of them makes the *next* failure legible,
+and neither is known to address the actual Windows error.

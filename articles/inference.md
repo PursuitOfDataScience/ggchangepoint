@@ -454,7 +454,7 @@ cat(head(cpt_report(fit, session = FALSE), 20), sep = "\n")
     #> - Penalty: MBIC
     #> - Series length: 360
     #> - Changepoints found: 2
-    #> - Detection runtime: 0.019 s
+    #> - Detection runtime: 0.014 s
     #> 
     #> ## Changepoints
     #> 
