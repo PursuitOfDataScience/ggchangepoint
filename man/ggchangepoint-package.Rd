@@ -18,7 +18,7 @@ integration via \code{autoplot()} and composable geoms
 \code{geom_cpt_event()}, \code{stat_changepoint()}), and a unified
 dispatcher \code{cpt_detect()} that reaches fifty methods.
 
-**Detection engines.** \code{cpt_detect()} dispatches to the methods in
+\strong{Detection engines.} \code{cpt_detect()} dispatches to the methods in
 \code{cpt_methods()}, across nine families:
 \itemize{
   \item \strong{Penalised/optimal:} PELT, BinSeg, SegNeigh, AMOC
@@ -57,7 +57,7 @@ dispatcher \code{cpt_detect()} that reaches fifty methods.
     SNHT (\pkg{trend}), Taylor's analyzer (\pkg{ChangePointTaylor}).
 }
 
-**What surrounds the detectors.** Every detector returns a \code{ggcpt}
+\strong{What surrounds the detectors.} Every detector returns a \code{ggcpt}
 object with a stable \code{tibble(cp, cp_value)} contract, optionally
 carrying a time index, engine confidence intervals, a fitted signal,
 significance regions and diagnostics. Around that:

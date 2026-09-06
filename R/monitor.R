@@ -147,9 +147,34 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
   validate_scalar(relearn, "relearn", min = 0)
   validate_flag(reset, "reset")
 
+  # Normalise the series ONCE, before the switch. Each branch used to coerce
+  # `baseline` its own way -- as.numeric() for edetector and cpm, a matrix
+  # for ocd -- so a factor reached two of the three detectors as its level
+  # codes. Guarding here means every method enters through the same door,
+  # which is the only way this stays true when a fourth branch is added.
+  if (!is.null(baseline)) {
+    if (is.matrix(baseline) || is.data.frame(baseline)) {
+      # `edetector` and `cpm` monitor ONE series, and length() on a
+      # data.frame counts its columns -- so a 60-row, 2-column baseline was
+      # refused for having "at least 5 pre-change observations", naming a
+      # count of 2 for 60 observations. Refuse the shape instead, since a
+      # multi-column baseline for a univariate detector is outside the
+      # documented contract either way.
+      if (!identical(method, "ocd")) {
+        reject_multicolumn(baseline, "baseline",
+                           paste0("`method = \"", method, "\"` monitors one ",
+                                  "series; use `method = \"ocd\"` for a ",
+                                  "multivariate stream."))
+        baseline <- as_mv_matrix(baseline, arg = "baseline")[, 1]
+      }
+    } else {
+      baseline <- coerce_series_values(baseline, arg = "baseline")
+    }
+  }
+
   state <- switch(method,
     edetector = {
-      if (is.null(baseline) || length(baseline) < 5) {
+      if (is.null(baseline) || NROW(baseline) < 5) {
         stop("`edetector` estimates the in-control mean and scale from ",
              "`baseline`, so it needs at least 5 pre-change observations.",
              call. = FALSE)
@@ -159,8 +184,7 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
       # so the variability test below would blame a flat baseline for what is
       # really a missing value.
       if (anyNA(b) || any(!is.finite(b))) {
-        stop("`baseline` must be finite (no NA/NaN/Inf); ", sum(!is.finite(b)),
-             " of ", length(b), " values are not.", call. = FALSE)
+        stop_nonfinite(b, "baseline")
       }
       sd0 <- stats::sd(b)
       if (!is.finite(sd0) || sd0 <= 0) {
@@ -187,9 +211,9 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
              "standard deviation.", call. = FALSE)
       }
       B <- if (is.matrix(baseline) || is.data.frame(baseline)) {
-        as.matrix(baseline)
+        as_mv_matrix(baseline, arg = "baseline")
       } else {
-        matrix(as.numeric(baseline), ncol = 1)
+        matrix(baseline, ncol = 1)
       }
       p <- ncol(B)
       if (p < 2) {
@@ -251,13 +275,15 @@ cpt_update <- function(monitor, new_obs) {
          call. = FALSE)
   }
   X <- if (is.matrix(new_obs) || is.data.frame(new_obs)) {
-    as.matrix(new_obs)
+    as_mv_matrix(new_obs, arg = "new_obs")
   } else {
-    matrix(as.numeric(new_obs), ncol = 1)
+    # a streaming caller passes observations one at a time, so this is the
+    # most likely place for a factor level code to enter unnoticed
+    matrix(coerce_series_values(new_obs, arg = "new_obs"), ncol = 1)
   }
   if (nrow(X) == 0) return(monitor)
   if (anyNA(X) || any(!is.finite(X))) {
-    stop("`new_obs` must be finite (no NA/NaN/Inf).", call. = FALSE)
+    stop_nonfinite(X, "new_obs")
   }
   # A monitor is stateful and dimensioned by its baseline. Feeding it a
   # different width is a mistake, not a coercion: `ocd` would consume the
@@ -535,23 +561,61 @@ autoplot.ggcpt_monitor <- function(object,
 cpt_replay <- function(x, method = c("edetector", "cpm", "ocd"),
                        baseline = NULL, ...) {
   method <- match.arg(method)
-  X <- if (is.matrix(x) || is.data.frame(x)) as.matrix(x) else {
-    matrix(as.numeric(x), ncol = 1)
+  # coerce_series_values()/as_mv_matrix(), not a bare as.numeric(): a factor
+  # coerces to its LEVEL CODES, which for labels like "10", "2", "30" is the
+  # alphabetical order 3, 1, 2 rather than the numbers -- so a replay ran on
+  # a series the user never supplied. cpt_detect() has refused that since
+  # 0.4.0, and as_mv_matrix() already refuses a factor *column*; only the
+  # vector path was open.
+  X <- if (is.matrix(x) || is.data.frame(x)) as_mv_matrix(x) else {
+    matrix(coerce_series_values(x), ncol = 1)
   }
   n <- nrow(X)
   if (n < 10) {
     stop("A replay needs at least 10 observations; got ", n, ".",
          call. = FALSE)
   }
+  # Without this, a non-finite value was caught downstream by whichever of
+  # cpt_monitor() or cpt_update() happened to receive the slice containing
+  # it -- so `cpt_replay(x)` reported a problem with `baseline` for an NA at
+  # position 20 and with `new_obs` for one at 95, named an argument the
+  # caller never passed, and counted "1 of 45 values" against the baseline
+  # slice rather than the series. Checked here, the message describes `x`.
+  if (anyNA(X) || any(!is.finite(X))) {
+    stop_nonfinite(X)
+  }
   if (is.null(baseline)) baseline <- min(100L, floor(n / 4))
-  if (length(baseline) == 1L && baseline >= 1 && baseline < n &&
-      baseline %% 1 == 0) {
+  # `baseline` is documented two ways -- a count of leading observations, or
+  # an explicit series -- so it needs the same type guard as `x` above before
+  # either reading is applied. The explicit-series branch used a bare
+  # as.numeric(), and it hands cpt_monitor() an already-numeric vector, so
+  # cpt_monitor()'s own guard could never see the factor.
+  if (!is.matrix(baseline) && !is.data.frame(baseline)) {
+    baseline <- coerce_series_values(baseline, arg = "baseline")
+  }
+  if (length(baseline) == 1L) {
+    # A lone number is the count. It used to fall through to the
+    # explicit-series branch whenever it was fractional or out of range,
+    # which turned it into a ONE-point baseline: cpt_replay(x, baseline =
+    # 500) on a 180-point series then failed with "needs at least 5
+    # pre-change observations" and never mentioned the 500.
+    if (is.na(baseline) || baseline %% 1 != 0 || baseline < 1 ||
+        baseline >= n) {
+      stop("`baseline` as a single number is the count of leading ",
+           "observations to train on, so it must be a whole number in ",
+           "1..", n - 1L, "; the series has ", n, " observations and ",
+           "`baseline` is ", format(baseline), ". Pass an explicit ",
+           "baseline series if you meant a value rather than a count.",
+           call. = FALSE)
+    }
     n_base <- as.integer(baseline)
     base_data <- X[seq_len(n_base), , drop = FALSE]
     rest <- X[seq.int(n_base + 1L, n), , drop = FALSE]
   } else {
-    base_data <- if (is.matrix(baseline)) baseline else {
-      matrix(as.numeric(baseline), ncol = ncol(X))
+    base_data <- if (is.matrix(baseline) || is.data.frame(baseline)) {
+      as_mv_matrix(baseline, arg = "baseline")
+    } else {
+      matrix(baseline, ncol = ncol(X))
     }
     n_base <- 0L
     rest <- X

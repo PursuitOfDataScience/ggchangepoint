@@ -92,7 +92,7 @@ test_that("cpt_penalty works", {
   expect_true(is.numeric(cpt_penalty("Hannan-Quinn", n = 100)))
   expect_true(is.numeric(cpt_penalty("sSIC", n = 100)))
   expect_equal(cpt_penalty("Manual", value = 5), 5)
-  expect_error(cpt_penalty("Manual"))
+  expect_error(cpt_penalty("Manual"), "`value` must be supplied")
 })
 
 test_that("cpt_metrics works", {

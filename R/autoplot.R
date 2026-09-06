@@ -12,12 +12,20 @@
 #'   Defaults to \code{FALSE}.
 #' @param show_ci Logical. Whether to draw confidence intervals for
 #'   changepoint locations, when the engine provides them (columns
-#'   \code{ci_lower}/\code{ci_upper} on the changepoints tibble — SMUCE,
-#'   strucchange, segmented). Drawn as horizontal whiskers near the bottom
-#'   of the panel. Defaults to \code{FALSE}.
+#'   \code{ci_lower}/\code{ci_upper} on the changepoints tibble, supplied by
+#'   the engines \code{\link{cpt_methods}()} marks in its \code{ci} column:
+#'   \code{smuce}, \code{hsmuce}, \code{strucchange}, \code{segmented},
+#'   \code{mcp}, \code{bfast} and \code{taylor}). \code{nsp} is marked there as
+#'   well but is not drawn by this argument: it reports
+#'   \code{region_start}/\code{region_end} rather than an interval around an
+#'   estimate, which \code{show_regions} draws. Drawn as horizontal whiskers
+#'   near the bottom of the panel. Defaults to \code{FALSE}.
 #' @param show_fit Logical. Whether to draw the engine's fitted signal (the
-#'   \code{fitted} column of \code{$data}, provided by SMUCE, DeCAFS, cpop,
-#'   segmented, bcp, beast). Defaults to \code{FALSE}.
+#'   \code{fitted} column of \code{$data}, provided by the engines
+#'   \code{\link{cpt_methods}()} marks in its \code{fitted} column:
+#'   \code{smuce}, \code{hsmuce}, \code{cpop}, \code{bcp}, \code{beast},
+#'   \code{decafs}, \code{segmented}, \code{mcp} and \code{bfast}). Defaults to
+#'   \code{FALSE}.
 #' @param show_regions Logical. Whether to shade the significance regions an
 #'   interval-valued method returns (the \code{regions} slot — currently
 #'   \code{\link{nsp_wrapper}()}). Each band is an interval that contains at
@@ -260,10 +268,15 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
   # to the index the result carries, then to the observation position.
   x_vals <- plot_index(object, index)
   x_lab <- plot_index_label(object, index)
-  # The facet column must not be called `variable`: plotly::ggplotly() melts
-  # the built plot into a frame that already has a column of that name, so a
-  # faceted plot using it fails with "Names must be unique" -- which would
-  # make ggcpt_interactive() unusable for every multivariate result.
+  # The facet column is called `coordinate` rather than `variable`. That was
+  # originally a workaround: plotly::ggplotly() melts the built plot into a
+  # frame that already has a column of that name, and a faceted plot using
+  # it failed with "Names must be unique", which made ggcpt_interactive()
+  # unusable for every multivariate result. Re-measured against the
+  # installed plotly, ggplotly() now survives a facet column literally
+  # named `variable`, so the collision is no longer the reason -- but
+  # `coordinate` is the accurate name for what the column holds, and
+  # keeping it costs nothing and cannot regress.
   long <- do.call(rbind, lapply(vars, function(v) {
     tibble::tibble(index = x_vals, value = as.numeric(wide[[v]]),
                    coordinate = v)

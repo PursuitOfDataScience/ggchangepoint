@@ -319,8 +319,11 @@ cpt_recommend <- function(dimension = c("univariate", "multivariate"),
   if (dimension == "multivariate") {
     reg <- reg[reg$multivariate, , drop = FALSE]
   } else {
-    # A univariate user must not be pointed at an engine that errors on a
-    # single column, however well it matches on everything else.
+    # A univariate user must not be pointed at a high-dimensional engine,
+    # however well it matches on everything else. Nine of the fourteen do
+    # error on a single column; the other four (npmojo, inspect, esac,
+    # pilliat) would run and return something, which is exactly why the
+    # filter is on intent rather than on whether the call happens to fail.
     reg <- reg[reg$univariate, , drop = FALSE]
   }
   if (online) reg <- reg[reg$online, , drop = FALSE]

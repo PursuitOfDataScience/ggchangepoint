@@ -24,7 +24,11 @@ changepoints are shared across them, so \code{seg_id} and
 \code{is_changepoint} apply to the whole row while \code{.fitted} and
 \code{.resid} describe the \emph{first} coordinate only — the same
 coordinate \code{$segments$param_estimate} summarises. When an engine
-supplies its own fitted signal (SMUCE, DeCAFS, cpop, segmented, bcp,
-beast) that signal is used for \code{.fitted} in place of the segment
-means.
+supplies its own fitted signal that signal is used for \code{.fitted} in
+place of the segment means, and rides along in a \code{fitted} column of
+its own -- so for those engines the two columns agree. The engines that
+do this are exactly the ones \code{\link{cpt_methods}()} marks in its
+\code{fitted} column: \code{smuce}, \code{hsmuce}, \code{cpop},
+\code{bcp}, \code{beast}, \code{decafs}, \code{segmented},
+\code{mcp} and \code{bfast}.
 }

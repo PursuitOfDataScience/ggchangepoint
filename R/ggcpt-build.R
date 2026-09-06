@@ -80,6 +80,51 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
   res
 }
 
+# Internal: several engines refuse a short series from deep inside
+# themselves, in their own vocabulary -- two of them with their own typos.
+# Measured on a plain vector, the shortest length each accepts, and what it
+# says below that:
+#
+#   wbs          4   "sample size is too small"
+#   not          4   "max.length must satisfy 3 < max.lenght <= n"     [sic]
+#   wbsts        4   "subscript out of bounds"                   (base R's)
+#   taylor       5   "Invalid x argument. 'x' must be a numeric vector"
+#   envcpt      12   "Minimum segment legnth is too large to include a
+#                     change"                                          [sic]
+#   strucchange 15   "minimum segment size must be greater than the number
+#                     of regressors"
+#   bfast       25   "series is not periodic or has less than two periods"
+#
+# Not one names the method the caller asked for or the length they gave it,
+# and "subscript out of bounds" does not even say the series is the problem.
+# Three of the thresholds move with an argument -- `minseglen`, `h`,
+# `frequency` -- so a constant guard per wrapper would go stale against its
+# own engine. Translating keeps the engine's diagnosis, which is the
+# informative half, and adds the two things it never carried.
+SHORT_SERIES_PATTERNS <- paste(
+  "too small", "max\\.leng", "segment size", "segment legnth",
+  "segment length", "not periodic", "two periods",
+  "subscript out of bounds", "Invalid x argument",
+  sep = "|")
+
+#' @noRd
+rethrow_short_series <- function(e, method, n, hint = NULL) {
+  msg <- gsub("\\s+", " ", conditionMessage(e))
+  if (!grepl(SHORT_SERIES_PATTERNS, msg)) stop(e)
+  # Engine messages do not end in punctuation, so quote them and close the
+  # sentence -- otherwise the hint runs straight on from the engine's last
+  # word ("... less than two periods `bfast` needs at least ...").
+  msg <- sub("[.;:, ]+$", "", msg)
+  stop("Method `", method, "` could not segment a series of ", n,
+       " observation(s). The engine reported: \"", msg, "\".",
+       if (!is.null(hint)) paste0(" ", hint) else "", call. = FALSE)
+}
+
+#' @noRd
+engine_short_series <- function(expr, method, n, hint = NULL) {
+  tryCatch(expr, error = function(e) rethrow_short_series(e, method, n, hint))
+}
+
 # Internal: a segmentation in which every observation is its own segment is
 # not a segmentation, it is a failure to segment -- and several engines
 # produce exactly that on a series that is too short for them rather than
@@ -266,16 +311,20 @@ drop_constant_cols <- function(X, method) {
 # Internal: normalise multivariate input to a numeric matrix and build the
 # wide data tibble stored on the ggcpt object.
 #' @noRd
-as_mv_matrix <- function(x) {
+as_mv_matrix <- function(x, arg = "x") {
   # as.matrix(NULL) stops with "'data' must be of a vector type, was 'NULL'",
-  # which says nothing about this package or which argument was empty.
+  # which says nothing about this package or which argument was empty. `arg`
+  # exists for the same reason: the caller's argument is often `baseline`,
+  # `new_obs` or `series` rather than `x`, and naming `x` sends the reader
+  # looking for an argument the function they called does not have.
   if (is.null(x) || length(x) == 0L) {
-    stop("`x` is empty: a multivariate series needs at least one column ",
-         "with at least 3 observations.", call. = FALSE)
+    stop("`", arg, "` is empty: a multivariate series needs at least one ",
+         "column with at least 3 observations.", call. = FALSE)
   }
   X <- as.matrix(x)
   if (!is.numeric(X)) {
-    stop("`x` must be numeric.", call. = FALSE)
+    stop("`", arg, "` must be numeric.", nonnumeric_columns_note(x),
+         call. = FALSE)
   }
   if (is.null(colnames(X))) {
     colnames(X) <- paste0("V", seq_len(ncol(X)))

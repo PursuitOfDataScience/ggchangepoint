@@ -30,13 +30,21 @@ Defaults to \code{FALSE}.}
 
 \item{show_ci}{Logical. Whether to draw confidence intervals for
 changepoint locations, when the engine provides them (columns
-\code{ci_lower}/\code{ci_upper} on the changepoints tibble — SMUCE,
-strucchange, segmented). Drawn as horizontal whiskers near the bottom
-of the panel. Defaults to \code{FALSE}.}
+\code{ci_lower}/\code{ci_upper} on the changepoints tibble, supplied by
+the engines \code{\link{cpt_methods}()} marks in its \code{ci} column:
+\code{smuce}, \code{hsmuce}, \code{strucchange}, \code{segmented},
+\code{mcp}, \code{bfast} and \code{taylor}). \code{nsp} is marked there as
+well but is not drawn by this argument: it reports
+\code{region_start}/\code{region_end} rather than an interval around an
+estimate, which \code{show_regions} draws. Drawn as horizontal whiskers
+near the bottom of the panel. Defaults to \code{FALSE}.}
 
 \item{show_fit}{Logical. Whether to draw the engine's fitted signal (the
-\code{fitted} column of \code{$data}, provided by SMUCE, DeCAFS, cpop,
-segmented, bcp, beast). Defaults to \code{FALSE}.}
+\code{fitted} column of \code{$data}, provided by the engines
+\code{\link{cpt_methods}()} marks in its \code{fitted} column:
+\code{smuce}, \code{hsmuce}, \code{cpop}, \code{bcp}, \code{beast},
+\code{decafs}, \code{segmented}, \code{mcp} and \code{bfast}). Defaults to
+\code{FALSE}.}
 
 \item{show_regions}{Logical. Whether to shade the significance regions an
 interval-valued method returns (the \code{regions} slot — currently

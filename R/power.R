@@ -7,6 +7,31 @@
 # "how big would the change have to be?".
 # ---------------------------------------------------------------------------
 
+# Internal: `location` in the power helpers is either a fraction of n in
+# (0, 1) or an absolute integer position, elementwise, and may be a vector.
+#' @noRd
+validate_location <- function(location, n) {
+  if (!is.numeric(location) || length(location) == 0L ||
+      anyNA(location) || any(!is.finite(location))) {
+    stop("`location` must be finite numbers: a fraction of `n` in (0, 1), ",
+         "or an integer position. Got ",
+         paste(format(utils::head(location, 4)), collapse = ", "), ".",
+         call. = FALSE)
+  }
+  nmax <- suppressWarnings(max(as.numeric(n)))
+  frac <- location > 0 & location < 1
+  pos <- !frac & location == round(location) &
+    location >= 1 & location <= nmax - 1
+  bad <- !(frac | pos)
+  if (any(bad)) {
+    stop("`location` must be a fraction of `n` in (0, 1) or an integer ",
+         "position in [1, ", format(nmax - 1), "]; ",
+         paste(format(location[bad]), collapse = ", "),
+         if (sum(bad) > 1) " are not." else " is not.", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 #' Detection power for a changepoint scenario
 #'
 #' Simulates replicate series under a scenario and reports how often the
@@ -58,6 +83,20 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
                       parallel = TRUE, ...) {
   validate_scalar(n_sim, "n_sim", min = 1)
   validate_scalar(tolerance, "tolerance", min = 0)
+  # `sigma` reaches cpt_simulate() as its `sd`, so without a check here a bad
+  # value was reported as "`sd` must be a single finite number" -- naming an
+  # argument neither this function nor cpt_min_detectable() has.
+  validate_scalar(sigma, "sigma", min = 0)
+  # `location` is documented as "a fraction of n in (0, 1) or an integer
+  # position", and a vector runs one scenario per value -- so it cannot go
+  # through validate_scalar(). It went through nothing at all, and the
+  # scenario loop clamps with max(2, min(cp, n - 2)), so an out-of-range
+  # integer was silently moved and a power figure reported for a changepoint
+  # nobody asked about: `location = 1e6` at n = 200 answered "power 0.75"
+  # for a change at 198. The clamp is right for an extreme *fraction* (0.001
+  # rounds to 0, and a changepoint needs observations either side); what was
+  # missing is refusing positions that are not positions.
+  validate_location(location, n)
   validate_flag(parallel, "parallel")
   change_in <- match.arg(change_in, c("mean", "var", "meanvar", "slope"))
   # Fail here rather than in every replicate. An unsupported combination
@@ -94,6 +133,15 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
                    list(intercept = 0,
                         slope = scen$jump[i] * scen$sigma[i] / ni))
     )
+    # A single replicate may legitimately fail -- an engine can error on one
+    # unlucky draw -- and one bad draw must not abort a 500-replicate run,
+    # which is why the tryCatch is here. But when EVERY replicate fails the
+    # rate below is mean(all-NA) = NaN, and returning that silently is the
+    # problem: a bad argument forwarded through `...` reaches cpt_detect(),
+    # every call dies, and the caller gets `power = NaN` -- a number they
+    # could plot or publish -- instead of the perfectly clear "unused
+    # argument" the engine already raised. So the first error is kept.
+    first_err <- NULL
     reps <- lapply(seq_len(as.integer(n_sim)), function(b) {
       d <- cpt_simulate(ni, changepoints = cp, change_in = change_in,
                         params = params, noise = noise,
@@ -101,7 +149,10 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
       det <- tryCatch(
         cpt_detect(d$value, method = method, change_in = change_in,
                    ...)$changepoints$cp,
-        error = function(e) NULL
+        error = function(e) {
+          if (is.null(first_err)) first_err <<- conditionMessage(e)
+          NULL
+        }
       )
       if (is.null(det)) return(c(hit = NA, err = NA, extra = NA))
       near <- abs(det - cp) <= tolerance
@@ -112,6 +163,14 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
     m <- do.call(rbind, reps)
     hits <- m[, "hit"]
     ok <- sum(!is.na(hits))
+    if (ok == 0L) {
+      warning("No replicate completed for n = ", ni, ", jump = ",
+              format(scen$jump[i]), ": all ", as.integer(n_sim),
+              " detection calls failed, so `power` is NaN rather than a ",
+              "rate. The first error was: ",
+              if (is.null(first_err)) "unavailable" else first_err,
+              call. = FALSE)
+    }
     power <- mean(hits, na.rm = TRUE)
     tibble::tibble(
       n = ni, jump = scen$jump[i], sigma = scen$sigma[i],
@@ -243,6 +302,10 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
                   min_open = TRUE, max_open = TRUE)
   validate_scalar(tol, "tol", min = 0, min_open = TRUE)
   validate_scalar(max_iter, "max_iter", min = 1)
+  # Checked here as well as in cpt_power(), so the message names `sigma`
+  # before the search has spent a single simulation on a value it will
+  # reject.
+  validate_scalar(sigma, "sigma", min = 0)
   if (length(range) != 2 || range[1] >= range[2] || range[1] <= 0) {
     stop("`range` must be two increasing positive numbers.", call. = FALSE)
   }
@@ -253,7 +316,18 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
                    location = location, n_sim = n_sim,
                    tolerance = tolerance, change_in = change_in,
                    noise = noise, rho = rho, df = df, parallel = FALSE, ...)
-    c(jump = j, power = r$power[1], mc_se = r$mc_se[1])
+    p <- r$power[1]
+    # Without this the NaN from an all-failed scenario reaches
+    # `if (trace[[2]]["power"] < power)` and R reports "missing value where
+    # TRUE/FALSE needed", which says nothing about the argument at fault.
+    if (!is.finite(p)) {
+      stop("`cpt_power()` returned a non-finite power at jump = ", format(j),
+           ", so the search has nothing to bracket. That happens when every ",
+           "replicate fails -- most often because an argument passed through ",
+           "`...` is not one `cpt_detect()` accepts. See the warning above ",
+           "for the error the detector raised.", call. = FALSE)
+    }
+    c(jump = j, power = p, mc_se = r$mc_se[1])
   }
 
   lo <- range[1]; hi <- range[2]
@@ -355,6 +429,11 @@ cpt_scenarios <- function(n = 500, jump = c(0.5, 1, 2), location = 0.5,
                           n_rep = 1, seed = 1, as_datasets = TRUE) {
   validate_flag(as_datasets, "as_datasets")
   validate_scalar(n_rep, "n_rep", min = 1)
+  # `seed` is used arithmetically (seed + (i - 1) * n_rep + r) to give each
+  # scenario its own stream, so a character seed died in `+` with
+  # "non-numeric argument to binary operator" and a length-2 seed silently
+  # vectorised.
+  validate_scalar(seed, "seed")
   scen <- expand.grid(n = as.integer(n), jump = as.numeric(jump),
                       location = as.numeric(location), noise = noise,
                       change_in = change_in, stringsAsFactors = FALSE,

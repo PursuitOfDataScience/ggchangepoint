@@ -19,9 +19,13 @@
 #'   through \code{...}, e.g. \code{lambda = 0.3}).
 #' @param arl0 Target in-control average run length (how many observations,
 #'   on average, before a false alarm). Defaults to \code{500}. \pkg{cpm}
-#'   ships thresholds only for 100, 200, 370, 400, 500, 600, 700, 1000, 2000,
-#'   5000, 10000 and 20000; any other value is refused, because the engine
-#'   answers it by printing an error and reporting no changepoints.
+#'   ships thresholds only for a fixed grid -- 100, 200, 300, 370, 400, 500,
+#'   600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
+#'   9000, 10000, 20000, 30000, 40000 and 50000 -- and any other value is
+#'   refused, because the engine answers it by printing an error and
+#'   reporting no changepoints. The grid is the same for every
+#'   \code{cpm_type}, and 50000 is the ceiling: a long series cannot be
+#'   given an \code{arl0} proportional to its length indefinitely.
 #' @param startup Number of observations after each restart before monitoring
 #'   begins. Defaults to \code{20}.
 #' @param ... Additional arguments passed to \code{cpm::processStream()}.
@@ -38,16 +42,45 @@
 cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
                         startup = 20, ...) {
   need_pkg("cpm")
+  reject_renamed_args(list(...), "cpm")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  # No `min` here on purpose: the printed-error guard further down names
+  # the average run lengths cpm actually ships thresholds for, which is
+  # far more useful than a range complaint. This catches only what that
+  # guard cannot see -- NA, a string, a length-2 vector.
+  validate_scalar(arl0, "arl0")
+  validate_scalar(startup, "startup", min = 1)
 
-  # "GLRAdjusted"/"ExponentialAdjusted" are documented by cpm but rejected by
-  # its own processStream() dispatch (it prints "not a valid
-  # ChangePointModel type" and returns no changepoints instead of erroring),
-  # so they are not offered here: a silent empty result is worse than a
-  # refusal.
+  # "GLRAdjusted" is documented by cpm but rejected by its own
+  # processStream() dispatch (it prints "not a valid ChangePointModel type"
+  # and returns no changepoints instead of erroring), so it is not offered
+  # here: a silent empty result is worse than a refusal. Re-measured against
+  # cpm 2.3, and note that "ExponentialAdjusted" -- named alongside it in an
+  # earlier version of this comment -- is NOT rejected: it runs and returns
+  # changepoints, so the pair is not interchangeable and only the one type
+  # is withheld.
   cpm_type <- match.arg(cpm_type, c(
     "Mann-Whitney", "Mood", "Lepage", "Kolmogorov-Smirnov",
     "Cramer-von-Mises", "Student", "Bartlett", "GLR", "Exponential", "FET"
   ))
+
+  # FET is the one type that needs `lambda`, and without it processStream()
+  # dies inside cpm with base R's "only 0's may be mixed with negative
+  # subscripts" -- a message about neither the argument nor the method. cpm
+  # ships FET thresholds for lambda = 0.1 and 0.3 only (measured across
+  # 0.01-1.0 against cpm 2.3); every other value takes the printed-error
+  # path handled below.
+  dots_names <- names(list(...))
+  if (identical(cpm_type, "FET") && !"lambda" %in% dots_names) {
+    stop("`cpm_type = \"FET\"` needs a `lambda` value passed through `...`; ",
+         "cpm has no default for it and fails with an unrelated subscript ",
+         "error when it is missing. Supported values are `lambda = 0.1` and ",
+         "`lambda = 0.3`.", call. = FALSE)
+  }
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "cpm")
@@ -65,11 +98,24 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
                               startup = startup, ...)
   )
   if (any(grepl("No thresholds available", cpm_out, fixed = TRUE))) {
+    # The same printed line covers two different arguments, and it names
+    # which: "selected ARL0" or "selected lambda". Blaming arl0 for a
+    # lambda cpm has no thresholds for sent the reader after an argument
+    # that was already correct, so the branch follows the printed text.
+    if (any(grepl("selected lambda", cpm_out, fixed = TRUE))) {
+      lam <- list(...)[["lambda"]]
+      stop("`lambda = ", if (is.null(lam)) "<unset>" else lam, "` is not a ",
+           "value cpm ships FET thresholds for; it returns no changepoints ",
+           "rather than failing, which is indistinguishable from a genuine ",
+           "\"no changes\" result. Supported values are 0.1 and 0.3.",
+           call. = FALSE)
+    }
     stop("`arl0 = ", arl0, "` is not an average run length that cpm ships ",
          "thresholds for; it returns no changepoints rather than failing, ",
          "which is indistinguishable from a genuine \"no changes\" result. ",
-         "Supported values are 100, 200, 370, 400, 500, 600, 700, 1000, ",
-         "2000, 5000, 10000 and 20000.", call. = FALSE)
+         "Supported values are 100, 200, 300, 370, 400, 500, 600, 700, ",
+         "800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, ",
+         "10000, 20000, 30000, 40000 and 50000.", call. = FALSE)
   }
   # anything else the engine printed is still the user's to see
   if (length(cpm_out)) cat(cpm_out, sep = "\n")
@@ -134,6 +180,14 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
                         wsize = 25, nperm = 1000, kmax = 10, alpha = 0.05,
                         seed = NULL, ...) {
   need_pkg("kcpRS")
+  reject_renamed_args(list(...), "kcp")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(wsize, "wsize", min = 2)
+  validate_scalar(kmax, "kmax", min = 1)
   running_stat <- match.arg(running_stat)
   validate_scalar(alpha, "alpha", min = 0, max = 1, min_open = TRUE,
                   max_open = TRUE)
@@ -235,6 +289,12 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
 #' @family changepoint engines
 npmojo_wrapper <- function(x, G = NULL, lag = 0, ...) {
   need_pkg("CptNonPar")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(lag, "lag", min = 0)
 
   validate_data(x)
   is_mv <- is.matrix(x) || is.data.frame(x)

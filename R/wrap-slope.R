@@ -32,6 +32,7 @@
 #' @family changepoint engines
 cpop_wrapper <- function(x, penalty = NULL, sd = NULL, ...) {
   need_pkg("cpop")
+  reject_renamed_args(list(...), "cpop")
 
   if (!is.null(sd)) validate_scalar(sd, "sd", min = 0, min_open = TRUE)
 

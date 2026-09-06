@@ -64,15 +64,20 @@ found.
 
 Nearly all of the run time is \code{ocd}'s Monte Carlo threshold
 calibration, which happens before a single observation is read. It is
-linear in \code{mc_reps} and grows with the number of coordinates:
-measured at \code{mc_reps = 5}, construction takes about 3 s at
-\eqn{p = 3}, 9 s at \eqn{p = 10} and 55 s at \eqn{p = 50}, and four
-times as long at \code{mc_reps = 20}. At the default \code{mc_reps = 100}
-that extrapolates to roughly a minute at \eqn{p = 3} and a quarter of an
-hour at \eqn{p = 50}. Monitoring the observations afterwards is cheap by
-comparison — well under a second for a thousand of them. Lower
+linear in \code{mc_reps} and grows with the number of coordinates. Timed
+on one Linux x86-64 machine at \code{mc_reps = 5}, construction took
+about 10 s at \eqn{p = 3}, 22 s at \eqn{p = 10} and 113 s at
+\eqn{p = 50}; raising \code{mc_reps} scales it linearly, so at
+\eqn{p = 3} it was 38 s at \code{mc_reps = 20} and 189 s at the default
+\code{mc_reps = 100}. The practical reading is that the default costs
+\emph{minutes} rather than seconds even for a handful of coordinates,
+and better than half an hour at \eqn{p = 50}. Another machine will give
+different absolute numbers; the linearity in \code{mc_reps} is the part
+to plan around. Monitoring the observations afterwards is cheap by
+comparison — 0.37 s for a thousand of them at \eqn{p = 3}. Lower
 \code{mc_reps} while exploring, or pass \code{thresh} directly to skip
-calibration entirely.
+calibration entirely, which brings the same fit down to a tenth of a
+second.
 }
 
 \examples{

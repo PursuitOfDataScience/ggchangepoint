@@ -426,9 +426,13 @@ cpt_scale_space <- function(x, bandwidths = NULL,
   # make the scale-space view unavailable for the one multiscale engine that
   # needs it most.
   if (method == "mosum") {
-    series <- as_uni_vector(series, "scale_space")
+    # Pass `method`, not a literal: as_uni_vector() builds "Method `%s` is
+    # univariate", and a literal "scale_space" named this function rather
+    # than the engine the caller actually asked for -- so someone who wrote
+    # `method = "mosum"` was told about a "method" they had never heard of.
+    series <- as_uni_vector(series, method)
   } else if (is.data.frame(series)) {
-    series <- as_mv_matrix(series)
+    series <- as_mv_matrix(series, arg = "series")
   }
   n <- NROW(series)
 

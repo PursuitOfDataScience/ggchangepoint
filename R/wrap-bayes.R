@@ -31,6 +31,12 @@
 bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
                         seed = NULL, ...) {
   need_pkg("bcp")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(burnin, "burnin", min = 1)
 
   validate_data(x)
   validate_scalar(prob_threshold, "prob_threshold", min = 0, max = 1,
@@ -95,6 +101,11 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
 #' @family changepoint engines
 bocpd_wrapper <- function(x, hazard = 100, ...) {
   need_pkg("ocp")
+  reject_renamed_args(list(...), "bocpd")
+  reject_managed_args(list(...), "bocpd", c(
+    getR = paste("the wrapper needs the run-length posterior to report",
+                 "changepoint probabilities and to draw",
+                 "`ggcpt_runlength()`")))
   validate_scalar(hazard, "hazard", min = 0, min_open = TRUE)
 
   validate_data(x)
@@ -147,7 +158,12 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
 #' @family changepoint engines
 beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
   need_pkg("Rbeast")
-
+  reject_managed_args(list(...), "beast", c(
+    season = paste("the wrapper runs Rbeast in trend-only mode; a seasonal",
+                   "decomposition changes what the reported breakpoints",
+                   "mean"),
+    quiet = "the wrapper keeps the engine's console narration out of the result",
+    print.progress = "the wrapper keeps the engine's progress bar out of the result"))
   validate_data(x)
   validate_scalar(prob_threshold, "prob_threshold", min = 0, max = 1,
                   min_open = TRUE)

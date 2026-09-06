@@ -21,9 +21,22 @@ ggcpt_posterior <- function(x, prob_threshold = NULL) {
 
   prob <- posterior_prob_profile(x)
   if (is.null(prob)) {
+    # `cpt_methods()` reports posterior = TRUE for bocpd and mcp as well,
+    # because both are Bayesian and both quantify the location -- but
+    # neither exposes the per-location profile this function draws, so
+    # arriving here from that column used to be a dead end. Name the
+    # accessor that does work instead.
+    extra <- switch(
+      as.character(x$method),
+      bocpd = paste0(" A BOCPD result carries a posterior over run lengths",
+                     " rather than over locations: see ggcpt_runlength()."),
+      mcp = paste0(" An mcp result carries the posterior as",
+                   " `ci_lower`/`ci_upper` on the changepoints tibble and",
+                   " `fitted` on $data, not as a per-location profile."),
+      "")
     stop("No posterior probability profile found on this object. ",
          "ggcpt_posterior() supports results from bcp_wrapper() and ",
-         "beast_wrapper().", call. = FALSE)
+         "beast_wrapper().", extra, call. = FALSE)
   }
 
   if (is.null(prob_threshold)) {
@@ -183,6 +196,12 @@ ggcpt_interactive <- function(x, engine = c("plotly", "ggiraph"),
   if (engine == "plotly") {
     return(plotly::ggplotly(p))
   }
+  # Checked on the ggiraph path only, because that is the only path that uses
+  # them (the plotly branch above ignores both, as documented). Without this,
+  # girafe() answers "`width` must be a scalar positive number" -- naming its
+  # own internal argument rather than the `width_svg` the caller passed.
+  validate_scalar(width_svg, "width_svg", min = 0, min_open = TRUE)
+  validate_scalar(height_svg, "height_svg", min = 0, min_open = TRUE)
   ggiraph::girafe(ggobj = p, width_svg = width_svg,
                   height_svg = height_svg)
 }

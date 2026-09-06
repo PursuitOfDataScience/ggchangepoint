@@ -428,3 +428,773 @@ test_that("a detection call leaves the caller's search path alone", {
   invisible(bcp_wrapper(x))
   expect_equal(setdiff(search(), before), character(0))
 })
+
+test_that("the monitoring layer refuses a factor or character series", {
+  # cpt_detect() has refused a factor since 0.4.0, but the four monitoring
+  # entry points each coerced their series independently -- as.numeric() in
+  # cpt_monitor()'s edetector and cpm branches, a bare matrix() in
+  # cpt_update() and cpt_replay() -- so a factor arrived as its LEVEL CODES.
+  # With labels like "10", "2", "30" the codes are the alphabetical order
+  # 1, 2, 3, i.e. a series the caller never supplied, monitored silently.
+  # The guard now sits once at each entry point, before the method switch.
+  set.seed(51)
+  labs <- c("10", "2", "30")            # alphabetical != numerical
+  fac <- factor(sample(labs, 180, TRUE))
+  chr <- as.character(fac)
+  num <- c(stats::rnorm(90), stats::rnorm(90, 3))
+
+  expect_error(cpt_replay(fac, method = "edetector"), "`x` is a factor")
+  expect_error(cpt_replay(chr, method = "edetector"), "`x` is character")
+
+  # every method branch, because each used to coerce for itself
+  for (m in c("edetector", "cpm")) {
+    expect_error(cpt_monitor(fac[1:60], method = m), "`baseline` is a factor")
+    expect_error(cpt_monitor(chr[1:60], method = m), "`baseline` is character")
+  }
+
+  mon <- cpt_monitor(num[1:60], method = "edetector")
+  expect_error(cpt_update(mon, fac[61:180]), "`new_obs` is a factor")
+  expect_error(cpt_update(mon, chr[61:180]), "`new_obs` is character")
+
+  # and the numeric route is untouched: the guard must not have displaced
+  # the finiteness check, which gives a better message for an NA baseline
+  expect_s3_class(cpt_replay(num, method = "edetector"), "ggcpt_monitor")
+  expect_error(cpt_monitor(c(num[1:59], NA), method = "edetector"),
+               "must be finite")
+})
+
+test_that("series arguments that are not the first argument are guarded too", {
+  # The type guard on `x` does not help when the series arrives through some
+  # other argument. Three such paths existed, each reached by a route the
+  # per-function check on `x` cannot see.
+  set.seed(51)
+  labs <- c("10", "2", "30")
+  fac <- factor(sample(labs, 180, TRUE))
+  num <- c(stats::rnorm(90), stats::rnorm(90, 3))
+
+  # 1. cpt_replay(baseline =) as an explicit series: it hands cpt_monitor()
+  #    an already-numeric vector, so cpt_monitor()'s guard never sees it.
+  expect_error(cpt_replay(num, method = "edetector", baseline = fac[1:60]),
+               "`baseline` is a factor")
+  expect_error(cpt_replay(num, method = "edetector",
+                          baseline = as.character(fac)[1:60]),
+               "`baseline` is character")
+
+  # ... while both documented readings of `baseline` still work
+  expect_equal(cpt_replay(num, method = "edetector", baseline = 60)$offset, 60)
+  expect_equal(cpt_replay(num, method = "edetector",
+                          baseline = stats::rnorm(60))$offset, 0)
+
+  # 2. a lone number is a COUNT, so an impossible count is an error rather
+  #    than a silent one-observation baseline series
+  for (bad in list(500, 0, 60.5, NA_real_)) {
+    expect_error(cpt_replay(num, method = "edetector", baseline = bad),
+                 "count of leading observations")
+  }
+
+  # 3. the learned-penalty path predicts from features of `series`
+  mod <- cpt_learn_penalty(list(a = num), list(a = cpt_labels(50, 70, "change")))
+  expect_error(cpt_penalty(mod, series = fac), "`series` is a factor")
+  expect_type(cpt_penalty(mod, series = num), "double")
+
+  # 4. the formula interface reads the response out of `data`, where `x` is
+  #    the formula and so carries no series to check
+  skip_if_not_installed("strucchange")
+  df_fac <- data.frame(y = fac[1:120], t = 1:120)
+  df_num <- data.frame(y = num[1:120], t = 1:120)
+  expect_error(strucchange_wrapper(y ~ t, data = df_fac), "`y` is a factor")
+  expect_s3_class(strucchange_wrapper(y ~ t, data = df_num), "ggcpt")
+})
+
+test_that("a panel member must be one series, and bad columns are named", {
+  # `cpt_batch()`'s panel is documented as "a list of numeric vectors".
+  # as.numeric() on a matrix unrolls it column after column, so an 80x2
+  # member became a 160-point series and reported changepoints at 40, 80 and
+  # 121 -- the 80 being the seam where column 2 was appended, a changepoint
+  # the data does not contain. cpt_detect() on the same matrix reports one.
+  set.seed(7)
+  v <- c(stats::rnorm(40), stats::rnorm(40, 3))
+  M <- cbind(a = v, b = c(stats::rnorm(40), stats::rnorm(40, 3)))
+
+  expect_error(cpt_batch(list(p = M), method = "pelt"),
+               "takes a single series")
+  expect_error(cpt_batch(list(p = as.data.frame(M)), method = "pelt"),
+               "takes a single series")
+  # the message has to say which member, because a panel is where that is
+  # the question
+  expect_error(cpt_batch(list(ok = v, bad = M), method = "pelt"),
+               "Series `bad` \\(2 of 2\\)")
+
+  # one column is exempt: unrolling it changes nothing, so refusing it would
+  # be strictness without a defect behind it
+  for (one in list(M[, 1, drop = FALSE], data.frame(a = v))) {
+    b <- cpt_batch(list(p = one), method = "pelt")
+    expect_equal(length(b$result[[1]]$data$index), 80L)
+  }
+
+  # and the two legitimate routes are untouched
+  expect_equal(nrow(cpt_batch(list(a = v, b = v), method = "pelt")), 2L)
+  expect_equal(nrow(cpt_batch(M, method = "pelt")), 2L)
+
+  # a non-numeric column is named, with its class -- as.matrix() turns the
+  # WHOLE frame character for one bad column, so the old message blamed the
+  # entire series and left the reader to find the culprit
+  df <- data.frame(a = v, b = factor(rep(c("10", "2"), 40)))
+  expect_error(cpt_detect(df, method = "ecp"), "`b` \\(factor\\)")
+  expect_error(cpt_detect(df, method = "ecp"), "level codes")
+  df2 <- data.frame(a = v, b = as.character(v), c = factor("z"))
+  expect_error(cpt_detect(df2, method = "ecp"),
+               "`b` \\(character\\), `c` \\(factor\\)")
+  # ... and the argument named is the one the caller passed. Tested on the
+  # helper rather than through cpt_monitor("ocd", ...), because need_pkg()
+  # runs before the validation and this expectation would then assert
+  # "Package 'ocd' is required" on any library without the Suggests.
+  expect_error(as_mv_matrix(df, arg = "baseline"), "`baseline` must be numeric")
+  expect_error(as_mv_matrix(df, arg = "series"), "`series` must be numeric")
+
+  # a univariate monitor counts OBSERVATIONS, not container length:
+  # length() on a data.frame is its column count, so a 60-row two-column
+  # baseline was refused for having fewer than 5 observations
+  expect_error(cpt_monitor("edetector", baseline = df), "takes a single series")
+  expect_error(cpt_monitor("edetector", baseline = as.matrix(df[, 1:2])),
+               "takes a single series")
+  # one column is fine, and it is the 60 observations that count
+  ok1 <- data.frame(a = v)
+  expect_s3_class(cpt_monitor("edetector", baseline = ok1), "ggcpt_monitor")
+  # a genuinely short baseline still gets the observation-count message
+  expect_error(cpt_monitor("edetector", baseline = v[1:4]),
+               "at least 5 pre-change observations")
+})
+
+test_that("the original wrappers and ggcptplot refuse a multi-column series", {
+  # cpt_wrapper() wraps the univariate changepoint package but coerced with
+  # as.numeric(), which concatenates a matrix column after column. On a
+  # 120x2 matrix it reported changepoints at 58, 120 and 180: only the 58 is
+  # real, the 120 is the seam where column 2 was appended, and the 180 is
+  # column 2's own change shifted by 120. cpt_detect() has always refused
+  # this ("univariate, but `x` has 2 columns"); the original API did not.
+  set.seed(9)
+  v <- c(stats::rnorm(60), stats::rnorm(60, 3))
+  M <- cbind(a = v, b = c(stats::rnorm(60), stats::rnorm(60, 3)))
+
+  expect_error(cpt_wrapper(M), "takes a single series")
+  expect_error(cpt_wrapper(as.data.frame(M)), "takes a single series")
+  # ggcptplot() drew the same 240-point concatenation, seam included. It
+  # follows ggecpplot()'s established convention instead of refusing: draw
+  # the first column, and say so.
+  expect_message(p <- ggcptplot(M), "plotting the first column")
+  expect_equal(nrow(p$data), 120L)
+
+  # one column stays acceptable, and is 120 observations rather than 240
+  expect_equal(nrow(cpt_wrapper(M[, 1, drop = FALSE])),
+               nrow(cpt_wrapper(v)))
+  expect_equal(nrow(ggcptplot(M[, 1, drop = FALSE])$data), 120L)
+  expect_equal(nrow(ggcptplot(v)$data), 120L)
+
+  # ecp_wrapper() is genuinely multivariate and must NOT be caught by this
+  skip_if_not_installed("ecp")
+  expect_s3_class(ecp_wrapper(M), "tbl_df")
+})
+
+test_that("the ecp route refuses non-finite input like every other route", {
+  # ecp absorbs NA/NaN/Inf instead of refusing, and returns a WRONG answer
+  # rather than no answer. On a 180-point series with one changepoint at 90:
+  # twenty NAs lost the changepoint entirely, and an all-NA second half
+  # reported changepoints at 12 and 14. cpt_wrapper() and cpt_detect() have
+  # always refused this input; ecp_wrapper() and so ggecpplot() had not.
+  set.seed(51)
+  v <- c(stats::rnorm(90), stats::rnorm(90, 4))
+
+  for (bad in list(replace(v, 95, NA_real_), replace(v, 95, NaN),
+                   replace(v, 95, Inf), replace(v, 95, -Inf))) {
+    expect_error(ecp_wrapper(bad, seed = 1), "must be finite")
+  }
+  # the count describes the series the caller passed
+  expect_error(ecp_wrapper(replace(v, 95, NA_real_), seed = 1),
+               "1 of 180 values")
+  expect_error(ecp_wrapper(replace(v, c(3, 95), NA_real_), seed = 1),
+               "2 of 180 values")
+  # ggecpplot() draws through ecp_wrapper(), so it inherits the guard
+  expect_error(ggecpplot(replace(v, 95, NA_real_), seed = 1), "must be finite")
+
+  # a non-numeric column is named, as at every other rectangular entry point
+  expect_error(
+    ecp_wrapper(data.frame(a = v, b = factor(rep("z", 180)))),
+    "`b` \\(factor\\)")
+
+  # and every clean shape still works, with the same answer as before
+  clean <- ecp_wrapper(v, seed = 1)
+  expect_gt(nrow(clean), 0L)
+  expect_equal(ecp_wrapper(cbind(v, rev(v)), seed = 1)$cp, clean$cp)
+  expect_equal(ecp_wrapper(data.frame(a = v, b = rev(v)), seed = 1)$cp,
+               clean$cp)
+  expect_equal(nrow(ggecpplot(v, seed = 1)$data), 180L)
+})
+
+test_that("cpt_replay names `x` for a non-finite value, wherever it falls", {
+  # The check used to happen downstream, in whichever of cpt_monitor() or
+  # cpt_update() received the slice holding the bad value -- so the SAME
+  # call reported a problem with `baseline` for an NA at position 20 and
+  # with `new_obs` for one at 95, named an argument the caller never passed,
+  # and counted "1 of 45 values" against the baseline slice.
+  set.seed(51)
+  v <- c(stats::rnorm(90), stats::rnorm(90, 4))
+
+  for (pos in c(20, 95, 1, 180)) {        # inside and after the baseline
+    expect_error(cpt_replay(replace(v, pos, NA_real_), method = "edetector"),
+                 "`x` must be finite")
+    expect_error(cpt_replay(replace(v, pos, NA_real_), method = "edetector"),
+                 "1 of 180 values")
+  }
+  expect_error(cpt_replay(replace(v, 95, Inf), method = "edetector"),
+               "`x` must be finite")
+
+  # an explicit baseline still reports itself, with its own count
+  expect_error(cpt_replay(v, method = "edetector",
+                          baseline = replace(stats::rnorm(60), 3, NA_real_)),
+               "`baseline` must be finite")
+  expect_s3_class(cpt_replay(v, method = "edetector"), "ggcpt_monitor")
+})
+
+test_that("as_cpt_series translates rather than validates, and that is safe", {
+  # as_cpt_series() is documented as the one place that separates values
+  # from a time index "so cpt_detect() can detect on positions and report on
+  # dates". It therefore passes a non-finite value through, exactly as
+  # new_ggcpt() passes an unvalidated slot through -- and refusing here
+  # would break the legitimate extract-then-impute workflow. What makes it
+  # safe is that every route onward refuses, which is what this pins down.
+  set.seed(51)
+  v_na <- replace(c(stats::rnorm(90), stats::rnorm(90, 4)), 95, NA_real_)
+
+  s <- as_cpt_series(stats::ts(v_na, start = c(2020, 1), frequency = 12))
+  expect_length(s$values, 180L)
+  expect_false(is.null(s$index))          # the index is still recovered
+  expect_true(anyNA(s$values))            # deliberately carried through
+
+  expect_error(cpt_detect(v_na, method = "pelt"), "must be finite")
+  expect_error(cpt_detect(as_cpt_series(v_na)$values, method = "pelt"),
+               "must be finite")
+  expect_error(cpt_detect(stats::ts(v_na, frequency = 12), method = "pelt"),
+               "must be finite")
+  expect_error(cpt_detect(v_na, method = "pelt",
+                          index = as.Date("2020-01-01") + 0:179),
+               "must be finite")
+  expect_error(cpt_batch(list(a = v_na), method = "pelt"), "must be finite")
+  expect_error(cpt_select(v_na, method = "pelt"), "must be finite")
+})
+
+test_that("every multivariate wrapper refuses a non-finite value", {
+  # The univariate sweep could not answer this: handed a plain vector, each
+  # of these refuses on SHAPE before finiteness is ever considered, so the
+  # question needed a correctly shaped probe. `network` turned out to be the
+  # one route with no finiteness check at all -- it reaches the engine via
+  # network_matrix() rather than validate_data() -- and a single NA surfaced
+  # as base R's "replacement has length zero" from inside the random
+  # edge-splitting, naming neither the argument nor the problem.
+  skip_on_cran()
+  set.seed(4)
+  n <- 120L; p <- 6L
+  M <- matrix(stats::rnorm(n * p), n, p)
+  M[61:n, ] <- M[61:n, ] + 2
+  Mna <- M; Mna[70, 3] <- NA_real_
+
+  # ocd's default Monte-Carlo threshold takes minutes on this size, so it is
+  # called with a cheap one; the finiteness guard runs before either way.
+  calls <- list(
+    inspect    = function(d) inspect_wrapper(d),
+    esac       = function(d) esac_wrapper(d),
+    pilliat    = function(d) pilliat_wrapper(d),
+    geomcp     = function(d) geomcp_wrapper(d),
+    var        = function(d) var_wrapper(d),
+    hdcov      = function(d) hdcov_wrapper(d),
+    network    = function(d) network_wrapper(d),
+    fmean      = function(d) fmean_wrapper(d),
+    fcov       = function(d) fcov_wrapper(d),
+    kwc        = function(d) kwc_wrapper(d),
+    ocd        = function(d) ocd_wrapper(d, thresh = "MC", mc_reps = 2,
+                                         patience = 200)
+  )
+  pkgs <- c(inspect = "InspectChangepoint", esac = "HDCD", pilliat = "HDCD",
+            geomcp = "changepoint.geo", var = "VARDetect",
+            hdcov = "changepoints", network = "changepoints",
+            fmean = "fdachange", fcov = "fdaACF", kwc = "kerSeg",
+            ocd = "ocd")
+
+  available <- tested <- 0L
+  for (nm in names(calls)) {
+    if (!requireNamespace(pkgs[[nm]], quietly = TRUE)) next
+    available <- available + 1L
+    err <- tryCatch({
+      suppressWarnings(suppressMessages(calls[[nm]](Mna)))
+      NA_character_
+    }, error = function(e) conditionMessage(e))
+    expect_match(err, "must be finite", info = nm)
+    tested <- tested + 1L
+  }
+  # a proportional tripwire, not a magic threshold: whatever is installed
+  # here must have been exercised
+  expect_equal(tested, available)
+  skip_if(available == 0L, "no multivariate engines installed")
+})
+
+test_that("a series too short for an engine gets a message that names it", {
+  # Seven engines refused a short series from inside themselves, in their own
+  # vocabulary and two of them with their own typos:
+  #
+  #   wbs   "sample size is too small"     wbsts  "subscript out of bounds"
+  #   not   "max.length must satisfy 3 < max.lenght <= n"            [sic]
+  #   envcpt "Minimum segment legnth is too large to include a change" [sic]
+  #   strucchange "minimum segment size must be greater than the number
+  #                of regressors"
+  #   bfast "series is not periodic or has less than two periods"
+  #   taylor "Invalid x argument. 'x' must be a numeric vector"
+  #
+  # None named the method the caller asked for or the length they supplied,
+  # and "subscript out of bounds" does not even implicate the series.
+  skip_on_cran()
+  set.seed(11)
+  short <- function(n) c(stats::rnorm(n %/% 2), stats::rnorm(n - n %/% 2, 4))
+
+  cases <- list(wbs = 3L, not = 3L, wbsts = 3L, taylor = 3L,
+                envcpt = 5L, strucchange = 5L, bfast = 10L)
+  pkgs <- c(wbs = "wbs", not = "not", wbsts = "wbsts",
+            taylor = "ChangePointTaylor", envcpt = "EnvCpt",
+            strucchange = "strucchange", bfast = "bfast")
+
+  available <- tested <- 0L
+  for (m in names(cases)) {
+    if (!requireNamespace(pkgs[[m]], quietly = TRUE)) next
+    available <- available + 1L
+    n <- cases[[m]]
+    err <- tryCatch({
+      suppressWarnings(suppressMessages(cpt_detect(short(n), method = m)))
+      NA_character_
+    }, error = function(e) conditionMessage(e))
+    expect_match(err, paste0("Method `", m, "`"), info = m)
+    expect_match(err, paste0("series of ", n, " observation"), info = m)
+    # the engine's own diagnosis is kept, quoted, rather than hidden
+    expect_match(err, "The engine reported: \"", fixed = TRUE, info = m)
+    tested <- tested + 1L
+  }
+  expect_equal(tested, available)
+
+  # The three argument-dependent thresholds must NOT become constants: a
+  # shorter series that the arguments do permit still has to work. This is
+  # why the guard translates rather than pre-empting -- `bfast` needs two
+  # periods, not 25 observations, and `strucchange` needs h * n, not 15.
+  if (requireNamespace("bfast", quietly = TRUE)) {
+    expect_s3_class(
+      suppressWarnings(suppressMessages(
+        cpt_detect(short(10L), method = "bfast", frequency = 4))), "ggcpt")
+  }
+  if (requireNamespace("strucchange", quietly = TRUE)) {
+    expect_s3_class(
+      suppressWarnings(suppressMessages(
+        cpt_detect(short(5L), method = "strucchange", h = 0.4))), "ggcpt")
+  }
+})
+
+test_that("the translation does not swallow an unrelated error", {
+  # rethrow_short_series() must re-raise anything it does not recognise
+  # verbatim, or it would turn every engine failure into a story about
+  # series length.
+  other <- simpleError("singular matrix in 'chol'")
+  expect_error(rethrow_short_series(other, "pelt", 200L),
+               "singular matrix", fixed = TRUE)
+  expect_error(rethrow_short_series(other, "pelt", 200L),
+               "^(?!.*could not segment).*$", perl = TRUE)
+
+  # and one it does recognise is reworded, with the hint appended
+  short_err <- simpleError("sample size is too small")
+  expect_error(rethrow_short_series(short_err, "wbs", 3L),
+               "Method `wbs` could not segment a series of 3 observation")
+  expect_error(rethrow_short_series(short_err, "wbs", 3L, "Try more data."),
+               "Try more data\\.$")
+})
+
+test_that("every method satisfies the result contract the vignette states", {
+  # extending.Rmd sets out the whole contract and says as_ggcpt() enforces
+  # all of it: `$changepoints$cp` sorted, de-duplicated and in 1..n-1;
+  # `$segments` with one more row than `$changepoints`; `$data` carrying
+  # index 1..n and value; length-one metadata. That is a claim about EVERY
+  # method, so it is checked against every method that is installed.
+  skip_on_cran()
+  set.seed(7)
+  n <- 200L
+  x <- c(stats::rnorm(70), stats::rnorm(70, 4), stats::rnorm(60, 1))
+  reg <- ggchangepoint:::builtin_registry()
+  methods <- reg$method[reg$status == "available" & reg$univariate]
+
+  available <- tested <- 0L
+  for (m in methods) {
+    r <- tryCatch(
+      suppressWarnings(suppressMessages(cpt_detect(x, method = m))),
+      error = function(e) NULL)
+    if (is.null(r)) next                 # engine absent, or refused: not this test's business
+    available <- available + 1L
+    cp <- r$changepoints$cp
+    if (length(cp)) {
+      expect_false(anyDuplicated(cp) > 0L, info = m)
+      expect_identical(cp, sort(cp), info = m)
+      expect_true(all(cp >= 1L & cp <= n - 1L), info = m)
+    }
+    expect_equal(nrow(r$segments), length(cp) + 1L, info = m)
+    expect_true(all(c("index", "value") %in% names(r$data)), info = m)
+    for (f in c("method", "change_in", "cp_convention")) {
+      expect_length(r[[f]], 1L)
+    }
+    tested <- tested + 1L
+  }
+  expect_equal(tested, available)
+  expect_gt(available, 10L)              # the sweep must have actually run
+})
+
+test_that("multivariate results satisfy the contract, data_wide included", {
+  # Part XLVII checked the result contract across every univariate method
+  # and stopped there, which left the 17 multivariate ones unswept. The
+  # vignette's claim about them is specific: "Multivariate results
+  # additionally carry a `data_wide` tibble with one column per coordinate".
+  # Sweeping it found exactly one exception -- `network`, whose input is a
+  # sequence of adjacency matrices -- and that exception is now documented
+  # rather than surprising.
+  skip_on_cran()
+  set.seed(4)
+  n <- 120L; p <- 6L
+  M <- matrix(stats::rnorm(n * p), n, p)
+  M[61:n, ] <- M[61:n, ] + 2
+  resp <- c(stats::rnorm(60), stats::rnorm(60, 3))
+
+  calls <- list(
+    npmojo   = function() npmojo_wrapper(M),
+    inspect  = function() inspect_wrapper(M),
+    geomcp   = function() geomcp_wrapper(M),
+    esac     = function() esac_wrapper(M),
+    pilliat  = function() pilliat_wrapper(M),
+    hdcov    = function() hdcov_wrapper(M),
+    var      = function() var_wrapper(M),
+    fmean    = function() fmean_wrapper(M),
+    fcov     = function() fcov_wrapper(M),
+    kwc      = function() kwc_wrapper(M),
+    network  = function() network_wrapper(M),
+    hdreg    = function() hdreg_wrapper(M, response = resp)
+  )
+  # `fabisearch` is left out deliberately: its non-negative matrix
+  # factorisation takes over five minutes on a 120x6 matrix, which is too
+  # slow for a test that runs on every check. Its contract was verified by
+  # hand during the sweep that produced this test.
+  # Two report a derived series rather than the coordinates, and so carry
+  # no `data_wide`: `network` reports mean edge weight (one facet per
+  # adjacency entry would be unreadable) and `hdreg` reports the response.
+  # Both are documented; the sweep is what established that it is exactly
+  # these two.
+  no_wide <- c("network", "hdreg")
+
+  # engine_installed() rather than a bare tryCatch: the package's own
+  # availability predicate skips the one absent engine instead of the whole
+  # test, and -- the reason the shipped Suggests guard insists on it -- it
+  # distinguishes "engine not installed" from "the call failed", which a
+  # tryCatch that returns NULL silently conflates. Any error from an
+  # engine that IS installed is now a failure, as it should be.
+  reg <- ggchangepoint:::builtin_registry()
+  engine_of <- function(m) {
+    e <- reg$engine[reg$method == m]
+    if (length(e)) e[1] else NA_character_
+  }
+
+  available <- tested <- 0L
+  for (nm in names(calls)) {
+    pkg <- engine_of(nm)
+    if (!is.na(pkg) && !ggchangepoint:::engine_installed(pkg)) next
+    available <- available + 1L
+    r <- suppressWarnings(suppressMessages(calls[[nm]]()))
+    cp <- r$changepoints$cp
+    if (length(cp)) {
+      expect_false(anyDuplicated(cp) > 0L, info = nm)
+      expect_identical(cp, sort(cp), info = nm)
+      expect_true(all(cp >= 1L & cp <= n - 1L), info = nm)
+    }
+    expect_equal(nrow(r$segments), length(cp) + 1L, info = nm)
+    expect_true(all(c("index", "value") %in% names(r$data)), info = nm)
+
+    if (nm %in% no_wide) {
+      expect_null(r$data_wide, info = nm)
+      # ... and the series it does carry is the documented summary
+      expect_equal(nrow(r$data), n, info = nm)
+    } else {
+      expect_false(is.null(r$data_wide), info = nm)
+      expect_equal(nrow(r$data_wide), n, info = nm)
+      # index plus one column per coordinate
+      expect_equal(ncol(r$data_wide), p + 1L, info = nm)
+    }
+    # and every generic works on a multivariate result too
+    expect_s3_class(tidy(r), "tbl_df")
+    expect_equal(nrow(glance(r)), 1L, info = nm)
+    expect_s3_class(augment(r), "tbl_df")
+    tested <- tested + 1L
+  }
+  expect_equal(tested, available)
+  expect_gt(available, 5L)
+})
+
+test_that("the covering metric matches the formula the vignette states", {
+  # `vignette("comparison")` gives the definition, following van den Burg
+  # and Williams (2020):
+  #
+  #   cov(S, S') = (1/n) * sum_{A in S} |A| * max_{A' in S'} J(A, A')
+  #
+  # with J the Jaccard index and S the partition induced by the TRUTH.
+  # calc_covering() implements it with two findInterval() lookups instead of
+  # scanning every prediction segment for every truth segment -- an
+  # optimisation its own comment measures at 7.5 s down to hundredths for
+  # 3000 changepoints. That is exactly the kind of rewrite that can be
+  # subtly wrong at a boundary and still look plausible, so the fast path is
+  # checked against a naive reference written straight from the formula.
+  naive <- function(pred, truth, n) {
+    segs <- function(cp) {
+      b <- sort(unique(c(0, cp, n)))
+      lapply(seq_len(length(b) - 1L), function(i) (b[i] + 1L):b[i + 1L])
+    }
+    S <- segs(truth); Sp <- segs(pred)
+    sum(vapply(S, function(A) {
+      length(A) * max(vapply(Sp, function(B) {
+        length(intersect(A, B)) / length(union(A, B))
+      }, numeric(1)))
+    }, numeric(1))) / n
+  }
+
+  # the boundary cases first, by hand: empty either side, changepoints at
+  # the first and last legal index, duplicates, and two disjoint clusters
+  fixed <- list(
+    list(integer(0), integer(0), 50L), list(integer(0), 25L, 50L),
+    list(25L, integer(0), 50L),        list(1L, 1L, 50L),
+    list(49L, 49L, 50L),               list(c(1L, 49L), c(1L, 49L), 50L),
+    list(c(10L, 10L, 20L), 15L, 50L),  list(c(1L, 2L, 3L), c(47L, 48L, 49L), 50L)
+  )
+  for (cs in fixed) {
+    expect_equal(ggchangepoint:::calc_covering(cs[[1]], cs[[2]], cs[[3]]),
+                 naive(cs[[1]], cs[[2]], cs[[3]]),
+                 info = paste("pred", paste(cs[[1]], collapse = ","),
+                              "truth", paste(cs[[2]], collapse = ",")))
+  }
+
+  # then randomly, over lengths and changepoint counts
+  set.seed(11)
+  for (k in seq_len(60)) {
+    n <- sample(20:200, 1)
+    p <- sort(unique(sample.int(n - 1L, sample(0:6, 1))))
+    t <- sort(unique(sample.int(n - 1L, sample(0:6, 1))))
+    expect_equal(ggchangepoint:::calc_covering(p, t, n), naive(p, t, n),
+                 info = paste("n", n, "| pred", paste(p, collapse = ","),
+                              "| truth", paste(t, collapse = ",")))
+  }
+
+  # a perfect prediction covers everything; the metric is in [0, 1]
+  expect_equal(ggchangepoint:::calc_covering(c(30L, 60L), c(30L, 60L), 100L), 1)
+  expect_lte(ggchangepoint:::calc_covering(c(10L), c(90L), 100L), 1)
+  expect_gt(ggchangepoint:::calc_covering(c(10L), c(90L), 100L), 0)
+})
+
+test_that("the other metric formulas match the vignette's definitions", {
+  # Hausdorff is stated as max{max_p min_t |p - t|, max_t min_p |p - t|},
+  # NA when either set is empty "since there is no distance to a
+  # nonexistent point"; annotation error as ||P| - |T||; MAE/RMSE of
+  # matched pairs NA when nothing matched, "because an average over no
+  # pairs is not zero error"; and precision/recall/F1 all 1 when both sets
+  # are empty, since that segmentation is exactly right.
+  haus <- function(p, t) {
+    if (!length(p) || !length(t)) return(NA_real_)
+    max(max(vapply(p, function(a) min(abs(a - t)), numeric(1))),
+        max(vapply(t, function(a) min(abs(a - p)), numeric(1))))
+  }
+  set.seed(3)
+  for (k in seq_len(40)) {
+    n <- sample(30:200, 1)
+    p <- sort(unique(sample.int(n - 1L, sample(0:5, 1))))
+    t <- sort(unique(sample.int(n - 1L, sample(0:5, 1))))
+    m <- cpt_metrics(p, t, n = n)
+    expect_equal(m$hausdorff, haus(p, t), info = paste("n", n))
+    expect_equal(m$annotation_error, abs(length(p) - length(t)))
+  }
+  expect_true(is.na(cpt_metrics(integer(0), 50L, n = 100)$hausdorff))
+  expect_true(is.na(cpt_metrics(50L, integer(0), n = 100)$hausdorff))
+  none <- cpt_metrics(10L, 90L, n = 100, margin = 2)
+  expect_true(is.na(none$mae_matched))
+  expect_true(is.na(none$rmse_matched))
+  both_empty <- cpt_metrics(integer(0), integer(0), n = 100)
+  expect_equal(c(both_empty$precision, both_empty$recall, both_empty$f1),
+               c(1, 1, 1))
+})
+
+test_that("a power run that detects nothing says so instead of returning NaN", {
+  # cpt_power() forwards `...` to cpt_detect() inside a per-replicate
+  # tryCatch, which is right -- one unlucky draw must not abort a
+  # 500-replicate run. But when EVERY replicate failed, mean(all-NA) gave
+  # NaN and the function returned it silently: an argument cpt_detect()
+  # does not accept produced `power = NaN, mc_se = NA`, a number a caller
+  # could plot or publish, while the engine's own perfectly clear "unused
+  # argument" message was swallowed.
+  expect_warning(
+    r <- cpt_power(n = 120, jump = 1, n_sim = 6, seed = 3, bogus = 1),
+    "No replicate completed")
+  expect_warning(
+    cpt_power(n = 120, jump = 1, n_sim = 6, seed = 3, bogus = 1),
+    "unused argument")            # the swallowed error is reported
+  expect_true(is.nan(r$power))    # still NaN: one bad scenario in a grid
+  expect_true(is.na(r$mc_se))     # must not abort the others
+
+  # cpt_min_detectable() then fed that NaN to `if (power < target)` and R
+  # reported "missing value where TRUE/FALSE needed", which names nothing.
+  expect_error(
+    suppressWarnings(cpt_min_detectable(n = 120, power = 0.8, n_sim = 6,
+                                        seed = 3, bogus = 1)),
+    "non-finite power")
+  expect_error(
+    suppressWarnings(cpt_min_detectable(n = 120, power = 0.8, n_sim = 6,
+                                        seed = 3, bogus = 1)),
+    "nothing to bracket")
+
+  # and correct usage is untouched, including the documented mc_se
+  a <- cpt_power(n = 120, jump = 1, n_sim = 20, seed = 3)
+  expect_false(is.nan(a$power))
+  expect_equal(a$mc_se, sqrt(a$power * (1 - a$power) / a$n_sim))
+  b <- cpt_min_detectable(n = 120, power = 0.8, n_sim = 40, seed = 3)
+  expect_true(is.finite(b$jump))
+  expect_gte(b$achieved_power, 0.8)
+})
+
+test_that("cpt_power's mc_se is the binomial standard error", {
+  # A reported standard error is the kind of number nobody re-derives, so
+  # it is checked at intermediate powers rather than only where it is 0.
+  for (j in c(0.3, 0.5, 0.8)) {
+    r <- cpt_power(n = 120, jump = j, n_sim = 60, seed = 7, tolerance = 5)
+    expect_equal(r$mc_se, sqrt(r$power * (1 - r$power) / r$n_sim), info = j)
+  }
+  # at power 1 the SE is 0, not NaN
+  r1 <- cpt_power(n = 300, jump = 8, n_sim = 20, seed = 2)
+  expect_equal(r1$power, 1)
+  expect_equal(r1$mc_se, 0)
+})
+
+test_that("the result contract holds across every shipped signal shape", {
+  # Part XLVIII checked the contract across every method on ONE series -- a
+  # clean mean shift. Part LVII's `wbs2` finding showed why that is not
+  # enough: a defect can live in the data dimension, and enumerating one
+  # dimension thoroughly hides it. These five generators are the standard
+  # test signals the package ships for exactly this reason, and they differ
+  # in shape rather than in noise: piecewise-constant blocks, frequency
+  # modulation, a teeth sawtooth, a monotone staircase, and a mixture.
+  skip_on_cran()
+  reg <- ggchangepoint:::builtin_registry()
+  methods <- reg$method[reg$status == "available" & reg$univariate]
+  gens <- c("signal_blocks", "signal_teeth", "signal_stairs")
+
+  checked <- 0L
+  for (g in gens) {
+    d <- get(g, envir = asNamespace("ggchangepoint"))(n = 300, seed = 5)
+    x <- if (is.list(d)) d$value else d
+    expect_length(x, 300L)
+    # the generator's own contract, which comparison.Rmd relies on
+    expect_false(is.null(attr(d, "true_changepoints")), info = g)
+
+    for (m in methods) {
+      pkg <- reg$engine[reg$method == m][1]
+      if (!is.na(pkg) && !ggchangepoint:::engine_installed(pkg)) next
+      r <- tryCatch(suppressWarnings(suppressMessages(
+        cpt_detect(x, method = m))), error = function(e) NULL)
+      if (is.null(r)) next          # refused this shape, which is its right
+      cp <- r$changepoints$cp
+      if (length(cp)) {
+        expect_false(anyDuplicated(cp) > 0L, info = paste(g, m))
+        expect_identical(cp, sort(cp), info = paste(g, m))
+        expect_true(all(cp >= 1L & cp <= length(x) - 1L), info = paste(g, m))
+        expect_true(all(is.finite(cp)), info = paste(g, m))
+      }
+      expect_equal(nrow(r$segments), length(cp) + 1L, info = paste(g, m))
+      checked <- checked + 1L
+    }
+  }
+  # the sweep must have actually exercised engines on each shape
+  expect_gt(checked, 3L * 10L)
+})
+
+test_that("every shipped signal feeds cpt_metrics() as its own truth", {
+  # comparison.Rmd: "Every generator attaches its true changepoints as a
+  # `true_changepoints` attribute, which is exactly the `truth` argument
+  # cpt_metrics() expects." All five do, and the blocks signal carries the
+  # eleven changepoints its figure caption claims, at every length.
+  for (g in c("signal_blocks", "signal_fms", "signal_teeth",
+              "signal_stairs", "signal_mix")) {
+    d <- get(g, envir = asNamespace("ggchangepoint"))(n = 500, seed = 3)
+    tc <- attr(d, "true_changepoints")
+    expect_false(is.null(tc), info = g)
+    expect_gt(length(tc), 0L)
+    m <- cpt_metrics(pred = tc, truth = tc, n = 500)
+    expect_equal(m$f1, 1)                       # its own truth scores perfectly
+  }
+  for (n in c(500L, 1024L, 2048L))
+    expect_length(attr(signal_blocks(n = n, seed = 3), "true_changepoints"), 11L)
+})
+
+test_that("the tidy() -> as_ggcpt() round trip is lossless", {
+  # `extending.Rmd` documents as_ggcpt() as the way an external result
+  # enters the package and tidy() as the way one leaves. Nothing checked
+  # that the two compose: a result taken out and put back should be the
+  # same result. Swept across every method, 39 of 39 applicable ones
+  # round-trip with the changepoints, the segment count, the data length,
+  # `cp_value` AND `param_estimate` all identical.
+  #
+  # That last one is the interesting part, and it confirms the separation
+  # Part XLVIII found: as_ggcpt() recomputes segment means from the series,
+  # so param_estimate matching means every engine's `$segments` really does
+  # hold segment means, with the engine's own fitted signal kept apart in
+  # `$data$fitted`.
+  skip_on_cran()
+  reg <- ggchangepoint:::builtin_registry()
+  set.seed(7)
+  x <- c(stats::rnorm(80), stats::rnorm(80, 4), stats::rnorm(60, 1))
+
+  checked <- 0L
+  for (m in reg$method[reg$status == "available" & reg$univariate]) {
+    pkg <- reg$engine[reg$method == m][1]
+    if (!is.na(pkg) && !ggchangepoint:::engine_installed(pkg)) next
+    r <- tryCatch(suppressWarnings(suppressMessages(
+      cpt_detect(x, method = m))), error = function(e) NULL)
+    if (is.null(r)) next
+    back <- suppressWarnings(suppressMessages(as_ggcpt(tidy(r)$cp, x)))
+    expect_identical(back$changepoints$cp, r$changepoints$cp, info = m)
+    expect_equal(nrow(back$segments), nrow(r$segments), info = m)
+    expect_equal(nrow(back$data), nrow(r$data), info = m)
+    expect_equal(back$changepoints$cp_value, r$changepoints$cp_value, info = m)
+    expect_equal(back$segments$param_estimate, r$segments$param_estimate,
+                 info = m)
+    checked <- checked + 1L
+  }
+  expect_gt(checked, 10L)
+})
+
+test_that("as_ggcpt() converts a right-convention location on the way in", {
+  # extending.Rmd: "`cp_convention = "right"` matters: some engines report
+  # the first index of the new segment and some the last index of the old
+  # one, and getting it wrong shifts every location by one. The conversion
+  # happens on the way in, so the stored result is always on this package's
+  # convention." An off-by-one here would be invisible in every other test,
+  # because both conventions produce valid-looking changepoints.
+  set.seed(2026)
+  x <- c(stats::rnorm(100), stats::rnorm(100, 4), stats::rnorm(100, 1))
+
+  L <- as_ggcpt(c(101, 199), x, method = "ext", cp_convention = "left")
+  R <- as_ggcpt(c(101, 199), x, method = "ext", cp_convention = "right")
+
+  expect_identical(L$changepoints$cp, c(101L, 199L))   # stored as given
+  expect_identical(R$changepoints$cp, c(100L, 198L))   # shifted by one
+  expect_identical(R$changepoints$cp, L$changepoints$cp - 1L)
+
+  # ... and the stored result is on this package's convention either way,
+  # which is what makes everything downstream comparable
+  expect_identical(L$cp_convention, "left")
+  expect_identical(R$cp_convention, "left")
+
+  # the vignette's own metric line, which depends on the conversion
+  m <- cpt_metrics(tidy(R)$cp, truth = c(100, 200), n = 300)
+  expect_equal(m$f1, 1)
+})

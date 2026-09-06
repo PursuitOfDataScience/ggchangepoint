@@ -37,7 +37,11 @@ detection engines and the rest are optional extras (time-index coercion,
 tables, interactivity, progress bars, the test toolchain). One of them, 'mcp', needs JAGS -- a system library -- so a machine
 without JAGS must check with `_R_CHECK_FORCE_SUGGESTS_=false`. 'mcp' is on
 CRAN and checks there; `mcp_wrapper()` names JAGS in its error when 'mcp' is
-absent, and its example is gated with @examplesIf. Every one is guarded with `requireNamespace()`, its examples use
+absent, and its example is wrapped in `\dontrun{}` rather than gated with
+`@examplesIf`, deliberately: whether the engine works depends on a *system*
+library, and `requireNamespace("mcp")` does not predict that -- 'rjags' can
+be installed and still fail to find JAGS at run time. The example therefore
+never runs anywhere, which is the only guard that holds. Every one is guarded with `requireNamespace()`, its examples use
 `@examplesIf`, its tests use `skip_if_not_installed()`, and the vignettes
 gate the chunks that need it, so the package checks cleanly with none of
 them installed (see below). Only 'changepoint', 'changepoint.np' and 'ecp'
@@ -61,7 +65,7 @@ redistributed, the function is not called by any example, test or vignette
 against `cpt_datasets()`, which is built from the package's own simulated
 signals.
 
-Thirty-seven defects found while building and auditing this release were fixed in
+Forty-one defects found while building and auditing this release were fixed in
 the same cycle; NEWS.md itemises them and each has a regression test. The
 most instructive: a `tibble::tribble()` list-column silently deparsed into a
 string, which made every multi-capability method lose its extra `change_in`
@@ -100,13 +104,23 @@ The 0.1.0-0.4.0 function signatures keep working unchanged.
 oldrel-1) and on windows-latest; macos-latest reports one note, which is
 the runner's and not the package's (see below).
 
-**The installed-size note that 0.4.0 carried is gone.** The seven package
-vignettes now render their figures at `dpi = 72` rather than rmarkdown's
-default 96, which takes the source tarball from 5.2 MB to 4.2 MB and cuts
-the installed `doc` directory by about a quarter. `html_vignette` displays
-the figures at their natural size, so this removes pixels rather than
-shrinking the pictures, and `checking installed package size` no longer
-raises a note on any platform we check on. The `vdiffr` snapshots are test
+**The installed-size note that 0.4.0 carried is much reduced, but the
+package still sits on the threshold.** The seven package vignettes now
+render their figures at `dpi = 72` rather than rmarkdown's default 96, which
+takes the source tarball from 5.2 MB to 4.2 MB and cuts the installed `doc`
+directory by about a quarter. `html_vignette` displays the figures at their
+natural size, so this removes pixels rather than shrinking the pictures.
+
+The installed size is nevertheless within a rounding error of the 5.0 MB
+that triggers the note, and we would rather say so than have it come as a
+surprise: repeated `--as-cran` runs on the same unchanged sources report
+`checking installed package size ... OK` and `... NOTE   installed size is
+5.1Mb` in roughly equal measure. When it does fire, the breakdown is `doc`
+3.8 MB and `help` 2.0 MB. The `doc` half is 65 vignette figures already at
+`dpi = 72`, the largest 96 KB, with no outlier and nothing unreferenced; the
+`help` half is 0.5 MB of Rd database and 1.1 MB of `man/figures`, all of it
+reachable from `README.md`. We can find nothing further to remove that is
+not documentation the package deliberately ships. The `vdiffr` snapshots are test
 fixtures, excluded from the build, and were never part of the installed
 package.
 

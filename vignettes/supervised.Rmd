@@ -178,7 +178,7 @@ nrow(cpt_detect(series$d, method = "pelt")$changepoints)
 nrow(cpt_detect(series$d, method = "pelt", penalty = model)$changepoints)
 ```
 
-When \pkg{penaltyLearning} is installed, `cpt_learn_penalty()` delegates
+When **penaltyLearning** is installed, `cpt_learn_penalty()` delegates
 the interval regression to `IntervalRegressionCV()` and keeps the built-in
 squared-hinge fit as a fallback, so the result is the published estimator
 whenever the published implementation is available:

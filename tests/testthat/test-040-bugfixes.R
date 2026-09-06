@@ -461,8 +461,15 @@ test_that("R21: enumerated engine options that cannot work are not offered", {
 test_that("R23: a constant series returns an empty result instead of an
            opaque engine error or a spurious changepoint", {
   flat <- rep(5, 150)
+  # Every engine here is a Suggests, so on a library without them the loop
+  # body never ran and this test passed with ZERO expectations -- testthat
+  # reports it as "empty test", which reads as verification in the summary.
+  # Counting what was exercised and skipping when nothing was makes the
+  # difference between "checked" and "not checked" visible.
+  tested <- 0L
   for (pkg in c("segmented", "SNSeg", "kcpRS", "CptNonPar")) {
     if (!requireNamespace(pkg, quietly = TRUE)) next
+    tested <- tested + 1L
     res <- switch(pkg,
       segmented = segmented_wrapper(flat),
       SNSeg     = sn_wrapper(flat),
@@ -476,6 +483,7 @@ test_that("R23: a constant series returns an empty result instead of an
   flat_m <- matrix(5, 150, 3)
   for (pkg in c("InspectChangepoint", "CptNonPar", "kcpRS")) {
     if (!requireNamespace(pkg, quietly = TRUE)) next
+    tested <- tested + 1L
     res <- switch(pkg,
       InspectChangepoint = inspect_wrapper(flat_m),
       CptNonPar          = npmojo_wrapper(flat_m),
@@ -483,6 +491,7 @@ test_that("R23: a constant series returns an empty result instead of an
                                                         seed = 1)))
     expect_equal(nrow(res$changepoints), 0, info = pkg)
   }
+  skip_if(tested == 0L, "none of the engines in this test is installed")
 })
 
 test_that("R24: one flat coordinate among real signal is dropped with a

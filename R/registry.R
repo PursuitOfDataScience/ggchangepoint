@@ -24,12 +24,39 @@
 #                 `derived_args_for()` below, so the table itself stays a
 #                 plain data frame)
 #   multivariate  accepts a matrix/data frame with more than one column
-#   univariate    works on a single series (FALSE for the engines that need
-#                 at least two coordinates and error on one)
+#   univariate    is a univariate method -- appropriate on a single series,
+#                 and what cpt_recommend(dimension = "univariate") offers.
+#
+#                 The stronger reading, "errors on a single column", is not
+#                 quite what FALSE means, and measuring it is how that got
+#                 pinned down. Of the fourteen FALSE engines, nine do error
+#                 on a vector and now all nine name the requirement when
+#                 they do (ocd, geomcp, hdreg, fmean, fcov, fabisearch
+#                 always did; hdcov, network, var and kwc used to answer
+#                 "non-conformable arrays", "'x' must be an array of at
+#                 least two dimensions", "incorrect number of dimensions"
+#                 and "dim(X) must have a positive length"). The other
+#                 five -- npmojo, inspect, esac, pilliat -- *run* on a
+#                 vector and even recover the changepoint, but they are
+#                 high-dimensional procedures whose whole point is
+#                 aggregating evidence across coordinates, so recommending
+#                 them for one series would be poor advice. FALSE records
+#                 the intent, not a promise that the call will fail.
 #   online        a sequential/online detector (batch-replayed offline)
-#   ci            populates ci_lower/ci_upper on the changepoints tibble
+#   ci            reports interval uncertainty for a changepoint location:
+#                 ci_lower/ci_upper on the changepoints tibble for most, or
+#                 a significance region for `nsp` (region_start/region_end
+#                 plus the $regions slot). Both are what
+#                 cpt_recommend(need_uncertainty = TRUE) is asking for,
+#                 which is why nsp is TRUE here despite carrying no
+#                 ci_lower column.
 #   fitted        populates a length-n fitted signal on $data
-#   posterior     exposes a per-location posterior probability profile
+#   posterior     the method is Bayesian and quantifies the location with a
+#                 posterior. Only `bcp` and `beast` expose the per-location
+#                 profile that ggcpt_posterior() draws; `bocpd`'s posterior
+#                 is over run lengths (ggcpt_runlength()) and `mcp`'s is
+#                 summarised as ci_lower/ci_upper. Verified by sweeping
+#                 every method against the accessors.
 #   statistic     exposes a detector statistic as a function of location
 #   path          exposes a solution path (candidate splits, in order)
 #   scale_space   has a bandwidth/scale parameter worth sweeping
@@ -82,13 +109,13 @@ builtin_registry <- function() {
     "fcov",        "functional covariance",               "fChange",            "covariance",             "fcov_wrapper",         TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     "kwc",         "covariance (robust, functional)",     "KWCChangepoint",     "covariance,distribution", "kwc_wrapper",          TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     "fabisearch",  "network structure (NMF)",             "fabisearch",         "network",                "fabisearch_wrapper",   TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-    "wbsts",       "mean (nonstationary)",                "wbsts",              "mean",                   "wbsts_wrapper",        FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE,
+    "wbsts",       "mean (nonstationary)",                "wbsts",              "mean",                   "wbsts_wrapper",        FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,  FALSE,
     "bfast",       "trend and seasonality",               "bfast",              "mean,slope,seasonality", "bfast_wrapper",        FALSE, TRUE,  FALSE, TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE,
     "pettitt",     "mean (single change, rank test)",     "trend",              "mean",                   "trend_wrapper",        FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE,
     "buishand",    "mean (single change, range test)",    "trend",              "mean",                   "trend_wrapper",        FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE,
     "snht",        "mean (standard normal homogeneity)",  "trend",              "mean",                   "trend_wrapper",        FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE,
     "taylor",      "mean (Taylor's analyzer)",            "ChangePointTaylor",  "mean",                   "taylor_wrapper",       FALSE, TRUE,  FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE,
-    "binsegrcpp",  "mean, meanvar (fast BinSeg)",         "binsegRcpp",         "mean,meanvar",           "binsegrcpp_wrapper",   FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE
+    "binsegrcpp",  "mean, meanvar (fast BinSeg)",         "binsegRcpp",         "mean,meanvar",           "binsegrcpp_wrapper",   FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
   )
   # `supports` is stored as a comma-separated string so the table stays a
   # plain, printable, diffable tibble; a tribble list-column would deparse

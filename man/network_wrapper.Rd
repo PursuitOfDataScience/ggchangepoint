@@ -37,7 +37,14 @@ calibration.}
 \item{seed}{Optional seed.}
 }
 \value{
-A \code{ggcpt} object with \code{change_in = "network"}.
+A \code{ggcpt} object with \code{change_in = "network"}. The
+  series it carries -- and so the one \code{autoplot()} draws -- is the
+  \strong{mean edge weight} at each time point, \code{rowMeans()} of the
+  vectorised adjacency matrices. This is the one multivariate method with
+  no \code{data_wide} slot: a \eqn{p \times p} network has \eqn{p^2}
+  entries per time point, so a facet per coordinate would be unreadable.
+  The changepoints are estimated from the networks themselves, not from
+  the summary.
 }
 \description{
 Wraps \code{changepoints::WBS.network()} (Yu, Padilla, Wang and Rinaldo):

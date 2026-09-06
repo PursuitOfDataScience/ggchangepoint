@@ -48,6 +48,10 @@
 smuce_wrapper <- function(x, alpha = 0.5,
                           family = c("gauss", "hsmuce"), ...) {
   need_pkg("stepR")
+  reject_managed_args(list(...), if (identical(family, "hsmuce")) "hsmuce" else "smuce",
+    c(jumpint = paste("the wrapper needs stepR's jump intervals to fill the",
+                      "`ci_lower`/`ci_upper` columns, which is the reason",
+                      "to use SMUCE in the first place")))
   family <- match.arg(family)
 
   validate_data(x)

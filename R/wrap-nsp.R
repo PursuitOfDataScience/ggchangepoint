@@ -79,6 +79,12 @@ nsp_wrapper <- function(x, alpha = 0.1,
                         M = 1000, covariates = NULL, ord = 1, seed = NULL,
                         ...) {
   need_pkg("nsp")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(ord, "ord", min = 0)
   variant <- match.arg(variant)
   change_in <- match.arg(change_in)
   validate_scalar(alpha, "alpha", min = 0, max = 1,

@@ -11,7 +11,7 @@
 #' \code{geom_cpt_event()}, \code{stat_changepoint()}), and a unified
 #' dispatcher \code{cpt_detect()} that reaches fifty methods.
 #'
-#' **Detection engines.** \code{cpt_detect()} dispatches to the methods in
+#' \strong{Detection engines.} \code{cpt_detect()} dispatches to the methods in
 #' \code{cpt_methods()}, across nine families:
 #' \itemize{
 #'   \item \strong{Penalised/optimal:} PELT, BinSeg, SegNeigh, AMOC
@@ -50,7 +50,7 @@
 #'     SNHT (\pkg{trend}), Taylor's analyzer (\pkg{ChangePointTaylor}).
 #' }
 #'
-#' **What surrounds the detectors.** Every detector returns a \code{ggcpt}
+#' \strong{What surrounds the detectors.} Every detector returns a \code{ggcpt}
 #' object with a stable \code{tibble(cp, cp_value)} contract, optionally
 #' carrying a time index, engine confidence intervals, a fitted signal,
 #' significance regions and diagnostics. Around that:
@@ -259,6 +259,86 @@ validate_flag <- function(value, name, allow_null = FALSE) {
   invisible(TRUE)
 }
 
+# Internal: refuse an engine argument the wrapper sets for itself.
+#
+# Every wrapper forwards `...` to its engine, and several also pin one of
+# that engine's own arguments -- because the pin is what makes the method
+# the method (`tguh`'s solution path), what makes the result extractable at
+# all (SMUCE's `jumpint`, bocpd's `getR`), or what stops the engine drawing
+# a plot or narrating into the caller's console. `...` is documented as
+# reaching the engine, so passing one of those is a reasonable thing to
+# try -- and it used to reach R's own argument matcher and stop with
+# "formal argument \"verbose\" matched by multiple actual arguments",
+# which names neither the wrapper, nor the engine, nor what to do instead.
+# Measured across the registry, twelve wrapper/argument pairs behaved that
+# way.
+#' @noRd
+reject_managed_args <- function(dots, method, managed) {
+  clash <- intersect(names(dots), names(managed))
+  if (length(clash) == 0L) return(invisible(TRUE))
+  stop("`", method, "` sets `", clash[1], "` itself, so it cannot be ",
+       "supplied through `...`: ", managed[[clash[1]]],
+       if (length(clash) > 1) paste0(" (same for `",
+         paste(clash[-1], collapse = "`, `"), "`.)"), call. = FALSE)
+}
+
+# Internal: the engine argument names this package renames, and what to use
+# instead.
+#
+# Most wrappers rename their engine's arguments into this package's snake_case
+# (`n_intervals` for wbs's `M`, `cpm_type` for cpm's `cpmType`, `min_dist` for
+# fabisearch's `mindist`) or derive them from `x`. But `...` is documented on
+# every wrapper as reaching the engine, so the engine's *own* name is the
+# natural thing for a reader of the upstream help page to pass -- and it then
+# collides with the one the wrapper already supplies, giving R's raw "formal
+# argument \"mindist\" matched by multiple actual arguments". Sweeping every
+# wrapper against every argument its engine accepts found 23 such pairs.
+#
+# This is the same failure as reject_managed_args() handles, but for arguments
+# the wrapper renames rather than pins, so the answer is a redirection rather
+# than a refusal: name the argument that does the job.
+#' @noRd
+renamed_engine_args <- function(method) {
+  switch(method,
+    ecp          = c(min.size = "min_size"),
+    fpop         = c(lambda = "penalty"),
+    wbs          = c(M = "n_intervals"),
+    wbsts        = c(M = "n_intervals"),
+    cpop         = c(beta = "penalty"),
+    decafs       = c(beta = "penalty"),
+    bocpd        = c(hazard_func = "hazard"),
+    cpm          = c(cpmType = "cpm_type", ARL0 = "arl0"),
+    kcp          = c(RS_fun = "running_stat", RS_name = "running_stat",
+                     Kmax = "kmax"),
+    sn           = c(ts = NA_character_, paras_to_test = "parameter"),
+    ocd          = c(dim = NA_character_, MC_reps = "mc_reps"),
+    strucchange  = c(formula = NA_character_),
+    segmented    = c(seg.Z = NA_character_),
+    fabisearch   = c(mindist = "min_dist", nruns = "n_runs",
+                     nreps = "n_reps", ncore = "n_core"),
+    bfast        = c(max.iter = "max_iter"),
+    NULL)
+}
+
+#' @noRd
+reject_renamed_args <- function(dots, method) {
+  map <- renamed_engine_args(method)
+  if (is.null(map)) return(invisible(TRUE))
+  clash <- intersect(names(dots), names(map))
+  if (length(clash) == 0L) return(invisible(TRUE))
+  a <- clash[1]
+  use <- map[[a]]
+  stop("`", method, "` ", if (is.na(use)) "derives" else "renames",
+       " its engine's `", a, "` argument, so passing it through `...` ",
+       "collides with the value the wrapper already supplies. ",
+       if (is.na(use)) {
+         paste0("`", a, "` comes from `x` and is not yours to set.")
+       } else {
+         paste0("Use `", use, "` instead.")
+       },
+       call. = FALSE)
+}
+
 # Internal: a user-supplied `index` labels the x axis, so it must line up
 # with the series one-to-one. Without this check a wrong-length index
 # surfaces as an opaque recycling error from dplyr ("`x` must be size n or
@@ -274,15 +354,54 @@ validate_index <- function(index, n) {
   invisible(TRUE)
 }
 
+# as.matrix() on a data.frame with ONE non-numeric column returns an
+# all-character matrix, so "`x` must be numeric" blamed the whole series for
+# one bad column and left the reader to find it. Shared by validate_data()
+# and as_mv_matrix(), the two front doors a data.frame can arrive through.
+nonnumeric_columns_note <- function(x) {
+  if (!is.data.frame(x)) return("")
+  bad <- names(x)[!vapply(x, is.numeric, logical(1))]
+  if (length(bad) == 0L) return("")
+  cls <- vapply(x[bad], function(z) class(z)[1], character(1))
+  paste0(" Not numeric: ", paste0("`", bad, "` (", cls, ")", collapse = ", "),
+         ". Coercing a factor gives its level codes, an alphabetical ",
+         "ordering of the labels, not the data.")
+}
+
+# A univariate entry point must not silently unroll a rectangular input.
+# as.numeric() on a matrix concatenates its columns, which invents a
+# changepoint at every join: cpt_wrapper() on a 120x2 matrix reported 58,
+# 120 and 180, where the 120 is the seam and only the 58 is real. A single
+# column is exempt -- there is no join for anything to be invented at.
+reject_multicolumn <- function(x, arg = "x", hint = "") {
+  if ((is.matrix(x) || is.data.frame(x)) && ncol(x) != 1L) {
+    stop("`", arg, "` is a ", class(x)[1], " with ", ncol(x),
+         " columns, but this takes a single series. Concatenating the ",
+         "columns would invent a changepoint at each join.",
+         if (nzchar(hint)) paste0(" ", hint) else "", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
+# Seven sites refused a non-finite series, and four of them said only
+# "must be finite (no NA/NaN/Inf)" -- which does not tell the caller whether
+# one stray NA slipped into a 10,000-point series or half of it is missing.
+# Those are different problems with different fixes, so the count travels
+# with the message, from one definition rather than seven copies.
+stop_nonfinite <- function(x, arg = "x") {
+  stop("`", arg, "` must be finite (no NA/NaN/Inf); ", sum(!is.finite(x)),
+       " of ", length(x), " values are not.", call. = FALSE)
+}
+
 # Validate input data
 validate_data <- function(x) {
   if (is.data.frame(x) || is.matrix(x)) {
     x_num <- as.matrix(x)
     if (!is.numeric(x_num)) {
-      stop("`x` must be numeric.", call. = FALSE)
+      stop("`x` must be numeric.", nonnumeric_columns_note(x), call. = FALSE)
     }
     if (anyNA(x_num) || any(!is.finite(x_num))) {
-      stop("`x` must be finite (no NA/NaN/Inf).", call. = FALSE)
+      stop_nonfinite(x_num)
     }
     if (nrow(x_num) < 3) {
       stop("`x` must have at least 3 observations.", call. = FALSE)
@@ -293,7 +412,7 @@ validate_data <- function(x) {
     # validate first agree with the tools that coerce first.
     x <- as.numeric(x)
     if (anyNA(x) || any(!is.finite(x))) {
-      stop("`x` must be finite (no NA/NaN/Inf).", call. = FALSE)
+      stop_nonfinite(x)
     }
     if (length(x) < 3) {
       stop("`x` must have at least 3 observations.", call. = FALSE)
@@ -362,16 +481,17 @@ as_cp_locations <- function(x, arg = "cp", sort = FALSE) {
 # character it returns NAs with base R's "NAs introduced by coercion", after
 # which validate_data() blames non-finite data rather than the text.
 #' @noRd
-coerce_series_values <- function(x) {
+coerce_series_values <- function(x, arg = "x") {
   if (is.factor(x)) {
-    stop("`x` is a factor. Detection needs numbers, and coercing a factor ",
-         "gives its level codes -- an alphabetical ordering of the labels, ",
-         "not the data. Convert it deliberately, e.g. ",
-         "as.numeric(as.character(x)).", call. = FALSE)
+    stop("`", arg, "` is a factor. Detection needs numbers, and coercing a ",
+         "factor gives its level codes -- an alphabetical ordering of the ",
+         "labels, not the data. Convert it deliberately, e.g. ",
+         "as.numeric(as.character(", arg, ")).", call. = FALSE)
   }
   if (is.character(x)) {
-    stop("`x` is character. `x` must be a numeric vector, matrix, or ",
-         "data.frame; convert it first, e.g. as.numeric(x).", call. = FALSE)
+    stop("`", arg, "` is character. `", arg, "` must be a numeric vector, ",
+         "matrix, or data.frame; convert it first, e.g. as.numeric(", arg,
+         ").", call. = FALSE)
   }
   # Everything else keeps whatever as.numeric() already did for it -- a ts,
   # a zoo, a table, a difftime all convert cleanly -- and is refused only
@@ -389,7 +509,7 @@ coerce_series_values <- function(x) {
     }
   )
   if (!clean || is.null(num)) {
-    stop("`x` must be a numeric vector, matrix, or data.frame, not ",
+    stop("`", arg, "` must be a numeric vector, matrix, or data.frame, not ",
          class(x)[1], ".", call. = FALSE)
   }
   num

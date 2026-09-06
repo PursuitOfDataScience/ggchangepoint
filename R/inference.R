@@ -30,7 +30,14 @@
 #'       intervals, else posterior if it supplied one, else bootstrap.}
 #'     \item{\code{"native"}}{the engine's own \code{ci_lower}/\code{ci_upper}
 #'       (SMUCE/HSMUCE simultaneous confidence sets, \pkg{strucchange}
-#'       break-date intervals, \pkg{segmented} breakpoint intervals).}
+#'       break-date intervals, \pkg{segmented} breakpoint intervals,
+#'       \pkg{mcp} posterior intervals, \pkg{bfast} break confidence
+#'       intervals, and \code{taylor}'s bootstrap confidence limits). The
+#'       engines that supply them are the ones
+#'       \code{\link{cpt_methods}()} marks in its \code{ci} column;
+#'       \code{nsp} is marked there too but is reported under its own
+#'       provenance below, because its regions are not intervals around an
+#'       estimate.}
 #'     \item{\code{"nsp"}}{Narrowest Significance Pursuit regions computed on
 #'       the same series and matched to the changepoints. These are
 #'       \emph{not} intervals around an estimate — see

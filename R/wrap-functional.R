@@ -49,6 +49,12 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
                           type = c("segmentation", "single"), alpha = 0.05,
                           robust = FALSE, ...) {
   need_pkg("fChange")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(alpha, "alpha", min = 0, max = 1, min_open = TRUE, max_open = TRUE)
   statistic <- match.arg(statistic)
   critical <- match.arg(critical)
   type <- match.arg(type)
@@ -116,11 +122,14 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
 
   # fChange takes curves down the columns (grid x time).
   #
-  # Two or three columns satisfy the ncol >= 2 guard above and are still too
+  # Exactly two columns satisfy the ncol >= 2 guard above and are still too
   # coarse a grid for the basis expansion: fChange then stops with base R's
   # "subscript out of bounds", which names neither the argument nor the
-  # shape. The upstream message is passed through verbatim rather than
-  # replaced -- the grid is the usual cause, not the only one.
+  # shape. Measured on 60 time points, two columns fail and three, four and
+  # six all return a fit, so the guard above cannot be raised to cover this
+  # without refusing grids the engine handles. The upstream message is
+  # passed through verbatim rather than replaced -- the grid is the usual
+  # cause, not the only one.
   fit <- tryCatch(
     {
       utils::capture.output(
@@ -205,6 +214,14 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
   change_in <- match.arg(change_in)
   validate_data(x)
   X <- as_mv_matrix(x)
+  # The engine fails on a single column with a message that names nothing
+  # ("dim(X) must have a positive length"), while ocd, geomcp, fmean, fcov and
+  # fabisearch all name the requirement. Match them.
+  if (ncol(X) < 2) {
+    stop("Method `kwc` is high-dimensional and needs at least two ",
+         "coordinates, but `x` has ", ncol(X),
+         ". See cpt_methods() for univariate methods.", call. = FALSE)
+  }
   data_vec <- as.numeric(rowMeans(X))
   if (!is.null(seed)) set.seed(seed)
 
@@ -308,6 +325,7 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
     }
   }, add = TRUE)
   need_pkg("fabisearch")
+  reject_renamed_args(list(...), "fabisearch")
   validate_data(x)
   X <- as_mv_matrix(x)
   n <- nrow(X)

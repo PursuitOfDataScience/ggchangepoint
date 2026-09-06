@@ -109,11 +109,13 @@ test_that("cpt_test marks unadjusted p-values as unadjusted", {
   # The estimate is the level difference across the changepoint.
   expect_gt(res$estimate[1], 2)
 
-  expect_warning(seg <- cpt_test(fit, type = "segment"))
+  expect_warning(seg <- cpt_test(fit, type = "segment"),
+                 "`selection_adjusted` is FALSE")
   expect_true("seg_id" %in% names(seg))
   expect_equal(nrow(seg), nrow(fit$segments) - 1)
 
-  expect_warning(adj <- cpt_test(fit, correction = "holm"))
+  expect_warning(adj <- cpt_test(fit, correction = "holm"),
+                 "`selection_adjusted` is FALSE")
   expect_true("p_adjusted" %in% names(adj))
   expect_true(all(adj$p_adjusted >= adj$p_value - 1e-12))
 })

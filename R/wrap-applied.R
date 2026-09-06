@@ -109,6 +109,20 @@ trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
 #' @param seed Optional seed (the procedure is bootstrap-based).
 #' @return A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} (so
 #'   \code{autoplot(show_ci = TRUE)} works) and a \code{confidence} column.
+#' @section Series length, and why you cannot interrupt it:
+#' This engine is written for the series lengths quality control sees --
+#' hundreds to low thousands -- and it does not scale. At \eqn{n = 10{,}000}
+#' with the default \code{n_bootstraps = 1000} it runs for \strong{minutes}, and
+#' more importantly it runs where R cannot look: a \code{setTimeLimit()} of
+#' 45 seconds was still not honoured after 170, and one of 125 seconds after
+#' 200, so the call had to be killed from outside the session. R checks
+#' elapsed-time limits and keyboard interrupts at the same points, which
+#' means \strong{Ctrl-C will not stop it either}.
+#'
+#' So size the call before starting it rather than after. \code{n_bootstraps}
+#' is the knob -- the cost is roughly linear in it -- and
+#' \code{vignette("benchmarks", package = "ggchangepoint")} lists the
+#' methods that do scale to long series.
 #' @references
 #' \insertRef{taylor2000changepoint}{ggchangepoint}
 #' @export
@@ -135,11 +149,13 @@ taylor_wrapper <- function(x, n_bootstraps = 1000, min_candidate_conf = 0.5,
   # The engine narrates ("3 Change(s) Identified", "NA supplied to 'label'")
   # through both stdout and the message stream; keep the console clean.
   suppressMessages(utils::capture.output(
-    fit <- ChangePointTaylor::change_point_analyzer(
-      data_vec, n_bootstraps = n_bootstraps,
-      min_candidate_conf = min_candidate_conf,
-      min_tbl_conf = min_conf, CI = conf_level
-    )
+    fit <- engine_short_series(
+      ChangePointTaylor::change_point_analyzer(
+        data_vec, n_bootstraps = n_bootstraps,
+        min_candidate_conf = min_candidate_conf,
+        min_tbl_conf = min_conf, CI = conf_level
+      ),
+      "taylor", length(data_vec))
   ))
   if (is.null(fit) || nrow(fit) == 0) {
     return(ggcpt_build(data_vec, integer(0), method = "taylor",
@@ -228,6 +244,16 @@ bfast_wrapper <- function(x, frequency = 12,
                           h = 0.15, season = c("harmonic", "dummy", "none"),
                           max_iter = 5, ...) {
   need_pkg("bfast")
+  reject_renamed_args(list(...), "bfast")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  # No `min` here: the wrapper already refuses a frequency below 2 with a
+  # message about the seasonal frequency, which says more than a range
+  # complaint would. This catches NA, a string and a length-2 vector.
+  validate_scalar(frequency, "frequency")
   change_in <- match.arg(change_in)
   season <- match.arg(season)
   if (change_in == "seasonality" && season == "none") {
@@ -251,7 +277,12 @@ bfast_wrapper <- function(x, frequency = 12,
          "or use `season = \"none\"`.", call. = FALSE)
   }
 
-  fit <- bfast::bfast(yt, h = h, season = season, max.iter = max_iter, ...)
+  fit <- engine_short_series(
+    bfast::bfast(yt, h = h, season = season, max.iter = max_iter, ...),
+    "bfast", length(data_vec),
+    paste0("`bfast` needs at least two full periods, so at ",
+           "`frequency = ", frequency, "` that is ", 2 * frequency,
+           " observations."))
   last <- fit$output[[length(fit$output)]]
   bp <- if (change_in == "seasonality") {
     last[["bp.Wt", exact = TRUE]]
@@ -294,6 +325,45 @@ bfast_wrapper <- function(x, frequency = 12,
   )
 }
 
+# Internal: wbsts::wbs.lsw() with its one R-4.2-incompatible line fixed.
+#
+# A line-for-line replay of the upstream body (wbsts 0.4.2), reached only
+# when the original has already failed on
+#   suppressWarnings(if (is.na(OUT)) OUT = NULL)
+# with a length > 1 condition. The single change is `all(is.na(OUT))` in
+# place of `is.na(OUT)`, which is what the surrounding suppressWarnings()
+# shows was intended: "if post-processing found nothing, report nothing".
+# Every other line, and every default, is upstream's.
+#' @noRd
+wbs_lsw_replay <- function(y, n_intervals, cstar, lambda, scales) {
+  n <- length(y)
+  J <- floor(log(n, 2))
+  C_i <- wbsts::tau.fun(y)
+  if (is.null(scales)) {
+    scales <- J - 1:floor(3 * lambda * log(log(n)))
+  } else {
+    scales <- sort(scales, decreasing = TRUE)
+  }
+  if (length(scales) == 1) {
+    stop(".........Choose at least two scales.........", call. = FALSE)
+  }
+  epp <- vapply(seq_along(scales), function(j) {
+    round(max(2 * n / 2^scales[j], ceiling(sqrt(n) / 2)))
+  }, numeric(1))
+  epp <- round(epp / 2)
+  z <- wbsts::ews.trans(y, scales = scales)
+  dis <- c((n - n / 2^(min(scales)) + 1):n)
+  z <- z[-dis, ]
+  del <- floor(log(length(y))^2 / 3)
+  u <- wbsts::uh.wbs(z, scale = scales, epp = epp, del = del,
+                     C_i = C_i, M = n_intervals, cstar = cstar)
+  cp_out <- u$breakpoints
+  out <- wbsts::post.processing(z, del = del, br = cp_out, C_i = C_i,
+                                epp = epp, scales = scales)
+  if (length(out) == 0L || all(is.na(out))) out <- NULL
+  list(cp.bef = cp_out, cp.aft = out)
+}
+
 #' WBS for nonstationary time series
 #'
 #' Wraps \code{wbsts::wbs.lsw()} (Korkas and Fryzlewicz): wild binary
@@ -325,14 +395,60 @@ bfast_wrapper <- function(x, frequency = 12,
 wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
                           scales = NULL, seed = NULL, ...) {
   need_pkg("wbsts")
+  reject_renamed_args(list(...), "wbsts")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(cstar, "cstar", min = 0, min_open = TRUE)
+  validate_scalar(lambda, "lambda", min = 0, min_open = TRUE)
   validate_data(x)
   data_vec <- as_uni_vector(x, "wbsts")
   validate_scalar(n_intervals, "n_intervals", min = 0)
   if (!is.null(seed)) set.seed(seed)
 
-  fit <- suppressWarnings(
-    wbsts::wbs.lsw(data_vec, M = n_intervals, cstar = cstar,
-                   lambda = lambda, scales = scales, ...)
+  # wbsts::wbs.lsw() ends with
+  #   suppressWarnings(if (is.na(OUT)) OUT = NULL)
+  # where OUT is the post-processed breakpoint set. That was correct while
+  # `if` on a length > 1 condition was a warning; since R 4.2 it is an
+  # error, and suppressWarnings() does nothing for an error. So the call
+  # dies with "the condition has length > 1" exactly when post-processing
+  # keeps two or more changepoints -- which is to say, whenever the method
+  # would report more than one. Measured on R 4.4.1: 2 of 20 runs failed on
+  # a single-changepoint series, and 19 of 20 on three- and
+  # five-changepoint series, where the successes never reported more than
+  # one changepoint. The method was effectively unusable for the multiple
+  # changepoints it exists to find.
+  #
+  # Everything wbs.lsw() does is available through wbsts' own exported
+  # pieces, so on that specific failure the computation is replayed with
+  # the one line corrected to the `all()` its own author clearly meant.
+  # `.Random.seed` is restored first, so the replay draws the identical
+  # random intervals and returns what the upstream function would have
+  # returned had the line been written for modern R -- this is not a
+  # different answer, it is the same one, retrieved.
+  seed_state <- if (exists(".Random.seed", envir = globalenv())) {
+    get(".Random.seed", envir = globalenv())
+  } else {
+    NULL
+  }
+  fit <- tryCatch(
+    suppressWarnings(
+      wbsts::wbs.lsw(data_vec, M = n_intervals, cstar = cstar,
+                     lambda = lambda, scales = scales, ...)
+    ),
+    error = function(e) {
+      if (!grepl("the condition has length", conditionMessage(e),
+                 fixed = TRUE)) {
+        rethrow_short_series(e, "wbsts", length(data_vec))
+      }
+      if (!is.null(seed_state)) {
+        assign(".Random.seed", seed_state, envir = globalenv())
+      }
+      wbs_lsw_replay(data_vec, n_intervals = n_intervals, cstar = cstar,
+                     lambda = lambda, scales = scales)
+    }
   )
   # $cp.aft holds the post-processed final estimates; $cp.bef the raw ones.
   cp <- as.integer(fit$cp.aft %||% integer(0))

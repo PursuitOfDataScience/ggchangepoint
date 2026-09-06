@@ -22,6 +22,7 @@
 wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ...) {
 
   need_pkg("wbs")
+  reject_renamed_args(list(...), "wbs")
   validate_scalar(n_intervals, "n_intervals", min = 1)
   validate_data(x)
   data_vec <- as_uni_vector(x, "wbs")
@@ -33,7 +34,8 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
   fit <- tryCatch(
     wbs::wbs(data_vec, M = n_intervals, ...),
     error = function(e) {
-      if (grepl("constant", conditionMessage(e), fixed = TRUE)) NULL else stop(e)
+      if (grepl("constant", conditionMessage(e), fixed = TRUE)) NULL
+      else rethrow_short_series(e, "wbs", length(data_vec))
     }
   )
   if (is.null(fit)) {
@@ -87,6 +89,32 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
 #' @param x A numeric vector.
 #' @param ... Additional arguments passed to \code{breakfast::breakfast()}.
 #' @return A \code{ggcpt} object.
+#' @section Reproducibility:
+#' This engine is \strong{not reproducible call to call within an R
+#' session}, and no argument here can make it so. On a 200-point series with
+#' one change at 100, repeated identical calls -- same input,
+#' \code{set.seed()} re-run beforehand so that \code{.Random.seed} is
+#' byte-identical on entry -- return a last changepoint of either 183 or
+#' 188, roughly evenly split. The variation is therefore not driven by R's
+#' random number stream, which is why this wrapper has no \code{seed}
+#' argument to offer: there is no stream to pin.
+#'
+#' It is upstream, not in this package. Calling
+#' \code{breakfast::breakfast(x, solution.path = "wbs2",
+#' model.selection = "sdll")} directly (\pkg{breakfast} 2.5) reproduces it
+#' exactly. A \emph{fresh} R session is deterministic -- five separate
+#' sessions agreed -- so what varies is state the engine carries between
+#' calls.
+#'
+#' In practice this is rare, and needs a series whose model selection sits
+#' near a tie. Measured over eight other series with three identical calls
+#' each, \code{wbs2} was stable on all eight; the flip above reproduces
+#' only on that one configuration. \code{tguh}, which uses the same
+#' package, was stable throughout, as were the other 35 methods this
+#' experiment covered. If you need a segmentation you can reproduce
+#' exactly, take the result of the first call in a session, or use an
+#' engine with a \code{seed} argument (\code{\link{cpt_methods}()}
+#' reports which wrappers have one).
 #' @references
 #' \insertRef{fryzlewicz2020detecting}{ggchangepoint}
 #' @export
@@ -98,6 +126,14 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
 wbs2_wrapper <- function(x, ...) {
 
   need_pkg("breakfast")
+  reject_managed_args(list(...), "wbs2", c(
+    solution.path = paste("it is what selects WBS2 rather than one of",
+                          "breakfast's other solution paths -- use",
+                          "`cpt_detect(method = \"tguh\")` or another",
+                          "method for a different one"),
+    model.selection = paste("the wrapper pins breakfast's selector so the",
+                            "result does not depend on the engine's own",
+                            "default")))
   validate_data(x)
   data_vec <- as_uni_vector(x, "wbs2")
 
@@ -174,7 +210,8 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
   fit <- tryCatch(
     not::not(data_vec, contrast = contrast, ...),
     error = function(e) {
-      if (grepl("constant", conditionMessage(e), fixed = TRUE)) NULL else stop(e)
+      if (grepl("constant", conditionMessage(e), fixed = TRUE)) NULL
+      else rethrow_short_series(e, "not", length(data_vec))
     }
   )
   if (is.null(fit)) {
@@ -375,12 +412,26 @@ idetect_wrapper <- function(x, seed = NULL, ...) {
 tguh_wrapper <- function(x, ...) {
 
   need_pkg("breakfast")
+  reject_managed_args(list(...), "tguh", c(
+    solution.path = paste("it is what selects the tail-greedy",
+                          "unbalanced-Haar path rather than one of",
+                          "breakfast's others -- a `tguh` result with a",
+                          "different path is not tguh"),
+    model.selection = paste("the wrapper pins \"ic\", the selector the",
+                            "TGUH paper pairs with this path")))
   validate_data(x)
   data_vec <- as_uni_vector(x, "tguh")
 
-  # Pin the model selector: breakfast's default choice ("lp") reports
-  # spurious changepoints on constant data; "ic" (strengthened SIC) is the
-  # selector the TGUH paper pairs with the solution path.
+  # Pin the model selector to "ic" (strengthened SIC), which is the
+  # selector the TGUH paper pairs with this solution path. Pinning it also
+  # makes the result independent of breakfast's own default, which is
+  # `model.selection = NULL` -- the engine then chooses for itself, so an
+  # upstream change of mind would silently change our answers. (On the
+  # installed version "lp", "ic" and the NULL default agree on the cases
+  # tested: none of the three reports a changepoint in constant,
+  # near-constant or pure-noise data, and all three find the single step at
+  # 100 in a two-segment series. The pin is for reproducibility, not to
+  # work around a misfire.)
   fit <- suppressWarnings(
     breakfast::breakfast(data_vec, solution.path = "tguh",
                          model.selection = "ic", ...)

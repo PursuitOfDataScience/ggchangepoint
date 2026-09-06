@@ -117,15 +117,20 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #' @section How long this takes:
 #' Nearly all of the run time is \code{ocd}'s Monte Carlo threshold
 #' calibration, which happens before a single observation is read. It is
-#' linear in \code{mc_reps} and grows with the number of coordinates:
-#' measured at \code{mc_reps = 5}, construction takes about 3 s at
-#' \eqn{p = 3}, 9 s at \eqn{p = 10} and 55 s at \eqn{p = 50}, and four
-#' times as long at \code{mc_reps = 20}. At the default \code{mc_reps = 100}
-#' that extrapolates to roughly a minute at \eqn{p = 3} and a quarter of an
-#' hour at \eqn{p = 50}. Monitoring the observations afterwards is cheap by
-#' comparison — well under a second for a thousand of them. Lower
+#' linear in \code{mc_reps} and grows with the number of coordinates. Timed
+#' on one Linux x86-64 machine at \code{mc_reps = 5}, construction took
+#' about 10 s at \eqn{p = 3}, 22 s at \eqn{p = 10} and 113 s at
+#' \eqn{p = 50}; raising \code{mc_reps} scales it linearly, so at
+#' \eqn{p = 3} it was 38 s at \code{mc_reps = 20} and 189 s at the default
+#' \code{mc_reps = 100}. The practical reading is that the default costs
+#' \emph{minutes} rather than seconds even for a handful of coordinates,
+#' and better than half an hour at \eqn{p = 50}. Another machine will give
+#' different absolute numbers; the linearity in \code{mc_reps} is the part
+#' to plan around. Monitoring the observations afterwards is cheap by
+#' comparison — 0.37 s for a thousand of them at \eqn{p = 3}. Lower
 #' \code{mc_reps} while exploring, or pass \code{thresh} directly to skip
-#' calibration entirely.
+#' calibration entirely, which brings the same fit down to a tenth of a
+#' second.
 #'
 #' @references
 #' \insertRef{chen2022ocd}{ggchangepoint}
@@ -141,15 +146,28 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
                         beta = 1, mc_reps = 100, ...) {
   need_pkg("ocd")
+  reject_renamed_args(list(...), "ocd")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(patience, "patience", min = 1)
+  validate_scalar(mc_reps, "mc_reps", min = 1)
 
   validate_data(x)
   X <- if (is.matrix(x) || is.data.frame(x)) as_mv_matrix(x)
        else matrix(as.numeric(x), ncol = 1)
   n <- nrow(X)
   p <- ncol(X)
-  # ocd::ChangepointDetector() fails to construct at dim = 1 ("subscript out
-  # of bounds"): the method projects across coordinates, so it needs at
-  # least two. Say so rather than surfacing the engine's internal error.
+  # ocd::ChangepointDetector() fails to construct at dim = 1 under this
+  # wrapper's default thresh = "MC", where the Monte Carlo threshold search
+  # ends in "'dims' cannot be of length 0": the method projects across
+  # coordinates, so it needs at least two. (With an explicit numeric
+  # `thresh` the constructor does succeed at dim = 1, which is why the
+  # shape is checked here rather than left to the engine -- the failure
+  # depends on an argument the caller may never have set.) Say so rather
+  # than surfacing the engine's internal error.
   if (p < 2) {
     stop("Method `ocd` is high-dimensional and needs at least two ",
          "coordinates, but `x` has ", p,
@@ -246,6 +264,16 @@ geomcp_wrapper <- function(x, penalty = "MBIC",
 
   validate_data(x)
   X <- as_mv_matrix(x)
+  # changepoint.geo answers "Univariate changepoint analysis is not
+  # supported" on a single column -- clearer than base R, but it names
+  # neither the method nor the argument, so a reader with several methods in
+  # flight cannot tell which call failed. Match the other eight
+  # multivariate-only engines.
+  if (ncol(X) < 2) {
+    stop("Method `geomcp` is high-dimensional and needs at least two ",
+         "coordinates, but `x` has ", ncol(X),
+         ". See cpt_methods() for univariate methods.", call. = FALSE)
+  }
   data_vec <- as.numeric(X[, 1])
 
   fit <- changepoint.geo::geomcp(X, penalty = penalty, ...)

@@ -12,6 +12,41 @@
 # than in the user's head.
 # ---------------------------------------------------------------------------
 
+# Internal: changepoints::thresholdBS() with its single-level-tree failure
+# routed around.
+#
+# The upstream pruning loop is
+#   for (i in 2:level_length) { ... 1:table(BS_object$Level)[i] ... }
+# so a tree with one level makes that `2:1`, the body runs with i = 2,
+# `table(...)[2]` is NA, and `1:NA` stops with base R's "NA/NaN argument" --
+# naming neither the shape of the input nor the cause. Binary segmentation
+# stops at one level whenever the series is short relative to the dimension,
+# and because the threshold comes from a permutation draw, whether a given
+# call lands there is random. Measured over repeated seeds: hdcov failed on
+# 23 of 25 runs at n = 120, p = 8 and 24 of 25 at n = 400, p = 20; network
+# on 10 of 12 at n = 20 with 4-node graphs.
+#
+# Refusing would be wrong -- the answer is not in doubt. One level means one
+# candidate split with no ancestors to prune against, so it is a changepoint
+# exactly when its own statistic clears the threshold. On a multi-level tree
+# that same rule reproduces thresholdBS()'s own output (checked: locations
+# 156 and 218 either way), which is what makes it safe to apply here.
+#
+# Shared by hdcov_wrapper() and network_wrapper(), the two wrappers that
+# call thresholdBS().
+#' @noRd
+threshold_bs <- function(bs, threshold) {
+  if (length(unique(bs$Level)) < 2L) {
+    keep <- which(as.numeric(bs$Dval) > threshold)
+    return(list(cpt_hat = if (length(keep) > 0) {
+      cbind(as.integer(bs$S)[keep], as.numeric(bs$Dval)[keep])
+    } else {
+      NULL
+    }))
+  }
+  changepoints::thresholdBS(bs, threshold)
+}
+
 #' ESAC wrapper — sparsity-adaptive high-dimensional detection
 #'
 #' Wraps \code{HDCD::ESAC()} (Moen, Glad and Tveten, 2023): Efficient
@@ -46,6 +81,14 @@
 esac_wrapper <- function(x, threshold_d = 1.5, threshold_s = 1,
                          empirical = FALSE, N = 1000, seed = NULL, ...) {
   need_pkg("HDCD")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(threshold_d, "threshold_d", min = 0, min_open = TRUE)
+  validate_scalar(threshold_s, "threshold_s", min = 0, min_open = TRUE)
+  validate_scalar(N, "N", min = 1)
   validate_flag(empirical, "empirical")
   validate_data(x)
   X <- as_mv_matrix(x)
@@ -162,6 +205,14 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
                             threshold_partial_const = 4,
                             empirical = FALSE, N = 100, seed = NULL, ...) {
   need_pkg("HDCD")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(threshold_d_const, "threshold_d_const", min = 0, min_open = TRUE)
+  validate_scalar(threshold_partial_const, "threshold_partial_const", min = 0, min_open = TRUE)
+  validate_scalar(N, "N", min = 1)
   validate_flag(empirical, "empirical")
   validate_data(x)
   X <- as_mv_matrix(x)
@@ -244,6 +295,14 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
                   min_open = TRUE, max_open = TRUE)
   validate_scalar(n_perm, "n_perm", min = 1)
   X <- as_mv_matrix(x)
+  # The engine fails on a single column with a message that names nothing
+  # ("non-conformable arrays"), while ocd, geomcp, fmean, fcov and
+  # fabisearch all name the requirement. Match them.
+  if (ncol(X) < 2) {
+    stop("Method `hdcov` is high-dimensional and needs at least two ",
+         "coordinates, but `x` has ", ncol(X),
+         ". See cpt_methods() for univariate methods.", call. = FALSE)
+  }
   n <- nrow(X)
   data_vec <- as.numeric(X[, 1])
   if (is.null(delta)) delta <- max(10L, floor(n / 20))
@@ -272,8 +331,9 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
 
   # thresholdBS() returns cpt_hat = NULL (not a zero-row matrix) when
   # nothing clears the threshold, so it has to be tested before subsetting;
-  # `NULL[, 1]` is an error, not an empty vector.
-  th <- changepoints::thresholdBS(bs, threshold)
+  # `NULL[, 1]` is an error, not an empty vector. threshold_bs() below also
+  # routes around an upstream failure on single-level trees.
+  th <- threshold_bs(bs, threshold)
   hat <- th$cpt_hat
   cp <- integer(0)
   cusum <- numeric(0)
@@ -341,7 +401,14 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
 #' exact for Poisson weights and approximate otherwise. If you have a genuine
 #' replicate, pass it as \code{copy2} and none of this applies.
 #'
-#' @return A \code{ggcpt} object with \code{change_in = "network"}.
+#' @return A \code{ggcpt} object with \code{change_in = "network"}. The
+#'   series it carries -- and so the one \code{autoplot()} draws -- is the
+#'   \strong{mean edge weight} at each time point, \code{rowMeans()} of the
+#'   vectorised adjacency matrices. This is the one multivariate method with
+#'   no \code{data_wide} slot: a \eqn{p \times p} network has \eqn{p^2}
+#'   entries per time point, so a facet per coordinate would be unreadable.
+#'   The changepoints are estimated from the networks themselves, not from
+#'   the summary.
 #' @references
 #' \insertRef{yu2021network}{ggchangepoint}
 #' @export
@@ -358,11 +425,37 @@ network_wrapper <- function(x, copy2 = NULL, n_intervals = 100,
                             threshold = NULL, alpha = 0.05, n_perm = 20,
                             delta = NULL, seed = NULL) {
   need_pkg("changepoints")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(alpha, "alpha", min = 0, max = 1, min_open = TRUE, max_open = TRUE)
+  validate_scalar(n_perm, "n_perm", min = 1)
+  # network_matrix() hands a vector to the engine, which stops with base R's
+  # "'x' must be an array of at least two dimensions" -- naming neither the
+  # method nor the shape. ocd, geomcp, fmean, fcov and fabisearch all name
+  # the requirement; match them.
+  if (is.null(dim(x)) && !is.list(x)) {
+    stop("Method `network` needs a sequence of networks: an n x p^2 matrix ",
+         "of vectorised adjacency matrices, or an n x p x p array. `x` is a ",
+         "plain vector. See cpt_methods() for univariate methods.",
+         call. = FALSE)
+  }
   X <- network_matrix(x)
   n <- nrow(X)
   if (n < 6) {
     stop("Network changepoint detection needs at least 6 time points; got ",
          n, ".", call. = FALSE)
+  }
+  # `network` reaches the engine through network_matrix() rather than
+  # validate_data(), so it was the one high-dimensional route with no
+  # finiteness check: a single NA surfaced as base R's "replacement has
+  # length zero" from inside the random edge-splitting, which names neither
+  # the argument nor the problem. Every sibling wrapper here refuses with
+  # this message; match them.
+  if (anyNA(X) || any(!is.finite(X))) {
+    stop_nonfinite(X)
   }
   data_vec <- as.numeric(rowMeans(X))
   if (is.null(delta)) delta <- max(5L, floor(n / 20))
@@ -425,7 +518,9 @@ network_wrapper <- function(x, copy2 = NULL, n_intervals = 100,
   }
   validate_scalar(threshold, "threshold", min = 0)
 
-  th <- changepoints::thresholdBS(bs, threshold)
+  # Same upstream single-level failure as in hdcov_wrapper(): measured at
+  # 10 of 12 runs for a 20-point sequence of 4-node networks.
+  th <- threshold_bs(bs, threshold)
   hat <- th$cpt_hat
   cp <- if (is.null(hat) || length(hat) == 0) {
     integer(0)
@@ -495,6 +590,14 @@ var_wrapper <- function(x, gamma_set = NULL, lambda_set = NULL,
   need_pkg("changepoints")
   validate_data(x)
   X <- as_mv_matrix(x)
+  # The engine fails on a single column with a message that names nothing
+  # ("incorrect number of dimensions"), while ocd, geomcp, fmean, fcov and
+  # fabisearch all name the requirement. Match them.
+  if (ncol(X) < 2) {
+    stop("Method `var` is high-dimensional and needs at least two ",
+         "coordinates, but `x` has ", ncol(X),
+         ". See cpt_methods() for univariate methods.", call. = FALSE)
+  }
   n <- nrow(X)
   data_vec <- as.numeric(X[, 1])
   if (is.null(delta)) delta <- max(5L, floor(n / 20))
@@ -584,7 +687,7 @@ hdreg_wrapper <- function(x, response = NULL, gamma_set = NULL,
          " row(s) but `response` has ", length(y), ".", call. = FALSE)
   }
   if (anyNA(y) || any(!is.finite(y))) {
-    stop("`response` must be finite (no NA/NaN/Inf).", call. = FALSE)
+    stop_nonfinite(y, "response")
   }
   if (is.null(delta)) delta <- max(5L, floor(n / 20))
   if (is.null(gamma_set)) gamma_set <- c(0.1, 1, 10) * log(n)

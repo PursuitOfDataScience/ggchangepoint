@@ -175,6 +175,12 @@ cpt_simulate <- function(n,
   if (noise == "gauss") {
     errors <- stats::rnorm(n, mean = 0, sd = sd_vec)
   } else if (noise == "t") {
+    # validate_scalar() first, for the same reason `rho` above gets it: a
+    # bare `if (df <= 2)` answers "missing value where TRUE/FALSE needed"
+    # for df = NA and "invalid arguments" for df = "a", neither of which
+    # names the argument. The domain message is kept, because "must exceed
+    # 2" is worth saying with its reason.
+    validate_scalar(df, "df")
     if (df <= 2) {
       stop("`df` must exceed 2 so the t-noise variance exists.", call. = FALSE)
     }

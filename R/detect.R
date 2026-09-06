@@ -25,6 +25,20 @@
 #'   \code{"mean"}. The requested value is validated against the method's
 #'   capabilities (see \code{cpt_methods()}); incompatible combinations
 #'   error rather than silently running something else.
+#'
+#'   A \emph{compatible} request may still be routed to the method's own
+#'   native change type, because several engines have no separate estimator
+#'   for the thing being asked about. That is never silent: the result's
+#'   \code{change_in} records what was actually detected, so compare it
+#'   with what you asked for. Measured across every method and every value
+#'   its \code{supports} entry lists, six pairs are routed --
+#'   \code{not}'s \code{"var"} becomes \code{"meanvar"} (its variance
+#'   contrast is piecewise-constant in mean \emph{and} variance),
+#'   \code{cpm}'s \code{"mean"} and \code{"var"} both become
+#'   \code{"distribution"}, \code{kcp}'s become \code{"running mean"} and
+#'   \code{"running var"}, and \code{wbsts}'s \code{"mean"} becomes
+#'   \code{"var"} (it detects change in the wavelet spectrum). Every other
+#'   listed combination returns the change type it was asked for.
 #' @param penalty Penalty type or value. Either a character string
 #'   (\code{"MBIC"}, \code{"BIC"}, \code{"SIC"}, \code{"AIC"},
 #'   \code{"Hannan-Quinn"}, \code{"None"}) or a numeric penalty value.
@@ -63,9 +77,10 @@
 #'   supplied here takes precedence. Check the spelling against the wrapper's
 #'   help page: several engines end their own signature in \code{...}
 #'   (\pkg{wbs}, \pkg{not}, \pkg{Rbeast}, \pkg{strucchange},
-#'   \pkg{segmented}, \pkg{fastcpd}), so for those a misspelt argument name
-#'   is silently discarded upstream and the engine quietly uses its default
-#'   rather than reporting the typo.
+#'   \pkg{segmented}, \pkg{fastcpd}, \pkg{fChange}, \pkg{bfast}), so for
+#'   those a misspelt argument name is silently discarded upstream and the
+#'   engine quietly uses its default rather than reporting the typo. Every
+#'   other wired method rejects an unknown argument by name.
 #'
 #' @section Scale sensitivity of the penalised change-in-mean engines:
 #' \code{"pelt"}, \code{"binseg"}, \code{"segneigh"} and \code{"fpop"}
@@ -395,7 +410,21 @@ planned_methods <- function() {
 #'         \code{scale_space} the internals rendered by
 #'         \code{\link{ggcpt_statistic}()},
 #'         \code{\link{ggcpt_solution_path}()} and
-#'         \code{\link{ggcpt_scale_space}()}.}
+#'         \code{\link{ggcpt_scale_space}()}.
+#'
+#'         \code{online} means the \emph{algorithm} is sequential -- it
+#'         consumes observations one at a time -- and this table reports it
+#'         because it governs how the method behaves in batch: an online
+#'         detector's threshold is a rate per observation, so run over a
+#'         whole series through \code{\link{cpt_detect}()} it reports
+#'         roughly \eqn{n / \mathrm{arl0}} changepoints by construction.
+#'         It does \strong{not} mean the method can be passed to
+#'         \code{\link{cpt_monitor}()}, which takes its own three:
+#'         \code{"edetector"}, \code{"cpm"} and \code{"ocd"}. The two
+#'         sets overlap without coinciding -- \code{bocpd} is an online
+#'         algorithm this table marks but the monitor does not offer, and
+#'         \code{edetector} is native to this package rather than a
+#'         wrapped engine, so it has no row here at all.}
 #' }
 #' @seealso \code{\link{cpt_install_engines}()} to install a whole family of
 #'   the engines this table reports on; \code{\link{cpt_detect}()} to run
@@ -727,7 +756,11 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01,
       stop("A learned penalty depends on the series' features, so `series` ",
            "must be supplied: cpt_penalty(model, series = x).", call. = FALSE)
     }
-    return(unname(stats::predict(type, as.numeric(series)))[1])
+    # coerce_series_values(), not as.numeric(): the model predicts from
+    # features of this series, so a factor would have it predict a penalty
+    # for the level codes -- silently, since the answer is just a number.
+    return(unname(stats::predict(
+      type, coerce_series_values(series, arg = "series")))[1])
   }
   type <- match.arg(type, c("None", "BIC", "SIC", "MBIC", "AIC",
                             "Hannan-Quinn", "sSIC", "Manual"))

@@ -165,6 +165,18 @@ test_that("scale space sweeps bandwidths and marks the detections", {
   expect_no_error(ggplot2::ggplot_build(
     ggcpt_scale_space(x_step, bandwidths = c(20, 40))))
   expect_error(cpt_scale_space(x_step, bandwidths = 500), "No usable bandwidth")
+
+  # Refusing a matrix used to report "Method `scale_space` is univariate",
+  # naming this function instead of the engine the caller asked for -- so
+  # someone who wrote `method = "mosum"` was told about a "method" that does
+  # not exist. The shape check itself is right and comes before the engine
+  # check on purpose; only the name in the message was wrong.
+  X2 <- cbind(a = x_step, b = rev(x_step))
+  expect_error(cpt_scale_space(X2, method = "mosum"), "`mosum` is univariate")
+  expect_error(cpt_scale_space(X2, method = "mosum"), "2 columns")
+  # npmojo is multivariate and must still accept the same input
+  skip_if_not_installed("CptNonPar")
+  expect_no_error(cpt_scale_space(X2, method = "npmojo"))
 })
 
 test_that("cpt_select says when the method gives it no ladder", {

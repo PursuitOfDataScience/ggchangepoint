@@ -37,7 +37,21 @@ A tibble with columns:
         \code{scale_space} the internals rendered by
         \code{\link{ggcpt_statistic}()},
         \code{\link{ggcpt_solution_path}()} and
-        \code{\link{ggcpt_scale_space}()}.}
+        \code{\link{ggcpt_scale_space}()}.
+
+        \code{online} means the \emph{algorithm} is sequential -- it
+        consumes observations one at a time -- and this table reports it
+        because it governs how the method behaves in batch: an online
+        detector's threshold is a rate per observation, so run over a
+        whole series through \code{\link{cpt_detect}()} it reports
+        roughly \eqn{n / \mathrm{arl0}} changepoints by construction.
+        It does \strong{not} mean the method can be passed to
+        \code{\link{cpt_monitor}()}, which takes its own three:
+        \code{"edetector"}, \code{"cpm"} and \code{"ocd"}. The two
+        sets overlap without coinciding -- \code{bocpd} is an online
+        algorithm this table marks but the monitor does not offer, and
+        \code{edetector} is native to this package rather than a
+        wrapped engine, so it has no row here at all.}
 }
 }
 \description{

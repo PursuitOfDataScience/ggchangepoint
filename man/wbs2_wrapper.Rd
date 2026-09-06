@@ -18,6 +18,35 @@ A \code{ggcpt} object.
 Wraps the \code{breakfast} package's WBS2 solution path with
 steepest-drop-to-low-levels (SDLL) model selection.
 }
+\section{Reproducibility}{
+
+This engine is \strong{not reproducible call to call within an R
+session}, and no argument here can make it so. On a 200-point series with
+one change at 100, repeated identical calls -- same input,
+\code{set.seed()} re-run beforehand so that \code{.Random.seed} is
+byte-identical on entry -- return a last changepoint of either 183 or
+188, roughly evenly split. The variation is therefore not driven by R's
+random number stream, which is why this wrapper has no \code{seed}
+argument to offer: there is no stream to pin.
+
+It is upstream, not in this package. Calling
+\code{breakfast::breakfast(x, solution.path = "wbs2",
+model.selection = "sdll")} directly (\pkg{breakfast} 2.5) reproduces it
+exactly. A \emph{fresh} R session is deterministic -- five separate
+sessions agreed -- so what varies is state the engine carries between
+calls.
+
+In practice this is rare, and needs a series whose model selection sits
+near a tie. Measured over eight other series with three identical calls
+each, \code{wbs2} was stable on all eight; the flip above reproduces
+only on that one configuration. \code{tguh}, which uses the same
+package, was stable throughout, as were the other 35 methods this
+experiment covered. If you need a segmentation you can reproduce
+exactly, take the result of the first call in a session, or use an
+engine with a \code{seed} argument (\code{\link{cpt_methods}()}
+reports which wrappers have one).
+}
+
 \examples{
 \dontshow{if (requireNamespace("breakfast", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 set.seed(2026)

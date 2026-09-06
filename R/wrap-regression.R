@@ -49,6 +49,7 @@
 strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
                                 conf_level = 0.95, ...) {
   need_pkg("strucchange")
+  reject_renamed_args(list(...), "strucchange")
   # A confidence level outside (0, 1) is meaningless, and `level = 2` makes
   # stats::confint() on a breakpoints fit spin without ever returning -- a
   # tryCatch() cannot rescue a call that does not terminate, so it has to be
@@ -61,7 +62,11 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
       stop("`data` must be supplied when `x` is a formula.", call. = FALSE)
     }
     response <- all.vars(x)[1]
-    data_vec <- as.numeric(data[[response]])
+    # The formula interface reads the response column straight out of `data`,
+    # which as.numeric() would silently turn into level codes for a factor --
+    # the one series-bearing path in the package that the type guard on `x`
+    # cannot see, because here `x` is the formula.
+    data_vec <- coerce_series_values(data[[response]], arg = response)
     fml <- x
   } else {
     validate_data(x)
@@ -72,7 +77,12 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
 
   args <- list(formula = fml, data = data, h = h, ...)
   if (!is.null(breaks)) args$breaks <- breaks
-  fit <- do.call(strucchange::breakpoints, args)
+  fit <- engine_short_series(
+    do.call(strucchange::breakpoints, args),
+    "strucchange", length(data_vec),
+    paste0("The minimum segment is `h` * n = ", h, " * ", length(data_vec),
+           " = ", floor(h * length(data_vec)),
+           " observations; raise `h` or lengthen the series."))
 
   bp <- fit$breakpoints
   if (length(bp) == 1 && is.na(bp)) bp <- integer(0)
@@ -141,6 +151,13 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
 segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
                               ...) {
   need_pkg("segmented")
+  reject_renamed_args(list(...), "segmented")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(npsi, "npsi", min = 1)
   validate_scalar(conf_level, "conf_level", min = 0, max = 1,
                   min_open = TRUE, max_open = TRUE)
 
@@ -241,23 +258,49 @@ envcpt_wrapper <- function(x, models = c("mean", "meancpt", "meanar1",
                                          "trendar1cpt", "trendar2cpt"),
                            criterion = c("AIC", "BIC"), minseglen = 5, ...) {
   need_pkg("EnvCpt")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(minseglen, "minseglen", min = 2)
+  reject_managed_args(list(...), "envcpt", c(
+    verbose = paste("the wrapper keeps the engine's \"Fitting 12 models\"",
+                    "narration and its progress bar out of the result")))
   criterion <- match.arg(criterion)
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "envcpt")
 
   # EnvCpt fits up to twelve models with try(), and a try() that is not
-  # silent prints its error straight to stderr. On a degenerate series
-  # several of the AR fits fail that way, so the call succeeds and returns a
-  # perfectly good answer after printing "Error in arima(...): non-stationary
-  # AR part from CSS" -- which reads as a failure. Divert the message stream
-  # for the duration: individual model failures are expected here (the
-  # criterion simply ignores the non-finite ones, and a run where nothing
-  # fits gets its own error below), while genuine warnings are deferred past
-  # the diversion and still reach the user.
+  # silent prints its error straight to stderr, where it reads as a failure
+  # even though the call succeeded and the criterion simply ignores the
+  # non-finite fits (a run where nothing fits gets its own error below).
+  #
+  # Re-measured: the cited example -- "Error in arima(...): non-stationary
+  # AR part from CSS" -- would not reproduce on any of eight series chosen
+  # to provoke it (a random walk, an explosive AR(1), a doubly-integrated
+  # series, one scaled to 1e6, a numerically-constant one, an exact step,
+  # and two ordinary two-segment series): zero stderr lines each. What the
+  # engine does still write to stderr is its own "Fitting 12 models"
+  # narration, and that is already off because this call passes
+  # `verbose = FALSE`. So the diversion is now a cheap safety net rather
+  # than a fix for an observed leak -- kept because an upstream try() that
+  # stops being silent would otherwise print into the caller's console,
+  # and because it costs nothing.
+  #
+  # What the diversion must NOT do is swallow real conditions, and it does
+  # not: a genuine warning ("possible convergence problem: optim gave
+  # code = 1", from a trending series) is deferred past the diversion and
+  # still reaches the user.
   utils::capture.output(
-    fit <- EnvCpt::envcpt(data_vec, models = models, minseglen = minseglen,
-                          verbose = FALSE, ...),
+    fit <- engine_short_series(
+      EnvCpt::envcpt(data_vec, models = models, minseglen = minseglen,
+                     verbose = FALSE, ...),
+      "envcpt", length(data_vec),
+      paste0("Every model must fit two segments of `minseglen` = ",
+             minseglen, ", so the series needs more than ", 2 * minseglen,
+             " observations; lower `minseglen` or lengthen the series.")),
     type = "message"
   )
 

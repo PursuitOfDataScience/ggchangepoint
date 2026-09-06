@@ -30,6 +30,7 @@
 fpop_wrapper <- function(x, penalty = NULL, ...) {
 
   need_pkg("fpop")
+  reject_renamed_args(list(...), "fpop")
   validate_data(x)
   data_vec <- as_uni_vector(x, "fpop")
 

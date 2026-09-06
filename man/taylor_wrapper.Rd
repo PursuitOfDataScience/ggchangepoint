@@ -42,6 +42,23 @@ the bootstrap probability that a change occurred there, which gives a
 confidence level per changepoint and a confidence interval for its
 location — both carried onto the result.
 }
+\section{Series length, and why you cannot interrupt it}{
+
+This engine is written for the series lengths quality control sees --
+hundreds to low thousands -- and it does not scale. At \eqn{n = 10{,}000}
+with the default \code{n_bootstraps = 1000} it runs for \strong{minutes}, and
+more importantly it runs where R cannot look: a \code{setTimeLimit()} of
+45 seconds was still not honoured after 170, and one of 125 seconds after
+200, so the call had to be killed from outside the session. R checks
+elapsed-time limits and keyboard interrupts at the same points, which
+means \strong{Ctrl-C will not stop it either}.
+
+So size the call before starting it rather than after. \code{n_bootstraps}
+is the knob -- the cost is roughly linear in it -- and
+\code{vignette("benchmarks", package = "ggchangepoint")} lists the
+methods that do scale to long series.
+}
+
 \examples{
 \dontshow{if (requireNamespace("ChangePointTaylor", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 set.seed(2026)

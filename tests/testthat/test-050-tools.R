@@ -644,7 +644,15 @@ test_that("the monitor API rejects the inputs that would score nonsense", {
 # tidy(cpt_benchmark(...)) worked. Every class that holds rows now answers.
 # ---------------------------------------------------------------------------
 
-test_that("tidy() works on every result class the package returns", {
+test_that("tidy() works on every result class that offers it", {
+  # The name used to say "every result class the package returns", which
+  # overstated it: `ggcpt_stability` has no tidy() route and its own help
+  # says so ("Methods: print() and autoplot()"). It is the only result
+  # class that does not inherit `ggcpt` -- `ggcpt_consensus` has no tidy
+  # method either but its class vector is c("ggcpt_consensus", "ggcpt"),
+  # so tidy.ggcpt handles it. The exception is asserted below rather than
+  # left implicit, so adding tidy.ggcpt_stability later fails this test and
+  # prompts updating cpt_stability()'s @return at the same time.
   set.seed(81)
   x <- c(stats::rnorm(100), stats::rnorm(100, 5))
   X <- cbind(a = x, b = c(stats::rnorm(100), stats::rnorm(100, -4)))
@@ -663,8 +671,13 @@ test_that("tidy() works on every result class the package returns", {
                                         over = list(minseglen = c(2L, 10L))),
     ggcpt_consensus = cpt_consensus(x, methods = c("pelt", "binseg", "amoc"),
                                     min_votes = 2),
-    ggcpt_power = cpt_power(n = 60, jump = c(1, 3), n_sim = 4, seed = 1,
-                            progress = FALSE),
+    # `progress` is not an argument of cpt_power(); it landed in `...`,
+    # reached cpt_detect(), and the wrapper refused it -- so every replicate
+    # failed and this fixture was a power object whose `power` was NaN. The
+    # test still passed, because tidy() works fine on a degenerate object.
+    # Surfaced by the warning cpt_power() now raises when no replicate
+    # completes; the assertion below is what should have caught it.
+    ggcpt_power = cpt_power(n = 60, jump = c(1, 3), n_sim = 4, seed = 1),
     ggcpt_monitor = cpt_replay(x, method = "edetector",
                                baseline = stats::rnorm(100)),
     ggcpt_recommendation = cpt_recommend(),
@@ -674,6 +687,19 @@ test_that("tidy() works on every result class the package returns", {
                                                        what = "shock"))
   )
   objs$ggcpt_delay <- cpt_delay(objs$ggcpt_monitor, truth = 100)
+
+  # Every fixture must be a real result, not a degenerate one that happens
+  # to survive tidy(). The power object was NaN for as long as this test
+  # existed; nothing here looked at its numbers.
+  expect_true(all(is.finite(objs$ggcpt_power$power)))
+  expect_true(all(is.finite(objs$ggcpt_power$mc_se)))
+
+  # the documented exception, pinned in both directions
+  st <- cpt_stability(x, method = "pelt", B = 6, seed = 1)
+  expect_identical(class(st), "ggcpt_stability")   # inherits nothing
+  expect_error(generics::tidy(st), "no applicable method")
+  expect_s3_class(ggplot2::autoplot(st), "ggplot") # what it does offer
+  expect_output(print(st))
 
   for (nm in names(objs)) {
     t <- generics::tidy(objs[[nm]])
@@ -885,4 +911,244 @@ test_that("cpt_annotate_events adds cp_index only when there is an index", {
     expect_output(print(ev), "ggcpt_events")
     expect_no_error(ggplot2::ggplot_build(ggplot2::autoplot(ev)))
   }
+})
+
+test_that("a bad argument value is reported against the argument the caller passed", {
+  # Sweeping every numeric/logical-defaulted argument of the exported
+  # non-detector functions with NA, Inf, -1, 0, a length-2 vector and a
+  # string, and asking whether the resulting error names *that* argument,
+  # found three that did not.
+  set.seed(4)
+
+  ## cpt_simulate(df =) used a bare `if (df <= 2)`, so NA answered "missing
+  ## value where TRUE/FALSE needed" and "a" answered "invalid arguments".
+  ## `rho` next to it already went through validate_scalar().
+  for (bad in list(NA, "a", c(3, 4), Inf)) {
+    expect_error(cpt_simulate(n = 100, changepoints = 50, noise = "t",
+                              df = bad), "`df`")
+  }
+  # the domain message is kept, with its reason
+  expect_error(cpt_simulate(n = 100, changepoints = 50, noise = "t", df = 2),
+               "must exceed 2 so the t-noise variance exists")
+  expect_s3_class(cpt_simulate(n = 100, changepoints = 50, noise = "t",
+                               df = 5), "tbl_df")
+  # rho is validated only on the path that uses it, as documented
+  expect_error(cpt_simulate(n = 100, changepoints = 50, noise = "ar1",
+                            rho = 1.5), "`rho`")
+
+  ## cpt_power(sigma =)/cpt_min_detectable(sigma =) reach cpt_simulate() as
+  ## its `sd`, so a bad value was reported as "`sd` must be a single finite
+  ## number" -- an argument neither function has.
+  for (bad in list(NA, -1, "a", c(1, 2))) {
+    expect_error(cpt_power(n = 100, jump = 2, sigma = bad, n_sim = 2),
+                 "`sigma`")
+  }
+  expect_error(cpt_min_detectable(n = 100, sigma = NA, n_sim = 2,
+                                  max_iter = 1), "`sigma`")
+
+  ## cpt_power(location =) went through nothing, and the scenario loop
+  ## clamps with max(2, min(cp, n - 2)) -- so `location = 1e6` at n = 200
+  ## silently reported power for a change at 198. It is documented as "a
+  ## fraction of n in (0, 1) or an integer position", and may be a vector,
+  ## so validate_scalar() cannot express it.
+  for (bad in list(-1, 0, 1e6, 200, NA, "a")) {
+    expect_error(cpt_power(n = 200, jump = 3, location = bad, n_sim = 2),
+                 "`location`")
+  }
+  # every documented form still works, including a vector
+  for (good in list(0.5, 0.25, 100, c(0.3, 0.7))) {
+    r <- cpt_power(n = 200, jump = 3, location = good, n_sim = 2)
+    expect_s3_class(r, "ggcpt_power")
+    expect_true(all(r$location >= 2 & r$location <= 198))
+  }
+
+  ## cpt_scenarios() is the contrast, and is deliberately left alone: its
+  ## `location` is fractions-only, it clamps, and it already *warns* naming
+  ## the argument. Silence was the defect, not clamping.
+  expect_warning(cpt_scenarios(n = 200, jump = 2, location = 1e6, n_rep = 1),
+                 "`location` is a fraction of `n`")
+
+  ## ggecpplot(min_size =)/ecp_wrapper() reach ecp as `min.size`, so a bad
+  ## value was reported as "min.size must be an integer greater than 1",
+  ## and min_size = NA reached an `if` ("missing value where TRUE/FALSE").
+  for (bad in list(NA, -1, 0, "a", c(2, 3))) {
+    expect_error(ecp_wrapper(c(rnorm(40), rnorm(40, 5)), min_size = bad),
+                 "`min_size`")
+  }
+  expect_s3_class(ecp_wrapper(c(rnorm(40), rnorm(40, 5)), min_size = 2),
+                  "tbl_df")
+
+  ## cpt_scenarios(seed =) is used arithmetically to give each scenario its
+  ## own stream, so a string died in `+` with "non-numeric argument to
+  ## binary operator" and a length-2 value silently vectorised.
+  for (bad in list("a", c(1, 2), NA)) {
+    expect_error(cpt_scenarios(n = 200, jump = 2, seed = bad, n_rep = 1),
+                 "`seed`")
+  }
+
+  ## ggcpt_interactive(width_svg =) is validated on the ggiraph path only,
+  ## because only that path uses it; girafe() otherwise answered "`width`
+  ## must be a scalar positive number", naming its own internal argument.
+  skip_if_not_installed("ggiraph")
+  fit <- cpt_detect(c(rnorm(90), rnorm(90, 5)), method = "pelt")
+  for (bad in list(NA, -1, 0, "a")) {
+    expect_error(ggcpt_interactive(fit, engine = "ggiraph", width_svg = bad),
+                 "`width_svg`")
+    expect_error(ggcpt_interactive(fit, engine = "ggiraph", height_svg = bad),
+                 "`height_svg`")
+  }
+})
+
+test_that("a parallel plan does not change the answer", {
+  skip_on_cran()
+  skip_if_not_installed("future")
+  skip_if_not_installed("future.apply")
+  # `cpt_batch()` documents that it "Honours future::plan() for parallel
+  # execution when future.apply is available, with parallel-safe RNG";
+  # `ggcpt_compare()` "Respects future::plan()"; `cpt_benchmark()` takes a
+  # `parallel` argument. Nothing checked the property that makes those
+  # claims worth anything: the answer must not depend on the plan. A
+  # parallel run that silently reseeds each worker would still look fine --
+  # every result plausible, none reproducible.
+  #
+  # Measured identical across sequential and a two-worker multisession for
+  # all three entry points.
+  set.seed(21)
+  series <- lapply(1:4, function(i) c(rnorm(80), rnorm(80, 3 + i * 0.2)))
+  names(series) <- paste0("s", 1:4)
+  labs <- lapply(series, function(s) as_cpt_labels(80, n = length(s)))
+
+  snapshot <- function() {
+    tb <- tidy(suppressWarnings(cpt_batch(series, method = "pelt", seed = 1)))
+    cm <- suppressWarnings(
+      ggcpt_compare_table(series[[1]], methods = c("pelt", "binseg")))
+    bm <- suppressWarnings(
+      cpt_benchmark(series, methods = c("pelt", "amoc"), truth = labs,
+                    parallel = TRUE))
+    list(batch = paste(tb$series, tb$cp, collapse = "|"),
+         compare = paste(cm$method, cm$cp, collapse = "|"),
+         bench = paste(bm$method, round(bm$f1, 8), collapse = "|"))
+  }
+
+  old <- future::plan("sequential")
+  on.exit(future::plan(old), add = TRUE)
+  seq_run <- snapshot()
+
+  future::plan(future::multisession, workers = 2)
+  par_run <- snapshot()
+  future::plan("sequential")
+
+  expect_identical(seq_run$batch, par_run$batch)
+  expect_identical(seq_run$compare, par_run$compare)
+  expect_identical(seq_run$bench, par_run$bench)
+})
+
+test_that("streaming one observation at a time equals a bulk update", {
+  skip_on_cran()
+  # `cpt_replay()` is documented as doing "in one call" what hand-rolling
+  # the update loop does, and it is literally cpt_monitor() plus a single
+  # cpt_update(), so *that* equivalence holds by construction. The one that
+  # does not is whether a bulk update equals feeding observations a few at a
+  # time -- genuine streaming, which is what an online detector is for.
+  # Nothing checked it, and a monitor that mishandled its state across calls
+  # would give a streaming user different alarms from the batch replay with
+  # nothing to signal the difference.
+  #
+  # Measured identical for all three monitors: bulk == one-at-a-time ==
+  # chunks of five == cpt_replay().
+  set.seed(31)
+  n <- 200
+  alarm_times <- function(m) alarms(m)$time
+
+  three_ways <- function(mk, rest, take) {
+    bulk <- { m <- mk(); alarm_times(cpt_update(m, take(rest, seq_len(nrow_or_len(rest))))) }
+    m <- mk()
+    for (i in seq_len(nrow_or_len(rest))) m <- cpt_update(m, take(rest, i))
+    one <- alarm_times(m)
+    m <- mk()
+    idx <- split(seq_len(nrow_or_len(rest)),
+                 ceiling(seq_len(nrow_or_len(rest)) / 5))
+    for (k in idx) m <- cpt_update(m, take(rest, k))
+    five <- alarm_times(m)
+    list(bulk = bulk, one = one, five = five)
+  }
+  nrow_or_len <- function(z) if (is.matrix(z)) nrow(z) else length(z)
+
+  ## univariate monitors
+  v <- c(rnorm(n / 2), rnorm(n / 2, 3))
+  base <- v[1:50]
+  rest <- v[51:n]
+  take_v <- function(z, i) z[i]
+  for (meth in c("edetector", "cpm")) {
+    if (meth == "cpm" && !engine_installed("cpm")) next
+    mk <- function() suppressWarnings(suppressMessages(
+      cpt_monitor(meth, baseline = base)))
+    r <- three_ways(mk, rest, take_v)
+    expect_identical(r$bulk, r$one, info = paste(meth, "one at a time"))
+    expect_identical(r$bulk, r$five, info = paste(meth, "chunks of five"))
+    # ...and cpt_replay() agrees with all of them
+    rp <- suppressWarnings(cpt_replay(v, method = meth, baseline = 50))
+    expect_identical(r$bulk, alarm_times(rp), info = paste(meth, "replay"))
+  }
+
+  ## ocd is multivariate-only, and needs an explicit threshold so the test
+  ## does not pay for its Monte Carlo calibration (~189 s, see ?ocd_wrapper)
+  skip_if_not_installed("ocd")
+  p3 <- 3
+  X <- matrix(rnorm(n * p3), n, p3)
+  X[(n / 2 + 1):n, ] <- X[(n / 2 + 1):n, ] + 2
+  colnames(X) <- paste0("v", seq_len(p3))
+  mkx <- function() suppressWarnings(suppressMessages(
+    cpt_monitor("ocd", baseline = X[1:50, , drop = FALSE],
+                thresh = c(20, 20, 20))))
+  take_m <- function(z, i) z[i, , drop = FALSE]
+  r <- three_ways(mkx, X[51:n, , drop = FALSE], take_m)
+  expect_identical(r$bulk, r$one, info = "ocd one at a time")
+  expect_identical(r$bulk, r$five, info = "ocd chunks of five")
+})
+
+test_that("the panel layer refuses what cpt_detect() refuses", {
+  # Sweeping cpt_batch() and cpt_benchmark() over collections with a bad
+  # member found two gaps.
+  set.seed(41)
+  ok1 <- c(rnorm(80), rnorm(80, 4))
+  ok2 <- c(rnorm(80), rnorm(80, 3))
+
+  ## cpt_batch() coerced each series with a bare as.numeric(), so it accepted
+  ## exactly what cpt_detect() has refused since 0.4.0: a factor (which
+  ## becomes its LEVEL CODES -- an alphabetical ordering of the labels, not
+  ## the data) and a character vector (which becomes NAs). A whole panel of
+  ## them ran and reported changepoints.
+  expect_error(cpt_detect(as.character(ok2), method = "pelt"), "character")
+  expect_error(cpt_batch(list(a = ok1, b = as.character(ok2)), method = "pelt"),
+               "character")
+  expect_error(cpt_batch(list(a = ok1, b = factor(c("a", "b", "c"))),
+                         method = "pelt"), "factor")
+  # the series is named, because in a panel "which one?" is the question
+  expect_error(cpt_batch(list(a = ok1, b = as.character(ok2)), method = "pelt"),
+               "Series `b`")
+
+  # and every legitimate input still works, including the containers
+  # coerce_series_values() deliberately lets through
+  expect_s3_class(cpt_batch(list(a = ok1, b = ok2), method = "pelt"),
+                  "ggcpt_batch")
+  expect_s3_class(cpt_batch(cbind(a = ok1, b = ok2), method = "pelt"),
+                  "ggcpt_batch")
+  expect_s3_class(cpt_batch(list(ok1, ok2), method = "pelt"), "ggcpt_batch")
+  expect_s3_class(cpt_batch(list(a = ok1, b = stats::ts(ok2)), method = "pelt"),
+                  "ggcpt_batch")
+
+  ## cpt_benchmark(methods = character(0)) built a zero-row grid and then set
+  ## an attribute on NULL, so base R answered "attempt to set an attribute on
+  ## NULL" -- nothing about the argument. `datasets` was already checked.
+  ds <- list(a = ok1, b = ok2)
+  tr <- list(a = as_cpt_labels(80, n = 160), b = as_cpt_labels(80, n = 160))
+  for (empty in list(character(0), NULL)) {
+    err <- tryCatch({ cpt_benchmark(ds, methods = empty, truth = tr); NULL },
+                    error = function(e) conditionMessage(e))
+    expect_true(!is.null(err))
+    expect_match(err, "`methods` is empty")
+    expect_false(grepl("attempt to set an attribute on NULL", err, fixed = TRUE))
+  }
+  expect_error(cpt_benchmark(list(), methods = "pelt"), "datasets")
 })

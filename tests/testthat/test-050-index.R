@@ -256,3 +256,85 @@ test_that("every plot drawn against series position honours the index", {
     expect_equal(xscale(plain[[nm]]), "ScaleContinuousPosition", info = nm)
   }
 })
+
+test_that("a seed makes a stochastic detector reproducible", {
+  skip_on_cran()
+  # Nineteen wrappers take a `seed`, and nothing asserted the property the
+  # argument exists for: two runs with the same seed give the same answer.
+  # Measured across all nineteen -- 17 reproducible, 0 not, the other two
+  # unavailable here (mcp needs JAGS, fabisearch is too slow for three fits).
+  #
+  # The series is deliberately a *weak* change. On a 5-sigma step every
+  # random draw finds the same changepoint, so identical answers would say
+  # nothing about whether the seed was used at all.
+  fast <- c("wbs", "not", "mosum", "idetect", "ecp", "bcp", "nsp",
+            "segmented", "taylor", "wbsts")
+  reg <- builtin_registry()
+  available <- fast[vapply(fast, function(m) {
+    i <- match(m, reg$method)
+    !is.na(i) && engine_installed(reg$engine[i])
+  }, logical(1))]
+  if (length(available) == 0L) skip("no seed-taking engine installed")
+
+  set.seed(11)
+  v <- c(rnorm(110), rnorm(110, 0.4))
+  tested <- 0L
+  for (m in available) {
+    run <- function(sd) tryCatch({
+      suppressWarnings(suppressMessages(
+        utils::capture.output(z <- cpt_detect(v, method = m, seed = sd))))
+      z$changepoints$cp
+    }, error = function(e) NULL)
+    a <- run(1)
+    if (is.null(a)) next
+    tested <- tested + 1L
+    expect_identical(a, run(1), info = paste(m, "is not reproducible"))
+  }
+  expect_gt(tested, 0L)
+})
+
+test_that("an index is threaded through to every method's result", {
+  skip_on_cran()
+  # test-050-index.R covered `pelt` and `ecp`. `?cpt_detect` promises the
+  # index is "stored on the result and threaded through tidy() (as
+  # cp_index), augment(), autoplot() and cpt_report()" for *every* method, so
+  # a sweep of all 49 checked that -- 38 reachable, all correct. This keeps a
+  # spread of them honest: univariate and multivariate, and engines that
+  # rebuild the data tibble themselves.
+  n <- 220
+  set.seed(12)
+  v <- c(rnorm(110), rnorm(110, 5))
+  dates <- seq(as.Date("2020-01-01"), by = "day", length.out = n)
+  reg <- builtin_registry()
+  spread <- c("pelt", "binseg", "fpop", "wbs", "smuce", "bcp", "cpm",
+              "strucchange", "ecp", "inspect", "kcp")
+
+  available <- spread[vapply(spread, function(m) {
+    i <- match(m, reg$method)
+    !is.na(i) && engine_installed(reg$engine[i])
+  }, logical(1))]
+  if (length(available) == 0L) skip("no engine in the spread is installed")
+
+  tested <- 0L
+  for (m in available) {
+    i <- match(m, reg$method)
+    dat <- if (isTRUE(reg$univariate[i])) v else
+      cbind(a = v, b = c(rnorm(110), rnorm(110, 4)),
+            c = c(rnorm(110), rnorm(110, 3)))
+    res <- tryCatch(suppressWarnings(suppressMessages({
+      utils::capture.output(z <- cpt_detect(dat, method = m, index = dates))
+      z })), error = function(e) NULL)
+    if (is.null(res)) next
+    tested <- tested + 1L
+    expect_false(is.null(res$index), info = paste(m, "lost the index"))
+    expect_length(res$index, n)
+    expect_s3_class(res$index, "Date")
+    expect_true("index" %in% names(res$data), info = m)
+    td <- tidy(res)
+    if (nrow(td) == 0L) next
+    expect_true("cp_index" %in% names(td), info = paste(m, "tidy has no cp_index"))
+    expect_equal(as.character(td$cp_index),
+                 as.character(dates[res$changepoints$cp]), info = m)
+  }
+  expect_gt(tested, 0L)
+})

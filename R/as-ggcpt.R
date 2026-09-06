@@ -61,7 +61,7 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
   is_mv <- (is.matrix(values) || is.data.frame(values)) &&
     ncol(as.matrix(values)) > 1
   if (is_mv) {
-    X <- as_mv_matrix(values)
+    X <- as_mv_matrix(values, arg = "x")
     data_vec <- as.numeric(X[, 1])
   } else {
     X <- NULL

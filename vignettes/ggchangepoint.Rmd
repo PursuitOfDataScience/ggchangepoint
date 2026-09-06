@@ -58,7 +58,7 @@ has_plotly    <- requireNamespace("plotly", quietly = TRUE)
 
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface to
 changepoint detection in R: one dispatcher (`cpt_detect()`) covering 50
-methods across nine methodological families, one result class (`ggcpt`) with
+methods across six methodological families, one result class (`ggcpt`) with
 a stable tidy contract, and one visualisation entry point (`autoplot()`)
 that draws everything a method reports — including confidence intervals and
 posterior probabilities [@wickham2016ggplot2; @robinson2017broom]. This
@@ -144,8 +144,10 @@ plot(res)
 # Unified detection
 
 `cpt_detect()` is the recommended entry point: pick a `method`, say what the
-change is in (`change_in` = `"mean"`, `"var"`, `"meanvar"`, `"slope"`, or
-`"distribution"`), and optionally set a `penalty`. Incompatible
+change is in (`change_in` = `"mean"`, `"var"`, `"meanvar"`, `"slope"`,
+`"distribution"`, `"covariance"`, `"network"`, `"regression"` or
+`"seasonality"` — the values `cpt_methods()` lists in its `supports`
+column), and optionally set a `penalty`. Incompatible
 `method`/`change_in` combinations error — they are never silently
 substituted.
 
@@ -420,10 +422,13 @@ autoplot(path, type = "segmentations")  # the candidate models themselves
 # The visualisation layer
 
 `autoplot()` renders any `ggcpt`. Options: `show_segments` (fitted segment
-means), `show_fit` (the engine's own fitted signal, where provided — SMUCE,
-DeCAFS, CPOP, segmented, bcp, BEAST), `show_ci` (changepoint-location
-confidence intervals, where provided — SMUCE/HSMUCE, strucchange,
-segmented), `show_points`/`show_line`, an `index` for a date axis, and the
+means), `show_fit` (the engine's own fitted signal, where provided — the nine
+engines `cpt_methods()` marks in its `fitted` column: SMUCE, HSMUCE, CPOP,
+bcp, BEAST, DeCAFS, segmented, mcp, bfast), `show_ci` (changepoint-location
+confidence intervals, where provided — the seven marked in its `ci` column:
+SMUCE, HSMUCE, strucchange, segmented, mcp, bfast, taylor; `nsp` is marked
+there too but reports a region, drawn by `show_regions`),
+`show_points`/`show_line`, an `index` for a date axis, and the
 `cptline_*` styling arguments (`cptline_color`, `cptline_alpha`,
 `cptline_type`, `cptline_linewidth`). Asking for an overlay the result
 cannot supply warns rather than failing silently.

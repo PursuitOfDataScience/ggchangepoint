@@ -29,7 +29,11 @@
 #' @family changepoint engines
 decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
   need_pkg("DeCAFS")
-
+  reject_renamed_args(list(...), "decafs")
+  reject_managed_args(list(...), "decafs", c(
+    warningMessage = paste("the wrapper turns the engine's own advisory off",
+                           "and raises the conditions R users expect",
+                           "instead")))
   validate_data(x)
   data_vec <- as_uni_vector(x, "decafs")
 
@@ -87,6 +91,17 @@ decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
 sn_wrapper <- function(x, parameter = c("mean", "variance", "acf", "bivcor"),
                        confidence = 0.9, grid_size = NULL, ...) {
   need_pkg("SNSeg")
+  reject_renamed_args(list(...), "sn")
+  # Forwarded to the engine, which reported a bad value from deep inside
+  # itself -- "missing value where TRUE/FALSE needed", "negative length
+  # vectors are not allowed", "NAs in foreign function call" and the like,
+  # none of which names the argument. Measured across all 64 wrapper
+  # argument slots; these are the ones that needed it.
+  validate_scalar(confidence, "confidence", min = 0, max = 1, min_open = TRUE, max_open = TRUE)
+  reject_managed_args(list(...), "sn", c(
+    plot_SN = paste("SNSeg would draw to the active device; this wrapper",
+                    "returns a ggcpt and leaves plotting to",
+                    "`autoplot()`")))
   parameter <- match.arg(parameter)
 
   validate_data(x)

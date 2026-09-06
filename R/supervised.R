@@ -617,7 +617,7 @@ as_series_list <- function(series) {
   out <- if (is.list(series) && !is.data.frame(series)) {
     lapply(series, as.numeric)
   } else {
-    X <- as_mv_matrix(series)
+    X <- as_mv_matrix(series, arg = "series")
     stats::setNames(lapply(seq_len(ncol(X)), function(j) X[, j]), colnames(X))
   }
   nms <- names(out) %||% rep("", length(out))

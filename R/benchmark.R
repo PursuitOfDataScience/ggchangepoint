@@ -70,6 +70,14 @@ cpt_benchmark <- function(datasets, methods = c("pelt", "binseg", "wbs"),
          call. = FALSE)
   }
   methods <- unique(as.character(methods))
+  # An empty method set builds a zero-row grid, and the attribute the result
+  # carries is then set on NULL -- base R answers "attempt to set an
+  # attribute on NULL", which says nothing about the argument. `datasets`
+  # above is checked the same way, for the same reason.
+  if (length(methods) == 0L) {
+    stop("`methods` is empty: `cpt_benchmark()` needs at least one method ",
+         "to score. See cpt_methods() for what is available.", call. = FALSE)
+  }
   metric_choices <- c("covering", "f1", "precision", "recall", "hausdorff",
                       "rand_index", "annotation_error", "mae_matched",
                       "rmse_matched")

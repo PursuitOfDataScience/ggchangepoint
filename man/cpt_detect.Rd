@@ -31,12 +31,26 @@ report what to install when missing;
 not wrap.}
 
 \item{change_in}{What to detect change in. One of \code{"mean"},
-\code{"var"}, \code{"meanvar"}, \code{"slope"},
-\code{"distribution"}, \code{"covariance"}, \code{"network"},
-\code{"regression"} or \code{"seasonality"}. Defaults to
-\code{"mean"}. The requested value is validated against the method's
-capabilities (see \code{cpt_methods()}); incompatible combinations
-error rather than silently running something else.}
+  \code{"var"}, \code{"meanvar"}, \code{"slope"},
+  \code{"distribution"}, \code{"covariance"}, \code{"network"},
+  \code{"regression"} or \code{"seasonality"}. Defaults to
+  \code{"mean"}. The requested value is validated against the method's
+  capabilities (see \code{cpt_methods()}); incompatible combinations
+  error rather than silently running something else.
+
+  A \emph{compatible} request may still be routed to the method's own
+  native change type, because several engines have no separate estimator
+  for the thing being asked about. That is never silent: the result's
+  \code{change_in} records what was actually detected, so compare it
+  with what you asked for. Measured across every method and every value
+  its \code{supports} entry lists, six pairs are routed --
+  \code{not}'s \code{"var"} becomes \code{"meanvar"} (its variance
+  contrast is piecewise-constant in mean \emph{and} variance),
+  \code{cpm}'s \code{"mean"} and \code{"var"} both become
+  \code{"distribution"}, \code{kcp}'s become \code{"running mean"} and
+  \code{"running var"}, and \code{wbsts}'s \code{"mean"} becomes
+  \code{"var"} (it detects change in the wavelet spectrum). Every other
+  listed combination returns the change type it was asked for.}
 
 \item{penalty}{Penalty type or value. Either a character string
 (\code{"MBIC"}, \code{"BIC"}, \code{"SIC"}, \code{"AIC"},
@@ -79,9 +93,10 @@ also derived from \code{change_in} (\code{not}'s \code{contrast},
 supplied here takes precedence. Check the spelling against the wrapper's
 help page: several engines end their own signature in \code{...}
 (\pkg{wbs}, \pkg{not}, \pkg{Rbeast}, \pkg{strucchange},
-\pkg{segmented}, \pkg{fastcpd}), so for those a misspelt argument name
-is silently discarded upstream and the engine quietly uses its default
-rather than reporting the typo.}
+\pkg{segmented}, \pkg{fastcpd}, \pkg{fChange}, \pkg{bfast}), so for
+those a misspelt argument name is silently discarded upstream and the
+engine quietly uses its default rather than reporting the typo. Every
+other wired method rejects an unknown argument by name.}
 }
 \value{
 A \code{ggcpt} object.

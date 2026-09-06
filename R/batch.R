@@ -54,7 +54,45 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
       stop("`x` is empty: `cpt_batch()` needs at least one series.",
            call. = FALSE)
     }
-    lapply(x, as.numeric)
+    # coerce_series_values(), not a bare as.numeric(): a factor coerces to
+    # its LEVEL CODES -- an alphabetical ordering of the labels rather than
+    # the data -- and a character vector to NAs, both silently. cpt_detect()
+    # has refused those since 0.4.0; cpt_batch() reached the engine through
+    # `as.numeric()` and so accepted a whole panel of them, reporting
+    # changepoints in the label ordering. The series name goes into the
+    # message because a panel is exactly where "which one?" is the question.
+    stats::setNames(lapply(seq_along(x), function(i) {
+      nm <- names(x)[i] %||% ""
+      label <- paste0("Series ", if (nzchar(nm)) paste0("`", nm, "` ") else "",
+                      "(", i, " of ", length(x), ")")
+      xi <- x[[i]]
+      # A panel is documented as "a list of numeric vectors", and that is
+      # load-bearing: as.numeric() on a matrix unrolls it column after
+      # column, so an 80x2 member became a 160-point series and reported a
+      # changepoint at index 80 -- the seam where the second column was
+      # appended, which the data does not contain. One column is exempt
+      # because unrolling it changes nothing.
+      if (is.matrix(xi) || is.data.frame(xi)) {
+        withCallingHandlers(
+          reject_multicolumn(xi, "x",
+                             paste("Pass a multivariate series to",
+                                   "cpt_detect() directly, or split the",
+                                   "columns into separate panel members.")),
+          error = function(e) {
+            stop(label, ": ", conditionMessage(e), call. = FALSE)
+          })
+        return(withCallingHandlers(
+          as_mv_matrix(xi, arg = "x")[, 1],
+          error = function(e) {
+            stop(label, ": ", conditionMessage(e), call. = FALSE)
+          }))
+      }
+      withCallingHandlers(
+        coerce_series_values(xi),
+        error = function(e) {
+          stop(label, ": ", conditionMessage(e), call. = FALSE)
+        })
+    }), names(x))
   } else {
     X <- as_mv_matrix(x)
     stats::setNames(lapply(seq_len(ncol(X)), function(j) X[, j]),

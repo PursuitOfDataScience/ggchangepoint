@@ -46,11 +46,36 @@ ecp_wrapper <- function(data,
                         min_size = 2,
                         seed = NULL,
                         ...){
+  reject_renamed_args(list(...), "ecp")
+  # `min_size` reaches ecp as `min.size`, so without a check here a bad value
+  # was reported as "min.size must be an integer greater than 1" -- naming
+  # the engine's argument rather than the one the caller passed -- and
+  # `min_size = NA` reached an `if` and answered "missing value where
+  # TRUE/FALSE needed". Only meaningful for algorithm = "divisive", which is
+  # where ecp itself applies it, but the check is cheap and the message is
+  # about the argument either way.
+  validate_scalar(min_size, "min_size", min = 2)
 
   algorithm <- match.arg(algorithm, c("divisive", "agglo"))
 
   if (!is.numeric(data) && !is.data.frame(data) && !is.matrix(data)) {
     stop("`data` must be a numeric vector, matrix, or data.frame.", call. = FALSE)
+  }
+  # ecp absorbs non-finite values rather than refusing them, and what it
+  # returns is wrong rather than merely missing: on a 180-point series with
+  # one changepoint at 90, twenty NAs lose the changepoint entirely, and an
+  # all-NA second half reports two changepoints at 12 and 14 that the data
+  # does not contain. `cpt_wrapper()` and `cpt_detect()` have both always
+  # refused this input; only the ecp route was open. as_mv_matrix() handles
+  # the rectangular case so a non-numeric *column* is named, as everywhere
+  # else in the package.
+  finite_check <- if (is.matrix(data) || is.data.frame(data)) {
+    as_mv_matrix(data, arg = "data")
+  } else {
+    data
+  }
+  if (anyNA(finite_check) || any(!is.finite(finite_check))) {
+    stop_nonfinite(finite_check, "data")
   }
 
   if (!is.null(seed)) set.seed(seed)

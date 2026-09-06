@@ -54,7 +54,10 @@ regression specified as a \emph{list of formulas}, one per segment. This
 is the most expressive detector in the package — each segment can have its
 own intercept, slope, variance and autocorrelation, and the changepoints
 themselves get full posterior distributions rather than point estimates,
-which \code{\link{ggcpt_posterior}()} already knows how to draw.
+summarised here as \code{ci_lower}/\code{ci_upper} on the changepoints
+tibble. (\code{\link{ggcpt_posterior}()} draws a \emph{per-location}
+probability profile, which only \pkg{bcp} and \pkg{Rbeast} expose; it
+does not accept an \code{mcp} result.)
 }
 \section{JAGS is a system dependency}{
 

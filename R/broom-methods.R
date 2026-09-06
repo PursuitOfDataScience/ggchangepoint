@@ -112,14 +112,23 @@ glance.ggcpt <- function(x, ...) {
         identical(cpt_test_stat(x$fit), "Normal")) {
       # changepoint's logLik() returns c(`-2*logLik`, `-2*logLik + pen`);
       # report the unpenalised first element, which is already a cost (do not
-      # negate it). The two guards above keep values that are NOT on that
-      # scale out of the column: a `cpt.range` fit (BinSeg, SegNeigh) returns
-      # the raw within-segment cost instead -- for one and the same
-      # segmentation that is 219.7 where a PELT fit reports 659.9 -- and the
-      # non-Normal test statistics warn "Not changed to be -2*logLik" for the
-      # same reason. It also skips cpt.np() fits, which carry the `cpt` class
-      # but have no logLik method, so asking would print "Calculating
-      # parameter estimates..." and then error.
+      # negate it). Verified against changepoint's own output: under a BIC
+      # penalty the pair is (544.4, 555.0), i.e. the second element is the
+      # first plus the penalty, and `change_in = "var"` and `"meanvar"` both
+      # report on the same scale.
+      #
+      # The two guards above keep values that are NOT on that scale out of
+      # the column. A `cpt.range` fit (BinSeg, SegNeigh) returns the raw
+      # within-segment cost instead -- for one and the same segmentation,
+      # cpt at 100, BinSeg reported 178.1 where PELT reported 544.4 -- and
+      # it is that path, not the test statistic, which warns "Not changed
+      # to be -2*logLik". A non-Normal test statistic does not warn at all:
+      # CUSUM and CSS *error* with "logLik is only valid for distributional
+      # assumptions", which is why they are excluded by name rather than
+      # relied on to warn. cpt.np() fits are skipped for a third reason:
+      # they carry the `cpt` class but describe no distributional
+      # changepoint type, so logLik() rejects them with "Unknown
+      # changepoint type".
       #
       # `logLik` is deliberately unqualified: the method for `cpt` is an S4
       # method owned by changepoint, which this package @imports, so plain
@@ -192,9 +201,13 @@ glance.ggcpt <- function(x, ...) {
 #' \code{is_changepoint} apply to the whole row while \code{.fitted} and
 #' \code{.resid} describe the \emph{first} coordinate only — the same
 #' coordinate \code{$segments$param_estimate} summarises. When an engine
-#' supplies its own fitted signal (SMUCE, DeCAFS, cpop, segmented, bcp,
-#' beast) that signal is used for \code{.fitted} in place of the segment
-#' means.
+#' supplies its own fitted signal that signal is used for \code{.fitted} in
+#' place of the segment means, and rides along in a \code{fitted} column of
+#' its own -- so for those engines the two columns agree. The engines that
+#' do this are exactly the ones \code{\link{cpt_methods}()} marks in its
+#' \code{fitted} column: \code{smuce}, \code{hsmuce}, \code{cpop},
+#' \code{bcp}, \code{beast}, \code{decafs}, \code{segmented},
+#' \code{mcp} and \code{bfast}.
 #' @export
 augment.ggcpt <- function(x, ...) {
   # For a multivariate result use the wide frame (index + one column per

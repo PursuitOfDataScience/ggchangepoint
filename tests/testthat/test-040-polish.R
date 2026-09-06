@@ -610,9 +610,13 @@ test_that("R43: geom_cpt_ci needs y/xmin/xmax, and x is optional", {
                                                xmax = xmax),
                        inherit.aes = FALSE)))
   # y really is required
+  # Patterned on ggplot2's own wording rather than left bare: without it
+  # this passed on any build failure at all, including one that had nothing
+  # to do with the missing `y`.
   expect_error(ggplot2::ggplot_build(
     base + geom_cpt_ci(data = ci, ggplot2::aes(xmin = xmin, xmax = xmax),
-                       inherit.aes = FALSE)))
+                       inherit.aes = FALSE)),
+    "missing aesthetics")
 
   # and the other two geoms take exactly the aesthetics they document
   segs <- data.frame(start = c(1, 51), end = c(50, 100), param = c(0, 2))
@@ -675,12 +679,19 @@ test_that("R44: the three citation sources agree with each other", {
   expect_true(all(used %in% names(inst)),
               info = paste(setdiff(used, names(inst)), collapse = ", "))
 
-  # every @key cited in a vignette resolves in the vignette bibliography
+  # every @key cited in a vignette resolves in the vignette bibliography.
+  # The pattern deliberately does not require a four-digit year: the
+  # earlier one did, so `@rcore` -- the R itself citation -- was invisible
+  # to this check, and a misspelling of any yearless key would have gone
+  # unreported. The lookbehind is what keeps an email address from
+  # reading as a citation; measured against these seven vignettes the
+  # pattern finds 63 candidates and every one is a real bib key.
   rmds <- list.files(file.path(root, "vignettes"), "\\.Rmd$", full.names = TRUE)
   cited <- unlist(lapply(rmds, function(f) {
     l <- readLines(f, warn = FALSE)
-    m <- unlist(regmatches(l, gregexpr("@[A-Za-z][A-Za-z0-9]*[0-9]{4}[a-z0-9]*", l)))
-    sub("^@", "", m)
+    m <- unlist(regmatches(l, gregexpr(
+      "(?<![A-Za-z0-9_])@[A-Za-z0-9_][A-Za-z0-9_:.#&+?<>~/-]*", l, perl = TRUE)))
+    sub("[.,;:]+$", "", sub("^@", "", m))
   }))
   expect_true(all(unique(cited) %in% names(vig)),
               info = paste(setdiff(unique(cited), names(vig)), collapse = ", "))
@@ -689,6 +700,19 @@ test_that("R44: the three citation sources agree with each other", {
   expect_identical(vig[["fryzlewicz2018tail"]]$year, "2018")
   expect_identical(inst[["james2014ecp"]]$year, "2014")
   expect_match(inst[["james2014ecp"]]$journal, "Journal of Statistical Software")
+
+  # The reverse direction, which nothing checked: an entry that no consumer
+  # cites. Ten had accumulated -- seven engine papers sitting in the
+  # vignette bibliography while only the help pages cited them (ESAC,
+  # fChange, bfast, Pettitt, Taylor, mcp), two cited only by a vignette
+  # while sitting in the Rd bibliography as well (ChangepointInference,
+  # changeforest), and Demsar (2006), which was in both files and cited by
+  # neither. None of it renders anywhere -- there is no \insertAllCited in
+  # the package -- so each was dead weight in the tarball that read as
+  # though an attribution existed. Each bibliography now holds exactly what
+  # its own consumer cites.
+  expect_setequal(names(inst), unique(used))
+  expect_setequal(names(vig), unique(cited))
 })
 
 test_that("R45: exported surface that the suite never exercised", {
@@ -1065,7 +1089,11 @@ test_that("R52: envcpt does not print upstream try() failures as if it had
   # The risk of diverting the message stream is hiding a real failure, so
   # check that one still gets through: a minimum segment length longer than
   # the series leaves the engine nothing to fit.
-  expect_error(envcpt_wrapper(rnorm(10), minseglen = 400))
+  # The pattern is the point: Part XLVII replaced the engine's bare
+  # "Minimum segment legnth is too large" with a message naming the method
+  # and the length, and a patternless expectation would pass on either.
+  expect_error(envcpt_wrapper(rnorm(10), minseglen = 400),
+               "Method `envcpt` could not segment a series of 10 observation")
 
   # (whether a given series also triggers an upstream convergence *warning*
   # is data-dependent, so it is not asserted here; warnings are deferred past
@@ -1436,6 +1464,60 @@ test_that("R61: cpm and kcp no longer report 'no changepoints' when the
     expect_length(out, 0L)
   }
   expect_true(any(abs(cpm_wrapper(x, arl0 = 500)$changepoints$cp - 120) <= 5))
+
+  # Sampling supported values proves the guard fires; it does not prove the
+  # message's enumeration is complete, and it was not. The list stopped at
+  # 20000 while cpm ships thresholds up to 50000, so half the grid -- 300,
+  # 800, 900, 3000, 4000, 6000-9000, 30000, 40000, 50000 -- was documented
+  # as refused while working fine, sending a reader with a long series to a
+  # smaller arl0 than the engine can take. Derive the grid from the table
+  # cpm's own loadThresholds() indexes, so the message cannot drift from it.
+  th <- tryCatch(utils::getFromNamespace("cpmthresholds", "cpm"),
+                 error = function(e) NULL)
+  if (is.null(th)) skip("cpm no longer exposes cpmthresholds")
+  arl <- as.integer(sub("^.*ARL", "", names(th)))
+  # "ExponentialAdjusted" additionally ships 1-24; every type shares >= 100
+  grid <- sort(unique(arl[arl >= 100]))
+  msg <- tryCatch(cpm_wrapper(x, arl0 = 333), error = conditionMessage)
+  # regmatches() extracts from the string the positions were computed on, so
+  # both arguments have to be the same string -- passing `msg` with offsets
+  # measured on the trimmed tail slices the wrong substrings.
+  tail <- sub("^.*Supported values are ", "", msg)
+  listed <- as.integer(regmatches(tail, gregexpr("[0-9]+", tail))[[1]])
+  expect_setequal(listed, grid)
+  # the @param also claims the grid is identical for every cpm_type
+  expect_setequal(Reduce(intersect, split(arl, sub("ARL[0-9]+$", "", names(th)))),
+                  grid)
+  # and the values the truncated list denied do run, including the ceiling
+  for (a in c(300L, 3000L, 30000L, max(grid))) {
+    out <- capture.output(res <- cpm_wrapper(x, arl0 = a))
+    expect_s3_class(res, "ggcpt")
+    expect_length(out, 0L)
+  }
+
+  # The same printed line covers `lambda` as well, and the branch used to
+  # read it as an arl0 problem: `cpm_type = "FET", lambda = 0.5` was
+  # reported as "`arl0 = 500` is not an average run length", which is an
+  # argument the caller had set correctly. And FET without any `lambda`
+  # died inside cpm with base R's "only 0's may be mixed with negative
+  # subscripts", naming neither the argument nor the method.
+  b <- c(stats::rbinom(150, 1, 0.2), stats::rbinom(150, 1, 0.8))
+  expect_error(cpm_wrapper(b, cpm_type = "FET"), "needs a `lambda`")
+  expect_error(cpm_wrapper(b, cpm_type = "FET", lambda = 0.5),
+               "lambda = 0.5.*FET thresholds")
+  # ... and the arl0 message is still reached for a genuine arl0 problem
+  expect_error(cpm_wrapper(b, cpm_type = "FET", lambda = 0.3, arl0 = 333),
+               "average run length")
+  # the two values cpm does ship FET thresholds for both run
+  for (lam in c(0.1, 0.3)) {
+    out <- capture.output(res <- cpm_wrapper(b, cpm_type = "FET", lambda = lam))
+    expect_s3_class(res, "ggcpt")
+    expect_length(out, 0L)
+  }
+  # "ExponentialAdjusted" was described as rejected upstream alongside
+  # "GLRAdjusted"; it is not, so only the latter is withheld here
+  expect_error(cpm_wrapper(x, cpm_type = "GLRAdjusted"), "should be one of")
+  expect_s3_class(cpm_wrapper(abs(x) + 1, cpm_type = "Exponential"), "ggcpt")
 
   skip_if_not_installed("kcpRS")
   # kcp's permutation test needs a permutation distribution: nperm = 0 or

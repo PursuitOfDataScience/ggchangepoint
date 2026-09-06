@@ -14,7 +14,10 @@ mcp_has_samples <- function(fit) {
 #' is the most expressive detector in the package — each segment can have its
 #' own intercept, slope, variance and autocorrelation, and the changepoints
 #' themselves get full posterior distributions rather than point estimates,
-#' which \code{\link{ggcpt_posterior}()} already knows how to draw.
+#' summarised here as \code{ci_lower}/\code{ci_upper} on the changepoints
+#' tibble. (\code{\link{ggcpt_posterior}()} draws a \emph{per-location}
+#' probability profile, which only \pkg{bcp} and \pkg{Rbeast} expose; it
+#' does not accept an \code{mcp} result.)
 #'
 #' @param x A numeric vector.
 #' @param change_in Shorthand for the segment model when \code{model} is not
@@ -65,10 +68,16 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
                         n_changepoints = 1, model = NULL, prior = list(),
                         iter = 3000, adapt = 1000, chains = 3, seed = NULL,
                         ...) {
-  # `mcp` imports `rjags`, so a successful requireNamespace("mcp") already
-  # implies JAGS is present. Naming `rjags` here instead would be an
-  # undeclared dependency, and declaring it would add a second package that
-  # cannot install without the system library.
+  # `mcp` imports `rjags`, so this reports the common case -- neither
+  # installed -- with the JAGS instruction attached. It does NOT prove JAGS
+  # is reachable: `rjags` loads on a machine where the JAGS program is
+  # absent (the Windows CI runner is exactly that), and `mcp` then warns
+  # rather than errors. The sample check after the fit below is what covers
+  # that, and it is not redundant with this one.
+  #
+  # Naming `rjags` here instead would be an undeclared dependency, and
+  # declaring it would add a second package that cannot install without the
+  # system library.
   if (!requireNamespace("mcp", quietly = TRUE)) {
     stop("Package 'mcp' is required, and it samples through JAGS -- a ",
          "separate program installed outside R. Install JAGS from ",

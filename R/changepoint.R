@@ -60,12 +60,17 @@ cpt_wrapper <- function(data,
 
   change_in <- match.arg(change_in, c("mean_var", "mean", "var", "np", "cpt_np"))
 
+  reject_multicolumn(data, "data",
+                     paste("`cpt_wrapper()` wraps the univariate changepoint",
+                           "package; use `ecp_wrapper()` for a multivariate",
+                           "series."))
   if (!is.numeric(data)) {
-    stop("`data` must be numeric.", call. = FALSE)
+    stop("`data` must be numeric.", nonnumeric_columns_note(data),
+         call. = FALSE)
   }
   data <- as.numeric(data)
   if (anyNA(data) || any(!is.finite(data))) {
-    stop("`data` must be finite (no NA/NaN/Inf).", call. = FALSE)
+    stop_nonfinite(data, "data")
   }
   if (length(data) < 3) {
     stop("`data` must have at least 3 observations.", call. = FALSE)
@@ -201,6 +206,21 @@ ggcptplot <- function(data,
   if (lifecycle::is_present(cptline_size)) {
     lifecycle::deprecate_soft("0.2.0", "ggcptplot(cptline_size)", "ggcptplot(cptline_linewidth)")
     cptline_linewidth <- cptline_size
+  }
+
+  # The line plot is univariate, and as.numeric() on a matrix concatenates
+  # its columns -- so a 120x2 input drew 240 points with a seam at 120 and
+  # a changepoint reported there. ggecpplot() already had the convention for
+  # this: draw the first column and say so. `show_points` below depends on
+  # the observation count, so the reduction has to come first (length() on
+  # the matrix would be rows times columns).
+  if (is.matrix(data) || is.data.frame(data)) {
+    if (ncol(as.matrix(data)) > 1) {
+      message("Multivariate input: plotting the first column. ",
+              "Use autoplot(cpt_detect(data, method = \"pelt\")) for a ",
+              "faceted multivariate plot.")
+    }
+    data <- as.numeric(as.matrix(data)[, 1])
   }
 
   if (is.null(show_points)) {
