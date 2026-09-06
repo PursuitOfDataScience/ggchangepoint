@@ -23,7 +23,7 @@ and a unified dispatcher
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 that reaches fifty methods.
 
-\*\*Detection engines.\*\*
+**Detection engines.**
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 dispatches to the methods in
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md),
@@ -69,7 +69,7 @@ across nine families:
 - **Classical single-change tests:** Pettitt, Buishand and SNHT (trend),
   Taylor's analyzer (ChangePointTaylor).
 
-\*\*What surrounds the detectors.\*\* Every detector returns a `ggcpt`
+**What surrounds the detectors.** Every detector returns a `ggcpt`
 object with a stable `tibble(cp, cp_value)` contract, optionally
 carrying a time index, engine confidence intervals, a fitted signal,
 significance regions and diagnostics. Around that:

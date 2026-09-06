@@ -79,14 +79,18 @@ together with a `declared_at` column.
 
 Nearly all of the run time is `ocd`'s Monte Carlo threshold calibration,
 which happens before a single observation is read. It is linear in
-`mc_reps` and grows with the number of coordinates: measured at
-`mc_reps = 5`, construction takes about 3 s at \\p = 3\\, 9 s at \\p =
-10\\ and 55 s at \\p = 50\\, and four times as long at `mc_reps = 20`.
-At the default `mc_reps = 100` that extrapolates to roughly a minute at
-\\p = 3\\ and a quarter of an hour at \\p = 50\\. Monitoring the
-observations afterwards is cheap by comparison — well under a second for
-a thousand of them. Lower `mc_reps` while exploring, or pass `thresh`
-directly to skip calibration entirely.
+`mc_reps` and grows with the number of coordinates. Timed on one Linux
+x86-64 machine at `mc_reps = 5`, construction took about 10 s at \\p =
+3\\, 22 s at \\p = 10\\ and 113 s at \\p = 50\\; raising `mc_reps`
+scales it linearly, so at \\p = 3\\ it was 38 s at `mc_reps = 20` and
+189 s at the default `mc_reps = 100`. The practical reading is that the
+default costs *minutes* rather than seconds even for a handful of
+coordinates, and better than half an hour at \\p = 50\\. Another machine
+will give different absolute numbers; the linearity in `mc_reps` is the
+part to plan around. Monitoring the observations afterwards is cheap by
+comparison — 0.37 s for a thousand of them at \\p = 3\\. Lower `mc_reps`
+while exploring, or pass `thresh` directly to skip calibration entirely,
+which brings the same fit down to a tenth of a second.
 
 ## References
 

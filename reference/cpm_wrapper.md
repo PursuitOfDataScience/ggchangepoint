@@ -36,9 +36,13 @@ cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)
 
   Target in-control average run length (how many observations, on
   average, before a false alarm). Defaults to `500`. cpm ships
-  thresholds only for 100, 200, 370, 400, 500, 600, 700, 1000, 2000,
-  5000, 10000 and 20000; any other value is refused, because the engine
-  answers it by printing an error and reporting no changepoints.
+  thresholds only for a fixed grid – 100, 200, 300, 370, 400, 500, 600,
+  700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
+  10000, 20000, 30000, 40000 and 50000 – and any other value is refused,
+  because the engine answers it by printing an error and reporting no
+  changepoints. The grid is the same for every `cpm_type`, and 50000 is
+  the ceiling: a long series cannot be given an `arl0` proportional to
+  its length indefinitely.
 
 - startup:
 

@@ -56,6 +56,23 @@ taylor_wrapper(
 A `ggcpt` object with `ci_lower`/`ci_upper` (so
 `autoplot(show_ci = TRUE)` works) and a `confidence` column.
 
+## Series length, and why you cannot interrupt it
+
+This engine is written for the series lengths quality control sees –
+hundreds to low thousands – and it does not scale. At \\n = 10{,}000\\
+with the default `n_bootstraps = 1000` it runs for **minutes**, and more
+importantly it runs where R cannot look: a
+[`setTimeLimit()`](https://rdrr.io/r/base/setTimeLimit.html) of 45
+seconds was still not honoured after 170, and one of 125 seconds after
+200, so the call had to be killed from outside the session. R checks
+elapsed-time limits and keyboard interrupts at the same points, which
+means **Ctrl-C will not stop it either**.
+
+So size the call before starting it rather than after. `n_bootstraps` is
+the knob – the cost is roughly linear in it – and
+`vignette("benchmarks", package = "ggchangepoint")` lists the methods
+that do scale to long series.
+
 ## References
 
 Taylor WA (2000). *Change-Point Analysis: A Powerful New Tool for

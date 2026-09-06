@@ -211,8 +211,9 @@ noise standard deviation fixed at 1, and <strong>fpop</strong> penalises
 the residual sum of squares directly, so multiplying the data by a
 constant multiplies the cost while leaving
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
-untouched. On a single changepoint whose jump is five standard
-deviations, <code>pelt</code> recovers exactly one changepoint at
+untouched. On a 200-point series with a single changepoint whose jump is
+five standard deviations, <code>pelt</code> recovers exactly one
+changepoint at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sigma = 1</annotation></semantics></math>
 but returns 29 at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">\sigma = 3</annotation></semantics></math>
@@ -255,7 +256,11 @@ heterogeneous noise.</p>
 </h3>
 <p>Changes need not be in the mean: the <code>change_in</code> argument
 accepts <code>"mean"</code>, <code>"var"</code>, <code>"meanvar"</code>,
-<code>"slope"</code>, and <code>"distribution"</code>. Nonparametric
+<code>"slope"</code>, <code>"distribution"</code>,
+<code>"covariance"</code>, <code>"network"</code>,
+<code>"regression"</code> and <code>"seasonality"</code> — the nine
+values <code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> lists in its <code>supports</code>
+column, each routable to the methods that declare it. Nonparametric
 engines (energy statistics <span class="citation">(Matteson and James
 2014)</span>, nonparametric cost functions <span class="citation">(Haynes et al. 2017)</span>, kernel running statistics
 <span class="citation">(Arlot et al. 2019; Cabrieto et al. 2018)</span>,
@@ -285,10 +290,13 @@ containing:</p>
 Columns <code>cp</code> (location, “left” convention) and
 <code>cp_value</code> (the data value at <code>cp</code>) are always
 present; engines add <code>ci_lower</code>/<code>ci_upper</code> (SMUCE,
-HSMUCE, strucchange, segmented), <code>posterior_prob</code> (bcp,
-BEAST), <code>detection_time</code> (CPM), <code>strength</code>
-(inspect), <code>declared_at</code> (ocd), or <code>mapping</code>
-(geomcp) when they have more to say.</li>
+HSMUCE, strucchange, segmented, bfast, taylor, mcp),
+<code>posterior_prob</code> (bcp, BEAST), <code>detection_time</code>
+(CPM), <code>strength</code> (inspect), <code>declared_at</code> (ocd),
+or <code>mapping</code> (geomcp) when they have more to say.
+<code>nsp</code> reports its uncertainty as a significance region
+instead — <code>region_start</code>, <code>region_end</code> and the
+<code>regions</code> slot.</li>
 <li>
 <code>segments</code>: a tibble of the induced segments
 (<code>seg_id</code>, <code>start</code>, <code>end</code>,
@@ -296,8 +304,10 @@ BEAST), <code>detection_time</code> (CPM), <code>strength</code>
 <li>
 <code>data</code>: the analysed series as a tibble
 (<code>index</code>, <code>value</code>), plus a <code>fitted</code>
-column when the engine estimates a signal (SMUCE, DeCAFS, CPOP,
-segmented, bcp, BEAST).</li>
+column when the engine estimates a signal (SMUCE, HSMUCE, CPOP, bcp,
+BEAST, DeCAFS, segmented, mcp, bfast — the engines
+<code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> marks in its <code>fitted</code>
+column).</li>
 <li>
 <code>method</code>, <code>change_in</code>, <code>penalty</code> (a
 <code>list(type, value)</code> descriptor), <code>cp_convention</code>
@@ -308,7 +318,12 @@ for experts).</li>
 </ul>
 <p>Multivariate results additionally carry a <code>data_wide</code>
 tibble with one column per coordinate, which <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>
-renders as faceted small-multiples.</p>
+renders as faceted small-multiples. Two methods plot a derived series
+instead, because for them the coordinates are not what a reader wants to
+see: <code>network</code> takes a sequence of adjacency matrices and
+reports mean edge weight (one facet per matrix entry would be
+unreadable), and <code>hdreg</code> plots the response it regressed on
+the covariates. Both carry no <code>data_wide</code>.</p>
 </div>
 <div class="section level3">
 <h3 id="tidy-methods-and-the-plotting-layer">Tidy methods and the plotting layer<a class="anchor" aria-label="anchor" href="#tidy-methods-and-the-plotting-layer"></a>

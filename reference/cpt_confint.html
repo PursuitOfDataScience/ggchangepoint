@@ -94,7 +94,14 @@ already computed at whatever level it was asked for.</p></dd>
   <dt><code>"native"</code></dt>
 <dd><p>the engine's own <code>ci_lower</code>/<code>ci_upper</code>
     (SMUCE/HSMUCE simultaneous confidence sets, <span class="pkg">strucchange</span>
-    break-date intervals, <span class="pkg">segmented</span> breakpoint intervals).</p></dd>
+    break-date intervals, <span class="pkg">segmented</span> breakpoint intervals,
+    <span class="pkg">mcp</span> posterior intervals, <span class="pkg">bfast</span> break confidence
+    intervals, and <code>taylor</code>'s bootstrap confidence limits). The
+    engines that supply them are the ones
+    <code><a href="cpt_methods.html">cpt_methods()</a></code> marks in its <code>ci</code> column;
+    <code>nsp</code> is marked there too but is reported under its own
+    provenance below, because its regions are not intervals around an
+    estimate.</p></dd>
 
   <dt><code>"nsp"</code></dt>
 <dd><p>Narrowest Significance Pursuit regions computed on

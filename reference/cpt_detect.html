@@ -92,12 +92,25 @@ not wrap.</p></dd>
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>
 <dd><p>What to detect change in. One of <code>"mean"</code>,
-<code>"var"</code>, <code>"meanvar"</code>, <code>"slope"</code>,
-<code>"distribution"</code>, <code>"covariance"</code>, <code>"network"</code>,
-<code>"regression"</code> or <code>"seasonality"</code>. Defaults to
-<code>"mean"</code>. The requested value is validated against the method's
-capabilities (see <code><a href="cpt_methods.html">cpt_methods()</a></code>); incompatible combinations
-error rather than silently running something else.</p></dd>
+  <code>"var"</code>, <code>"meanvar"</code>, <code>"slope"</code>,
+  <code>"distribution"</code>, <code>"covariance"</code>, <code>"network"</code>,
+  <code>"regression"</code> or <code>"seasonality"</code>. Defaults to
+  <code>"mean"</code>. The requested value is validated against the method's
+  capabilities (see <code><a href="cpt_methods.html">cpt_methods()</a></code>); incompatible combinations
+  error rather than silently running something else.</p>
+<p>A <em>compatible</em> request may still be routed to the method's own
+  native change type, because several engines have no separate estimator
+  for the thing being asked about. That is never silent: the result's
+  <code>change_in</code> records what was actually detected, so compare it
+  with what you asked for. Measured across every method and every value
+  its <code>supports</code> entry lists, six pairs are routed –
+  <code>not</code>'s <code>"var"</code> becomes <code>"meanvar"</code> (its variance
+  contrast is piecewise-constant in mean <em>and</em> variance),
+  <code>cpm</code>'s <code>"mean"</code> and <code>"var"</code> both become
+  <code>"distribution"</code>, <code>kcp</code>'s become <code>"running mean"</code> and
+  <code>"running var"</code>, and <code>wbsts</code>'s <code>"mean"</code> becomes
+  <code>"var"</code> (it detects change in the wavelet spectrum). Every other
+  listed combination returns the change type it was asked for.</p></dd>
 
 
 <dt id="arg-penalty">penalty<a class="anchor" aria-label="anchor" href="#arg-penalty"></a></dt>
@@ -148,9 +161,10 @@ also derived from <code>change_in</code> (<code>not</code>'s <code>contrast</cod
 supplied here takes precedence. Check the spelling against the wrapper's
 help page: several engines end their own signature in <code>...</code>
 (<span class="pkg">wbs</span>, <span class="pkg">not</span>, <span class="pkg">Rbeast</span>, <span class="pkg">strucchange</span>,
-<span class="pkg">segmented</span>, <span class="pkg">fastcpd</span>), so for those a misspelt argument name
-is silently discarded upstream and the engine quietly uses its default
-rather than reporting the typo.</p></dd>
+<span class="pkg">segmented</span>, <span class="pkg">fastcpd</span>, <span class="pkg">fChange</span>, <span class="pkg">bfast</span>), so for
+those a misspelt argument name is silently discarded upstream and the
+engine quietly uses its default rather than reporting the typo. Every
+other wired method rejects an unknown argument by name.</p></dd>
 
 </dl></div>
     <div class="section level2">

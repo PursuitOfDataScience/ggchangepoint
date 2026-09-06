@@ -5,9 +5,8 @@
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface
 to changepoint detection in R: one dispatcher
 ([`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md))
-covering 50 methods across nine methodological families, one result
-class (`ggcpt`) with a stable tidy contract, and one visualisation entry
-point
+covering 50 methods across six methodological families, one result class
+(`ggcpt`) with a stable tidy contract, and one visualisation entry point
 ([`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html))
 that draws everything a method reports — including confidence intervals
 and posterior probabilities (Wickham 2016; Robinson 2017). This vignette
@@ -149,7 +148,7 @@ summary(res)
 #>   CP convention:            left 
 #>   Series length:            200 
 #>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.015 
+#>   Runtime (seconds):        0.018 
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -188,10 +187,13 @@ autoplot()](ggchangepoint_files/figure-html/plot-fallback-1.png)
 
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 is the recommended entry point: pick a `method`, say what the change is
-in (`change_in` = `"mean"`, `"var"`, `"meanvar"`, `"slope"`, or
-`"distribution"`), and optionally set a `penalty`. Incompatible
-`method`/`change_in` combinations error — they are never silently
-substituted.
+in (`change_in` = `"mean"`, `"var"`, `"meanvar"`, `"slope"`,
+`"distribution"`, `"covariance"`, `"network"`, `"regression"` or
+`"seasonality"` — the values
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+lists in its `supports` column), and optionally set a `penalty`.
+Incompatible `method`/`change_in` combinations error — they are never
+silently substituted.
 
 ``` r
 
@@ -827,11 +829,16 @@ changepoints](ggchangepoint_files/figure-html/crops-seg-1.png)
 
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 renders any `ggcpt`. Options: `show_segments` (fitted segment means),
-`show_fit` (the engine’s own fitted signal, where provided — SMUCE,
-DeCAFS, CPOP, segmented, bcp, BEAST), `show_ci` (changepoint-location
-confidence intervals, where provided — SMUCE/HSMUCE, strucchange,
-segmented), `show_points`/`show_line`, an `index` for a date axis, and
-the `cptline_*` styling arguments (`cptline_color`, `cptline_alpha`,
+`show_fit` (the engine’s own fitted signal, where provided — the nine
+engines
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+marks in its `fitted` column: SMUCE, HSMUCE, CPOP, bcp, BEAST, DeCAFS,
+segmented, mcp, bfast), `show_ci` (changepoint-location confidence
+intervals, where provided — the seven marked in its `ci` column: SMUCE,
+HSMUCE, strucchange, segmented, mcp, bfast, taylor; `nsp` is marked
+there too but reports a region, drawn by `show_regions`),
+`show_points`/`show_line`, an `index` for a date axis, and the
+`cptline_*` styling arguments (`cptline_color`, `cptline_alpha`,
 `cptline_type`, `cptline_linewidth`). Asking for an overlay the result
 cannot supply warns rather than failing silently.
 

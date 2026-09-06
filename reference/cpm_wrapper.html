@@ -90,9 +90,13 @@ through <code>...</code>, e.g. <code>lambda = 0.3</code>).</p></dd>
 <dt id="arg-arl-">arl0<a class="anchor" aria-label="anchor" href="#arg-arl-"></a></dt>
 <dd><p>Target in-control average run length (how many observations,
 on average, before a false alarm). Defaults to <code>500</code>. <span class="pkg">cpm</span>
-ships thresholds only for 100, 200, 370, 400, 500, 600, 700, 1000, 2000,
-5000, 10000 and 20000; any other value is refused, because the engine
-answers it by printing an error and reporting no changepoints.</p></dd>
+ships thresholds only for a fixed grid – 100, 200, 300, 370, 400, 500,
+600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
+9000, 10000, 20000, 30000, 40000 and 50000 – and any other value is
+refused, because the engine answers it by printing an error and
+reporting no changepoints. The grid is the same for every
+<code>cpm_type</code>, and 50000 is the ceiling: a long series cannot be
+given an <code>arl0</code> proportional to its length indefinitely.</p></dd>
 
 
 <dt id="arg-startup">startup<a class="anchor" aria-label="anchor" href="#arg-startup"></a></dt>

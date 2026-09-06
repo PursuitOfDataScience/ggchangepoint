@@ -74,6 +74,21 @@ A tibble with columns:
   and
   [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md).
 
+  `online` means the *algorithm* is sequential – it consumes
+  observations one at a time – and this table reports it because it
+  governs how the method behaves in batch: an online detector's
+  threshold is a rate per observation, so run over a whole series
+  through
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  it reports roughly \\n / \mathrm{arl0}\\ changepoints by construction.
+  It does **not** mean the method can be passed to
+  [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md),
+  which takes its own three: `"edetector"`, `"cpm"` and `"ocd"`. The two
+  sets overlap without coinciding – `bocpd` is an online algorithm this
+  table marks but the monitor does not offer, and `edetector` is native
+  to this package rather than a wrapped engine, so it has no row here at
+  all.
+
 ## See also
 
 [`cpt_install_engines()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_install_engines.md)

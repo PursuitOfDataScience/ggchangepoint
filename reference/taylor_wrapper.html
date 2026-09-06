@@ -110,6 +110,23 @@ Defaults to <code>0.95</code>.</p></dd>
   <code>autoplot(show_ci = TRUE)</code> works) and a <code>confidence</code> column.</p>
     </div>
     <div class="section level2">
+    <h2 id="series-length-and-why-you-cannot-interrupt-it">Series length, and why you cannot interrupt it<a class="anchor" aria-label="anchor" href="#series-length-and-why-you-cannot-interrupt-it"></a></h2>
+
+
+<p>This engine is written for the series lengths quality control sees –
+hundreds to low thousands – and it does not scale. At \(n = 10{,}000\)
+with the default <code>n_bootstraps = 1000</code> it runs for <strong>minutes</strong>, and
+more importantly it runs where R cannot look: a <code><a href="https://rdrr.io/r/base/setTimeLimit.html" class="external-link">setTimeLimit()</a></code> of
+45 seconds was still not honoured after 170, and one of 125 seconds after
+200, so the call had to be killed from outside the session. R checks
+elapsed-time limits and keyboard interrupts at the same points, which
+means <strong>Ctrl-C will not stop it either</strong>.</p>
+<p>So size the call before starting it rather than after. <code>n_bootstraps</code>
+is the knob – the cost is roughly linear in it – and
+<code>vignette("benchmarks", package = "ggchangepoint")</code> lists the
+methods that do scale to long series.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>Taylor WA (2000).
 <em>Change-Point Analysis: A Powerful New Tool for Detecting Changes</em>.

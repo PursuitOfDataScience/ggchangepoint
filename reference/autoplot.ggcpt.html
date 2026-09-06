@@ -98,15 +98,23 @@ Defaults to <code>FALSE</code>.</p></dd>
 <dt id="arg-show-ci">show_ci<a class="anchor" aria-label="anchor" href="#arg-show-ci"></a></dt>
 <dd><p>Logical. Whether to draw confidence intervals for
 changepoint locations, when the engine provides them (columns
-<code>ci_lower</code>/<code>ci_upper</code> on the changepoints tibble — SMUCE,
-strucchange, segmented). Drawn as horizontal whiskers near the bottom
-of the panel. Defaults to <code>FALSE</code>.</p></dd>
+<code>ci_lower</code>/<code>ci_upper</code> on the changepoints tibble, supplied by
+the engines <code><a href="cpt_methods.html">cpt_methods()</a></code> marks in its <code>ci</code> column:
+<code>smuce</code>, <code>hsmuce</code>, <code>strucchange</code>, <code>segmented</code>,
+<code>mcp</code>, <code>bfast</code> and <code>taylor</code>). <code>nsp</code> is marked there as
+well but is not drawn by this argument: it reports
+<code>region_start</code>/<code>region_end</code> rather than an interval around an
+estimate, which <code>show_regions</code> draws. Drawn as horizontal whiskers
+near the bottom of the panel. Defaults to <code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-show-fit">show_fit<a class="anchor" aria-label="anchor" href="#arg-show-fit"></a></dt>
 <dd><p>Logical. Whether to draw the engine's fitted signal (the
-<code>fitted</code> column of <code>$data</code>, provided by SMUCE, DeCAFS, cpop,
-segmented, bcp, beast). Defaults to <code>FALSE</code>.</p></dd>
+<code>fitted</code> column of <code>$data</code>, provided by the engines
+<code><a href="cpt_methods.html">cpt_methods()</a></code> marks in its <code>fitted</code> column:
+<code>smuce</code>, <code>hsmuce</code>, <code>cpop</code>, <code>bcp</code>, <code>beast</code>,
+<code>decafs</code>, <code>segmented</code>, <code>mcp</code> and <code>bfast</code>). Defaults to
+<code>FALSE</code>.</p></dd>
 
 
 <dt id="arg-show-regions">show_regions<a class="anchor" aria-label="anchor" href="#arg-show-regions"></a></dt>

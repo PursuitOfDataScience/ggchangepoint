@@ -409,17 +409,18 @@ replicates per cell, median over replicates:</p>
 <span><span class="co">#&gt; 5     2       cpm          4.5</span></span>
 <span><span class="co">#&gt; 6     3       cpm          4.0</span></span></code></pre></div>
 <p>Ten replicates is a noisy estimate of a median, and the table above
-will wobble with the seed. A larger run of the same design gives median
-detection delays of roughly <strong>12, 4 and 2</strong> observations
-for <code>edetector</code> at shifts of 1, 2 and 3 standard deviations,
-and <strong>11, 5 and 4</strong> for <code>cpm</code>. Two things are
-worth taking from that. Delay falls steeply in the shift size, so a
-monitor tuned on a large change will feel unusably slow on a small one.
-And the ordering of the two detectors is not fixed: at 1 sigma they are
-within an observation or two of each other, and the small run above and
-the larger one disagree about which is ahead, while
-<code>edetector</code> is clearly quicker once the change is
-obvious.</p>
+will wobble with the seed. A larger run of the same design — 150
+replicates per cell, repeated under two seeds — gives median detection
+delays of <strong>7, 3 and 2</strong> observations for
+<code>edetector</code> at shifts of 1, 2 and 3 standard deviations, and
+<strong>10, 5 and 4</strong> for <code>cpm</code>. Two things are worth
+taking from that. Delay falls steeply in the shift size, so a monitor
+tuned on a large change will feel unusably slow on a small one. And the
+gap between the two detectors is real but modest where the change is
+small: two or three observations at 1 sigma, against inter-quartile
+ranges of [5, 12] and [7, 15] that overlap almost entirely — while
+<code>edetector</code> is clearly and consistently quicker once the
+change is obvious.</p>
 </div>
 <div class="section level2">
 <h2 id="assumptions-the-thresholds-are-for-independent-observations">6. Assumptions: the thresholds are for independent observations<a class="anchor" aria-label="anchor" href="#assumptions-the-thresholds-are-for-independent-observations"></a>

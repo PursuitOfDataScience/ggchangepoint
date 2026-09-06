@@ -109,15 +109,16 @@ miss: $`\beta`$ and $`\mathcal{C}`$ must live on the same scale. For a
 change in mean the **changepoint** engines evaluate the Normal cost with
 the noise standard deviation fixed at 1, and **fpop** penalises the
 residual sum of squares directly, so multiplying the data by a constant
-multiplies the cost while leaving $`\beta`$ untouched. On a single
-changepoint whose jump is five standard deviations, `pelt` recovers
-exactly one changepoint at $`\sigma = 1`$ but returns 29 at
-$`\sigma = 3`$ and 138 at $`\sigma = 10`$. Standardise the series, pass
-a penalty on the data’s own scale (say `2 * log(n) * var(diff(x)) / 2`),
-or use `change_in = "meanvar"`, which estimates a variance per segment.
-Methods that estimate the noise level as part of their procedure —
-SMUCE, the WBS family, CPOP, DeCAFS, and the Bayesian and nonparametric
-engines — return the same segmentation whatever the units.
+multiplies the cost while leaving $`\beta`$ untouched. On a 200-point
+series with a single changepoint whose jump is five standard deviations,
+`pelt` recovers exactly one changepoint at $`\sigma = 1`$ but returns 29
+at $`\sigma = 3`$ and 138 at $`\sigma = 10`$. Standardise the series,
+pass a penalty on the data’s own scale (say
+`2 * log(n) * var(diff(x)) / 2`), or use `change_in = "meanvar"`, which
+estimates a variance per segment. Methods that estimate the noise level
+as part of their procedure — SMUCE, the WBS family, CPOP, DeCAFS, and
+the Bayesian and nonparametric engines — return the same segmentation
+whatever the units.
 
 ### Search-based and multiscale methods
 
@@ -143,9 +144,13 @@ extends this to heterogeneous noise.
 ### Beyond the mean
 
 Changes need not be in the mean: the `change_in` argument accepts
-`"mean"`, `"var"`, `"meanvar"`, `"slope"`, and `"distribution"`.
-Nonparametric engines (energy statistics (Matteson and James 2014),
-nonparametric cost functions (Haynes et al. 2017), kernel running
+`"mean"`, `"var"`, `"meanvar"`, `"slope"`, `"distribution"`,
+`"covariance"`, `"network"`, `"regression"` and `"seasonality"` — the
+nine values
+[`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+lists in its `supports` column, each routable to the methods that
+declare it. Nonparametric engines (energy statistics (Matteson and James
+2014), nonparametric cost functions (Haynes et al. 2017), kernel running
 statistics (Arlot et al. 2019; Cabrieto et al. 2018), joint
 characteristic functions (McGonigle and Cho 2025), self-normalisation
 (Zhao et al. 2022)) detect distributional change without likelihood
@@ -166,14 +171,18 @@ Every detector returns an object of class `ggcpt` containing:
 - `changepoints`: a tibble with one row per changepoint. Columns `cp`
   (location, “left” convention) and `cp_value` (the data value at `cp`)
   are always present; engines add `ci_lower`/`ci_upper` (SMUCE, HSMUCE,
-  strucchange, segmented), `posterior_prob` (bcp, BEAST),
-  `detection_time` (CPM), `strength` (inspect), `declared_at` (ocd), or
-  `mapping` (geomcp) when they have more to say.
+  strucchange, segmented, bfast, taylor, mcp), `posterior_prob` (bcp,
+  BEAST), `detection_time` (CPM), `strength` (inspect), `declared_at`
+  (ocd), or `mapping` (geomcp) when they have more to say. `nsp` reports
+  its uncertainty as a significance region instead — `region_start`,
+  `region_end` and the `regions` slot.
 - `segments`: a tibble of the induced segments (`seg_id`, `start`,
   `end`, `n`, `param_estimate`).
 - `data`: the analysed series as a tibble (`index`, `value`), plus a
-  `fitted` column when the engine estimates a signal (SMUCE, DeCAFS,
-  CPOP, segmented, bcp, BEAST).
+  `fitted` column when the engine estimates a signal (SMUCE, HSMUCE,
+  CPOP, bcp, BEAST, DeCAFS, segmented, mcp, bfast — the engines
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  marks in its `fitted` column).
 - `method`, `change_in`, `penalty` (a `list(type, value)` descriptor),
   `cp_convention` (always `"left"`), `runtime` (elapsed seconds, timed
   by
@@ -184,7 +193,12 @@ Every detector returns an object of class `ggcpt` containing:
 Multivariate results additionally carry a `data_wide` tibble with one
 column per coordinate, which
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-renders as faceted small-multiples.
+renders as faceted small-multiples. Two methods plot a derived series
+instead, because for them the coordinates are not what a reader wants to
+see: `network` takes a sequence of adjacency matrices and reports mean
+edge weight (one facet per matrix entry would be unreadable), and
+`hdreg` plots the response it regressed on the covariates. Both carry no
+`data_wide`.
 
 ### Tidy methods and the plotting layer
 

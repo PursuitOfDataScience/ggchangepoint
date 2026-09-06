@@ -114,7 +114,14 @@ calibration.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggcpt</code> object with <code>change_in = "network"</code>.</p>
+    <p>A <code>ggcpt</code> object with <code>change_in = "network"</code>. The
+  series it carries – and so the one <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws – is the
+  <strong>mean edge weight</strong> at each time point, <code><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans()</a></code> of the
+  vectorised adjacency matrices. This is the one multivariate method with
+  no <code>data_wide</code> slot: a \(p \times p\) network has \(p^2\)
+  entries per time point, so a facet per coordinate would be unreadable.
+  The changepoints are estimated from the networks themselves, not from
+  the summary.</p>
     </div>
     <div class="section level2">
     <h2 id="when-you-have-only-one-copy-of-the-network">When you have only one copy of the network<a class="anchor" aria-label="anchor" href="#when-you-have-only-one-copy-of-the-network"></a></h2>

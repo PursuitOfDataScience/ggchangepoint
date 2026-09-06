@@ -5,9 +5,11 @@ Wraps [`mcp::mcp()`](https://lindeloev.github.io/mcp/reference/mcp.html)
 *list of formulas*, one per segment. This is the most expressive
 detector in the package — each segment can have its own intercept,
 slope, variance and autocorrelation, and the changepoints themselves get
-full posterior distributions rather than point estimates, which
-[`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)
-already knows how to draw.
+full posterior distributions rather than point estimates, summarised
+here as `ci_lower`/`ci_upper` on the changepoints tibble.
+([`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)
+draws a *per-location* probability profile, which only bcp and Rbeast
+expose; it does not accept an `mcp` result.)
 
 ## Usage
 

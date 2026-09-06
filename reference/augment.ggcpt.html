@@ -77,9 +77,13 @@ changepoints are shared across them, so <code>seg_id</code> and
 <code>is_changepoint</code> apply to the whole row while <code>.fitted</code> and
 <code>.resid</code> describe the <em>first</em> coordinate only — the same
 coordinate <code>$segments$param_estimate</code> summarises. When an engine
-supplies its own fitted signal (SMUCE, DeCAFS, cpop, segmented, bcp,
-beast) that signal is used for <code>.fitted</code> in place of the segment
-means.</p>
+supplies its own fitted signal that signal is used for <code>.fitted</code> in
+place of the segment means, and rides along in a <code>fitted</code> column of
+its own – so for those engines the two columns agree. The engines that
+do this are exactly the ones <code><a href="cpt_methods.html">cpt_methods()</a></code> marks in its
+<code>fitted</code> column: <code>smuce</code>, <code>hsmuce</code>, <code>cpop</code>,
+<code>bcp</code>, <code>beast</code>, <code>decafs</code>, <code>segmented</code>,
+<code>mcp</code> and <code>bfast</code>.</p>
     </div>
 
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

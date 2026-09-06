@@ -60,7 +60,15 @@ network_wrapper(
 
 ## Value
 
-A `ggcpt` object with `change_in = "network"`.
+A `ggcpt` object with `change_in = "network"`. The series it carries –
+and so the one
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+draws – is the **mean edge weight** at each time point,
+[`rowMeans()`](https://rdrr.io/r/base/colSums.html) of the vectorised
+adjacency matrices. This is the one multivariate method with no
+`data_wide` slot: a \\p \times p\\ network has \\p^2\\ entries per time
+point, so a facet per coordinate would be unreadable. The changepoints
+are estimated from the networks themselves, not from the summary.
 
 ## When you have only one copy of the network
 

@@ -56,7 +56,7 @@ integration via <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.
 <code><a href="geom_cpt_ci.html">geom_cpt_ci()</a></code>, <code><a href="geom_cpt_region.html">geom_cpt_region()</a></code>, <code><a href="geom_cpt_label.html">geom_cpt_label()</a></code>,
 <code><a href="geom_cpt_event.html">geom_cpt_event()</a></code>, <code><a href="stat_changepoint.html">stat_changepoint()</a></code>), and a unified
 dispatcher <code><a href="cpt_detect.html">cpt_detect()</a></code> that reaches fifty methods.</p>
-<p>**Detection engines.** <code><a href="cpt_detect.html">cpt_detect()</a></code> dispatches to the methods in
+<p><strong>Detection engines.</strong> <code><a href="cpt_detect.html">cpt_detect()</a></code> dispatches to the methods in
 <code><a href="cpt_methods.html">cpt_methods()</a></code>, across nine families:</p><ul><li><p><strong>Penalised/optimal:</strong> PELT, BinSeg, SegNeigh, AMOC
     (<span class="pkg">changepoint</span>); FPOP (<span class="pkg">fpop</span>); fast binary segmentation
     (<span class="pkg">binsegRcpp</span>); the CROPS penalty path (<code><a href="cpt_crops.html">cpt_crops()</a></code>);
@@ -91,7 +91,7 @@ dispatcher <code><a href="cpt_detect.html">cpt_detect()</a></code> that reaches 
     breaks (<span class="pkg">bfast</span>).</p></li>
 <li><p><strong>Classical single-change tests:</strong> Pettitt, Buishand and
     SNHT (<span class="pkg">trend</span>), Taylor's analyzer (<span class="pkg">ChangePointTaylor</span>).</p></li>
-</ul><p>**What surrounds the detectors.** Every detector returns a <code>ggcpt</code>
+</ul><p><strong>What surrounds the detectors.</strong> Every detector returns a <code>ggcpt</code>
 object with a stable <code>tibble(cp, cp_value)</code> contract, optionally
 carrying a time index, engine confidence intervals, a fitted signal,
 significance regions and diagnostics. Around that:</p><ul><li><p><strong>Inference:</strong> <code><a href="cpt_confint.html">cpt_confint()</a></code> (four provenances, one

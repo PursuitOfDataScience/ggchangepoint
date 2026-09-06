@@ -46,7 +46,13 @@ cpt_confint(
 
   :   the engine's own `ci_lower`/`ci_upper` (SMUCE/HSMUCE simultaneous
       confidence sets, strucchange break-date intervals, segmented
-      breakpoint intervals).
+      breakpoint intervals, mcp posterior intervals, bfast break
+      confidence intervals, and `taylor`'s bootstrap confidence limits).
+      The engines that supply them are the ones
+      [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+      marks in its `ci` column; `nsp` is marked there too but is
+      reported under its own provenance below, because its regions are
+      not intervals around an estimate.
 
   `"nsp"`
 

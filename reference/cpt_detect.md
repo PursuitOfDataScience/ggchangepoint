@@ -52,6 +52,19 @@ cpt_detect(
   incompatible combinations error rather than silently running something
   else.
 
+  A *compatible* request may still be routed to the method's own native
+  change type, because several engines have no separate estimator for
+  the thing being asked about. That is never silent: the result's
+  `change_in` records what was actually detected, so compare it with
+  what you asked for. Measured across every method and every value its
+  `supports` entry lists, six pairs are routed – `not`'s `"var"` becomes
+  `"meanvar"` (its variance contrast is piecewise-constant in mean *and*
+  variance), `cpm`'s `"mean"` and `"var"` both become `"distribution"`,
+  `kcp`'s become `"running mean"` and `"running var"`, and `wbsts`'s
+  `"mean"` becomes `"var"` (it detects change in the wavelet spectrum).
+  Every other listed combination returns the change type it was asked
+  for.
+
 - penalty:
 
   Penalty type or value. Either a character string (`"MBIC"`, `"BIC"`,
@@ -101,9 +114,10 @@ cpt_detect(
   `kcp`'s `running_stat`, `sn`'s `parameter`, `fastcpd`'s `family`), a
   value supplied here takes precedence. Check the spelling against the
   wrapper's help page: several engines end their own signature in `...`
-  (wbs, not, Rbeast, strucchange, segmented, fastcpd), so for those a
-  misspelt argument name is silently discarded upstream and the engine
-  quietly uses its default rather than reporting the typo.
+  (wbs, not, Rbeast, strucchange, segmented, fastcpd, fChange, bfast),
+  so for those a misspelt argument name is silently discarded upstream
+  and the engine quietly uses its default rather than reporting the
+  typo. Every other wired method rejects an unknown argument by name.
 
 ## Value
 

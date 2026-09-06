@@ -24,6 +24,33 @@ wbs2_wrapper(x, ...)
 
 A `ggcpt` object.
 
+## Reproducibility
+
+This engine is **not reproducible call to call within an R session**,
+and no argument here can make it so. On a 200-point series with one
+change at 100, repeated identical calls – same input,
+[`set.seed()`](https://rdrr.io/r/base/Random.html) re-run beforehand so
+that `.Random.seed` is byte-identical on entry – return a last
+changepoint of either 183 or 188, roughly evenly split. The variation is
+therefore not driven by R's random number stream, which is why this
+wrapper has no `seed` argument to offer: there is no stream to pin.
+
+It is upstream, not in this package. Calling
+`breakfast::breakfast(x, solution.path = "wbs2", model.selection = "sdll")`
+directly (breakfast 2.5) reproduces it exactly. A *fresh* R session is
+deterministic – five separate sessions agreed – so what varies is state
+the engine carries between calls.
+
+In practice this is rare, and needs a series whose model selection sits
+near a tie. Measured over eight other series with three identical calls
+each, `wbs2` was stable on all eight; the flip above reproduces only on
+that one configuration. `tguh`, which uses the same package, was stable
+throughout, as were the other 35 methods this experiment covered. If you
+need a segmentation you can reproduce exactly, take the result of the
+first call in a session, or use an engine with a `seed` argument
+([`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+reports which wrappers have one).
+
 ## References
 
 Fryzlewicz P (2020). “Detecting Multiple Change-Point Features via

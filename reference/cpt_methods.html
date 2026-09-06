@@ -116,7 +116,20 @@ posterior, a detector statistic, a solution path, a bandwidth to sweep).</p>
         <code>scale_space</code> the internals rendered by
         <code><a href="cpt_statistic.html">ggcpt_statistic()</a></code>,
         <code><a href="cpt_solution_path.html">ggcpt_solution_path()</a></code> and
-        <code><a href="cpt_scale_space.html">ggcpt_scale_space()</a></code>.</p></dd>
+        <code><a href="cpt_scale_space.html">ggcpt_scale_space()</a></code>.</p>
+<p><code>online</code> means the <em>algorithm</em> is sequential – it
+        consumes observations one at a time – and this table reports it
+        because it governs how the method behaves in batch: an online
+        detector's threshold is a rate per observation, so run over a
+        whole series through <code><a href="cpt_detect.html">cpt_detect()</a></code> it reports
+        roughly \(n / \mathrm{arl0}\) changepoints by construction.
+        It does <strong>not</strong> mean the method can be passed to
+        <code><a href="cpt_monitor.html">cpt_monitor()</a></code>, which takes its own three:
+        <code>"edetector"</code>, <code>"cpm"</code> and <code>"ocd"</code>. The two
+        sets overlap without coinciding – <code>bocpd</code> is an online
+        algorithm this table marks but the monitor does not offer, and
+        <code>edetector</code> is native to this package rather than a
+        wrapped engine, so it has no row here at all.</p></dd>
 
 
 </dl></div>

@@ -45,15 +45,24 @@ autoplot(
 
   Logical. Whether to draw confidence intervals for changepoint
   locations, when the engine provides them (columns
-  `ci_lower`/`ci_upper` on the changepoints tibble — SMUCE, strucchange,
-  segmented). Drawn as horizontal whiskers near the bottom of the panel.
-  Defaults to `FALSE`.
+  `ci_lower`/`ci_upper` on the changepoints tibble, supplied by the
+  engines
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  marks in its `ci` column: `smuce`, `hsmuce`, `strucchange`,
+  `segmented`, `mcp`, `bfast` and `taylor`). `nsp` is marked there as
+  well but is not drawn by this argument: it reports
+  `region_start`/`region_end` rather than an interval around an
+  estimate, which `show_regions` draws. Drawn as horizontal whiskers
+  near the bottom of the panel. Defaults to `FALSE`.
 
 - show_fit:
 
   Logical. Whether to draw the engine's fitted signal (the `fitted`
-  column of `$data`, provided by SMUCE, DeCAFS, cpop, segmented, bcp,
-  beast). Defaults to `FALSE`.
+  column of `$data`, provided by the engines
+  [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
+  marks in its `fitted` column: `smuce`, `hsmuce`, `cpop`, `bcp`,
+  `beast`, `decafs`, `segmented`, `mcp` and `bfast`). Defaults to
+  `FALSE`.
 
 - show_regions:
 

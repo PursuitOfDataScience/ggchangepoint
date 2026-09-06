@@ -4,12 +4,18 @@ regression specified as a list of formulas, one per segment. This
 is the most expressive detector in the package — each segment can have its
 own intercept, slope, variance and autocorrelation, and the changepoints
 themselves get full posterior distributions rather than point estimates,
-which ggcpt_posterior() already knows how to draw."><meta property="og:description" content="Wraps mcp::mcp() (Lindeløv): a Bayesian multiple-changepoint
+summarised here as ci_lower/ci_upper on the changepoints
+tibble. (ggcpt_posterior() draws a per-location
+probability profile, which only bcp and Rbeast expose; it
+does not accept an mcp result.)"><meta property="og:description" content="Wraps mcp::mcp() (Lindeløv): a Bayesian multiple-changepoint
 regression specified as a list of formulas, one per segment. This
 is the most expressive detector in the package — each segment can have its
 own intercept, slope, variance and autocorrelation, and the changepoints
 themselves get full posterior distributions rather than point estimates,
-which ggcpt_posterior() already knows how to draw."><meta property="og:image" content="https://pursuitofdatascience.github.io/ggchangepoint/logo.png"></head><body>
+summarised here as ci_lower/ci_upper on the changepoints
+tibble. (ggcpt_posterior() draws a per-location
+probability profile, which only bcp and Rbeast expose; it
+does not accept an mcp result.)"><meta property="og:image" content="https://pursuitofdatascience.github.io/ggchangepoint/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
 
@@ -57,7 +63,10 @@ regression specified as a <em>list of formulas</em>, one per segment. This
 is the most expressive detector in the package — each segment can have its
 own intercept, slope, variance and autocorrelation, and the changepoints
 themselves get full posterior distributions rather than point estimates,
-which <code><a href="ggcpt_posterior.html">ggcpt_posterior()</a></code> already knows how to draw.</p>
+summarised here as <code>ci_lower</code>/<code>ci_upper</code> on the changepoints
+tibble. (<code><a href="ggcpt_posterior.html">ggcpt_posterior()</a></code> draws a <em>per-location</em>
+probability profile, which only <span class="pkg">bcp</span> and <span class="pkg">Rbeast</span> expose; it
+does not accept an <code>mcp</code> result.)</p>
     </div>
 
     <div class="section level2">

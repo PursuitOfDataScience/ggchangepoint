@@ -358,15 +358,17 @@ grid
 ```
 
 Ten replicates is a noisy estimate of a median, and the table above will
-wobble with the seed. A larger run of the same design gives median
-detection delays of roughly **12, 4 and 2** observations for `edetector`
-at shifts of 1, 2 and 3 standard deviations, and **11, 5 and 4** for
-`cpm`. Two things are worth taking from that. Delay falls steeply in the
-shift size, so a monitor tuned on a large change will feel unusably slow
-on a small one. And the ordering of the two detectors is not fixed: at 1
-sigma they are within an observation or two of each other, and the small
-run above and the larger one disagree about which is ahead, while
-`edetector` is clearly quicker once the change is obvious.
+wobble with the seed. A larger run of the same design — 150 replicates
+per cell, repeated under two seeds — gives median detection delays of
+**7, 3 and 2** observations for `edetector` at shifts of 1, 2 and 3
+standard deviations, and **10, 5 and 4** for `cpm`. Two things are worth
+taking from that. Delay falls steeply in the shift size, so a monitor
+tuned on a large change will feel unusably slow on a small one. And the
+gap between the two detectors is real but modest where the change is
+small: two or three observations at 1 sigma, against inter-quartile
+ranges of \[5, 12\] and \[7, 15\] that overlap almost entirely — while
+`edetector` is clearly and consistently quicker once the change is
+obvious.
 
 ## 6. Assumptions: the thresholds are for independent observations
 

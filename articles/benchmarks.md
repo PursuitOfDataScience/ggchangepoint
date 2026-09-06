@@ -109,13 +109,23 @@ implies about `n / arl0` alarms by construction: 2 at n = 1,000, 20 at n
 count is the parameterisation working as specified, read as though it
 were a segmentation.
 
-Setting `arl0 = 5 * n` returns **exactly the 4 real changepoints** at
-every length. The lesson generalises to every online method used in
-batch mode: its threshold is a rate per observation, so it must be
-scaled to the length of the series you are pointing it at. See
+Setting `arl0 = 5 * n` returns **exactly the 4 real changepoints** at n
+= 1,000 and n = 10,000. The lesson generalises to every online method
+used in batch mode: its threshold is a rate per observation, so it must
+be scaled to the length of the series you are pointing it at. See
 [`vignette("monitoring", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/monitoring.md)
 for the alarm-and-delay accounting that makes this visible rather than
 confusing.
+
+The rule runs out at the third length, and the reason is worth knowing
+before you reach for it. **`cpm` ships thresholds for a fixed grid of
+`arl0` values whose largest entry is 50,000**, so `5 * n` is simply
+unavailable at n = 100,000; the most that can be asked for there is
+50,000, or `n / 2`.
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+refuses an off-grid value outright, because `cpm` answers one by
+printing an error and returning no changepoints – indistinguishable from
+a genuine “no changes” result.
 
 `np` reports 10 at n = 100,000 — an over-count of six, small enough to
 be worth its nonparametric robustness, and much better behaved than
