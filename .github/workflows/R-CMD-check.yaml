@@ -38,6 +38,14 @@ jobs:
       # keeps the LAST n and prefixes "...", so the default of 10 hides the
       # error and 0 hides everything -- make it big enough to show the lot.
       _R_CHECK_VIGNETTES_NLINES_: 1000
+      # The same trap for the test log, and it cost a CI cycle to learn
+      # twice: R CMD check keeps the LAST n lines, default 13. A Windows run
+      # failed with thirteen identical "there is no package called
+      # 'RSpectra'" lines -- an upstream loading diagnostic, not the failure
+      # -- and the testthat failure names had been pushed off the top, so
+      # they appeared in neither `gh run view --log-failed` nor the full
+      # job log. They were never written at all.
+      _R_CHECK_TESTS_NLINES_: 1000
 
     steps:
       - uses: actions/checkout@v4

@@ -56,8 +56,28 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
   if (!is.null(lambda)) args$lambda <- lambda
   if (!is.null(threshold)) args$threshold <- threshold
 
-  # The engine prints Monte Carlo progress; keep the console clean.
-  utils::capture.output(fit <- do.call(InspectChangepoint::inspect, args))
+  # The engine prints Monte Carlo progress; keep the console clean. That
+  # took stdout only, which is not all of it: `inspect()` and
+  # `sparse.svd()` both call requireNamespace("RSpectra") without
+  # `quietly = TRUE`, and RSpectra is merely *suggested* by
+  # InspectChangepoint -- so on a machine holding the engine but not
+  # RSpectra (the Windows CI runner, for one) every call writes "Loading
+  # required namespace" and "Failed with error: there is no package called
+  # 'RSpectra'". The engine handles the absence itself, falling back to
+  # base::svd, so it is a loading diagnostic rather than a problem -- but
+  # it is not ours to print, and thirteen repetitions of it are what
+  # truncated a CI test log down to nothing else.
+  #
+  # suppressMessages() is not enough and was tried first: only "Loading
+  # required namespace" is a condition, while requireNamespace() writes the
+  # "Failed with error" line straight to stderr. Capturing the message
+  # stream is what silences it. Warning *conditions* still reach the
+  # caller and errors still propagate -- both verified -- because only the
+  # stream is redirected, not the condition system.
+  ignore <- utils::capture.output(
+    inner <- utils::capture.output(
+      fit <- do.call(InspectChangepoint::inspect, args),
+      type = "message"))
 
   cp_mat <- fit$changepoints
   cp_indices <- if (is.null(cp_mat)) integer(0) else as.integer(cp_mat[, "location"])
