@@ -32,8 +32,10 @@ cpt_scenarios(
 \item{n_rep}{Replicates per scenario. Defaults to \code{1}.}
 
 \item{seed}{Base seed; replicate \code{r} of scenario \code{i} uses
-\code{seed + (i - 1) * n_rep + r}, so the whole grid is reproducible and
-every cell is independent.}
+\code{seed + (i - 1) * n_rep + r}, so the whole grid is reproducible
+and every cell is independent. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{as_datasets}{Return simulated datasets in
 \code{\link{cpt_benchmark}()}'s shape (the default), or just the

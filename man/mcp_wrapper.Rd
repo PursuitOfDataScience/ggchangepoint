@@ -37,7 +37,9 @@ for this engine at all.}
 
 \item{iter, adapt, chains}{Sampler settings, passed through.}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{mcp::mcp()}.}
 }

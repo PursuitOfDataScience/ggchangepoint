@@ -38,6 +38,7 @@ Other result class:
 \code{\link{as_ggcpt}()},
 \code{\link{cpt_annotations}()},
 \code{\link{is_ggcpt}()},
-\code{\link{new_ggcpt}()}
+\code{\link{new_ggcpt}()},
+\code{\link{print.ggcpt}()}
 }
 \concept{result class}

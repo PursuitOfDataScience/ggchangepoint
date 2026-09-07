@@ -16,9 +16,16 @@ cpt_confint(
 \arguments{
 \item{object}{A \code{ggcpt} object.}
 
-\item{level}{Confidence/credible level. Defaults to \code{0.95}. Ignored
-by \code{method = "native"}, which reports the interval the engine
-already computed at whatever level it was asked for.}
+\item{level}{Confidence/credible level. Defaults to \code{0.95}. Honoured
+by the routes that compute an interval -- \code{"bootstrap"},
+\code{"posterior"} and \code{"nsp"} -- and \strong{ignored by}
+\code{"native"}, which reports the interval the engine already
+computed at whatever level it was asked for. Note that
+\code{method = "auto"} resolves to \code{"native"} whenever the engine
+supplied one, so an explicit \code{level} can go unused there too: it
+is reported in the \code{level} column either way, and supplying a
+level the answer does not carry now warns rather than passing
+silently. To choose the level yourself, name a computing route.}
 
 \item{method}{Which route to use:
 \describe{
@@ -55,7 +62,10 @@ already computed at whatever level it was asked for.}
 \item{B}{Bootstrap replicates for \code{method = "bootstrap"}. Defaults to
 \code{200}.}
 
-\item{seed}{Optional seed (bootstrap and NSP are both random).}
+\item{seed}{Optional seed (bootstrap and NSP are both random). The seed
+is scoped to this call: \code{.Random.seed} is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.}
 
 \item{...}{Passed to \code{\link{cpt_detect}()} on the bootstrap
 replicates, or to \code{\link{nsp_wrapper}()}.}

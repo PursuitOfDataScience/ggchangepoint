@@ -24,11 +24,26 @@
 #' @param methods Character vector of method names.
 #' @param tolerance Matching window, in positions. Defaults to \code{5}.
 #' @param min_votes Minimum number of methods that must find a location for
-#'   it to enter the consensus. Defaults to \code{2}; pass a fraction in
-#'   \eqn{(0, 1)} for a proportion of the methods that ran.
+#'   it to enter the consensus. Defaults to \code{2}.
+#'
+#'   A value \strong{strictly between 0 and 1} is read as a proportion of
+#'   the methods that ran; anything else is a count. The boundary is worth
+#'   knowing, because it falls exactly where a reader thinking in
+#'   proportions would write \dQuote{unanimous}: with three methods,
+#'   \code{min_votes = 0.99} needs all three, while
+#'   \code{min_votes = 1} -- and \code{1.0}, which is the same number --
+#'   is a count of one and so the \emph{least} strict setting there is. For
+#'   unanimity, pass the number of methods, or a fraction just below 1.
+#'
+#'   A count larger than the number of methods that ran cannot be reached,
+#'   so the consensus would be empty by construction; that warns rather
+#'   than returning a result indistinguishable from \dQuote{the methods
+#'   agreed on nothing}.
 #' @param change_in Passed to each detector.
 #' @param index Optional time index, carried onto the result.
-#' @param seed Optional seed for reproducibility.
+#' @param seed Optional seed for reproducibility. The seed is scoped to this
+#'   call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to each detector.
 #'
 #' @section Consensus is not inference:
@@ -72,7 +87,7 @@ cpt_consensus <- function(x, methods = c("pelt", "binseg", "amoc"),
   validate_data(data_vec)
   n <- length(data_vec)
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
   has_future <- requireNamespace("future", quietly = TRUE) &&
     requireNamespace("future.apply", quietly = TRUE) &&
     !inherits(future::plan(), "sequential")
@@ -108,6 +123,19 @@ cpt_consensus <- function(x, methods = c("pelt", "binseg", "amoc"),
     max(1, ceiling(min_votes * length(ok)))
   } else {
     max(1, as.integer(min_votes))
+  }
+  # A threshold no method can reach makes the empty result certain, and an
+  # empty consensus is indistinguishable from "the methods agreed on
+  # nothing" -- which is a finding, where this is an arithmetic mistake.
+  # `cpt_consensus(x, methods = c("pelt", "binseg"), min_votes = 3)` asked
+  # three of two. Same reason `cpt_benchmark()` refuses an empty `methods`.
+  if (threshold > length(ok)) {
+    warning("`min_votes` resolves to a threshold of ", threshold,
+            " but only ", length(ok), " method(s) ran, so no location can ",
+            "reach it and the consensus is empty by construction. Note that ",
+            "a value of 1 or more is a count of methods, not a proportion: ",
+            "only a fraction strictly between 0 and 1 is read as a ",
+            "proportion.", call. = FALSE)
   }
 
   clusters <- cluster_changepoints(detections, tolerance)

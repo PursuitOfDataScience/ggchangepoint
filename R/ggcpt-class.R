@@ -1,5 +1,10 @@
 #' Create a ggcpt object
 #'
+#' The low-level constructor for the class every detector in this package
+#' returns. It assembles the components into a \code{ggcpt} without checking
+#' them, which is what makes it useful inside a wrapper and unsuitable as the
+#' entry point for hand-built input -- use \code{\link{as_ggcpt}()} for that.
+#'
 #' @param changepoints A tibble with columns \code{cp} and \code{cp_value}.
 #' @param segments A tibble with segment information: \code{seg_id}, \code{start},
 #'   \code{end}, \code{n}, \code{param_estimate}.
@@ -112,6 +117,10 @@ format_penalty <- function(penalty) {
 
 #' Test if an object is a ggcpt object
 #'
+#' A class check, useful when a function accepts either a detection result or
+#' the raw series. It tests the class only; a \code{ggcpt} subclass such as
+#' \code{ggcpt_batch} is not one of these and returns \code{FALSE}.
+#'
 #' @param x An object to test.
 #' @return \code{TRUE} if \code{x} inherits from \code{ggcpt}.
 #' @export
@@ -125,22 +134,55 @@ is_ggcpt <- function(x) {
   inherits(x, "ggcpt")
 }
 
+# Internal: one "  Label:  value" line of a print() header, with the values
+# aligned on a single column and no trailing space.
+#
+# Written once because four print methods padded their labels by hand and
+# all four had drifted. print.ggcpt() put its values in three different
+# columns (19, 20 and 22) because `Changepoints found:` is longer than the
+# pad the others use; print.ggcpt_delay() had five of six right and
+# `Average run length:` one column out; print.ggcpt_path() left
+# `Distinct segmentations:` unpadded entirely. And every line built with
+# cat()'s default separator ended in a space, because the separator lands
+# between the value and the "\n" -- 5 of 13 lines of a ggcpt and 7 of a
+# summary.
+#
+# `width` is the widest label plus its colon, so a label that outgrows it
+# extends the line rather than being truncated.
+#' @noRd
+cat_field <- function(label, value, width = 19L) {
+  cat("  ", formatC(paste0(label, ":"), width = width, flag = "-"), " ",
+      paste0(value, collapse = ""), "\n", sep = "")
+}
+
 #' Print a ggcpt object
+#'
+#' A compact header -- method, what changed, how many changepoints, the
+#' convention their locations follow, the penalty and the series length --
+#' followed by the first ten changepoints. For the segment table and the
+#' fitted parameters use \code{\link[base]{summary}()}; for the changepoints
+#' as data use \code{\link{tidy}()}.
 #'
 #' @param x A \code{ggcpt} object.
 #' @param ... Additional arguments (ignored).
+#' @return \code{x}, invisibly. Called for the side effect of printing.
 #' @export
+#' @family result class
+#' @seealso \code{\link{summary.ggcpt}()}, \code{\link{tidy.ggcpt}()}.
+#' @examples
+#' set.seed(2026)
+#' print(cpt_detect(c(rnorm(40), rnorm(40, 4)), method = "pelt"))
 print.ggcpt <- function(x, ...) {
   cat("ggcpt (changepoint detection result)\n")
-  cat("  Method:         ", x$method,
-      if (isTRUE(x$registered)) "  [user-registered]" else "", "\n", sep = "")
-  cat("  Change in:      ", x$change_in, "\n")
-  cat("  Changepoints found:", nrow(x$changepoints), "\n")
-  cat("  CP convention:  ", x$cp_convention, "\n")
-  cat("  Penalty:        ", format_penalty(x$penalty), "\n")
-  cat("  Series length:  ", nrow(x$data), "\n")
+  cat_field("Method", paste0(x$method,
+            if (isTRUE(x$registered)) "  [user-registered]" else ""))
+  cat_field("Change in", x$change_in)
+  cat_field("Changepoints found", nrow(x$changepoints))
+  cat_field("CP convention", x$cp_convention)
+  cat_field("Penalty", format_penalty(x$penalty))
+  cat_field("Series length", nrow(x$data))
   if (!is.null(x$index)) {
-    cat("  Index:          ", format_index_range(x$index), "\n")
+    cat_field("Index", format_index_range(x$index))
   }
   if (nrow(x$changepoints) > 0) {
     cat("\nChangepoints:\n")

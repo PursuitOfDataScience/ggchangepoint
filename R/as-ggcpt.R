@@ -10,8 +10,13 @@
 #' \code{\link{cpt_report}()}.
 #'
 #' @param cp Integer vector of changepoint locations. Out-of-range,
-#'   duplicated and missing values are dropped, and the result is sorted —
-#'   the same contract every built-in wrapper is held to.
+#'   duplicated and missing values are dropped and the result is sorted —
+#'   the same contract every built-in wrapper is held to — but unlike a
+#'   wrapper, which is normalising an engine's output, this function is
+#'   given yours, so \strong{anything it drops it warns about}, with the
+#'   values and the range they had to fall in. A fractional index is
+#'   included in that: it is truncated rather than rounded, which makes
+#'   \code{50.5} into a changepoint at 50.
 #' @param x The series the changepoints refer to: a numeric vector, or a
 #'   matrix/data frame (rows are time points) for a multivariate result.
 #' @param fitted Optional length-\code{n} fitted signal, used by
@@ -51,6 +56,10 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
                      penalty = NULL, cp_convention = c("left", "right"),
                      index = NULL, fit = NULL, extra = NULL) {
   cp_convention <- match.arg(cp_convention)
+  # Kept because the checks below need the value as the caller wrote it:
+  # as_cp_locations() truncates a fractional index through as.integer(),
+  # which is exactly one of the things worth refusing.
+  cp_input <- cp
   if (!is.character(method) || length(method) != 1L || !nzchar(method)) {
     stop("`method` must be a single non-empty string.", call. = FALSE)
   }
@@ -71,6 +80,84 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
   n <- length(data_vec)
 
   cp <- as_cp_locations(cp, "cp")
+  # `ggcpt_build()` below drops a `cp` that is NA or outside 1..(n-1), and
+  # `@param cp` documents that as the contract -- "the same contract every
+  # built-in wrapper is held to". For a wrapper that is right: the indices
+  # come from an engine, some of which legitimately emit a boundary value
+  # (`ecp` reports n), and normalising a machine's output is the wrapper's
+  # job.
+  #
+  # Here they come from a person. The documented use cases are a published
+  # paper's reported breaks, an analyst's annotations, another package's
+  # output -- and for those, one mistyped index vanishing without a word
+  # leaves a result that looks complete and is short a changepoint.
+  # Measured on a 200-point series:
+  #
+  #   as_ggcpt(c(50, 500), x)  -> 1 changepoint at 50
+  #   as_ggcpt(c(0, 50), x)    -> 1 changepoint at 50
+  #   as_ggcpt(c(50, NA), x)   -> 1 changepoint at 50
+  #   as_ggcpt(50.5, x)        -> 1 changepoint at 50   (truncated)
+  #   as_ggcpt(c(50, 50), x)   -> 1 changepoint at 50   (deduplicated)
+  #
+  # The dropping is kept, because it is the documented behaviour and
+  # refusing would break code that works today. What is not kept is the
+  # silence: each of the five now says what it discarded and why. Sorting
+  # stays silent, because reordering loses nothing.
+  if (length(cp) > 0) {
+    lo <- if (cp_convention == "right") 2L else 1L
+    hi <- if (cp_convention == "right") n else n - 1L
+    dropped <- character(0)
+    if (anyNA(cp)) {
+      dropped <- c(dropped, paste0(sum(is.na(cp)), " missing"))
+    }
+    # The fractional case has to be read off the input rather than `cp`,
+    # because as_cp_locations() has already truncated it through
+    # as.integer() -- and truncating 50.5 to 50 is a different changepoint,
+    # not a rounding.
+    cp_raw <- suppressWarnings(as.numeric(cp_input))
+    frac <- is.finite(cp_raw) & cp_raw != trunc(cp_raw)
+    if (any(frac)) {
+      dropped <- c(dropped, paste0(
+        sum(frac), " truncated to whole numbers (",
+        paste(format(utils::head(cp_raw[frac], 3)), collapse = ", "), ")"))
+    }
+    oob <- !is.na(cp) & (cp < lo | cp > hi)
+    if (any(oob)) {
+      dropped <- c(dropped, paste0(
+        sum(oob), " outside ", lo, "..", hi, " (",
+        paste(utils::head(cp[oob], 3), collapse = ", "),
+        if (sum(oob) > 3) ", ..." else "", ")"))
+    }
+    dup <- !is.na(cp) & duplicated(cp)
+    if (any(dup)) {
+      dropped <- c(dropped, paste0(sum(dup), " duplicated (",
+                                   paste(unique(cp[dup]), collapse = ", "), ")"))
+    }
+    if (length(dropped) > 0) {
+      # Classed, so the one caller for which the silence *was* right can
+      # muffle it precisely. `cpt_detect()` routes a registered method's
+      # bare-vector return through here, and that is the wrapper case: the
+      # indices come from a detector, not from a person transcribing them,
+      # and "check the values against the series" is advice for the wrong
+      # audience. See run_registered_method().
+      msg <- paste0(
+        "`cp`: ", paste(dropped, collapse = ", "),
+        ". ", length(cp), " location(s) supplied. A \"", cp_convention,
+        "\" changepoint is ",
+        if (cp_convention == "right") {
+          paste0("the first index of the segment after it, so 1 would ",
+                 "leave no segment before it")
+        } else {
+          paste0("the last index of the segment before it, so ", n,
+                 " would leave no segment after it")
+        },
+        ". Check the values against the series rather than relying on ",
+        "this normalisation.")
+      warning(structure(
+        class = c("ggchangepoint_cp_dropped", "warning", "condition"),
+        list(message = msg, call = NULL)))
+    }
+  }
   if (cp_convention == "right") cp <- cp - 1L
 
   # Every other optional slot below reports a length mismatch; `fitted` was

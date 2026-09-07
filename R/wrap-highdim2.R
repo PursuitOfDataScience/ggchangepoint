@@ -64,7 +64,10 @@ threshold_bs <- function(bs, threshold) {
 #' @param empirical Calibrate the thresholds by Monte Carlo rather than using
 #'   the theoretical values? Slower but sharper; defaults to \code{FALSE}.
 #' @param N Monte Carlo samples when \code{empirical = TRUE}.
-#' @param seed Optional seed (used by the empirical calibration).
+#' @param seed Optional seed (used by the empirical calibration). The seed
+#'   is scoped to this call: \code{.Random.seed} is saved and restored, so a
+#'   seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @param ... Additional arguments passed to \code{HDCD::ESAC()}.
 #' @return A \code{ggcpt} object. The changepoints tibble carries
 #'   \code{cusum} (the ESAC statistic at each detected location) and
@@ -100,7 +103,7 @@ esac_wrapper <- function(x, threshold_d = 1.5, threshold_s = 1,
                        call = match.call()))
   }
   data_vec <- as.numeric(X[, 1])
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   # HDCD works with p x n (coordinates down, time across).
   fit <- HDCD::ESAC(t(X), threshold_d = threshold_d,
@@ -225,7 +228,7 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
   }
   data_vec <- as.numeric(X[, 1])
   pilliat_dimension_guard(ncol(X), ncol(as_mv_matrix(x)))
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   fit <- HDCD::Pilliat(t(X), threshold_d_const = threshold_d_const,
                        threshold_bj_const = threshold_bj_const,
@@ -273,7 +276,10 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
 #'   \code{20}; raise it for a sharper threshold at proportional cost.
 #' @param delta Minimum spacing between changepoints. Defaults to
 #'   \code{max(10, floor(n / 20))}.
-#' @param seed Optional seed (the permutation calibration is random).
+#' @param seed Optional seed (the permutation calibration is random). The
+#'   seed is scoped to this call: \code{.Random.seed} is saved and restored,
+#'   so a seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @return A \code{ggcpt} object with \code{change_in = "covariance"}; the
 #'   changepoints tibble carries the CUSUM statistic in \code{cusum}.
 #' @references
@@ -307,7 +313,7 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
   data_vec <- as.numeric(X[, 1])
   if (is.null(delta)) delta <- max(10L, floor(n / 20))
   validate_scalar(delta, "delta", min = 1)
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
   if (is.null(threshold) && n_perm < 1 / alpha) {
     warning("The permutation threshold is the ", format(1 - alpha),
             " quantile of ", n_perm, " values, which extrapolates beyond ",
@@ -388,8 +394,9 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
 #' @param alpha,n_perm Level and number of permutations for that
 #'   calibration.
 #' @param delta Minimum spacing. Defaults to \code{max(5, floor(n / 20))}.
-#' @param seed Optional seed.
-#'
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @section When you have only one copy of the network:
 #' \code{WBS.network()} takes two independent observations of the sequence,
 #' which is how the theory controls the bias of the squared-Frobenius
@@ -461,7 +468,7 @@ network_wrapper <- function(x, copy2 = NULL, n_intervals = 100,
   if (is.null(delta)) delta <- max(5L, floor(n / 20))
   validate_scalar(delta, "delta", min = 1)
   validate_scalar(n_intervals, "n_intervals", min = 1)
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
   if (is.null(threshold) && n_perm < 1 / alpha) {
     warning("The permutation threshold is the ", format(1 - alpha),
             " quantile of ", n_perm, " values, which extrapolates beyond ",

@@ -18,7 +18,9 @@
 #'   faceted plot of fifty series shows dates rather than positions.
 #' @param seed Optional seed for reproducible parallel execution (passed to
 #'   \code{future.apply::future_lapply()} as \code{future.seed}; applied via
-#'   \code{set.seed()} when running sequentially).
+#'   \code{set.seed()} when running sequentially). The seed is scoped to
+#'   this call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @param keep_fit Keep each engine's raw fit in \code{result[[i]]$fit}?
 #'   Defaults to \code{TRUE}, which is what makes a batch result as
 #'   inspectable as a single one. Set it to \code{FALSE} for a large panel:
@@ -143,7 +145,7 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
                                 with_session_registry(run_one),
                                 future.seed = seed %||% TRUE)
   } else {
-    if (!is.null(seed)) set.seed(seed)
+    local_seed(seed)
     lapply(seq_along(series_list), run_one)
   }
   names(results) <- names(series_list)

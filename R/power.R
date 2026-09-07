@@ -55,10 +55,42 @@ validate_location <- function(location, n) {
 #' @param noise Noise model, passed to \code{\link{cpt_simulate}()}.
 #' @param rho AR(1) parameter when \code{noise = "ar1"}.
 #' @param df Degrees of freedom when \code{noise = "t"}.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param parallel Use \code{future::plan()} when \pkg{future.apply} is
-#'   available? Defaults to \code{TRUE}.
+#'   available? Defaults to \code{TRUE}. It has no effect unless a
+#'   non-sequential plan is set, but when one is it changes where the
+#'   replicates' random numbers come from -- see the section below, which
+#'   matters if the power figure is going into a paper.
 #' @param ... Additional arguments passed to \code{\link{cpt_detect}()}.
+#'
+#' @section Reproducibility under a parallel plan:
+#' A seeded call is reproducible \strong{for a given} \code{future::plan()},
+#' and not across plans. Under a parallel plan the replicates' random numbers
+#' come from \pkg{future.apply}'s parallel-safe L'Ecuyer streams, derived
+#' from \code{seed}; run sequentially they come from the calling stream that
+#' \code{seed} set. Both are deterministic, and they are not the same
+#' numbers. Measured on two scenarios at \code{n_sim = 8}, one and the same
+#' \code{seed = 11} gave \code{power = 0, 1} sequentially and
+#' \code{0.125, 0.875} on two workers.
+#'
+#' So the guarantee is: same seed and same plan, same answer -- every time,
+#' whichever plan it is. If a power figure needs to be reproducible by
+#' someone else, pin the execution as well as the seed: pass
+#' \code{parallel = FALSE}, or state the plan alongside the seed. Raising
+#' \code{n_sim} narrows the gap, because it is Monte Carlo error rather
+#' than disagreement -- both estimates are of the same quantity, and
+#' \code{mc_se} says how precisely.
+#'
+#' This is specific to \code{cpt_power()}, which is the one function here
+#' whose parallel tasks consume random numbers. The other six that dispatch
+#' on \code{future::plan()} -- \code{\link{cpt_benchmark}()},
+#' \code{\link{cpt_batch}()}, \code{\link{cpt_consensus}()},
+#' \code{\link{cpt_influence}()}, \code{\link{cpt_sensitivity}()} and
+#' \code{\link{ggcpt_compare}()} -- farm out work that is deterministic
+#' given its input, and were measured to return identical results under a
+#' sequential and a two-worker plan, stochastic engines included.
 #'
 #' @return A \code{ggcpt_power} object: a tibble with one row per scenario —
 #'   \code{n}, \code{jump}, \code{sigma}, \code{location}, \code{power}
@@ -108,7 +140,7 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
                       sigma = as.numeric(sigma),
                       location = as.numeric(location),
                       stringsAsFactors = FALSE, KEEP.OUT.ATTRS = FALSE)
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   has_future <- isTRUE(parallel) &&
     requireNamespace("future", quietly = TRUE) &&
@@ -309,7 +341,7 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
   if (length(range) != 2 || range[1] >= range[2] || range[1] <= 0) {
     stop("`range` must be two increasing positive numbers.", call. = FALSE)
   }
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   eval_at <- function(j) {
     r <- cpt_power(n = n, jump = j, sigma = sigma, method = method,
@@ -412,8 +444,10 @@ print.ggcpt_min_detectable <- function(x, ...) {
 #' @param change_in Change types.
 #' @param n_rep Replicates per scenario. Defaults to \code{1}.
 #' @param seed Base seed; replicate \code{r} of scenario \code{i} uses
-#'   \code{seed + (i - 1) * n_rep + r}, so the whole grid is reproducible and
-#'   every cell is independent.
+#'   \code{seed + (i - 1) * n_rep + r}, so the whole grid is reproducible
+#'   and every cell is independent. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param as_datasets Return simulated datasets in
 #'   \code{\link{cpt_benchmark}()}'s shape (the default), or just the
 #'   scenario table?

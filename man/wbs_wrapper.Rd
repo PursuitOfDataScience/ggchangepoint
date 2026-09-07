@@ -14,7 +14,9 @@ wbs_wrapper(x, n_intervals = 5000, threshold = NULL, seed = NULL, ...)
 \item{threshold}{Manual threshold for detection. If \code{NULL}, model
 selection uses the strengthened Schwarz Information Criterion (sSIC).}
 
-\item{seed}{Optional seed for reproducibility.}
+\item{seed}{Optional seed for reproducibility. The seed is scoped to this
+call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{wbs::wbs()}.}
 }

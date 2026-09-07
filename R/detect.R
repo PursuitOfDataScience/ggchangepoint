@@ -337,9 +337,17 @@ run_registered_method <- function(entry, x, change_in, penalty, ...) {
          "indices; it returned an object of class ", class(out)[1], ".",
          call. = FALSE)
   }
-  res <- as_ggcpt(out, x, method = entry$method, change_in = change_in,
-                  penalty = penalty,
-                  cp_convention = entry$cp_convention)
+  # `as_ggcpt()` reports what it drops from `cp`, because there it is a
+  # person's transcription of published breaks. Here the indices came from
+  # the registered detector itself, which is the wrapper case: normalising
+  # an engine's output is what the builder is for, and telling the caller to
+  # "check the values against the series" would be advice about code they
+  # did not write. Muffled by class, so only this one report is suppressed
+  # and every other warning as_ggcpt() might raise still reaches them.
+  res <- withCallingHandlers(
+    as_ggcpt(out, x, method = entry$method, change_in = change_in,
+             penalty = penalty, cp_convention = entry$cp_convention),
+    ggchangepoint_cp_dropped = function(w) invokeRestart("muffleWarning"))
   res$registered <- TRUE
   res
 }
@@ -406,11 +414,20 @@ planned_methods <- function() {
 #'         \code{capabilities = FALSE}). \code{ci} means the engine
 #'         supplies changepoint-location confidence intervals; \code{fitted}
 #'         a length-\eqn{n} fitted signal; \code{posterior} a per-location
-#'         posterior probability; \code{statistic}, \code{path} and
-#'         \code{scale_space} the internals rendered by
-#'         \code{\link{ggcpt_statistic}()},
-#'         \code{\link{ggcpt_solution_path}()} and
-#'         \code{\link{ggcpt_scale_space}()}.
+#'         posterior probability; \code{statistic} and \code{path} the
+#'         internals rendered by \code{\link{ggcpt_statistic}()} and
+#'         \code{\link{ggcpt_solution_path}()}, which error with the list
+#'         of supporting engines when a result does not carry them.
+#'
+#'         \code{scale_space} is not one of those, despite sitting beside
+#'         them. Nothing stores a scale space on a result:
+#'         \code{\link{cpt_scale_space}()} computes one on demand by
+#'         sweeping a multiscale detector's bandwidth over the series, so
+#'         it works on \emph{any} series and any result -- a \code{pelt}
+#'         fit included. What this column marks is the two engines that
+#'         sweep can be run \emph{with}, i.e. the domain of that
+#'         function's own \code{method} argument:
+#'         \code{subset(cpt_methods(), scale_space)$method}.
 #'
 #'         \code{online} means the \emph{algorithm} is sequential -- it
 #'         consumes observations one at a time -- and this table reports it

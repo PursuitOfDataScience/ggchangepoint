@@ -49,7 +49,10 @@ diagnostic affordable. Defaults to every observation.}
 deviations the substituted value sits above the fitted level. Defaults
 to \code{5}.}
 
-\item{seed}{Optional seed, for detectors that randomise.}
+\item{seed}{Optional seed, for detectors that randomise. The seed is
+scoped to this call: \code{.Random.seed} is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.}
 
 \item{...}{Additional arguments passed to \code{\link{cpt_detect}()} on
 each perturbed series.}

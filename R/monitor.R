@@ -142,6 +142,21 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
             "`. See ?cpt_monitor.", call. = FALSE)
   }
 
+  # `...` reaches cpm::processStream() or ocd::ChangepointDetector(), and
+  # this function renames three of their arguments and pins two more.
+  # Passing an engine's own name gave R's raw "formal argument \"cpmType\"
+  # matched by multiple actual arguments" -- `cpmType`, `ARL0`, `dim`,
+  # `MC_reps` and `beta`, measured across the two engines. `thresh`,
+  # `patience` and `startup` cannot reach `...` at all, because they are
+  # formals here and R matches them there first. `cpt_replay()` forwards
+  # `...` to this function, so it is covered by the same guard.
+  reject_renamed_args(list(...), method)
+  if (identical(method, "ocd")) {
+    reject_managed_args(list(...), "ocd", c(
+      beta = paste("the monitor calibrates against a unit-scale change;",
+                   "use `ocd_wrapper()` directly to set it")))
+  }
+
   validate_scalar(alpha, "alpha", min = 0, max = 1,
                   min_open = TRUE, max_open = TRUE)
   validate_scalar(relearn, "relearn", min = 0)
@@ -421,6 +436,11 @@ monitor_relearn <- function(method, st, buffer) {
 }
 
 #' The alarm log of a monitor
+#'
+#' Every observation at which a sequential monitor crossed its threshold, in
+#' the order they fired. A monitor that never fired returns a zero-row tibble
+#' rather than \code{NULL}, so the result is always safe to \code{rbind()} or
+#' plot.
 #'
 #' @param x A \code{ggcpt_monitor} object.
 #' @param ... Ignored.
@@ -749,18 +769,17 @@ glance.ggcpt_delay <- function(x, ...) {
 #' @export
 print.ggcpt_delay <- function(x, ...) {
   cat("ggcpt_delay\n")
-  cat("  True changes:      ", x$n_changes, "\n", sep = "")
-  cat("  Detected:          ", x$n_detected, "\n", sep = "")
-  cat("  Mean delay:        ",
-      if (is.nan(x$mean_delay)) "-" else format(x$mean_delay, digits = 4),
-      "\n", sep = "")
-  cat("  Median delay:      ",
-      if (is.na(x$median_delay)) "-" else format(x$median_delay, digits = 4),
-      "\n", sep = "")
-  cat("  False alarms:      ", x$n_false_alarms, "\n", sep = "")
-  cat("  Average run length: ",
-      if (is.infinite(x$arl)) "no false alarms" else format(x$arl, digits = 4),
-      "\n", sep = "")
+  cat_field("True changes", x$n_changes)
+  cat_field("Detected", x$n_detected)
+  cat_field("Mean delay",
+            if (is.nan(x$mean_delay)) "-" else format(x$mean_delay, digits = 4))
+  cat_field("Median delay",
+            if (is.na(x$median_delay)) "-" else
+              format(x$median_delay, digits = 4))
+  cat_field("False alarms", x$n_false_alarms)
+  cat_field("Average run length",
+            if (is.infinite(x$arl)) "no false alarms" else
+              format(x$arl, digits = 4))
   cat("\n")
   print(x$per_change, n = 10)
   invisible(x)

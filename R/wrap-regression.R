@@ -129,7 +129,10 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
 #' @param npsi Number of breakpoints to estimate. Defaults to \code{1}.
 #' @param conf_level Confidence level for breakpoint intervals. Defaults to
 #'   \code{0.95}.
-#' @param seed Optional seed (the estimator uses bootstrap restarting).
+#' @param seed Optional seed (the estimator uses bootstrap restarting). The
+#'   seed is scoped to this call: \code{.Random.seed} is saved and restored,
+#'   so a seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @param ... Additional arguments passed to \code{segmented::segmented()}.
 #' @return A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} columns
 #'   and the fitted broken line in \code{$data$fitted}. Breakpoints are
@@ -176,7 +179,7 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
 
   df <- data.frame(.y = data_vec, .t = seq_along(data_vec))
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   base_fit <- stats::lm(.y ~ .t, data = df)
   fit <- segmented::segmented(base_fit, seg.Z = ~.t, npsi = npsi, ...)

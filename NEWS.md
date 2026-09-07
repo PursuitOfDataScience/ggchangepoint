@@ -517,6 +517,639 @@ them, and the capability matrix was extended in lockstep.
   change to the figures: `html_vignette` displays them at their natural
   size, so fewer pixels means a smaller file, not a smaller picture.
 
+## Fixes found in the final pre-submission sweeps
+
+Further passes, each sweeping a surface rather than re-reading code: every
+wrapper against every argument its engine accepts, every method against
+every `change_in` value it advertises, every documented claim against the
+installed package, and — the ones that found the most — *invariances*, where
+the answer is compared against another answer rather than against a
+recorded value. Fifty-eight further items.
+
+Five are wrong answers. Four are below; the fifth has its own section
+because it is the one that could have reached a publication: a `seed`
+argument that reset the caller's random stream, so a simulation loop
+analysed the same dataset six times over.
+
+### Wrong answers
+
+- **`wbsts` could not report more than one changepoint.**
+  `wbsts::wbs.lsw()` ends in
+  `suppressWarnings(if (is.na(OUT)) OUT = NULL)`, which was a warning
+  before R 4.2 and is an error after it — and `OUT` has length > 1
+  exactly when post-processing kept two or more changepoints. So the call
+  died precisely when the method would have reported the multiple changes
+  it exists to find: 2 of 20 runs failed on a one-changepoint series and
+  19 of 20 on three- and five-changepoint ones, where the successes never
+  reported more than one. On that one error the wrapper restores
+  `.Random.seed` and replays the engine's own body with `all(is.na(OUT))`
+  in place of `is.na(OUT)` — the reading its `suppressWarnings()` shows
+  was intended — so the result is upstream's answer retrieved, not a
+  different one.
+- **`hdcov` and `network` failed on 44–96% of runs, at random.**
+  `changepoints::thresholdBS()` prunes with `for (i in 2:level_length)`,
+  so a binary-segmentation tree with one level runs the body at `i = 2`,
+  `table(...)[2]` is `NA`, and `1:NA` stops with base R's `NA/NaN
+  argument`. Binary segmentation stops at one level whenever the series is
+  short relative to the dimension, and the threshold comes from a
+  permutation draw, so whether a given call landed there was random:
+  `hdcov` failed on 23 of 25 runs at *n* = 120, *p* = 8 and 24 of 25 at
+  *n* = 400, *p* = 20; `network` on 10 of 12 for a 20-point sequence of
+  4-node graphs. One level means one candidate split with no ancestors to
+  prune against, so it is a changepoint exactly when its own statistic
+  clears the threshold — a rule that reproduces `thresholdBS()`'s output
+  on a multi-level tree, which is what makes it safe to apply.
+- **`cpt_batch()` detected on a panel it had rewritten.** It reached the
+  engine through a bare `as.numeric()`, which `cpt_detect()` has refused
+  since 0.4.0: a **factor** member became its level codes — an
+  alphabetical ordering of the labels — and a **character** member became
+  `NA`s. A **matrix** member was worse, because `as.numeric()` unrolls it
+  column after column: an 80×2 member became a 160-point series and
+  reported a changepoint at index 80, the seam where the second column was
+  appended. The message names the offending series, because in a panel
+  "which one?" is the question.
+- **`ecp_wrapper()` absorbed non-finite values rather than refusing
+  them,** and what came back was wrong rather than merely missing. On a
+  180-point series with one change at 90, twenty `NA`s lost the
+  changepoint entirely, and an all-`NA` second half reported two
+  changepoints at 12 and 14 that the data does not contain.
+  `cpt_wrapper()` and `cpt_detect()` had always refused this; only the
+  `ecp` route was open.
+- `cpt_wrapper()` and `ggcptplot()` refuse multi-column input instead of
+  concatenating it. The same unrolling as above: `cpt_wrapper()` on a
+  120×2 matrix reported 58, 120 and 180, where only the 58 is real and the
+  120 is the seam. `ggcptplot()` drew 240 points for 120 observations;
+  it now plots the first column and says so, the convention
+  `ggecpplot()` already had.
+- `cpt_replay()`, `cpt_monitor()` and `cpt_update()` refuse a factor
+  series. Each branch coerced its own way, so a factor reached two of the
+  three detectors as level codes — for labels like `"10"`, `"2"`, `"30"`
+  that is the order 3, 1, 2 rather than the numbers. The series is now
+  normalised once, before the branch. `cpt_penalty(model, series =)` is
+  guarded for the same reason: a learned penalty predicted from a factor's
+  level codes is silently just a number.
+- `cpt_power()` no longer reports a power figure for a changepoint nobody
+  asked about. `location` went through no validation at all, and the
+  scenario loop clamps with `max(2, min(cp, n - 2))`, so `location = 1e6`
+  at *n* = 200 answered "power 0.75" for a change at 198. Out-of-range
+  *positions* are now refused; an extreme *fraction* still clamps, which
+  is correct.
+- `cpt_power()` warns instead of returning `power = NaN`. One unlucky
+  replicate may legitimately fail, which is why the loop tolerates
+  errors — but when *every* replicate fails (most often because an
+  argument forwarded through `...` is not one `cpt_detect()` accepts) the
+  rate is `mean(all-NA)`, and a `NaN` is a number the caller could plot.
+  The first engine error is now reported with it, and
+  `cpt_min_detectable()` stops on it rather than reaching
+  `if (power < ...)` and answering `missing value where TRUE/FALSE
+  needed`.
+- `cpt_replay(baseline = 500)` on a 180-point series is refused rather
+  than reinterpreted. A lone number is documented as the count of leading
+  observations; when it was fractional or out of range it fell through to
+  the explicit-series branch, which turned it into a **one-point**
+  baseline and then failed with "needs at least 5 pre-change
+  observations", never mentioning the 500.
+- `cpt_methods()` no longer advertises two capabilities it could not
+  deliver: `wbsts` and `binsegrcpp` were marked `path = TRUE` but expose
+  no solution path to `cpt_solution_path()`.
+
+### Engine arguments, answered by name
+
+A sweep of all 64 wrapper argument slots and of every wrapper against
+every argument its engine accepts.
+
+- **Twelve wrapper/argument pairs collided with a value the wrapper pins
+  for itself** — SMUCE's `jumpint`, bocpd's `getR`, `wbs2`/`tguh`'s
+  `solution.path` and `model.selection`, `sn`'s `plot_SN`, `envcpt`'s and
+  `beast`'s narration switches, `decafs`'s `warningMessage` — and R
+  answered `formal argument "verbose" matched by multiple actual
+  arguments`, naming neither the wrapper, nor the engine, nor what to do
+  instead. Each is now refused with the reason the wrapper sets it.
+- **Twenty-three pairs collided with an argument this package renames.**
+  `...` is documented as reaching the engine, so the engine's own name is
+  the natural thing to pass — `mindist` for `min_dist`, `M` for
+  `n_intervals`, `cpmType` for `cpm_type`, `ARL0` for `arl0`, `lambda`
+  for `penalty`, and so on. Each now redirects to the argument that does
+  the job, or says the value comes from `x` and is not the caller's to
+  set.
+- **Four entry points that are not engine wrappers were never swept, and
+  had fifteen collisions between them.** `cpt_crops()` pins the two
+  arguments that make its call CROPS at all (`method`, `penalty`) and the
+  interval it sweeps (`pen.value`); `cpt_wrapper()` and `ggcptplot()`
+  rename the \pkg{changepoint} package's `method` to `cp_method`, so
+  `method` — the most natural name to reach for — was the one that broke;
+  and `cpt_monitor()` renames or pins five of `cpm`'s and `ocd`'s
+  (`cpmType`, `ARL0`, `MC_reps`, `dim`, `beta`), which `cpt_replay()`
+  inherits by forwarding `...` to it. Each now redirects by name, and
+  `ggcptplot()` names itself rather than the function it shares the rename
+  with.
+- **Twenty-four arguments were forwarded to the engine unchecked**, which
+  reported them from deep inside itself as `missing value where
+  TRUE/FALSE needed`, `negative length vectors are not allowed` or
+  `NAs in foreign function call`. `burnin`, `min_size`, `cstar`,
+  `lambda`, `alpha`, `patience`, `mc_reps`, `wsize`, `kmax`, `lag`,
+  `npsi`, `minseglen`, `confidence`, `frequency`, `ord`, `N`, the two
+  `threshold_*` constants, `n_perm`, `sigma`, `df`, `seed`, `startup`
+  and `arl0` are all validated by name now.
+- **Seven engines refused a short series in their own vocabulary,** two
+  of them with their own typos: `not` reports `max.length must satisfy
+  3 < max.lenght <= n`, `envcpt` `Minimum segment legnth is too large`,
+  `wbsts` base R's `subscript out of bounds`, which does not even say the
+  series is the problem. None named the method the caller asked for or the
+  length they gave it. The engine's diagnosis is kept — it is the
+  informative half — and the method, the observation count and, where the
+  threshold moves with an argument, the arithmetic are added:
+  `bfast` needs `2 * frequency`, `strucchange` needs `h * n`, `envcpt`
+  more than `2 * minseglen`.
+- **Five multivariate-only engines failed on a single column with a
+  message that named nothing:** `hdcov` `non-conformable arrays`,
+  `network` `'x' must be an array of at least two dimensions`, `var`
+  `incorrect number of dimensions`, `kwc` `dim(X) must have a positive
+  length`, and `geomcp` a clearer line that still named neither method nor
+  argument. All five now match the four engines that always named the
+  requirement.
+- Every refusal of a non-finite series now carries the count — one stray
+  `NA` in 10,000 points and a half-missing series are different problems
+  with different fixes — from one definition rather than seven copies.
+  `network` was the one high-dimensional route with no finiteness check at
+  all, and a single `NA` surfaced as `replacement has length zero` from
+  inside its random edge-splitting.
+- A data frame with one non-numeric column is named rather than blamed
+  whole: `as.matrix()` returns an all-character matrix, so `x must be
+  numeric` left the reader to find which column. The note also says what
+  coercing a factor would have given.
+- Error messages name the argument the caller actually passed.
+  `as_mv_matrix()` said `x` where the argument was `baseline`, `new_obs`,
+  `series` or `response`; `cpt_scale_space()` reported
+  ``Method `scale_space` is univariate``, naming a method the caller had
+  never heard of; `cpt_replay()` reported a non-finite value against
+  `baseline` or `new_obs` depending on which slice happened to contain it,
+  and counted it against the slice rather than the series.
+- `cpt_benchmark(methods = character(0))` is refused instead of building a
+  zero-row grid and stopping at `attempt to set an attribute on NULL`.
+- `ggcpt_interactive()` validates `width_svg`/`height_svg` on the
+  `ggiraph` path, where `girafe()` answered `` `width` must be a scalar
+  positive number `` about its own internal argument.
+- `cpt_monitor()` refuses a multi-column `baseline` for a univariate
+  detector by shape. `length()` on a data frame counts its columns, so a
+  60-row, 2-column baseline was refused for having fewer than 5
+  pre-change observations — naming a count of 2 for 60 observations.
+- `ggcpt_posterior()` on a `bocpd` or `mcp` result names the accessor that
+  does work (`ggcpt_runlength()`, and `ci_lower`/`ci_upper` respectively)
+  instead of being a dead end reached from `cpt_methods()`' own
+  `posterior` column.
+
+### `cpm`'s two thresholds
+
+- **The documented `arl0` grid was half the real one.** `cpm` ships
+  thresholds for 24 average run lengths, not the 12 the help page and the
+  error message listed: 300, 800, 900, 3000, 4000, 6000, 7000, 8000, 9000,
+  30000, 40000 and 50000 were all refused by this package and accepted by
+  the engine. The grid is the same for every `cpm_type`, and 50000 is the
+  ceiling.
+- **`cpm_type = "FET"` needs a `lambda` and had no default.** Without one
+  `processStream()` dies inside `cpm` with `only 0's may be mixed with
+  negative subscripts`. It is now refused by name, with the two values
+  `cpm` ships FET thresholds for (0.1 and 0.3).
+- The "No thresholds available" branch reads the printed line rather than
+  assuming: the same message covers `arl0` and `lambda`, and blaming
+  `arl0` for a `lambda` failure sent the reader after an argument that was
+  already correct.
+- `"ExponentialAdjusted"` is offered again. It was withheld alongside
+  `"GLRAdjusted"` as one of two types `cpm`'s own dispatch rejects;
+  re-measured against `cpm` 2.3, it runs and returns changepoints. Only
+  `"GLRAdjusted"` is genuinely rejected upstream.
+
+### The caller's session
+
+- **Two engines rewrote the search path and did not put it back.**
+  `fabisearch` needs `NMF` *attached* rather than loaded, and attaching it
+  brings its `Depends` (Biobase, BiocGenerics) and the
+  foreach/doParallel/doRNG stack the engine registers — eight packages
+  measured, where the wrapper detached only `NMF`; and the baseline was
+  taken *after* `need_pkg()`, which is itself what attaches two of them.
+  `bcp::bcp()` calls `require(bcp)` in its own body, so every call
+  attached `package:bcp` and `package:grid`. Both now restore exactly what
+  the call added, leaving a package the user had already attached
+  untouched.
+- **A detection call no longer announces someone else's package loads.**
+  `require()` speaks through `packageStartupMessage()`, so restoring the
+  search path silently was not enough: `bcp_wrapper()` still printed
+  `Loading required package: bcp` and `Loading required package: grid` on
+  stderr. Only package startup messages are suppressed, so an engine's own
+  `message()` and `warning()` still reach the caller.
+- **`inspect_wrapper()` no longer prints an upstream loading
+  diagnostic.** `InspectChangepoint::inspect()` and `sparse.svd()` both
+  call `requireNamespace("RSpectra")` without `quietly = TRUE`, and
+  `RSpectra` is only *suggested* there — so on a machine holding the
+  engine and not `RSpectra` every call wrote `Loading required namespace`
+  and `Failed with error: there is no package called 'RSpectra'`. The
+  engine handles the absence itself by falling back to `base::svd`, so it
+  is a diagnostic rather than a problem, and thirteen repetitions of it
+  are what truncated a CI test log down to nothing else.
+  `suppressMessages()` is not enough — `requireNamespace()` writes the
+  second line straight to stderr — so the message *stream* is captured;
+  warning conditions and errors still propagate.
+
+### `seed` no longer resets the caller's random stream
+
+- **A `seed` argument silently collapsed simulation studies to a sample
+  size of one.** Every one of the thirty-six sites that honoured a `seed`
+  did it with `if (!is.null(seed)) set.seed(seed)` in the function's own
+  frame, which does not merely *consume* the caller's random stream — it
+  **resets** it. So the argument whose entire purpose is trustworthiness
+  pinned the stream of whatever loop the call sat inside:
+
+  ```r
+  set.seed(2026)
+  for (i in 1:6) {
+    d <- c(rnorm(100), rnorm(100, 3))
+    f <- cpt_detect(d, method = "wbs", seed = 1)
+  }
+  ```
+
+  Iteration 1's `set.seed(1)` pins the stream, so every later `rnorm()`
+  starts from the same place and regenerates the same series: measured
+  with the data built outside the call, **6 distinct datasets of 6 without
+  the seed and 2 of 6 with it.** Nothing warned and no test failed. The
+  same collapse was measured through `cpt_stability()`,
+  `cpt_select(criterion = "cv")`, `cpt_simulate()`, `cpt_power()` and the
+  stochastic engines — which is to say exactly the functions a user calls
+  inside a simulation loop.
+- **The seed is now scoped to the call.** A new internal helper saves
+  `.Random.seed`, sets it, and restores it when the calling function
+  exits, at all thirty-six sites. A fresh session that had no
+  `.Random.seed` is left without one, rather than acquiring one. Nested
+  calls stack correctly: an inner scope restores what the outer one set.
+- **Nothing documented changed.** A seeded call is still byte-reproducible,
+  and still reproducible across a thousand intervening draws or after an
+  unseeded call has moved the stream on — all three are now tested, as
+  metamorphic assertions that compare calls to each other rather than to a
+  recorded value, which is the only kind that could have caught this.
+- Every `@param seed` says so: the seed is scoped to the call and does not
+  pin the loop's own stream.
+
+### Benchmarking
+
+- **The critical-difference diagram named Demšar and cited nobody.**
+  `autoplot(plot_type = "critical_difference")` is described as "the Demšar
+  diagram ... the standard way this literature says method A beats method
+  B", which is a specific methodological claim, and Demšar (2006) appeared
+  in neither `inst/REFERENCES.bib` nor any `\insertRef` — on a page that
+  already cites van den Burg and Williams for the metrics. Added, and the
+  page now carries a "Reading the critical-difference diagram" section.
+- **The section says three things the diagram cannot.** What rank 1 means
+  and which direction each metric is ranked in; that an `NA` takes the
+  *worst* rank rather than being dropped, so a method that failed on a
+  dataset is penalised instead of quietly scoring on a smaller sample; and
+  the formula for the bar, `CD = q_α √(k(k+1)/6N)` with `q_α` the
+  Studentised range over `√2`.
+- **And the caveat it invites.** Nemenyi is a *post-hoc* procedure,
+  conventionally run only after a Friedman test rejects equal ranks;
+  `autoplot()` draws the diagram it is asked for and does not run that
+  omnibus test. With the handful of datasets `cpt_datasets()` supplies *N*
+  is small and *CD* correspondingly wide, so the page now says to read such
+  a diagram descriptively.
+- The arithmetic behind all of it was checked rather than assumed: the
+  critical distance agrees with Demšar's Table 5 to three decimals for
+  *k* = 2…10, the ranks respect each metric's direction, `NA` takes the
+  worst rank in both directions, ties share the average, `mean_rank`
+  averages over datasets, and an all-`NA` metric returns `NULL` rather than
+  a table of ties. `cpt_stability()`'s frequencies are exact multiples of
+  1/*B* — so `hits` really is a count of replicates, which is what the
+  clipping bug fixed earlier in this cycle had hidden.
+
+### Consensus
+
+- **`cpt_consensus()` accepted a `min_votes` no location could reach, and
+  returned an empty consensus without comment.** `min_votes = 3` against
+  two methods resolves to a threshold of 3, which nothing can clear — and
+  an empty consensus is indistinguishable from *the methods agreed on
+  nothing*, which is a finding rather than an arithmetic mistake. It now
+  warns, naming the threshold and the number of methods that actually ran
+  (not the number requested, since a method that errors is excluded from
+  the vote).
+- **The count/proportion boundary falls exactly where a reader would write
+  "unanimous", and `?cpt_consensus` now says so.** A value strictly between
+  0 and 1 is a proportion; anything else is a count. So with three methods
+  `min_votes = 0.99` requires all three while `min_votes = 1` — and `1.0`,
+  the same number — is a count of one, the *least* strict setting there is.
+  The two neighbouring values mean opposite things, silently. The parameter
+  now spells that out and says to pass the method count, or a fraction just
+  below 1, for unanimity; the new warning repeats it, because a count above
+  the method total is the likeliest way to arrive there.
+
+### Choosing K: the criteria say what they compute
+
+- **`?cpt_select` gave the formula for one of its three closed-form
+  criteria and not the other two.** `"mbic"` was written out in full
+  (\eqn{3K\log n + \sum_i \log(l_i/n)}); `"bic"` was "Gaussian BIC over
+  the ladder" and `"aic"` "Gaussian AIC over the ladder", which leaves the
+  `value` column a reader cannot reproduce — both the cost convention and
+  the changepoint parameter count vary between authors. Both are now
+  stated: `n log(RSS/n) + (2K + 1) log n` and `n log(RSS/n) + 2(2K + 1)`,
+  with the parameter count spelled out as *K* locations plus *K + 1*
+  segment means, and the note that the first term is the `cost` column.
+- The arithmetic was checked rather than assumed, against reference
+  implementations written from the definitions and sharing no code with the
+  package: all three criteria agree exactly at every rung of the ladder,
+  the `cost` column is the Gaussian profile cost at that rung's own
+  locations, exactly one row is marked `chosen`, and it is the argmin of
+  `value`. A test pins the formulas rather than recorded numbers, so a
+  change to what a criterion *means* fails instead of passing.
+- The help page's warning about `"aic"` is now a tested behaviour rather
+  than prose: on a 300-point series with changes at 100 and 200, `"bic"`
+  and `"mbic"` both choose *K* = 2 and `"aic"` takes the whole ladder.
+
+### Cost, where it is large enough to look like a hang
+
+- **`fcov` costs minutes on a hundred-point series, and nothing said so.**
+  It is by a wide margin the most expensive engine in the package. Timed
+  against `fmean_wrapper()` on identical input — same package, same
+  data — `fcov` took **316 s** at *n* = 60, *p* = 5 and **598 s** at
+  *n* = 120 against `fmean`'s 4.5 s and 2.9 s: a factor of seventy to two
+  hundred. `?fcov_wrapper` now carries a "How long this takes" section with
+  those numbers, notes that the cost is roughly linear in the number of
+  time points and lives in the engine's covariance-operator estimation
+  rather than in the wrapper, and says plainly not to put the method in a
+  loop — a twelve-replicate study at *n* = 120 is two hours. `taylor` and
+  `ocd` already carried cost sections for the same reason; this is the
+  third and the most extreme.
+
+### Simulation, which is the package's own ground truth
+
+- **`cpt_simulate()` dropped a surplus `params` entry silently.** `k`
+  changepoints make `k + 1` segments, which is the arithmetic easiest to
+  get wrong, and the two directions were treated differently: too *few*
+  entries already warned (the last one is recycled, so the trailing
+  changepoints would be recorded as ground truth with no change behind
+  them), while too *many* used the first `k + 1` and discarded the rest
+  without a word. So `cpt_simulate(400, changepoints = 200,
+  params = c(0, 3, 9))` returned an ordinary two-segment series and the
+  `9` vanished — from a caller who had plainly meant two changepoints, and
+  whose `cpt_power()` or `cpt_benchmark()` numbers are then scored against
+  a truth they did not intend. It now warns in both directions, naming the
+  changepoint count, the segment count and how many entries went unused,
+  for every `change_in` rather than only `"mean"`.
+- The quantities are now tested rather than assumed, because everything
+  downstream of `cpt_simulate()` is scored against them: the realised mean
+  jump matches `params` to within a standard error at three sizes, the
+  realised sd ratio matches at two, `seg_id` increments at exactly the
+  requested changepoints for three configurations, `noise = "ar1"` recovers
+  `rho`, and `noise = "t"` is materially heavier-tailed than Gaussian.
+
+### The extension mechanism
+
+- **`as_ggcpt()` dropped a changepoint it could not use without saying
+  so.** `ggcpt_build()` discards an index that is `NA` or outside
+  `1..(n - 1)`, and for a wrapper that is right — the indices come from an
+  engine, some of which legitimately emit a boundary value, and normalising
+  a machine's output is the wrapper's job. But `as_ggcpt()` is handed the
+  *caller's* values, and its documented use cases are a published paper's
+  reported breaks, an analyst's annotations, another package's output. On a
+  200-point series:
+
+  ```
+  as_ggcpt(c(50, 500), x)  ->  1 changepoint at 50
+  as_ggcpt(c(0, 50), x)    ->  1 changepoint at 50
+  as_ggcpt(c(50, 200), x)  ->  1 changepoint at 50
+  as_ggcpt(50.5, x)        ->  1 changepoint at 50   (truncated, not rounded)
+  as_ggcpt(c(50, 50), x)   ->  1 changepoint at 50   (deduplicated)
+  ```
+
+  One mistyped index left a result that looked complete and was short a
+  changepoint. **The dropping is unchanged** — it is the documented
+  contract and refusing would break working code — but each of the five now
+  warns, naming the values, the range they had to fall in, and why the
+  convention makes `n` invalid under `"left"` and `1` invalid under
+  `"right"`. Sorting still happens silently, because reordering loses
+  nothing.
+- The report is a **classed** condition (`ggchangepoint_cp_dropped`),
+  because one caller was right to be silent: `cpt_detect()` routes a
+  registered method's bare-vector return through `as_ggcpt()`, and there
+  the indices came from the detector rather than from a person transcribing
+  them — the wrapper case, where normalising an engine's output is the
+  point. That one call site muffles this condition and nothing else, so a
+  registered detector emitting a boundary index does not warn on every
+  call while a user's own transcription still does.
+
+### Reproducibility under a parallel plan
+
+- **`cpt_power()`'s seeded answer depends on the `future::plan()`, and
+  `?cpt_power` now says so.** Seven exported functions dispatch on the
+  plan, and this is the one whose farmed-out tasks consume random numbers:
+  under a parallel plan the replicates draw from \pkg{future.apply}'s
+  L'Ecuyer streams (derived from `seed`), and sequentially from the calling
+  stream `seed` set. Both are deterministic and they are not the same
+  numbers — measured, one and the same `seed = 11` gave `power = 0, 1`
+  sequentially and `0.125, 0.875` on two workers. The guarantee is *same
+  seed and same plan, same answer*, and the new section says how to pin a
+  figure that has to be reproducible by someone else. It also notes that
+  the gap is Monte Carlo error rather than disagreement, which `mc_se`
+  quantifies.
+- The other six that dispatch on the plan — `cpt_benchmark()`,
+  `cpt_batch()`, `cpt_consensus()`, `cpt_influence()`, `cpt_sensitivity()`
+  and `ggcpt_compare()` — were **measured** to return identical results
+  under a sequential and a two-worker plan, stochastic engines included,
+  because their parallel tasks are deterministic given their input. Tests
+  now pin both facts: every one of the seven reproduces within a plan, and
+  the six are plan-independent.
+
+### Inference
+
+- **`cpt_confint(method = "auto")` could answer at a different level than
+  the one asked for, silently.** An `nsp` result carries significance
+  regions, so `"auto"` resolves to `"native"` and reports them at the level
+  the engine already used — `nsp_wrapper()`'s `alpha = 0.1`, i.e. 0.9 — so
+  `cpt_confint(res, level = 0.95)` returned 90% regions. The `level` column
+  said 0.9 throughout, which is honest but only if you inspect it, and
+  `?cpt_confint` documented `level` as ignored by `"native"` without noting
+  that `"auto"` lands there whenever the engine supplied an interval.
+  Supplying a `level` the answer does not carry now **warns and names the
+  route it took**, the way `cpt_monitor()` already warns for a tuning
+  argument that does not affect the chosen method. The default never warns,
+  and `"bootstrap"`, `"posterior"` and `"nsp"` honour the level as before.
+- The bound invariants are now tested rather than assumed: across every
+  provenance and every installed univariate engine, `ci_lower <= cp <=
+  ci_upper`, both bounds inside `1..(n - 1)`, one row per changepoint, and
+  a non-empty `source`. Fifty-nine method/route pairs, no violations.
+
+### `cpt_metrics()` says what its twelve numbers mean
+
+- **The help page listed twelve column names and explained three of
+  them.** `?cpt_metrics` now describes each, with the direction that is
+  better — the same directions `cpt_benchmark()` ranks by — because a
+  benchmark table of twelve unlabelled columns is not readable otherwise.
+- **`annotation_error` is a count difference and nothing else**, and that
+  is now said where it can be seen. It is `abs(n_pred - n_truth)`, so a
+  segmentation with the right *number* of changepoints in entirely the
+  wrong *places* scores a perfect 0: on a 100-point series, predicting 5
+  against a truth of 90 gives `annotation_error = 0` alongside
+  `hausdorff = 85` and `f1 = 0`. The page now says to read it beside a
+  location metric, never alone.
+- **The degenerate cases are documented, including the one place the row
+  mixes conventions.** With one side empty, `precision`, `recall`, `f1`
+  and `rand_index` are `0` rather than `NA`; but `hausdorff`,
+  `mae_matched` and `rmse_matched` are `NA`, because they are distances
+  with no pair to measure. So an all-wrong answer returns `f1 = 0` and
+  `mae_matched = NA` in the same row, and `cpt_benchmark()` ranks the `NA`
+  last rather than dropping it. Only the both-empty case was documented
+  before.
+- The numbers themselves were checked rather than assumed: `covering`,
+  `hausdorff`, `rand_index` and the matched precision/recall/F1 agree
+  exactly with brute-force reference implementations (explicit set
+  intersection over every segment pair, a contingency-table ARI, a double
+  minimax) on nine hand-built cases and twenty random 400-point ones. The
+  `findInterval()` fast path in `calc_covering()` is a performance change
+  to a formula, so a test now pins it to the definition.
+
+### Testing
+
+- **Eleven vignette chunks generated their data without seeding it**, so
+  their rendered output was a function of how much randomness every chunk
+  above them happened to consume — and several of those chunks are
+  conditional on an engine being installed, which means the vignette's
+  numbers and figures already differed between machines with different
+  optional packages. Scoping the `seed` argument (above) changed them
+  again. Each of the eleven now seeds itself, in
+  `vignettes/ggchangepoint.Rmd`, `vignettes/monitoring.Rmd` and
+  `vignettes/supervised.Rmd`, so a rebuilt vignette is a function of the
+  vignette. No prose claim depended on the old values.
+- **Four visual snapshots were only reproducible by accident.** The
+  visual-regression file seeds once at the top and draws its shared series
+  there, but three blocks generate their own data with a bare `rnorm()` —
+  so those snapshots were a function of test *execution order*, stable
+  only because every block above them consumed randomness deterministically.
+  Scoping the `seed` argument (above) took that away and four snapshots
+  changed; the figures were the same layers of a different series, not a
+  broken plot. Each of those blocks now seeds itself, and the snapshots
+  reproduce from three deliberately different starting RNG states — which
+  they did not before.
+- **The suite's Suggests-guard check could name the wrong test.** It
+  locates each `test_that()` block, and it used to end one at the line
+  before the next `test_that(` — which swept up the section comment
+  introducing the *following* test. So a test that touches no optional
+  engine was reported as calling one, because the next test's header
+  mentioned it in prose, and the reader was sent to edit a block that was
+  never at fault. Block extents now come from R's parser (`srcref`s cover
+  an expression and nothing between expressions), which is also exact where
+  brace-counting would not be — several blocks contain a brace inside a
+  string, `skip("{mcp} is not installed")` among them. A test builds a
+  synthetic file with all five shapes (unguarded-and-innocent, guarded,
+  genuinely unguarded, brace-in-string, `expect_error`) and asserts the new
+  spans flag exactly the one guilty block while the old rule flags two.
+
+### Printed output
+
+- **Four `print()` headers padded their labels by hand, and all four had
+  drifted.** `print.ggcpt()` — the package's most-seen output — put its
+  values in three different columns, because `Changepoints found:` is
+  longer than the pad the other five lines use; `print.ggcpt_delay()` had
+  five of six lines right and `Average run length:` one column out; and
+  `print.ggcpt_path()` left `Distinct segmentations:` unpadded entirely.
+  `print.ggcpt()` and `print.summary.ggcpt()` also indented their values
+  differently, though they are two views of one object. One internal
+  helper now emits every field line, so they cannot drift apart again.
+- Header lines no longer end in a space. `cat("  Label: ", value, "\n")`
+  puts the separator between the value and the newline, which left a
+  trailing space on 5 of 13 lines of a `ggcpt` and 7 of a summary.
+  (The tibble printed below the header pads its own columns; that is
+  tibble's output and is left alone.)
+
+### Documentation that had drifted from the code
+
+- The engine lists in `autoplot(show_ci =)`, `autoplot(show_fit =)`,
+  `augment.ggcpt()` and `cpt_confint(method = "native")` were each short
+  by three to four engines. They now name exactly the methods
+  `cpt_methods()` marks in its `ci` and `fitted` columns, and say why
+  `nsp` is marked for uncertainty while being drawn by `show_regions`
+  rather than `show_ci`.
+- `?cpt_detect` documents the six method/`change_in` pairs that are routed
+  to the method's own native change type because the engine has no
+  separate estimator — `not`'s `"var"`, `cpm`'s `"mean"` and `"var"`,
+  `kcp`'s two, and `wbsts`'s `"mean"`. The routing was never silent (the
+  result's `change_in` records what was detected), but it was never
+  written down either. Measured across every method and every value its
+  registry entry lists; every other combination returns what was asked
+  for.
+- `?cpt_detect` names two more engines whose own signature ends in `...`,
+  so a misspelt argument is discarded upstream rather than reported:
+  `fChange` and `bfast`. Every other wired method rejects an unknown
+  argument by name — checked, rather than asserted.
+- **`scale_space` is not the capability column the docs said it was, on
+  three help pages.** `?cpt_methods`, `autoplot(type =)` and
+  `?cpt_scale_space` all grouped it with `statistic` and `path` as an
+  engine internal whose accessor errors without it — so a reader with a
+  `pelt` fit was told the scale-space view was closed to them. It is not:
+  nothing stores a scale space on a result at all,
+  `cpt_scale_space()` computes one by sweeping a multiscale detector over
+  the series, and it returns a full sweep for a `pelt` result as readily as
+  for a `mosum` one. What the column marks is the two engines the sweep can
+  be run *with* — the domain of that function's own `method` argument.
+  `statistic` and `path` do gate their accessors, and still do, with the
+  list of supporting engines in the message.
+- `cpt_methods()` documents that `online` describes the *algorithm* and
+  not what `cpt_monitor()` accepts. The two sets overlap without
+  coinciding: `bocpd` is an online algorithm the monitor does not offer,
+  and `edetector` is native to this package and has no row in the table.
+  Also documented: what `univariate = FALSE` means (a high-dimensional
+  method, which is what `cpt_recommend()` filters on — nine of the
+  fourteen do error on one column, five run and would still be poor
+  advice), what `ci = TRUE` covers for `nsp`, and that `posterior = TRUE`
+  does not imply `ggcpt_posterior()` can draw it.
+- Eight wrappers had no reference at all (`fpop`, `wbs`, `wbs2`, `not`,
+  `mosum`, `idetect`, `tguh`) and `fcov_wrapper()` credited the wrong
+  paper — `fChange`'s package citation rather than the covariance-change
+  method it wraps.
+- The package help page's bold headings rendered as literal `**`: the
+  block is not `@md`, so they are `\strong{}` now.
+- `?ocd_wrapper`'s timing note understated Monte Carlo construction by
+  2–3× and has been re-timed, with the machine dependence stated and the
+  linearity in `mc_reps` — the part worth planning around — separated
+  from the absolute numbers.
+- `?taylor_wrapper` gains a section on series length, because the engine
+  runs where R cannot look: a `setTimeLimit()` of 45 s was not honoured
+  after 170, and **Ctrl-C will not stop it either** (R checks both at the
+  same points). `n_bootstraps` is the knob, and the cost is roughly linear
+  in it.
+- `?wbs2_wrapper` gains a reproducibility section. The engine is not
+  reproducible call to call within a session and no argument can make it
+  so — repeated identical calls with a byte-identical `.Random.seed` on
+  entry returned a last changepoint of either 183 or 188 — because the
+  state that varies is not R's random stream. It reproduces upstream, a
+  fresh session is deterministic, and it needs a series whose model
+  selection sits near a tie: across the methods swept, `wbs2` on one
+  configuration was the only case, and `tguh` — same package — was stable
+  throughout.
+- `?network_wrapper` documents that the series the result carries — and so
+  the one `autoplot()` draws — is the **mean edge weight** per time point,
+  not a coordinate. It is the one multivariate method with no `data_wide`
+  slot, because a *p*×*p* network has *p*² entries per time point.
+- The `fChange` wrappers' note on a too-coarse grid said "two or three
+  columns"; measured on 60 time points, two fail and three, four and six
+  all return a fit, so the guard above it cannot be raised without
+  refusing grids the engine handles.
+- `cpt_load_tcpd()`'s example says why it is `\dontrun{}` — every call
+  downloads from the Turing Change Point Dataset's repository — rather
+  than leaving a reader to guess.
+- Seven help topics could not be reached from any other help page;
+  `@seealso` links now connect them. `print.ggcpt()`, `is_ggcpt()`,
+  `new_ggcpt()` and `alarms()` gained a description distinct from their
+  title — roxygen had been copying the title into `\description` — and
+  `print.ggcpt()` documents its return value, which no `\value` section
+  had stated.
+- Comments that justified a workaround with a claim that is no longer true
+  were corrected rather than left standing: `plotly::ggplotly()` now
+  survives a facet column named `variable` (the name stays `coordinate`
+  because that is what the column holds); `EnvCpt`'s `arima()` stderr leak
+  would not reproduce on any of eight series chosen to provoke it (the
+  diversion is kept as a cheap net, and a genuine convergence warning
+  still reaches the caller); `breakfast`'s `"lp"` selector does not misfire
+  on constant data, so pinning `"ic"` is for reproducibility against an
+  upstream default of `NULL`; and `ocd`'s single-column failure depends on
+  `thresh = "MC"`, which is why the shape is checked in the wrapper rather
+  than left to the engine.
+
 ## Corrections to the roadmap
 
 - `hdbinseg` is **archived on CRAN again**, contrary to the 0.5.0 roadmap's

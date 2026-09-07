@@ -62,7 +62,9 @@ runs one scenario per value.}
 
 \item{max_iter}{Maximum bisection steps. Defaults to \code{12}.}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{...}{Ignored.}
 

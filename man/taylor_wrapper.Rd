@@ -28,7 +28,10 @@ Defaults to \code{0.9}.}
 \item{conf_level}{Confidence level of the reported location intervals.
 Defaults to \code{0.95}.}
 
-\item{seed}{Optional seed (the procedure is bootstrap-based).}
+\item{seed}{Optional seed (the procedure is bootstrap-based). The seed is
+scoped to this call: \code{.Random.seed} is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.}
 }
 \value{
 A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} (so

@@ -201,6 +201,14 @@ test_that("the monitoring display renders consistently", {
     "cpt_monitor timeline"
   )
   skip_if_no_vdiffr()
+  # Seed the block, not the file. `x_step` and `x_multi` at the top are
+  # drawn once from a seeded stream, but a block that generates its own
+  # data was taking whatever stream state the blocks above it happened to
+  # leave -- so the snapshot was a function of test execution order, and
+  # stable only by accident. It came apart the moment seeded calls stopped
+  # leaking their seed into the caller's stream: `cpt_power(seed = 1)` in
+  # the block above used to pin the stream this `rnorm()` drew from.
+  set.seed(4001)
   mon <- cpt_replay(c(rnorm(150), rnorm(150, 3)), method = "edetector")
   vdiffr::expect_doppelganger("cpt_monitor timeline",
                               ggplot2::autoplot(mon))})
@@ -213,6 +221,8 @@ test_that("engine-dependent displays render consistently", {
   )
   skip_if_no_vdiffr()
   skip_if_not_installed("mosum")
+  # Self-contained, for the reason given in the block above.
+  set.seed(4002)
   m <- cpt_detect(c(rnorm(200), rnorm(200, 3)), method = "mosum")
   vdiffr::expect_doppelganger("ggcpt_statistic", ggcpt_statistic(m))
   vdiffr::expect_doppelganger(
@@ -220,6 +230,7 @@ test_that("engine-dependent displays render consistently", {
     ggcpt_scale_space(m, bandwidths = c(20, 40))
   )
   skip_if_not_installed("wbs")
+  set.seed(4003)
   w <- cpt_detect(c(rnorm(200), rnorm(200, 3)), method = "wbs")
   vdiffr::expect_doppelganger("ggcpt_solution_path",
                               ggcpt_solution_path(w, max_steps = 15))})

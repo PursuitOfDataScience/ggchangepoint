@@ -37,6 +37,18 @@
 #' ggplot2::autoplot(path, type = "segmentations")
 cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
                       pen_min = NULL, pen_max = NULL, ...) {
+  # `...` reaches changepoint::cpt.mean()/cpt.var()/cpt.meanvar(), and this
+  # function pins three of their arguments -- the two that make the call
+  # CROPS at all, and the interval it sweeps. Passing any of them gave R's
+  # raw "formal argument \"penalty\" matched by multiple actual arguments",
+  # which names neither this function nor what to use instead. Same
+  # treatment as the fifty wrappers get.
+  reject_managed_args(list(...), "crops", c(
+    penalty = paste("CROPS *is* the penalty regime this function runs; a",
+                    "single penalty value is what `cpt_detect()` takes"),
+    method = paste("the penalty path is computed by PELT; the other search",
+                   "methods do not produce one"),
+    pen.value = "use `pen_min` and `pen_max` to set the interval to sweep"))
   change_in <- match.arg(change_in)
 
   validate_data(x)
@@ -201,11 +213,16 @@ autoplot.ggcpt_path <- function(object,
 #' @export
 print.ggcpt_path <- function(x, ...) {
   cat("ggcpt_path (CROPS penalty path)\n")
-  cat("  Change in:      ", x$change_in, "\n")
-  cat("  Penalty range:  [", format(x$pen_range[1], digits = 4), ", ",
-      format(x$pen_range[2], digits = 4), "]\n", sep = "")
-  cat("  Series length:  ", nrow(x$data), "\n")
-  cat("  Distinct segmentations:", nrow(x$solutions), "\n\n")
+  # Wider than the default: "Distinct segmentations" outgrows it, and a
+  # label that outgrows the pad is what left this header ragged before.
+  w <- 23L
+  cat_field("Change in", x$change_in, w)
+  cat_field("Penalty range",
+            paste0("[", format(x$pen_range[1], digits = 4), ", ",
+                   format(x$pen_range[2], digits = 4), "]"), w)
+  cat_field("Series length", nrow(x$data), w)
+  cat_field("Distinct segmentations", nrow(x$solutions), w)
+  cat("\n")
   print(x$solutions[, c("penalty", "n_cpts", "cost")],
         n = min(nrow(x$solutions), 10))
   invisible(x)

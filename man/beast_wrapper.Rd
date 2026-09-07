@@ -13,7 +13,9 @@ beast_wrapper(x, prob_threshold = 0.5, seed = NULL, ...)
 which a candidate trend changepoint is reported. Defaults to \code{0.5}.}
 
 \item{seed}{Optional seed for the engine's MCMC sampler (passed to
-\code{Rbeast::beast()} as \code{mcmc.seed}).}
+\code{Rbeast::beast()} as \code{mcmc.seed}). The seed is scoped to this
+call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{Rbeast::beast()}.}
 }

@@ -35,10 +35,14 @@ vector of segment means. For \code{var} changes, a vector of segment sds.
 For \code{meanvar}, a list of lists with \code{mean} and \code{sd} per
 segment. For \code{slope}, a list with \code{intercept} and \code{slope}
 per segment. When \code{NULL}, every segment gets the same neutral
-parameters, so the series has no actual change. Supplying fewer entries
-than there are segments recycles the last one and warns, because the
-trailing \code{changepoints} would then be recorded as ground truth
-without a change behind them.}
+parameters, so the series has no actual change. \code{changepoints}
+sets the number of segments -- \eqn{k} changepoints make \eqn{k + 1}
+of them -- and a mismatch in either direction warns rather than
+passing quietly: too few entries recycles the last one, so the
+trailing \code{changepoints} would otherwise be recorded as ground
+truth with no change behind them, and too many drops the surplus, so a
+caller who miscounted the changepoints would otherwise get an ordinary
+series back with a parameter silently unused.}
 
 \item{noise}{Noise type: \code{"gauss"} (Gaussian), \code{"t"} (Student-t),
 \code{"ar1"} (AR(1)), or \code{"rw"} (random walk).}
@@ -70,7 +74,9 @@ interpolated log-linearly in between. Distinct from
 detectors shatter, and the condition HSMUCE, NSP-self-normalised and
 \pkg{fastcpd}'s variance families exist to handle.}
 
-\item{seed}{Optional seed for reproducibility.}
+\item{seed}{Optional seed for reproducibility. The seed is scoped to this
+call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{...}{Passed to \code{\link{cpt_simulate}}.}
 }

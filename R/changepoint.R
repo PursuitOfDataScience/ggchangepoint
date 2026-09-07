@@ -60,6 +60,11 @@ cpt_wrapper <- function(data,
 
   change_in <- match.arg(change_in, c("mean_var", "mean", "var", "np", "cpt_np"))
 
+  # `...` reaches changepoint::cpt.*(), whose `method` this function renames
+  # to `cp_method`; passing the engine's own name gave R's raw "formal
+  # argument \"method\" matched by multiple actual arguments".
+  reject_renamed_args(list(...), "cpt_wrapper")
+
   reject_multicolumn(data, "data",
                      paste("`cpt_wrapper()` wraps the univariate changepoint",
                            "package; use `ecp_wrapper()` for a multivariate",
@@ -202,6 +207,11 @@ ggcptplot <- function(data,
                       index = NULL,
                       show_points = NULL,
                       show_line = TRUE){
+
+  # Same rename as cpt_wrapper() below it, and the same collision: `...`
+  # reaches changepoint::cpt.*(), whose `method` is this function's
+  # `cp_method`.
+  reject_renamed_args(list(...), "cpt_wrapper", label = "ggcptplot")
 
   if (lifecycle::is_present(cptline_size)) {
     lifecycle::deprecate_soft("0.2.0", "ggcptplot(cptline_size)", "ggcptplot(cptline_linewidth)")

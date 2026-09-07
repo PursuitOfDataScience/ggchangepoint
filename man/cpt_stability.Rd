@@ -23,7 +23,9 @@ cpt_stability(x, method = "pelt", B = 100, margin = 5, seed = NULL, ...)
 \item{margin}{Tolerance (in indices) when counting a replicate detection
 as a re-detection of a location. Defaults to \code{5}.}
 
-\item{seed}{Optional seed for reproducibility.}
+\item{seed}{Optional seed for reproducibility. The seed is scoped to this
+call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to every \code{cpt_detect()} call.}
 

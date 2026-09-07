@@ -15,7 +15,9 @@
 #'   default is 2. This argument is only applied when \code{algorithm =
 #'   "divisive"}.
 #' @param seed Optional. A seed for reproducibility of the stochastic
-#'   permutation test.
+#'   permutation test. The seed is scoped to this call: \code{.Random.seed}
+#'   is saved and restored, so a seeded call inside a simulation loop does
+#'   not pin the loop's own stream.
 #' @param ... Extra arguments to pass on either from \code{e.divisive()} or
 #'   \code{e.agglo()}.
 #'
@@ -78,7 +80,7 @@ ecp_wrapper <- function(data,
     stop_nonfinite(finite_check, "data")
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   estimates <- if (algorithm == "divisive") {
     ecp::e.divisive(as.matrix(data), min.size = min_size, ...)$estimates

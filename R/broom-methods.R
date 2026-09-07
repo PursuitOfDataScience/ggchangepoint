@@ -314,13 +314,15 @@ summary.ggcpt <- function(object, ...) {
 #' @export
 print.summary.ggcpt <- function(x, ...) {
   cat("ggcpt Summary\n")
-  cat("  Method:                  ", x$method, "\n")
-  cat("  Change in:               ", x$change_in, "\n")
-  cat("  Changepoints found:      ", x$n_changepoints, "\n")
-  cat("  CP convention:           ", x$cp_convention, "\n")
-  cat("  Series length:           ", x$n_obs, "\n")
-  cat("  Penalty:                 ", format_penalty(x$penalty), "\n")
-  cat("  Runtime (seconds):       ", format(x$runtime, digits = 4), "\n")
+  # Same column as print.ggcpt(): the two are two views of one object, and
+  # they used to indent their values differently.
+  cat_field("Method", x$method)
+  cat_field("Change in", x$change_in)
+  cat_field("Changepoints found", x$n_changepoints)
+  cat_field("CP convention", x$cp_convention)
+  cat_field("Series length", x$n_obs)
+  cat_field("Penalty", format_penalty(x$penalty))
+  cat_field("Runtime (seconds)", format(x$runtime, digits = 4))
   if (nrow(x$segments) > 0) {
     cat("\nSegments:\n")
     print(x$segments, n = min(nrow(x$segments), 10))

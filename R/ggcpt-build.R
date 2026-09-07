@@ -213,13 +213,21 @@ normalise_regions <- function(regions, n) {
 # mutate it. `fabisearch` needs NMF *attached* rather than loaded, and
 # attaching NMF brings its own Depends (Biobase, BiocGenerics) and its
 # foreach/doParallel/doRNG stack with it -- eight packages measured, where
-# the wrapper only ever detached NMF itself. `bcp` attaches itself and grid
-# when its namespace loads. Neither is something a detection call should do
-# to a user's session.
+# the wrapper only ever detached NMF itself. `bcp::bcp()` calls
+# `require(bcp)` in its own body, so every call attaches `package:bcp` and
+# `package:grid` (bcp's Depends). Neither is something a detection call
+# should do to a user's session.
 #
 # Only what *this* call added is detached, so a package the user had already
 # attached is untouched, and `search()` lists the most recently attached
 # first, which is the order they have to go in.
+#
+# The attach also *speaks*: `require()` announces itself with
+# `packageStartupMessage()`, so a plain `bcp_wrapper()` call printed
+# "Loading required package: bcp" and "Loading required package: grid" on
+# stderr -- restoring the search path silently was not enough, because the
+# noise had already been emitted. Suppressing only package startup messages
+# leaves the engine's own `message()` and `warning()` output intact.
 #' @noRd
 with_search_path_restored <- function(expr) {
   before <- search()
@@ -228,7 +236,7 @@ with_search_path_restored <- function(expr) {
       try(detach(p, character.only = TRUE, unload = FALSE), silent = TRUE)
     }
   }, add = TRUE)
-  force(expr)
+  suppressPackageStartupMessages(force(expr))
 }
 
 # Internal: check that an optional engine package is installed.

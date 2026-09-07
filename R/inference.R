@@ -21,9 +21,16 @@
 #' rather than presenting them as interchangeable.
 #'
 #' @param object A \code{ggcpt} object.
-#' @param level Confidence/credible level. Defaults to \code{0.95}. Ignored
-#'   by \code{method = "native"}, which reports the interval the engine
-#'   already computed at whatever level it was asked for.
+#' @param level Confidence/credible level. Defaults to \code{0.95}. Honoured
+#'   by the routes that compute an interval -- \code{"bootstrap"},
+#'   \code{"posterior"} and \code{"nsp"} -- and \strong{ignored by}
+#'   \code{"native"}, which reports the interval the engine already
+#'   computed at whatever level it was asked for. Note that
+#'   \code{method = "auto"} resolves to \code{"native"} whenever the engine
+#'   supplied one, so an explicit \code{level} can go unused there too: it
+#'   is reported in the \code{level} column either way, and supplying a
+#'   level the answer does not carry now warns rather than passing
+#'   silently. To choose the level yourself, name a computing route.
 #' @param method Which route to use:
 #'   \describe{
 #'     \item{\code{"auto"}}{(default) native if the engine supplied
@@ -57,7 +64,10 @@
 #'   }
 #' @param B Bootstrap replicates for \code{method = "bootstrap"}. Defaults to
 #'   \code{200}.
-#' @param seed Optional seed (bootstrap and NSP are both random).
+#' @param seed Optional seed (bootstrap and NSP are both random). The seed
+#'   is scoped to this call: \code{.Random.seed} is saved and restored, so a
+#'   seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @param ... Passed to \code{\link{cpt_detect}()} on the bootstrap
 #'   replicates, or to \code{\link{nsp_wrapper}()}.
 #'
@@ -85,6 +95,10 @@ cpt_confint <- function(object, level = 0.95,
     stop("`object` must be a ggcpt object.", call. = FALSE)
   }
   method <- match.arg(method)
+  # Whether the caller asked for a level, as opposed to taking the default.
+  # Used at the end: only an explicit request is worth warning about.
+  level_supplied <- !missing(level)
+  requested <- if (level_supplied) level else NA_real_
   validate_scalar(level, "level", min = 0, max = 1,
                   min_open = TRUE, max_open = TRUE)
   validate_scalar(B, "B", min = 1)
@@ -152,6 +166,30 @@ cpt_confint <- function(object, level = 0.95,
     out$cp_index <- idx[out$cp]
     out$ci_lower_index <- idx[out$ci_lower]
     out$ci_upper_index <- idx[out$ci_upper]
+  }
+
+  # A route that reports the engine's own level cannot honour the caller's,
+  # and `method = "auto"` is where that bites: an `nsp` result carries
+  # regions, so "auto" resolves to "native" and reports them at the level
+  # nsp_wrapper()'s `alpha` produced -- 0.9 by default. Asking for
+  # `level = 0.95` there returned 0.9 with nothing said about it, and the
+  # only signal was the `level` column the caller would have to inspect.
+  #
+  # `?cpt_confint` documented that "native" ignores `level`, which is true
+  # and is not the problem: the caller who is surprised asked for "auto".
+  # So the check is on the answer rather than on the route -- if the level
+  # reported differs from the one requested, say so, whichever branch got
+  # there. cpt_monitor() already warns on this pattern for `arl0` and
+  # friends; this is the same courtesy.
+  if (level_supplied) {
+    got <- unique(out$level[is.finite(out$level)])
+    if (length(got) > 0 && !any(abs(got - requested) < 1e-9)) {
+      warning("`level = ", format(requested), "` was not applied: `method = ",
+              "\"", method, "\"` reports the interval the engine already ",
+              "computed, at level ", paste(format(got), collapse = "/"),
+              ". Use `method = \"bootstrap\"` or `\"nsp\"` for an interval ",
+              "computed at the level you ask for.", call. = FALSE)
+    }
   }
   out
 }
@@ -286,7 +324,7 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
   resid <- data_vec - fitted_step
   seg_id <- rep(seq_len(nrow(seg)), times = seg$n)
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   draws <- matrix(NA_real_, nrow = B, ncol = length(cp))
   for (b in seq_len(B)) {

@@ -34,19 +34,21 @@ registration supplied or states plainly that none was given.
 
 **Dependencies.** Fifty-six packages are suggested; thirty-five of them are
 detection engines and the rest are optional extras (time-index coercion,
-tables, interactivity, progress bars, the test toolchain). One of them, 'mcp', needs JAGS -- a system library -- so a machine
+tables, interactivity, progress bars, the test toolchain). Every one is
+guarded with `requireNamespace()`, its examples use `@examplesIf`, its tests
+use `skip_if_not_installed()`, and the vignettes gate the chunks that need
+it, so the package checks cleanly with none of them installed (see below).
+Only 'changepoint', 'changepoint.np' and 'ecp' are required.
+`cpt_install_engines()` installs a family at a time for users who want more.
+
+One suggested engine, 'mcp', needs JAGS -- a system library -- so a machine
 without JAGS must check with `_R_CHECK_FORCE_SUGGESTS_=false`. 'mcp' is on
 CRAN and checks there; `mcp_wrapper()` names JAGS in its error when 'mcp' is
 absent, and its example is wrapped in `\dontrun{}` rather than gated with
 `@examplesIf`, deliberately: whether the engine works depends on a *system*
 library, and `requireNamespace("mcp")` does not predict that -- 'rjags' can
 be installed and still fail to find JAGS at run time. The example therefore
-never runs anywhere, which is the only guard that holds. Every one is guarded with `requireNamespace()`, its examples use
-`@examplesIf`, its tests use `skip_if_not_installed()`, and the vignettes
-gate the chunks that need it, so the package checks cleanly with none of
-them installed (see below). Only 'changepoint', 'changepoint.np' and 'ecp'
-are required. `cpt_install_engines()` installs a family at a time for users
-who want more.
+never runs anywhere, which is the only guard that holds.
 
 **One original implementation, labelled as such.** Every detector in this
 package wraps a separately maintained one, with a single deliberate
@@ -65,18 +67,50 @@ redistributed, the function is not called by any example, test or vignette
 against `cpt_datasets()`, which is built from the package's own simulated
 signals.
 
-Forty-one defects found while building and auditing this release were fixed in
-the same cycle; NEWS.md itemises them and each has a regression test. The
+One hundred and seventeen defects found while building and auditing this release were fixed
+in the same cycle; NEWS.md itemises them and each has a regression test. The
 most instructive: a `tibble::tribble()` list-column silently deparsed into a
 string, which made every multi-capability method lose its extra `change_in`
 values; `$` on a ggplot2 mapping partially matching `xintercept` when asked
 for `x`, which left one new layer with no x aesthetic; an upstream column
 that is a p-value or a logical depending on an argument, which made one
-wrapper return every candidate split it had considered; and -- the one
-worth singling out -- the native e-detector combined its per-shift
-statistics with a maximum rather than an average, which broke the very
-average-run-length bound the method is chosen for. The test for it now
-measures the realised in-control alarm rate.
+wrapper return every candidate split it had considered; `as.numeric()` on a
+matrix panel member in `cpt_batch()`, which concatenated the columns and
+reported a changepoint at the seam; and the native e-detector combining its
+per-shift statistics with a maximum rather than an average, which broke the
+very average-run-length bound the method is chosen for.
+
+The one worth singling out is the `seed` argument. All thirty-six sites that
+honoured one did it with `set.seed(seed)` in the function's own frame, which
+does not merely consume the caller's random stream but resets it -- so the
+argument whose whole purpose is trustworthiness pinned the stream of
+whatever loop the call sat inside. A six-iteration generate-then-detect
+loop analysed **two distinct datasets**, measured with the data built
+outside the call; without the seed it analysed six. Nothing warned and no
+test failed. The seed is now scoped to the call: `.Random.seed` is saved
+and restored, a session that had none is left with none, and a seeded call
+is still byte-reproducible across intervening draws. The tests for it are
+metamorphic -- they compare calls to each other rather than to a recorded
+value, which is the only kind that could have caught it.
+
+Three of the fixes route around a defect in an engine rather than in this
+package, and each is narrow, measured and reversible. `wbsts::wbs.lsw()`
+ends in `suppressWarnings(if (is.na(OUT)) OUT = NULL)`, which R has treated
+as an error since 4.2 whenever `OUT` holds two or more changepoints -- so
+the call failed exactly when the method would have reported the multiple
+changes it exists to find (19 of 20 runs on a five-changepoint series). On
+that one error message the wrapper restores `.Random.seed` and replays the
+engine's own body with the `all(is.na(OUT))` its `suppressWarnings()` shows
+was intended, so what comes back is upstream's answer retrieved rather than
+a different one. `changepoints::thresholdBS()` prunes with
+`for (i in 2:level_length)`, so a single-level binary-segmentation tree
+reaches `1:NA` and stops; that made 'hdcov' fail on 23 of 25 runs and
+'network' on 10 of 12, at random, because the tree depth depends on a
+permutation draw. A single level has one candidate split and no ancestors to
+prune against, so the wrapper applies the rule that reproduces
+`thresholdBS()`'s own output on a multi-level tree. Both are conditioned on
+the installed version. The third is `HDCD`'s `Pilliat()`, which is refused
+rather than routed around; it has its own note below.
 
 **One engine is refused at some dimensions, deliberately.** `HDCD` 1.1's
 `Pilliat()` builds one fewer partial-sum threshold than it indexes when the

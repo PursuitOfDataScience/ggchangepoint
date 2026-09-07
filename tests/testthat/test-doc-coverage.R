@@ -174,13 +174,38 @@ test_that("no test reaches a Suggests engine outside a guarded block", {
       sprintf("methods\\s*=\\s*\"%s\"", m))
   }
 
+  # A block's extent comes from R's parser, not from the line before the
+  # next `test_that(`. That cheaper rule attributed everything between two
+  # blocks -- blank lines and, more to the point, the section comment
+  # introducing the *next* test -- to the block above, so an unguarded test
+  # got blamed for a call named only in the following test's header. (It
+  # happened: a comment reading "nsp_wrapper()'s alpha" reported the
+  # `covering` test, which does not touch nsp.) srcrefs cover the
+  # expression and nothing between expressions, and they are exact where
+  # brace-counting would not be: several blocks contain a brace inside a
+  # string, e.g. skip("{mcp} is not installed").
+  block_spans <- function(f) {
+    exprs <- tryCatch(parse(f, keep.source = TRUE), error = function(e) NULL)
+    if (is.null(exprs)) return(list())
+    refs <- attr(exprs, "srcref")
+    keep <- vapply(seq_along(exprs), function(k) {
+      e <- exprs[[k]]
+      is.call(e) && identical(as.character(e[[1]])[1], "test_that")
+    }, logical(1))
+    lapply(which(keep), function(k) {
+      r <- refs[[k]]
+      c(first = r[[1]], last = r[[3]])
+    })
+  }
+
   offenders <- character()
   files <- list.files(test_path(), pattern = "^test-.*[.]R$", full.names = TRUE)
   for (f in files) {
     src <- readLines(f, warn = FALSE)
-    starts <- grep("^test_that\\(", src)
-    if (length(starts) == 0) next
-    ends <- c(starts[-1] - 1L, length(src))
+    spans <- block_spans(f)
+    if (length(spans) == 0) next
+    starts <- vapply(spans, function(z) z[["first"]], numeric(1))
+    ends <- vapply(spans, function(z) z[["last"]], numeric(1))
     for (i in seq_along(starts)) {
       lines <- src[starts[i]:ends[i]]
       body <- paste(lines, collapse = "\n")
@@ -222,6 +247,100 @@ test_that("no test reaches a Suggests engine outside a guarded block", {
     }
   }
   expect_equal(offenders, character(0))
+})
+
+test_that("the guard check attributes a call to the block that makes it", {
+  # The check above locates each test_that() block with srcrefs. It used to
+  # end a block at the line before the next `test_that(`, which swept up the
+  # section comment introducing the *following* test -- so an unguarded test
+  # was reported for a call named only in the next test's header, and the
+  # reader was sent to edit a test that does not touch the engine.
+  #
+  # Written out because a checker that names the wrong line is worse than no
+  # checker: the failure is confusing rather than informative.
+  dir <- withr::local_tempdir()
+  f <- file.path(dir, "test-synthetic.R")
+  writeLines(c(
+    'test_that("A: unguarded, touches nothing", {',
+    "  expect_equal(1, 1)",
+    "})",
+    "",
+    "# Section header for the NEXT test, naming nsp_wrapper() in prose.",
+    'test_that("B: guarded, and the header above belongs to it", {',
+    '  skip_if_not_installed("nsp")',
+    "  r <- nsp_wrapper(rnorm(50))",
+    "  expect_true(TRUE)",
+    "})",
+    "",
+    'test_that("C: genuinely unguarded call", {',
+    "  r <- nsp_wrapper(rnorm(50))",
+    "  expect_true(TRUE)",
+    "})",
+    "",
+    'test_that("D: a brace inside a string must not confuse the span", {',
+    '  skip("{mcp} is not installed")',
+    "  expect_true(TRUE)",
+    "})",
+    "",
+    'test_that("E: expect_error is exempt", {',
+    '  expect_error(nsp_wrapper("a"), "numeric")',
+    "})"
+  ), f)
+
+  spans <- function(path) {
+    exprs <- parse(path, keep.source = TRUE)
+    refs <- attr(exprs, "srcref")
+    keep <- vapply(seq_along(exprs), function(k) {
+      e <- exprs[[k]]
+      is.call(e) && identical(as.character(e[[1]])[1], "test_that")
+    }, logical(1))
+    lapply(which(keep), function(k) {
+      r <- refs[[k]]
+      c(first = r[[1]], last = r[[3]])
+    })
+  }
+  src <- readLines(f, warn = FALSE)
+  sp <- spans(f)
+  flagged <- character()
+  for (z in sp) {
+    lines <- src[z[["first"]]:z[["last"]]]
+    if (grepl("skip_if_not_installed|requireNamespace|skip_if\\(|engine_usable",
+              paste(lines, collapse = "\n"))) next
+    at <- grep("nsp_wrapper\\(", lines)
+    if (length(at) == 0) next
+    in_expect_error <- vapply(at, function(k) {
+      any(grepl("expect_error\\(", lines[max(1, k - 1):k]))
+    }, logical(1))
+    if (!all(in_expect_error)) {
+      flagged <- c(flagged, sub('^test_that\\("([^"]*)".*', "\\1",
+                                src[z[["first"]]]))
+    }
+  }
+  # Exactly the block that makes the call: not A (whose old span swallowed
+  # B's header), not B (guarded), not D (a brace in a string), not E
+  # (asserting a refusal, which must work without the engine).
+  expect_equal(flagged, "C: genuinely unguarded call")
+
+  # And the misattribution the srcref spans remove is real: the cheaper
+  # line-based rule reports A as well.
+  ost <- grep("^test_that\\(", src)
+  oen <- c(ost[-1] - 1L, length(src))
+  old_flagged <- character()
+  for (i in seq_along(ost)) {
+    lines <- src[ost[i]:oen[i]]
+    if (grepl("skip_if_not_installed|requireNamespace|skip_if\\(|engine_usable",
+              paste(lines, collapse = "\n"))) next
+    if (length(grep("nsp_wrapper\\(", lines)) == 0) next
+    at <- grep("nsp_wrapper\\(", lines)
+    in_expect_error <- vapply(at, function(k) {
+      any(grepl("expect_error\\(", lines[max(1, k - 1):k]))
+    }, logical(1))
+    if (!all(in_expect_error)) {
+      old_flagged <- c(old_flagged, sub('^test_that\\("([^"]*)".*', "\\1",
+                                        src[ost[i]]))
+    }
+  }
+  expect_true("A: unguarded, touches nothing" %in% old_flagged)
 })
 
 test_that("a registry sweep that asserts success gates on engine_usable()", {

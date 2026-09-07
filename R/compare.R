@@ -16,7 +16,10 @@
 #'   \code{future.apply::future_lapply()} as \code{future.seed}, and to
 #'   \code{set.seed()} when running sequentially. Left \code{NULL} under a
 #'   parallel plan, \code{future.seed = TRUE} is used, so the workers get
-#'   parallel-safe streams but the run is not reproducible.
+#'   parallel-safe streams but the run is not reproducible. The seed is
+#'   scoped to this call: \code{.Random.seed} is saved and restored, so a
+#'   seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @param ... Additional arguments passed to each detector.
 #'
 #' @return A ggplot object.
@@ -57,7 +60,7 @@ ggcpt_compare <- function(x,
                                            with_session_registry(run_one),
                                            future.seed = seed %||% TRUE)
   } else {
-    if (!is.null(seed)) set.seed(seed)
+    local_seed(seed)
     results <- lapply(methods, function(m) {
       cpt_detect(data_vec, method = m, change_in = change_in, ...)
     })

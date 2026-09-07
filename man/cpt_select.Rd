@@ -45,18 +45,30 @@ to one or two rungs and the function warns.}
 
 \item{criterion}{Which criterion selects \eqn{K}:
 \describe{
-  \item{\code{"bic"}}{Gaussian BIC over the ladder.}
+  \item{\code{"bic"}}{Gaussian BIC over the ladder,
+    \eqn{n\log(\mathrm{RSS}/n) + (2K + 1)\log n}. The first term is
+    the Gaussian profile cost reported in the \code{cost} column
+    (\eqn{-2\log L} up to an additive constant, for a common
+    variance); the parameter count is \eqn{K} locations plus
+    \eqn{K + 1} segment means. Stated because the \code{value}
+    column is otherwise not reproducible: both the cost convention and
+    the parameter count vary between authors.}
   \item{\code{"mbic"}}{the modified BIC of Zhang and Siegmund (2007),
     \eqn{3K\log n + \sum_i \log(l_i/n)}, which depends on the segment
     lengths \eqn{l_i} and so cannot be expressed by
     \code{\link{cpt_penalty}()}'s function of \eqn{n} and \eqn{k}
     alone. This is the one place in the package where the real
     Zhang–Siegmund penalty is computed.}
-  \item{\code{"aic"}}{Gaussian AIC over the ladder. Its \eqn{2k}
-    penalty does not grow with \eqn{n}, so it over-selects
-    changepoints — often taking every rung offered. Included because
-    people ask for it and because seeing the curve is instructive;
-    \code{"bic"} or \code{"mbic"} is the better default.}
+  \item{\code{"aic"}}{Gaussian AIC over the ladder,
+    \eqn{n\log(\mathrm{RSS}/n) + 2(2K + 1)} — the same cost and the
+    same parameter count as \code{"bic"}, with \eqn{2} in place of
+    \eqn{\log n}. That penalty does not grow with \eqn{n}, so it
+    over-selects changepoints, often taking every rung offered: on a
+    300-point series with changes at 100 and 200, \code{"bic"} and
+    \code{"mbic"} both choose \eqn{K = 2} and \code{"aic"} chooses
+    the largest \eqn{K} available. Included because people ask for it
+    and because seeing the curve is instructive; \code{"bic"} or
+    \code{"mbic"} is the better default.}
   \item{\code{"crops_elbow"}}{the knee of the CROPS cost-against-\eqn{K}
     curve, made an explicit rule (maximum distance from the chord
     joining the endpoints — the standard Kneedle construction) rather
@@ -89,7 +101,9 @@ onto the chosen fit so \code{tidy()} and \code{autoplot()} report the
 changepoint on your scale rather than as a position. Inherited from
 \code{x} when \code{x} is an indexed \code{ggcpt}.}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{\link{cpt_detect}()} when
 the ladder is built by repeated detection.}

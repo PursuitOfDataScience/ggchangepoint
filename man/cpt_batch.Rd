@@ -40,7 +40,9 @@ faceted plot of fifty series shows dates rather than positions.}
 
 \item{seed}{Optional seed for reproducible parallel execution (passed to
 \code{future.apply::future_lapply()} as \code{future.seed}; applied via
-\code{set.seed()} when running sequentially).}
+\code{set.seed()} when running sequentially). The seed is scoped to
+this call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{keep_fit}{Keep each engine's raw fit in \code{result[[i]]$fit}?
 Defaults to \code{TRUE}, which is what makes a batch result as

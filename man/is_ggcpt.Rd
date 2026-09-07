@@ -13,7 +13,9 @@ is_ggcpt(x)
 \code{TRUE} if \code{x} inherits from \code{ggcpt}.
 }
 \description{
-Test if an object is a ggcpt object
+A class check, useful when a function accepts either a detection result or
+the raw series. It tests the class only; a \code{ggcpt} subclass such as
+\code{ggcpt_batch} is not one of these and returns \code{FALSE}.
 }
 \examples{
 set.seed(2026)
@@ -27,6 +29,7 @@ Other result class:
 \code{\link{as_cpt_series}()},
 \code{\link{as_ggcpt}()},
 \code{\link{cpt_annotations}()},
-\code{\link{new_ggcpt}()}
+\code{\link{new_ggcpt}()},
+\code{\link{print.ggcpt}()}
 }
 \concept{result class}

@@ -75,6 +75,27 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #' @param target What to test: \code{"covariance"} (default), \code{"trace"},
 #'   \code{"eigenjoint"} or \code{"eigensingle"}.
 #' @return A \code{ggcpt} object with \code{change_in = "covariance"}.
+#' @section How long this takes:
+#' \strong{Minutes, not seconds, on a series of a hundred points} -- by a
+#' wide margin the most expensive engine in the package, and slow enough
+#' that a first call looks like a hung session. Timed on one Linux x86-64
+#' machine, against \code{\link{fmean_wrapper}()} on the identical input
+#' so the comparison is the same package and the same data:
+#'
+#' \tabular{lrr}{
+#'   \strong{input} \tab \strong{fmean} \tab \strong{fcov} \cr
+#'   \eqn{n = 60}, \eqn{p = 5}  \tab 4.5 s \tab \strong{316 s} \cr
+#'   \eqn{n = 120}, \eqn{p = 5} \tab 2.9 s \tab \strong{598 s}
+#' }
+#'
+#' The cost is roughly linear in the number of time points and it is in the
+#' engine's own covariance-operator estimation, not in this wrapper, so
+#' there is no argument here that reduces it. Two practical consequences:
+#' size the call before starting it, and do not put this method in a loop --
+#' a twelve-replicate study at \eqn{n = 120} is two hours. Another machine
+#' will give different absolute numbers; the ratio to \code{fmean}, which
+#' is a factor of about seventy to two hundred, is the part to plan around.
+#' The \dQuote{Benchmarks} article compares the engines that do scale.
 #' @references
 #' \insertRef{aue2020covariance}{ggchangepoint}
 #' @export
@@ -194,7 +215,9 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
 #'   \code{"distribution"}. The test is sensitive to both; this only labels
 #'   the result.
 #' @param seed Optional seed — the random-projection depths and the wild
-#'   binary segmentation both randomise.
+#'   binary segmentation both randomise. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to the engine.
 #' @return A \code{ggcpt} object.
 #' @references
@@ -223,7 +246,7 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
          ". See cpt_methods() for univariate methods.", call. = FALSE)
   }
   data_vec <- as.numeric(rowMeans(X))
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   if (is.null(depth)) {
     depth <- if (algorithm == "fkwc") "RPD" else "spat"
@@ -273,7 +296,9 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 #'   \code{fabisearch::opt.rank()}, which is expensive; supplying a rank is
 #'   much faster.
 #' @param n_core Cores for the permutation stage. Defaults to \code{1}.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to \code{fabisearch::detect.cps()}.
 #'
 #' @section Non-negativity, cost, and the attached namespace:
@@ -352,7 +377,7 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
   data_vec <- as.numeric(rowMeans(X))
   validate_scalar(min_dist, "min_dist", min = 2)
   min_dist <- min(as.integer(min_dist), max(2L, floor(n / 3)))
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   # See the "attached namespace" note in the docs. The on.exit above gives
   # back everything this call attached -- NMF, its Depends, and the

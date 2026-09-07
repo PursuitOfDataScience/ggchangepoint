@@ -34,7 +34,9 @@ calibration.}
 
 \item{delta}{Minimum spacing. Defaults to \code{max(5, floor(n / 20))}.}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 }
 \value{
 A \code{ggcpt} object with \code{change_in = "network"}. The

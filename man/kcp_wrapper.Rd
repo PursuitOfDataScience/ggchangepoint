@@ -36,7 +36,10 @@ fails inside its own code for 1.}
 \item{alpha}{Significance level of the permutation test. Defaults to
 \code{0.05}.}
 
-\item{seed}{Optional seed for reproducibility of the permutation test.}
+\item{seed}{Optional seed for reproducibility of the permutation test.
+The seed is scoped to this call: \code{.Random.seed} is saved and
+restored, so a seeded call inside a simulation loop does not pin the
+loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{kcpRS::kcpRS()}.}
 }

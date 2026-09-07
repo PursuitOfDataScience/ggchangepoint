@@ -54,7 +54,9 @@ row per observation.}
 \item{ord}{AR order for \code{variant = "ar"}. Defaults to \code{1}.}
 
 \item{seed}{Optional seed. NSP draws random intervals, so a run is
-reproducible only with one.}
+reproducible only with one. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to the underlying \pkg{nsp}
 function.}

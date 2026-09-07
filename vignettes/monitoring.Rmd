@@ -64,6 +64,7 @@ Nothing has been monitored yet. Now feed it 120 observations from the same
 distribution — the in-control case, where the right answer is silence:
 
 ```{r in-control}
+set.seed(5201)
 mon <- cpt_update(mon, rnorm(120))
 mon
 ```
@@ -73,6 +74,7 @@ observation 121 of the monitored stream, and the monitor sees it only one
 observation at a time:
 
 ```{r change}
+set.seed(5202)
 mon <- cpt_update(mon, rnorm(80, mean = 2))
 alarms(mon)
 ```
@@ -131,6 +133,7 @@ monitor object. This is how to study an online method's alarm timeline
 retrospectively without pretending its alarms are changepoints.
 
 ```{r replay}
+set.seed(5203)
 stream <- c(rnorm(200), rnorm(200, mean = 2))
 rep_e <- cpt_replay(stream, method = "edetector")
 alarms(rep_e)
@@ -193,6 +196,7 @@ distribution-free statistic (`cpm_type`, `"Mann-Whitney"` by default) and
 a threshold calibrated to a target in-control average run length.
 
 ```{r cpm, eval = has_cpm}
+set.seed(5204)
 mon_cpm <- cpt_monitor("cpm", arl0 = 500)
 mon_cpm <- cpt_update(mon_cpm, rnorm(120))
 mon_cpm <- cpt_update(mon_cpm, rnorm(80, mean = 2))
@@ -214,6 +218,7 @@ different currencies, and each ignores the other's. **`edetector` honours
 `arl0` on an e-detector, or `alpha` on `cpm`, changes nothing.
 
 ```{r alpha, warning = TRUE}
+set.seed(5205)
 ic <- rnorm(400)
 vapply(c(0.05, 0.01, 0.001),
        function(a) nrow(alarms(cpt_replay(ic, method = "edetector",
@@ -238,6 +243,7 @@ coordinates**. On a single series it does not fall back to a univariate
 statistic; it stops, and says which methods do read one series:
 
 ```{r ocd-error, error = TRUE}
+set.seed(5206)
 cpt_monitor("ocd", baseline = rnorm(100))
 ```
 

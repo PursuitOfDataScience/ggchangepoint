@@ -48,11 +48,13 @@
 #'   positive, false negative — so scoring a segmentation against expert
 #'   labels becomes a picture rather than a table.
 #' @param type Which view to draw. \code{"series"} (default) is the series
-#'   with its changepoints; \code{"statistic"}, \code{"path"} and
-#'   \code{"scale_space"} delegate to \code{\link{ggcpt_statistic}()},
-#'   \code{\link{ggcpt_solution_path}()} and
-#'   \code{\link{ggcpt_scale_space}()}, which error with the list of
+#'   with its changepoints; \code{"statistic"} and \code{"path"} delegate
+#'   to \code{\link{ggcpt_statistic}()} and
+#'   \code{\link{ggcpt_solution_path}()}, which error with the list of
 #'   supporting engines when this one does not expose the internals.
+#'   \code{"scale_space"} delegates to \code{\link{ggcpt_scale_space}()},
+#'   which needs nothing from the engine: it sweeps a multiscale detector
+#'   over the same series, so it draws for any result.
 #' @param ... Unknown arguments are ignored with a warning, except when
 #'   \code{type} is not \code{"series"}, in which case they are passed to
 #'   the delegate.

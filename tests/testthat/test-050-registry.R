@@ -62,7 +62,11 @@ test_that("planned methods are named, not denied", {
 })
 
 test_that("as_ggcpt enforces the same contract as a wrapper", {
-  fit <- as_ggcpt(c(40, 40, 200, NA, 20), x_step, method = "custom")
+  # The dropping is documented and unchanged; it is no longer silent, so the
+  # warning is part of what this asserts.
+  expect_warning(fit <- as_ggcpt(c(40, 40, 200, NA, 20), x_step,
+                                 method = "custom"),
+                 "1 missing, 1 outside", fixed = TRUE)
   expect_s3_class(fit, "ggcpt")
   # sorted, de-duplicated, in range, NA dropped
   expect_equal(fit$changepoints$cp, c(20L, 40L))
@@ -209,15 +213,25 @@ test_that("as_ggcpt() drops what it documents and refuses what it cannot read", 
   n <- length(x)
 
   # The documented contract: out-of-range, duplicated and missing values are
-  # dropped and the result is sorted. All of this must keep working.
-  expect_equal(as_ggcpt(c(90, 30), x)$changepoints$cp, c(30L, 90L))
-  expect_equal(as_ggcpt(c(60, 60), x)$changepoints$cp, 60L)
-  expect_equal(as_ggcpt(c(60, NA), x)$changepoints$cp, 60L)
-  expect_equal(as_ggcpt(c(0, -5, 60, n, 500), x)$changepoints$cp, 60L)
-  expect_equal(as_ggcpt(60.5, x)$changepoints$cp, 60L)
-  expect_equal(nrow(as_ggcpt(integer(0), x)$changepoints), 0L)
-  expect_equal(nrow(as_ggcpt(NULL, x)$changepoints), 0L)
-  expect_equal(as_ggcpt("60", x)$changepoints$cp, 60L)
+  # dropped and the result is sorted. All of this must keep working -- and
+  # everything that loses a value now warns while doing it, so the two are
+  # asserted together. Reordering, empty input and a numeric string lose
+  # nothing and must stay silent.
+  expect_silent(a <- as_ggcpt(c(90, 30), x))
+  expect_equal(a$changepoints$cp, c(30L, 90L))
+  expect_warning(b <- as_ggcpt(c(60, 60), x), "duplicated (60)", fixed = TRUE)
+  expect_equal(b$changepoints$cp, 60L)
+  expect_warning(c1 <- as_ggcpt(c(60, NA), x), "1 missing", fixed = TRUE)
+  expect_equal(c1$changepoints$cp, 60L)
+  expect_warning(d <- as_ggcpt(c(0, -5, 60, n, 500), x),
+                 "4 outside 1..119", fixed = TRUE)
+  expect_equal(d$changepoints$cp, 60L)
+  expect_warning(e <- as_ggcpt(60.5, x), "truncated to whole numbers",
+                 fixed = TRUE)
+  expect_equal(e$changepoints$cp, 60L)
+  expect_silent(expect_equal(nrow(as_ggcpt(integer(0), x)$changepoints), 0L))
+  expect_silent(expect_equal(nrow(as_ggcpt(NULL, x)$changepoints), 0L))
+  expect_silent(expect_equal(as_ggcpt("60", x)$changepoints$cp, 60L))
 
   # What it must NOT do is swallow the coercion warning and report a clean
   # "no changepoints" for input it could not read.
@@ -250,16 +264,22 @@ test_that("ci and extra columns follow their changepoint through the drop", {
   # ci/extra are validated against the SUPPLIED cp vector and the dropping
   # happens afterwards, so the columns have to be filtered and reordered in
   # step with cp or they end up describing a different changepoint.
-  front <- as_ggcpt(c(0, 60), x, ci = cbind(c(-5, 55), c(5, 65)),
-                    extra = list(score = c(111, 222)))
+  # The drop is reported now, so it is asserted rather than tolerated.
+  expect_warning(front <- as_ggcpt(c(0, 60), x, ci = cbind(c(-5, 55), c(5, 65)),
+                                   extra = list(score = c(111, 222))),
+                 "outside 1..119 (0)", fixed = TRUE)
   expect_equal(front$changepoints$cp, 60L)
   expect_equal(front$changepoints$score, 222)
   expect_equal(front$changepoints$ci_lower, 55L)
 
-  back <- as_ggcpt(c(60, 500), x, extra = list(score = c(111, 222)))
+  expect_warning(back <- as_ggcpt(c(60, 500), x,
+                                  extra = list(score = c(111, 222))),
+                 "outside 1..119 (500)", fixed = TRUE)
   expect_equal(back$changepoints$score, 111)
 
-  sorted <- as_ggcpt(c(90, 30), x, extra = list(score = c(999, 111)))
+  # Reordering loses nothing, so this one stays silent.
+  expect_silent(sorted <- as_ggcpt(c(90, 30), x,
+                                   extra = list(score = c(999, 111))))
   expect_equal(sorted$changepoints$cp, c(30L, 90L))
   expect_equal(sorted$changepoints$score, c(111, 999))
 })

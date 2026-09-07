@@ -259,6 +259,64 @@ validate_flag <- function(value, name, allow_null = FALSE) {
   invisible(TRUE)
 }
 
+# Internal: seed the RNG for the duration of one call, and give the caller
+# their stream back.
+#
+# A bare `set.seed(seed)` in a function's own frame does not
+# merely *consume* the caller's random stream, it *resets* it -- so a `seed`
+# argument whose whole purpose is trustworthiness silently pins the stream
+# of whatever loop the call sits inside. Measured, with the data generated
+# outside the call so that data generation cannot be mistaken for the
+# effect:
+#
+#   set.seed(2026)
+#   for (i in 1:6) {
+#     d <- c(rnorm(100), rnorm(100, 3))
+#     f <- cpt_detect(d, method = "wbs", seed = 1)
+#   }
+#
+# Iteration 1's `set.seed(1)` pins the stream, so every later `rnorm()`
+# starts from the same place: **6 of 6 distinct datasets without the seed,
+# 2 of 6 with it.** The same collapse was measured through `nsp`,
+# `cpt_stability()`, `cpt_select(criterion = "cv")` and `cpt_simulate()` --
+# which is to say through exactly the functions a user calls inside a
+# simulation loop, and a study that silently has a sample size of one is
+# worse than one that fails.
+#
+# So the seed is scoped to the call. `.Random.seed` is saved before
+# `set.seed()` and restored when the calling function exits, which leaves
+# every documented behaviour intact -- a seeded call is still
+# byte-reproducible, and still reproducible across intervening draws --
+# and removes the side effect nobody asked for. Nested calls stack
+# correctly: an inner scope restores what the outer one had set.
+#
+# The handler is registered in the *caller's* frame rather than here,
+# because a helper's own `on.exit()` would fire the moment the helper
+# returns. `add = TRUE` because two wrappers already register a
+# search-path restore, and neither is disturbed.
+#' @noRd
+local_seed <- function(seed, envir = parent.frame()) {
+  if (is.null(seed)) return(invisible(FALSE))
+  g <- globalenv()
+  # A fresh session has no `.Random.seed` until the first draw, and leaving
+  # one behind would itself be a change to the caller's state.
+  had <- exists(".Random.seed", envir = g, inherits = FALSE)
+  old <- if (had) get(".Random.seed", envir = g, inherits = FALSE) else NULL
+  nm <- ".__ggchangepoint_restore_seed__"
+  assign(nm, function() {
+    if (had) {
+      assign(".Random.seed", old, envir = g)
+    } else if (exists(".Random.seed", envir = g, inherits = FALSE)) {
+      rm(".Random.seed", envir = g)
+    }
+  }, envir = envir)
+  do.call(base::on.exit,
+          list(substitute(f(), list(f = as.name(nm))), add = TRUE),
+          envir = envir)
+  set.seed(seed)
+  invisible(TRUE)
+}
+
 # Internal: refuse an engine argument the wrapper sets for itself.
 #
 # Every wrapper forwards `...` to its engine, and several also pin one of
@@ -317,20 +375,30 @@ renamed_engine_args <- function(method) {
     fabisearch   = c(mindist = "min_dist", nruns = "n_runs",
                      nreps = "n_reps", ncore = "n_core"),
     bfast        = c(max.iter = "max_iter"),
+    # Not a registry method: `cpt_wrapper()` and `ggcptplot()` both rename
+    # the changepoint package's `method` to `cp_method`, because `method`
+    # already means "which detector" everywhere else in this package. That
+    # made `method` through `...` the single most natural thing to pass and
+    # the one that collided.
+    cpt_wrapper  = c(method = "cp_method"),
     NULL)
 }
 
+# `label` names the function in the message when it differs from the map
+# key: `ggcptplot()` shares `cpt_wrapper()`'s rename, and being told about
+# a function you did not call is the failure this whole guard exists to
+# stop.
 #' @noRd
-reject_renamed_args <- function(dots, method) {
+reject_renamed_args <- function(dots, method, label = method) {
   map <- renamed_engine_args(method)
   if (is.null(map)) return(invisible(TRUE))
   clash <- intersect(names(dots), names(map))
   if (length(clash) == 0L) return(invisible(TRUE))
   a <- clash[1]
   use <- map[[a]]
-  stop("`", method, "` ", if (is.na(use)) "derives" else "renames",
+  stop("`", label, "` ", if (is.na(use)) "derives" else "renames",
        " its engine's `", a, "` argument, so passing it through `...` ",
-       "collides with the value the wrapper already supplies. ",
+       "collides with the value this package already supplies. ",
        if (is.na(use)) {
          paste0("`", a, "` comes from `x` and is not yours to set.")
        } else {

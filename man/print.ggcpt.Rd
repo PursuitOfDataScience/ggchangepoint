@@ -11,6 +11,29 @@
 
 \item{...}{Additional arguments (ignored).}
 }
-\description{
-Print a ggcpt object
+\value{
+\code{x}, invisibly. Called for the side effect of printing.
 }
+\description{
+A compact header -- method, what changed, how many changepoints, the
+convention their locations follow, the penalty and the series length --
+followed by the first ten changepoints. For the segment table and the
+fitted parameters use \code{\link[base]{summary}()}; for the changepoints
+as data use \code{\link{tidy}()}.
+}
+\examples{
+set.seed(2026)
+print(cpt_detect(c(rnorm(40), rnorm(40, 4)), method = "pelt"))
+}
+\seealso{
+\code{\link{summary.ggcpt}()}, \code{\link{tidy.ggcpt}()}.
+
+Other result class: 
+\code{\link{annotate_segments}()},
+\code{\link{as_cpt_series}()},
+\code{\link{as_ggcpt}()},
+\code{\link{cpt_annotations}()},
+\code{\link{is_ggcpt}()},
+\code{\link{new_ggcpt}()}
+}
+\concept{result class}

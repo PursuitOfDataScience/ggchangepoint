@@ -26,7 +26,10 @@ the theoretical values? Slower but sharper; defaults to \code{FALSE}.}
 
 \item{N}{Monte Carlo samples when \code{empirical = TRUE}.}
 
-\item{seed}{Optional seed (used by the empirical calibration).}
+\item{seed}{Optional seed (used by the empirical calibration). The seed
+is scoped to this call: \code{.Random.seed} is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.}
 
 \item{...}{Additional arguments passed to \code{HDCD::ESAC()}.}
 }

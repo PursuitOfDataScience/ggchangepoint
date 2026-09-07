@@ -33,7 +33,10 @@
 #' @param outlier_sd For \code{type = "outlier"}, how many residual standard
 #'   deviations the substituted value sits above the fitted level. Defaults
 #'   to \code{5}.
-#' @param seed Optional seed, for detectors that randomise.
+#' @param seed Optional seed, for detectors that randomise. The seed is
+#'   scoped to this call: \code{.Random.seed} is saved and restored, so a
+#'   seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @param ... Additional arguments passed to \code{\link{cpt_detect}()} on
 #'   each perturbed series.
 #'
@@ -106,7 +109,7 @@ cpt_influence <- function(object, type = c("delete", "outlier"),
             call. = FALSE)
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   res <- if (use_native) {
     influence_native(object, type)
@@ -423,7 +426,9 @@ autoplot.ggcpt_influence <- function(object,
 #' @param over A named list of parameter vectors to sweep. Every combination
 #'   is run, so keep the grid small:
 #'   \code{list(penalty = c(5, 10, 20), minseglen = c(2, 10))}.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments held fixed across the grid and passed to
 #'   \code{\link{cpt_detect}()}.
 #'
@@ -457,7 +462,7 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
   }
   grid <- expand.grid(over, stringsAsFactors = FALSE,
                       KEEP.OUT.ATTRS = FALSE)
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   has_future <- requireNamespace("future", quietly = TRUE) &&
     requireNamespace("future.apply", quietly = TRUE) &&

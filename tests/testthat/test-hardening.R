@@ -1340,3 +1340,999 @@ test_that("only the two pre-class wrappers return a bare tibble", {
     expect_s3_class(suppressWarnings(fpop_wrapper(uni)), "ggcpt")
   }
 })
+
+# ---------------------------------------------------------------------------
+# The `...` collision sweep, extended past the fifty wrappers.
+#
+# reject_managed_args()/reject_renamed_args() were built for the engine
+# wrappers, and the four entry points that are not wrappers were not swept:
+# cpt_crops(), cpt_wrapper(), ggcptplot() and cpt_monitor() (which
+# cpt_replay() forwards to). Each pins or renames an engine argument and
+# each answered R's raw "formal argument \"x\" matched by multiple actual
+# arguments", naming neither the function nor what to use instead.
+# ---------------------------------------------------------------------------
+
+test_that("the non-wrapper entry points name a colliding `...` argument", {
+  set.seed(11)
+  uni <- c(stats::rnorm(80), stats::rnorm(80, 4))
+
+  # A collision must never surface as R's own argument-matching error.
+  no_raw <- function(expr) {
+    msg <- tryCatch({ force(expr); NA_character_ },
+                    error = function(e) conditionMessage(e))
+    expect_false(is.na(msg))
+    expect_false(grepl("matched by multiple actual arguments", msg))
+    msg
+  }
+
+  # cpt_crops() pins the two arguments that make the call CROPS and the
+  # interval it sweeps.
+  expect_match(no_raw(cpt_crops(uni, penalty = 10)),
+               "`crops` sets `penalty` itself", fixed = TRUE)
+  expect_match(no_raw(cpt_crops(uni, method = "BinSeg")),
+               "`crops` sets `method` itself", fixed = TRUE)
+  expect_match(no_raw(cpt_crops(uni, pen.value = c(1, 2))),
+               "use `pen_min` and `pen_max`", fixed = TRUE)
+
+  # cpt_wrapper() and ggcptplot() rename changepoint's `method` to
+  # `cp_method`, and each must name itself rather than the other.
+  expect_match(no_raw(cpt_wrapper(uni, method = "BinSeg")),
+               "`cpt_wrapper` renames its engine's `method`", fixed = TRUE)
+  expect_match(no_raw(cpt_wrapper(uni, method = "BinSeg")),
+               "Use `cp_method` instead", fixed = TRUE)
+  expect_match(no_raw(ggcptplot(uni, method = "BinSeg")),
+               "`ggcptplot` renames its engine's `method`", fixed = TRUE)
+
+  # ...and the redirection actually works.
+  expect_s3_class(suppressWarnings(cpt_wrapper(uni, cp_method = "BinSeg")),
+                  "tbl_df")
+})
+
+test_that("a monitor names a colliding engine argument, for both engines", {
+  set.seed(12)
+  uni <- c(stats::rnorm(80), stats::rnorm(80, 4))
+  msg_of <- function(expr) {
+    tryCatch({ force(expr); NA_character_ },
+             error = function(e) conditionMessage(e))
+  }
+
+  if (engine_usable("cpm")) {
+    m <- msg_of(cpt_monitor("cpm", baseline = uni[1:60], ARL0 = 500))
+    expect_match(m, "Use `arl0` instead", fixed = TRUE)
+    m <- msg_of(cpt_monitor("cpm", baseline = uni[1:60], cpmType = "Mood"))
+    expect_match(m, "Use `cpm_type` instead", fixed = TRUE)
+    # cpt_replay() forwards `...` to cpt_monitor(), so one guard covers it.
+    m <- msg_of(cpt_replay(uni, method = "cpm", cpmType = "Mood"))
+    expect_match(m, "Use `cpm_type` instead", fixed = TRUE)
+  }
+
+  if (engine_usable("ocd")) {
+    # An explicit `thresh` keeps this off ocd's Monte Carlo calibration,
+    # which costs minutes.
+    mv <- cbind(stats::rnorm(90), stats::rnorm(90), stats::rnorm(90))
+    m <- msg_of(cpt_monitor("ocd", baseline = mv[1:60, ],
+                            thresh = c(10, 10, 10), MC_reps = 5))
+    expect_match(m, "Use `mc_reps` instead", fixed = TRUE)
+    m <- msg_of(cpt_monitor("ocd", baseline = mv[1:60, ],
+                            thresh = c(10, 10, 10), dim = 3))
+    expect_match(m, "is not yours to set", fixed = TRUE)
+    m <- msg_of(cpt_monitor("ocd", baseline = mv[1:60, ],
+                            thresh = c(10, 10, 10), beta = 2))
+    expect_match(m, "`ocd` sets `beta` itself", fixed = TRUE)
+  }
+})
+
+# ---------------------------------------------------------------------------
+# A detection call is not allowed to narrate, and print() headers are not
+# allowed to be ragged. Both were true of `bcp` and of four print methods.
+# ---------------------------------------------------------------------------
+
+test_that("no engine announces someone else's package loads", {
+  skip_if_not(engine_usable("bcp"))
+  set.seed(13)
+  uni <- c(stats::rnorm(40), stats::rnorm(40, 4))
+  # bcp::bcp() calls require(bcp) in its own body, which attaches bcp and
+  # grid AND announces both through packageStartupMessage().
+  out <- utils::capture.output(
+    inner <- utils::capture.output(res <- bcp_wrapper(uni, seed = 2026),
+                                   type = "message"))
+  expect_s3_class(res, "ggcpt")
+  expect_length(out, 0L)
+  expect_length(inner, 0L)
+  # and the search path is given back
+  expect_false(any(c("package:bcp", "package:grid") %in% search()))
+})
+
+test_that("print() headers align their values in one column", {
+  set.seed(14)
+  uni <- c(stats::rnorm(80), stats::rnorm(80, 4))
+  res <- cpt_detect(uni, method = "pelt")
+
+  # A header line is "  Label: value". Every one in a block must put its
+  # value in the same column, and none may end in whitespace: cat()'s
+  # default separator lands between the value and the newline.
+  #
+  # Only the header is checked, not the whole output: the tibble printed
+  # below it pads its own columns, so `<lgl> ` legitimately ends in a
+  # space and is tibble's business rather than this package's.
+  check_header <- function(txt, label) {
+    blank <- which(!nzchar(txt))
+    head_txt <- if (length(blank)) txt[seq_len(blank[1] - 1L)] else txt
+    expect_false(any(grepl("[ \t]+$", head_txt)),
+                 info = paste(label, "trailing"))
+    fields <- grep("^  [A-Z][^:]*: ", head_txt, value = TRUE)
+    expect_gt(length(fields), 1L)
+    starts <- vapply(fields, function(l) {
+      m <- regexpr("^  [^:]*:[ ]*", l)
+      attr(m, "match.length")
+    }, integer(1))
+    expect_length(unique(starts), 1L)
+  }
+
+  check_header(utils::capture.output(print(res)), "print.ggcpt")
+  check_header(utils::capture.output(print(summary(res))), "summary.ggcpt")
+  # the two views of one object use the same column
+  a <- utils::capture.output(print(res))
+  b <- utils::capture.output(print(summary(res)))
+  col_of <- function(txt) {
+    l <- grep("^  Method: ", txt, value = TRUE)[1]
+    attr(regexpr("^  [^:]*:[ ]*", l), "match.length")
+  }
+  expect_equal(col_of(a), col_of(b))
+
+  if (engine_usable("cpm")) {
+    mon <- cpt_update(cpt_monitor("edetector", baseline = stats::rnorm(100)),
+                      c(stats::rnorm(50), stats::rnorm(50, 3)))
+    check_header(utils::capture.output(print(cpt_delay(mon, truth = 100))),
+                 "print.ggcpt_delay")
+  }
+  check_header(utils::capture.output(print(cpt_crops(uni))),
+               "print.ggcpt_path")
+})
+
+# ---------------------------------------------------------------------------
+# `scale_space` is not the same kind of capability column as `statistic` and
+# `path`, and three help pages had said it was.
+#
+# `statistic` and `path` gate their accessors: nothing stored, nothing
+# drawn. A scale space is stored by no engine at all -- cpt_scale_space()
+# computes one by sweeping a multiscale detector over the series -- so it
+# works on any result, and the column marks the two engines the sweep can
+# be run *with* rather than the results it accepts.
+# ---------------------------------------------------------------------------
+
+test_that("scale_space works on a result whose method does not claim it", {
+  skip_if_not(engine_usable("mosum"))
+  set.seed(15)
+  x <- c(stats::rnorm(150), stats::rnorm(150, 3))
+  res <- cpt_detect(x, method = "pelt")
+
+  caps <- cpt_methods()
+  expect_false(isTRUE(caps$scale_space[caps$method == "pelt"]))
+  # ...and yet:
+  ss <- cpt_scale_space(res, bandwidths = c(20, 40))
+  expect_s3_class(ss, "tbl_df")
+  expect_gt(nrow(ss), 0L)
+  expect_true(all(c("index", "bandwidth", "statistic", "threshold",
+                    "significant", "detected") %in% names(ss)))
+  expect_setequal(unique(ss$bandwidth), c(20, 40))
+  expect_s3_class(ggplot2::autoplot(res, type = "scale_space"), "ggplot")
+
+  # Nothing writes a scale space onto a result, which is why the above holds.
+  expect_null(res$diagnostics$scale_space)
+
+  # The column's real meaning: the domain of cpt_scale_space(method = ).
+  expect_setequal(caps$method[which(caps$scale_space)], c("mosum", "npmojo"))
+
+  # The two columns that DO gate their accessors still gate them, and name
+  # the engines that work.
+  expect_error(cpt_statistic(res), "does not expose a per-location statistic")
+  expect_error(cpt_solution_path(res), "does not expose a solution path")
+})
+
+# ---------------------------------------------------------------------------
+# `cpt_metrics()` returns twelve numbers and the help page used to list them
+# as twelve names. Three are ratios with a zero denominator when one side is
+# empty, and the row does not resolve them all the same way -- so the
+# conventions are now documented, and pinned here.
+#
+# The numbers themselves were verified against brute-force reference
+# implementations (covering by explicit set intersection over every segment
+# pair, ARI from a contingency table, Hausdorff by double minimax) on nine
+# hand-built cases and twenty random 400-point ones; they agreed exactly.
+# What that sweep could not check is the *documented* meaning, which is what
+# this test is for.
+# ---------------------------------------------------------------------------
+
+test_that("cpt_metrics() resolves the degenerate cases as documented", {
+  # Both empty: the segmentation is exactly right.
+  m <- cpt_metrics(integer(0), integer(0), n = 100)
+  expect_equal(m$precision, 1); expect_equal(m$recall, 1); expect_equal(m$f1, 1)
+  expect_equal(m$covering, 1); expect_equal(m$rand_index, 1)
+  expect_equal(m$annotation_error, 0)
+  # ...but the distances have no pair to measure.
+  expect_true(is.na(m$hausdorff))
+  expect_true(is.na(m$mae_matched)); expect_true(is.na(m$rmse_matched))
+
+  # One side empty: 0, not NA, on both ratios.
+  m <- cpt_metrics(integer(0), c(30, 70), n = 100)
+  expect_equal(m$precision, 0); expect_equal(m$recall, 0); expect_equal(m$f1, 0)
+  expect_equal(m$rand_index, 0)
+  expect_equal(m$annotation_error, 2)
+  expect_true(is.na(m$hausdorff))
+
+  m <- cpt_metrics(c(50), integer(0), n = 100)
+  expect_equal(m$precision, 0); expect_equal(m$recall, 0); expect_equal(m$f1, 0)
+  expect_equal(m$annotation_error, 1)
+
+  # The mixed-convention row the docs now warn about: nothing matched, so
+  # f1 is 0 while mae_matched is NA -- and annotation_error is a perfect 0
+  # for a segmentation that got the location off by 85 observations.
+  m <- cpt_metrics(5, 90, n = 100, margin = 5)
+  expect_equal(m$f1, 0)
+  expect_true(is.na(m$mae_matched))
+  expect_equal(m$annotation_error, 0)
+  expect_equal(m$hausdorff, 85)
+  expect_lt(m$rand_index, 0)          # worse than chance
+
+  # An out-of-range index is dropped with a warning, not silently kept: it
+  # would corrupt the partition metrics rather than merely miss.
+  expect_warning(mm <- cpt_metrics(c(50, 100), c(50), n = 100),
+                 "outside 1..(n-1)", fixed = TRUE)
+  expect_equal(mm$n_pred, 1L)
+})
+
+test_that("the covering metric matches an explicit set computation", {
+  # calc_covering() reaches its overlapping prediction segments with two
+  # findInterval() lookups rather than scanning them all. That is a
+  # performance change to a formula, so the formula is checked against the
+  # definition: sum over true segments of |A| * max Jaccard, over n.
+  ref <- function(pred, truth, n) {
+    seg <- function(cp) {
+      b <- sort(unique(c(0, cp, n)))
+      lapply(seq_len(length(b) - 1), function(i) (b[i] + 1):b[i + 1])
+    }
+    A <- seg(truth); B <- seg(pred)
+    sum(vapply(A, function(a) {
+      length(a) * max(vapply(B, function(b) {
+        length(intersect(a, b)) / length(union(a, b))
+      }, numeric(1)))
+    }, numeric(1))) / n
+  }
+  expect_equal(cpt_metrics(12, 10, n = 20)$covering, ref(12, 10, 20))
+  expect_equal(cpt_metrics(integer(0), c(30, 70), n = 100)$covering,
+               ref(integer(0), c(30, 70), 100))
+  set.seed(16)
+  for (i in 1:5) {
+    n <- 300
+    truth <- sort(sample(2:(n - 2), 8)); pred <- sort(sample(2:(n - 2), 11))
+    expect_equal(cpt_metrics(pred, truth, n = n)$covering,
+                 ref(pred, truth, n), tolerance = 1e-12)
+  }
+})
+
+# ---------------------------------------------------------------------------
+# `cpt_confint(method = "auto")` could quietly answer at a different level
+# than the one asked for.
+#
+# An `nsp` result carries regions, so native_bounds() finds them and "auto"
+# resolves to "native" -- which reports the level the engine already used
+# (the `nsp` wrapper's own `alpha = 0.1`, i.e. 0.9). `?cpt_confint` said
+# "native" ignores `level`, and that is true; the caller who is surprised
+# asked for "auto" and was never told where it landed. The `level` column
+# was honest throughout, but only if you inspected it.
+# ---------------------------------------------------------------------------
+
+test_that("cpt_confint() warns when the level it reports is not the one asked", {
+  skip_if_not(engine_usable("nsp"))
+  set.seed(17)
+  x <- c(stats::rnorm(100), stats::rnorm(100, 4))
+  r <- suppressWarnings(cpt_detect(x, method = "nsp"))
+  skip_if(nrow(r$changepoints) == 0)
+
+  # explicit level, route cannot honour it -> warn, and say which route
+  expect_warning(ci <- cpt_confint(r, method = "auto", level = 0.95),
+                 "`level = 0.95` was not applied", fixed = TRUE)
+  expect_warning(cpt_confint(r, method = "auto", level = 0.95),
+                 "method = \"native\"", fixed = TRUE)
+  # the column was always honest; that is not what changed
+  expect_equal(unique(ci$level), 0.9)
+
+  # the default level never warns, whatever the route reports
+  expect_silent(suppressMessages(cpt_confint(r, method = "auto")))
+
+  # a route that computes the interval honours the request, silently
+  expect_silent(
+    ci2 <- suppressMessages(cpt_confint(r, method = "nsp", level = 0.95,
+                                        M = 100, seed = 1)))
+  expect_equal(unique(ci2$level), 0.95)
+})
+
+test_that("cpt_confint() honours `level` on every computing route", {
+  set.seed(18)
+  x <- c(stats::rnorm(100), stats::rnorm(100, 4))
+  r <- cpt_detect(x, method = "pelt")
+  for (lv in c(0.80, 0.95, 0.99)) {
+    ci <- cpt_confint(r, method = "bootstrap", level = lv, B = 30, seed = 1)
+    expect_equal(unique(ci$level), lv)
+  }
+  # ...and the invariants hold whatever the level: the interval brackets the
+  # changepoint and stays inside the series.
+  n <- nrow(r$data)
+  ci <- cpt_confint(r, method = "bootstrap", level = 0.95, B = 30, seed = 1)
+  expect_true(all(ci$ci_lower <= ci$cp)); expect_true(all(ci$cp <= ci$ci_upper))
+  expect_true(all(ci$ci_lower >= 1L)); expect_true(all(ci$ci_upper <= n - 1L))
+  expect_true(all(nzchar(as.character(ci$source))))
+  expect_equal(nrow(ci), nrow(r$changepoints))
+})
+
+# ---------------------------------------------------------------------------
+# `seed` is scoped to the call, so it cannot pin the caller's stream.
+#
+# A bare `set.seed(seed)` in a function's own frame does not merely consume
+# the caller's random stream, it RESETS it. Measured before the fix, with
+# the data generated outside the call so generation cannot be mistaken for
+# the effect: a six-iteration generate-then-detect loop analysed
+# **2 distinct datasets of 6** when a seed was passed, and 6 of 6 when it
+# was not. Five entry points behaved that way -- `cpt_detect()` with a
+# stochastic engine, `cpt_stability()`, `cpt_select(criterion = "cv")`,
+# `cpt_simulate()` and `cpt_power()` -- which is to say exactly the
+# functions a user calls inside a simulation loop. Nothing warned and no
+# test failed; the study silently had a sample size of one.
+#
+# These are metamorphic assertions: they compare calls to each other rather
+# than to an expected value, which is the only kind that could have caught
+# this.
+# ---------------------------------------------------------------------------
+
+test_that("a seeded call does not pin the caller's random stream", {
+  distinct_datasets <- function(run) {
+    set.seed(2026)
+    firsts <- numeric(6)
+    for (i in 1:6) {
+      d <- c(stats::rnorm(60), stats::rnorm(60, 3))
+      firsts[i] <- d[1]
+      invisible(run(d))
+    }
+    length(unique(round(firsts, 9)))
+  }
+
+  # The reference: no seed at all must give six different datasets. If this
+  # ever fails the test below proves nothing.
+  expect_equal(distinct_datasets(function(d) cpt_detect(d, method = "pelt")), 6L)
+
+  # ...and neither does passing one.
+  expect_equal(
+    distinct_datasets(function(d) cpt_stability(d, method = "pelt", B = 3,
+                                                seed = 7)), 6L)
+  expect_equal(
+    distinct_datasets(function(d) cpt_simulate(40, changepoints = 20,
+                                               seed = 3)), 6L)
+  expect_equal(
+    distinct_datasets(function(d) {
+      suppressWarnings(cpt_select(d, method = "pelt", criterion = "cv",
+                                  seed = 5))
+    }), 6L)
+  if (engine_usable("wbs")) {
+    expect_equal(
+      distinct_datasets(function(d) {
+        suppressWarnings(cpt_detect(d, method = "wbs", seed = 1))
+      }), 6L)
+  }
+})
+
+test_that("a seeded call leaves .Random.seed exactly as it found it", {
+  set.seed(11)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 3))
+  preserved <- function(run) {
+    set.seed(99); before <- get(".Random.seed", envir = globalenv())
+    invisible(run())
+    identical(get(".Random.seed", envir = globalenv()), before)
+  }
+  expect_true(preserved(function() cpt_simulate(40, changepoints = 20, seed = 3)))
+  expect_true(preserved(function() cpt_stability(x, method = "pelt", B = 3, seed = 7)))
+  expect_true(preserved(function() {
+    cpt_power(n = 50, jump = 2, n_sim = 2, parallel = FALSE, seed = 4)
+  }))
+  if (engine_usable("wbs")) {
+    expect_true(preserved(function() {
+      suppressWarnings(cpt_detect(x, method = "wbs", seed = 42))
+    }))
+  }
+  if (engine_usable("nsp")) {
+    expect_true(preserved(function() {
+      suppressWarnings(cpt_detect(x, method = "nsp", seed = 42, M = 50))
+    }))
+  }
+
+  # A fresh session has no `.Random.seed` until the first draw, and leaving
+  # one behind would itself be a change to the caller's state.
+  if (exists(".Random.seed", envir = globalenv(), inherits = FALSE)) {
+    rm(".Random.seed", envir = globalenv())
+  }
+  invisible(cpt_simulate(40, changepoints = 20, seed = 3))
+  expect_false(exists(".Random.seed", envir = globalenv(), inherits = FALSE))
+})
+
+test_that("scoping the seed did not cost reproducibility", {
+  set.seed(12)
+  x <- c(stats::rnorm(150), stats::rnorm(150, 3))
+
+  # Same seed twice, with a thousand draws in between: identical answers.
+  same <- function(run) {
+    a <- run()
+    invisible(stats::rnorm(1000))
+    b <- run()
+    identical(a, b)
+  }
+  expect_true(same(function() cpt_simulate(60, changepoints = 30, seed = 3)$value))
+  expect_true(same(function() {
+    # `$frequency` is the re-detection table -- the part that is random.
+    cpt_stability(x, method = "pelt", B = 5, seed = 7)$frequency
+  }))
+  if (engine_usable("wbs")) {
+    expect_true(same(function() {
+      suppressWarnings(cpt_detect(x, method = "wbs", seed = 42))$changepoints$cp
+    }))
+  }
+
+  # And a seeded call still reproduces after an unseeded one has moved the
+  # stream on, which is what "reproducible" has to mean.
+  if (engine_usable("wbs")) {
+    a <- suppressWarnings(cpt_detect(x, method = "wbs", seed = 42))$changepoints$cp
+    invisible(suppressWarnings(cpt_detect(x, method = "wbs")))
+    b <- suppressWarnings(cpt_detect(x, method = "wbs", seed = 42))$changepoints$cp
+    expect_identical(a, b)
+  }
+})
+
+# ---------------------------------------------------------------------------
+# Reproducibility under a `future::plan()`.
+#
+# Seven exported functions dispatch on the plan. §180.2 of the development
+# ledger guessed that `cpt_power()` and `cpt_stability()` might disagree
+# between the sequential and parallel paths even with a seed fixed, and
+# asked for exactly this test. Measuring corrects the guess twice:
+# `cpt_stability()` has no parallel path at all, and of the seven that do,
+# only `cpt_power()` diverges -- because it is the only one whose farmed-out
+# tasks consume random numbers. The other six farm out work that is
+# deterministic given its input, so the worker stream never enters the
+# answer.
+#
+# The guarantee worth pinning is therefore "same seed and same plan, same
+# answer", for both plans. Cross-plan equality is deliberately NOT asserted:
+# under a parallel plan the numbers come from future.apply's L'Ecuyer
+# streams and sequentially from the calling stream, and both being
+# deterministic is the property that matters.
+# ---------------------------------------------------------------------------
+
+test_that("a seeded call reproduces under whichever future plan is set", {
+  skip_on_cran()
+  skip_if_not_installed("future")
+  skip_if_not_installed("future.apply")
+  set.seed(19)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 3))
+
+  runs <- list(
+    cpt_power = function() {
+      cpt_power(n = 100, jump = c(0.5, 1.5), n_sim = 6, seed = 11)$power
+    },
+    cpt_consensus = function() {
+      cpt_consensus(x, methods = c("pelt", "binseg", "amoc"),
+                    seed = 3)$consensus
+    },
+    cpt_batch = function() {
+      cpt_batch(list(a = x, b = rev(x)), method = "pelt", seed = 3)$changepoints
+    },
+    cpt_sensitivity = function() {
+      cpt_sensitivity(x, method = "pelt", over = list(penalty = c(4, 10)),
+                      seed = 3)$grid
+    }
+  )
+
+  twice <- function(run) {
+    a <- run()
+    b <- run()
+    identical(a, b)
+  }
+
+  # (1) the default plan, which is sequential
+  expect_true(inherits(future::plan(), "sequential"))
+  for (nm in names(runs)) expect_true(twice(runs[[nm]]), info = nm)
+
+  # (2) and a real two-worker plan. Restored on exit however this exits, so
+  # a failure here cannot leave a parallel plan set for the rest of the
+  # suite.
+  old <- future::plan(future::multisession, workers = 2)
+  withr::defer(future::plan(old))
+  expect_false(inherits(future::plan(), "sequential"))
+  for (nm in names(runs)) expect_true(twice(runs[[nm]]), info = nm)
+})
+
+test_that("only cpt_power()'s answer depends on the plan", {
+  skip_on_cran()
+  skip_if_not_installed("future")
+  skip_if_not_installed("future.apply")
+  set.seed(20)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 3))
+
+  seq_of <- function(run) {
+    stopifnot(inherits(future::plan(), "sequential"))
+    run()
+  }
+  par_of <- function(run) {
+    old <- future::plan(future::multisession, workers = 2)
+    on.exit(future::plan(old), add = TRUE)
+    run()
+  }
+
+  # Deterministic tasks: the plan must not enter the answer, and this is
+  # the claim `?cpt_power`'s section makes about the other six.
+  det <- list(
+    cpt_consensus = function() {
+      cpt_consensus(x, methods = c("pelt", "binseg", "amoc"), seed = 3)$consensus
+    },
+    cpt_batch = function() {
+      cpt_batch(list(a = x, b = rev(x)), method = "pelt", seed = 3)$changepoints
+    },
+    cpt_sensitivity = function() {
+      cpt_sensitivity(x, method = "pelt", over = list(penalty = c(4, 10)),
+                      seed = 3)$grid
+    }
+  )
+  for (nm in names(det)) {
+    expect_equal(seq_of(det[[nm]]), par_of(det[[nm]]), info = nm)
+  }
+
+  # cpt_power() is the exception, and its `mc_se` column is what says the
+  # two are estimates of the same quantity rather than a disagreement.
+  pw <- function() cpt_power(n = 100, jump = 1, n_sim = 6, seed = 11)
+  a <- seq_of(pw)
+  b <- par_of(pw)
+  expect_equal(nrow(a), nrow(b))
+  expect_equal(a$n, b$n)
+  expect_equal(a$jump, b$jump)
+  expect_true(all(is.finite(a$power)) && all(is.finite(b$power)))
+  expect_true(all(a$power >= 0 & a$power <= 1))
+  expect_true(all(b$power >= 0 & b$power <= 1))
+})
+
+# ---------------------------------------------------------------------------
+# `as_ggcpt()` drops a `cp` it cannot use -- documented -- but it used to do
+# it in silence.
+#
+# `ggcpt_build()` discards an index that is NA or outside 1..(n-1), and for a
+# wrapper that is correct: the indices come from an engine, some of which
+# legitimately emit a boundary value, and normalising a machine's output is
+# the wrapper's job. `as_ggcpt()` is given the caller's own values -- a
+# published paper's breaks, an analyst's annotations -- and there one
+# mistyped index vanishing without a word leaves a result that looks
+# complete and is short a changepoint. Measured on a 200-point series
+# before the fix: `as_ggcpt(c(50, 500), x)` returned one changepoint at 50.
+#
+# The dropping is kept, because it is documented and refusing would break
+# working code. Only the silence is gone.
+# ---------------------------------------------------------------------------
+
+test_that("as_ggcpt() says what it dropped from `cp`", {
+  set.seed(21)
+  x <- c(stats::rnorm(100), stats::rnorm(100, 4))
+  n <- length(x)
+
+  # Each of the five, with the value named in the message.
+  expect_warning(a <- as_ggcpt(c(50, 500), x), "outside 1..199", fixed = TRUE)
+  expect_warning(as_ggcpt(c(50, 500), x), "(500)", fixed = TRUE)
+  expect_equal(a$changepoints$cp, 50L)          # behaviour unchanged
+
+  expect_warning(as_ggcpt(c(0, 50), x), "outside 1..199", fixed = TRUE)
+  expect_warning(as_ggcpt(c(50, n), x), "(200)", fixed = TRUE)
+  expect_warning(b <- as_ggcpt(50.5, x), "truncated to whole numbers",
+                 fixed = TRUE)
+  expect_equal(b$changepoints$cp, 50L)
+  expect_warning(as_ggcpt(c(50, 50), x), "duplicated (50)", fixed = TRUE)
+  expect_warning(as_ggcpt(c(50, NA), x), "1 missing", fixed = TRUE)
+
+  # The message explains the convention, because that is what makes `n`
+  # out of range and 1 valid under "left".
+  expect_warning(as_ggcpt(c(50, n), x),
+                 "last index of the segment before it", fixed = TRUE)
+  expect_warning(as_ggcpt(1, x, cp_convention = "right"),
+                 "first index of the segment after it", fixed = TRUE)
+  expect_warning(as_ggcpt(1, x, cp_convention = "right"), "outside 2..200",
+                 fixed = TRUE)
+})
+
+test_that("as_ggcpt() stays silent when nothing is lost", {
+  set.seed(22)
+  x <- c(stats::rnorm(100), stats::rnorm(100, 4))
+  n <- length(x)
+
+  # Valid input, both convention boundaries, and reordering -- which loses
+  # nothing and so must not warn.
+  expect_silent(as_ggcpt(c(50, 150), x))
+  expect_silent(as_ggcpt(1, x))
+  expect_silent(as_ggcpt(n - 1L, x))
+  expect_silent(as_ggcpt(2, x, cp_convention = "right"))
+  expect_silent(as_ggcpt(n, x, cp_convention = "right"))
+  expect_silent(as_ggcpt(integer(0), x))
+  expect_silent(as_ggcpt(NULL, x))
+  # an integer-valued double is not a truncation
+  expect_silent(as_ggcpt(c(50, 150.0), x))
+  # ...and sorting happens, silently
+  expect_silent(s <- as_ggcpt(c(150, 50), x))
+  expect_equal(s$changepoints$cp, c(50L, 150L))
+
+  # The optional slots still work alongside the guard.
+  expect_silent(as_ggcpt(c(50, 150), x, ci = cbind(c(45, 145), c(55, 155))))
+  expect_silent(as_ggcpt(50, x, fitted = rep(0, n)))
+  expect_silent(as_ggcpt(50, cbind(x, rev(x))))
+})
+
+test_that("a registered method's own indices are normalised without a report", {
+  # `cpt_detect()` routes a registered method's bare-vector return through
+  # as_ggcpt(), so the new drop report reached a caller it was not written
+  # for: the indices came from the detector, not from a person transcribing
+  # published breaks, and "check the values against the series" is advice
+  # about code the user did not write. The report is a classed condition
+  # (`ggchangepoint_cp_dropped`) and only that one caller muffles it.
+  set.seed(23)
+  x <- c(stats::rnorm(80), stats::rnorm(80, 4))
+  withr::defer(for (nm in c("dropprobe")) {
+    try(cpt_unregister_method(nm), silent = TRUE)
+  })
+
+  for (fn in list(function(x, ...) c(0L, 80L, 500L),   # both boundaries
+                  function(x, ...) 80.4,               # fractional
+                  function(x, ...) c(80L, 80L))) {     # duplicated
+    cpt_register_method("dropprobe", fn = fn, overwrite = TRUE)
+    expect_silent(fit <- cpt_detect(x, method = "dropprobe"))
+    expect_equal(fit$changepoints$cp, 80L)
+    expect_true(isTRUE(fit$registered))
+  }
+
+  # The same values through the user-facing door DO report, which is the
+  # asymmetry the whole thing rests on.
+  expect_warning(as_ggcpt(c(0L, 80L, 500L), x), "outside 1..159", fixed = TRUE)
+
+  # And the condition is classed, so a caller can muffle exactly this and
+  # nothing else.
+  cnd <- tryCatch(as_ggcpt(c(80L, 500L), x),
+                  warning = function(w) w)
+  expect_s3_class(cnd, "ggchangepoint_cp_dropped")
+  expect_s3_class(cnd, "warning")
+})
+
+# ---------------------------------------------------------------------------
+# `cpt_simulate()` is the package's own ground truth -- `cpt_power()`,
+# `cpt_benchmark()` and `cpt_datasets()` are all scored against what it says
+# it generated -- so a `params` that does not describe the series it built
+# corrupts every number downstream of it.
+#
+# Supplying too FEW entries already warned: the last one is recycled, so the
+# trailing changepoints would be recorded as ground truth with no change
+# behind them. Too MANY was silent. `k` changepoints make `k + 1` segments,
+# which is the arithmetic easiest to get wrong, and a caller who wrote three
+# segment means against one changepoint got an ordinary two-segment series
+# with the third value dropped and nothing said.
+# ---------------------------------------------------------------------------
+
+test_that("cpt_simulate() reports a params/segment mismatch either way", {
+  # too few: recycled, and it says so (unchanged)
+  expect_warning(cpt_simulate(200, changepoints = 100, params = c(0), seed = 1),
+                 "1 value(s) for 2 segments", fixed = TRUE)
+  # too many: the surplus is dropped, and now it says so
+  expect_warning(cpt_simulate(200, changepoints = 100, params = c(0, 3, 9),
+                              seed = 1),
+                 "3 value(s) but 1 changepoint(s) make only 2 segment(s)",
+                 fixed = TRUE)
+  expect_warning(cpt_simulate(200, changepoints = 100, params = c(0, 3, 9),
+                              seed = 1),
+                 "`changepoints` sets the number of segments", fixed = TRUE)
+  # ...for every change type, not just "mean"
+  expect_warning(cpt_simulate(200, changepoints = 100, change_in = "var",
+                              params = c(1, 4, 9), seed = 1),
+                 "the last 1 are unused", fixed = TRUE)
+  expect_warning(
+    cpt_simulate(200, changepoints = 100, change_in = "meanvar",
+                 params = list(list(mean = 0, sd = 1), list(mean = 3, sd = 1),
+                               list(mean = 9, sd = 1)), seed = 1),
+    "only 2 segment(s)", fixed = TRUE)
+
+  # and silent when the counts agree, or when params is left to the default
+  expect_silent(cpt_simulate(200, changepoints = 100, params = c(0, 3), seed = 1))
+  expect_silent(cpt_simulate(300, changepoints = c(100, 200),
+                             params = c(0, 3, 9), seed = 1))
+  expect_silent(cpt_simulate(200, changepoints = 100, seed = 1))
+  expect_silent(cpt_simulate(200, changepoints = integer(0), seed = 1))
+})
+
+test_that("cpt_simulate() builds the series it says it built", {
+  # The quantities, not just the shape: everything downstream is scored
+  # against these.
+  jump_err <- function(jump) {
+    e <- vapply(1:30, function(s) {
+      d <- cpt_simulate(400, changepoints = 200, change_in = "mean",
+                        params = c(0, jump), sd = 1, seed = s)
+      (mean(d$value[201:400]) - mean(d$value[1:200])) - jump
+    }, numeric(1))
+    abs(mean(e)) / (stats::sd(e) / sqrt(length(e)))       # |bias| in SEs
+  }
+  for (j in c(0.5, 2, 5)) expect_lt(jump_err(j), 4)
+
+  sd_ratio <- function(r) {
+    v <- vapply(1:30, function(s) {
+      d <- cpt_simulate(400, changepoints = 200, change_in = "var",
+                        params = c(1, r), seed = s)
+      stats::sd(d$value[201:400]) / stats::sd(d$value[1:200])
+    }, numeric(1))
+    mean(v)
+  }
+  expect_equal(sd_ratio(2), 2, tolerance = 0.1)
+  expect_equal(sd_ratio(4), 4, tolerance = 0.1)
+
+  # seg_id must increment exactly at the requested changepoints, because
+  # that is the ground-truth column the metrics are matched against.
+  for (cps in list(200L, c(100L, 300L), c(50L, 150L, 250L, 350L))) {
+    d <- cpt_simulate(400, changepoints = cps,
+                      params = seq_len(length(cps) + 1L), seed = 1)
+    expect_identical(as.integer(which(diff(d$seg_id) != 0)), as.integer(cps))
+  }
+
+  # the noise models are the ones they claim to be
+  rho_hat <- function(rho) mean(vapply(1:20, function(s) {
+    d <- cpt_simulate(600, changepoints = integer(0), noise = "ar1",
+                      rho = rho, seed = s)
+    stats::acf(d$value, lag.max = 1, plot = FALSE)$acf[2]
+  }, numeric(1)))
+  expect_equal(rho_hat(0.3), 0.3, tolerance = 0.08)
+  expect_equal(rho_hat(0.7), 0.7, tolerance = 0.08)
+
+  kur <- function(v) mean((v - mean(v))^4) / stats::var(v)^2
+  kg <- mean(vapply(1:20, function(s) kur(cpt_simulate(
+    500, changepoints = integer(0), noise = "gauss", seed = s)$value), numeric(1)))
+  kt <- mean(vapply(1:20, function(s) kur(cpt_simulate(
+    500, changepoints = integer(0), noise = "t", df = 3, seed = s)$value), numeric(1)))
+  expect_gt(kt, kg * 2)
+})
+
+# ---------------------------------------------------------------------------
+# `cpt_select()`'s closed-form criteria, against their definitions.
+#
+# The `value` column is what a user compares rungs by, so it is worth
+# pinning to the formula rather than to a recorded number: a test that
+# records 152.7985 passes after a formula change that silently alters what
+# the criterion means. The reference implementations below are written from
+# the definitions and share no code with the package.
+#
+# Measured: all three agree exactly at every rung, and the documented
+# behaviour of "aic" -- that a penalty which does not grow with n
+# over-selects -- shows up as it taking the whole ladder while "bic" and
+# "mbic" find the truth.
+# ---------------------------------------------------------------------------
+
+test_that("bic, aic and mbic are the formulas the help page states", {
+  set.seed(24)
+  x <- c(stats::rnorm(100), stats::rnorm(100, 3), stats::rnorm(100, 1))
+
+  rss_cost <- function(y, cp) {
+    b <- c(0L, sort(unique(cp[cp >= 1 & cp < length(y)])), length(y))
+    r <- sum(vapply(seq_len(length(b) - 1), function(i) {
+      s <- y[(b[i] + 1):b[i + 1]]
+      sum((s - mean(s))^2)
+    }, numeric(1)))
+    length(y) * log(max(r, .Machine$double.eps) / length(y))
+  }
+  ref <- list(
+    bic = function(y, cp) rss_cost(y, cp) + (2 * length(cp) + 1) * log(length(y)),
+    aic = function(y, cp) rss_cost(y, cp) + 2 * (2 * length(cp) + 1),
+    mbic = function(y, cp) {
+      k <- length(cp)
+      pen <- if (k == 0) 0 else {
+        l <- diff(c(0L, sort(cp), length(y)))
+        3 * k * log(length(y)) + sum(log(l / length(y)))
+      }
+      rss_cost(y, cp) + pen
+    }
+  )
+
+  chosen_k <- integer(0)
+  for (crit in names(ref)) {
+    s <- cpt_select(x, method = "pelt", criterion = crit, k_max = 6)
+    tb <- s$criterion_table
+    expect_true(all(c("k", "value", "cost", "chosen", "cpts") %in% names(tb)))
+    # exactly one row chosen, and it is the argmin of `value`
+    expect_equal(sum(tb$chosen), 1L)
+    expect_equal(tb$k[tb$chosen], tb$k[which.min(tb$value)])
+    expect_equal(s$k, tb$k[tb$chosen])
+    # every rung's value and cost equal the definition at that rung's own
+    # locations
+    for (i in seq_len(nrow(tb))) {
+      loc <- as.integer(unlist(tb$cpts[[i]]))
+      if (length(loc) != tb$k[i]) next
+      expect_equal(tb$value[i], ref[[crit]](x, loc), tolerance = 1e-8,
+                   info = paste(crit, "K =", tb$k[i]))
+      expect_equal(tb$cost[i], rss_cost(x, loc), tolerance = 1e-8,
+                   info = paste(crit, "cost at K =", tb$k[i]))
+    }
+    chosen_k <- c(chosen_k, tb$k[tb$chosen])
+  }
+  names(chosen_k) <- names(ref)
+
+  # The help page's claim about aic, as behaviour rather than prose: bic and
+  # mbic recover the two real changes, aic takes the whole ladder.
+  expect_equal(chosen_k[["bic"]], 2L)
+  expect_equal(chosen_k[["mbic"]], 2L)
+  expect_gt(chosen_k[["aic"]], chosen_k[["bic"]])
+})
+
+# ---------------------------------------------------------------------------
+# `cpt_consensus(min_votes =)`: an unreachable threshold, and a boundary that
+# falls where a reader would write "unanimous".
+#
+# The rule is that a value strictly between 0 and 1 is a proportion and
+# anything else is a count. With three methods that puts `min_votes = 0.99`
+# at all three and `min_votes = 1` at *one* -- the least strict setting
+# there is -- so the two neighbouring values mean opposite things. And a
+# count above the number of methods that ran cannot be reached, so the
+# consensus is empty by construction, which is indistinguishable from the
+# methods having agreed on nothing.
+#
+# The clustering itself was verified separately against hand-computed cases
+# and is unchanged.
+# ---------------------------------------------------------------------------
+
+test_that("cpt_consensus() warns when min_votes cannot be reached", {
+  set.seed(25)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 4))
+  three <- c("pelt", "binseg", "amoc")
+
+  # reachable: silent, whatever the value, including exact unanimity
+  for (mv in c(0.5, 0.99, 1, 2, 3)) {
+    expect_silent(r <- cpt_consensus(x, methods = three, min_votes = mv))
+    expect_lte(attr(r, "consensus")$threshold, 3L)
+  }
+
+  # unreachable: warns, and names both numbers
+  expect_warning(cpt_consensus(x, methods = three, min_votes = 4),
+                 "threshold of 4 but only 3 method(s) ran", fixed = TRUE)
+  expect_warning(cpt_consensus(x, methods = three, min_votes = 4),
+                 "empty by construction", fixed = TRUE)
+  # ...and the message explains the count/proportion boundary, which is the
+  # likeliest reason someone got here
+  expect_warning(cpt_consensus(x, methods = three, min_votes = 10),
+                 "a count of methods, not a proportion", fixed = TRUE)
+  # the count that matters is the methods that RAN, not those requested
+  expect_warning(cpt_consensus(x, methods = c("pelt", "binseg"),
+                               min_votes = 3),
+                 "only 2 method(s) ran", fixed = TRUE)
+
+  # the boundary itself, as behaviour: 0.99 is stricter than 1
+  a <- cpt_consensus(x, methods = three, min_votes = 0.99)
+  b <- cpt_consensus(x, methods = three, min_votes = 1)
+  expect_equal(attr(a, "consensus")$threshold, 3L)
+  expect_equal(attr(b, "consensus")$threshold, 1L)
+})
+
+test_that("cpt_consensus() clusters by leader, not transitively", {
+  cl <- ggchangepoint:::cluster_changepoints
+  # A cluster spans at most `tolerance` from its first member, so a chain of
+  # near-neighbours does not merge into one wide cluster.
+  o <- cl(list(a = 100L, b = 105L, c = 110L), 5)
+  expect_equal(as.integer(o$cp), c(102L, 110L))
+  expect_equal(as.integer(o$votes), c(2L, 1L))
+  expect_equal(as.integer(o$spread), c(5L, 0L))
+
+  # the tolerance boundary is inclusive
+  expect_equal(nrow(cl(list(a = 100L, b = 105L), 5)), 1L)
+  expect_equal(nrow(cl(list(a = 100L, b = 106L), 5)), 2L)
+
+  # one method contributing two nearby locations is still one vote
+  o <- cl(list(a = c(99L, 101L), b = 100L), 5)
+  expect_equal(as.integer(o$votes), 2L)
+  expect_equal(as.integer(o$cp), 100L)
+
+  # `cp` is the median of the cluster's members, `spread` its range
+  o <- cl(list(a = 98L, b = 100L, c = 102L), 5)
+  expect_equal(as.integer(o$cp), 100L)
+  expect_equal(as.integer(o$spread), 4L)
+
+  # nothing detected is an empty table, not an error
+  o <- cl(list(a = integer(0), b = integer(0)), 5)
+  expect_equal(nrow(o), 0L)
+  expect_true(all(c("cp", "votes", "methods", "spread") %in% names(o)))
+})
+
+# ---------------------------------------------------------------------------
+# The benchmark's ranking arithmetic and its Nemenyi critical distance.
+#
+# The critical distance is the number a reader takes "method A beats method
+# B" from, so it is checked against Demsar (2006) Table 5 rather than
+# against a recorded value: q_alpha = qtukey(1 - alpha, k, Inf) / sqrt(2),
+# and CD = q_alpha * sqrt(k(k + 1) / (6N)).
+# ---------------------------------------------------------------------------
+
+test_that("the Nemenyi critical distance matches Demsar's published table", {
+  cd <- ggchangepoint:::nemenyi_cd
+  # Demsar (2006), Table 5: q_0.05 for k = 2..10, to three decimals.
+  published <- c(`2` = 1.960, `3` = 2.343, `4` = 2.569, `5` = 2.728,
+                 `6` = 2.850, `7` = 2.949, `8` = 3.031, `9` = 3.102,
+                 `10` = 3.164)
+  for (k in as.integer(names(published))) {
+    q <- stats::qtukey(0.95, nmeans = k, df = Inf) / sqrt(2)
+    expect_equal(q, published[[as.character(k)]], tolerance = 1e-3,
+                 info = paste("k =", k))
+  }
+  # and CD assembles those constants the documented way
+  for (spec in list(c(3, 10), c(5, 20), c(8, 6))) {
+    k <- spec[1]; n_d <- spec[2]
+    want <- (stats::qtukey(0.95, k, Inf) / sqrt(2)) * sqrt(k * (k + 1) / (6 * n_d))
+    expect_equal(cd(k, n_d), want)
+  }
+  # CD narrows as the number of datasets grows -- the reason the help page
+  # says to read a small-N diagram descriptively
+  expect_gt(cd(5, 5), cd(5, 50))
+})
+
+test_that("benchmark ranks respect the metric's direction and penalise NA", {
+  br <- ggchangepoint:::benchmark_ranks
+  mk <- function(df, metric) {
+    structure(tibble::as_tibble(df), metrics = metric,
+              class = c("ggcpt_benchmark", class(tibble::as_tibble(df))))
+  }
+
+  # higher-is-better: rank 1 to the largest
+  r <- br(mk(data.frame(dataset = "A", method = c("m1", "m2", "m3"),
+                        covering = c(0.9, 0.5, 0.7)), "covering"), "covering")
+  expect_equal(r$method, c("m1", "m3", "m2"))
+  expect_equal(r$mean_rank, c(1, 2, 3))
+
+  # lower-is-better: rank 1 to the smallest
+  r <- br(mk(data.frame(dataset = "A", method = c("m1", "m2", "m3"),
+                        hausdorff = c(9, 1, 5)), "hausdorff"), "hausdorff")
+  expect_equal(r$method, c("m2", "m3", "m1"))
+
+  # NA takes the worst rank, in both directions, rather than being dropped
+  r <- br(mk(data.frame(dataset = "A", method = c("m1", "m2", "m3"),
+                        covering = c(0.9, NA, 0.7)), "covering"), "covering")
+  expect_equal(r$method[3], "m2")
+  expect_equal(r$mean_rank[3], 3)
+  r <- br(mk(data.frame(dataset = "A", method = c("m1", "m2", "m3"),
+                        hausdorff = c(9, NA, 5)), "hausdorff"), "hausdorff")
+  expect_equal(r$method[3], "m2")
+
+  # ties share the average rank, and mean_rank averages over datasets:
+  # dataset A is a tie (1.5 each), B splits 1 and 2 -> 1.25 and 1.75
+  r <- br(mk(data.frame(dataset = c("A", "A", "B", "B"),
+                        method = c("m1", "m2", "m1", "m2"),
+                        covering = c(0.5, 0.5, 0.9, 0.1)), "covering"),
+          "covering")
+  got <- stats::setNames(r$mean_rank, r$method)
+  expect_equal(got[["m1"]], 1.25)
+  expect_equal(got[["m2"]], 1.75)
+  expect_equal(unique(r$n_datasets), 2L)
+
+  # an all-NA metric has no ranking to report, and says so with NULL rather
+  # than a table of ties
+  expect_null(br(mk(data.frame(dataset = "A", method = "m1",
+                               covering = NA_real_), "covering"), "covering"))
+})
+
+test_that("cpt_stability() frequencies are replicate proportions", {
+  set.seed(26)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 4))
+  B <- 40
+  st <- cpt_stability(x, method = "pelt", B = B, margin = 5, seed = 1)
+  f <- st$frequency
+
+  expect_equal(nrow(f), length(x))
+  expect_identical(f$index, seq_along(x))
+  expect_true(all(f$freq >= 0 & f$freq <= 1))
+  # Each replicate contributes at most 1 to any index, so freq is a genuine
+  # multiple of 1/B. Incrementing once per changepoint instead double-counts
+  # a replicate wherever two detections' windows overlap -- the defect the
+  # old `pmin(hits / B, 1)` clipped out of sight.
+  expect_true(all(abs(f$freq * B - round(f$freq * B)) < 1e-9))
+  # and it locates the change rather than the quiet stretches
+  expect_gt(max(f$freq[abs(f$index - 120) <= 5]),
+            max(f$freq[f$index < 40 | f$index > 200]))
+})

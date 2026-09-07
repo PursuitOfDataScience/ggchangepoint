@@ -33,11 +33,20 @@ A tibble with columns:
         \code{capabilities = FALSE}). \code{ci} means the engine
         supplies changepoint-location confidence intervals; \code{fitted}
         a length-\eqn{n} fitted signal; \code{posterior} a per-location
-        posterior probability; \code{statistic}, \code{path} and
-        \code{scale_space} the internals rendered by
-        \code{\link{ggcpt_statistic}()},
-        \code{\link{ggcpt_solution_path}()} and
-        \code{\link{ggcpt_scale_space}()}.
+        posterior probability; \code{statistic} and \code{path} the
+        internals rendered by \code{\link{ggcpt_statistic}()} and
+        \code{\link{ggcpt_solution_path}()}, which error with the list
+        of supporting engines when a result does not carry them.
+
+        \code{scale_space} is not one of those, despite sitting beside
+        them. Nothing stores a scale space on a result:
+        \code{\link{cpt_scale_space}()} computes one on demand by
+        sweeping a multiscale detector's bandwidth over the series, so
+        it works on \emph{any} series and any result -- a \code{pelt}
+        fit included. What this column marks is the two engines that
+        sweep can be run \emph{with}, i.e. the domain of that
+        function's own \code{method} argument:
+        \code{subset(cpt_methods(), scale_space)$method}.
 
         \code{online} means the \emph{algorithm} is sequential -- it
         consumes observations one at a time -- and this table reports it

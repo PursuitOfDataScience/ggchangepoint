@@ -7,7 +7,9 @@
 #' @param n_intervals Number of random intervals. Defaults to \code{5000}.
 #' @param threshold Manual threshold for detection. If \code{NULL}, model
 #'   selection uses the strengthened Schwarz Information Criterion (sSIC).
-#' @param seed Optional seed for reproducibility.
+#' @param seed Optional seed for reproducibility. The seed is scoped to this
+#'   call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to \code{wbs::wbs()}.
 #' @return A \code{ggcpt} object.
 #' @references
@@ -27,7 +29,7 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
   validate_data(x)
   data_vec <- as_uni_vector(x, "wbs")
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   # The engine errors on constant input; a constant series simply has no
   # changepoints, so normalise to the empty-ggcpt contract.
@@ -172,7 +174,9 @@ breakfast_cpts <- function(fit) {
 #' @param contrast Contrast type. One of \code{"pcwsConstMean"},
 #'   \code{"pcwsLinContMean"}, \code{"pcwsLinMean"},
 #'   \code{"pcwsConstMeanVar"}. Defaults to \code{"pcwsConstMean"}.
-#' @param seed Optional seed for reproducibility.
+#' @param seed Optional seed for reproducibility. The seed is scoped to this
+#'   call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to \code{not::not()}.
 #' @return A \code{ggcpt} object whose \code{change_in} reflects the
 #'   contrast: \code{"mean"}, \code{"meanvar"}, or \code{"slope"}.
@@ -196,7 +200,7 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
   validate_data(x)
   data_vec <- as_uni_vector(x, "not")
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   change_in <- switch(contrast,
     pcwsConstMean = "mean",
@@ -249,7 +253,9 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
 #' @param multiscale Logical. Use the multiscale MOSUM procedure
 #'   (\code{mosum::multiscale.localPrune()}) instead of a single bandwidth?
 #'   Defaults to \code{FALSE}.
-#' @param seed Optional seed for reproducibility.
+#' @param seed Optional seed for reproducibility. The seed is scoped to this
+#'   call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to \code{mosum::mosum()} or
 #'   \code{mosum::multiscale.localPrune()}.
 #' @return A \code{ggcpt} object.
@@ -269,7 +275,7 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
   validate_data(x)
   data_vec <- as_uni_vector(x, "mosum")
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   if (isTRUE(multiscale)) {
     fit <- if (is.null(G)) {
@@ -317,7 +323,9 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
 #' Wraps the \code{IDetect} package. Requires the \code{IDetect} package.
 #'
 #' @param x A numeric vector.
-#' @param seed Optional seed for reproducibility.
+#' @param seed Optional seed for reproducibility. The seed is scoped to this
+#'   call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to \code{IDetect::ID()}.
 #' @return A \code{ggcpt} object. When the engine finds no changepoints
 #'   (including when it signals "No change-points found"), an empty result
@@ -358,7 +366,7 @@ idetect_wrapper <- function(x, seed = NULL, ...) {
                        call = match.call()))
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   # IDetect::ID() errors (rather than returning an empty set) when it finds
   # no changepoints; normalise that to the empty-ggcpt contract every other

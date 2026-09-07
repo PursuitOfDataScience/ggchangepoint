@@ -13,10 +13,14 @@
 #'   For \code{meanvar}, a list of lists with \code{mean} and \code{sd} per
 #'   segment. For \code{slope}, a list with \code{intercept} and \code{slope}
 #'   per segment. When \code{NULL}, every segment gets the same neutral
-#'   parameters, so the series has no actual change. Supplying fewer entries
-#'   than there are segments recycles the last one and warns, because the
-#'   trailing \code{changepoints} would then be recorded as ground truth
-#'   without a change behind them.
+#'   parameters, so the series has no actual change. \code{changepoints}
+#'   sets the number of segments -- \eqn{k} changepoints make \eqn{k + 1}
+#'   of them -- and a mismatch in either direction warns rather than
+#'   passing quietly: too few entries recycles the last one, so the
+#'   trailing \code{changepoints} would otherwise be recorded as ground
+#'   truth with no change behind them, and too many drops the surplus, so a
+#'   caller who miscounted the changepoints would otherwise get an ordinary
+#'   series back with a parameter silently unused.
 #' @param noise Noise type: \code{"gauss"} (Gaussian), \code{"t"} (Student-t),
 #'   \code{"ar1"} (AR(1)), or \code{"rw"} (random walk).
 #' @param sd Noise standard deviation, non-negative (for Gaussian and t;
@@ -41,8 +45,9 @@
 #'   \emph{gradual} heteroscedasticity that makes constant-variance
 #'   detectors shatter, and the condition HSMUCE, NSP-self-normalised and
 #'   \pkg{fastcpd}'s variance families exist to handle.
-#' @param seed Optional seed for reproducibility.
-#'
+#' @param seed Optional seed for reproducibility. The seed is scoped to this
+#'   call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @return A tibble with columns \code{index}, \code{value}, and \code{seg_id}.
 #'   The true changepoints are stored in the \code{true_changepoints} attribute.
 #' @export
@@ -84,7 +89,7 @@ cpt_simulate <- function(n,
                     min_open = TRUE, max_open = TRUE)
   }
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   changepoints <- as_cp_locations(changepoints, "changepoints", sort = TRUE)
   changepoints <- changepoints[changepoints > 0 & changepoints < n]
@@ -116,6 +121,20 @@ cpt_simulate <- function(n,
     warning("`params` has ", length(params), " value(s) for ", n_seg,
             " segments; the last value is reused, so the extra ",
             "segments carry no actual change.", call. = FALSE)
+  }
+  # ...and the other direction was silent. `n` changepoints make `n + 1`
+  # segments, which is the arithmetic easiest to get wrong: supplying three
+  # segment means against one changepoint uses the first two and drops the
+  # third without a word, and the series that comes back is a perfectly
+  # ordinary two-segment one. The caller who wrote three parameters meant
+  # two changepoints. Same asymmetry the too-few branch above already
+  # refused to accept, in the direction nothing was checking.
+  if (length(params) > n_seg) {
+    warning("`params` has ", length(params), " value(s) but ",
+            length(changepoints), " changepoint(s) make only ", n_seg,
+            " segment(s), so the last ", length(params) - n_seg,
+            " are unused. `changepoints` sets the number of segments, not ",
+            "`params`.", call. = FALSE)
   }
 
   # Build the per-observation signal (mean) and noise scale (sd). For "var"
@@ -263,7 +282,9 @@ rcpt <- function(...) cpt_simulate(...)
 #' The classic Donoho-Johnstone blocks test signal with known changepoints.
 #'
 #' @param n Length of the signal. Defaults to 2048.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @return A tibble with columns \code{index} and \code{value}. The \code{true_changepoints}
 #'   attribute contains the known changepoint locations.
 #' @export
@@ -276,7 +297,7 @@ rcpt <- function(...) cpt_simulate(...)
 #' # PELT recovers all eleven Donoho-Johnstone jumps
 #' cpt_detect(x$value, method = "pelt")$changepoints$cp
 signal_blocks <- function(n = 2048, seed = NULL) {
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
   if (n < 100) {
     stop("`n` must be at least 100 for the blocks signal.", call. = FALSE)
   }
@@ -315,7 +336,9 @@ signal_blocks <- function(n = 2048, seed = NULL) {
 #' A piecewise-constant test signal from the WBS/NOT literature.
 #'
 #' @param n Length of the signal. Defaults to 2000.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @return A tibble with columns \code{index} and \code{value}.
 #' @export
 #' @family test signals
@@ -325,7 +348,7 @@ signal_blocks <- function(n = 2048, seed = NULL) {
 #' # the smallest jumps (0.5, against noise sd 0.5) are the ones missed
 #' cpt_metrics(cp, attr(x, "true_changepoints"), n = nrow(x))$covering
 signal_fms <- function(n = 2000, seed = NULL) {
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
   if (n < 40) {
     stop("`n` must be at least 40 for the fms signal.", call. = FALSE)
   }
@@ -352,7 +375,9 @@ signal_fms <- function(n = 2000, seed = NULL) {
 #' A piecewise-constant/linear signal from the literature.
 #'
 #' @param n Length of the signal. Defaults to 2000.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @return A tibble with columns \code{index} and \code{value}.
 #' @export
 #' @family test signals
@@ -363,7 +388,7 @@ signal_fms <- function(n = 2000, seed = NULL) {
 #' # changepoints inside them rather than at the segment joins
 #' cpt_detect(x$value, method = "pelt")$changepoints$cp
 signal_mix <- function(n = 2000, seed = NULL) {
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
   if (n < 40) {
     stop("`n` must be at least 40 for the mix signal.", call. = FALSE)
   }
@@ -394,7 +419,9 @@ signal_mix <- function(n = 2000, seed = NULL) {
 #' A piecewise-constant signal with regularly spaced changepoints.
 #'
 #' @param n Length of the signal. Defaults to 2000.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @return A tibble with columns \code{index} and \code{value}.
 #' @export
 #' @family test signals
@@ -403,7 +430,7 @@ signal_mix <- function(n = 2000, seed = NULL) {
 #' attr(x, "true_changepoints")   # a change every 100 observations
 #' cpt_detect(x$value, method = "pelt")$changepoints$cp
 signal_teeth <- function(n = 2000, seed = NULL) {
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   teeth_width <- 100
   n_teeth <- floor(n / teeth_width)
@@ -431,7 +458,9 @@ signal_teeth <- function(n = 2000, seed = NULL) {
 #' A monotonically stepping signal (staircase).
 #'
 #' @param n Length of the signal. Defaults to 2000.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @return A tibble with columns \code{index} and \code{value}.
 #' @export
 #' @family test signals
@@ -440,7 +469,7 @@ signal_teeth <- function(n = 2000, seed = NULL) {
 #' attr(x, "true_changepoints")   # ten steps, so nine changes
 #' cpt_detect(x$value, method = "pelt")$changepoints$cp
 signal_stairs <- function(n = 2000, seed = NULL) {
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   n_steps <- 10
   step_size <- n %/% n_steps

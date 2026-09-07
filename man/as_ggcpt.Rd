@@ -21,8 +21,13 @@ as_ggcpt(
 }
 \arguments{
 \item{cp}{Integer vector of changepoint locations. Out-of-range,
-duplicated and missing values are dropped, and the result is sorted —
-the same contract every built-in wrapper is held to.}
+duplicated and missing values are dropped and the result is sorted —
+the same contract every built-in wrapper is held to — but unlike a
+wrapper, which is normalising an engine's output, this function is
+given yours, so \strong{anything it drops it warns about}, with the
+values and the range they had to fall in. A fractional index is
+included in that: it is truncated rather than rounded, which makes
+\code{50.5} into a changepoint at 50.}
 
 \item{x}{The series the changepoints refer to: a numeric vector, or a
 matrix/data frame (rows are time points) for a multivariate result.}
@@ -86,6 +91,7 @@ Other result class:
 \code{\link{as_cpt_series}()},
 \code{\link{cpt_annotations}()},
 \code{\link{is_ggcpt}()},
-\code{\link{new_ggcpt}()}
+\code{\link{new_ggcpt}()},
+\code{\link{print.ggcpt}()}
 }
 \concept{result class}

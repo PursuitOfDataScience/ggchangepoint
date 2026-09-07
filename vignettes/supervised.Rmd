@@ -135,6 +135,7 @@ a max-margin interval regression: features of each series predict a
 log-penalty that lands inside its interval.
 
 ```{r learn}
+set.seed(5301)
 series <- list(
   a = c(rnorm(60), rnorm(60, 4)),
   b = c(rnorm(80), rnorm(80, 2)),

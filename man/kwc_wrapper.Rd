@@ -30,7 +30,9 @@ depth ranks) or \code{"dwbs"} (depth-based wild binary segmentation).}
 the result.}
 
 \item{seed}{Optional seed — the random-projection depths and the wild
-binary segmentation both randomise.}
+binary segmentation both randomise. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to the engine.}
 }

@@ -32,7 +32,9 @@ mcp_has_samples <- function(fit) {
 #'   for this engine at all.
 #' @param prior Optional named list of priors, passed to \code{mcp::mcp()}.
 #' @param iter,adapt,chains Sampler settings, passed through.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to \code{mcp::mcp()}.
 #'
 #' @section JAGS is a system dependency:
@@ -89,7 +91,7 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
   validate_data(x)
   data_vec <- as_uni_vector(x, "mcp")
   n <- length(data_vec)
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   df <- data.frame(t = seq_len(n), y = data_vec)
   if (is.null(model)) {

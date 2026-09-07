@@ -106,7 +106,10 @@ trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
 #'   Defaults to \code{0.9}.
 #' @param conf_level Confidence level of the reported location intervals.
 #'   Defaults to \code{0.95}.
-#' @param seed Optional seed (the procedure is bootstrap-based).
+#' @param seed Optional seed (the procedure is bootstrap-based). The seed is
+#'   scoped to this call: \code{.Random.seed} is saved and restored, so a
+#'   seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @return A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} (so
 #'   \code{autoplot(show_ci = TRUE)} works) and a \code{confidence} column.
 #' @section Series length, and why you cannot interrupt it:
@@ -148,7 +151,7 @@ taylor_wrapper <- function(x, n_bootstraps = 1000, min_candidate_conf = 0.5,
   validate_data(x)
   data_vec <- as_uni_vector(x, "taylor")
   n <- length(data_vec)
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   # The engine narrates ("3 Change(s) Identified", "NA supplied to 'label'")
   # through both stdout and the message stream; keep the console clean.
@@ -382,7 +385,9 @@ wbs_lsw_replay <- function(y, n_intervals, cstar, lambda, scales) {
 #' @param cstar,lambda Post-processing constants; the engine's defaults are
 #'   \code{0.75} for both.
 #' @param scales Wavelet scales to use. \code{NULL} lets the engine choose.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to \code{wbsts::wbs.lsw()}.
 #' @return A \code{ggcpt} object with \code{change_in = "var"}.
 #' @references
@@ -410,7 +415,7 @@ wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
   validate_data(x)
   data_vec <- as_uni_vector(x, "wbsts")
   validate_scalar(n_intervals, "n_intervals", min = 0)
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   # wbsts::wbs.lsw() ends with
   #   suppressWarnings(if (is.na(OUT)) OUT = NULL)

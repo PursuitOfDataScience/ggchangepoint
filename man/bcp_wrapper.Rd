@@ -16,7 +16,10 @@ which a location is reported as a changepoint. Defaults to \code{0.5}.}
 
 \item{mcmc}{Number of post-burn-in MCMC iterations. Defaults to \code{500}.}
 
-\item{seed}{Optional seed for reproducibility of the MCMC run.}
+\item{seed}{Optional seed for reproducibility of the MCMC run. The seed
+is scoped to this call: \code{.Random.seed} is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.}
 
 \item{...}{Additional arguments passed to \code{bcp::bcp()}.}
 }

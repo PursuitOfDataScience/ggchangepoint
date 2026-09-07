@@ -13,7 +13,9 @@ not_wrapper(x, contrast = "pcwsConstMean", seed = NULL, ...)
 \code{"pcwsLinContMean"}, \code{"pcwsLinMean"},
 \code{"pcwsConstMeanVar"}. Defaults to \code{"pcwsConstMean"}.}
 
-\item{seed}{Optional seed for reproducibility.}
+\item{seed}{Optional seed for reproducibility. The seed is scoped to this
+call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{not::not()}.}
 }

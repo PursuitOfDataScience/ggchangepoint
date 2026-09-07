@@ -256,12 +256,14 @@ tidy(res_smuce)
 a continuous piecewise-linear mean [@fearnhead2019cpop; @fearnhead2024cpop]:
 
 ```{r cpop, eval = has_cpop}
+set.seed(5101)
 y_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
 res_cpop <- cpop_wrapper(y_slope)
 tidy(res_cpop)
 ```
 
 ```{r cpop-fallback, include = FALSE, eval = !has_cpop}
+set.seed(5102)
 # y_slope is reused by the segmented example below
 y_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
 ```
@@ -549,6 +551,7 @@ list of vectors), also under `future::plan()`, and returns a tidy
 the `ggcpt` objects themselves:
 
 ```{r batch, fig.alt = "Small-multiples of a panel of series, each with its own detected changepoints"}
+set.seed(5103)
 XB <- cbind(shifted = x, pure_noise = rnorm(200))
 batch <- cpt_batch(XB, method = "pelt")
 batch
@@ -777,6 +780,7 @@ is not run here because it needs a network connection.
 ## Streaming
 
 ```{r monitor-tour}
+set.seed(5104)
 mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
 alarms(mon)
 cpt_delay(mon, truth = 200)

@@ -31,7 +31,10 @@ while preserving the marginal distributions, and the threshold is the
 \item{delta}{Minimum spacing between changepoints. Defaults to
 \code{max(10, floor(n / 20))}.}
 
-\item{seed}{Optional seed (the permutation calibration is random).}
+\item{seed}{Optional seed (the permutation calibration is random). The
+seed is scoped to this call: \code{.Random.seed} is saved and restored,
+so a seeded call inside a simulation loop does not pin the loop's own
+stream.}
 }
 \value{
 A \code{ggcpt} object with \code{change_in = "covariance"}; the

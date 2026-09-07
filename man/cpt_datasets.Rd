@@ -17,7 +17,10 @@ cpt_datasets(
 
 \item{n}{Length of each simulated series. Defaults to \code{500}.}
 
-\item{seed}{Seed for the simulated signals. Defaults to \code{1}.}
+\item{seed}{Seed for the simulated signals. Defaults to \code{1}. The
+seed is scoped to this call: \code{.Random.seed} is saved and restored,
+so a seeded call inside a simulation loop does not pin the loop's own
+stream.}
 
 \item{names}{Optional subset of dataset names.}
 

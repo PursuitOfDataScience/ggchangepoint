@@ -25,7 +25,9 @@ wbsts_wrapper(
 
 \item{scales}{Wavelet scales to use. \code{NULL} lets the engine choose.}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{wbsts::wbs.lsw()}.}
 }

@@ -42,6 +42,30 @@ Wraps \code{fChange::fchange()} for changes in the covariance operator,
 eigenstructure or trace of a functional time series — the changes that
 leave the mean curve untouched.
 }
+\section{How long this takes}{
+
+\strong{Minutes, not seconds, on a series of a hundred points} -- by a
+wide margin the most expensive engine in the package, and slow enough
+that a first call looks like a hung session. Timed on one Linux x86-64
+machine, against \code{\link{fmean_wrapper}()} on the identical input
+so the comparison is the same package and the same data:
+
+\tabular{lrr}{
+  \strong{input} \tab \strong{fmean} \tab \strong{fcov} \cr
+  \eqn{n = 60}, \eqn{p = 5}  \tab 4.5 s \tab \strong{316 s} \cr
+  \eqn{n = 120}, \eqn{p = 5} \tab 2.9 s \tab \strong{598 s}
+}
+
+The cost is roughly linear in the number of time points and it is in the
+engine's own covariance-operator estimation, not in this wrapper, so
+there is no argument here that reduces it. Two practical consequences:
+size the call before starting it, and do not put this method in a loop --
+a twelve-replicate study at \eqn{n = 120} is two hours. Another machine
+will give different absolute numbers; the ratio to \code{fmean}, which
+is a factor of about seventy to two hundred, is the part to plan around.
+The \dQuote{Benchmarks} article compares the engines that do scale.
+}
+
 \examples{
 \dontshow{if (requireNamespace("fChange", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{

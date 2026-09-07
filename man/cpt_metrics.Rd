@@ -16,10 +16,44 @@ cpt_metrics(pred, truth, n, margin = 5)
 \item{margin}{Tolerance margin for matching (default 5).}
 }
 \value{
-A tibble with columns: \code{n}, \code{n_pred}, \code{n_truth},
-  \code{precision}, \code{recall}, \code{f1}, \code{covering},
-  \code{hausdorff}, \code{rand_index}, \code{annotation_error},
-  \code{mae_matched}, \code{rmse_matched}.
+A tibble with one row and the columns below. \dQuote{Higher} and
+  \dQuote{lower} mark which direction is better — the same directions
+  \code{\link{cpt_benchmark}()} ranks by.
+  \describe{
+    \item{\code{n}, \code{n_pred}, \code{n_truth}}{the series length
+      and the two changepoint counts, after out-of-range indices are
+      dropped.}
+    \item{\code{precision}, \code{recall}, \code{f1}}{higher is
+      better. The fraction of predictions that matched a truth, the
+      fraction of truths that were matched, and their harmonic mean —
+      all under the one-to-one matching within \code{margin}, so they
+      score \emph{whether} a change was found, not how precisely it was
+      located.}
+    \item{\code{covering}}{higher is better, in \eqn{[0, 1]}. The
+      segmentation covering metric: each true segment's best Jaccard
+      overlap with a predicted segment, averaged weighted by segment
+      length. Unlike F1 it needs no margin and degrades smoothly with
+      location error.}
+    \item{\code{hausdorff}}{lower is better, in observations. The
+      largest distance from any changepoint on either side to the nearest
+      one on the other — a worst-case location error, so one badly placed
+      changepoint dominates it.}
+    \item{\code{rand_index}}{higher is better. The \emph{adjusted}
+      Rand index between the two segment labellings: 1 for identical
+      partitions, 0 for chance agreement, and negative for worse than
+      chance.}
+    \item{\code{annotation_error}}{lower is better. \strong{A count
+      difference only}: \code{abs(n_pred - n_truth)}. It says nothing
+      about location, so a segmentation with the right \emph{number} of
+      changepoints in entirely the wrong \emph{places} scores a perfect
+      0. Read it beside \code{covering} or \code{hausdorff}, never
+      alone.}
+    \item{\code{mae_matched}, \code{rmse_matched}}{lower is better, in
+      observations. Mean absolute and root-mean-square location error over
+      the matched pairs only, so they describe how well the changepoints
+      that were found are placed and ignore the ones that were missed.
+      \code{NA} when nothing matched.}
+  }
 }
 \description{
 Computes standard accuracy metrics comparing predicted changepoints to
@@ -31,14 +65,46 @@ of matched locations.
 Precision/recall use a one-to-one matching: each truth may be
 claimed by at most one prediction (predictions are scanned in order and
 take the earliest unmatched truth within \code{margin}, which yields a
-maximum matching for interval-structured problems). When \code{pred} and
-\code{truth} are both empty the segmentation is exactly right, so
-precision, recall, and F1 are all 1. The covering metric follows
-van den Burg and Williams (2020): the prediction-side partition is always
-well defined, so an empty \code{pred} scores the covering of the trivial
-single-segment partition rather than 0.
+maximum matching for interval-structured problems). The covering metric
+follows van den Burg and Williams (2020): the prediction-side partition is
+always well defined, so an empty \code{pred} scores the covering of the
+trivial single-segment partition rather than 0.
 }
+\section{Degenerate cases, and which way each metric resolves them}{
+
+Three of the twelve columns are ratios with a zero denominator when one
+side is empty, and the row does not resolve them all the same way, so the
+conventions are worth stating rather than inferring from a benchmark
+table:
+\itemize{
+  \item \strong{Both empty.} The segmentation is exactly right:
+    \code{precision}, \code{recall}, \code{f1}, \code{covering} and
+    \code{rand_index} are all 1 and \code{annotation_error} is 0. (A
+    metric that scored this 0 was a 0.4.0 bug.)
+  \item \strong{One side empty.} \code{precision} and \code{recall} are
+    \emph{0} rather than \code{NA} — finding nothing where there was a
+    change, and finding a change where there was none, both score badly —
+    and so is \code{f1}. \code{rand_index} is 0 for the same reason.
+  \item \strong{Nothing matched.} \code{hausdorff},
+    \code{mae_matched} and \code{rmse_matched} are \code{NA}, because
+    they are distances and there is no pair to measure. They are also
+    \code{NA} whenever either side is empty. This is the one place the
+    row mixes conventions: an all-wrong answer gives
+    \code{f1 = 0} and \code{mae_matched = NA} in the same row.
+    \code{\link{cpt_benchmark}()} treats an \code{NA} as the worst rank
+    rather than dropping it.
+}
+An index outside \code{1..(n - 1)} is dropped with a warning: locations
+follow the \code{"left"} convention, and an out-of-range one would
+corrupt the partition metrics rather than merely miss.
+}
+
 \examples{
 cpt_metrics(c(100, 200), c(100, 200), n = 300)
 cpt_metrics(c(101, 205), c(100, 200), n = 300, margin = 5)
+}
+\seealso{
+\code{\link{cpt_metrics_annotated}()} for scoring against
+  multiple annotators, and \code{\link{cpt_benchmark}()} to run a
+  method-by-dataset grid on these metrics.
 }

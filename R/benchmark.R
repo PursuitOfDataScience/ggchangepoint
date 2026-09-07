@@ -39,7 +39,9 @@
 #'   available? Defaults to \code{TRUE}.
 #' @param progress Show a \pkg{progressr} progress bar when that package is
 #'   installed and a handler is enabled? Defaults to \code{TRUE}.
-#' @param seed Optional seed.
+#' @param seed Optional seed. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to every \code{cpt_detect()} call.
 #'
 #' @return A \code{ggcpt_benchmark} object: a tibble with one row per
@@ -96,7 +98,7 @@ cpt_benchmark <- function(datasets, methods = c("pelt", "binseg", "wbs"),
 
   grid <- expand.grid(dataset = names(datasets), method = methods,
                       stringsAsFactors = FALSE, KEEP.OUT.ATTRS = FALSE)
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   use_progress <- isTRUE(progress) &&
     requireNamespace("progressr", quietly = TRUE)
@@ -278,6 +280,38 @@ benchmark_ranks <- function(x, metric = NULL) {
 #'   "method A beats method B").
 #' @param metric Which metric to plot. Defaults to the first one scored.
 #' @param alpha Level for the critical distance. Defaults to \code{0.05}.
+#' @section Reading the critical-difference diagram:
+#' Rank 1 is best. Each method's mean rank is taken over the datasets, in
+#' the direction the metric calls for -- higher is better for
+#' \code{covering}, \code{f1}, \code{precision}, \code{recall} and
+#' \code{rand_index}; lower for \code{hausdorff},
+#' \code{annotation_error}, \code{mae_matched} and \code{rmse_matched}.
+#' A metric that came back \code{NA} takes the \emph{worst} rank on that
+#' dataset rather than being dropped, so a method that failed there is
+#' penalised for it instead of quietly scoring on a smaller sample; ties
+#' share the average rank.
+#'
+#' The bar is the Nemenyi critical distance
+#' \deqn{CD = q_\alpha \sqrt{k(k + 1) / (6N)}}
+#' for \eqn{k} methods over \eqn{N} datasets, where \eqn{q_\alpha} is
+#' the Studentised range statistic at \eqn{\alpha} divided by
+#' \eqn{\sqrt 2} (Demsar, 2006 -- the constants agree with that paper's
+#' Table 5 to three decimals for \eqn{k = 2, \ldots, 10}). Two methods
+#' whose mean ranks differ by less than \eqn{CD} are not distinguished at
+#' that level.
+#'
+#' \strong{One caveat the diagram cannot show.} Nemenyi is a
+#' \emph{post-hoc} procedure, and the convention is to run it only after a
+#' Friedman test has rejected the null that all methods rank equally.
+#' \code{autoplot()} does not run that omnibus test -- it draws the
+#' diagram it is asked for -- so a gap wider than \eqn{CD} on a grid where
+#' Friedman would not have rejected is not the significant difference it
+#' looks like. With the handful of datasets \code{\link{cpt_datasets}()}
+#' supplies, \eqn{N} is small and \eqn{CD} correspondingly wide; read the
+#' diagram as a descriptive summary unless \eqn{N} is large enough to
+#' support the test.
+#' @references
+#' \insertRef{demsar2006statistical}{ggchangepoint}
 #' @export
 autoplot.ggcpt_benchmark <- function(object,
                                      plot_type = c("heatmap", "ranks",
@@ -379,7 +413,10 @@ nemenyi_cd <- function(k, N, alpha = 0.05) {
 #'
 #' @param source \code{"simulated"} (default) or \code{"tcpd"}.
 #' @param n Length of each simulated series. Defaults to \code{500}.
-#' @param seed Seed for the simulated signals. Defaults to \code{1}.
+#' @param seed Seed for the simulated signals. Defaults to \code{1}. The
+#'   seed is scoped to this call: \code{.Random.seed} is saved and restored,
+#'   so a seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @param names Optional subset of dataset names.
 #' @param ... Passed to \code{\link{cpt_load_tcpd}()} for
 #'   \code{source = "tcpd"}.

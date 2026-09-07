@@ -20,7 +20,10 @@ A tibble with one row per alarm: \code{time} (the observation at
   \code{statistic} and \code{threshold}.
 }
 \description{
-The alarm log of a monitor
+Every observation at which a sequential monitor crossed its threshold, in
+the order they fired. A monitor that never fired returns a zero-row tibble
+rather than \code{NULL}, so the result is always safe to \code{rbind()} or
+plot.
 }
 \examples{
 set.seed(2026)

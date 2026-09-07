@@ -13,7 +13,10 @@
 #'   which a location is reported as a changepoint. Defaults to \code{0.5}.
 #' @param burnin Number of burn-in MCMC iterations. Defaults to \code{50}.
 #' @param mcmc Number of post-burn-in MCMC iterations. Defaults to \code{500}.
-#' @param seed Optional seed for reproducibility of the MCMC run.
+#' @param seed Optional seed for reproducibility of the MCMC run. The seed
+#'   is scoped to this call: \code{.Random.seed} is saved and restored, so a
+#'   seeded call inside a simulation loop does not pin the loop's own
+#'   stream.
 #' @param ... Additional arguments passed to \code{bcp::bcp()}.
 #' @return A \code{ggcpt} object. The \code{changepoints} tibble carries a
 #'   \code{posterior_prob} column, and the \code{data} tibble carries the
@@ -47,7 +50,7 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
     stop("`x` must have at least 4 observations for the bcp engine.",
          call. = FALSE)
   }
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   # Loading bcp attaches `package:bcp` and `package:grid`; a detection call
   # should not change where the caller's names resolve from.
@@ -144,7 +147,9 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
 #' @param prob_threshold Posterior probability cutoff in \eqn{(0, 1)} above
 #'   which a candidate trend changepoint is reported. Defaults to \code{0.5}.
 #' @param seed Optional seed for the engine's MCMC sampler (passed to
-#'   \code{Rbeast::beast()} as \code{mcmc.seed}).
+#'   \code{Rbeast::beast()} as \code{mcmc.seed}). The seed is scoped to this
+#'   call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to \code{Rbeast::beast()}.
 #' @return A \code{ggcpt} object. The \code{changepoints} tibble carries
 #'   \code{posterior_prob}, and the \code{data} tibble carries the posterior

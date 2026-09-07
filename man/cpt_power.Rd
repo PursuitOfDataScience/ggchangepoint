@@ -57,10 +57,15 @@ within this many positions of it. Defaults to \code{5}.}
 
 \item{df}{Degrees of freedom when \code{noise = "t"}.}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{parallel}{Use \code{future::plan()} when \pkg{future.apply} is
-available? Defaults to \code{TRUE}.}
+available? Defaults to \code{TRUE}. It has no effect unless a
+non-sequential plan is set, but when one is it changes where the
+replicates' random numbers come from -- see the section below, which
+matters if the power figure is going into a paper.}
 
 \item{...}{Additional arguments passed to \code{\link{cpt_detect}()}.}
 
@@ -85,6 +90,35 @@ reports changes that are not there. This is the calculation that should
 precede an analysis, and the one applied papers are increasingly asked
 for.
 }
+\section{Reproducibility under a parallel plan}{
+
+A seeded call is reproducible \strong{for a given} \code{future::plan()},
+and not across plans. Under a parallel plan the replicates' random numbers
+come from \pkg{future.apply}'s parallel-safe L'Ecuyer streams, derived
+from \code{seed}; run sequentially they come from the calling stream that
+\code{seed} set. Both are deterministic, and they are not the same
+numbers. Measured on two scenarios at \code{n_sim = 8}, one and the same
+\code{seed = 11} gave \code{power = 0, 1} sequentially and
+\code{0.125, 0.875} on two workers.
+
+So the guarantee is: same seed and same plan, same answer -- every time,
+whichever plan it is. If a power figure needs to be reproducible by
+someone else, pin the execution as well as the seed: pass
+\code{parallel = FALSE}, or state the plan alongside the seed. Raising
+\code{n_sim} narrows the gap, because it is Monte Carlo error rather
+than disagreement -- both estimates are of the same quantity, and
+\code{mc_se} says how precisely.
+
+This is specific to \code{cpt_power()}, which is the one function here
+whose parallel tasks consume random numbers. The other six that dispatch
+on \code{future::plan()} -- \code{\link{cpt_benchmark}()},
+\code{\link{cpt_batch}()}, \code{\link{cpt_consensus}()},
+\code{\link{cpt_influence}()}, \code{\link{cpt_sensitivity}()} and
+\code{\link{ggcpt_compare}()} -- farm out work that is deterministic
+given its input, and were measured to return identical results under a
+sequential and a two-worker plan, stochastic engines included.
+}
+
 \examples{
 \donttest{
 pw <- cpt_power(n = 200, jump = c(0.5, 1, 2), n_sim = 30, seed = 1)

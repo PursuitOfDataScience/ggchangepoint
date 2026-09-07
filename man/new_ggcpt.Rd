@@ -64,7 +64,10 @@ Defaults to \code{NA}.}
 An object of class \code{ggcpt}.
 }
 \description{
-Create a ggcpt object
+The low-level constructor for the class every detector in this package
+returns. It assembles the components into a \code{ggcpt} without checking
+them, which is what makes it useful inside a wrapper and unsuitable as the
+entry point for hand-built input -- use \code{\link{as_ggcpt}()} for that.
 }
 \section{Optional slots}{
 
@@ -105,6 +108,7 @@ Other result class:
 \code{\link{as_cpt_series}()},
 \code{\link{as_ggcpt}()},
 \code{\link{cpt_annotations}()},
-\code{\link{is_ggcpt}()}
+\code{\link{is_ggcpt}()},
+\code{\link{print.ggcpt}()}
 }
 \concept{result class}

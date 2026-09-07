@@ -11,8 +11,12 @@ ggcpt_scale_space(x, bandwidths = NULL, method = c("mosum", "npmojo"), ...)
 }
 \arguments{
 \item{x}{A numeric vector (or, for \code{method = "npmojo"}, a matrix
-with rows as time points), or a \code{ggcpt} object produced by a
-multiscale engine (\code{subset(cpt_methods(), scale_space)$method}).}
+with rows as time points), or any \code{ggcpt} object. The sweep is
+computed here rather than read off the result, so a fit from any
+engine is accepted and the scale space is the one belonging to its
+series: from a \code{mosum} or \code{npmojo} result the engine is
+adopted as well (see \code{method}), and from anything else the
+default \code{"mosum"} sweep is drawn over the same series.}
 
 \item{bandwidths}{Integer vector of bandwidths to sweep. Defaults to a
 geometric grid between \code{max(5, n/50)} and \code{n/4}.}

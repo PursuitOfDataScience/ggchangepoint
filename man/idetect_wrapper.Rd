@@ -9,7 +9,9 @@ idetect_wrapper(x, seed = NULL, ...)
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{seed}{Optional seed for reproducibility.}
+\item{seed}{Optional seed for reproducibility. The seed is scoped to this
+call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{IDetect::ID()}.}
 }

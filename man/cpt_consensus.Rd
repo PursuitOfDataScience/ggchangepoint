@@ -29,14 +29,29 @@ cpt_consensus(
 \item{tolerance}{Matching window, in positions. Defaults to \code{5}.}
 
 \item{min_votes}{Minimum number of methods that must find a location for
-it to enter the consensus. Defaults to \code{2}; pass a fraction in
-\eqn{(0, 1)} for a proportion of the methods that ran.}
+  it to enter the consensus. Defaults to \code{2}.
+
+  A value \strong{strictly between 0 and 1} is read as a proportion of
+  the methods that ran; anything else is a count. The boundary is worth
+  knowing, because it falls exactly where a reader thinking in
+  proportions would write \dQuote{unanimous}: with three methods,
+  \code{min_votes = 0.99} needs all three, while
+  \code{min_votes = 1} -- and \code{1.0}, which is the same number --
+  is a count of one and so the \emph{least} strict setting there is. For
+  unanimity, pass the number of methods, or a fraction just below 1.
+
+  A count larger than the number of methods that ran cannot be reached,
+  so the consensus would be empty by construction; that warns rather
+  than returning a result indistinguishable from \dQuote{the methods
+  agreed on nothing}.}
 
 \item{change_in}{Passed to each detector.}
 
 \item{index}{Optional time index, carried onto the result.}
 
-\item{seed}{Optional seed for reproducibility.}
+\item{seed}{Optional seed for reproducibility. The seed is scoped to this
+call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{...}{Passed on to \code{\link{autoplot.ggcpt}()} for
 \code{plot_type = "series"}.}

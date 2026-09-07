@@ -9,7 +9,9 @@ signal_mix(n = 2000, seed = NULL)
 \arguments{
 \item{n}{Length of the signal. Defaults to 2000.}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 }
 \value{
 A tibble with columns \code{index} and \code{value}.

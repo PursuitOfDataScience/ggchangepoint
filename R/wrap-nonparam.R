@@ -161,6 +161,9 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
 #' @param alpha Significance level of the permutation test. Defaults to
 #'   \code{0.05}.
 #' @param seed Optional seed for reproducibility of the permutation test.
+#'   The seed is scoped to this call: \code{.Random.seed} is saved and
+#'   restored, so a seeded call inside a simulation loop does not pin the
+#'   loop's own stream.
 #' @param ... Additional arguments passed to \code{kcpRS::kcpRS()}.
 #' @return A \code{ggcpt} object. Reported locations refer to the centre of
 #'   the sliding window in which the change occurs. The series must be at
@@ -238,7 +241,7 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
     corr     = kcpRS::runCorr
   )
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   fit <- kcpRS::kcpRS(data = as.data.frame(X_fit), RS_fun = rs_fun,
                       RS_name = running_stat, wsize = wsize, nperm = nperm,

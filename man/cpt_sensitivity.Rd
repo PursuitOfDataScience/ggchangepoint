@@ -26,7 +26,9 @@ case its series and method are used.}
 is run, so keep the grid small:
 \code{list(penalty = c(5, 10, 20), minseglen = c(2, 10))}.}
 
-\item{seed}{Optional seed.}
+\item{seed}{Optional seed. The seed is scoped to this call:
+\code{.Random.seed} is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments held fixed across the grid and passed to
 \code{\link{cpt_detect}()}.}

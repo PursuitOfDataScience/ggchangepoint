@@ -15,7 +15,10 @@ segmented_wrapper(x, npsi = 1, conf_level = 0.95, seed = NULL, ...)
 \item{conf_level}{Confidence level for breakpoint intervals. Defaults to
 \code{0.95}.}
 
-\item{seed}{Optional seed (the estimator uses bootstrap restarting).}
+\item{seed}{Optional seed (the estimator uses bootstrap restarting). The
+seed is scoped to this call: \code{.Random.seed} is saved and restored,
+so a seeded call inside a simulation loop does not pin the loop's own
+stream.}
 
 \item{...}{Additional arguments passed to \code{segmented::segmented()}.}
 }

@@ -30,7 +30,10 @@ every seam. Use \code{\link{cpt_batch}()} for a panel of series.}
 \code{future.apply::future_lapply()} as \code{future.seed}, and to
 \code{set.seed()} when running sequentially. Left \code{NULL} under a
 parallel plan, \code{future.seed = TRUE} is used, so the workers get
-parallel-safe streams but the run is not reproducible.}
+parallel-safe streams but the run is not reproducible. The seed is
+scoped to this call: \code{.Random.seed} is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.}
 
 \item{...}{Additional arguments passed to each detector.}
 }

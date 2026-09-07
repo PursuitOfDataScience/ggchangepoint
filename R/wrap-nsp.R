@@ -37,7 +37,9 @@
 #'   row per observation.
 #' @param ord AR order for \code{variant = "ar"}. Defaults to \code{1}.
 #' @param seed Optional seed. NSP draws random intervals, so a run is
-#'   reproducible only with one.
+#'   reproducible only with one. The seed is scoped to this call:
+#'   \code{.Random.seed} is saved and restored, so a seeded call inside a
+#'   simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to the underlying \pkg{nsp}
 #'   function.
 #'
@@ -97,7 +99,7 @@ nsp_wrapper <- function(x, alpha = 0.1,
   if (is.null(deg)) deg <- if (change_in == "slope") 1L else 0L
   validate_scalar(deg, "deg", min = 0)
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   fit <- switch(variant,
     poly = nsp::nsp_poly(data_vec, M = M, alpha = alpha, deg = deg, ...),

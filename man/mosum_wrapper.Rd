@@ -19,7 +19,9 @@ estimate undefined, so the automatic choice is floored at 2.}
 (\code{mosum::multiscale.localPrune()}) instead of a single bandwidth?
 Defaults to \code{FALSE}.}
 
-\item{seed}{Optional seed for reproducibility.}
+\item{seed}{Optional seed for reproducibility. The seed is scoped to this
+call: \code{.Random.seed} is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.}
 
 \item{...}{Additional arguments passed to \code{mosum::mosum()} or
 \code{mosum::multiscale.localPrune()}.}

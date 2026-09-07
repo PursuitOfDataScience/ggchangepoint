@@ -15,7 +15,9 @@
 #' @param B Number of bootstrap replicates. Defaults to \code{100}.
 #' @param margin Tolerance (in indices) when counting a replicate detection
 #'   as a re-detection of a location. Defaults to \code{5}.
-#' @param seed Optional seed for reproducibility.
+#' @param seed Optional seed for reproducibility. The seed is scoped to this
+#'   call: \code{.Random.seed} is saved and restored, so a seeded call
+#'   inside a simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to every \code{cpt_detect()} call.
 #' @return A \code{ggcpt_stability} object: a list with \code{frequency}
 #'   (a tibble of \code{index} and \code{freq}, the proportion of replicates
@@ -38,7 +40,7 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
   data_vec <- as_uni_vector(x, method)
   n <- length(data_vec)
 
-  if (!is.null(seed)) set.seed(seed)
+  local_seed(seed)
 
   original <- cpt_detect(data_vec, method = method, ...)
 
