@@ -1,6 +1,9 @@
 # The alarm log of a monitor
 
-The alarm log of a monitor
+Every observation at which a sequential monitor crossed its threshold,
+in the order they fired. A monitor that never fired returns a zero-row
+tibble rather than `NULL`, so the result is always safe to
+[`rbind()`](https://rdrr.io/r/base/cbind.html) or plot.
 
 ## Usage
 

@@ -100,8 +100,10 @@ passed straight to <code><a href="cpt_benchmark.html">cpt_benchmark()</a></code>
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Base seed; replicate <code>r</code> of scenario <code>i</code> uses
-<code>seed + (i - 1) * n_rep + r</code>, so the whole grid is reproducible and
-every cell is independent.</p></dd>
+<code>seed + (i - 1) * n_rep + r</code>, so the whole grid is reproducible
+and every cell is independent. The seed is scoped to this call:
+<code>.Random.seed</code> is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg-as-datasets">as_datasets<a class="anchor" aria-label="anchor" href="#arg-as-datasets"></a></dt>

@@ -32,7 +32,9 @@ mosum_wrapper(x, G = NULL, multiscale = FALSE, seed = NULL, ...)
 
 - seed:
 
-  Optional seed for reproducibility.
+  Optional seed for reproducibility. The seed is scoped to this call:
+  `.Random.seed` is saved and restored, so a seeded call inside a
+  simulation loop does not pin the loop's own stream.
 
 - ...:
 

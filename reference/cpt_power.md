@@ -88,13 +88,18 @@ autoplot(object, ...)
 
 - seed:
 
-  Optional seed.
+  Optional seed. The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 - parallel:
 
   Use
   [`future::plan()`](https://future.futureverse.org/reference/plan.html)
-  when future.apply is available? Defaults to `TRUE`.
+  when future.apply is available? Defaults to `TRUE`. It has no effect
+  unless a non-sequential plan is set, but when one is it changes where
+  the replicates' random numbers come from – see the section below,
+  which matters if the power figure is going into a paper.
 
 - ...:
 
@@ -120,6 +125,39 @@ of that proportion), `mean_abs_error` (location error among detections),
 replicate) and `n_sim` — with
 [`print()`](https://rdrr.io/r/base/print.html) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
+
+## Reproducibility under a parallel plan
+
+A seeded call is reproducible **for a given**
+[`future::plan()`](https://future.futureverse.org/reference/plan.html),
+and not across plans. Under a parallel plan the replicates' random
+numbers come from future.apply's parallel-safe L'Ecuyer streams, derived
+from `seed`; run sequentially they come from the calling stream that
+`seed` set. Both are deterministic, and they are not the same numbers.
+Measured on two scenarios at `n_sim = 8`, one and the same `seed = 11`
+gave `power = 0, 1` sequentially and `0.125, 0.875` on two workers.
+
+So the guarantee is: same seed and same plan, same answer – every time,
+whichever plan it is. If a power figure needs to be reproducible by
+someone else, pin the execution as well as the seed: pass
+`parallel = FALSE`, or state the plan alongside the seed. Raising
+`n_sim` narrows the gap, because it is Monte Carlo error rather than
+disagreement – both estimates are of the same quantity, and `mc_se` says
+how precisely.
+
+This is specific to `cpt_power()`, which is the one function here whose
+parallel tasks consume random numbers. The other six that dispatch on
+[`future::plan()`](https://future.futureverse.org/reference/plan.html) –
+[`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),
+[`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md),
+[`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md),
+[`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md),
+[`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
+and
+[`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
+– farm out work that is deterministic given its input, and were measured
+to return identical results under a sequential and a two-worker plan,
+stochastic engines included.
 
 ## See also
 

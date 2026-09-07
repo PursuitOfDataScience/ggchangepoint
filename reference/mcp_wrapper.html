@@ -121,7 +121,9 @@ for this engine at all.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed.</p></dd>
+<dd><p>Optional seed. The seed is scoped to this call:
+<code>.Random.seed</code> is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

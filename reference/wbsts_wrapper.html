@@ -93,7 +93,9 @@ jumps in the level, this looks for jumps in how the series behaves.</p>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed.</p></dd>
+<dd><p>Optional seed. The seed is scoped to this call:
+<code>.Random.seed</code> is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -167,12 +169,12 @@ jumps in the level, this looks for jumps in how the series behaves.</p>
 <span class="r-in"><span>       <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/arima.sim.html" class="external-link">arima.sim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ar <span class="op">=</span> <span class="fl">0.9</span><span class="op">)</span>, <span class="fl">250</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">wbsts_wrapper</span><span class="op">(</span><span class="va">y</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:         wbsts</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       var </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         threshold </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:   500 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:             wbsts</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:          var</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:      left</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:            threshold</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:      500</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>

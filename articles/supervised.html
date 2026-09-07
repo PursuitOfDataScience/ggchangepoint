@@ -223,7 +223,8 @@ labels, and the labels or the method need revisiting.</p>
 response in a max-margin interval regression: features of each series
 predict a log-penalty that lands inside its interval.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">series</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5301</span><span class="op">)</span></span>
+<span><span class="va">series</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span></span>
 <span>  a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  c <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">70</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">70</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span>,</span>
@@ -243,11 +244,11 @@ predict a log-penalty that lands inside its interval.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients (predicting log penalty):</span></span>
 <span><span class="co">#&gt;        intercept            log_n        log_log_n           log_sd </span></span>
-<span><span class="co">#&gt;           3.7361          -0.2342          -0.1004           0.3255 </span></span>
+<span><span class="co">#&gt;           3.7140          -0.3358          -0.1005           0.4148 </span></span>
 <span><span class="co">#&gt;          log_mad        log_range      log_sd_diff     log_mad_diff </span></span>
-<span><span class="co">#&gt;           0.3342           0.3022           0.2931           0.2825 </span></span>
+<span><span class="co">#&gt;           0.4245           0.3636           0.3031           0.3735 </span></span>
 <span><span class="co">#&gt; log_q90_abs_diff </span></span>
-<span><span class="co">#&gt;           0.2768 </span></span>
+<span><span class="co">#&gt;           0.2757 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Use it directly: cpt_detect(x, method = "pelt", penalty = model)</span></span></code></pre></div>
 <p>The features are scale-free summaries on the log scale, which is why
@@ -258,31 +259,31 @@ whole exercise — <code><a href="../reference/cpt_detect.html">cpt_detect()</a>
 goes:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">series</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 347.5088</span></span>
+<span><span class="co">#&gt; [1] 347.4859</span></span>
 <span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">series</span><span class="op">$</span><span class="va">d</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, penalty <span class="op">=</span> <span class="va">model</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         pelt</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         Manual = 347.51 </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            Manual = 347.49</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     1.77</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    -<span style="color: #BB0000;">1.55</span></span></span></code></pre></div>
 <p>So does <code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code>, and so do the wrappers that
 accept a numeric penalty:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_penalty.html">cpt_penalty</a></span><span class="op">(</span><span class="va">model</span>, series <span class="op">=</span> <span class="va">series</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 347.5088</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 347.4859</span></span></code></pre></div>
 <p>Compare that with the unsupervised default on the same series, which
 reads its penalty against a raw cost calibrated for unit noise:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">series</span><span class="op">$</span><span class="va">d</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 41</span></span>
+<span><span class="co">#&gt; [1] 42</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">series</span><span class="op">$</span><span class="va">d</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, penalty <span class="op">=</span> <span class="va">model</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
 <p>When <strong>penaltyLearning</strong> is installed,

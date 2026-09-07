@@ -81,9 +81,16 @@ rather than presenting them as interchangeable.</p>
 
 
 <dt id="arg-level">level<a class="anchor" aria-label="anchor" href="#arg-level"></a></dt>
-<dd><p>Confidence/credible level. Defaults to <code>0.95</code>. Ignored
-by <code>method = "native"</code>, which reports the interval the engine
-already computed at whatever level it was asked for.</p></dd>
+<dd><p>Confidence/credible level. Defaults to <code>0.95</code>. Honoured
+by the routes that compute an interval – <code>"bootstrap"</code>,
+<code>"posterior"</code> and <code>"nsp"</code> – and <strong>ignored by</strong>
+<code>"native"</code>, which reports the interval the engine already
+computed at whatever level it was asked for. Note that
+<code>method = "auto"</code> resolves to <code>"native"</code> whenever the engine
+supplied one, so an explicit <code>level</code> can go unused there too: it
+is reported in the <code>level</code> column either way, and supplying a
+level the answer does not carry now warns rather than passing
+silently. To choose the level yourself, name a computing route.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
@@ -135,7 +142,10 @@ already computed at whatever level it was asked for.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed (bootstrap and NSP are both random).</p></dd>
+<dd><p>Optional seed (bootstrap and NSP are both random). The seed
+is scoped to this call: <code>.Random.seed</code> is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

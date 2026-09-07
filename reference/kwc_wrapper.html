@@ -98,7 +98,9 @@ the result.</p></dd>
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Optional seed — the random-projection depths and the wild
-binary segmentation both randomise.</p></dd>
+binary segmentation both randomise. The seed is scoped to this call:
+<code>.Random.seed</code> is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -171,12 +173,12 @@ binary segmentation both randomise.</p></dd>
 <span class="r-in"><span><span class="va">X</span><span class="op">[</span><span class="fl">51</span><span class="op">:</span><span class="fl">100</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">[</span><span class="fl">51</span><span class="op">:</span><span class="fl">100</span>, <span class="op">]</span> <span class="op">*</span> <span class="fl">3</span></span></span>
 <span class="r-in"><span><span class="fu">kwc_wrapper</span><span class="op">(</span><span class="va">X</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:         kwc</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       covariance </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         fkwc </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:   100 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:             kwc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:          covariance</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:      left</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:            fkwc</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:      100</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>

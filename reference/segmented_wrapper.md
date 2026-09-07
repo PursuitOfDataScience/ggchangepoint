@@ -32,7 +32,9 @@ segmented_wrapper(x, npsi = 1, conf_level = 0.95, seed = NULL, ...)
 
 - seed:
 
-  Optional seed (the estimator uses bootstrap restarting).
+  Optional seed (the estimator uses bootstrap restarting). The seed is
+  scoped to this call: `.Random.seed` is saved and restored, so a seeded
+  call inside a simulation loop does not pin the loop's own stream.
 
 - ...:
 

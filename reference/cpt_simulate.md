@@ -45,9 +45,14 @@ rcpt(...)
   `meanvar`, a list of lists with `mean` and `sd` per segment. For
   `slope`, a list with `intercept` and `slope` per segment. When `NULL`,
   every segment gets the same neutral parameters, so the series has no
-  actual change. Supplying fewer entries than there are segments
-  recycles the last one and warns, because the trailing `changepoints`
-  would then be recorded as ground truth without a change behind them.
+  actual change. `changepoints` sets the number of segments – \\k\\
+  changepoints make \\k + 1\\ of them – and a mismatch in either
+  direction warns rather than passing quietly: too few entries recycles
+  the last one, so the trailing `changepoints` would otherwise be
+  recorded as ground truth with no change behind them, and too many
+  drops the surplus, so a caller who miscounted the changepoints would
+  otherwise get an ordinary series back with a parameter silently
+  unused.
 
 - noise:
 
@@ -91,7 +96,9 @@ rcpt(...)
 
 - seed:
 
-  Optional seed for reproducibility.
+  Optional seed for reproducibility. The seed is scoped to this call:
+  `.Random.seed` is saved and restored, so a seeded call inside a
+  simulation loop does not pin the loop's own stream.
 
 - ...:
 

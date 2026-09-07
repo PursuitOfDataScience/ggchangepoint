@@ -120,13 +120,15 @@ autoplot(
 - type:
 
   Which view to draw. `"series"` (default) is the series with its
-  changepoints; `"statistic"`, `"path"` and `"scale_space"` delegate to
-  [`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md),
-  [`ggcpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  changepoints; `"statistic"` and `"path"` delegate to
+  [`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
   and
-  [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md),
+  [`ggcpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md),
   which error with the list of supporting engines when this one does not
-  expose the internals.
+  expose the internals. `"scale_space"` delegates to
+  [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md),
+  which needs nothing from the engine: it sweeps a multiscale detector
+  over the same series, so it draws for any result.
 
 - ...:
 

@@ -45,7 +45,9 @@ kwc_wrapper(
 - seed:
 
   Optional seed — the random-projection depths and the wild binary
-  segmentation both randomise.
+  segmentation both randomise. The seed is scoped to this call:
+  `.Random.seed` is saved and restored, so a seeded call inside a
+  simulation loop does not pin the loop's own stream.
 
 - ...:
 
@@ -117,12 +119,12 @@ X <- matrix(rnorm(100 * 20), nrow = 100)
 X[51:100, ] <- X[51:100, ] * 3
 kwc_wrapper(X, seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:         kwc
-#>   Change in:       covariance 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         fkwc 
-#>   Series length:   100 
+#>   Method:             kwc
+#>   Change in:          covariance
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            fkwc
+#>   Series length:      100
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

@@ -50,7 +50,9 @@ ggcpt_compare(
   [`set.seed()`](https://rdrr.io/r/base/Random.html) when running
   sequentially. Left `NULL` under a parallel plan, `future.seed = TRUE`
   is used, so the workers get parallel-safe streams but the run is not
-  reproducible.
+  reproducible. The seed is scoped to this call: `.Random.seed` is saved
+  and restored, so a seeded call inside a simulation loop does not pin
+  the loop's own stream.
 
 - ...:
 

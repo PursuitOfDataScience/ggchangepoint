@@ -132,12 +132,12 @@ directly.</p>
 <span><span class="co">#&gt; [1] TRUE</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         pelt</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -184,13 +184,13 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt Summary</span></span>
-<span><span class="co">#&gt;   Method:                   pelt </span></span>
-<span><span class="co">#&gt;   Change in:                mean </span></span>
-<span><span class="co">#&gt;   Changepoints found:       1 </span></span>
-<span><span class="co">#&gt;   CP convention:            left </span></span>
-<span><span class="co">#&gt;   Series length:            200 </span></span>
-<span><span class="co">#&gt;   Penalty:                  MBIC </span></span>
-<span><span class="co">#&gt;   Runtime (seconds):        0.02 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Runtime (seconds):  0.02</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
@@ -234,12 +234,12 @@ never silently substituted.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"binseg"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         binseg</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             binseg</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -373,12 +373,12 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/fpop_wrapper.html">fpop_wrapper</a></span><span class="op">(</span><span class="va">x</span>, penalty <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         fpop</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         Manual = 10.597 </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             fpop</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            Manual = 10.597</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -388,12 +388,12 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/wbs_wrapper.html">wbs_wrapper</a></span><span class="op">(</span><span class="va">x</span>, n_intervals <span class="op">=</span> <span class="fl">2000</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         wbs</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         sSIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             wbs</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            sSIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -403,12 +403,12 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/wbs2_wrapper.html">wbs2_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         wbs2</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         SDLL </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             wbs2</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            SDLL</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -418,12 +418,12 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/not_wrapper.html">not_wrapper</a></span><span class="op">(</span><span class="va">x</span>, contrast <span class="op">=</span> <span class="st">"pcwsConstMean"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         not</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         sSIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             not</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            sSIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -433,12 +433,12 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/mosum_wrapper.html">mosum_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         mosum</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         threshold = 3.6342 </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             mosum</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            threshold = 3.6342</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -447,12 +447,12 @@ al. 2017)</span>, one call each:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
 <span><span class="fu"><a href="../reference/mosum_wrapper.html">mosum_wrapper</a></span><span class="op">(</span><span class="va">x3</span>, multiscale <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         mosum</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 2 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         threshold </span></span>
-<span><span class="co">#&gt;   Series length:   300 </span></span>
+<span><span class="co">#&gt;   Method:             mosum</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 2</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            threshold</span></span>
+<span><span class="co">#&gt;   Series length:      300</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
@@ -463,12 +463,12 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/idetect_wrapper.html">idetect_wrapper</a></span><span class="op">(</span><span class="va">x</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         idetect</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         threshold </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             idetect</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            threshold</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -478,12 +478,12 @@ al. 2017)</span>, one call each:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/tguh_wrapper.html">tguh_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         tguh</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         sSIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             tguh</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            sSIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -514,13 +514,14 @@ performs exact penalised estimation of a continuous piecewise-linear
 mean <span class="citation">(Fearnhead et al. 2019; Fearnhead and Grose
 2024)</span>:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">y_slope</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.3</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5101</span><span class="op">)</span></span>
+<span><span class="va">y_slope</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.3</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span></span>
 <span><span class="va">res_cpop</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpop_wrapper.html">cpop_wrapper</a></span><span class="op">(</span><span class="va">y_slope</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_cpop</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     39.5</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    99     40.8</span></span></code></pre></div>
 <p><strong>Bayesian detection.</strong> <code><a href="../reference/bcp_wrapper.html">bcp_wrapper()</a></code>
 implements the Barry–Hartigan product-partition model <span class="citation">(Barry and Hartigan 1993; Erdman and Emerson
 2007)</span>; <code><a href="../reference/bocpd_wrapper.html">bocpd_wrapper()</a></code> runs Bayesian online
@@ -671,7 +672,7 @@ rather than a jump in the level <span class="citation">(Muggeo 2003,
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
 <span><span class="co">#&gt;      cp cp_value ci_lower ci_upper</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     39.5       98      101</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    99     40.8       98      101</span></span></code></pre></div>
 <p><strong>The modern PELT family.</strong>
 <code><a href="../reference/fastcpd_wrapper.html">fastcpd_wrapper()</a></code> exposes the <em>fastcpd</em> engine,
 whose <code>family</code> argument covers changes in the mean, the
@@ -698,10 +699,10 @@ its own <code><a href="https://rdrr.io/r/base/print.html" class="external-link">
 <code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="va">x3</span><span class="op">)</span></span>
 <span><span class="va">path</span></span>
 <span><span class="co">#&gt; ggcpt_path (CROPS penalty path)</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Penalty range:  [5.704, 57.04]</span></span>
-<span><span class="co">#&gt;   Series length:   300 </span></span>
-<span><span class="co">#&gt;   Distinct segmentations: 5 </span></span>
+<span><span class="co">#&gt;   Change in:              mean</span></span>
+<span><span class="co">#&gt;   Penalty range:          [5.704, 57.04]</span></span>
+<span><span class="co">#&gt;   Series length:          300</span></span>
+<span><span class="co">#&gt;   Distinct segmentations: 5</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 3</span></span></span>
 <span><span class="co">#&gt;   penalty n_cpts  cost</span></span>
@@ -859,7 +860,8 @@ and returns a tidy <code>ggcpt_batch</code> tibble with list-columns for
 the per-series changepoints and the <code>ggcpt</code> objects
 themselves:</p>
 <div class="sourceCode" id="cb56"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">XB</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>shifted <span class="op">=</span> <span class="va">x</span>, pure_noise <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5103</span><span class="op">)</span></span>
+<span><span class="va">XB</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>shifted <span class="op">=</span> <span class="va">x</span>, pure_noise <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">batch</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_batch.html">cpt_batch</a></span><span class="op">(</span><span class="va">XB</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span></span>
 <span><span class="va">batch</span></span>
 <span><span class="co">#&gt; ggcpt_batch (2 series, method: pelt)</span></span>
@@ -1144,23 +1146,23 @@ and <code><a href="../reference/cpt_gt.html">cpt_gt()</a></code> renders a publi
 tibble, with a note, when <code>gt</code> is not installed):</p>
 <div class="sourceCode" id="cb73"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_gt.html">cpt_gt</a></span><span class="op">(</span><span class="va">res</span>, title <span class="op">=</span> <span class="st">"Detected changepoints"</span><span class="op">)</span></span></code></pre></div>
-<div id="ydgabwknrs" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
-<style>#ydgabwknrs table {
+<div id="iyexmboztt" style="padding-left:0px;padding-right:0px;padding-top:10px;padding-bottom:10px;overflow-x:auto;overflow-y:auto;width:auto;height:auto;">
+<style>#iyexmboztt table {
   font-family: system-ui, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 }
 
-#ydgabwknrs thead, #ydgabwknrs tbody, #ydgabwknrs tfoot, #ydgabwknrs tr, #ydgabwknrs td, #ydgabwknrs th {
+#iyexmboztt thead, #iyexmboztt tbody, #iyexmboztt tfoot, #iyexmboztt tr, #iyexmboztt td, #iyexmboztt th {
   border-style: none;
 }
 
-#ydgabwknrs p {
+#iyexmboztt p {
   margin: 0;
   padding: 0;
 }
 
-#ydgabwknrs .gt_table {
+#iyexmboztt .gt_table {
   display: table;
   border-collapse: collapse;
   line-height: normal;
@@ -1186,12 +1188,12 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-left-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_caption {
+#iyexmboztt .gt_caption {
   padding-top: 4px;
   padding-bottom: 4px;
 }
 
-#ydgabwknrs .gt_title {
+#iyexmboztt .gt_title {
   color: #333333;
   font-size: 125%;
   font-weight: initial;
@@ -1203,7 +1205,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-bottom-width: 0;
 }
 
-#ydgabwknrs .gt_subtitle {
+#iyexmboztt .gt_subtitle {
   color: #333333;
   font-size: 85%;
   font-weight: initial;
@@ -1215,7 +1217,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-top-width: 0;
 }
 
-#ydgabwknrs .gt_heading {
+#iyexmboztt .gt_heading {
   background-color: #FFFFFF;
   text-align: center;
   border-bottom-color: #FFFFFF;
@@ -1227,13 +1229,13 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-right-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_bottom_border {
+#iyexmboztt .gt_bottom_border {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_col_headings {
+#iyexmboztt .gt_col_headings {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1248,7 +1250,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-right-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_col_heading {
+#iyexmboztt .gt_col_heading {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1268,7 +1270,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   overflow-x: hidden;
 }
 
-#ydgabwknrs .gt_column_spanner_outer {
+#iyexmboztt .gt_column_spanner_outer {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1280,15 +1282,15 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   padding-right: 4px;
 }
 
-#ydgabwknrs .gt_column_spanner_outer:first-child {
+#iyexmboztt .gt_column_spanner_outer:first-child {
   padding-left: 0;
 }
 
-#ydgabwknrs .gt_column_spanner_outer:last-child {
+#iyexmboztt .gt_column_spanner_outer:last-child {
   padding-right: 0;
 }
 
-#ydgabwknrs .gt_column_spanner {
+#iyexmboztt .gt_column_spanner {
   border-bottom-style: solid;
   border-bottom-width: 2px;
   border-bottom-color: #D3D3D3;
@@ -1300,11 +1302,11 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   width: 100%;
 }
 
-#ydgabwknrs .gt_spanner_row {
+#iyexmboztt .gt_spanner_row {
   border-bottom-style: hidden;
 }
 
-#ydgabwknrs .gt_group_heading {
+#iyexmboztt .gt_group_heading {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1330,7 +1332,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   text-align: left;
 }
 
-#ydgabwknrs .gt_empty_group_heading {
+#iyexmboztt .gt_empty_group_heading {
   padding: 0.5px;
   color: #333333;
   background-color: #FFFFFF;
@@ -1345,15 +1347,15 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   vertical-align: middle;
 }
 
-#ydgabwknrs .gt_from_md > :first-child {
+#iyexmboztt .gt_from_md > :first-child {
   margin-top: 0;
 }
 
-#ydgabwknrs .gt_from_md > :last-child {
+#iyexmboztt .gt_from_md > :last-child {
   margin-bottom: 0;
 }
 
-#ydgabwknrs .gt_row {
+#iyexmboztt .gt_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1372,7 +1374,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   overflow-x: hidden;
 }
 
-#ydgabwknrs .gt_stub {
+#iyexmboztt .gt_stub {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1385,7 +1387,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   padding-right: 5px;
 }
 
-#ydgabwknrs .gt_stub_row_group {
+#iyexmboztt .gt_stub_row_group {
   color: #333333;
   background-color: #FFFFFF;
   font-size: 100%;
@@ -1399,15 +1401,15 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   vertical-align: top;
 }
 
-#ydgabwknrs .gt_row_group_first td {
+#iyexmboztt .gt_row_group_first td {
   border-top-width: 2px;
 }
 
-#ydgabwknrs .gt_row_group_first th {
+#iyexmboztt .gt_row_group_first th {
   border-top-width: 2px;
 }
 
-#ydgabwknrs .gt_summary_row {
+#iyexmboztt .gt_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1417,16 +1419,16 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   padding-right: 5px;
 }
 
-#ydgabwknrs .gt_first_summary_row {
+#iyexmboztt .gt_first_summary_row {
   border-top-style: solid;
   border-top-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_first_summary_row.thick {
+#iyexmboztt .gt_first_summary_row.thick {
   border-top-width: 2px;
 }
 
-#ydgabwknrs .gt_last_summary_row {
+#iyexmboztt .gt_last_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1436,7 +1438,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-bottom-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_grand_summary_row {
+#iyexmboztt .gt_grand_summary_row {
   color: #333333;
   background-color: #FFFFFF;
   text-transform: inherit;
@@ -1446,7 +1448,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   padding-right: 5px;
 }
 
-#ydgabwknrs .gt_first_grand_summary_row {
+#iyexmboztt .gt_first_grand_summary_row {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1456,7 +1458,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-top-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_last_grand_summary_row_top {
+#iyexmboztt .gt_last_grand_summary_row_top {
   padding-top: 8px;
   padding-bottom: 8px;
   padding-left: 5px;
@@ -1466,11 +1468,11 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-bottom-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_striped {
+#iyexmboztt .gt_striped {
   background-color: rgba(128, 128, 128, 0.05);
 }
 
-#ydgabwknrs .gt_table_body {
+#iyexmboztt .gt_table_body {
   border-top-style: solid;
   border-top-width: 2px;
   border-top-color: #D3D3D3;
@@ -1479,7 +1481,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-bottom-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_footnotes {
+#iyexmboztt .gt_footnotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1493,7 +1495,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-right-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_footnote {
+#iyexmboztt .gt_footnote {
   margin: 0px;
   font-size: 90%;
   padding-top: 4px;
@@ -1502,7 +1504,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   padding-right: 5px;
 }
 
-#ydgabwknrs .gt_sourcenotes {
+#iyexmboztt .gt_sourcenotes {
   color: #333333;
   background-color: #FFFFFF;
   border-bottom-style: none;
@@ -1516,7 +1518,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   border-right-color: #D3D3D3;
 }
 
-#ydgabwknrs .gt_sourcenote {
+#iyexmboztt .gt_sourcenote {
   font-size: 90%;
   padding-top: 4px;
   padding-bottom: 4px;
@@ -1524,72 +1526,72 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
   padding-right: 5px;
 }
 
-#ydgabwknrs .gt_left {
+#iyexmboztt .gt_left {
   text-align: left;
 }
 
-#ydgabwknrs .gt_center {
+#iyexmboztt .gt_center {
   text-align: center;
 }
 
-#ydgabwknrs .gt_right {
+#iyexmboztt .gt_right {
   text-align: right;
   font-variant-numeric: tabular-nums;
 }
 
-#ydgabwknrs .gt_font_normal {
+#iyexmboztt .gt_font_normal {
   font-weight: normal;
 }
 
-#ydgabwknrs .gt_font_bold {
+#iyexmboztt .gt_font_bold {
   font-weight: bold;
 }
 
-#ydgabwknrs .gt_font_italic {
+#iyexmboztt .gt_font_italic {
   font-style: italic;
 }
 
-#ydgabwknrs .gt_super {
+#iyexmboztt .gt_super {
   font-size: 65%;
 }
 
-#ydgabwknrs .gt_footnote_marks {
+#iyexmboztt .gt_footnote_marks {
   font-size: 75%;
   vertical-align: 0.4em;
   position: initial;
 }
 
-#ydgabwknrs .gt_asterisk {
+#iyexmboztt .gt_asterisk {
   font-size: 100%;
   vertical-align: 0;
 }
 
-#ydgabwknrs .gt_indent_1 {
+#iyexmboztt .gt_indent_1 {
   text-indent: 5px;
 }
 
-#ydgabwknrs .gt_indent_2 {
+#iyexmboztt .gt_indent_2 {
   text-indent: 10px;
 }
 
-#ydgabwknrs .gt_indent_3 {
+#iyexmboztt .gt_indent_3 {
   text-indent: 15px;
 }
 
-#ydgabwknrs .gt_indent_4 {
+#iyexmboztt .gt_indent_4 {
   text-indent: 20px;
 }
 
-#ydgabwknrs .gt_indent_5 {
+#iyexmboztt .gt_indent_5 {
   text-indent: 25px;
 }
 
-#ydgabwknrs .katex-display {
+#iyexmboztt .katex-display {
   display: inline-flex !important;
   margin-bottom: 0.75em !important;
 }
 
-#ydgabwknrs div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
+#iyexmboztt div.Reactable > div.rt-table > div.rt-thead > div.rt-tr.rt-tr-group-header > div.rt-th-group:after {
   height: 0px !important;
 }
 </style>
@@ -1665,26 +1667,28 @@ connection.</p>
 <h3 id="streaming">Streaming<a class="anchor" aria-label="anchor" href="#streaming"></a>
 </h3>
 <div class="sourceCode" id="cb77"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"edetector"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5104</span><span class="op">)</span></span>
+<span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"edetector"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="va">mon</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
 <span><span class="co">#&gt;    time statistic threshold</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    38      127.       100</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   101      163.       100</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    65      223.       100</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   102     <span style="text-decoration: underline;">3</span>027.       100</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   272      196.       100</span></span>
 <span><span class="fu"><a href="../reference/cpt_delay.html">cpt_delay</a></span><span class="op">(</span><span class="va">mon</span>, truth <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt_delay</span></span>
-<span><span class="co">#&gt;   True changes:      1</span></span>
-<span><span class="co">#&gt;   Detected:          1</span></span>
-<span><span class="co">#&gt;   Mean delay:        1</span></span>
-<span><span class="co">#&gt;   Median delay:      1</span></span>
-<span><span class="co">#&gt;   False alarms:      1</span></span>
-<span><span class="co">#&gt;   Average run length: 400</span></span>
+<span><span class="co">#&gt;   True changes:       1</span></span>
+<span><span class="co">#&gt;   Detected:           1</span></span>
+<span><span class="co">#&gt;   Mean delay:         2</span></span>
+<span><span class="co">#&gt;   Median delay:       2</span></span>
+<span><span class="co">#&gt;   False alarms:       2</span></span>
+<span><span class="co">#&gt;   Average run length: 200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
 <span><span class="co">#&gt;   truth alarm delay detected</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200   201     1 TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200   202     2 TRUE</span></span></code></pre></div>
 <p><code><a href="../reference/cpt_monitor.html">cpt_monitor()</a></code> and <code><a href="../reference/cpt_update.html">cpt_update()</a></code> are the
 incremental form: <code>mon &lt;- cpt_update(mon, new_obs)</code> as
 data arrive.</p>

@@ -178,6 +178,7 @@ log-penalty that lands inside its interval.
 
 ``` r
 
+set.seed(5301)
 series <- list(
   a = c(rnorm(60), rnorm(60, 4)),
   b = c(rnorm(80), rnorm(80, 2)),
@@ -198,11 +199,11 @@ model
 #> 
 #> Coefficients (predicting log penalty):
 #>        intercept            log_n        log_log_n           log_sd 
-#>           3.7361          -0.2342          -0.1004           0.3255 
+#>           3.7140          -0.3358          -0.1005           0.4148 
 #>          log_mad        log_range      log_sd_diff     log_mad_diff 
-#>           0.3342           0.3022           0.2931           0.2825 
+#>           0.4245           0.3636           0.3031           0.3735 
 #> log_q90_abs_diff 
-#>           0.2768 
+#>           0.2757 
 #> 
 #> Use it directly: cpt_detect(x, method = "pelt", penalty = model)
 ```
@@ -219,21 +220,21 @@ takes it wherever a penalty goes:
 ``` r
 
 predict(model, series$d)
-#> [1] 347.5088
+#> [1] 347.4859
 cpt_detect(series$d, method = "pelt", penalty = model)
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         Manual = 347.51 
-#>   Series length:   200 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            Manual = 347.49
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1   100     1.77
+#> 1   100    -1.55
 ```
 
 So does
@@ -243,7 +244,7 @@ and so do the wrappers that accept a numeric penalty:
 ``` r
 
 cpt_penalty(model, series = series$d)
-#> [1] 347.5088
+#> [1] 347.4859
 ```
 
 Compare that with the unsupervised default on the same series, which
@@ -252,7 +253,7 @@ reads its penalty against a raw cost calibrated for unit noise:
 ``` r
 
 nrow(cpt_detect(series$d, method = "pelt")$changepoints)
-#> [1] 41
+#> [1] 42
 nrow(cpt_detect(series$d, method = "pelt", penalty = model)$changepoints)
 #> [1] 1
 ```

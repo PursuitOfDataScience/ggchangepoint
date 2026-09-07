@@ -44,6 +44,7 @@ silence:
 
 ``` r
 
+set.seed(5201)
 mon <- cpt_update(mon, rnorm(120))
 mon
 #> ggcpt_monitor (edetector -- native implementation)
@@ -59,13 +60,13 @@ one observation at a time:
 
 ``` r
 
+set.seed(5202)
 mon <- cpt_update(mon, rnorm(80, mean = 2))
 alarms(mon)
-#> # A tibble: 2 × 3
+#> # A tibble: 1 × 3
 #>    time statistic threshold
 #>   <int>     <dbl>     <dbl>
-#> 1   122      932.       500
-#> 2   164      517.       500
+#> 1   122      969.       500
 ```
 
 The idiom is `mon <- cpt_update(mon, new_obs)`: the monitor is returned
@@ -84,12 +85,12 @@ rest as false alarms.
 d <- cpt_delay(mon, truth = 121)
 d
 #> ggcpt_delay
-#>   True changes:      1
-#>   Detected:          1
-#>   Mean delay:        1
-#>   Median delay:      1
-#>   False alarms:      1
-#>   Average run length: 200
+#>   True changes:       1
+#>   Detected:           1
+#>   Mean delay:         1
+#>   Median delay:       1
+#>   False alarms:       0
+#>   Average run length: no false alarms
 #> 
 #> # A tibble: 1 × 4
 #>   truth alarm delay detected
@@ -119,7 +120,7 @@ glance(d)
 #> # A tibble: 1 × 7
 #>   n_changes n_detected mean_delay median_delay n_false_alarms   arl n_obs
 #>       <int>      <int>      <dbl>        <dbl>          <int> <dbl> <int>
-#> 1         1          1          1            1              1   200   200
+#> 1         1          1          1            1              0   Inf   200
 ```
 
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
@@ -154,15 +155,15 @@ pretending its alarms are changepoints.
 
 ``` r
 
+set.seed(5203)
 stream <- c(rnorm(200), rnorm(200, mean = 2))
 rep_e <- cpt_replay(stream, method = "edetector")
 alarms(rep_e)
-#> # A tibble: 3 × 3
+#> # A tibble: 2 × 3
 #>    time statistic threshold
 #>   <int>     <dbl>     <dbl>
-#> 1   104      217.       100
-#> 2   218      135.       100
-#> 3   291      130.       100
+#> 1   101     2101.       100
+#> 2   145      436.       100
 ```
 
 The baseline offset is applied automatically, so `truth` is on the
@@ -174,7 +175,7 @@ glance(cpt_delay(rep_e, truth = 200))
 #> # A tibble: 1 × 7
 #>   n_changes n_detected mean_delay median_delay n_false_alarms   arl n_obs
 #>       <int>      <int>      <dbl>        <dbl>          <int> <dbl> <int>
-#> 1         1          1          4            4              2   200   400
+#> 1         1          1          1            1              1   400   400
 ```
 
 ## 4. The three methods
@@ -232,6 +233,7 @@ and a threshold calibrated to a target in-control average run length.
 
 ``` r
 
+set.seed(5204)
 mon_cpm <- cpt_monitor("cpm", arl0 = 500)
 mon_cpm <- cpt_update(mon_cpm, rnorm(120))
 mon_cpm <- cpt_update(mon_cpm, rnorm(80, mean = 2))
@@ -263,16 +265,17 @@ Setting `arl0` on an e-detector, or `alpha` on `cpm`, changes nothing.
 
 ``` r
 
+set.seed(5205)
 ic <- rnorm(400)
 vapply(c(0.05, 0.01, 0.001),
        function(a) nrow(alarms(cpt_replay(ic, method = "edetector",
                                           alpha = a))),
        numeric(1))
-#> [1] 7 3 0
+#> [1] 3 1 0
 nrow(alarms(cpt_replay(ic, method = "edetector", arl0 = 5000)))
 #> Warning: `arl0` does not affect `method = "edetector"`, which is tuned by
 #> `alpha`, `deltas`. See ?cpt_monitor.
-#> [1] 3
+#> [1] 1
 ```
 
 Three alphas, three false-alarm counts; then `arl0 = 5000` on the same
@@ -294,6 +297,7 @@ statistic; it stops, and says which methods do read one series:
 
 ``` r
 
+set.seed(5206)
 cpt_monitor("ocd", baseline = rnorm(100))
 #> Error:
 #> ! Method `ocd` is high-dimensional and needs at least two coordinates, but `baseline` has 1. Use method = "edetector" or "cpm" for one series.
@@ -438,9 +442,9 @@ every threshold crossing.
 ``` r
 
 nrow(alarms(cpt_replay(stream, method = "edetector", relearn = 20)))
-#> [1] 3
+#> [1] 2
 nrow(alarms(cpt_replay(stream, method = "edetector", relearn = 0)))
-#> [1] 36
+#> [1] 73
 ```
 
 ## 7. What to report
@@ -460,7 +464,7 @@ glance(cpt_delay(rep_e, truth = 200))
 #> # A tibble: 1 × 7
 #>   n_changes n_detected mean_delay median_delay n_false_alarms   arl n_obs
 #>       <int>      <int>      <dbl>        <dbl>          <int> <dbl> <int>
-#> 1         1          1          4            4              2   200   400
+#> 1         1          1          1            1              1   400   400
 ```
 
 ## References

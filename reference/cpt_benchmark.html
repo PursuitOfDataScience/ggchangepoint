@@ -131,7 +131,9 @@ installed and a handler is enabled? Defaults to <code>TRUE</code>.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed.</p></dd>
+<dd><p>Optional seed. The seed is scoped to this call:
+<code>.Random.seed</code> is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -172,12 +174,47 @@ Nemenyi critical distance, the standard way this literature says
   (<code>"heatmap"</code>, <code>"ranks"</code>, <code>"critical_difference"</code>).</p>
     </div>
     <div class="section level2">
+    <h2 id="reading-the-critical-difference-diagram">Reading the critical-difference diagram<a class="anchor" aria-label="anchor" href="#reading-the-critical-difference-diagram"></a></h2>
+
+
+<p>Rank 1 is best. Each method's mean rank is taken over the datasets, in
+the direction the metric calls for – higher is better for
+<code>covering</code>, <code>f1</code>, <code>precision</code>, <code>recall</code> and
+<code>rand_index</code>; lower for <code>hausdorff</code>,
+<code>annotation_error</code>, <code>mae_matched</code> and <code>rmse_matched</code>.
+A metric that came back <code>NA</code> takes the <em>worst</em> rank on that
+dataset rather than being dropped, so a method that failed there is
+penalised for it instead of quietly scoring on a smaller sample; ties
+share the average rank.</p>
+<p>The bar is the Nemenyi critical distance
+$$CD = q_\alpha \sqrt{k(k + 1) / (6N)}$$
+for \(k\) methods over \(N\) datasets, where \(q_\alpha\) is
+the Studentised range statistic at \(\alpha\) divided by
+\(\sqrt 2\) (Demsar, 2006 – the constants agree with that paper's
+Table 5 to three decimals for \(k = 2, \ldots, 10\)). Two methods
+whose mean ranks differ by less than \(CD\) are not distinguished at
+that level.</p>
+<p><strong>One caveat the diagram cannot show.</strong> Nemenyi is a
+<em>post-hoc</em> procedure, and the convention is to run it only after a
+Friedman test has rejected the null that all methods rank equally.
+<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> does not run that omnibus test – it draws the
+diagram it is asked for – so a gap wider than \(CD\) on a grid where
+Friedman would not have rejected is not the significant difference it
+looks like. With the handful of datasets <code><a href="cpt_datasets.html">cpt_datasets()</a></code>
+supplies, \(N\) is small and \(CD\) correspondingly wide; read the
+diagram as a descriptive summary unless \(N\) is large enough to
+support the test.</p>
+    </div>
+    <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
     <p>van den Burg GJJ, Williams CKI (2020).
 “An evaluation of change point detection algorithms.”
 <em>arXiv preprint arXiv:2003.06222</em>.
 <a href="https://doi.org/10.48550/arXiv.2003.06222" class="external-link">doi:10.48550/arXiv.2003.06222</a>
 .</p>
+<p>Demšar J (2006).
+“Statistical comparisons of classifiers over multiple data sets.”
+<em>Journal of Machine Learning Research</em>, <b>7</b>, 1–30.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

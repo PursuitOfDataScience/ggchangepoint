@@ -19,8 +19,12 @@ ggcpt_scale_space(x, bandwidths = NULL, method = c("mosum", "npmojo"), ...)
 - x:
 
   A numeric vector (or, for `method = "npmojo"`, a matrix with rows as
-  time points), or a `ggcpt` object produced by a multiscale engine
-  (`subset(cpt_methods(), scale_space)$method`).
+  time points), or any `ggcpt` object. The sweep is computed here rather
+  than read off the result, so a fit from any engine is accepted and the
+  scale space is the one belonging to its series: from a `mosum` or
+  `npmojo` result the engine is adopted as well (see `method`), and from
+  anything else the default `"mosum"` sweep is drawn over the same
+  series.
 
 - bandwidths:
 

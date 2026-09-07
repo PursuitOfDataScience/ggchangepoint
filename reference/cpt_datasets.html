@@ -84,7 +84,10 @@ is downloaded and cached.</p>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Seed for the simulated signals. Defaults to <code>1</code>.</p></dd>
+<dd><p>Seed for the simulated signals. Defaults to <code>1</code>. The
+seed is scoped to this call: <code>.Random.seed</code> is saved and restored,
+so a seeded call inside a simulation loop does not pin the loop's own
+stream.</p></dd>
 
 
 <dt id="arg-names">names<a class="anchor" aria-label="anchor" href="#arg-names"></a></dt>

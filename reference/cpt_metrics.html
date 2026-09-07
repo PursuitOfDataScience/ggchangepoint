@@ -81,22 +81,99 @@ of matched locations.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble with columns: <code>n</code>, <code>n_pred</code>, <code>n_truth</code>,
-  <code>precision</code>, <code>recall</code>, <code>f1</code>, <code>covering</code>,
-  <code>hausdorff</code>, <code>rand_index</code>, <code>annotation_error</code>,
-  <code>mae_matched</code>, <code>rmse_matched</code>.</p>
-    </div>
+    <p>A tibble with one row and the columns below. “Higher” and
+  “lower” mark which direction is better — the same directions
+  <code><a href="cpt_benchmark.html">cpt_benchmark()</a></code> ranks by.</p><dl><dt><code>n</code>, <code>n_pred</code>, <code>n_truth</code></dt>
+<dd><p>the series length
+      and the two changepoint counts, after out-of-range indices are
+      dropped.</p></dd>
+
+    <dt><code>precision</code>, <code>recall</code>, <code>f1</code></dt>
+<dd><p>higher is
+      better. The fraction of predictions that matched a truth, the
+      fraction of truths that were matched, and their harmonic mean —
+      all under the one-to-one matching within <code>margin</code>, so they
+      score <em>whether</em> a change was found, not how precisely it was
+      located.</p></dd>
+
+    <dt><code>covering</code></dt>
+<dd><p>higher is better, in \([0, 1]\). The
+      segmentation covering metric: each true segment's best Jaccard
+      overlap with a predicted segment, averaged weighted by segment
+      length. Unlike F1 it needs no margin and degrades smoothly with
+      location error.</p></dd>
+
+    <dt><code>hausdorff</code></dt>
+<dd><p>lower is better, in observations. The
+      largest distance from any changepoint on either side to the nearest
+      one on the other — a worst-case location error, so one badly placed
+      changepoint dominates it.</p></dd>
+
+    <dt><code>rand_index</code></dt>
+<dd><p>higher is better. The <em>adjusted</em>
+      Rand index between the two segment labellings: 1 for identical
+      partitions, 0 for chance agreement, and negative for worse than
+      chance.</p></dd>
+
+    <dt><code>annotation_error</code></dt>
+<dd><p>lower is better. <strong>A count
+      difference only</strong>: <code>abs(n_pred - n_truth)</code>. It says nothing
+      about location, so a segmentation with the right <em>number</em> of
+      changepoints in entirely the wrong <em>places</em> scores a perfect
+      0. Read it beside <code>covering</code> or <code>hausdorff</code>, never
+      alone.</p></dd>
+
+    <dt><code>mae_matched</code>, <code>rmse_matched</code></dt>
+<dd><p>lower is better, in
+      observations. Mean absolute and root-mean-square location error over
+      the matched pairs only, so they describe how well the changepoints
+      that were found are placed and ignore the ones that were missed.
+      <code>NA</code> when nothing matched.</p></dd>
+
+
+</dl></div>
     <div class="section level2">
     <h2 id="details">Details<a class="anchor" aria-label="anchor" href="#details"></a></h2>
     <p>Precision/recall use a one-to-one matching: each truth may be
 claimed by at most one prediction (predictions are scanned in order and
 take the earliest unmatched truth within <code>margin</code>, which yields a
-maximum matching for interval-structured problems). When <code>pred</code> and
-<code>truth</code> are both empty the segmentation is exactly right, so
-precision, recall, and F1 are all 1. The covering metric follows
-van den Burg and Williams (2020): the prediction-side partition is always
-well defined, so an empty <code>pred</code> scores the covering of the trivial
-single-segment partition rather than 0.</p>
+maximum matching for interval-structured problems). The covering metric
+follows van den Burg and Williams (2020): the prediction-side partition is
+always well defined, so an empty <code>pred</code> scores the covering of the
+trivial single-segment partition rather than 0.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="degenerate-cases-and-which-way-each-metric-resolves-them">Degenerate cases, and which way each metric resolves them<a class="anchor" aria-label="anchor" href="#degenerate-cases-and-which-way-each-metric-resolves-them"></a></h2>
+
+
+<p>Three of the twelve columns are ratios with a zero denominator when one
+side is empty, and the row does not resolve them all the same way, so the
+conventions are worth stating rather than inferring from a benchmark
+table:</p><ul><li><p><strong>Both empty.</strong> The segmentation is exactly right:
+    <code>precision</code>, <code>recall</code>, <code>f1</code>, <code>covering</code> and
+    <code>rand_index</code> are all 1 and <code>annotation_error</code> is 0. (A
+    metric that scored this 0 was a 0.4.0 bug.)</p></li>
+<li><p><strong>One side empty.</strong> <code>precision</code> and <code>recall</code> are
+    <em>0</em> rather than <code>NA</code> — finding nothing where there was a
+    change, and finding a change where there was none, both score badly —
+    and so is <code>f1</code>. <code>rand_index</code> is 0 for the same reason.</p></li>
+<li><p><strong>Nothing matched.</strong> <code>hausdorff</code>,
+    <code>mae_matched</code> and <code>rmse_matched</code> are <code>NA</code>, because
+    they are distances and there is no pair to measure. They are also
+    <code>NA</code> whenever either side is empty. This is the one place the
+    row mixes conventions: an all-wrong answer gives
+    <code>f1 = 0</code> and <code>mae_matched = NA</code> in the same row.
+    <code><a href="cpt_benchmark.html">cpt_benchmark()</a></code> treats an <code>NA</code> as the worst rank
+    rather than dropping it.</p></li>
+</ul><p>An index outside <code>1..(n - 1)</code> is dropped with a warning: locations
+follow the <code>"left"</code> convention, and an out-of-range one would
+corrupt the partition metrics rather than merely miss.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code> for scoring against
+  multiple annotators, and <code><a href="cpt_benchmark.html">cpt_benchmark()</a></code> to run a
+  method-by-dataset grid on these metrics.</p></div>
     </div>
 
     <div class="section level2">

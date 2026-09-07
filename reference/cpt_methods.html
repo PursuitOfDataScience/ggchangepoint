@@ -112,11 +112,19 @@ posterior, a detector statistic, a solution path, a bandwidth to sweep).</p>
         <code>capabilities = FALSE</code>). <code>ci</code> means the engine
         supplies changepoint-location confidence intervals; <code>fitted</code>
         a length-\(n\) fitted signal; <code>posterior</code> a per-location
-        posterior probability; <code>statistic</code>, <code>path</code> and
-        <code>scale_space</code> the internals rendered by
-        <code><a href="cpt_statistic.html">ggcpt_statistic()</a></code>,
-        <code><a href="cpt_solution_path.html">ggcpt_solution_path()</a></code> and
-        <code><a href="cpt_scale_space.html">ggcpt_scale_space()</a></code>.</p>
+        posterior probability; <code>statistic</code> and <code>path</code> the
+        internals rendered by <code><a href="cpt_statistic.html">ggcpt_statistic()</a></code> and
+        <code><a href="cpt_solution_path.html">ggcpt_solution_path()</a></code>, which error with the list
+        of supporting engines when a result does not carry them.</p>
+<p><code>scale_space</code> is not one of those, despite sitting beside
+        them. Nothing stores a scale space on a result:
+        <code><a href="cpt_scale_space.html">cpt_scale_space()</a></code> computes one on demand by
+        sweeping a multiscale detector's bandwidth over the series, so
+        it works on <em>any</em> series and any result – a <code>pelt</code>
+        fit included. What this column marks is the two engines that
+        sweep can be run <em>with</em>, i.e. the domain of that
+        function's own <code>method</code> argument:
+        <code>subset(cpt_methods(), scale_space)$method</code>.</p>
 <p><code>online</code> means the <em>algorithm</em> is sequential – it
         consumes observations one at a time – and this table reports it
         because it governs how the method behaves in batch: an online

@@ -103,10 +103,10 @@ x <- c(rnorm(100), rnorm(100, 3), rnorm(100, -1))
 path <- cpt_crops(x)
 path
 #> ggcpt_path (CROPS penalty path)
-#>   Change in:       mean 
-#>   Penalty range:  [5.704, 57.04]
-#>   Series length:   300 
-#>   Distinct segmentations: 2 
+#>   Change in:              mean
+#>   Penalty range:          [5.704, 57.04]
+#>   Series length:          300
+#>   Distinct segmentations: 2
 #> 
 #> # A tibble: 2 × 3
 #>   penalty n_cpts  cost

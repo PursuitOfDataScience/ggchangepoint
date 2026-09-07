@@ -130,12 +130,12 @@ y <- c(X[1:40, ] %*% beta1, X[41:n, ] %*% beta2) + stats::rnorm(n)
 hdreg_wrapper(X, response = y, gamma_set = c(1, 10),
               lambda_set = c(0.1, 1))
 #> ggcpt (changepoint detection result)
-#>   Method:         hdreg
-#>   Change in:       regression 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         l0 (CV) 
-#>   Series length:   80 
+#>   Method:             hdreg
+#>   Change in:          regression
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            l0 (CV)
+#>   Series length:      80
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

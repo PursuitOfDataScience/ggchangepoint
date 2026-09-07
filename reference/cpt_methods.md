@@ -67,12 +67,21 @@ A tibble with columns:
   Capability flags (omitted when `capabilities = FALSE`). `ci` means the
   engine supplies changepoint-location confidence intervals; `fitted` a
   length-\\n\\ fitted signal; `posterior` a per-location posterior
-  probability; `statistic`, `path` and `scale_space` the internals
-  rendered by
-  [`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md),
-  [`ggcpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  probability; `statistic` and `path` the internals rendered by
+  [`ggcpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
   and
-  [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md).
+  [`ggcpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md),
+  which error with the list of supporting engines when a result does not
+  carry them.
+
+  `scale_space` is not one of those, despite sitting beside them.
+  Nothing stores a scale space on a result:
+  [`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
+  computes one on demand by sweeping a multiscale detector's bandwidth
+  over the series, so it works on *any* series and any result – a `pelt`
+  fit included. What this column marks is the two engines that sweep can
+  be run *with*, i.e. the domain of that function's own `method`
+  argument: `subset(cpt_methods(), scale_space)$method`.
 
   `online` means the *algorithm* is sequential – it consumes
   observations one at a time – and this table reports it because it

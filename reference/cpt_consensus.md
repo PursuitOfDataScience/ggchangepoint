@@ -53,8 +53,21 @@ print(x, ...)
 - min_votes:
 
   Minimum number of methods that must find a location for it to enter
-  the consensus. Defaults to `2`; pass a fraction in \\(0, 1)\\ for a
-  proportion of the methods that ran.
+  the consensus. Defaults to `2`.
+
+  A value **strictly between 0 and 1** is read as a proportion of the
+  methods that ran; anything else is a count. The boundary is worth
+  knowing, because it falls exactly where a reader thinking in
+  proportions would write “unanimous”: with three methods,
+  `min_votes = 0.99` needs all three, while `min_votes = 1` – and `1.0`,
+  which is the same number – is a count of one and so the *least* strict
+  setting there is. For unanimity, pass the number of methods, or a
+  fraction just below 1.
+
+  A count larger than the number of methods that ran cannot be reached,
+  so the consensus would be empty by construction; that warns rather
+  than returning a result indistinguishable from “the methods agreed on
+  nothing”.
 
 - change_in:
 
@@ -66,7 +79,9 @@ print(x, ...)
 
 - seed:
 
-  Optional seed for reproducibility.
+  Optional seed for reproducibility. The seed is scoped to this call:
+  `.Random.seed` is saved and restored, so a seeded call inside a
+  simulation loop does not pin the loop's own stream.
 
 - ...:
 

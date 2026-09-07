@@ -49,7 +49,9 @@ taylor_wrapper(
 
 - seed:
 
-  Optional seed (the procedure is bootstrap-based).
+  Optional seed (the procedure is bootstrap-based). The seed is scoped
+  to this call: `.Random.seed` is saved and restored, so a seeded call
+  inside a simulation loop does not pin the loop's own stream.
 
 ## Value
 
@@ -134,12 +136,12 @@ Other changepoint engines:
 set.seed(2026)
 taylor_wrapper(c(rnorm(60), rnorm(60, 3)), n_bootstraps = 200, seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:         taylor
-#>   Change in:       mean 
-#>   Changepoints found: 2 
-#>   CP convention:   left 
-#>   Penalty:         confidence = 0.9 
-#>   Series length:   120 
+#>   Method:             taylor
+#>   Change in:          mean
+#>   Changepoints found: 2
+#>   CP convention:      left
+#>   Penalty:            confidence = 0.9
+#>   Series length:      120
 #> 
 #> Changepoints:
 #> # A tibble: 2 × 5

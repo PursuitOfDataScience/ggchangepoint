@@ -121,12 +121,12 @@ Other changepoint engines:
 set.seed(2026)
 binsegrcpp_wrapper(c(rnorm(100), rnorm(100, 3)))
 #> ggcpt (changepoint detection result)
-#>   Method:         binsegrcpp
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         BIC over nested family = 2 
-#>   Series length:   200 
+#>   Method:             binsegrcpp
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            BIC over nested family = 2
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

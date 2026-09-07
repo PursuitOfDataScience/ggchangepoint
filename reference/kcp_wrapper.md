@@ -57,7 +57,9 @@ kcp_wrapper(
 
 - seed:
 
-  Optional seed for reproducibility of the permutation test.
+  Optional seed for reproducibility of the permutation test. The seed is
+  scoped to this call: `.Random.seed` is saved and restored, so a seeded
+  call inside a simulation loop does not pin the loop's own stream.
 
 - ...:
 

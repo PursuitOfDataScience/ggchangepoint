@@ -91,10 +91,14 @@ vector of segment means. For <code>var</code> changes, a vector of segment sds.
 For <code>meanvar</code>, a list of lists with <code>mean</code> and <code>sd</code> per
 segment. For <code>slope</code>, a list with <code>intercept</code> and <code>slope</code>
 per segment. When <code>NULL</code>, every segment gets the same neutral
-parameters, so the series has no actual change. Supplying fewer entries
-than there are segments recycles the last one and warns, because the
-trailing <code>changepoints</code> would then be recorded as ground truth
-without a change behind them.</p></dd>
+parameters, so the series has no actual change. <code>changepoints</code>
+sets the number of segments – \(k\) changepoints make \(k + 1\)
+of them – and a mismatch in either direction warns rather than
+passing quietly: too few entries recycles the last one, so the
+trailing <code>changepoints</code> would otherwise be recorded as ground
+truth with no change behind them, and too many drops the surplus, so a
+caller who miscounted the changepoints would otherwise get an ordinary
+series back with a parameter silently unused.</p></dd>
 
 
 <dt id="arg-noise">noise<a class="anchor" aria-label="anchor" href="#arg-noise"></a></dt>
@@ -140,7 +144,9 @@ detectors shatter, and the condition HSMUCE, NSP-self-normalised and
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed for reproducibility.</p></dd>
+<dd><p>Optional seed for reproducibility. The seed is scoped to this
+call: <code>.Random.seed</code> is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

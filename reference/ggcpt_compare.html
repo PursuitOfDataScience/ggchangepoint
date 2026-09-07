@@ -92,7 +92,10 @@ every seam. Use <code><a href="cpt_batch.html">cpt_batch()</a></code> for a pane
 <code><a href="https://future.apply.futureverse.org/reference/future_lapply.html" class="external-link">future.apply::future_lapply()</a></code> as <code>future.seed</code>, and to
 <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> when running sequentially. Left <code>NULL</code> under a
 parallel plan, <code>future.seed = TRUE</code> is used, so the workers get
-parallel-safe streams but the run is not reproducible.</p></dd>
+parallel-safe streams but the run is not reproducible. The seed is
+scoped to this call: <code>.Random.seed</code> is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

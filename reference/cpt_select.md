@@ -60,7 +60,13 @@ autoplot(
 
   `"bic"`
 
-  :   Gaussian BIC over the ladder.
+  :   Gaussian BIC over the ladder, \\n\log(\mathrm{RSS}/n) + (2K +
+      1)\log n\\. The first term is the Gaussian profile cost reported
+      in the `cost` column (\\-2\log L\\ up to an additive constant, for
+      a common variance); the parameter count is \\K\\ locations plus
+      \\K + 1\\ segment means. Stated because the `value` column is
+      otherwise not reproducible: both the cost convention and the
+      parameter count vary between authors.
 
   `"mbic"`
 
@@ -73,11 +79,15 @@ autoplot(
 
   `"aic"`
 
-  :   Gaussian AIC over the ladder. Its \\2k\\ penalty does not grow
-      with \\n\\, so it over-selects changepoints — often taking every
-      rung offered. Included because people ask for it and because
-      seeing the curve is instructive; `"bic"` or `"mbic"` is the better
-      default.
+  :   Gaussian AIC over the ladder, \\n\log(\mathrm{RSS}/n) + 2(2K +
+      1)\\ — the same cost and the same parameter count as `"bic"`, with
+      \\2\\ in place of \\\log n\\. That penalty does not grow with
+      \\n\\, so it over-selects changepoints, often taking every rung
+      offered: on a 300-point series with changes at 100 and 200,
+      `"bic"` and `"mbic"` both choose \\K = 2\\ and `"aic"` chooses the
+      largest \\K\\ available. Included because people ask for it and
+      because seeing the curve is instructive; `"bic"` or `"mbic"` is
+      the better default.
 
   `"crops_elbow"`
 
@@ -128,7 +138,9 @@ autoplot(
 
 - seed:
 
-  Optional seed.
+  Optional seed. The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 - ...:
 

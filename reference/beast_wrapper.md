@@ -29,7 +29,9 @@ beast_wrapper(x, prob_threshold = 0.5, seed = NULL, ...)
 
   Optional seed for the engine's MCMC sampler (passed to
   [`Rbeast::beast()`](https://rdrr.io/pkg/Rbeast/man/beast.html) as
-  `mcmc.seed`).
+  `mcmc.seed`). The seed is scoped to this call: `.Random.seed` is saved
+  and restored, so a seeded call inside a simulation loop does not pin
+  the loop's own stream.
 
 - ...:
 
@@ -104,5 +106,5 @@ res$changepoints
 #> # A tibble: 1 × 3
 #>      cp cp_value posterior_prob
 #>   <int>    <dbl>          <dbl>
-#> 1    60    -1.79              1
+#> 1    60   -0.100              1
 ```

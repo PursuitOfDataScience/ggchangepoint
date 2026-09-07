@@ -130,7 +130,8 @@ period and so does not need one.</p>
 same distribution — the in-control case, where the right answer is
 silence:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_update.html">cpt_update</a></span><span class="op">(</span><span class="va">mon</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5201</span><span class="op">)</span></span>
+<span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_update.html">cpt_update</a></span><span class="op">(</span><span class="va">mon</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mon</span></span>
 <span><span class="co">#&gt; ggcpt_monitor (edetector -- native implementation)</span></span>
 <span><span class="co">#&gt;   Baseline observations: 200</span></span>
@@ -141,13 +142,13 @@ silence:</p>
 observation 121 of the monitored stream, and the monitor sees it only
 one observation at a time:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_update.html">cpt_update</a></span><span class="op">(</span><span class="va">mon</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, mean <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5202</span><span class="op">)</span></span>
+<span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_update.html">cpt_update</a></span><span class="op">(</span><span class="va">mon</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, mean <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="va">mon</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
 <span><span class="co">#&gt;    time statistic threshold</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   122      932.       500</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   164      517.       500</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   122      969.       500</span></span></code></pre></div>
 <p>The idiom is <code>mon &lt;- cpt_update(mon, new_obs)</code>: the
 monitor is returned because it is stateful, and each call appends to the
 same alarm log. The <code>time</code> column counts observations fed to
@@ -162,12 +163,12 @@ plausibly detected, and counts the rest as false alarms.</p>
 <code class="sourceCode R"><span><span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_delay.html">cpt_delay</a></span><span class="op">(</span><span class="va">mon</span>, truth <span class="op">=</span> <span class="fl">121</span><span class="op">)</span></span>
 <span><span class="va">d</span></span>
 <span><span class="co">#&gt; ggcpt_delay</span></span>
-<span><span class="co">#&gt;   True changes:      1</span></span>
-<span><span class="co">#&gt;   Detected:          1</span></span>
-<span><span class="co">#&gt;   Mean delay:        1</span></span>
-<span><span class="co">#&gt;   Median delay:      1</span></span>
-<span><span class="co">#&gt;   False alarms:      1</span></span>
-<span><span class="co">#&gt;   Average run length: 200</span></span>
+<span><span class="co">#&gt;   True changes:       1</span></span>
+<span><span class="co">#&gt;   Detected:           1</span></span>
+<span><span class="co">#&gt;   Mean delay:         1</span></span>
+<span><span class="co">#&gt;   Median delay:       1</span></span>
+<span><span class="co">#&gt;   False alarms:       0</span></span>
+<span><span class="co">#&gt;   Average run length: no false alarms</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 4</span></span></span>
 <span><span class="co">#&gt;   truth alarm delay detected</span></span>
@@ -192,7 +193,7 @@ as data:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
 <span><span class="co">#&gt;   n_changes n_detected mean_delay median_delay n_false_alarms   arl n_obs</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1          1          1            1              1   200   200</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1          1          1            1              0   <span style="color: #BB0000;">Inf</span>   200</span></span></code></pre></div>
 <p><code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> is the wrong tool here. It asks whether
 the <em>location</em> was recovered, which a sequential procedure never
 claims: an alarm is deliberately late, so scoring it as a location
@@ -213,15 +214,15 @@ same monitor object. This is how to study an online method’s alarm
 timeline retrospectively without pretending its alarms are
 changepoints.</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">stream</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, mean <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5203</span><span class="op">)</span></span>
+<span><span class="va">stream</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, mean <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">rep_e</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="va">stream</span>, method <span class="op">=</span> <span class="st">"edetector"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="va">rep_e</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 3</span></span></span>
 <span><span class="co">#&gt;    time statistic threshold</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   104      217.       100</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   218      135.       100</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   291      130.       100</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   101     <span style="text-decoration: underline;">2</span>101.       100</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   145      436.       100</span></span></code></pre></div>
 <p>The baseline offset is applied automatically, so <code>truth</code>
 is on the original clock of <code>stream</code>:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
@@ -229,7 +230,7 @@ is on the original clock of <code>stream</code>:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
 <span><span class="co">#&gt;   n_changes n_detected mean_delay median_delay n_false_alarms   arl n_obs</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1          1          4            4              2   200   400</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1          1          1            1              1   400   400</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="the-three-methods">4. The three methods<a class="anchor" aria-label="anchor" href="#the-three-methods"></a>
@@ -288,7 +289,8 @@ do.</p>
 (<code>cpm_type</code>, <code>"Mann-Whitney"</code> by default) and a
 threshold calibrated to a target in-control average run length.</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mon_cpm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_monitor.html">cpt_monitor</a></span><span class="op">(</span><span class="st">"cpm"</span>, arl0 <span class="op">=</span> <span class="fl">500</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5204</span><span class="op">)</span></span>
+<span><span class="va">mon_cpm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_monitor.html">cpt_monitor</a></span><span class="op">(</span><span class="st">"cpm"</span>, arl0 <span class="op">=</span> <span class="fl">500</span><span class="op">)</span></span>
 <span><span class="va">mon_cpm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_update.html">cpt_update</a></span><span class="op">(</span><span class="va">mon_cpm</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mon_cpm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_update.html">cpt_update</a></span><span class="op">(</span><span class="va">mon_cpm</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, mean <span class="op">=</span> <span class="fl">2</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="va">mon_cpm</span><span class="op">)</span></span>
@@ -323,16 +325,17 @@ threshold is
 <code>arl0</code> on an e-detector, or <code>alpha</code> on
 <code>cpm</code>, changes nothing.</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">ic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">400</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5205</span><span class="op">)</span></span>
+<span><span class="va">ic</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">400</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/lapply.html" class="external-link">vapply</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.05</span>, <span class="fl">0.01</span>, <span class="fl">0.001</span><span class="op">)</span>,</span>
 <span>       <span class="kw">function</span><span class="op">(</span><span class="va">a</span><span class="op">)</span> <span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="va">ic</span>, method <span class="op">=</span> <span class="st">"edetector"</span>,</span>
 <span>                                          alpha <span class="op">=</span> <span class="va">a</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>       <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">numeric</a></span><span class="op">(</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 7 3 0</span></span>
+<span><span class="co">#&gt; [1] 3 1 0</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="va">ic</span>, method <span class="op">=</span> <span class="st">"edetector"</span>, arl0 <span class="op">=</span> <span class="fl">5000</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Warning: `arl0` does not affect `method = "edetector"`, which is tuned by</span></span>
 <span><span class="co">#&gt; `alpha`, `deltas`. See ?cpt_monitor.</span></span>
-<span><span class="co">#&gt; [1] 3</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
 <p>Three alphas, three false-alarm counts; then <code>arl0 = 5000</code>
 on the same stream, which reproduces the default-<code>alpha</code>
 result exactly because the argument is not read – and
@@ -352,7 +355,8 @@ whole vector, and <strong>requires at least two coordinates</strong>. On
 a single series it does not fall back to a univariate statistic; it
 stops, and says which methods do read one series:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_monitor.html">cpt_monitor</a></span><span class="op">(</span><span class="st">"ocd"</span>, baseline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5206</span><span class="op">)</span></span>
+<span><span class="fu"><a href="../reference/cpt_monitor.html">cpt_monitor</a></span><span class="op">(</span><span class="st">"ocd"</span>, baseline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Method `ocd` is high-dimensional and needs at least two coordinates, but `baseline` has 1. Use method = "edetector" or "cpm" for one series.</span></span></code></pre></div>
 <p>Given a matrix with rows as time points it monitors all coordinates
@@ -493,9 +497,9 @@ alarms. Set <code>relearn = 0</code> only when you want to see every
 threshold crossing.</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="va">stream</span>, method <span class="op">=</span> <span class="st">"edetector"</span>, relearn <span class="op">=</span> <span class="fl">20</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 3</span></span>
+<span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/alarms.html">alarms</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="va">stream</span>, method <span class="op">=</span> <span class="st">"edetector"</span>, relearn <span class="op">=</span> <span class="fl">0</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 36</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 73</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="what-to-report">7. What to report<a class="anchor" aria-label="anchor" href="#what-to-report"></a>
@@ -513,7 +517,7 @@ accounting automatic.</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
 <span><span class="co">#&gt;   n_changes n_detected mean_delay median_delay n_false_alarms   arl n_obs</span></span>
 <span><span class="co">#&gt;       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1          1          4            4              2   200   400</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1          1          1            1              1   400   400</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 class="unnumbered" id="references">References<a class="anchor" aria-label="anchor" href="#references"></a>

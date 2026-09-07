@@ -109,7 +109,9 @@ calibration.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed.</p></dd>
+<dd><p>Optional seed. The seed is scoped to this call:
+<code>.Random.seed</code> is saved and restored, so a seeded call inside a
+simulation loop does not pin the loop's own stream.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -203,12 +205,12 @@ replicate, pass it as <code>copy2</code> and none of this applies.</p>
 <span class="r-in"><span><span class="fu">network_wrapper</span><span class="op">(</span><span class="va">X</span>, n_intervals <span class="op">=</span> <span class="fl">20</span>, n_perm <span class="op">=</span> <span class="fl">20</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> No independent second observation supplied: splitting each edge at random to build one. See the "When you have only one copy" section of ?network_wrapper.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:         network</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       network </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         threshold = 3.2294 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:   80 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:             network</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:          network</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:      left</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:            threshold = 3.2294</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:      80</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>

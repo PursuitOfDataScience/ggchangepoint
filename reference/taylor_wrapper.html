@@ -101,7 +101,10 @@ Defaults to <code>0.95</code>.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed (the procedure is bootstrap-based).</p></dd>
+<dd><p>Optional seed (the procedure is bootstrap-based). The seed is
+scoped to this call: <code>.Random.seed</code> is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -188,12 +191,12 @@ Taylor Enterprises, Libertyville, Illinois.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">taylor_wrapper</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, n_bootstraps <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:         taylor</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:       mean </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 2 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:   left </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:         confidence = 0.9 </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:   120 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:             taylor</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:          mean</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 2</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:      left</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:            confidence = 0.9</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:      120</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 5</span></span>

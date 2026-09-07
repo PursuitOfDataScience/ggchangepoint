@@ -57,7 +57,9 @@ cpt_scenarios(
 
   Base seed; replicate `r` of scenario `i` uses
   `seed + (i - 1) * n_rep + r`, so the whole grid is reproducible and
-  every cell is independent.
+  every cell is independent. The seed is scoped to this call:
+  `.Random.seed` is saved and restored, so a seeded call inside a
+  simulation loop does not pin the loop's own stream.
 
 - as_datasets:
 

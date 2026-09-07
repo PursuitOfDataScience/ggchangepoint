@@ -74,12 +74,12 @@ is_ggcpt(res)
 #> [1] TRUE
 print(res)
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -142,13 +142,13 @@ that delegates to
 
 summary(res)
 #> ggcpt Summary
-#>   Method:                   pelt 
-#>   Change in:                mean 
-#>   Changepoints found:       1 
-#>   CP convention:            left 
-#>   Series length:            200 
-#>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.02 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Series length:      200
+#>   Penalty:            MBIC
+#>   Runtime (seconds):  0.02
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -199,12 +199,12 @@ silently substituted.
 
 cpt_detect(x, method = "binseg", change_in = "mean")
 #> ggcpt (changepoint detection result)
-#>   Method:         binseg
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
+#>   Method:             binseg
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -355,12 +355,12 @@ Anastasiou and Fryzlewicz 2022; Maidstone et al. 2017), one call each:
 
 fpop_wrapper(x, penalty = 2 * log(length(x)))
 #> ggcpt (changepoint detection result)
-#>   Method:         fpop
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         Manual = 10.597 
-#>   Series length:   200 
+#>   Method:             fpop
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            Manual = 10.597
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -373,12 +373,12 @@ fpop_wrapper(x, penalty = 2 * log(length(x)))
 
 wbs_wrapper(x, n_intervals = 2000, seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:         wbs
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         sSIC 
-#>   Series length:   200 
+#>   Method:             wbs
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            sSIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -391,12 +391,12 @@ wbs_wrapper(x, n_intervals = 2000, seed = 1)
 
 wbs2_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:         wbs2
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         SDLL 
-#>   Series length:   200 
+#>   Method:             wbs2
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            SDLL
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -409,12 +409,12 @@ wbs2_wrapper(x)
 
 not_wrapper(x, contrast = "pcwsConstMean", seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:         not
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         sSIC 
-#>   Series length:   200 
+#>   Method:             not
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            sSIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -427,12 +427,12 @@ not_wrapper(x, contrast = "pcwsConstMean", seed = 1)
 
 mosum_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:         mosum
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         threshold = 3.6342 
-#>   Series length:   200 
+#>   Method:             mosum
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            threshold = 3.6342
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -441,12 +441,12 @@ mosum_wrapper(x)
 #> 1   100    0.369
 mosum_wrapper(x3, multiscale = TRUE)
 #> ggcpt (changepoint detection result)
-#>   Method:         mosum
-#>   Change in:       mean 
-#>   Changepoints found: 2 
-#>   CP convention:   left 
-#>   Penalty:         threshold 
-#>   Series length:   300 
+#>   Method:             mosum
+#>   Change in:          mean
+#>   Changepoints found: 2
+#>   CP convention:      left
+#>   Penalty:            threshold
+#>   Series length:      300
 #> 
 #> Changepoints:
 #> # A tibble: 2 × 2
@@ -460,12 +460,12 @@ mosum_wrapper(x3, multiscale = TRUE)
 
 idetect_wrapper(x, seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:         idetect
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         threshold 
-#>   Series length:   200 
+#>   Method:             idetect
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            threshold
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -478,12 +478,12 @@ idetect_wrapper(x, seed = 1)
 
 tguh_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:         tguh
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         sSIC 
-#>   Series length:   200 
+#>   Method:             tguh
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            sSIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -520,13 +520,14 @@ mean (Fearnhead et al. 2019; Fearnhead and Grose 2024):
 
 ``` r
 
+set.seed(5101)
 y_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
 res_cpop <- cpop_wrapper(y_slope)
 tidy(res_cpop)
 #> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1   100     39.5
+#> 1    99     40.8
 ```
 
 **Bayesian detection.**
@@ -739,7 +740,7 @@ tidy(segmented_wrapper(y_slope, npsi = 1, seed = 1))
 #> # A tibble: 1 × 4
 #>      cp cp_value ci_lower ci_upper
 #>   <int>    <dbl>    <int>    <int>
-#> 1   100     39.5       98      101
+#> 1    99     40.8       98      101
 ```
 
 **The modern PELT family.**
@@ -774,10 +775,10 @@ types:
 path <- cpt_crops(x3)
 path
 #> ggcpt_path (CROPS penalty path)
-#>   Change in:       mean 
-#>   Penalty range:  [5.704, 57.04]
-#>   Series length:   300 
-#>   Distinct segmentations: 5 
+#>   Change in:              mean
+#>   Penalty range:          [5.704, 57.04]
+#>   Series length:          300
+#>   Distinct segmentations: 5
 #> 
 #> # A tibble: 5 × 3
 #>   penalty n_cpts  cost
@@ -1046,6 +1047,7 @@ per-series changepoints and the `ggcpt` objects themselves:
 
 ``` r
 
+set.seed(5103)
 XB <- cbind(shifted = x, pure_noise = rnorm(200))
 batch <- cpt_batch(XB, method = "pelt")
 batch
@@ -1485,26 +1487,28 @@ because it needs a network connection.
 
 ``` r
 
+set.seed(5104)
 mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
 alarms(mon)
-#> # A tibble: 2 × 3
+#> # A tibble: 3 × 3
 #>    time statistic threshold
 #>   <int>     <dbl>     <dbl>
-#> 1    38      127.       100
-#> 2   101      163.       100
+#> 1    65      223.       100
+#> 2   102     3027.       100
+#> 3   272      196.       100
 cpt_delay(mon, truth = 200)
 #> ggcpt_delay
-#>   True changes:      1
-#>   Detected:          1
-#>   Mean delay:        1
-#>   Median delay:      1
-#>   False alarms:      1
-#>   Average run length: 400
+#>   True changes:       1
+#>   Detected:           1
+#>   Mean delay:         2
+#>   Median delay:       2
+#>   False alarms:       2
+#>   Average run length: 200
 #> 
 #> # A tibble: 1 × 4
 #>   truth alarm delay detected
 #>   <int> <int> <dbl> <lgl>   
-#> 1   200   201     1 TRUE
+#> 1   200   202     2 TRUE
 ```
 
 [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)

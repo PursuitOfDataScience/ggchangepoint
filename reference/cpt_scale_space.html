@@ -70,8 +70,12 @@ is a slow shift; one that appears only at a narrow bandwidth is a spike.</p>
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>A numeric vector (or, for <code>method = "npmojo"</code>, a matrix
-with rows as time points), or a <code>ggcpt</code> object produced by a
-multiscale engine (<code>subset(cpt_methods(), scale_space)$method</code>).</p></dd>
+with rows as time points), or any <code>ggcpt</code> object. The sweep is
+computed here rather than read off the result, so a fit from any
+engine is accepted and the scale space is the one belonging to its
+series: from a <code>mosum</code> or <code>npmojo</code> result the engine is
+adopted as well (see <code>method</code>), and from anything else the
+default <code>"mosum"</code> sweep is drawn over the same series.</p></dd>
 
 
 <dt id="arg-bandwidths">bandwidths<a class="anchor" aria-label="anchor" href="#arg-bandwidths"></a></dt>

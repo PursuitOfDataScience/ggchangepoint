@@ -126,12 +126,12 @@ set.seed(2026)
 x <- c(rnorm(60), rnorm(60, 2))
 trend_wrapper(x, test = "pettitt")
 #> ggcpt (changepoint detection result)
-#>   Method:         pettitt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         alpha = 0.05 
-#>   Series length:   120 
+#>   Method:             pettitt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            alpha = 0.05
+#>   Series length:      120
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 4
@@ -140,12 +140,12 @@ trend_wrapper(x, test = "pettitt")
 #> 1    60   -0.999 1.54e-14      3072
 trend_wrapper(x, test = "snht")
 #> ggcpt (changepoint detection result)
-#>   Method:         snht
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         alpha = 0.05 
-#>   Series length:   120 
+#>   Method:             snht
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            alpha = 0.05
+#>   Series length:      120
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 4

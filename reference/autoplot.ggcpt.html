@@ -167,11 +167,13 @@ labels becomes a picture rather than a table.</p></dd>
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>
 <dd><p>Which view to draw. <code>"series"</code> (default) is the series
-with its changepoints; <code>"statistic"</code>, <code>"path"</code> and
-<code>"scale_space"</code> delegate to <code><a href="cpt_statistic.html">ggcpt_statistic()</a></code>,
-<code><a href="cpt_solution_path.html">ggcpt_solution_path()</a></code> and
-<code><a href="cpt_scale_space.html">ggcpt_scale_space()</a></code>, which error with the list of
-supporting engines when this one does not expose the internals.</p></dd>
+with its changepoints; <code>"statistic"</code> and <code>"path"</code> delegate
+to <code><a href="cpt_statistic.html">ggcpt_statistic()</a></code> and
+<code><a href="cpt_solution_path.html">ggcpt_solution_path()</a></code>, which error with the list of
+supporting engines when this one does not expose the internals.
+<code>"scale_space"</code> delegates to <code><a href="cpt_scale_space.html">ggcpt_scale_space()</a></code>,
+which needs nothing from the engine: it sweeps a multiscale detector
+over the same series, so it draws for any result.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

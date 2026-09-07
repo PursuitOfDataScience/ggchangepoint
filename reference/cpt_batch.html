@@ -108,7 +108,9 @@ faceted plot of fifty series shows dates rather than positions.</p></dd>
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Optional seed for reproducible parallel execution (passed to
 <code><a href="https://future.apply.futureverse.org/reference/future_lapply.html" class="external-link">future.apply::future_lapply()</a></code> as <code>future.seed</code>; applied via
-<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> when running sequentially).</p></dd>
+<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> when running sequentially). The seed is scoped to
+this call: <code>.Random.seed</code> is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg-keep-fit">keep_fit<a class="anchor" aria-label="anchor" href="#arg-keep-fit"></a></dt>

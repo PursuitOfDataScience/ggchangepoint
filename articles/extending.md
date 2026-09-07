@@ -39,12 +39,12 @@ fit <- as_ggcpt(external, x, method = "ruptures::Pelt",
                 cp_convention = "right")
 fit
 #> ggcpt (changepoint detection result)
-#>   Method:         ruptures::Pelt
-#>   Change in:       mean 
-#>   Changepoints found: 2 
-#>   CP convention:   left 
-#>   Penalty:         user 
-#>   Series length:   300 
+#>   Method:             ruptures::Pelt
+#>   Change in:          mean
+#>   Changepoints found: 2
+#>   CP convention:      left
+#>   Penalty:            user
+#>   Series length:      300
 #> 
 #> Changepoints:
 #> # A tibble: 2 × 2
@@ -137,12 +137,12 @@ cpt_register_method(
 res <- cpt_detect(x, method = "biggest_jump", window = 5)
 res
 #> ggcpt (changepoint detection result)
-#>   Method:         biggest_jump  [user-registered]
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   300 
+#>   Method:             biggest_jump  [user-registered]
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      300
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

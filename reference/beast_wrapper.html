@@ -80,7 +80,9 @@ which a candidate trend changepoint is reported. Defaults to <code>0.5</code>.</
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
 <dd><p>Optional seed for the engine's MCMC sampler (passed to
-<code><a href="https://rdrr.io/pkg/Rbeast/man/beast.html" class="external-link">Rbeast::beast()</a></code> as <code>mcmc.seed</code>).</p></dd>
+<code><a href="https://rdrr.io/pkg/Rbeast/man/beast.html" class="external-link">Rbeast::beast()</a></code> as <code>mcmc.seed</code>). The seed is scoped to this
+call: <code>.Random.seed</code> is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
@@ -153,7 +155,7 @@ which a candidate trend changepoint is reported. Defaults to <code>0.5</code>.</
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value posterior_prob</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    60    -<span style="color: #BB0000;">1.79</span>              1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    60   -<span style="color: #BB0000;">0.100</span>              1</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -126,12 +126,12 @@ y <- stats::ts(c(rnorm(60, 1), rnorm(60, 5)) + season,
                frequency = 12, start = c(2000, 1))
 bfast_wrapper(y)
 #> ggcpt (changepoint detection result)
-#>   Method:         bfast
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         BIC 
-#>   Series length:   120 
+#>   Method:             bfast
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            BIC
+#>   Series length:      120
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 4

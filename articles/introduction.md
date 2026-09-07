@@ -211,12 +211,12 @@ x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
 res <- cpt_detect(x, method = "pelt", change_in = "mean")
 res
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -454,10 +454,10 @@ diagnostic:
 path <- cpt_crops(x_multi)
 path
 #> ggcpt_path (CROPS penalty path)
-#>   Change in:       mean 
-#>   Penalty range:  [5.704, 57.04]
-#>   Series length:   300 
-#>   Distinct segmentations: 5 
+#>   Change in:              mean
+#>   Penalty range:          [5.704, 57.04]
+#>   Series length:          300
+#>   Distinct segmentations: 5
 #> 
 #> # A tibble: 5 × 3
 #>   penalty n_cpts  cost
@@ -621,11 +621,10 @@ automatically:
 ``` r
 
 tidy(cpt_detect(x_slope, method = "not", change_in = "slope"))
-#> # A tibble: 2 × 2
+#> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1    85     36.8
-#> 2   101     40.7
+#> 1   100     38.6
 ```
 
 ### Bayesian detection

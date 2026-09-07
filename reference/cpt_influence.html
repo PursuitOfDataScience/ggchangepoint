@@ -122,7 +122,10 @@ to <code>5</code>.</p></dd>
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed, for detectors that randomise.</p></dd>
+<dd><p>Optional seed, for detectors that randomise. The seed is
+scoped to this call: <code>.Random.seed</code> is saved and restored, so a
+seeded call inside a simulation loop does not pin the loop's own
+stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

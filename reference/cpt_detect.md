@@ -173,12 +173,12 @@ x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
 result <- cpt_detect(x, method = "pelt", change_in = "mean")
 result
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -201,13 +201,13 @@ tidy(dated)
 df <- data.frame(day = dates, value = x)
 cpt_detect(df, y = value, index = day, method = "pelt")
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
-#>   Index:           2000-01-01 to 2000-07-18 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
+#>   Index:              2000-01-01 to 2000-07-18
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 3

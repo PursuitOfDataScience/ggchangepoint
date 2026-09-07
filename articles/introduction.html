@@ -336,12 +336,12 @@ expect:</p>
 <span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="va">res</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         pelt</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -557,10 +557,10 @@ turns penalty selection into a diagnostic:</p>
 <code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="va">x_multi</span><span class="op">)</span></span>
 <span><span class="va">path</span></span>
 <span><span class="co">#&gt; ggcpt_path (CROPS penalty path)</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Penalty range:  [5.704, 57.04]</span></span>
-<span><span class="co">#&gt;   Series length:   300 </span></span>
-<span><span class="co">#&gt;   Distinct segmentations: 5 </span></span>
+<span><span class="co">#&gt;   Change in:              mean</span></span>
+<span><span class="co">#&gt;   Penalty range:          [5.704, 57.04]</span></span>
+<span><span class="co">#&gt;   Series length:          300</span></span>
+<span><span class="co">#&gt;   Distinct segmentations: 5</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 3</span></span></span>
 <span><span class="co">#&gt;   penalty n_cpts  cost</span></span>
@@ -690,11 +690,10 @@ routes <code>cpt_detect(x, method = "not", change_in = "slope")</code>
 to it automatically:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x_slope</span>, method <span class="op">=</span> <span class="st">"not"</span>, change_in <span class="op">=</span> <span class="st">"slope"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    85     36.8</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   101     40.7</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100     38.6</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="bayesian-detection">Bayesian detection<a class="anchor" aria-label="anchor" href="#bayesian-detection"></a>

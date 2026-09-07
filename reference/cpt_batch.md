@@ -66,7 +66,9 @@ autoplot(object, ...)
   [`future.apply::future_lapply()`](https://future.apply.futureverse.org/reference/future_lapply.html)
   as `future.seed`; applied via
   [`set.seed()`](https://rdrr.io/r/base/Random.html) when running
-  sequentially).
+  sequentially). The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 - keep_fit:
 

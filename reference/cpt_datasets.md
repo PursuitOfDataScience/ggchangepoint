@@ -31,7 +31,9 @@ cpt_datasets(
 
 - seed:
 
-  Seed for the simulated signals. Defaults to `1`.
+  Seed for the simulated signals. Defaults to `1`. The seed is scoped to
+  this call: `.Random.seed` is saved and restored, so a seeded call
+  inside a simulation loop does not pin the loop's own stream.
 
 - names:
 

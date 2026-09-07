@@ -15029,6 +15029,809 @@ Actual comparison: 0 &lt; 13</code></pre>
 <p>and <code>test-040-bugfixes.R:528</code> asserts <code>expect_no_warning(inspect_wrapper(Xg))</code> – which would fail on Windows and pass everywhere else. But <code>Xg</code> is <code>cbind(a = ..., b = ...)</code> on 150 rows, so <code>prod(dim(x))</code> is <strong>300</strong>, five orders of magnitude below the threshold. The warning cannot have fired. Nor does any of the nine <code>expect_silent()</code> calls touch that engine.</p>
 <p>So the failure’s identity went down with the truncated log, and that is precisely what §575 fixed. <strong>The durable outcome of this part is not the green tick; it is that a recurrence will name itself.</strong> If Windows fails again, the log will say what failed instead of thirteen copies of somebody else’s loading diagnostic.</p>
 </div>
+<div class="section level2">
+<h2 id="id_579-the-windows-failure-finally-named--and-it-is-a-process-death">579. The Windows failure, finally named – and it is a process death<a class="anchor" aria-label="anchor" href="#id_579-the-windows-failure-finally-named--and-it-is-a-process-death"></a></h2>
+<p><code>2327dc1</code> changed <strong>only <code>next_release.md</code></strong>, which <code>.Rbuildignore</code> excludes, so the checked tarball was byte-identical to the green <code>57a5804</code>. Windows failed anyway. That settles the question §578 left open: <strong>the failure is intermittent, and nothing in this loop’s edits caused or cured it.</strong></p>
+<p>With <code>_R_CHECK_TESTS_NLINES_: 1000</code> now in effect – confirmed present in the job’s env block – the complete test output is available, and the important thing about it is what is <em>absent</em>:</p>
+<blockquote>
+<p>there is no <code>[ FAIL n | WARN n | SKIP n | PASS n ]</code> line anywhere.</p>
+</blockquote>
+<p>testthat never printed its summary. This is not an expectation failure; the <strong>R process died mid-run</strong>. <code>testthat.Rout.fail</code> is 91 lines and stops after a printed tibble, with no condition, no traceback and no <code>Execution halted</code> inside the test output.</p>
+<p>The last thing printed locates it exactly. <code>test-050-tools.R:462-468</code> ends a block by trimming and printing five objects:</p>
+<div class="sourceCode" id="cb120"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb120-1"><a href="#cb120-1" tabindex="-1"></a>cv <span class="ot">&lt;-</span> <span class="fu">cpt_label_error_curve</span>(ds<span class="sc">$</span>a<span class="sc">$</span>series, labs, <span class="at">penalties =</span> <span class="fu">c</span>(<span class="dv">2</span>, <span class="dv">20</span>, <span class="dv">200</span>))</span>
+<span id="cb120-2"><a href="#cb120-2" tabindex="-1"></a><span class="cf">for</span> (obj <span class="cf">in</span> <span class="fu">list</span>(labs, err, b, r, cv)) { ... <span class="fu">expect_warning</span>(<span class="fu">print</span>(trimmed), <span class="cn">NA</span>, ...) }</span></code></pre></div>
+<p>and the log’s final five tibbles are <code>label_id</code>, <code>label_id</code>, <code>series</code>, <code>method</code>, and <code>penalty</code> with values 2/20/200 – that loop, in order, complete. So the process survived to the end of that test and died at the boundary into the next one, <code>"a monitor refuses a feed of the wrong width"</code>, which builds an <strong><code>ocd</code></strong> monitor:</p>
+<div class="sourceCode" id="cb121"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">mv</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_monitor.html">cpt_monitor</a></span><span class="op">(</span><span class="st">"ocd"</span>, baseline <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">240</span><span class="op">)</span>, ncol <span class="op">=</span> <span class="fl">3</span><span class="op">)</span>,</span>
+<span>                  thresh <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">10</span>, <span class="fl">10</span>, <span class="fl">10</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p><code>ocd</code> is compiled code, and the check reports <strong>0 notes</strong> with no “packages suggested but not available” – so <code>ocd</code> was installed and that test really ran. A hard crash inside an engine’s C++ kills R exactly this way: no R condition, no testthat summary, output simply stops.</p>
+<p><strong>Flagged rather than fixed, once:</strong> this is a genuine risk for the submission, because CRAN’s Windows builders would meet the same intermittency. It is not reproducible on this Linux machine, and guessing at a code change for a crash I cannot trigger would be worse than naming it. What the round delivers is the diagnosis – which was unobtainable two commits ago – and the log setting that produced it.</p>
+</div>
+<div class="section level2">
+<h2 id="id_580-the-changelog-had-stopped-tracking-the-code-four-commits-ago">580. The changelog had stopped tracking the code four commits ago<a class="anchor" aria-label="anchor" href="#id_580-the-changelog-had-stopped-tracking-the-code-four-commits-ago"></a></h2>
+<p>The first thing a sweep of this working tree turns up is not in the code. <code>b94c612</code> is the <strong>last commit that touched <code>NEWS.md</code></strong>, and four code-bearing commits follow it:</p>
+<table class="table"><thead><tr><th>commit</th>
+<th>R files changed</th>
+</tr></thead><tbody><tr><td><code>7ece62f</code></td>
+<td>9</td>
+</tr><tr><td><code>bfa2677</code></td>
+<td>33</td>
+</tr><tr><td><code>af544bf</code></td>
+<td>1</td>
+</tr><tr><td><code>57a5804</code></td>
+<td>1</td>
+</tr></tbody></table><p>That is 42 file-touches and ~1500 changed lines of <code>R/</code> with <strong>no changelog entry</strong>, and <code>cran-comments.md</code> telling CRAN “Forty-one defects … NEWS.md itemises them and each has a regression test” while the tree holds considerably more than forty-one.</p>
+<p>The gap is not cosmetic, because four of the undocumented items are wrong answers rather than rough edges:</p>
+<ul><li>
+<strong><code>wbsts</code> could not report more than one changepoint.</strong> Its <code>suppressWarnings(if (is.na(OUT)) OUT = NULL)</code> has been an error since R 4.2 for exactly the case where <code>OUT</code> holds two or more of them.</li>
+<li>
+<strong><code>hdcov</code> and <code>network</code> failed on 44-96% of runs, at random</strong>, on <code>thresholdBS()</code>’s <code>2:level_length</code> against a single-level tree.</li>
+<li>
+<strong><code><a href="reference/cpt_batch.html">cpt_batch()</a></code> detected on a panel it had rewritten</strong> – a factor member became level codes, a matrix member was unrolled column-wise into a longer series with a changepoint at the seam.</li>
+<li>
+<strong><code><a href="reference/ecp_wrapper.html">ecp_wrapper()</a></code> absorbed non-finite values</strong>, losing a real changepoint on twenty <code>NA</code>s and inventing two on an all-<code>NA</code> half.</li>
+</ul><p>A user upgrading from 0.4.0 would have had no way to learn any of that from the package.</p>
+<div class="section level3">
+<h3 id="id_5801-what-the-audit-passes-had-recorded-instead">580.1 What the audit passes had recorded instead<a class="anchor" aria-label="anchor" href="#id_5801-what-the-audit-passes-had-recorded-instead"></a></h3>
+<p>The information was not lost – §285 to §579 of this document describe every one of them. But <code>next_release.md</code> is <code>.Rbuildignore</code>d and is a development ledger, not a changelog; NEWS.md is what ships and what <code>pkgdown</code> renders. The two had diverged because the audit rounds were written up here and the write-up here felt like the write-up.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_581-what-this-pass-changes">581. What this pass changes<a class="anchor" aria-label="anchor" href="#id_581-what-this-pass-changes"></a></h2>
+<ul><li>
+<strong>A 47-item <code>NEWS.md</code> section</strong>, “Fixes found in the final pre-submission sweeps”, covering all four commits: the four wrong answers above, the argument-collision sweep, <code>cpm</code>’s two thresholds, the search-path and console-noise fixes, and the documentation that had drifted. Grouped by kind rather than by commit, because a reader does not care which pass found what.</li>
+<li>
+<strong><code>cran-comments.md</code></strong>: “Forty-one defects” -&gt; “Eighty-eight”, and a new paragraph naming the three engine-level defects this package routes around, because a CRAN reviewer reading <code>wbs_lsw_replay()</code> should not have to work out from the source why a wrapper replays an engine’s body.</li>
+<li>The same file’s <strong>Dependencies paragraph is rewritten</strong>. Two edits had collided in it: the sentence “Every one is guarded with <code><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace()</a></code> …” – which is about the thirty-five engines – had ended up after a five-line digression about <code>mcp</code> and JAGS, where “Every one” reads as being about <code>mcp</code>.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="id_582-fifteen--collisions-the-wrapper-sweep-could-not-see">582. Fifteen <code>...</code> collisions the wrapper sweep could not see<a class="anchor" aria-label="anchor" href="#id_582-fifteen--collisions-the-wrapper-sweep-could-not-see"></a></h2>
+<p>§354, §377 and §397 swept <code>...</code> against every engine argument, and the sweep was over the <strong>registry</strong>: fifty wrappers, 64 argument slots. Four exported entry points are not registry wrappers, were therefore not swept, and each pins or renames an engine argument:</p>
+<pre><code>cpt_crops(penalty=)      cpt_crops(method=)      cpt_crops(pen.value=)
+cpt_wrapper(method=)     ggcptplot(method=)
+cpt_monitor(cpmType=)    cpt_monitor(ARL0=)      cpt_monitor(MC_reps=)
+cpt_monitor(dim=)        cpt_monitor(beta=)      + the same five through
+                                                   cpt_replay()</code></pre>
+<p>Every one answered with R’s own <code>formal argument "penalty" matched by multiple actual arguments</code>, which names neither the function, nor the engine, nor what to use instead – the exact failure those two helpers exist to prevent, in the four places nobody had pointed them at.</p>
+<p><code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>’s is the one most likely to be met: it renames <code>changepoint</code>’s <code>method</code> to <code>cp_method</code> because <code>method</code> already means “which detector” everywhere else in this package, which makes <code>method</code> both the natural thing for a reader of <code>?cpt.mean</code> to pass and the one that breaks.</p>
+<div class="section level3">
+<h3 id="id_5821-three-things-measured-rather-than-assumed">582.1 Three things measured rather than assumed<a class="anchor" aria-label="anchor" href="#id_5821-three-things-measured-rather-than-assumed"></a></h3>
+<ul><li>
+<strong><code>thresh</code>, <code>patience</code> and <code>startup</code> cannot reach <code>...</code> at all.</strong> They are formals of <code><a href="reference/cpt_monitor.html">cpt_monitor()</a></code>, so R matches them there first, and a guard listing them would be a branch that can never fire. Probed individually rather than added by pattern-match with the others.</li>
+<li>
+<strong><code><a href="reference/cpt_replay.html">cpt_replay()</a></code> needs no guard of its own.</strong> It forwards <code>...</code> to <code><a href="reference/cpt_monitor.html">cpt_monitor()</a></code>, so one fix covers both – confirmed by probing <code><a href="reference/cpt_replay.html">cpt_replay()</a></code> after fixing only <code><a href="reference/cpt_monitor.html">cpt_monitor()</a></code>.</li>
+<li>
+<strong><code><a href="reference/ggcptplot.html">ggcptplot()</a></code> must name itself.</strong> It shares <code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>’s rename, so keying the message off the map key told a <code><a href="reference/ggcptplot.html">ggcptplot()</a></code> caller about <code><a href="reference/cpt_wrapper.html">cpt_wrapper()</a></code>. <code>reject_renamed_args()</code> grew a <code>label</code> argument for exactly that, since being told about a function you did not call is the failure this whole guard exists to stop.</li>
+</ul></div>
+</div>
+<div class="section level2">
+<h2 id="id_583-bcp-was-still-talking-and-four-print-headers-were-ragged">583. <code>bcp</code> was still talking, and four print headers were ragged<a class="anchor" aria-label="anchor" href="#id_583-bcp-was-still-talking-and-four-print-headers-were-ragged"></a></h2>
+<p><strong>§310 restored the search path and did not stop the announcement.</strong> <code><a href="https://rdrr.io/pkg/bcp/man/bcp.html" class="external-link">bcp::bcp()</a></code> calls <code><a href="https://github.com/zhaokg/bcp" class="external-link">require(bcp)</a></code> in its own body; the fix detached <code>package:bcp</code> and <code>package:grid</code> afterwards, but <code><a href="https://rdrr.io/r/base/library.html" class="external-link">require()</a></code> speaks through <code><a href="https://rdrr.io/r/base/message.html" class="external-link">packageStartupMessage()</a></code> first, so every <code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code> call still printed two <code>Loading required package:</code> lines on stderr. They are visible in this loop’s own test logs. <code>with_search_path_restored()</code> now suppresses package startup messages – only those, so an engine’s <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> and <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code> still reach the caller.</p>
+<p><strong>And four <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> headers padded their labels by hand.</strong> Measured on the rendered output rather than read:</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>method</th>
+<th>defect</th>
+</tr></thead><tbody><tr><td><code>print.ggcpt</code></td>
+<td>values in <strong>three</strong> columns (19, 20, 22)</td>
+</tr><tr><td><code>print.summary.ggcpt</code></td>
+<td>a different column from <code>print.ggcpt</code>, same object</td>
+</tr><tr><td><code>print.ggcpt_delay</code></td>
+<td>five of six right, <code>Average run length:</code> one out</td>
+</tr><tr><td><code>print.ggcpt_path</code></td>
+<td>
+<code>Distinct segmentations:</code> unpadded entirely</td>
+</tr></tbody></table><p>plus a trailing space on every line built with <code><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat()</a></code>’s default separator – 5 of 13 lines of a <code>ggcpt</code>, 7 of a summary – because the separator lands between the value and the <code>"\n"</code>. One <code>cat_field()</code> helper now emits all of them, so they cannot drift apart again. The tibble printed below each header pads its own columns; that is tibble’s output and is left alone, which the regression test has to know.</p>
+<p><code>print.ggcpt</code> also had <strong>no <code>\value</code> section</strong> – the single most common reason a CRAN reviewer sends a package back – and four topics (<code>print.ggcpt</code>, <code>is_ggcpt</code>, <code>new_ggcpt</code>, <code>alarms</code>) had a <code>\description</code> byte-identical to their <code>\title</code>, because roxygen copies the title when there is no description paragraph.</p>
+</div>
+<div class="section level2">
+<h2 id="id_584-scale_space-is-not-the-column-three-help-pages-said-it-was">584. <code>scale_space</code> is not the column three help pages said it was<a class="anchor" aria-label="anchor" href="#id_584-scale_space-is-not-the-column-three-help-pages-said-it-was"></a></h2>
+<p><code><a href="reference/cpt_methods.html">?cpt_methods</a></code> grouped it with <code>statistic</code> and <code>path</code>:</p>
+<blockquote>
+<p><code>statistic</code>, <code>path</code> and <code>scale_space</code> the internals rendered by <code><a href="reference/cpt_statistic.html">ggcpt_statistic()</a></code>, <code><a href="reference/cpt_solution_path.html">ggcpt_solution_path()</a></code> and <code><a href="reference/cpt_scale_space.html">ggcpt_scale_space()</a></code></p>
+</blockquote>
+<p><code>autoplot(type =)</code> said the three “error with the list of supporting engines when this one does not expose the internals”, and <code><a href="reference/cpt_scale_space.html">?cpt_scale_space</a></code> typed its <code>x</code> as “a <code>ggcpt</code> object produced by a multiscale engine”. All three describe a gate that does not exist.</p>
+<p>Measured on a <code>pelt</code> fit, which the table marks <code>scale_space = FALSE</code>:</p>
+<pre><code>cpt_statistic(res)      -&gt; Engine `pelt` does not expose a per-location statistic.
+cpt_solution_path(res)  -&gt; Engine `pelt` does not expose a solution path.
+cpt_scale_space(res)    -&gt; 600 rows: index, bandwidth, statistic,
+                           threshold, significant, detected
+autoplot(res, type = "scale_space") -&gt; a ggplot</code></pre>
+<p><code>statistic</code> and <code>path</code> gate their accessors. <code>scale_space</code> does not, because <strong>no engine stores one</strong>: a grep for anything writing <code>diagnostics$scale_space</code> finds nothing, and <code><a href="reference/cpt_scale_space.html">cpt_scale_space()</a></code> computes the sweep itself by running <code>mosum</code> (or <code>npmojo</code>) over the series. So the column marks the two engines the sweep can be run <em>with</em> – the domain of that function’s own <code>method</code> argument, which is exactly how <code><a href="reference/cpt_scale_space.html">?cpt_scale_space</a></code> already used it one paragraph earlier (<code>subset(cpt_methods(), scale_space)$method</code>).</p>
+<p>The cost of the wrong wording is a reader with a <code>pelt</code> fit concluding the scale-space view is closed to them. All three pages now say what the column is, and a test pins the behaviour: <code><a href="reference/cpt_scale_space.html">cpt_scale_space()</a></code> on a <code>pelt</code> result returns a sweep, <code>res$diagnostics$scale_space</code> is <code>NULL</code>, and the two columns that <em>do</em> gate still refuse by name.</p>
+</div>
+<div class="section level2">
+<h2 id="id_585-four-sweeps-that-found-nothing-recorded-so-they-are-not-repeated">585. Four sweeps that found nothing, recorded so they are not repeated<a class="anchor" aria-label="anchor" href="#id_585-four-sweeps-that-found-nothing-recorded-so-they-are-not-repeated"></a></h2>
+<p>Negative results, each measured rather than reasoned about:</p>
+<ul><li>
+<strong>Structural invariants, all 50 wired methods.</strong> For each: <code>cp</code> whole, strictly increasing and inside the convention’s range; <code>cp_value</code> equal to <code>data$value[cp]</code>; <code>segments</code> a gapless partition of <code>1..n</code> with <code>n == end - start + 1</code> and <code>nrow == length(cp) + 1</code>; <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> one row per changepoint, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> exactly one, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> exactly <em>n</em>; <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>, <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> all building. <strong>48 clean, 2 correct refusals</strong> (<code>hdreg</code> requires <code>response</code>, <code>fabisearch</code> requires non-negative values). No violations.</li>
+<li>
+<strong>Capability columns against their accessors.</strong> <code>ci</code>, <code>fitted</code>, <code>statistic</code>, <code>path</code> and <code>posterior</code> agree with what every installed method actually delivers, with no exceptions. (The <code>scale_space</code> disagreement was §584 – a wrong premise in the sweep, which is what led to the wrong wording being found.)</li>
+<li>
+<strong>Documented defaults against <code><a href="https://rdrr.io/r/base/formals.html" class="external-link">formals()</a></code>.</strong> 159 <code>@param</code> texts saying “Defaults to X” compared against the actual default; every mismatch surviving normalisation was the comparator’s (a captured sentence period, <code>NA</code> vs <code>NA_real_</code>, <code>1e-3</code> vs <code>0.001</code>, prose describing a computed default). Zero real drift.</li>
+<li>
+<strong>Every README chunk, run.</strong> <code>README.md</code> is not checked by <code>R CMD check</code> and had not been rebuilt since <code>abf04c6</code>, so the 112 expressions in <code>README.Rmd</code> were purled and evaluated one at a time against the current package: <strong>0 failures</strong>.</li>
+</ul><p>Also clean: no dead internal functions (every non-exported definition has at least one reference in <code>R/</code>, the tests or the vignettes); no <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code>/<code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code> missing <code>call. = FALSE</code> except four deliberate condition re-throws; the pkgdown reference index covers every exported topic; and no <code>TODO</code>/<code>FIXME</code> anywhere in the sources.</p>
+</div>
+<div class="section level2">
+<h2 id="id_586-verification">586. Verification<a class="anchor" aria-label="anchor" href="#id_586-verification"></a></h2>
+<p><code>R CMD check --as-cran</code> on the built tarball, R 4.4.1:</p>
+<pre><code>checking installed package size ... OK
+checking R code for possible problems ... OK
+checking Rd \usage sections ... OK
+checking examples ... [53s] OK
+checking examples with --run-donttest ... [123s] OK
+  Running 'testthat.R' [328s] OK
+checking re-building of vignette outputs ... [118s] OK
+
+Status: 1 ERROR, 2 WARNINGs, 3 NOTEs</code></pre>
+<p>All six are the machine’s, and are the same six this document has recorded since 0.4.0: no <code>qpdf</code> (WARNING), no <code>pdflatex</code> (WARNING + ERROR on the PDF manual, and the NOTE about the <code>.tex</code> file it leaves behind), no <code>tidy</code> (NOTE on the HTML manual), and <code>rjags</code>/<code>mcp</code> unavailable because there is no JAGS here (NOTE). Nothing substantive: the examples, <code>--run-donttest</code>, the full test suite and the vignette rebuild are all OK, and the installed size did not trip the 5 MB note on this run.</p>
+</div>
+<div class="section level2">
+<h2 id="id_587-cpt_confintmethod--auto-answered-a-different-question-quietly">587. <code>cpt_confint(method = "auto")</code> answered a different question, quietly<a class="anchor" aria-label="anchor" href="#id_587-cpt_confintmethod--auto-answered-a-different-question-quietly"></a></h2>
+<p>The bound-invariant sweep – lower &lt;= cp &lt;= upper, both inside <code>1..(n-1)</code>, one row per changepoint, <code>source</code> non-empty – ran over every provenance against every installed univariate engine, 59 method/route pairs. <strong>All the geometric invariants hold.</strong> The one thing that did not was a level:</p>
+<pre><code>cpt_confint(nsp_result, method = "auto", level = 0.95)   -&gt;  level column 0.9
+cpt_confint(nsp_result, method = "nsp",  level = 0.95)   -&gt;  level column 0.95</code></pre>
+<p>The mechanism is short. An <code>nsp</code> result carries significance regions, so <code>native_bounds()</code> finds them, <code>"auto"</code> resolves to <code>"native"</code>, and <code>"native"</code> reports <code>native$level</code> – which is what <code><a href="reference/nsp_wrapper.html">nsp_wrapper()</a></code>’s default <code>alpha = 0.1</code> produced, a global level of 0.9. The requested 0.95 is discarded on the way.</p>
+<p><strong>Nothing here was dishonest.</strong> The <code>level</code> column said 0.9, the <code>source</code> column said <code>nsp_region</code>, and <code><a href="reference/cpt_confint.html">?cpt_confint</a></code> documented that <code>method = "native"</code> ignores <code>level</code>. The gap is that the caller who is surprised did not ask for <code>"native"</code>; they asked for <code>"auto"</code> and were never told where it went. Asking for a 95% interval and getting a 90% one with no signal but a column you have to inspect is the kind of thing that reaches a paper.</p>
+<div class="section level3">
+<h3 id="id_5871-why-a-warning-rather-than-recomputing">587.1 Why a warning rather than recomputing<a class="anchor" aria-label="anchor" href="#id_5871-why-a-warning-rather-than-recomputing"></a></h3>
+<p>Recomputing NSP at the requested level would be the wrong fix twice over: it would spend an <code>M = 1000</code> Monte Carlo run that <code>"auto"</code> exists to avoid, and it would throw away the regions the result already carries – which are the inference the user asked for when they chose <code>nsp</code>. Reusing them is right; doing it silently was not.</p>
+<p>So the check is <strong>on the answer, not on the route</strong>: if an explicitly supplied <code>level</code> does not appear in the <code>level</code> column, say so and name the branch that got there. That covers <code>"auto"</code> -&gt; <code>"native"</code> without needing per-route bookkeeping, and it would catch any future route with the same property.</p>
+<p>Two details that keep it from being noise:</p>
+<ul><li>
+<strong><code>missing(level)</code> gates it.</strong> The default must never warn, because 0.95 against a 0.9 native interval is the overwhelmingly common case and warning about it would train the user to ignore the warning.</li>
+<li>
+<strong>Tolerance, not equality.</strong> <code>abs(got - requested) &lt; 1e-9</code>, since the levels travel as doubles through an engine.</li>
+</ul><p><code><a href="reference/cpt_monitor.html">cpt_monitor()</a></code> already warns on exactly this pattern – “<code>arl0</code> does not affect <code>method = \"edetector\"</code>, which is tuned by <code>alpha</code>” – so this is the courtesy the package already extends elsewhere, applied to the one place it was missing.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_588-twelve-metrics-twelve-names-three-explanations">588. Twelve metrics, twelve names, three explanations<a class="anchor" aria-label="anchor" href="#id_588-twelve-metrics-twelve-names-three-explanations"></a></h2>
+<p><code><a href="reference/cpt_metrics.html">?cpt_metrics</a></code>’s <code>@return</code> was a flat comma-separated list of twelve column names, and <code>@details</code> explained precision/recall, covering, and the both-empty case. What a reader could not learn from the page:</p>
+<ul><li>
+<p><strong><code>annotation_error</code> is a count difference and nothing else.</strong> It is <code>abs(n_pred - n_truth)</code>. Measured on a 100-point series, predicting 5 against a truth of 90:</p>
+<pre><code>annotation_error = 0     hausdorff = 85     f1 = 0     rand_index = -0.06</code></pre>
+<p>A perfect score for a segmentation that got the location wrong by 85 observations. That is the metric behaving as defined – but a <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code> column reading 0 is going to be read as “perfect”, and nothing said otherwise.</p>
+</li>
+<li><p><strong>Which direction is better.</strong> <code>benchmark.R</code> knows (<code>lower_better &lt;- metric %in% c("hausdorff", "annotation_error", "mae_matched", "rmse_matched")</code>); the help page did not say.</p></li>
+<li>
+<p><strong>The one-sided degenerate cases</strong>, where the row mixes two conventions:</p>
+<table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th>case</th>
+<th>precision / recall / f1</th>
+<th>rand_index</th>
+<th>hausdorff / mae / rmse</th>
+</tr></thead><tbody><tr><td>both empty</td>
+<td>1</td>
+<td>1</td>
+<td><code>NA</code></td>
+</tr><tr><td>
+<code>pred</code> empty</td>
+<td>0</td>
+<td>0</td>
+<td><code>NA</code></td>
+</tr><tr><td>
+<code>truth</code> empty</td>
+<td>0</td>
+<td>0</td>
+<td><code>NA</code></td>
+</tr><tr><td>nothing matched</td>
+<td>0</td>
+<td>&lt; 0</td>
+<td>
+<code>NA</code> for mae/rmse, a number for hausdorff</td>
+</tr></tbody></table><p>So an all-wrong answer returns <code>f1 = 0</code> and <code>mae_matched = NA</code> in the same row – 0 where the quantity is a rate, <code>NA</code> where it is a distance with no pair to measure. Only the both-empty row was documented, and it is the one a reader is least likely to hit.</p>
+</li>
+</ul><div class="section level3">
+<h3 id="id_5881-the-numbers-themselves-are-right">588.1 The numbers themselves are right<a class="anchor" aria-label="anchor" href="#id_5881-the-numbers-themselves-are-right"></a></h3>
+<p>Checked rather than asserted, against reference implementations written from the definitions and sharing no code with the package: <code>covering</code> by explicit <code><a href="https://rdrr.io/r/base/sets.html" class="external-link">intersect()</a></code>/<code><a href="https://rdrr.io/r/base/sets.html" class="external-link">union()</a></code> over every segment pair, <code>rand_index</code> from a contingency table with <code><a href="https://rdrr.io/r/base/Special.html" class="external-link">choose()</a></code>, <code>hausdorff</code> by double minimax, precision/recall by re-running the greedy one-to-one match. Nine hand-built cases plus twenty random 400-point ones. <strong>Every non-degenerate value agreed exactly</strong>, including the <code><a href="https://rdrr.io/r/base/findInterval.html" class="external-link">findInterval()</a></code> fast path in <code>calc_covering()</code> – which is a performance change to a formula, so a test now pins it to the definition rather than to a recorded number.</p>
+<p>The only disagreements were the degenerate rows above, where the reference divided by zero and the package makes a deliberate choice. That is what turned this from a correctness check into a documentation one.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_589-what-this-pass-changes">589. What this pass changes<a class="anchor" aria-label="anchor" href="#id_589-what-this-pass-changes"></a></h2>
+<ul><li>
+<strong><code><a href="reference/cpt_confint.html">cpt_confint()</a></code> warns</strong> when an explicitly supplied <code>level</code> is not the one the answer carries, naming the route. <code>@param level</code> now says that <code>"auto"</code> resolves to <code>"native"</code> whenever the engine supplied an interval, so an explicit level can go unused there too.</li>
+<li>
+<strong><code><a href="reference/cpt_metrics.html">?cpt_metrics</a></code> gains a <code>\describe</code> return block</strong> – every column, what it measures, and which direction is better – plus a “Degenerate cases” section giving the table above. <code>annotation_error</code> carries an explicit “read it beside a location metric, never alone”.</li>
+<li>
+<strong><code><a href="reference/cpt_scale_space.html">?cpt_scale_space</a></code>, <code><a href="reference/cpt_methods.html">?cpt_methods</a></code> and <code>autoplot(type =)</code></strong> stop describing <code>scale_space</code> as a gate (see §584).</li>
+<li>Four regression tests: the level warning and its silence on the default, the level honoured on every computing route with the geometric invariants alongside, the metric conventions row by row, and covering against its definition.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="id_590-two-more-clean-sweeps">590. Two more clean sweeps<a class="anchor" aria-label="anchor" href="#id_590-two-more-clean-sweeps"></a></h2>
+<ul><li>
+<strong>Time-index threading, end to end.</strong> With a weekly <code>Date</code> index over 200 observations and five engines: <code>res$index</code> identical to what was supplied; <code>tidy()$cp_index</code> equal to <code>index[cp]</code> <strong>and still a <code>Date</code></strong>; <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> carrying a Date column equal to the index in order; <code><a href="reference/cpt_confint.html">cpt_confint()</a></code>’s <code>cp_index</code>, <code>ci_lower_index</code> and <code>ci_upper_index</code> all equal to the index at their integer positions; <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>’s x range spanning the index rather than <code>1..n</code>; <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> reporting the index. Plus the two guards: an unequally spaced index warns, and a wrong-length one is refused by name. <strong>No violations.</strong>
+</li>
+<li>
+<strong><code><a href="reference/cpt_confint.html">cpt_confint()</a></code> geometry</strong>, as above: 59 method/route pairs, every interval bracketing its changepoint and inside the series.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="id_591-the-check-that-names-the-wrong-line">591. The check that names the wrong line<a class="anchor" aria-label="anchor" href="#id_591-the-check-that-names-the-wrong-line"></a></h2>
+<p>Adding §589’s tests made the suite fail, and the failure was informative about the checker rather than about the tests:</p>
+<pre><code>test-hardening.R:1585 uses nsp_wrapper without skip_if_not_installed()</code></pre>
+<p>Line 1585 is <code>test_that("the covering metric matches an explicit set computation", ...)</code>, which computes Jaccard overlaps on integer vectors and does not touch <code>nsp</code> in any form. The only mention of <code><a href="reference/nsp_wrapper.html">nsp_wrapper()</a></code> in the file was in a <strong>section comment introducing the next test</strong> – the guarded one that legitimately uses it.</p>
+<p>The cause is one line of the checker:</p>
+<div class="sourceCode" id="cb128"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">starts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/grep.html" class="external-link">grep</a></span><span class="op">(</span><span class="st">"^test_that\\("</span>, <span class="va">src</span><span class="op">)</span></span>
+<span><span class="va">ends</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">starts</span><span class="op">[</span><span class="op">-</span><span class="fl">1</span><span class="op">]</span> <span class="op">-</span> <span class="fl">1L</span>, <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">src</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>A block therefore runs to the line before the next <code>test_that(</code>, so everything between two blocks – blank lines, and the header comment belonging to the block below – is attributed to the block above.</p>
+<p><strong>A checker that names the wrong line is worse than no checker</strong>, because the failure is confusing instead of informative: the obvious response is to add a guard to a test that does not need one, which weakens the coverage this check exists to protect (the design note above it is explicit that a call inside <code>expect_error()</code> must stay unguarded, for exactly that reason).</p>
+<div class="section level3">
+<h3 id="id_5911-srcrefs-not-brace-counting">591.1 srcrefs, not brace counting<a class="anchor" aria-label="anchor" href="#id_5911-srcrefs-not-brace-counting"></a></h3>
+<p>The fix is to take each block’s extent from R’s own parser: <code>parse(f, keep.source = TRUE)</code> and the <code>srcref</code> attribute give the first and last line of each expression, and comments <em>between</em> expressions belong to no expression at all.</p>
+<p>Brace counting was the other candidate and would have been wrong here: several blocks in this suite contain a brace inside a string – <code>skip("{mcp} is not installed")</code> is one – so a balance counter would mis-close them. The parser handles it because it is a parser.</p>
+</div>
+<div class="section level3">
+<h3 id="id_5912-measured-both-ways">591.2 Measured both ways<a class="anchor" aria-label="anchor" href="#id_5912-measured-both-ways"></a></h3>
+<p>The synthetic file the new test builds has all five shapes, and the two rules disagree exactly where they should:</p>
+<table class="table"><thead><tr><th>block</th>
+<th>old rule</th>
+<th>srcrefs</th>
+</tr></thead><tbody><tr><td>A: unguarded, touches nothing</td>
+<td><strong>flagged</strong></td>
+<td>–</td>
+</tr><tr><td>B: guarded, header above belongs to it</td>
+<td>–</td>
+<td>–</td>
+</tr><tr><td>C: genuinely unguarded call</td>
+<td>flagged</td>
+<td><strong>flagged</strong></td>
+</tr><tr><td>D: brace inside a string</td>
+<td>–</td>
+<td>–</td>
+</tr><tr><td>E: call inside <code>expect_error()</code>
+</td>
+<td>–</td>
+<td>–</td>
+</tr></tbody></table><p>So the change removes a false positive and keeps the true one, which is what the test asserts – both directions, so a future simplification back to the line-based rule fails rather than passing quietly.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_592-verification">592. Verification<a class="anchor" aria-label="anchor" href="#id_592-verification"></a></h2>
+<p>Full suite via <code><a href="https://testthat.r-lib.org/reference/test_package.html" class="external-link">testthat::test_local()</a></code>: the only failure was the one in §591, and it is now fixed; the two standing skips (<code>mcp</code> needs JAGS, the TCPD download is not exercised) and the two <code>envcpt</code> upstream warnings are unchanged.</p>
+</div>
+<div class="section level2">
+<h2 id="id_593-180-was-the-highest-severity-item-in-this-document-and-was-never-done">593. §180 was the highest-severity item in this document and was never done<a class="anchor" aria-label="anchor" href="#id_593-180-was-the-highest-severity-item-in-this-document-and-was-never-done"></a></h2>
+<p>The audit that wrote §180 called it “the highest severity-to-effort ratio in the document”. §214.3 listed it as an action. §232 corrected its scope from 19 sites to 35. And then:</p>
+<pre><code>$ grep -rn "with_local_seed\|with_seed" R/
+$ grep -rc "if (!is.null(seed)) set.seed(seed)" R/*.R | ...
+35</code></pre>
+<p><strong>No helper, thirty-five bare sites.</strong> The diagnosis was written three times and the fix zero. Re-measured against the current tree before touching anything, because a stale finding is worth less than no finding:</p>
+<table class="table"><thead><tr><th>entry point</th>
+<th>distinct datasets in a 6-iteration loop</th>
+</tr></thead><tbody><tr><td>
+<code>cpt_detect(method = "wbs")</code> – no seed</td>
+<td>6 of 6</td>
+</tr><tr><td><code>cpt_detect(method = "wbs", seed = 1)</code></td>
+<td><strong>2 of 6</strong></td>
+</tr><tr><td><code>cpt_detect(method = "nsp", seed = 1)</code></td>
+<td><strong>2 of 6</strong></td>
+</tr><tr><td><code>cpt_stability(B = 5, seed = 7)</code></td>
+<td><strong>2 of 6</strong></td>
+</tr><tr><td><code>cpt_simulate(seed = 3)</code></td>
+<td><strong>2 of 6</strong></td>
+</tr><tr><td><code>cpt_select(criterion = "cv", seed = 5)</code></td>
+<td><strong>2 of 6</strong></td>
+</tr></tbody></table><p>and directly, with the data pre-generated so generation cannot be mistaken for the effect: after <code>cpt_detect(x, method = "wbs", seed = 42)</code> the caller’s next <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm()</a></code> draw is not the one they would have got. Still live, exactly as described.</p>
+<div class="section level3">
+<h3 id="id_5931-why-the-fix-is-a-statement-and-not-an-expression-wrapper">593.1 Why the fix is a statement and not an expression wrapper<a class="anchor" aria-label="anchor" href="#id_5931-why-the-fix-is-a-statement-and-not-an-expression-wrapper"></a></h3>
+<p>§180.2 proposed <code>with_local_seed(seed, expr)</code>. That form is cleaner in isolation and would have meant restructuring thirty-six function bodies to wrap everything after the seeding inside a call – a large diff across twenty-one files, in wrappers whose bodies are the part of the package most worth not disturbing before a submission.</p>
+<p>The equivalent that is a <strong>one-line substitution</strong> is to register the restore in the <em>caller’s</em> frame:</p>
+<div class="sourceCode" id="cb130"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">local_seed</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">seed</span>, <span class="va">envir</span> <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/sys.parent.html" class="external-link">parent.frame</a></span><span class="op">(</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span>
+<span>  <span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/NULL.html" class="external-link">is.null</a></span><span class="op">(</span><span class="va">seed</span><span class="op">)</span><span class="op">)</span> <span class="kw"><a href="https://rdrr.io/r/base/function.html" class="external-link">return</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/invisible.html" class="external-link">invisible</a></span><span class="op">(</span><span class="cn">FALSE</span><span class="op">)</span><span class="op">)</span></span>
+<span>  <span class="va">...</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call</a></span><span class="op">(</span><span class="fu">base</span><span class="fu">::</span><span class="va"><a href="https://rdrr.io/r/base/on.exit.html" class="external-link">on.exit</a></span>,</span>
+<span>          <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/substitute.html" class="external-link">substitute</a></span><span class="op">(</span><span class="fu">f</span><span class="op">(</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>f <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/name.html" class="external-link">as.name</a></span><span class="op">(</span><span class="va">nm</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, add <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span>,</span>
+<span>          envir <span class="op">=</span> <span class="va">envir</span><span class="op">)</span></span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="va">seed</span><span class="op">)</span></span>
+<span><span class="op">}</span></span></code></pre></div>
+<p>A helper’s own <code><a href="https://rdrr.io/r/base/on.exit.html" class="external-link">on.exit()</a></code> would fire the moment the helper returned, which is why the handler goes in <code>envir</code>. <code>add = TRUE</code> because two wrappers already register a search-path restore – checked, and both of those use <code>add = TRUE</code> too, so nothing is clobbered in either direction. Every one of the thirty-six sites became <code>local_seed(seed)</code>, and <code>grep</code> confirms no bare <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> is left in the package’s code.</p>
+</div>
+<div class="section level3">
+<h3 id="id_5932-two-details-that-are-easy-to-get-wrong">593.2 Two details that are easy to get wrong<a class="anchor" aria-label="anchor" href="#id_5932-two-details-that-are-easy-to-get-wrong"></a></h3>
+<ul><li>
+<strong>A fresh session has no <code>.Random.seed</code>.</strong> It is created by the first draw, so a naive save-and-restore would <em>leave one behind</em> on a session that had none – itself a change to the caller’s state. The helper records whether it existed and <code><a href="https://rdrr.io/r/base/rm.html" class="external-link">rm()</a></code>s it if it did not. A test asserts that.</li>
+<li>
+<strong><code><a href="reference/cpt_power.html">cpt_power()</a></code> and <code><a href="reference/cpt_stability.html">cpt_stability()</a></code> seed once and then draw many times.</strong> Scoping must not truncate that: the restore fires when the <em>outer</em> function exits, so the replicate loop inside still walks the seeded stream and stays reproducible. Verified rather than assumed – same seed twice gives identical output.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="id_5933-measured-after">593.3 Measured after<a class="anchor" aria-label="anchor" href="#id_5933-measured-after"></a></h3>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>property</th>
+<th>before</th>
+<th>after</th>
+</tr></thead><tbody><tr><td>distinct datasets, 6-iteration loop, seeded</td>
+<td>2 of 6</td>
+<td><strong>6 of 6</strong></td>
+</tr><tr><td>caller’s <code>.Random.seed</code> after a seeded call</td>
+<td>reset</td>
+<td><strong>identical</strong></td>
+</tr><tr><td>same seed twice, 1000 draws between</td>
+<td>identical</td>
+<td><strong>identical</strong></td>
+</tr><tr><td>same seed after an unseeded call moved the stream</td>
+<td>identical</td>
+<td><strong>identical</strong></td>
+</tr><tr><td>fresh session left without <code>.Random.seed</code>
+</td>
+<td>n/a</td>
+<td><strong>yes</strong></td>
+</tr></tbody></table><p>The two reproducibility rows are the point of the exercise: the fix removes a side effect without costing anything the argument was for.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_594-what-this-pass-changes">594. What this pass changes<a class="anchor" aria-label="anchor" href="#id_594-what-this-pass-changes"></a></h2>
+<ul><li>
+<strong><code>local_seed()</code></strong>, and all thirty-six <code>if (!is.null(seed)) set.seed(seed)</code> sites replaced with it – twenty-one files, mechanical, <code>grep</code>-verifiable.</li>
+<li>
+<strong>All thirty-six <code>@param seed</code> blocks</strong> say the seed is scoped to the call. §180.2’s item 4 called the old wording a documentation bug and it was: “for reproducibility” is what a reader would take as a promise that the loop around the call is unaffected.</li>
+<li>
+<strong>Three metamorphic test blocks</strong>: the six-iteration loop for five entry points (with the no-seed case as the reference, so the test cannot pass vacuously), <code>.Random.seed</code> identity across five seeded calls plus the fresh-session case, and reproducibility across intervening draws and across an unseeded call.</li>
+</ul></div>
+<div class="section level2">
+<h2 id="id_595-and-a-clean-sweep-of-the-extension-mechanism">595. And a clean sweep of the extension mechanism<a class="anchor" aria-label="anchor" href="#id_595-and-a-clean-sweep-of-the-extension-mechanism"></a></h2>
+<p><code><a href="reference/cpt_register_method.html">?cpt_register_method</a></code> promises that a registered detector “then works with everything built on the <code>ggcpt</code> contract” and names ten things. All ten were run against a registered detector (a CUSUM argmax in six lines): <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>, <code><a href="reference/geom_changepoint.html">geom_changepoint()</a></code>, <code><a href="reference/geom_cpt_segment.html">geom_cpt_segment()</a></code>, <code><a href="reference/geom_cpt_label.html">geom_cpt_label()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>, <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code>, <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code>, <code><a href="reference/cpt_stability.html">cpt_stability()</a></code>, <code><a href="reference/cpt_consensus.html">cpt_consensus()</a></code>, <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code>, <code><a href="reference/cpt_report.html">cpt_report()</a></code>. <strong>All pass</strong>, with the row counts the <code>ggcpt</code> contract requires (one tidy row per changepoint, one glance row, one augment row per observation).</p>
+<p>The visibility promises hold too: <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> gives the method <code>status = "registered"</code> and <code>installed = NA</code>, <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> marks the result <code>[user-registered]</code>, <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> returns the citation the registration supplied, and a registration with no citation says so plainly –</p>
+<blockquote>
+<p>No citation was supplied when <code>nocite</code> was registered with cpt_register_method(). This method is user-supplied: ggchangepoint validated the shape of its output, not its statistics.</p>
+</blockquote>
+<p>Nothing to fix. Recorded because this is the headline feature of the release and the claim is unusually specific, so it is worth having been checked item by item rather than in spirit.</p>
+</div>
+<div class="section level2">
+<h2 id="id_596-the-seed-fix-broke-four-snapshots-and-that-was-the-second-finding">596. The seed fix broke four snapshots, and that was the second finding<a class="anchor" aria-label="anchor" href="#id_596-the-seed-fix-broke-four-snapshots-and-that-was-the-second-finding"></a></h2>
+<p>Scoping the seed turned the full suite red in <code>test-050-visual.R</code>:</p>
+<pre><code>Snapshot of 050-visual/cpt-monitor-timeline.svg  has changed
+Snapshot of 050-visual/ggcpt-statistic.svg       has changed
+Snapshot of 050-visual/ggcpt-scale-space.svg     has changed
+Snapshot of 050-visual/ggcpt-solution-path.svg   has changed</code></pre>
+<p>The temptation here is to read this as the fix being wrong. It is the opposite: <strong>those four snapshots were relying on the leak.</strong></p>
+<p>The file seeds once at the top and draws the two series every block shares:</p>
+<div class="sourceCode" id="cb132"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
+<span><span class="va">x_step</span>  <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">x_multi</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">50</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>but three blocks generate their own data with a bare <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm()</a></code> inside the block, taking whatever stream state the blocks above them happen to leave. And the block immediately above them ends with:</p>
+<div class="sourceCode" id="cb133"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_power.html">cpt_power</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">150</span>, jump <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">2</span><span class="op">)</span>, n_sim <span class="op">=</span> <span class="fl">10</span>, seed <span class="op">=</span> <span class="fl">1</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<p>which used to pin the stream to seed 1. Remove the pin and the following <code>rnorm(150)</code> draws a different series – so the snapshot changes, because it was a snapshot of <em>test execution order</em> as much as of the plot.</p>
+<div class="section level3">
+<h3 id="id_5961-confirming-it-was-data-and-not-a-broken-figure">596.1 Confirming it was data and not a broken figure<a class="anchor" aria-label="anchor" href="#id_5961-confirming-it-was-data-and-not-a-broken-figure"></a></h3>
+<p>Before accepting a snapshot, the question is whether the picture is still the right <em>kind</em> of picture. Two checks, neither of which is “it looks fine”:</p>
+<p>Structure, from the SVGs:</p>
+<table class="table"><colgroup><col width="20%"><col width="20%"><col width="20%"><col width="20%"><col width="20%"></colgroup><thead><tr><th>snapshot</th>
+<th>polyline</th>
+<th>rect</th>
+<th>text</th>
+<th>bytes</th>
+</tr></thead><tbody><tr><td>cpt-monitor-timeline</td>
+<td>10 -&gt; 10</td>
+<td>6 -&gt; 6</td>
+<td>13 -&gt; 13</td>
+<td>8081 -&gt; 8229</td>
+</tr><tr><td>ggcpt-statistic</td>
+<td>15 -&gt; 16</td>
+<td>13 -&gt; 13</td>
+<td>17 -&gt; 18</td>
+<td>18902 -&gt; 19180</td>
+</tr><tr><td>ggcpt-scale-space</td>
+<td>13 -&gt; 15</td>
+<td>7 -&gt; 7</td>
+<td>15 -&gt; 16</td>
+<td>12705 -&gt; 12941</td>
+</tr><tr><td>ggcpt-solution-path</td>
+<td>13 -&gt; 13</td>
+<td>13 -&gt; 13</td>
+<td>24 -&gt; 24</td>
+<td>12168 -&gt; 12166</td>
+</tr></tbody></table><p>Same panels, same furniture, one or two more marks where the new series has one more changepoint or one more axis label. Layers, from the objects:</p>
+<pre><code>monitor      alarms = 2    GeomLine, GeomVline
+mosum        cp = 200      GeomLine, GeomLine, GeomVline, GeomHline
+scale_space                GeomRaster, GeomPoint
+wbs          cp = 199      GeomSegment, GeomPoint</code></pre>
+<p><code>mosum</code> finds the true changepoint at 200 and <code>wbs</code> at 199, and the layer compositions are unchanged. So the figures are correct and of a different series, which is the only reading under which accepting is right.</p>
+</div>
+<div class="section level3">
+<h3 id="id_5962-the-fix-is-to-seed-the-block-not-to-re-record-the-order">596.2 The fix is to seed the block, not to re-record the order<a class="anchor" aria-label="anchor" href="#id_5962-the-fix-is-to-seed-the-block-not-to-re-record-the-order"></a></h3>
+<p>Re-recording alone would have left the snapshots order-dependent – passing today and failing the next time anything above them changed how much randomness it consumes. Each of the three blocks now calls <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> before generating its data, which makes the snapshot a function of the block.</p>
+<p>Verified by running the file from three deliberately different starting states – <code>set.seed(1)</code>, <code>set.seed(12345)</code>, and 777 discarded draws – <strong>0 failures each</strong>. Before, the same experiment is what produced the four failures in the first place.</p>
+<p>This is the §180 story in miniature: a leaked seed made something look reproducible that was not, and the leak had to go before anyone could tell.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_597-1802s-item-5-measured--and-it-was-wrong-in-two-ways">597. §180.2’s item 5, measured – and it was wrong in two ways<a class="anchor" aria-label="anchor" href="#id_597-1802s-item-5-measured--and-it-was-wrong-in-two-ways"></a></h2>
+<p>The roadmap’s last unaddressed seed item read:</p>
+<blockquote>
+<p><strong>While there: <code>parallel = TRUE</code> is the default</strong> on <code><a href="reference/cpt_power.html">cpt_power()</a></code> and <code><a href="reference/cpt_stability.html">cpt_stability()</a></code>. Under <code>future</code>, <code>future.seed</code> governs worker streams and the local <code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> does not reach them, so the sequential and parallel paths may not agree even with a seed fixed. […] this is the specific pair to test.</p>
+</blockquote>
+<p>Measured, and both halves of the guess need correcting.</p>
+<p><strong><code><a href="reference/cpt_stability.html">cpt_stability()</a></code> has no parallel path at all.</strong> <code>grep</code> for <code>future_lapply</code> finds <code><a href="reference/cpt_batch.html">cpt_batch()</a></code>, <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code>, <code><a href="reference/cpt_consensus.html">cpt_consensus()</a></code>, <code><a href="reference/cpt_influence.html">cpt_influence()</a></code>, <code><a href="reference/cpt_sensitivity.html">cpt_sensitivity()</a></code>, <code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code> and <code><a href="reference/cpt_power.html">cpt_power()</a></code>; <code>stability.R</code> contains none. So the “pair” was one function and a mistake, and the real surface is seven.</p>
+<p><strong>Only one of the seven diverges.</strong> Each was run twice under a sequential plan and twice under a real two-worker <code>multisession</code> plan, with a <em>stochastic</em> engine (<code>wbs</code>) where the function takes a method, so the worker stream had every chance to show:</p>
+<table class="table"><colgroup><col width="25%"><col width="25%"><col width="25%"><col width="25%"></colgroup><thead><tr><th>function</th>
+<th>twice, sequential</th>
+<th>twice, 2 workers</th>
+<th>sequential vs parallel</th>
+</tr></thead><tbody><tr><td><code>cpt_influence</code></td>
+<td>identical</td>
+<td>identical</td>
+<td>identical</td>
+</tr><tr><td><code>cpt_sensitivity</code></td>
+<td>identical</td>
+<td>identical</td>
+<td>identical</td>
+</tr><tr><td><code>cpt_consensus</code></td>
+<td>identical</td>
+<td>identical</td>
+<td>identical</td>
+</tr><tr><td><code>cpt_batch</code></td>
+<td>identical</td>
+<td>identical</td>
+<td>identical</td>
+</tr><tr><td><code>cpt_benchmark</code></td>
+<td>identical</td>
+<td>identical</td>
+<td>identical</td>
+</tr><tr><td><strong><code>cpt_power</code></strong></td>
+<td>identical</td>
+<td>identical</td>
+<td><strong>different</strong></td>
+</tr></tbody></table><p>The reason is not the plumbing but what the tasks <em>do</em>: six of the seven farm out work that is deterministic given its input – refit with this perturbation, score against that dataset – so no random number enters the answer and the worker stream is irrelevant. <code><a href="reference/cpt_power.html">cpt_power()</a></code> farms out <em>simulation replicates</em>, which is exactly the case <code>future.seed</code> exists for. One and the same <code>seed = 11</code> on two scenarios at <code>n_sim = 8</code>:</p>
+<pre><code>sequential   power = 0,     1
+2 workers    power = 0.125, 0.875</code></pre>
+<div class="section level3">
+<h3 id="id_5971-why-this-is-documented-rather-than-fixed">597.1 Why this is documented rather than “fixed”<a class="anchor" aria-label="anchor" href="#id_5971-why-this-is-documented-rather-than-fixed"></a></h3>
+<p>Both answers are correct estimates of the same quantity and both are deterministic; they differ because the numbers come from different (equally valid) streams. Making them agree would mean either abandoning parallel-safe streams – which is what <code>future.seed</code> is for and would be a genuine correctness regression across workers – or generating every replicate’s data in the parent and farming out only the detection, which changes the numbers for the default path, is a real behaviour change, and still would not close the gap for a stochastic detector.</p>
+<p>So <code><a href="reference/cpt_power.html">?cpt_power</a></code> gains a <strong>Reproducibility under a parallel plan</strong> section stating the guarantee that does hold – <em>same seed and same plan, same answer</em> – how to pin a figure that has to be reproducible by someone else (<code>parallel = FALSE</code>, or state the plan with the seed), and that the gap is Monte Carlo error, which <code>mc_se</code> already quantifies. It also records that the other six are plan-independent, because “is this affected?” is the first question a reader of that section will have.</p>
+<p>Two tests pin it: all four testable entry points reproduce within a plan under <em>both</em> plans, and the three deterministic ones give identical answers across plans while <code><a href="reference/cpt_power.html">cpt_power()</a></code> is only required to stay a valid rate. The parallel plan is restored with <code><a href="https://withr.r-lib.org/reference/defer.html" class="external-link">withr::defer()</a></code> so a failure cannot leave one set for the rest of the suite.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_598-eleven-vignette-chunks-drew-data-nobody-had-seeded">598. Eleven vignette chunks drew data nobody had seeded<a class="anchor" aria-label="anchor" href="#id_598-eleven-vignette-chunks-drew-data-nobody-had-seeded"></a></h2>
+<p>The same defect as §596, in the vignettes. <code>vignettes/ggchangepoint.Rmd</code> seeds at line 90 and line 345 and then has four chunks that generate fresh data with a bare <code><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm()</a></code>; <code>monitoring.Rmd</code> has six and <code>supervised.Rmd</code> one. Their rendered output is therefore a function of how much randomness every chunk above them consumed.</p>
+<p><strong>And several of those upstream chunks are conditional.</strong> <code>ggchangepoint.Rmd</code> gates them on engine availability (<code>eval = has_cpop</code>, <code>eval = has_idetect</code>, …), so on a machine without <code>cpop</code> the chunk at line 258 does not run, and every unseeded chunk after it draws different data. The vignette’s numbers and figures already differed between machines with different optional packages – before this loop touched anything.</p>
+<p>Each of the eleven now seeds itself. No prose claim depended on the old values, checked chunk by chunk, so this changes the rendered output and nothing that is said about it.</p>
+</div>
+<div class="section level2">
+<h2 id="id_599-verification">599. Verification<a class="anchor" aria-label="anchor" href="#id_599-verification"></a></h2>
+<p><code>R CMD check --as-cran</code> on the tarball built after the 36-site seed change: <code>checking examples ... [54s] OK</code>, <code>--run-donttest ... [123s] OK</code>. The seed scoping reaches every example and every <code>\donttest</code> block, so those two lines are the ones worth quoting.</p>
+</div>
+<div class="section level2">
+<h2 id="id_600-as_ggcpt-was-losing-changepoints-quietly-and-the-docs-said-it-should">600. <code>as_ggcpt()</code> was losing changepoints quietly, and the docs said it should<a class="anchor" aria-label="anchor" href="#id_600-as_ggcpt-was-losing-changepoints-quietly-and-the-docs-said-it-should"></a></h2>
+<p><code><a href="reference/as_ggcpt.html">?as_ggcpt</a></code>’s <code>@param cp</code> read:</p>
+<blockquote>
+<p>Out-of-range, duplicated and missing values are dropped, and the result is sorted – the same contract every built-in wrapper is held to.</p>
+</blockquote>
+<p>So the dropping was a decision, not an oversight. Measured on a 200-point series:</p>
+<pre><code>as_ggcpt(c(50, 500), x)  -&gt;  1 changepoint at 50
+as_ggcpt(c(0, 50), x)    -&gt;  1 changepoint at 50
+as_ggcpt(c(50, 200), x)  -&gt;  1 changepoint at 50
+as_ggcpt(50.5, x)        -&gt;  1 changepoint at 50    (truncated, not rounded)
+as_ggcpt(c(50, 50), x)   -&gt;  1 changepoint at 50    (deduplicated)
+as_ggcpt(c(50, NA), x)   -&gt;  1 changepoint at 50</code></pre>
+<p><strong>The <code>x</code> side, by contrast, is validated exactly as <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> is</strong> – a factor, a character vector, an <code>NA</code>, an <code>Inf</code>, a two-point series and a <code>NULL</code> are all refused with the same messages, verified side by side. It is only <code>cp</code> that was unguarded.</p>
+<p>The justification in the docs is sound <em>for a wrapper</em>: the indices come from an engine, some of which legitimately emit a boundary value (<code>ecp</code> reports <code>n</code>), and normalising a machine’s output is what a wrapper is for. But <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code>’s documented use cases are “a published paper’s reported breaks, an analyst’s annotations, another package’s output” – human transcription, where one mistyped index vanishing without a word leaves a result that looks complete and is short a changepoint.</p>
+<div class="section level3">
+<h3 id="id_6001-warn-not-refuse--and-why-that-is-the-right-scope">600.1 Warn, not refuse – and why that is the right scope<a class="anchor" aria-label="anchor" href="#id_6001-warn-not-refuse--and-why-that-is-the-right-scope"></a></h3>
+<p>Refusing was implemented first and then backed out. It is the better behaviour in the abstract and it is the wrong change here: the dropping is documented, so refusing would break code that works today, and the brief for this pass is polish rather than behaviour change. What is not defensible under any reading is the <em>silence</em>.</p>
+<p>So the return value is byte-identical to before, and each of the five now warns – with the values, the range they had to fall in, and the sentence that makes the range make sense:</p>
+<pre><code>`cp`: 1 outside 1..199 (200). 2 location(s) supplied. A "left" changepoint
+is the last index of the segment before it, so 200 would leave no segment
+after it.</code></pre>
+<p>Sorting stays silent, because reordering loses nothing. An integer-valued double (<code>150.0</code>) is not a truncation and does not warn. Both convention boundaries – <code>cp = 1</code> under <code>"left"</code>, <code>cp = n</code> under <code>"right"</code> – are valid and stay silent, and their opposites warn with the right range (<code>2..200</code> for <code>"right"</code>). Twelve legitimate calls, including <code>ci</code>, <code>fitted</code>, <code>index</code>, multivariate and empty input, were checked to still be silent.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_601-two-claims-the-release-letter-makes-checked-and-holding">601. Two claims the release letter makes, checked and holding<a class="anchor" aria-label="anchor" href="#id_601-two-claims-the-release-letter-makes-checked-and-holding"></a></h2>
+<ul><li><p><strong><code><a href="reference/cpt_test.html">cpt_test()</a></code> never lets an unadjusted p-value pass for an adjusted one.</strong> 68 method/type pairs across every installed univariate engine: <code>p_value</code> inside  everywhere, <code>selection_adjusted</code> a clean logical with no <code>NA</code>, and the warning firing on <strong>exactly</strong> the rows that are unadjusted – never on a fully adjusted result, always on a partly unadjusted one. Two of the 68 pairs are adjusted (the engines with their own test), 66 are not and say so. All three <code>p.adjust</code> corrections (<code>holm</code>, <code>BH</code>, <code>bonferroni</code>) were checked to be non-decreasing, bounded by 1, and order-preserving. Zero violations.</p></li>
+<li>
+<p><strong>No engine fabricates changepoints on no-change data at a usable series length.</strong> NEWS records a 0.4.0 fix for “an <code>ecp</code> wrapper that fabricated changepoints on no-change data”, so the property is worth re-checking rather than assuming. Twelve pure-noise draws at , , per multivariate engine:</p>
+<table class="table"><thead><tr><th>engine</th>
+<th>draws reporting &gt;=1 changepoint</th>
+</tr></thead><tbody><tr><td>npmojo, inspect, geomcp, fastcpd, esac, pilliat, fmean</td>
+<td>0 of 12</td>
+</tr><tr><td>kcp, var</td>
+<td>1 of 12</td>
+</tr><tr><td>ecp, hdcov</td>
+<td>2 of 12</td>
+</tr><tr><td>kwc</td>
+<td>3 of 12</td>
+</tr><tr><td>fcov</td>
+<td>4 of 12</td>
+</tr></tbody></table><p>Ordinary Type-I error at nominal levels for the first eleven, and no fabrication anywhere near the <code>ecp</code> failure 0.4.0 fixed. <strong>The two functional methods are the loose ones and the measurement is not conclusive about them:</strong> <code>fcov</code> and <code>kwc</code> read the columns as a grid over a curve, so  is a coarse grid rather than their design case, and <code><a href="reference/fcov_wrapper.html">?fcov_wrapper</a></code> already records that two columns fail outright while three or more return a fit. Re-running at  and  to separate “wrong regime” from “loose threshold” was started and abandoned – it had not finished either method at  after forty minutes under load, and it is a refinement of a negative result rather than a blocker. <strong>Left open, and stated as open</strong>, rather than reported as either clean or broken.</p>
+</li>
+</ul></div>
+<div class="section level2">
+<h2 id="id_602-1812s-transposed-matrix-finding-no-longer-holds">602. §181.2’s transposed-matrix finding no longer holds<a class="anchor" aria-label="anchor" href="#id_602-1812s-transposed-matrix-finding-no-longer-holds"></a></h2>
+<p>The roadmap recorded:</p>
+<blockquote>
+<p><strong>7 of 9 multivariate engines accept a transposed matrix; 5 fabricate changepoints</strong></p>
+</blockquote>
+<p>Re-measured on a 200 x 3 series against its 3 x 200 transpose, over the eleven multivariate engines that take a plain matrix:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>behaviour</th>
+<th>count</th>
+<th>engines</th>
+</tr></thead><tbody><tr><td>refused, with a message naming the shape</td>
+<td>5</td>
+<td>kcp, npmojo, ocd, geomcp, var</td>
+</tr><tr><td>warned (the degenerate-segmentation guard)</td>
+<td>3</td>
+<td>fastcpd, esac, pilliat</td>
+</tr><tr><td>returned no changepoints</td>
+<td>3</td>
+<td>ecp, hdcov, fmean</td>
+</tr><tr><td>returned a changepoint, silently</td>
+<td>1</td>
+<td>inspect</td>
+</tr></tbody></table><p>So the intervening rounds moved this from “5 fabricate” to one engine that returns a changepoint without comment, and the reason it is not guarded is worth stating rather than fixing:</p>
+<p><strong>a 3 x 200 input is not obviously wrong for a high-dimensional method.</strong> <code>inspect</code>, <code>esac</code> and <code>pilliat</code> exist for ; refusing more coordinates than time points would refuse their design case. And the existing degenerate-segmentation guard fires on <code>k == n - 1</code>, which at  with one changepoint is correctly not triggered. Any threshold on  alone would be arbitrary, and the false-positive measurement in §601 shows the engines are well behaved wherever a series is long enough to be one. <strong>Recorded as measured and deliberately not guarded</strong>, which is a different answer from §181.2’s and the one the numbers support.</p>
+</div>
+<div class="section level2">
+<h2 id="id_603-the-warning-reached-a-caller-it-was-not-written-for">603. The warning reached a caller it was not written for<a class="anchor" aria-label="anchor" href="#id_603-the-warning-reached-a-caller-it-was-not-written-for"></a></h2>
+<p><code>test-050-registry.R</code> went green with four new warnings, and two of them were the fix over-reaching. <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> routes a <strong>registered method’s</strong> bare-vector return through <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code>:</p>
+<div class="sourceCode" id="cb138"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/as_ggcpt.html">as_ggcpt</a></span><span class="op">(</span><span class="va">out</span>, <span class="va">x</span>, method <span class="op">=</span> <span class="va">entry</span><span class="op">$</span><span class="va">method</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<p>so a user’s registered detector that emits a boundary index – or <code>80.4</code>, or a repeat – now warned on every call, with a message telling them to “check the values against the series rather than relying on this normalisation”. That is advice about code they did not write. Here the indices come from a detector, not from a person transcribing published breaks, which is precisely the wrapper case §600 argued the dropping is <em>right</em> for.</p>
+<p>The report is therefore a <strong>classed condition</strong>:</p>
+<div class="sourceCode" id="cb139"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/structure.html" class="external-link">structure</a></span><span class="op">(</span></span>
+<span>  class <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"ggchangepoint_cp_dropped"</span>, <span class="st">"warning"</span>, <span class="st">"condition"</span><span class="op">)</span>,</span>
+<span>  <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>message <span class="op">=</span> <span class="va">msg</span>, call <span class="op">=</span> <span class="cn">NULL</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>and <code>run_registered_method()</code> muffles that class and nothing else, so any other warning <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code> raises still reaches the caller. Text-matching would have worked today and broken the first time the message was reworded.</p>
+<p><strong>Measured after:</strong> a registered detector returning <code>c(0L, 80L, 500L)</code>, <code>80.4</code> or <code>c(80L, 80L)</code> is silent and still normalised to <code>cp = 80</code> with <code>registered = TRUE</code>; the same three values through <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code> directly all warn. Both directions are tested, and the test also asserts the condition’s class, so a future rewrite to a plain <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code> fails rather than silently un-muffling.</p>
+<div class="section level3">
+<h3 id="id_6031-the-other-two-were-the-tests-and-they-are-better-for-it">603.1 The other two were the tests, and they are better for it<a class="anchor" aria-label="anchor" href="#id_6031-the-other-two-were-the-tests-and-they-are-better-for-it"></a></h3>
+<p><code>test-050-registry.R</code> already had a block named “as_ggcpt() drops what it documents and refuses what it cannot read” – so the dropping was a deliberate, tested decision, which is the strongest argument that warn-rather-than-refuse was the right scope call. Six assertions there and three more in two other blocks now use <code>expect_warning()</code> with the message, and the three that lose nothing (reordering, empty input, a numeric string) use <code>expect_silent()</code>. The file went from four warnings to none, and the assertions went from “the value is right” to “the value is right and the package said what it did”.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_604-verification">604. Verification<a class="anchor" aria-label="anchor" href="#id_604-verification"></a></h2>
+<p>Full suite via <code><a href="https://testthat.r-lib.org/reference/test_package.html" class="external-link">testthat::test_local()</a></code>: no failures; the standing two skips (<code>mcp</code> needs JAGS, TCPD is not downloaded) and the two upstream <code>envcpt</code> warnings are unchanged, and the four <code>as_ggcpt</code> warnings this pass introduced into the report are gone – asserted rather than emitted.</p>
+</div>
+<div class="section level2">
+<h2 id="id_605-cpt_simulate-is-right-about-everything-it-builds-and-silent-in-one-direction">605. <code>cpt_simulate()</code> is right about everything it builds, and silent in one direction<a class="anchor" aria-label="anchor" href="#id_605-cpt_simulate-is-right-about-everything-it-builds-and-silent-in-one-direction"></a></h2>
+<p><code><a href="reference/cpt_power.html">cpt_power()</a></code>, <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code> and <code><a href="reference/cpt_datasets.html">cpt_datasets()</a></code> are all scored against what <code><a href="reference/cpt_simulate.html">cpt_simulate()</a></code> says it generated, so its arithmetic is load-bearing for every number the package reports about accuracy. Measured against the definitions rather than against a recorded value:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>property</th>
+<th>asked</th>
+<th>realised</th>
+</tr></thead><tbody><tr><td>mean jump</td>
+<td>0.5 / 2 / 5</td>
+<td>error +0.0025 (se 0.017) at all three</td>
+</tr><tr><td>sd ratio</td>
+<td>2 / 4</td>
+<td>2.039 (se 0.021) / 4.079 (se 0.041)</td>
+</tr><tr><td>
+<code>seg_id</code> breaks</td>
+<td>1, 2 and 4 changepoints</td>
+<td>exactly at the requested indices</td>
+</tr><tr><td>AR(1) <code>rho</code>
+</td>
+<td>0.3 / 0.7</td>
+<td>0.301 (se 0.010) / 0.697 (se 0.008)</td>
+</tr><tr><td>t(3) tail</td>
+<td>heavier</td>
+<td>kurtosis 20.2 against Gaussian 2.9</td>
+</tr></tbody></table><p>The sd-ratio numbers sit slightly high because <code><a href="https://rdrr.io/r/stats/sd.html" class="external-link">sd()</a></code> on 200 points is biased that way, not because the generator is. <strong>Nothing wrong with any of it.</strong></p>
+<div class="section level3">
+<h3 id="id_6051-the-finding-was-in-the-direction-nothing-checked">605.1 The finding was in the direction nothing checked<a class="anchor" aria-label="anchor" href="#id_6051-the-finding-was-in-the-direction-nothing-checked"></a></h3>
+<p><code>k</code> changepoints make <code>k + 1</code> segments, and the two mismatch directions were treated differently:</p>
+<div class="sourceCode" id="cb140"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_simulate.html">cpt_simulate</a></span><span class="op">(</span><span class="fl">400</span>, changepoints <span class="op">=</span> <span class="fl">200</span>, params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span><span class="op">)</span><span class="op">)</span>        <span class="co"># warns</span></span>
+<span><span class="fu"><a href="reference/cpt_simulate.html">cpt_simulate</a></span><span class="op">(</span><span class="fl">400</span>, changepoints <span class="op">=</span> <span class="fl">200</span>, params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span>, <span class="fl">9</span><span class="op">)</span><span class="op">)</span>  <span class="co"># silent</span></span></code></pre></div>
+<p>Too few already warned, and the comment above it says why – the last value is recycled, so the trailing changepoints would be recorded as ground truth with no change behind them. Too many used the first two and dropped the <code>9</code>: an ordinary two-segment series handed back to a caller who had plainly meant two changepoints, whose power or benchmark numbers are then scored against a truth they did not intend.</p>
+<p>Now warns both ways, naming the changepoint count, the segment count and how many entries went unused, for every <code>change_in</code> rather than only <code>"mean"</code> – checked on <code>var</code> and <code>meanvar</code> as well. Silent when the counts agree, when <code>params</code> is left at its default, and when there are no changepoints at all.</p>
+<p><strong>The same shape as §600</strong>, one file over: a documented normalisation that is audible in one direction and silent in the other, where the silent one is the one a miscount lands in.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_606-why-round-6-could-not-finish-the-fcov-measurement">606. Why round 6 could not finish the <code>fcov</code> measurement<a class="anchor" aria-label="anchor" href="#id_606-why-round-6-could-not-finish-the-fcov-measurement"></a></h2>
+<p>§601 left the functional methods’ false-positive rate open because the finer-grid run had to be abandoned. The reason turns out to be worth more than the answer. Timed one call at a time, against <code><a href="reference/fmean_wrapper.html">fmean_wrapper()</a></code> on identical input so the comparison is the same package and the same data:</p>
+<table class="table"><thead><tr><th>input</th>
+<th><code>fmean</code></th>
+<th><code>fcov</code></th>
+</tr></thead><tbody><tr><td>, </td>
+<td>4.5 s</td>
+<td><strong>316 s</strong></td>
+</tr><tr><td>, </td>
+<td>2.9 s</td>
+<td><strong>598 s</strong></td>
+</tr><tr><td>, </td>
+<td>4.5 s</td>
+<td>not measured</td>
+</tr></tbody></table><p><strong><code>fcov</code> is five to ten minutes on a hundred-point series</strong> and roughly linear in  – a factor of seventy to two hundred over <code>fmean</code>. So round 6’s twelve-draw sweep at  was an hour of work before it reached , and round 7’s smaller retry (8 draws, ) was still unfinished at 43 minutes. That is not a defect in the sweep; it is the engine.</p>
+<p>It <em>is</em> a documentation gap. Two wrappers already carry a cost section – <code><a href="reference/taylor_wrapper.html">?taylor_wrapper</a></code>’s “Series length, and why you cannot interrupt it” and <code><a href="reference/ocd_wrapper.html">?ocd_wrapper</a></code>’s “How long this takes” – and <code>fcov</code> is the third and by far the most extreme. Someone who picks it out of <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> and calls it on their data will conclude the session has hung. <code><a href="reference/fcov_wrapper.html">?fcov_wrapper</a></code> now says so, with the numbers, the linearity in , the fact that the cost is in the engine’s covariance-operator estimation rather than in anything this wrapper could tune, and the explicit advice not to put it in a loop (a twelve-replicate study at  is two hours).</p>
+<p><strong>Interruptibility was deliberately not claimed.</strong> Both runs were killed from outside the session, which is not the same as testing whether <code><a href="https://rdrr.io/r/base/setTimeLimit.html" class="external-link">setTimeLimit()</a></code> is honoured – the experiment <code><a href="reference/taylor_wrapper.html">?taylor_wrapper</a></code> did do. Recorded as untested rather than asserted either way.</p>
+<div class="section level3">
+<h3 id="id_6061-and-the-false-positive-question-stays-open-now-with-a-reason">606.1 And the false-positive question stays open, now with a reason<a class="anchor" aria-label="anchor" href="#id_6061-and-the-false-positive-question-stays-open-now-with-a-reason"></a></h3>
+<p><code>fcov</code> reported a changepoint on 4 of 12 pure-noise draws at  and <code>kwc</code> on 3 of 12 (§601). Whether that is a coarse grid outside the methods’ design case or a loose threshold is still unresolved, and at roughly ten minutes a call the study that would settle it costs hours. Left open, with the cost documented so the next attempt can be budgeted rather than abandoned.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_607-the-three-closed-form-criteria-are-right-and-one-of-three-was-reproducible">607. The three closed-form criteria are right, and one of three was reproducible<a class="anchor" aria-label="anchor" href="#id_607-the-three-closed-form-criteria-are-right-and-one-of-three-was-reproducible"></a></h2>
+<p><code><a href="reference/cpt_select.html">cpt_select()</a></code>’s <code>value</code> column is what a user compares rungs by, so the first question is whether it is the number it claims. Checked against reference implementations written from the definitions, sharing no code with the package:</p>
+<pre><code>cost   = n log(RSS/n)
+bic    = cost + (2K + 1) log n
+aic    = cost + 2(2K + 1)
+mbic   = cost + 3K log n + sum_i log(l_i / n)      (Zhang &amp; Siegmund 2007)</code></pre>
+<p>Every rung of a seven-rung ladder, for all three criteria, at that rung’s own changepoint locations: <strong>exact agreement, 21 comparisons, no violations.</strong> The <code>cost</code> column is the Gaussian profile cost at those locations, exactly one row is marked <code>chosen</code>, and it is the argmin of <code>value</code>.</p>
+<p>The behaviour is a bonus check on the docs. On a 300-point series with changes at 100 and 200:</p>
+<table class="table"><thead><tr><th>criterion</th>
+<th>chose</th>
+</tr></thead><tbody><tr><td><code>bic</code></td>
+<td>K = 2</td>
+</tr><tr><td><code>mbic</code></td>
+<td>K = 2</td>
+</tr><tr><td><code>aic</code></td>
+<td>K = 6, the largest rung offered</td>
+</tr></tbody></table><p>which is precisely what <code><a href="reference/cpt_select.html">?cpt_select</a></code> warns about – “its  penalty does not grow with , so it over-selects changepoints, often taking every rung offered”. The prose was right and is now a test.</p>
+<div class="section level3">
+<h3 id="id_6071-the-gap-was-which-formulas-got-written-down">607.1 The gap was which formulas got written down<a class="anchor" aria-label="anchor" href="#id_6071-the-gap-was-which-formulas-got-written-down"></a></h3>
+<p>Inside one <code>\describe</code> block, <code>"mbic"</code> was given in full and the other two were not:</p>
+<blockquote>
+{<code>"bic"</code>}{Gaussian BIC over the ladder.}
+<p>{<code>"aic"</code>}{Gaussian AIC over the ladder. …}</p>
+</blockquote>
+<p>“Gaussian BIC” does not identify a number. Both the cost convention ( against  with its constants, against the raw RSS) and the changepoint parameter count (, , ) vary between authors, and the reader who wants to know why rung 3 beats rung 2 cannot get there from the page. Both formulas are now stated, with the parameter count spelled out as  locations plus  segment means, and a pointer that the first term is the <code>cost</code> column they can already see.</p>
+<p>Same shape as §588: a returned number whose definition was not on the page. The test pins the formulas rather than recorded values, so a change to what a criterion <em>means</em> fails instead of passing with a new number.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_608-the-new-warnings-do-not-fire-inside-the-package">608. The new warnings do not fire inside the package<a class="anchor" aria-label="anchor" href="#id_608-the-new-warnings-do-not-fire-inside-the-package"></a></h2>
+<p>Rounds 6 and 7 added warnings to <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code> and <code><a href="reference/cpt_simulate.html">cpt_simulate()</a></code>, which raises the obvious question of whether they became noise in the package’s own output. Every internal caller of the simulation machinery, checked:</p>
+<p><code><a href="reference/cpt_datasets.html">cpt_datasets()</a></code> whole and per-signal (<code>blocks</code>, <code>fms</code>, <code>mix</code>, <code>teeth</code>, <code>stairs</code>, <code>step</code>, <code>ar1</code>), <code><a href="reference/signal_blocks.html">signal_blocks()</a></code>, <code><a href="reference/signal_fms.html">signal_fms()</a></code>, <code><a href="reference/signal_mix.html">signal_mix()</a></code>, <code><a href="reference/signal_stairs.html">signal_stairs()</a></code>, <code><a href="reference/signal_teeth.html">signal_teeth()</a></code>, <code><a href="reference/cpt_simulate.html">rcpt()</a></code>, <code><a href="reference/cpt_scenarios.html">cpt_scenarios()</a></code>, <code><a href="reference/cpt_power.html">cpt_power()</a></code> and <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code> – <strong>17 call sites, all silent.</strong></p>
+<p>Confirmed independently by the check below: <code>checking examples ... OK</code> and <code>re-building of vignette outputs ... OK</code> with no new warnings, so the three conditions added across rounds 3, 6 and 7 fire for a caller’s mistake and never for the package’s own code.</p>
+</div>
+<div class="section level2">
+<h2 id="id_609-verification">609. Verification<a class="anchor" aria-label="anchor" href="#id_609-verification"></a></h2>
+<p><code>R CMD check --as-cran</code> on the tarball built after rounds 1-7:</p>
+<pre><code>checking installed package size ...              OK
+checking R code for possible problems ... [21s]  OK
+checking Rd files ...                            OK
+checking examples ...                     [54s]  OK
+checking examples with --run-donttest ... [122s] OK
+  Running 'testthat.R'                    [334s] OK
+checking re-building of vignette outputs  [116s] OK
+
+Status: 1 ERROR, 2 WARNINGs, 3 NOTEs</code></pre>
+<p>The six are the same six this document has recorded since 0.4.0, and all six are the machine: no <code>qpdf</code>, no <code>pdflatex</code> (the WARNING and ERROR on the PDF manual plus the NOTE about the <code>.tex</code> it leaves), no <code>tidy</code> (the HTML manual NOTE), and <code>rjags</code>/<code>mcp</code> unavailable for want of JAGS. <code>Rd files ... OK</code> is worth naming this round because it covers the <code>\tabular</code> timing table added to <code><a href="reference/fcov_wrapper.html">?fcov_wrapper</a></code> and the <code>\eqn</code> formulas added to <code><a href="reference/cpt_select.html">?cpt_select</a></code>.</p>
+<p>Round 8’s own change is documentation plus a test; <code>test-hardening.R</code> passes standalone with it, and every other file is covered by the check above.</p>
+</div>
+<div class="section level2">
+<h2 id="id_610-three-quantities-that-are-right-and-the-one-argument-that-is-not">610. Three quantities that are right, and the one argument that is not<a class="anchor" aria-label="anchor" href="#id_610-three-quantities-that-are-right-and-the-one-argument-that-is-not"></a></h2>
+<p>Round 9 measured four computed surfaces against their definitions. Three came back clean, which is worth recording so they are not re-swept.</p>
+<p><strong><code><a href="reference/cpt_delay.html">cpt_delay()</a></code></strong> – seven hand-built alarm tables where the answer is known before the call, plus the matching rules and every summary:</p>
+<table class="table"><colgroup><col width="33%"><col width="33%"><col width="33%"></colgroup><thead><tr><th>case</th>
+<th>expected</th>
+<th>got</th>
+</tr></thead><tbody><tr><td>alarm 5 after the change</td>
+<td>delay 5, detected</td>
+<td>correct</td>
+</tr><tr><td>alarm <em>before</em> the change</td>
+<td>miss + 1 false alarm</td>
+<td>correct</td>
+</tr><tr><td>alarm exactly at the change</td>
+<td>delay 0</td>
+<td>correct</td>
+</tr><tr><td>two alarms after one change</td>
+<td>first wins, second is a false alarm</td>
+<td>correct</td>
+</tr><tr><td>
+<code>max_delay = 10</code>, alarm at +20</td>
+<td>miss + false alarm</td>
+<td>correct</td>
+</tr><tr><td>
+<code>max_delay = 10</code>, alarm at +8</td>
+<td>delay 8</td>
+<td>correct</td>
+</tr><tr><td>no alarms at all</td>
+<td>miss, 0 false alarms</td>
+<td>correct</td>
+</tr></tbody></table><p>and: one alarm cannot be claimed by two changes; an alarm past the <em>next</em> true change is not credited to the earlier one; alarms partition exactly into detections plus false alarms; <code>mean_delay</code>, <code>median_delay</code>, <code>n_detected</code> and <code>arl = n_obs / n_false_alarms</code> all equal their definitions; <code>arl</code> is <code>Inf</code> rather than <code>NaN</code> when nothing fired falsely. <strong>No violations.</strong></p>
+<p><strong><code><a href="reference/cpt_label_error.html">cpt_label_error()</a></code></strong> – Hocking’s definition, region by region. All nine combinations of the three label types against 0, 1 and several changepoints inside; both window boundaries inclusive as documented; per region counting; and both guards refusing by name (an unknown <code>change</code> level, and <code>end &lt; start</code>). <strong>No violations.</strong> This matters more than most: it is the objective <code><a href="reference/cpt_learn_penalty.html">cpt_learn_penalty()</a></code> minimises, so an error here would propagate the way a wrong <code><a href="reference/cpt_simulate.html">cpt_simulate()</a></code> would.</p>
+<p><strong><code><a href="reference/cpt_report.html">cpt_report()</a></code></strong> – both text formats write a file and return the lines; markdown fences balance and headings exist; <code>session = FALSE</code> drops the section (78 to 40 lines) and <code>confint</code> behaves exactly as documented – skipped for an engine with no native intervals whether <code>TRUE</code> or <code>FALSE</code>, and a nine-line “Location intervals” section for <code>smuce</code>, which is the “uses the engine’s own intervals when it has them and skips the section otherwise” the help page promises. A no-changepoint result still produces 75 lines, and a path in a nonexistent directory is refused before the report is built.</p>
+</div>
+<div class="section level2">
+<h2 id="id_611-min_votes-had-an-unreachable-setting-and-a-boundary-in-the-worst-place">611. <code>min_votes</code> had an unreachable setting and a boundary in the worst place<a class="anchor" aria-label="anchor" href="#id_611-min_votes-had-an-unreachable-setting-and-a-boundary-in-the-worst-place"></a></h2>
+<p><code><a href="reference/cpt_consensus.html">cpt_consensus()</a></code>’s clustering is also correct – eight hand cases, including that the tolerance boundary is inclusive (100 and 105 merge at <code>tolerance = 5</code>, 100 and 106 do not), that clustering is by <strong>leader</strong> rather than transitive (100, 105, 110 gives two clusters, not one), that a single method contributing two nearby locations is still one vote, and that <code>cp</code> is the cluster median with <code>spread</code> its range.</p>
+<p>The argument on top of it is where the two findings are.</p>
+<div class="section level3">
+<h3 id="id_6111-a-threshold-nothing-can-reach">611.1 A threshold nothing can reach<a class="anchor" aria-label="anchor" href="#id_6111-a-threshold-nothing-can-reach"></a></h3>
+<div class="sourceCode" id="cb143"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_consensus.html">cpt_consensus</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span><span class="op">)</span>, min_votes <span class="op">=</span> <span class="fl">3</span><span class="op">)</span></span></code></pre></div>
+<p>resolves to a threshold of 3 against two methods, keeps nothing, and returns an ordinary empty consensus. <strong>An empty consensus is a finding</strong> – it means the methods agreed on nothing – so returning one for an arithmetic impossibility spends the reader’s trust on the wrong thing. Now warns, and names the number of methods that <em>ran</em> rather than the number requested, because a method that errors is already excluded from the vote and that is exactly how someone lands here without having typed a silly number.</p>
+<p>Same reasoning as round 1’s <code>cpt_benchmark(methods = character(0))</code> guard.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6112-the-boundary-is-at-unanimous">611.2 The boundary is at “unanimous”<a class="anchor" aria-label="anchor" href="#id_6112-the-boundary-is-at-unanimous"></a></h3>
+<p>The rule is: strictly between 0 and 1 is a proportion, anything else is a count. Measured with three methods:</p>
+<table class="table"><thead><tr><th><code>min_votes</code></th>
+<th>threshold</th>
+<th>means</th>
+</tr></thead><tbody><tr><td>0.5</td>
+<td>2</td>
+<td>half</td>
+</tr><tr><td>0.99</td>
+<td>3</td>
+<td>all three</td>
+</tr><tr><td><strong>1</strong></td>
+<td><strong>1</strong></td>
+<td><strong>any one method</strong></td>
+</tr><tr><td>2</td>
+<td>2</td>
+<td>two</td>
+</tr><tr><td>3</td>
+<td>3</td>
+<td>all three</td>
+</tr></tbody></table><p>So the two neighbouring values 0.99 and 1 mean <em>opposite</em> things – the strictest setting available and the loosest – and 1 is precisely what a reader thinking in proportions writes for unanimity. Nothing was wrong with the arithmetic; what was missing is that the page said only “pass a fraction in  for a proportion”, which is true and does not warn anybody. <code>@param min_votes</code> now gives the table’s content in prose, names the trap, and says to pass the method count or a fraction just below 1 for unanimity. The new warning repeats it, since an over-large count is the likeliest way to discover the boundary the hard way.</p>
+<p>Deliberately <strong>not</strong> changed: <code>min_votes = 1</code> still means a count of one. A count of one is a legitimate request (“any method that saw it”), and reinterpreting it would break code that works.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_612-the-demsar-diagram-cited-nobody">612. The Demsar diagram cited nobody<a class="anchor" aria-label="anchor" href="#id_612-the-demsar-diagram-cited-nobody"></a></h2>
+<p><code>autoplot(plot_type = "critical_difference")</code> is documented as</p>
+<blockquote>
+<p>the Demsar diagram: mean ranks with the Nemenyi critical distance, the standard way this literature says “method A beats method B”</p>
+</blockquote>
+<p>which names a method, a diagram and a literature. <code>grep</code> for the citation:</p>
+<pre><code>$ grep -n "demsar" inst/REFERENCES.bib
+$ grep -rn "insertRef" R/benchmark.R
+54:  \insertRef{vandenburg2020evaluation}{ggchangepoint}
+472:  \insertRef{vandenburg2020evaluation}{ggchangepoint}</code></pre>
+<p><strong>Nothing.</strong> The metrics on the same page cite van den Burg and Williams; the statistical procedure the plot is built on cited no one. The package’s own standard is stricter than that – a test asserts that every <code>\insertRef</code> key in <code>R/</code> resolves in <code>inst/REFERENCES.bib</code>, and another that every available method has a <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> entry – so the omission is against the house rule rather than merely thin.</p>
+<div class="section level3">
+<h3 id="id_6121-the-arithmetic-was-right-which-is-why-this-is-the-finding">612.1 The arithmetic was right, which is why this is the finding<a class="anchor" aria-label="anchor" href="#id_6121-the-arithmetic-was-right-which-is-why-this-is-the-finding"></a></h3>
+<p><code>nemenyi_cd()</code> is three lines and correct:</p>
+<div class="sourceCode" id="cb145"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">q</span> <span class="op">&lt;-</span> <span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Tukey.html" class="external-link">qtukey</a></span><span class="op">(</span><span class="fl">1</span> <span class="op">-</span> <span class="va">alpha</span>, nmeans <span class="op">=</span> <span class="va">k</span>, df <span class="op">=</span> <span class="cn">Inf</span><span class="op">)</span> <span class="op">/</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="fl">2</span><span class="op">)</span></span>
+<span><span class="va">q</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">sqrt</a></span><span class="op">(</span><span class="va">k</span> <span class="op">*</span> <span class="op">(</span><span class="va">k</span> <span class="op">+</span> <span class="fl">1</span><span class="op">)</span> <span class="op">/</span> <span class="op">(</span><span class="fl">6</span> <span class="op">*</span> <span class="va">N</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
+<p>Checked against <strong>Demsar (2006) Table 5</strong> rather than against a re-derivation, for :</p>
+<table style="width:100%;" class="table"><colgroup><col width="10%"><col width="10%"><col width="10%"><col width="10%"><col width="10%"><col width="10%"><col width="10%"><col width="10%"><col width="10%"><col width="10%"></colgroup><thead><tr><th>k</th>
+<th>2</th>
+<th>3</th>
+<th>4</th>
+<th>5</th>
+<th>6</th>
+<th>7</th>
+<th>8</th>
+<th>9</th>
+<th>10</th>
+</tr></thead><tbody><tr><td>published</td>
+<td>1.960</td>
+<td>2.343</td>
+<td>2.569</td>
+<td>2.728</td>
+<td>2.850</td>
+<td>2.949</td>
+<td>3.031</td>
+<td>3.102</td>
+<td>3.164</td>
+</tr><tr><td>computed</td>
+<td>1.9600</td>
+<td>2.3437</td>
+<td>2.5690</td>
+<td>2.7278</td>
+<td>2.8497</td>
+<td>2.9483</td>
+<td>3.0309</td>
+<td>3.1017</td>
+<td>3.1637</td>
+</tr></tbody></table><p>Worst deviation , which is the table’s own rounding. The <code>sqrt(2)</code> – the constant most often dropped in reimplementations of this diagram – is there.</p>
+<p><code>benchmark_ranks()</code> is right too: rank 1 to the largest value for a higher-is-better metric and to the smallest for a lower-is-better one, <code>NA</code> taking the <strong>worst</strong> rank in both directions rather than being dropped, ties sharing the average, <code>mean_rank</code> averaging over datasets (hand-checked at 1.25 and 1.75 on a two-dataset grid with one tie), and an all-<code>NA</code> metric returning <code>NULL</code> instead of a table of ties.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6122-what-the-section-adds">612.2 What the section adds<a class="anchor" aria-label="anchor" href="#id_6122-what-the-section-adds"></a></h3>
+<p>A correct number that no one can interpret is not much use, and this one invites a conclusion. <code><a href="reference/cpt_benchmark.html">?cpt_benchmark</a></code> gains “Reading the critical-difference diagram”, covering the three things the picture cannot say:</p>
+<ul><li>
+<strong>what rank 1 means, and which way each metric is ranked</strong> – the <code>lower_better</code> set lives in the source and was nowhere on the page;</li>
+<li>
+<strong>that <code>NA</code> takes the worst rank</strong>, so a method that failed on a dataset is penalised for it rather than quietly scoring on a smaller sample;</li>
+<li>
+<strong>the formula for the bar</strong>, since round 8 established that a plotted or returned number should be reproducible from the page.</li>
+</ul><p>And the caveat the diagram structurally cannot show: <strong>Nemenyi is a post-hoc test.</strong> The convention is to run it only after a Friedman test rejects the null of equal ranks, and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> does not run that omnibus test – it draws what it is asked for. With the handful of datasets <code><a href="reference/cpt_datasets.html">cpt_datasets()</a></code> supplies,  is small and  correspondingly wide, so the page says to read such a diagram descriptively. Left as a caveat rather than made into a gate: refusing to draw the diagram without a Friedman test would remove a feature, and running one silently would change what the function does.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_613-cpt_stability-and-a-fixed-bug-that-stayed-fixed">613. <code>cpt_stability()</code>, and a fixed bug that stayed fixed<a class="anchor" aria-label="anchor" href="#id_613-cpt_stability-and-a-fixed-bug-that-stayed-fixed"></a></h2>
+<p><code>freq = hits / B</code> where <code>hits</code> counts, per index, the replicates whose  <code>margin</code> window covered it. The code carries a note about an earlier defect – incrementing once per changepoint double-counted a replicate wherever two detections’ windows overlapped, and the old <code>pmin(hits / B, 1)</code> clipped the excess out of sight, reporting 1.00 (“re-detected every time”) for indices only half the replicates covered.</p>
+<p>The invariant that catches a regression is not the range but the granularity: if <code>hits</code> is a count of replicates then <strong>every frequency is an exact multiple of </strong>, and double-counting breaks that before it breaks . Measured at : every one of 240 frequencies is a multiple of 0.025, 1.00 at the true change and 0.00 in the quiet stretches. Now a test, phrased as the multiple rather than the bound.</p>
+</div>
 </div>
 
 

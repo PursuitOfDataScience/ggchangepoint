@@ -134,12 +134,12 @@ set.seed(1)
 fit <- cpt_detect(c(rnorm(50), rnorm(50, 5)), method = "biggest_jump")
 fit
 #> ggcpt (changepoint detection result)
-#>   Method:         biggest_jump  [user-registered]
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   100 
+#>   Method:             biggest_jump  [user-registered]
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      100
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

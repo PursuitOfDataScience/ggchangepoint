@@ -36,7 +36,9 @@ bcp_wrapper(x, prob_threshold = 0.5, burnin = 50, mcmc = 500, seed = NULL, ...)
 
 - seed:
 
-  Optional seed for reproducibility of the MCMC run.
+  Optional seed for reproducibility of the MCMC run. The seed is scoped
+  to this call: `.Random.seed` is saved and restored, so a seeded call
+  inside a simulation loop does not pin the loop's own stream.
 
 - ...:
 
@@ -109,8 +111,6 @@ Other changepoint engines:
 
 ``` r
 res <- bcp_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
-#> Loading required package: bcp
-#> Loading required package: grid
 res$changepoints
 #> # A tibble: 1 × 3
 #>      cp cp_value posterior_prob

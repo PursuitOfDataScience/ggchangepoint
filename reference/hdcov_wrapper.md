@@ -50,7 +50,9 @@ hdcov_wrapper(
 
 - seed:
 
-  Optional seed (the permutation calibration is random).
+  Optional seed (the permutation calibration is random). The seed is
+  scoped to this call: `.Random.seed` is saved and restored, so a seeded
+  call inside a simulation loop does not pin the loop's own stream.
 
 ## Value
 
@@ -119,12 +121,12 @@ B <- matrix(rnorm(100 * p), ncol = p)
 B[, 2] <- B[, 1] + 0.2 * B[, 2]        # correlation appears
 hdcov_wrapper(rbind(A, B), n_perm = 20, alpha = 0.05, seed = 1)
 #> ggcpt (changepoint detection result)
-#>   Method:         hdcov
-#>   Change in:       covariance 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         threshold = 7.666 
-#>   Series length:   200 
+#>   Method:             hdcov
+#>   Change in:          covariance
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            threshold = 7.666
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 3

@@ -65,7 +65,9 @@ fabisearch_wrapper(
 
 - seed:
 
-  Optional seed.
+  Optional seed. The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 - ...:
 
@@ -166,12 +168,12 @@ fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 4,
 #> Loading required package: foreach
 #> Loading required package: rngtools
 #> ggcpt (changepoint detection result)
-#>   Method:         fabisearch
-#>   Change in:       network 
-#>   Changepoints found: 0 
-#>   CP convention:   left 
-#>   Penalty:         engine alpha = 0.25 
-#>   Series length:   50 
+#>   Method:             fabisearch
+#>   Change in:          network
+#>   Changepoints found: 0
+#>   CP convention:      left
+#>   Penalty:            engine alpha = 0.25
+#>   Series length:      50
 #> 
 #> No changepoints detected.
 # }

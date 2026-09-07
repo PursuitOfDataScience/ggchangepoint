@@ -45,7 +45,9 @@ pilliat_wrapper(
 
 - seed:
 
-  Optional seed (used by the empirical calibration).
+  Optional seed (used by the empirical calibration). The seed is scoped
+  to this call: `.Random.seed` is saved and restored, so a seeded call
+  inside a simulation loop does not pin the loop's own stream.
 
 - ...:
 
@@ -130,12 +132,12 @@ X <- matrix(rnorm(100 * 20), nrow = 100)
 X[51:100, 1:5] <- X[51:100, 1:5] + 3
 pilliat_wrapper(X)
 #> ggcpt (changepoint detection result)
-#>   Method:         pilliat
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         threshold = 4 
-#>   Series length:   100 
+#>   Method:             pilliat
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            threshold = 4
+#>   Series length:      100
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

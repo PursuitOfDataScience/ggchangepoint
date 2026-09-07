@@ -56,7 +56,9 @@ network_wrapper(
 
 - seed:
 
-  Optional seed.
+  Optional seed. The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 ## Value
 
@@ -147,12 +149,12 @@ X <- rbind(mk(40, 0.2), mk(40, 0.6))
 network_wrapper(X, n_intervals = 20, n_perm = 20, seed = 1)
 #> No independent second observation supplied: splitting each edge at random to build one. See the "When you have only one copy" section of ?network_wrapper.
 #> ggcpt (changepoint detection result)
-#>   Method:         network
-#>   Change in:       network 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         threshold = 3.2294 
-#>   Series length:   80 
+#>   Method:             network
+#>   Change in:          network
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            threshold = 3.2294
+#>   Series length:      80
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

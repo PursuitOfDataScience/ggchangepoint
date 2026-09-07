@@ -473,10 +473,10 @@ returns the full path:
 path <- cpt_crops(x)
 path
 #> ggcpt_path (CROPS penalty path)
-#>   Change in:       mean 
-#>   Penalty range:  [6.215, 62.15]
-#>   Series length:   500 
-#>   Distinct segmentations: 2 
+#>   Change in:              mean
+#>   Penalty range:          [6.215, 62.15]
+#>   Series length:          500
+#>   Distinct segmentations: 2
 #> 
 #> # A tibble: 2 × 3
 #>   penalty n_cpts  cost

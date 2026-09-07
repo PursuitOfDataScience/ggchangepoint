@@ -72,11 +72,11 @@ set.seed(2026)
 mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
 cpt_delay(mon, truth = 200)
 #> ggcpt_delay
-#>   True changes:      1
-#>   Detected:          1
-#>   Mean delay:        16
-#>   Median delay:      16
-#>   False alarms:      4
+#>   True changes:       1
+#>   Detected:           1
+#>   Mean delay:         16
+#>   Median delay:       16
+#>   False alarms:       4
 #>   Average run length: 100
 #> 
 #> # A tibble: 1 × 4

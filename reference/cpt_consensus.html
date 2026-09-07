@@ -110,8 +110,19 @@ a chain of near-neighbours merging into one arbitrarily wide cluster.</p>
 
 <dt id="arg-min-votes">min_votes<a class="anchor" aria-label="anchor" href="#arg-min-votes"></a></dt>
 <dd><p>Minimum number of methods that must find a location for
-it to enter the consensus. Defaults to <code>2</code>; pass a fraction in
-\((0, 1)\) for a proportion of the methods that ran.</p></dd>
+  it to enter the consensus. Defaults to <code>2</code>.</p>
+<p>A value <strong>strictly between 0 and 1</strong> is read as a proportion of
+  the methods that ran; anything else is a count. The boundary is worth
+  knowing, because it falls exactly where a reader thinking in
+  proportions would write “unanimous”: with three methods,
+  <code>min_votes = 0.99</code> needs all three, while
+  <code>min_votes = 1</code> – and <code>1.0</code>, which is the same number –
+  is a count of one and so the <em>least</em> strict setting there is. For
+  unanimity, pass the number of methods, or a fraction just below 1.</p>
+<p>A count larger than the number of methods that ran cannot be reached,
+  so the consensus would be empty by construction; that warns rather
+  than returning a result indistinguishable from “the methods
+  agreed on nothing”.</p></dd>
 
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>
@@ -123,7 +134,9 @@ it to enter the consensus. Defaults to <code>2</code>; pass a fraction in
 
 
 <dt id="arg-seed">seed<a class="anchor" aria-label="anchor" href="#arg-seed"></a></dt>
-<dd><p>Optional seed for reproducibility.</p></dd>
+<dd><p>Optional seed for reproducibility. The seed is scoped to this
+call: <code>.Random.seed</code> is saved and restored, so a seeded call
+inside a simulation loop does not pin the loop's own stream.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>

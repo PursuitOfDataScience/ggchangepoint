@@ -36,8 +36,13 @@ as_ggcpt(
 - cp:
 
   Integer vector of changepoint locations. Out-of-range, duplicated and
-  missing values are dropped, and the result is sorted — the same
-  contract every built-in wrapper is held to.
+  missing values are dropped and the result is sorted — the same
+  contract every built-in wrapper is held to — but unlike a wrapper,
+  which is normalising an engine's output, this function is given yours,
+  so **anything it drops it warns about**, with the values and the range
+  they had to fall in. A fractional index is included in that: it is
+  truncated rather than rounded, which makes `50.5` into a changepoint
+  at 50.
 
 - x:
 
@@ -110,7 +115,8 @@ Other result class:
 [`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md),
 [`cpt_annotations()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotations.md),
 [`is_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/is_ggcpt.md),
-[`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
+[`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md),
+[`print.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/print.ggcpt.md)
 
 ## Examples
 
@@ -120,12 +126,12 @@ x <- c(rnorm(60), rnorm(60, 4))
 fit <- as_ggcpt(c(60), x, method = "my_detector")
 fit
 #> ggcpt (changepoint detection result)
-#>   Method:         my_detector
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         user 
-#>   Series length:   120 
+#>   Method:             my_detector
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            user
+#>   Series length:      120
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

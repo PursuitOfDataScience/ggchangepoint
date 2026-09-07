@@ -42,7 +42,9 @@ autoplot(object, ...)
 
 - seed:
 
-  Optional seed.
+  Optional seed. The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 - ...:
 

@@ -42,7 +42,9 @@ wbsts_wrapper(
 
 - seed:
 
-  Optional seed.
+  Optional seed. The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 - ...:
 
@@ -115,12 +117,12 @@ y <- c(as.numeric(stats::arima.sim(list(ar = 0.1), 250)),
        as.numeric(stats::arima.sim(list(ar = 0.9), 250)))
 wbsts_wrapper(y)
 #> ggcpt (changepoint detection result)
-#>   Method:         wbsts
-#>   Change in:       var 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         threshold 
-#>   Series length:   500 
+#>   Method:             wbsts
+#>   Change in:          var
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            threshold
+#>   Series length:      500
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

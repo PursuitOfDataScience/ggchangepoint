@@ -23,12 +23,12 @@ x <- c(rnorm(120), rnorm(120, 3), rnorm(120, 0.5))
 fit <- cpt_detect(x, method = "pelt")
 fit
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 2 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   360 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 2
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      360
 #> 
 #> Changepoints:
 #> # A tibble: 2 × 2
@@ -423,11 +423,11 @@ head(cpt_solution_path(cpt_detect(x, method = "wbs")), 5)
 #> # A tibble: 5 × 6
 #>    step    cp contrast start   end selected
 #>   <int> <int>    <dbl> <int> <int> <lgl>   
-#> 1     1   120    25.0      1   360 TRUE    
+#> 1     1   120    24.9      1   360 TRUE    
 #> 2     2   240    20.2    121   360 TRUE    
-#> 3     3   318     4.01   241   360 FALSE   
+#> 3     3   318     4.26   241   360 FALSE   
 #> 4     4   314     3.65   241   318 FALSE   
-#> 5     5    15     3.35     1   120 FALSE
+#> 5     5    23     3.18     1   120 FALSE
 ```
 
 An engine that exposes none of these says so, and names the ones that
@@ -454,7 +454,7 @@ cat(head(cpt_report(fit, session = FALSE), 20), sep = "\n")
     #> - Penalty: MBIC
     #> - Series length: 360
     #> - Changepoints found: 2
-    #> - Detection runtime: 0.02 s
+    #> - Detection runtime: 0.021 s
     #> 
     #> ## Changepoints
     #> 

@@ -91,7 +91,9 @@ nsp_wrapper(
 - seed:
 
   Optional seed. NSP draws random intervals, so a run is reproducible
-  only with one.
+  only with one. The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 - ...:
 

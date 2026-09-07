@@ -96,12 +96,12 @@ looks.</li>
 <span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span></span>
 <span><span class="va">fit</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         pelt</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 2 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC </span></span>
-<span><span class="co">#&gt;   Series length:   360 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 2</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Series length:      360</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
@@ -399,11 +399,11 @@ close the decision was:</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
 <span><span class="co">#&gt;    step    cp contrast start   end selected</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1   120    25.0      1   360 TRUE    </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     1   120    24.9      1   360 TRUE    </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     2   240    20.2    121   360 TRUE    </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3   318     4.01   241   360 FALSE   </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     3   318     4.26   241   360 FALSE   </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4   314     3.65   241   318 FALSE   </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5    15     3.35     1   120 FALSE</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5    23     3.18     1   120 FALSE</span></span></code></pre></div>
 <p>An engine that exposes none of these says so, and names the ones that
 do:</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
@@ -424,7 +424,7 @@ do:</p>
 <span><span class="co">#&gt; - Penalty: MBIC</span></span>
 <span><span class="co">#&gt; - Series length: 360</span></span>
 <span><span class="co">#&gt; - Changepoints found: 2</span></span>
-<span><span class="co">#&gt; - Detection runtime: 0.02 s</span></span>
+<span><span class="co">#&gt; - Detection runtime: 0.021 s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ## Changepoints</span></span>
 <span><span class="co">#&gt; </span></span>

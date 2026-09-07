@@ -33,7 +33,5 @@ A ggplot object (two facets sharing the x axis).
 
 ``` r
 res <- bcp_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
-#> Loading required package: bcp
-#> Loading required package: grid
 ggcpt_posterior(res)
 ```

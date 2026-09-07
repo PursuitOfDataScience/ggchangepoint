@@ -32,7 +32,9 @@ ecp_wrapper(data, algorithm = "divisive", min_size = 2, seed = NULL, ...)
 - seed:
 
   Optional. A seed for reproducibility of the stochastic permutation
-  test.
+  test. The seed is scoped to this call: `.Random.seed` is saved and
+  restored, so a seeded call inside a simulation loop does not pin the
+  loop's own stream.
 
 - ...:
 

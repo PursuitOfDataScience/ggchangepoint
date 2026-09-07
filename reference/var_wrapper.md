@@ -109,12 +109,12 @@ step <- function(n, a) {
 var_wrapper(rbind(step(50, 0.1), step(50, 0.8)),
             gamma_set = c(1, 10), lambda_set = c(0.1, 1))
 #> ggcpt (changepoint detection result)
-#>   Method:         var
-#>   Change in:       regression 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         l0 (CV) 
-#>   Series length:   100 
+#>   Method:             var
+#>   Change in:          regression
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            l0 (CV)
+#>   Series length:      100
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2

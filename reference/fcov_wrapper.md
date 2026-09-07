@@ -59,6 +59,31 @@ fcov_wrapper(
 
 A `ggcpt` object with `change_in = "covariance"`.
 
+## How long this takes
+
+**Minutes, not seconds, on a series of a hundred points** – by a wide
+margin the most expensive engine in the package, and slow enough that a
+first call looks like a hung session. Timed on one Linux x86-64 machine,
+against
+[`fmean_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fmean_wrapper.md)
+on the identical input so the comparison is the same package and the
+same data:
+
+|                        |           |           |
+|------------------------|-----------|-----------|
+| **input**              | **fmean** | **fcov**  |
+| \\n = 60\\, \\p = 5\\  | 4.5 s     | **316 s** |
+| \\n = 120\\, \\p = 5\\ | 2.9 s     | **598 s** |
+
+The cost is roughly linear in the number of time points and it is in the
+engine's own covariance-operator estimation, not in this wrapper, so
+there is no argument here that reduces it. Two practical consequences:
+size the call before starting it, and do not put this method in a loop –
+a twelve-replicate study at \\n = 120\\ is two hours. Another machine
+will give different absolute numbers; the ratio to `fmean`, which is a
+factor of about seventy to two hundred, is the part to plan around. The
+“Benchmarks” article compares the engines that do scale.
+
 ## References
 
 Aue A, Rice G, Sönmez O (2020). “Structural break analysis for spectrum
@@ -119,12 +144,12 @@ X <- matrix(rnorm(60 * 20), nrow = 60)
 X[31:60, ] <- X[31:60, ] * 3
 fcov_wrapper(X, target = "trace", M = 200)
 #> ggcpt (changepoint detection result)
-#>   Method:         fcov
-#>   Change in:       covariance 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         alpha = 0.05 
-#>   Series length:   60 
+#>   Method:             fcov
+#>   Change in:          covariance
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            alpha = 0.05
+#>   Series length:      60
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 3

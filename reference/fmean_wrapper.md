@@ -124,12 +124,12 @@ X <- matrix(rnorm(60 * 20), nrow = 60)
 X[31:60, ] <- X[31:60, ] + 2
 fmean_wrapper(X, M = 200)
 #> ggcpt (changepoint detection result)
-#>   Method:         fmean
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         alpha = 0.05 
-#>   Series length:   60 
+#>   Method:             fmean
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            alpha = 0.05
+#>   Series length:      60
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 3

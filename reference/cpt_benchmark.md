@@ -81,7 +81,9 @@ autoplot(
 
 - seed:
 
-  Optional seed.
+  Optional seed. The seed is scoped to this call: `.Random.seed` is
+  saved and restored, so a seeded call inside a simulation loop does not
+  pin the loop's own stream.
 
 - ...:
 
@@ -123,12 +125,46 @@ the dataset supplied), `n_cp`, the requested metrics, `runtime`, `error`
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 (`"heatmap"`, `"ranks"`, `"critical_difference"`).
 
+## Reading the critical-difference diagram
+
+Rank 1 is best. Each method's mean rank is taken over the datasets, in
+the direction the metric calls for – higher is better for `covering`,
+`f1`, `precision`, `recall` and `rand_index`; lower for `hausdorff`,
+`annotation_error`, `mae_matched` and `rmse_matched`. A metric that came
+back `NA` takes the *worst* rank on that dataset rather than being
+dropped, so a method that failed there is penalised for it instead of
+quietly scoring on a smaller sample; ties share the average rank.
+
+The bar is the Nemenyi critical distance \$\$CD = q\_\alpha
+\sqrt{k(k + 1) / (6N)}\$\$ for \\k\\ methods over \\N\\ datasets, where
+\\q\_\alpha\\ is the Studentised range statistic at \\\alpha\\ divided
+by \\\sqrt 2\\ (Demsar, 2006 – the constants agree with that paper's
+Table 5 to three decimals for \\k = 2, \ldots, 10\\). Two methods whose
+mean ranks differ by less than \\CD\\ are not distinguished at that
+level.
+
+**One caveat the diagram cannot show.** Nemenyi is a *post-hoc*
+procedure, and the convention is to run it only after a Friedman test
+has rejected the null that all methods rank equally.
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+does not run that omnibus test – it draws the diagram it is asked for –
+so a gap wider than \\CD\\ on a grid where Friedman would not have
+rejected is not the significant difference it looks like. With the
+handful of datasets
+[`cpt_datasets()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_datasets.md)
+supplies, \\N\\ is small and \\CD\\ correspondingly wide; read the
+diagram as a descriptive summary unless \\N\\ is large enough to support
+the test.
+
 ## References
 
 van den Burg GJJ, Williams CKI (2020). “An evaluation of change point
 detection algorithms.” *arXiv preprint arXiv:2003.06222*.
 [doi:10.48550/arXiv.2003.06222](https://doi.org/10.48550/arXiv.2003.06222)
 .
+
+Demšar J (2006). “Statistical comparisons of classifiers over multiple
+data sets.” *Journal of Machine Learning Research*, **7**, 1–30.
 
 ## See also
 

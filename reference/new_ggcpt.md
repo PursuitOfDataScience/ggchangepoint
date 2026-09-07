@@ -1,6 +1,11 @@
 # Create a ggcpt object
 
-Create a ggcpt object
+The low-level constructor for the class every detector in this package
+returns. It assembles the components into a `ggcpt` without checking
+them, which is what makes it useful inside a wrapper and unsuitable as
+the entry point for hand-built input – use
+[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
+for that.
 
 ## Usage
 
@@ -138,7 +143,8 @@ Other result class:
 [`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md),
 [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md),
 [`cpt_annotations()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotations.md),
-[`is_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/is_ggcpt.md)
+[`is_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/is_ggcpt.md),
+[`print.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/print.ggcpt.md)
 
 ## Examples
 
@@ -150,12 +156,12 @@ new_ggcpt(
                         value = c(rnorm(50), rnorm(50, 4))),
   method = "manual", change_in = "mean")
 #> ggcpt (changepoint detection result)
-#>   Method:         manual
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         NA 
-#>   Series length:   100 
+#>   Method:             manual
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            NA
+#>   Series length:      100
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
