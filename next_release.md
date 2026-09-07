@@ -23298,3 +23298,40 @@ cleaner console, and the next run is what names the defect.
 Stated plainly because it would be easy to present a green-looking fix
 here: two edits went in, one of them makes the *next* failure legible,
 and neither is known to address the actual Windows error.
+
+## 578. All six jobs green – and the cause was never recovered
+
+`57a5804`: **`macos-latest`, `windows-latest`, all three Ubuntu flavours
+and pkgdown all pass.** The whole matrix `cran-comments.md` advertises
+is green for the first time in this loop.
+
+The honest part is that **I cannot say why Windows passed**, and the
+temptation to claim the fix worked should be resisted. Only two things
+changed: the
+[`inspect_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/inspect_wrapper.md)
+stream capture, and a log-length variable that cannot affect pass or
+fail. So either the capture fixed it by a path I cannot see, or the
+original failure was environmental – a Suggests engine that failed to
+install on that particular run, say.
+
+One concrete mechanism was worth checking and is ruled out.
+[`InspectChangepoint::inspect()`](https://rdrr.io/pkg/InspectChangepoint/man/inspect.html)
+does raise a real warning when RSpectra is missing:
+
+``` r
+if (prod(dim(x)) > 1e+06 && !requireNamespace("RSpectra")) {
+    warning("Dimension of data matrix is large, ...")
+```
+
+and `test-040-bugfixes.R:528` asserts
+`expect_no_warning(inspect_wrapper(Xg))` – which would fail on Windows
+and pass everywhere else. But `Xg` is `cbind(a = ..., b = ...)` on 150
+rows, so `prod(dim(x))` is **300**, five orders of magnitude below the
+threshold. The warning cannot have fired. Nor does any of the nine
+`expect_silent()` calls touch that engine.
+
+So the failure’s identity went down with the truncated log, and that is
+precisely what §575 fixed. **The durable outcome of this part is not the
+green tick; it is that a recurrence will name itself.** If Windows fails
+again, the log will say what failed instead of thirteen copies of
+somebody else’s loading diagnostic.

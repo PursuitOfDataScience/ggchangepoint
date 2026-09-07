@@ -104,5 +104,5 @@ res$changepoints
 #> # A tibble: 1 × 3
 #>      cp cp_value posterior_prob
 #>   <int>    <dbl>          <dbl>
-#> 1    60    -1.79          1.000
+#> 1    60    -1.79              1
 ```
