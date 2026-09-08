@@ -1095,6 +1095,29 @@ every argument its engine accepts.
 - Every `@param seed` says so: the seed is scoped to the call and does
   not pin the loop’s own stream.
 
+#### Influence diagnostics
+
+- **[`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+  ranked the most influential observation last.** `max_shift` (how far
+  each original changepoint had to move to find a match) and
+  `param_shift` (the largest change in a segment parameter) are both
+  undefined for a perturbation that left the engine with *no*
+  changepoints — nothing to match against, no parameters to compare — so
+  the composite score came out `NA` and `order(-leverage)` sent that row
+  to the bottom of a table whose entire purpose is *which observations
+  matter most*. An observation whose deletion destroys the whole
+  segmentation is the most influential one there is; measured, it ranked
+  3 of 3. Collapsed-fit rows now come **first**.
+- The `NA` itself is kept, because those two components genuinely are
+  undefined and filling them in with a fabricated number would be worse.
+  Such a row still says what happened through its `delta_n_cp`, and
+  [`?cpt_leverage`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+  now explains both the ordering and how to read it. It also records
+  that an `NA` here always means *this* perturbation collapsed the fit:
+  when the **original** fit found no changepoints, `max_shift` is
+  missing for every observation, the standardisation’s zero-variance
+  guard returns zeros, and every `leverage` is finite.
+
 #### Supervised detection
 
 - **[`coef()`](https://rdrr.io/r/stats/coef.html) and

@@ -25077,3 +25077,181 @@ workflow file rather than from memory this time.
 
 Round 11’s and round 12’s work was held uncommitted while the matrix
 ran, so the green is attributable to one commit.
+
+## 617. The most influential observation ranked last
+
+[`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+exists to answer one question – which observations matter most – and it
+put the answer at the bottom.
+
+      index delta_n_cp max_shift param_shift   leverage
+    1     2          0         2         0.1  0.8368633
+    2     1          0         0         0.0 -1.9915638
+    3     3         -2        NA          NA         NA     <- ranked 3 of 3
+
+Row 3 is an observation whose deletion **destroyed a two-changepoint
+segmentation entirely**. It is the most influential observation in the
+series by any reading, and a user looking at `head(cpt_leverage(fit))`
+would never see it.
+
+The mechanism is two lines apart:
+
+``` r
+
+lev <- z(inf$delta_n_cp) + z(inf$max_shift) + z(inf$param_shift)
+out[order(-out$leverage, out$index), , drop = FALSE]
+```
+
+`max_shift` is the distance each original changepoint had to move to
+find a match, and `param_shift` the largest change in a segment
+parameter. For a perturbation that leaves the engine with no
+changepoints there is nothing to match against and no parameters to
+compare, so both are `NA`, `NA + z + z` is `NA`, and `order(-leverage)`
+puts `NA` last.
+
+### 617.1 Not filling in the NA
+
+The tempting fix is to substitute something – the maximum observed
+z-score, or the series length for `max_shift`. Rejected: those two
+components are genuinely undefined for that row, and a fabricated number
+would put a made-up quantity into a column a reader compares across
+rows. The `NA` is the honest value.
+
+**What was wrong is where it sorted.** The fix is one line:
+
+``` r
+
+collapsed <- is.na(out$leverage)
+out[order(!collapsed, -out$leverage, out$index), , drop = FALSE]
+```
+
+and the row is self-explaining once it is visible – `delta_n_cp = -2`
+says exactly how many changepoints were lost.
+
+### 617.2 The distinction that makes the rule safe
+
+An `NA` leverage always means *this particular perturbation* collapsed
+the fit, never something benign, and that is worth checking rather than
+assuming. If the **original** fit found no changepoints then `max_shift`
+is `NA` for every row – but then `z()`’s own zero-variance guard
+(`if (!is.finite(s) || s == 0) return(rep(0, length(v)))`) returns zeros
+rather than `NA`s, so no leverage is `NA` and the ordering falls back to
+the components that do vary. Measured in all four regimes:
+
+| case | NA leverage rows | first row |
+|----|----|----|
+| one perturbation collapses the fit | 1 | the collapsed one |
+| no collapse | 0 | largest score |
+| original found nothing (all `max_shift` NA) | 0 | largest score |
+| real fit, 12 perturbations | 0 | largest score |
+
+[`?cpt_leverage`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)’s
+`@return` now states the ordering, why the `NA` is left in place, which
+column to read instead, and this last distinction – so the rule is
+documented as a property rather than left as a surprise.
+
+## 618. `summarise_influence()` measures what it says
+
+Checked while there, since
+[`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+is a re-ranking of its output and a wrong component would not have shown
+up above:
+
+- `n_cp` and `delta_n_cp` against hand-built perturbations;
+- `max_shift` is the **worst** distance an original changepoint had to
+  move, not the mean – `c(50, 100)` against `c(52, 100)` gives 2;
+- `param_shift` is the largest absolute change in a segment parameter;
+- and the two are measuring different things, which is the point of
+  having both: a perturbation that *adds* a changepoint at 75 to
+  `c(50, 100)` leaves `max_shift = 0` while `delta_n_cp` rises to 1.
+
+All correct. Now tested, along with the ordering rule.
+
+## 617. The most influential observation ranked last
+
+[`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+exists to answer one question – which observations matter most – and it
+put the answer at the bottom.
+
+      index delta_n_cp max_shift param_shift   leverage
+    1     2          0         2         0.1  0.8368633
+    2     1          0         0         0.0 -1.9915638
+    3     3         -2        NA          NA         NA     <- ranked 3 of 3
+
+Row 3 is an observation whose deletion **destroyed a two-changepoint
+segmentation entirely**. It is the most influential observation in the
+series by any reading, and a user looking at `head(cpt_leverage(fit))`
+would never see it.
+
+The mechanism is two lines apart:
+
+``` r
+
+lev <- z(inf$delta_n_cp) + z(inf$max_shift) + z(inf$param_shift)
+out[order(-out$leverage, out$index), , drop = FALSE]
+```
+
+`max_shift` is the distance each original changepoint had to move to
+find a match, and `param_shift` the largest change in a segment
+parameter. For a perturbation that leaves the engine with no
+changepoints there is nothing to match against and no parameters to
+compare, so both are `NA`, `NA + z + z` is `NA`, and `order(-leverage)`
+puts `NA` last.
+
+### 617.1 Not filling in the NA
+
+The tempting fix is to substitute something – the maximum observed
+z-score, or the series length for `max_shift`. Rejected: those two
+components are genuinely undefined for that row, and a fabricated number
+would put a made-up quantity into a column a reader compares across
+rows. The `NA` is the honest value.
+
+**What was wrong is where it sorted.** The fix is one line:
+
+``` r
+
+collapsed <- is.na(out$leverage)
+out[order(!collapsed, -out$leverage, out$index), , drop = FALSE]
+```
+
+and the row is self-explaining once it is visible – `delta_n_cp = -2`
+says exactly how many changepoints were lost.
+
+### 617.2 The distinction that makes the rule safe
+
+An `NA` leverage always means *this particular perturbation* collapsed
+the fit, never something benign, and that is worth checking rather than
+assuming. If the **original** fit found no changepoints then `max_shift`
+is `NA` for every row – but then `z()`’s own zero-variance guard
+(`if (!is.finite(s) || s == 0) return(rep(0, length(v)))`) returns zeros
+rather than `NA`s, so no leverage is `NA` and the ordering falls back to
+the components that do vary. Measured in all four regimes:
+
+| case | NA leverage rows | first row |
+|----|----|----|
+| one perturbation collapses the fit | 1 | the collapsed one |
+| no collapse | 0 | largest score |
+| original found nothing (all `max_shift` NA) | 0 | largest score |
+| real fit, 12 perturbations | 0 | largest score |
+
+[`?cpt_leverage`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)’s
+`@return` now states the ordering, why the `NA` is left in place, which
+column to read instead, and this last distinction – so the rule is
+documented as a property rather than left as a surprise.
+
+## 618. `summarise_influence()` measures what it says
+
+Checked while there, since
+[`cpt_leverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+is a re-ranking of its output and a wrong component would not have shown
+up above:
+
+- `n_cp` and `delta_n_cp` against hand-built perturbations;
+- `max_shift` is the **worst** distance an original changepoint had to
+  move, not the mean – `c(50, 100)` against `c(52, 100)` gives 2;
+- `param_shift` is the largest absolute change in a segment parameter;
+- and the two are measuring different things, which is the point of
+  having both: a perturbation that *adds* a changepoint at 75 to
+  `c(50, 100)` leaves `max_shift = 0` while `delta_n_cp` rises to 1.
+
+All correct. Now tested, along with the ordering rule.

@@ -15927,6 +15927,116 @@ Hannan-Quinn = 2k log log n    sSIC = k (log n)^alpha</code></pre>
 <p>One correction to this document: §578 and its successors called this a “six-job” matrix. <code>R-CMD-check.yaml</code> defines <strong>five</strong> jobs; the sixth in that count was <code>pkgdown</code>, which is a separate workflow. Counted from the workflow file rather than from memory this time.</p>
 <p>Round 11’s and round 12’s work was held uncommitted while the matrix ran, so the green is attributable to one commit.</p>
 </div>
+<div class="section level2">
+<h2 id="id_617-the-most-influential-observation-ranked-last">617. The most influential observation ranked last<a class="anchor" aria-label="anchor" href="#id_617-the-most-influential-observation-ranked-last"></a></h2>
+<p><code><a href="reference/cpt_leverage.html">cpt_leverage()</a></code> exists to answer one question – which observations matter most – and it put the answer at the bottom.</p>
+<pre><code>  index delta_n_cp max_shift param_shift   leverage
+1     2          0         2         0.1  0.8368633
+2     1          0         0         0.0 -1.9915638
+3     3         -2        NA          NA         NA     &lt;- ranked 3 of 3</code></pre>
+<p>Row 3 is an observation whose deletion <strong>destroyed a two-changepoint segmentation entirely</strong>. It is the most influential observation in the series by any reading, and a user looking at <code>head(cpt_leverage(fit))</code> would never see it.</p>
+<p>The mechanism is two lines apart:</p>
+<div class="sourceCode" id="cb152"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lev</span> <span class="op">&lt;-</span> <span class="fu">z</span><span class="op">(</span><span class="va">inf</span><span class="op">$</span><span class="va">delta_n_cp</span><span class="op">)</span> <span class="op">+</span> <span class="fu">z</span><span class="op">(</span><span class="va">inf</span><span class="op">$</span><span class="va">max_shift</span><span class="op">)</span> <span class="op">+</span> <span class="fu">z</span><span class="op">(</span><span class="va">inf</span><span class="op">$</span><span class="va">param_shift</span><span class="op">)</span></span>
+<span><span class="va">out</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">out</span><span class="op">$</span><span class="va">leverage</span>, <span class="va">out</span><span class="op">$</span><span class="va">index</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span></code></pre></div>
+<p><code>max_shift</code> is the distance each original changepoint had to move to find a match, and <code>param_shift</code> the largest change in a segment parameter. For a perturbation that leaves the engine with no changepoints there is nothing to match against and no parameters to compare, so both are <code>NA</code>, <code>NA + z + z</code> is <code>NA</code>, and <code>order(-leverage)</code> puts <code>NA</code> last.</p>
+<div class="section level3">
+<h3 id="id_6171-not-filling-in-the-na">617.1 Not filling in the NA<a class="anchor" aria-label="anchor" href="#id_6171-not-filling-in-the-na"></a></h3>
+<p>The tempting fix is to substitute something – the maximum observed z-score, or the series length for <code>max_shift</code>. Rejected: those two components are genuinely undefined for that row, and a fabricated number would put a made-up quantity into a column a reader compares across rows. The <code>NA</code> is the honest value.</p>
+<p><strong>What was wrong is where it sorted.</strong> The fix is one line:</p>
+<div class="sourceCode" id="cb153"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">collapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">leverage</span><span class="op">)</span></span>
+<span><span class="va">out</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">!</span><span class="va">collapsed</span>, <span class="op">-</span><span class="va">out</span><span class="op">$</span><span class="va">leverage</span>, <span class="va">out</span><span class="op">$</span><span class="va">index</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span></code></pre></div>
+<p>and the row is self-explaining once it is visible – <code>delta_n_cp = -2</code> says exactly how many changepoints were lost.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6172-the-distinction-that-makes-the-rule-safe">617.2 The distinction that makes the rule safe<a class="anchor" aria-label="anchor" href="#id_6172-the-distinction-that-makes-the-rule-safe"></a></h3>
+<p>An <code>NA</code> leverage always means <em>this particular perturbation</em> collapsed the fit, never something benign, and that is worth checking rather than assuming. If the <strong>original</strong> fit found no changepoints then <code>max_shift</code> is <code>NA</code> for every row – but then <code>z()</code>’s own zero-variance guard (<code>if (!is.finite(s) || s == 0) return(rep(0, length(v)))</code>) returns zeros rather than <code>NA</code>s, so no leverage is <code>NA</code> and the ordering falls back to the components that do vary. Measured in all four regimes:</p>
+<table class="table"><thead><tr><th>case</th>
+<th>NA leverage rows</th>
+<th>first row</th>
+</tr></thead><tbody><tr><td>one perturbation collapses the fit</td>
+<td>1</td>
+<td>the collapsed one</td>
+</tr><tr><td>no collapse</td>
+<td>0</td>
+<td>largest score</td>
+</tr><tr><td>original found nothing (all <code>max_shift</code> NA)</td>
+<td>0</td>
+<td>largest score</td>
+</tr><tr><td>real fit, 12 perturbations</td>
+<td>0</td>
+<td>largest score</td>
+</tr></tbody></table><p><code><a href="reference/cpt_leverage.html">?cpt_leverage</a></code>’s <code>@return</code> now states the ordering, why the <code>NA</code> is left in place, which column to read instead, and this last distinction – so the rule is documented as a property rather than left as a surprise.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_618-summarise_influence-measures-what-it-says">618. <code>summarise_influence()</code> measures what it says<a class="anchor" aria-label="anchor" href="#id_618-summarise_influence-measures-what-it-says"></a></h2>
+<p>Checked while there, since <code><a href="reference/cpt_leverage.html">cpt_leverage()</a></code> is a re-ranking of its output and a wrong component would not have shown up above:</p>
+<ul><li>
+<code>n_cp</code> and <code>delta_n_cp</code> against hand-built perturbations;</li>
+<li>
+<code>max_shift</code> is the <strong>worst</strong> distance an original changepoint had to move, not the mean – <code>c(50, 100)</code> against <code>c(52, 100)</code> gives 2;</li>
+<li>
+<code>param_shift</code> is the largest absolute change in a segment parameter;</li>
+<li>and the two are measuring different things, which is the point of having both: a perturbation that <em>adds</em> a changepoint at 75 to <code>c(50, 100)</code> leaves <code>max_shift = 0</code> while <code>delta_n_cp</code> rises to 1.</li>
+</ul><p>All correct. Now tested, along with the ordering rule.</p>
+</div>
+<div class="section level2">
+<h2 id="id_617-the-most-influential-observation-ranked-last-1">617. The most influential observation ranked last<a class="anchor" aria-label="anchor" href="#id_617-the-most-influential-observation-ranked-last-1"></a></h2>
+<p><code><a href="reference/cpt_leverage.html">cpt_leverage()</a></code> exists to answer one question – which observations matter most – and it put the answer at the bottom.</p>
+<pre><code>  index delta_n_cp max_shift param_shift   leverage
+1     2          0         2         0.1  0.8368633
+2     1          0         0         0.0 -1.9915638
+3     3         -2        NA          NA         NA     &lt;- ranked 3 of 3</code></pre>
+<p>Row 3 is an observation whose deletion <strong>destroyed a two-changepoint segmentation entirely</strong>. It is the most influential observation in the series by any reading, and a user looking at <code>head(cpt_leverage(fit))</code> would never see it.</p>
+<p>The mechanism is two lines apart:</p>
+<div class="sourceCode" id="cb155"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">lev</span> <span class="op">&lt;-</span> <span class="fu">z</span><span class="op">(</span><span class="va">inf</span><span class="op">$</span><span class="va">delta_n_cp</span><span class="op">)</span> <span class="op">+</span> <span class="fu">z</span><span class="op">(</span><span class="va">inf</span><span class="op">$</span><span class="va">max_shift</span><span class="op">)</span> <span class="op">+</span> <span class="fu">z</span><span class="op">(</span><span class="va">inf</span><span class="op">$</span><span class="va">param_shift</span><span class="op">)</span></span>
+<span><span class="va">out</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">-</span><span class="va">out</span><span class="op">$</span><span class="va">leverage</span>, <span class="va">out</span><span class="op">$</span><span class="va">index</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span></code></pre></div>
+<p><code>max_shift</code> is the distance each original changepoint had to move to find a match, and <code>param_shift</code> the largest change in a segment parameter. For a perturbation that leaves the engine with no changepoints there is nothing to match against and no parameters to compare, so both are <code>NA</code>, <code>NA + z + z</code> is <code>NA</code>, and <code>order(-leverage)</code> puts <code>NA</code> last.</p>
+<div class="section level3">
+<h3 id="id_6171-not-filling-in-the-na-1">617.1 Not filling in the NA<a class="anchor" aria-label="anchor" href="#id_6171-not-filling-in-the-na-1"></a></h3>
+<p>The tempting fix is to substitute something – the maximum observed z-score, or the series length for <code>max_shift</code>. Rejected: those two components are genuinely undefined for that row, and a fabricated number would put a made-up quantity into a column a reader compares across rows. The <code>NA</code> is the honest value.</p>
+<p><strong>What was wrong is where it sorted.</strong> The fix is one line:</p>
+<div class="sourceCode" id="cb156"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">collapsed</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">out</span><span class="op">$</span><span class="va">leverage</span><span class="op">)</span></span>
+<span><span class="va">out</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="op">!</span><span class="va">collapsed</span>, <span class="op">-</span><span class="va">out</span><span class="op">$</span><span class="va">leverage</span>, <span class="va">out</span><span class="op">$</span><span class="va">index</span><span class="op">)</span>, , drop <span class="op">=</span> <span class="cn">FALSE</span><span class="op">]</span></span></code></pre></div>
+<p>and the row is self-explaining once it is visible – <code>delta_n_cp = -2</code> says exactly how many changepoints were lost.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6172-the-distinction-that-makes-the-rule-safe-1">617.2 The distinction that makes the rule safe<a class="anchor" aria-label="anchor" href="#id_6172-the-distinction-that-makes-the-rule-safe-1"></a></h3>
+<p>An <code>NA</code> leverage always means <em>this particular perturbation</em> collapsed the fit, never something benign, and that is worth checking rather than assuming. If the <strong>original</strong> fit found no changepoints then <code>max_shift</code> is <code>NA</code> for every row – but then <code>z()</code>’s own zero-variance guard (<code>if (!is.finite(s) || s == 0) return(rep(0, length(v)))</code>) returns zeros rather than <code>NA</code>s, so no leverage is <code>NA</code> and the ordering falls back to the components that do vary. Measured in all four regimes:</p>
+<table class="table"><thead><tr><th>case</th>
+<th>NA leverage rows</th>
+<th>first row</th>
+</tr></thead><tbody><tr><td>one perturbation collapses the fit</td>
+<td>1</td>
+<td>the collapsed one</td>
+</tr><tr><td>no collapse</td>
+<td>0</td>
+<td>largest score</td>
+</tr><tr><td>original found nothing (all <code>max_shift</code> NA)</td>
+<td>0</td>
+<td>largest score</td>
+</tr><tr><td>real fit, 12 perturbations</td>
+<td>0</td>
+<td>largest score</td>
+</tr></tbody></table><p><code><a href="reference/cpt_leverage.html">?cpt_leverage</a></code>’s <code>@return</code> now states the ordering, why the <code>NA</code> is left in place, which column to read instead, and this last distinction – so the rule is documented as a property rather than left as a surprise.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_618-summarise_influence-measures-what-it-says-1">618. <code>summarise_influence()</code> measures what it says<a class="anchor" aria-label="anchor" href="#id_618-summarise_influence-measures-what-it-says-1"></a></h2>
+<p>Checked while there, since <code><a href="reference/cpt_leverage.html">cpt_leverage()</a></code> is a re-ranking of its output and a wrong component would not have shown up above:</p>
+<ul><li>
+<code>n_cp</code> and <code>delta_n_cp</code> against hand-built perturbations;</li>
+<li>
+<code>max_shift</code> is the <strong>worst</strong> distance an original changepoint had to move, not the mean – <code>c(50, 100)</code> against <code>c(52, 100)</code> gives 2;</li>
+<li>
+<code>param_shift</code> is the largest absolute change in a segment parameter;</li>
+<li>and the two are measuring different things, which is the point of having both: a perturbation that <em>adds</em> a changepoint at 75 to <code>c(50, 100)</code> leaves <code>max_shift = 0</code> while <code>delta_n_cp</code> rises to 1.</li>
+</ul><p>All correct. Now tested, along with the ordering rule.</p>
+</div>
 </div>
 
 

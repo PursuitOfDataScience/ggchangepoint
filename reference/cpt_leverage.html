@@ -84,9 +84,22 @@ still ranked.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble ordered by <code>leverage</code>, with columns <code>index</code>,
-  <code>delta_n_cp</code>, <code>max_shift</code>, <code>param_shift</code> and
-  <code>leverage</code>.</p>
+    <p>A tibble ordered most influential first, with columns
+  <code>index</code>, <code>delta_n_cp</code>, <code>max_shift</code>,
+  <code>param_shift</code> and <code>leverage</code>.</p>
+<p><strong>Rows with <code>leverage = NA</code> come first, and they are the
+  most influential of all.</strong> <code>max_shift</code> and <code>param_shift</code>
+  are undefined for a perturbation that left the engine with no
+  changepoints at all – there is nothing to match against and no
+  parameters to compare – so the composite score cannot be formed for
+  an observation whose removal destroys the segmentation entirely. The
+  <code>NA</code> is kept rather than filled in with a fabricated number;
+  read the <code>delta_n_cp</code> column on those rows, which says how many
+  changepoints were lost.</p>
+<p>An <code>NA</code> here is always that case. If the <em>original</em> fit
+  found no changepoints then <code>max_shift</code> is missing for every
+  observation, the standardisation returns zeros rather than
+  <code>NA</code>s, and every <code>leverage</code> is finite.</p>
     </div>
 
     <div class="section level2">
