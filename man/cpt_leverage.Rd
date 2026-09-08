@@ -14,9 +14,24 @@ cpt_leverage(object, ...)
 \code{ggcpt}.}
 }
 \value{
-A tibble ordered by \code{leverage}, with columns \code{index},
-  \code{delta_n_cp}, \code{max_shift}, \code{param_shift} and
-  \code{leverage}.
+A tibble ordered most influential first, with columns
+  \code{index}, \code{delta_n_cp}, \code{max_shift},
+  \code{param_shift} and \code{leverage}.
+
+  \strong{Rows with \code{leverage = NA} come first, and they are the
+  most influential of all.} \code{max_shift} and \code{param_shift}
+  are undefined for a perturbation that left the engine with no
+  changepoints at all -- there is nothing to match against and no
+  parameters to compare -- so the composite score cannot be formed for
+  an observation whose removal destroys the segmentation entirely. The
+  \code{NA} is kept rather than filled in with a fabricated number;
+  read the \code{delta_n_cp} column on those rows, which says how many
+  changepoints were lost.
+
+  An \code{NA} here is always that case. If the \emph{original} fit
+  found no changepoints then \code{max_shift} is missing for every
+  observation, the standardisation returns zeros rather than
+  \code{NA}s, and every \code{leverage} is finite.
 }
 \description{
 Orders the observations of a \code{\link{cpt_influence}()} result by how

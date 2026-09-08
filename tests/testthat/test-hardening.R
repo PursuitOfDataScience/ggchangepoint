@@ -2612,3 +2612,95 @@ test_that("the penalty model is a function of the series, not a constant", {
   manual <- exp(sum(c(1, feats[m$features]) * cf))
   expect_equal(unname(preds[["short_loud"]]), manual, tolerance = 1e-6)
 })
+
+# ---------------------------------------------------------------------------
+# `cpt_leverage()` ranked the most influential observation last.
+#
+# `max_shift` is how far each original changepoint had to move to find a
+# match, and `param_shift` the largest change in a segment parameter. Both
+# are undefined for a perturbation that left the engine with NO changepoints
+# -- nothing to match against, no parameters to compare -- so
+# `NA + z + z` is NA and `order(-leverage)` sent that row to the bottom of a
+# table whose entire purpose is "which observations matter most". An
+# observation whose deletion destroys the whole segmentation is the most
+# influential one there is; measured, it ranked 3 of 3.
+#
+# The NA is kept, because the two components genuinely are undefined and a
+# fabricated number would be worse. Only the ordering changed.
+# ---------------------------------------------------------------------------
+
+test_that("cpt_leverage() puts a collapsed fit first, not last", {
+  si <- ggchangepoint:::summarise_influence
+  mk <- function(cpts, pm, orig_cp, orig_param) {
+    s <- si(cpts, pm, orig_cp, orig_param, index = seq_along(cpts))
+    structure(list(influence = s$influence, param = pm, original = orig_cp,
+                   type = "delete", engine = "recompute", method = "pelt"),
+              class = "ggcpt_influence")
+  }
+
+  # perturbation 3 destroys a two-changepoint segmentation
+  lv <- cpt_leverage(mk(list(c(50L, 100L), c(52L, 100L), integer(0)),
+                        rbind(c(0, 3, 1), c(0.1, 3, 1), c(NA, NA, NA)),
+                        c(50L, 100L), c(0, 3, 1)))
+  expect_equal(lv$index[1], 3L)
+  expect_true(is.na(lv$leverage[1]))
+  # and the row still says what happened, which is why the NA can stay
+  expect_equal(lv$delta_n_cp[1], -2L)
+  # the finite rows keep their own descending order below it
+  fin <- lv$leverage[!is.na(lv$leverage)]
+  expect_true(all(diff(fin) <= 1e-12))
+
+  # with no collapse, nothing changes: no NA, strictly descending
+  lv2 <- cpt_leverage(mk(list(c(50L, 100L), c(52L, 100L), c(60L, 100L)),
+                         rbind(c(0, 3, 1), c(0.1, 3, 1), c(0.4, 3, 1)),
+                         c(50L, 100L), c(0, 3, 1)))
+  expect_false(any(is.na(lv2$leverage)))
+  expect_true(all(diff(lv2$leverage) <= 1e-12))
+  expect_equal(lv2$index[1], 3L)
+
+  # an NA leverage always means THIS perturbation collapsed the fit: when
+  # the ORIGINAL found no changepoints, max_shift is missing for every row,
+  # the zero-variance guard returns zeros, and no leverage is NA
+  lv3 <- cpt_leverage(mk(list(integer(0), c(5L), integer(0)),
+                         rbind(c(0), c(0.2), c(0)), integer(0), c(0)))
+  expect_true(all(is.na(lv3$max_shift)))
+  expect_false(any(is.na(lv3$leverage)))
+})
+
+test_that("summarise_influence() computes the shifts it documents", {
+  si <- ggchangepoint:::summarise_influence
+  s <- si(list(c(50L, 100L), c(52L, 100L), integer(0)),
+          rbind(c(0, 3, 1), c(0.1, 3, 1), c(NA, NA, NA)),
+          c(50L, 100L), c(0, 3, 1), index = 1:3)
+  inf <- s$influence
+  expect_equal(inf$n_cp, c(2L, 2L, 0L))
+  expect_equal(inf$delta_n_cp, c(0L, 0L, -2L))
+  # max_shift is the WORST distance an original changepoint had to move
+  expect_equal(inf$max_shift, c(0, 2, NA))
+  # param_shift is the largest absolute change in a segment parameter
+  expect_equal(inf$param_shift, c(0, 0.1, NA))
+
+  # a perturbation that ADDS a changepoint does not move the originals, so
+  # max_shift stays 0 while delta_n_cp rises -- the two components are
+  # measuring different things
+  s2 <- si(list(c(50L, 75L, 100L)), rbind(c(0, 3, 1)), c(50L, 100L),
+           c(0, 3, 1), index = 1L)
+  expect_equal(s2$influence$delta_n_cp, 1L)
+  expect_equal(s2$influence$max_shift, 0)
+})
+
+test_that("cpt_leverage() on a real fit is ordered and complete", {
+  set.seed(31)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 5))
+  r <- cpt_leverage(cpt_detect(x, method = "pelt"),
+                    subset = seq(5, 115, by = 10))
+  expect_true(all(c("index", "delta_n_cp", "max_shift", "param_shift",
+                    "leverage") %in% names(r)))
+  expect_equal(nrow(r), 12L)
+  fin <- r$leverage[!is.na(r$leverage)]
+  expect_true(all(diff(fin) <= 1e-12))
+  # every NA, if any, precedes every finite value
+  if (any(is.na(r$leverage))) {
+    expect_true(all(which(is.na(r$leverage)) < min(which(!is.na(r$leverage)))))
+  }
+})

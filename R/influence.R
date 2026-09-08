@@ -272,9 +272,24 @@ print.ggcpt_influence <- function(x, ...) {
 #'   (in which case \code{\link{cpt_influence}()} is run first).
 #' @param ... Passed to \code{\link{cpt_influence}()} when \code{object} is a
 #'   \code{ggcpt}.
-#' @return A tibble ordered by \code{leverage}, with columns \code{index},
-#'   \code{delta_n_cp}, \code{max_shift}, \code{param_shift} and
-#'   \code{leverage}.
+#' @return A tibble ordered most influential first, with columns
+#'   \code{index}, \code{delta_n_cp}, \code{max_shift},
+#'   \code{param_shift} and \code{leverage}.
+#'
+#'   \strong{Rows with \code{leverage = NA} come first, and they are the
+#'   most influential of all.} \code{max_shift} and \code{param_shift}
+#'   are undefined for a perturbation that left the engine with no
+#'   changepoints at all -- there is nothing to match against and no
+#'   parameters to compare -- so the composite score cannot be formed for
+#'   an observation whose removal destroys the segmentation entirely. The
+#'   \code{NA} is kept rather than filled in with a fabricated number;
+#'   read the \code{delta_n_cp} column on those rows, which says how many
+#'   changepoints were lost.
+#'
+#'   An \code{NA} here is always that case. If the \emph{original} fit
+#'   found no changepoints then \code{max_shift} is missing for every
+#'   observation, the standardisation returns zeros rather than
+#'   \code{NA}s, and every \code{leverage} is finite.
 #' @export
 #' @examples
 #' set.seed(2026)
@@ -300,7 +315,29 @@ cpt_leverage <- function(object, ...) {
     param_shift = inf$param_shift,
     leverage = lev
   )
-  out[order(-out$leverage, out$index), , drop = FALSE]
+  # A row with no `leverage` is the most influential observation there is,
+  # not the least.
+  #
+  # `max_shift` is the distance each original changepoint had to move to
+  # find a match, and `param_shift` the largest change in a segment
+  # parameter. Both are NA for a perturbation that left the engine with
+  # *no* changepoints at all -- there is nothing to match against and no
+  # parameters to compare -- so `NA + z + z` is NA, and `order(-leverage)`
+  # sent that row to the bottom of a table whose entire purpose is "which
+  # observations matter most". Measured: deleting one observation destroyed
+  # a two-changepoint segmentation and the row ranked 3 of 3.
+  #
+  # The NA is honest and is kept -- the two components genuinely are
+  # undefined, and inventing a number for them would be worse. What was
+  # wrong is where it sorted. The visible `delta_n_cp` on such a row says
+  # what happened.
+  #
+  # This is per-row. When the *original* fit found no changepoints,
+  # `max_shift` is NA for every row, `z()`'s zero-variance guard returns
+  # zeros, and no leverage is NA -- so an NA here always means this
+  # particular perturbation collapsed the fit.
+  collapsed <- is.na(out$leverage)
+  out[order(!collapsed, -out$leverage, out$index), , drop = FALSE]
 }
 
 #' @rdname cpt_influence
