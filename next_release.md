@@ -25407,15 +25407,69 @@ pkgdepends compounding a failed download into “an internal error in
 pkgdepends, please report an issue” is what made this read as a tooling
 bug rather than a stale cache.
 
-### 621.2 The fix, and the signature to recognise next time
+### 621.2 The cache hypothesis, and how the fix disproved it
 
-`cache-version: 2` on the `setup-r-dependencies` step. No
-`cache-version` was set, so nothing could invalidate the lockfile.
-Bumping it forces a fresh resolve and a fresh download plan.
+`cache-version: 2` went onto the `setup-r-dependencies` step – no
+`cache-version` was set, so nothing could invalidate the lockfile – with
+the reasoning that a fresh resolve would produce a fetchable plan. The
+comment left in the workflow named a diagnostic rule: *a dependency
+install that fails identically on every re-run is the cache, not the
+network.*
 
-The comment left in the workflow names the diagnostic rule, because this
-cost three CI cycles to see: **a dependency install that fails
-identically on every re-run is the cache, not the network.** A genuine
-network blip does not reproduce twice with byte-identical output.
+**Both the hypothesis and the rule were wrong, and the next run said
+so.**
 
-Nothing in the package changed for this.
+    Cache not found for input keys: ...-2-4871b7f8856e...
+    i Creating lockfile '.github/pkg.lock'
+    v Created lockfile '.github/pkg.lock' [15.6s]
+    i Getting 328 pkgs (261.58 MB) and 2 pkgs with unknown sizes
+    ...
+    v Got BiocGenerics 0.58.1 (source) (57.57 kB)
+    x Failed to download xts 0.14.3 (source)
+    v Got ash 1.0-15 (source) (7.01 kB)
+    v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)
+
+The bump worked exactly as intended: cache miss, fresh lockfile, 328
+packages resolved from scratch. And `xts` failed again – **wedged
+between two successful downloads from the same CDN in the same batch.**
+Three hundred other source tarballs came down fine.
+
+So it is one object on `cloud.R-project.org` that this runner cannot
+fetch. Not the cache, not the network in general, and not this package.
+
+### 621.3 What the episode actually supports
+
+The rule as first written – “reproduces on re-run, therefore the cache”
+– was inference from two observations that had a third explanation, and
+it went into the workflow as advice. Corrected there to the narrower
+claim the evidence supports:
+
+> an install that fails on a **single named package** while its
+> batch-mates succeed is that object upstream, and neither re-running
+> nor cache-busting can help.
+
+`cache-version: 2` is kept – being able to invalidate the cache
+deliberately is worth having, and it costs nothing – but the comment no
+longer claims it fixed anything.
+
+### 621.4 Where that leaves the submission
+
+Four of five runners green: `ubuntu-latest` release and oldrel-1,
+`windows-latest`, `macos-latest`, plus `pkgdown`. R-devel cannot
+complete its dependency install while that one tarball is unfetchable
+from its network, and `R CMD check` never starts, so the run says
+nothing about the package either way.
+
+`_R_CHECK_FORCE_SUGGESTS_: false` is already set, so a *missing* `xts`
+would be tolerated by the check itself – every use of it is guarded with
+[`requireNamespace()`](https://rdrr.io/r/base/ns-load.html), and the
+tests and vignettes skip those paths. It is the install step that
+refuses to proceed, and that is the action’s behaviour rather than
+something this repository configures.
+
+**Not chased further.** Re-running has been shown not to help, the
+failure is upstream of anything here, and the honest record is more
+useful than a green tick bought by churning CI. If it persists, the next
+lever is `extra-packages`/`dependencies` on the install step to let a
+Suggests failure be non-fatal – a change to what CI installs, which is
+worth doing deliberately rather than while firefighting.

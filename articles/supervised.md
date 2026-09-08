@@ -199,11 +199,11 @@ model
 #> 
 #> Coefficients (predicting log penalty):
 #>        intercept            log_n        log_log_n           log_sd 
-#>           3.6976          -0.3293          -0.1116           0.4154 
+#>           3.7140          -0.3358          -0.1005           0.4148 
 #>          log_mad        log_range      log_sd_diff     log_mad_diff 
-#>           0.4252           0.3666           0.3014           0.3730 
+#>           0.4245           0.3636           0.3031           0.3735 
 #> log_q90_abs_diff 
-#>           0.2716 
+#>           0.2757 
 #> 
 #> Use it directly: cpt_detect(x, method = "pelt", penalty = model)
 ```
@@ -220,7 +220,7 @@ takes it wherever a penalty goes:
 ``` r
 
 predict(model, series$d)
-#> [1] 347.4854
+#> [1] 347.4859
 cpt_detect(series$d, method = "pelt", penalty = model)
 #> ggcpt (changepoint detection result)
 #>   Method:             pelt
@@ -244,7 +244,7 @@ and so do the wrappers that accept a numeric penalty:
 ``` r
 
 cpt_penalty(model, series = series$d)
-#> [1] 347.4854
+#> [1] 347.4859
 ```
 
 Compare that with the unsupervised default on the same series, which
