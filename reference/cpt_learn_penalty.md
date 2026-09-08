@@ -88,6 +88,49 @@ A `ggcpt_penalty_model` object with
 [`coef()`](https://rdrr.io/r/stats/coef.html) and
 [`predict()`](https://rdrr.io/r/stats/predict.html) methods.
 
+The two scales differ and it matters:
+[`coef()`](https://rdrr.io/r/stats/coef.html) gives an intercept plus
+one weight per feature **on the log-penalty scale**, which is where the
+interval regression is fitted, while
+[`predict()`](https://rdrr.io/r/stats/predict.html) exponentiates and
+returns a penalty on the natural scale – the scale
+[`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+and
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+consume. So a coefficient of \\-0.04\\ on `log_n` is a multiplicative
+effect on the penalty, not an additive one.
+
+## Reading the coefficients
+
+**The signs are often not interpretable, and that is a property of the
+labels rather than of the fit.** A target interval is open above
+whenever the largest penalty on the grid still achieves the minimum
+label error – which is the common case, because a large penalty usually
+keeps the one changepoint the labels ask for. When every series'
+interval is open above, any sufficiently large prediction is optimal,
+the problem does not pin the slopes, and the \\L_2\\ term settles them
+near zero with whatever sign the optimiser reached.
+
+Two measurements on four series of very different length and noise, all
+with one-change labels, differing only in the data drawn. In one, every
+non-intercept coefficient came out slightly negative, so the predicted
+penalty *decreased* with \\n\\ – the opposite of the \\\log n\\ growth a
+reader would expect from BIC, and not evidence of anything. In the
+other, every feature weight went to zero and the model became a
+**constant**: [`predict()`](https://rdrr.io/r/stats/predict.html)
+returned the same penalty for all four series. Both fits put every
+prediction inside its target, which is the property the model is fitted
+for, and neither outcome says anything about how a penalty should scale.
+
+So do not read a `ggcpt_penalty_model` as having discovered a
+relationship, and do not be surprised by a constant one.
+
+If the coefficients need to mean something, the labels have to constrain
+the penalty from both sides: widen `penalties` until the largest one
+starts to over-segment, so the target intervals close above.
+[`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
+shows whether they do.
+
 ## References
 
 Hocking TD, Rigaill G, Vert J, Bach F (2013). “Learning sparse penalties

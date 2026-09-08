@@ -92,7 +92,22 @@ A `ggcpt_events` object: a list with
 
 `matched` and `unexplained` carry `cp_index`, the changepoint on the
 original scale, when — and only when — the result carries a time index,
-so `"cp_index" %in% names(x)` is the test for it. With
+so `"cp_index" %in% names(x)` is the test for it.
+
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) flattens
+those three slots into **one** table with a `status` column, and the row
+count is therefore the number of changepoints *plus* the number of
+events, not either one alone. The three values are `"matched"` (a pair:
+both `cp` and `event` filled, with `distance`),
+`"unexplained_changepoint"` (a changepoint with no event: `cp` filled,
+`event` and `distance` `NA`) and `"undetected_event"` (an event with no
+changepoint: `event` and `position` filled, `cp` and `distance` `NA`).
+
+**Filter on `status`, not on `is.na(cp)`.** An
+`"unexplained_changepoint"` row has a non-missing `cp`, so
+`subset(tidy(x), !is.na(cp))` returns the matched pairs *and* the
+unexplained changepoints — which is the natural mistake to make, and it
+silently overstates how many changepoints an event explains. With
 [`print()`](https://rdrr.io/r/base/print.html),
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).

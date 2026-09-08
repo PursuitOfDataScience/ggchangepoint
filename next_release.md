@@ -24834,3 +24834,246 @@ is an exact multiple of** , and double-counting breaks that before it
 breaks . Measured at : every one of 240 frequencies is a multiple of
 0.025, 1.00 at the true change and 0.00 in the quiet stretches. Now a
 test, phrased as the multiple rather than the bound.
+
+## 614. Three surfaces measured, three correct – and the finding was in reading one
+
+Round 11 took the remaining computed quantities. Recorded because after
+ten passes the informative result is increasingly *which* surfaces are
+clean.
+
+**[`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)**
+– 96 comparisons against the documented formulas, across four series
+lengths and four changepoint counts:
+
+    BIC = SIC = k log n            AIC = 2k
+    MBIC = 0.5(k+1) log n + log C(n, k)
+    Hannan-Quinn = 2k log log n    sSIC = k (log n)^alpha
+
+Exact at every point, `None` is 0, each penalty increases in , and the
+orderings the page asserts hold at all nine pairs tried: sSIC \> BIC,
+MBIC \> BIC, BIC \> AIC. All six guards refuse by name – `alpha <= 1`
+for sSIC (the definition needs ), `k` outside for MBIC (where `lchoose`
+would return `-Inf` and silently invert the penalty), for the penalties,
+and an unknown type – including the documented exemption that AIC is
+fine at because does not involve .
+
+**[`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)**
+– the bisection holds its invariant. The trace opens on both range
+endpoints, adds at most `max_iter` midpoints, and every midpoint lies
+strictly inside the interval the earlier evaluations left (measured:
+final bracket around a reported 1.019 at achieved power 0.833). Both
+degenerate brackets are *reported* rather than returned as a number the
+search never found: an unreachable target gives `jump = NA` with “Even
+the largest change tried (0.05 sd) reached only 0 power”, and a target
+already met at the bottom gives `jump = range[1]` with “the answer is at
+or below it”.
+
+**[`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)**
+– the matching is right in every direction tried. The tolerance boundary
+is inclusive on the position scale (offset 5 matches at `tolerance = 5`,
+offset 6 does not, offset 1 does not at `tolerance = 0`), and a `Date`
+column is read on the index scale rather than as a position: an event on
+the first date lands at position 1, not at the changepoint 100 positions
+away.
+
+### 614.1 The finding: I misread the table while holding the source open
+
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) on a
+`ggcpt_events` flattens the object’s three slots into **one** table with
+a `status` column:
+
+                       status  cp event position distance
+    1 unexplained_changepoint 100  <NA>      100       NA
+    2        undetected_event  NA     e      106       NA
+
+so the row count is the number of changepoints *plus* the number of
+events, and – the part that matters – **an `unexplained_changepoint` row
+carries a non-missing `cp`.** The sweep for this round inferred
+“matched” from `!is.na(cp)` and reported seven false violations before
+the table was printed. That is the natural reading, and in a user’s
+hands `subset(tidy(x), !is.na(cp))` returns the matched pairs *and* the
+changepoints no event explains – silently overstating how much the
+events account for, which is the whole question
+[`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
+exists to answer.
+
+`@return` documents the object’s three slots (`matched`, `unexplained`,
+`undetected`) thoroughly and never said what
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) does with
+them, nor that the three `status` values exist. They appeared nowhere
+but two `tibble::tibble(status = ...)` calls in `communicate.R`. Now on
+the page, with which column is `NA` in each row shape and an explicit
+“filter on `status`, not on `is.na(cp)`”.
+
+Same class as §588 and §607: a returned table whose values were not
+documented. The distinguishing feature of this one is that the evidence
+it was worth writing down is that it caught me.
+
+### 614.2 What this round ships
+
+No behaviour change. One documentation fix, and **three previously
+untested contracts pinned**:
+[`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)’s
+formulas, orderings and guards;
+[`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)’s
+bracketing and both degenerate reports; and the events table’s three
+statuses, tolerance boundary and index-scale handling. §232.4’s
+conclusion was to pair every documentation fix with the assertion that
+keeps it true, and the measured record is that checked surfaces stay
+complete while unchecked ones decay – so on a round that found the code
+right, the tests are the deliverable.
+
+## 615. The penalty learner is right, and its coefficients do not mean what they look like
+
+Round 9 verified
+[`cpt_label_error()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md)
+– the objective. Round 12 takes the two pieces built on it, neither of
+which had a test.
+
+**`target_interval()`** implements Hocking’s construction: the longest
+run of penalties achieving the minimum label error, open at whichever
+end of the grid the run touches. All seven grid shapes:
+
+| grid errors                | target       |
+|----------------------------|--------------|
+| `2 0 0 1 3`                |              |
+| `0 0 1 2`                  |              |
+| `2 1 0 0`                  |              |
+| `0 0 0`                    |              |
+| `2 0 1 3` (single optimum) |              |
+| `0 1 0 0 0 1` (two runs)   | , the longer |
+| `NA NA NA`                 |              |
+
+**`interval_regression()`** is the squared-hinge fit. Its reported loss
+equals the objective recomputed at the weights it returns, the search
+improves on the constant it starts from (2.500 to 0.501), a prediction
+comfortably inside every interval costs exactly zero, and an infinite
+bound contributes nothing on its side rather than `Inf`.
+
+**End to end**, five labelled series: every learned penalty lands inside
+that series’ own target interval. And the model is genuinely a function
+of the series – four series of very different length and noise give four
+distinct predictions from eight non-zero feature weights, so the earlier
+observation that five near-identical series all got 63.036 was the right
+answer rather than a degenerate learner.
+
+### 615.1 What the numbers looked like, and why that is a doc fix
+
+           intercept            log_n        log_log_n           log_sd
+             4.46931         -0.03716         -0.01238         -0.00985
+
+Every non-intercept coefficient negative, so the predicted penalty
+*decreases* with :
+
+      short_loud   n=80   64.88
+      long_loud    n=800  59.35
+
+A reader who knows BIC grows like will read that as the model having
+learned the opposite, and it has learned nothing of the kind. **The
+labels did not pin the slope.** Every one of those four target intervals
+is open above – – because the largest penalty on the grid still keeps
+the single changepoint the labels ask for. When every interval is open
+above, any sufficiently large prediction is optimal, the problem is
+under-determined in the slopes, and the term settles them near zero with
+whatever sign BFGS happened to reach. The predictions are all inside
+their targets, which is the only property the fit is for.
+
+That is the common case, not a contrived one: a one-change label plus a
+generous penalty grid produces an open-above target nearly every time.
+
+So
+[`?cpt_learn_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+gains two things. The `@return` now states that
+**[`coef()`](https://rdrr.io/r/stats/coef.html) is on the log-penalty
+scale and [`predict()`](https://rdrr.io/r/stats/predict.html) on the
+natural one** – previously it said only that both methods exist, which
+leaves a coefficient of looking additive when it is multiplicative. And
+a “Reading the coefficients” section says the signs are usually not
+interpretable, why (the open-above targets), and what to do if they need
+to be: widen `penalties` until the largest over-segments, so the
+intervals close above, with
+[`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
+to show whether they did.
+
+A test pins the scale relation by rebuilding a prediction from
+[`coef()`](https://rdrr.io/r/stats/coef.html) and `cpt_features()` by
+hand, so the two scales cannot drift apart silently.
+
+## 615.2 The test asserted a property of the data, and the suite said so
+
+The block written for §615 ended with
+
+``` r
+
+expect_gt(length(unique(round(preds, 6))), 1L)
+```
+
+– four series of very different length and noise must get four different
+penalties. It passed on the seed used while measuring and **failed in
+the full suite**, where a different seed produced four series whose
+targets are all open above. Then the fit is a constant, all four
+predictions are equal, and the assertion is false.
+
+Which is the finding, stated more sharply than §615.1 had it: with
+open-above targets the model does not merely have uninterpretable
+slopes, it **reduces to a constant** –
+[`predict()`](https://rdrr.io/r/stats/predict.html) returns the same
+penalty for every series. Both measured outcomes (slightly negative
+slopes on one draw, all-zero weights on another) put every prediction
+inside its target, which is the only property the fit is for.
+
+The test now asserts the implication rather than the antecedent: *if*
+any feature weight is non-zero the predictions must differ, and if none
+is they must all be equal. That is a property of the model form, true
+whichever way the labels fall.
+[`?cpt_learn_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+gained the constant case explicitly, because a user who asked for a
+*learned* penalty and got one number back would otherwise reasonably
+think something had gone wrong.
+
+Worth recording as my own instance of the mistake this loop keeps
+finding in the package: an assertion about what the data happened to do,
+in place of one about what the code guarantees.
+
+## 616. `8d9df7b` is green on every runner
+
+Pushed to `origin/master` and watched to completion. Both workflows
+succeeded:
+
+| job                      | `R CMD check`  |
+|--------------------------|----------------|
+| ubuntu-latest (devel)    | **Status: OK** |
+| ubuntu-latest (release)  | **Status: OK** |
+| ubuntu-latest (oldrel-1) | **Status: OK** |
+| windows-latest (release) | **Status: OK** |
+| macos-latest (release)   | 1 NOTE         |
+| pkgdown (build + deploy) | success        |
+
+No testthat failure or error anywhere in either run.
+
+**This is a better result than the local baseline, and it settles what
+that baseline was.** Four of the five runners report `Status: OK` – zero
+errors, zero warnings, zero notes. The `qpdf` WARNING, the PDF-manual
+WARNING and ERROR, the HTML-manual NOTE and the leftover `.tex` NOTE
+that this document has recorded since 0.4.0 **do not appear on any
+runner**, which is the direct confirmation that all five were this
+machine’s missing `pdflatex`, `qpdf` and `tidy` rather than anything in
+the package.
+
+The single macOS NOTE is the one `cran-comments.md` already describes:
+it fires under `checking dependencies in R code` because `dyn.load` of
+`rgl.so` cannot find `/opt/X11/lib/libGLU.1.dylib` on a runner with no
+XQuartz. `rgl` is three levels down from the suggested engine
+`fabisearch`, and nothing in this package loads it. The submission
+letter’s claim – “0 errors \| 0 warnings \| 0 notes on ubuntu-latest
+(devel, release and oldrel-1) and on windows-latest; macos-latest
+reports one note, which is the runner’s and not the package’s” – is now
+verified verbatim rather than asserted.
+
+One correction to this document: §578 and its successors called this a
+“six-job” matrix. `R-CMD-check.yaml` defines **five** jobs; the sixth in
+that count was `pkgdown`, which is a separate workflow. Counted from the
+workflow file rather than from memory this time.
+
+Round 11’s and round 12’s work was held uncommitted while the matrix
+ran, so the green is attributable to one commit.

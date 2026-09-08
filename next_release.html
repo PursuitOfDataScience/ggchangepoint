@@ -15832,6 +15832,101 @@ $ grep -rn "insertRef" R/benchmark.R
 <p><code>freq = hits / B</code> where <code>hits</code> counts, per index, the replicates whose  <code>margin</code> window covered it. The code carries a note about an earlier defect – incrementing once per changepoint double-counted a replicate wherever two detections’ windows overlapped, and the old <code>pmin(hits / B, 1)</code> clipped the excess out of sight, reporting 1.00 (“re-detected every time”) for indices only half the replicates covered.</p>
 <p>The invariant that catches a regression is not the range but the granularity: if <code>hits</code> is a count of replicates then <strong>every frequency is an exact multiple of </strong>, and double-counting breaks that before it breaks . Measured at : every one of 240 frequencies is a multiple of 0.025, 1.00 at the true change and 0.00 in the quiet stretches. Now a test, phrased as the multiple rather than the bound.</p>
 </div>
+<div class="section level2">
+<h2 id="id_614-three-surfaces-measured-three-correct--and-the-finding-was-in-reading-one">614. Three surfaces measured, three correct – and the finding was in reading one<a class="anchor" aria-label="anchor" href="#id_614-three-surfaces-measured-three-correct--and-the-finding-was-in-reading-one"></a></h2>
+<p>Round 11 took the remaining computed quantities. Recorded because after ten passes the informative result is increasingly <em>which</em> surfaces are clean.</p>
+<p><strong><code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code></strong> – 96 comparisons against the documented formulas, across four series lengths and four changepoint counts:</p>
+<pre><code>BIC = SIC = k log n            AIC = 2k
+MBIC = 0.5(k+1) log n + log C(n, k)
+Hannan-Quinn = 2k log log n    sSIC = k (log n)^alpha</code></pre>
+<p>Exact at every point, <code>None</code> is 0, each penalty increases in , and the orderings the page asserts hold at all nine  pairs tried: sSIC &gt; BIC, MBIC &gt; BIC, BIC &gt; AIC. All six guards refuse by name – <code>alpha &lt;= 1</code> for sSIC (the definition needs ), <code>k</code> outside  for MBIC (where <code>lchoose</code> would return <code>-Inf</code> and silently invert the penalty),  for the  penalties, and an unknown type – including the documented exemption that AIC is fine at  because  does not involve .</p>
+<p><strong><code><a href="reference/cpt_min_detectable.html">cpt_min_detectable()</a></code></strong> – the bisection holds its invariant. The trace opens on both range endpoints, adds at most <code>max_iter</code> midpoints, and every midpoint lies strictly inside the interval the earlier evaluations left (measured: final bracket  around a reported 1.019 at achieved power 0.833). Both degenerate brackets are <em>reported</em> rather than returned as a number the search never found: an unreachable target gives <code>jump = NA</code> with “Even the largest change tried (0.05 sd) reached only 0 power”, and a target already met at the bottom gives <code>jump = range[1]</code> with “the answer is at or below it”.</p>
+<p><strong><code><a href="reference/cpt_annotate_events.html">cpt_annotate_events()</a></code></strong> – the matching is right in every direction tried. The tolerance boundary is inclusive on the position scale (offset 5 matches at <code>tolerance = 5</code>, offset 6 does not, offset 1 does not at <code>tolerance = 0</code>), and a <code>Date</code> column is read on the index scale rather than as a position: an event on the first date lands at position 1, not at the changepoint 100 positions away.</p>
+<div class="section level3">
+<h3 id="id_6141-the-finding-i-misread-the-table-while-holding-the-source-open">614.1 The finding: I misread the table while holding the source open<a class="anchor" aria-label="anchor" href="#id_6141-the-finding-i-misread-the-table-while-holding-the-source-open"></a></h3>
+<p><code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> on a <code>ggcpt_events</code> flattens the object’s three slots into <strong>one</strong> table with a <code>status</code> column:</p>
+<pre><code>                   status  cp event position distance
+1 unexplained_changepoint 100  &lt;NA&gt;      100       NA
+2        undetected_event  NA     e      106       NA</code></pre>
+<p>so the row count is the number of changepoints <em>plus</em> the number of events, and – the part that matters – <strong>an <code>unexplained_changepoint</code> row carries a non-missing <code>cp</code>.</strong> The sweep for this round inferred “matched” from <code>!is.na(cp)</code> and reported seven false violations before the table was printed. That is the natural reading, and in a user’s hands <code>subset(tidy(x), !is.na(cp))</code> returns the matched pairs <em>and</em> the changepoints no event explains – silently overstating how much the events account for, which is the whole question <code><a href="reference/cpt_annotate_events.html">cpt_annotate_events()</a></code> exists to answer.</p>
+<p><code>@return</code> documents the object’s three slots (<code>matched</code>, <code>unexplained</code>, <code>undetected</code>) thoroughly and never said what <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> does with them, nor that the three <code>status</code> values exist. They appeared nowhere but two <code>tibble::tibble(status = ...)</code> calls in <code>communicate.R</code>. Now on the page, with which column is <code>NA</code> in each row shape and an explicit “filter on <code>status</code>, not on <code>is.na(cp)</code>”.</p>
+<p>Same class as §588 and §607: a returned table whose values were not documented. The distinguishing feature of this one is that the evidence it was worth writing down is that it caught me.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6142-what-this-round-ships">614.2 What this round ships<a class="anchor" aria-label="anchor" href="#id_6142-what-this-round-ships"></a></h3>
+<p>No behaviour change. One documentation fix, and <strong>three previously untested contracts pinned</strong>: <code><a href="reference/cpt_penalty.html">cpt_penalty()</a></code>’s formulas, orderings and guards; <code><a href="reference/cpt_min_detectable.html">cpt_min_detectable()</a></code>’s bracketing and both degenerate reports; and the events table’s three statuses, tolerance boundary and index-scale handling. §232.4’s conclusion was to pair every documentation fix with the assertion that keeps it true, and the measured record is that checked surfaces stay complete while unchecked ones decay – so on a round that found the code right, the tests are the deliverable.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_615-the-penalty-learner-is-right-and-its-coefficients-do-not-mean-what-they-look-like">615. The penalty learner is right, and its coefficients do not mean what they look like<a class="anchor" aria-label="anchor" href="#id_615-the-penalty-learner-is-right-and-its-coefficients-do-not-mean-what-they-look-like"></a></h2>
+<p>Round 9 verified <code><a href="reference/cpt_label_error.html">cpt_label_error()</a></code> – the objective. Round 12 takes the two pieces built on it, neither of which had a test.</p>
+<p><strong><code>target_interval()</code></strong> implements Hocking’s construction: the longest run of penalties achieving the minimum label error, open at whichever end of the grid the run touches. All seven grid shapes:</p>
+<table class="table"><thead><tr><th>grid errors</th>
+<th>target</th>
+</tr></thead><tbody><tr><td><code>2 0 0 1 3</code></td>
+<td></td>
+</tr><tr><td><code>0 0 1 2</code></td>
+<td></td>
+</tr><tr><td><code>2 1 0 0</code></td>
+<td></td>
+</tr><tr><td><code>0 0 0</code></td>
+<td></td>
+</tr><tr><td>
+<code>2 0 1 3</code> (single optimum)</td>
+<td></td>
+</tr><tr><td>
+<code>0 1 0 0 0 1</code> (two runs)</td>
+<td>, the longer</td>
+</tr><tr><td><code>NA NA NA</code></td>
+<td></td>
+</tr></tbody></table><p><strong><code>interval_regression()</code></strong> is the squared-hinge fit. Its reported loss equals the objective recomputed at the weights it returns, the search improves on the constant it starts from (2.500 to 0.501), a prediction comfortably inside every interval costs exactly zero, and an infinite bound contributes nothing on its side rather than <code>Inf</code>.</p>
+<p><strong>End to end</strong>, five labelled series: every learned penalty lands inside that series’ own target interval. And the model is genuinely a function of the series – four series of very different length and noise give four distinct predictions from eight non-zero feature weights, so the earlier observation that five near-identical series all got 63.036 was the right answer rather than a degenerate learner.</p>
+<div class="section level3">
+<h3 id="id_6151-what-the-numbers-looked-like-and-why-that-is-a-doc-fix">615.1 What the numbers looked like, and why that is a doc fix<a class="anchor" aria-label="anchor" href="#id_6151-what-the-numbers-looked-like-and-why-that-is-a-doc-fix"></a></h3>
+<pre><code>       intercept            log_n        log_log_n           log_sd
+         4.46931         -0.03716         -0.01238         -0.00985</code></pre>
+<p>Every non-intercept coefficient negative, so the predicted penalty <em>decreases</em> with :</p>
+<pre><code>  short_loud   n=80   64.88
+  long_loud    n=800  59.35</code></pre>
+<p>A reader who knows BIC grows like  will read that as the model having learned the opposite, and it has learned nothing of the kind. <strong>The labels did not pin the slope.</strong> Every one of those four target intervals is open above –  – because the largest penalty on the grid still keeps the single changepoint the labels ask for. When every interval is open above, any sufficiently large prediction is optimal, the problem is under-determined in the slopes, and the  term settles them near zero with whatever sign BFGS happened to reach. The predictions are all inside their targets, which is the only property the fit is for.</p>
+<p>That is the common case, not a contrived one: a one-change label plus a generous penalty grid produces an open-above target nearly every time.</p>
+<p>So <code><a href="reference/cpt_learn_penalty.html">?cpt_learn_penalty</a></code> gains two things. The <code>@return</code> now states that <strong><code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> is on the log-penalty scale and <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> on the natural one</strong> – previously it said only that both methods exist, which leaves a coefficient of  looking additive when it is multiplicative. And a “Reading the coefficients” section says the signs are usually not interpretable, why (the open-above targets), and what to do if they need to be: widen <code>penalties</code> until the largest over-segments, so the intervals close above, with <code><a href="reference/cpt_label_error_curve.html">cpt_label_error_curve()</a></code> to show whether they did.</p>
+<p>A test pins the scale relation by rebuilding a prediction from <code><a href="https://rdrr.io/r/stats/coef.html" class="external-link">coef()</a></code> and <code>cpt_features()</code> by hand, so the two scales cannot drift apart silently.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_6152-the-test-asserted-a-property-of-the-data-and-the-suite-said-so">615.2 The test asserted a property of the data, and the suite said so<a class="anchor" aria-label="anchor" href="#id_6152-the-test-asserted-a-property-of-the-data-and-the-suite-said-so"></a></h2>
+<p>The block written for §615 ended with</p>
+<div class="sourceCode" id="cb150"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">expect_gt</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/unique.html" class="external-link">unique</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/Round.html" class="external-link">round</a></span><span class="op">(</span><span class="va">preds</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span><span class="op">)</span>, <span class="fl">1L</span><span class="op">)</span></span></code></pre></div>
+<p>– four series of very different length and noise must get four different penalties. It passed on the seed used while measuring and <strong>failed in the full suite</strong>, where a different seed produced four series whose targets are all open above. Then the fit is a constant, all four predictions are equal, and the assertion is false.</p>
+<p>Which is the finding, stated more sharply than §615.1 had it: with open-above targets the model does not merely have uninterpretable slopes, it <strong>reduces to a constant</strong> – <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> returns the same penalty for every series. Both measured outcomes (slightly negative slopes on one draw, all-zero weights on another) put every prediction inside its target, which is the only property the fit is for.</p>
+<p>The test now asserts the implication rather than the antecedent: <em>if</em> any feature weight is non-zero the predictions must differ, and if none is they must all be equal. That is a property of the model form, true whichever way the labels fall. <code><a href="reference/cpt_learn_penalty.html">?cpt_learn_penalty</a></code> gained the constant case explicitly, because a user who asked for a <em>learned</em> penalty and got one number back would otherwise reasonably think something had gone wrong.</p>
+<p>Worth recording as my own instance of the mistake this loop keeps finding in the package: an assertion about what the data happened to do, in place of one about what the code guarantees.</p>
+</div>
+<div class="section level2">
+<h2 id="id_616-8d9df7b-is-green-on-every-runner">616. <code>8d9df7b</code> is green on every runner<a class="anchor" aria-label="anchor" href="#id_616-8d9df7b-is-green-on-every-runner"></a></h2>
+<p>Pushed to <code>origin/master</code> and watched to completion. Both workflows succeeded:</p>
+<table class="table"><thead><tr><th>job</th>
+<th><code>R CMD check</code></th>
+</tr></thead><tbody><tr><td>ubuntu-latest (devel)</td>
+<td><strong>Status: OK</strong></td>
+</tr><tr><td>ubuntu-latest (release)</td>
+<td><strong>Status: OK</strong></td>
+</tr><tr><td>ubuntu-latest (oldrel-1)</td>
+<td><strong>Status: OK</strong></td>
+</tr><tr><td>windows-latest (release)</td>
+<td><strong>Status: OK</strong></td>
+</tr><tr><td>macos-latest (release)</td>
+<td>1 NOTE</td>
+</tr><tr><td>pkgdown (build + deploy)</td>
+<td>success</td>
+</tr></tbody></table><p>No testthat failure or error anywhere in either run.</p>
+<p><strong>This is a better result than the local baseline, and it settles what that baseline was.</strong> Four of the five runners report <code>Status: OK</code> – zero errors, zero warnings, zero notes. The <code>qpdf</code> WARNING, the PDF-manual WARNING and ERROR, the HTML-manual NOTE and the leftover <code>.tex</code> NOTE that this document has recorded since 0.4.0 <strong>do not appear on any runner</strong>, which is the direct confirmation that all five were this machine’s missing <code>pdflatex</code>, <code>qpdf</code> and <code>tidy</code> rather than anything in the package.</p>
+<p>The single macOS NOTE is the one <code>cran-comments.md</code> already describes: it fires under <code>checking dependencies in R code</code> because <code>dyn.load</code> of <code>rgl.so</code> cannot find <code>/opt/X11/lib/libGLU.1.dylib</code> on a runner with no XQuartz. <code>rgl</code> is three levels down from the suggested engine <code>fabisearch</code>, and nothing in this package loads it. The submission letter’s claim – “0 errors | 0 warnings | 0 notes on ubuntu-latest (devel, release and oldrel-1) and on windows-latest; macos-latest reports one note, which is the runner’s and not the package’s” – is now verified verbatim rather than asserted.</p>
+<p>One correction to this document: §578 and its successors called this a “six-job” matrix. <code>R-CMD-check.yaml</code> defines <strong>five</strong> jobs; the sixth in that count was <code>pkgdown</code>, which is a separate workflow. Counted from the workflow file rather than from memory this time.</p>
+<p>Round 11’s and round 12’s work was held uncommitted while the matrix ran, so the green is attributable to one commit.</p>
+</div>
 </div>
 
 

@@ -1095,6 +1095,55 @@ every argument its engine accepts.
 - Every `@param seed` says so: the seed is scoped to the call and does
   not pin the loop’s own stream.
 
+#### Supervised detection
+
+- **[`coef()`](https://rdrr.io/r/stats/coef.html) and
+  [`predict()`](https://rdrr.io/r/stats/predict.html) on a learned
+  penalty are on different scales, and the help page said only that both
+  methods exist.** [`coef()`](https://rdrr.io/r/stats/coef.html) gives
+  an intercept plus one weight per feature on the **log-penalty** scale,
+  where the interval regression is fitted;
+  [`predict()`](https://rdrr.io/r/stats/predict.html) exponentiates and
+  returns a penalty on the natural scale, which is what
+  [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+  and
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  consume. So a coefficient of −0.04 on `log_n` is a multiplicative
+  effect, not an additive one. Both scales are now stated, and a test
+  pins the relation by reconstructing a prediction from the coefficients
+  by hand.
+- **A new “Reading the coefficients” section, because their signs
+  usually mean nothing.** A target interval is open above whenever the
+  largest penalty on the grid still achieves the minimum label error —
+  the common case, since a large penalty usually keeps the one
+  changepoint the labels ask for. With every interval open above, any
+  sufficiently large prediction is optimal, the problem does not pin the
+  slopes, and the L2 term settles them near zero with whatever sign the
+  optimiser reached. Measured on four series of very different length
+  and noise: every non-intercept coefficient came out slightly negative,
+  so the predicted penalty *decreased* with *n* — the opposite of the
+  log *n* growth a reader would expect from BIC, and evidence of
+  nothing. Every prediction was inside its target, which is the property
+  the model is fitted for. The section says to widen `penalties` until
+  the largest one over-segments if the coefficients need to mean
+  something.
+
+#### Event annotation
+
+- **[`tidy()`](https://generics.r-lib.org/reference/tidy.html) on an
+  events result has a `status` column whose three values appeared
+  nowhere but the source**, and misreading it overstates your results.
+  The table is one row per changepoint *plus* one row per event, with
+  `status` in `"matched"`, `"unexplained_changepoint"` and
+  `"undetected_event"` — and an `"unexplained_changepoint"` row carries
+  a non-missing `cp`. So `subset(tidy(x), !is.na(cp))` returns the
+  matched pairs **and** the changepoints no event explains, which
+  silently overstates how much the events account for. `@return`
+  documented the object’s three slots thoroughly and never said what
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) does with
+  them; it now gives the vocabulary, which column is `NA` in each row
+  shape, and says to filter on `status` rather than on `is.na(cp)`.
+
 #### Benchmarking
 
 - **The critical-difference diagram named Demšar and cited nobody.**

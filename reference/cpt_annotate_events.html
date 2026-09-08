@@ -142,7 +142,23 @@ factor column.</p></dd>
 </dl><p><code>matched</code> and <code>unexplained</code> carry <code>cp_index</code>, the
   changepoint on the original scale, when — and only when — the result
   carries a time index, so <code>"cp_index" %in% names(x)</code> is the
-  test for it.
+  test for it.</p>
+<p><code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> flattens those three slots into <strong>one</strong> table with
+  a <code>status</code> column, and the row count is therefore the number of
+  changepoints <em>plus</em> the number of events, not either one alone.
+  The three values are
+  <code>"matched"</code> (a pair: both <code>cp</code> and <code>event</code> filled,
+  with <code>distance</code>), <code>"unexplained_changepoint"</code> (a
+  changepoint with no event: <code>cp</code> filled, <code>event</code> and
+  <code>distance</code> <code>NA</code>) and <code>"undetected_event"</code> (an event
+  with no changepoint: <code>event</code> and <code>position</code> filled,
+  <code>cp</code> and <code>distance</code> <code>NA</code>).</p>
+<p><strong>Filter on <code>status</code>, not on <code>is.na(cp)</code>.</strong> An
+  <code>"unexplained_changepoint"</code> row has a non-missing <code>cp</code>, so
+  <code>subset(tidy(x), !is.na(cp))</code> returns the matched pairs
+  <em>and</em> the unexplained changepoints — which is the natural
+  mistake to make, and it silently overstates how many changepoints an
+  event explains.
   With <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</p>
     </div>
     <div class="section level2">
