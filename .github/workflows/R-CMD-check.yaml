@@ -70,6 +70,32 @@ jobs:
         with:
           extra-packages: any::rcmdcheck
           needs: check
+          # Bumped to invalidate the cached dependency lockfile.
+          #
+          # This action caches the resolved `.github/pkg.lock` and installs
+          # from it with `pak::lockfile_install()`. The R-devel job then
+          # failed three times running -- twice on plain re-runs -- with
+          #
+          #   x Failed to download xts 0.14.3 (source)
+          #   ! error in pak subprocess
+          #   Caused by error in `select_next_task(state)`:
+          #   ! Cannot select new package installation task.
+          #
+          # before `R CMD check` had started. The lockfile pins that source
+          # tarball to a cloud.R-project.org URL the runner could not fetch,
+          # so every re-run replayed the identical broken plan -- which is
+          # why re-running never helped. (The tarball is current and fetches
+          # fine elsewhere; only the four jobs that get an RSPM *binary* for
+          # xts were unaffected, and R-devel has no binaries.) pkgdepends
+          # turns the failed download into an internal error of its own
+          # rather than reporting it, which is what made the cause hard to
+          # see.
+          #
+          # Bumping this key forces a fresh resolve and a fresh download
+          # plan. Bump it again if a dependency install ever fails
+          # identically on every re-run: that signature means the cache, not
+          # the network.
+          cache-version: 2
 
       - uses: r-lib/actions/check-r-package@v2
         with:
