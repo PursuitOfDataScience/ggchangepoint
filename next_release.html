@@ -16084,6 +16084,41 @@ cpt_metrics_annotated(): n n_annotators n_pred precision recall f1 covering</cod
 <p><strong>The pattern is worth naming.</strong> Every one of the three was a number recorded during exploration and then reused in an assertion whose setup had moved. The defence is not more care – it is that the assertion carry its own input, which is what these now do.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_621-r-devel-failed-three-times-before-r-cmd-check-started-and-re-running-could-not-help">621. R-devel failed three times before <code>R CMD check</code> started, and re-running could not help<a class="anchor" aria-label="anchor" href="#id_621-r-devel-failed-three-times-before-r-cmd-check-started-and-re-running-could-not-help"></a></h2>
+<p><code>6834493</code> came back with four jobs green and <code>ubuntu-latest (devel)</code> failed. The failure is upstream of the package entirely:</p>
+<pre><code>x Failed to download xts 0.14.3 (source)
+! error in pak subprocess
+Caused by error in `select_next_task(state)`:
+! Cannot select new package installation task.
+i 1 package still waiting to install: xts.
+i This is an internal error in pkgdepends, please report an issue at ...</code></pre>
+<p>in <code>r-lib/actions/setup-r-dependencies@v2</code>, <strong>before <code>R CMD check</code> ran a single line</strong>. <code>xts</code> is a Suggests package (time-index coercion) and the four other jobs installed the same dependency set and passed.</p>
+<p>Three things had to be established before touching anything:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Not this commit.</strong> <code>8d9df7b</code> and <code>4d15e1d</code> both had all five jobs green, R-devel included, hours earlier.</li>
+<li>
+<strong>Not CRAN.</strong> <code>xts 0.14.3</code> is the current version, it is in <code>src/contrib</code>, and <code>curl -I</code> on the tarball returns 200 from here.</li>
+<li>
+<strong>Not transient.</strong> Two plain re-runs of the failed job reproduced it exactly.</li>
+</ol><div class="section level3">
+<h3 id="id_6211-why-re-running-was-never-going-to-work">621.1 Why re-running was never going to work<a class="anchor" aria-label="anchor" href="#id_6211-why-re-running-was-never-going-to-work"></a></h3>
+<p>The backtrace names the mechanism:</p>
+<pre><code>1. pak::lockfile_install(".github/pkg.lock")</code></pre>
+<p>The action <strong>caches the resolved lockfile</strong> and installs from it. The lockfile pins</p>
+<pre><code>"sources": ["https://cloud.R-project.org/src/contrib/xts_0.14.3.tar.gz", ...]
+"target":  "src/contrib/xts_0.14.3.tar.gz"
++ xts 0.14.3 [bld][cmp][dl] (481.29 kB)</code></pre>
+<p>– a CDN URL that runner could not fetch. A re-run restores the same cache and replays the same plan, so it fails identically every time. The other four jobs never noticed because <code>use-public-rspm: true</code> gets them a <em>binary</em> for <code>xts</code>; R-devel has no RSPM binaries and must build from source, which is the one path that needs that download.</p>
+<p>pkgdepends compounding a failed download into “an internal error in pkgdepends, please report an issue” is what made this read as a tooling bug rather than a stale cache.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6212-the-fix-and-the-signature-to-recognise-next-time">621.2 The fix, and the signature to recognise next time<a class="anchor" aria-label="anchor" href="#id_6212-the-fix-and-the-signature-to-recognise-next-time"></a></h3>
+<p><code>cache-version: 2</code> on the <code>setup-r-dependencies</code> step. No <code>cache-version</code> was set, so nothing could invalidate the lockfile. Bumping it forces a fresh resolve and a fresh download plan.</p>
+<p>The comment left in the workflow names the diagnostic rule, because this cost three CI cycles to see: <strong>a dependency install that fails identically on every re-run is the cache, not the network.</strong> A genuine network blip does not reproduce twice with byte-identical output.</p>
+<p>Nothing in the package changed for this.</p>
+</div>
+</div>
 </div>
 
 

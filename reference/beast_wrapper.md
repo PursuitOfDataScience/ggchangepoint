@@ -102,9 +102,7 @@ Other changepoint engines:
 
 ``` r
 res <- beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
+#> Error: Rbeast::beast() returned an invalid (all-NaN) fit repeatedly; this is an intermittent upstream issue - retry the call.
 res$changepoints
-#> # A tibble: 1 × 3
-#>      cp cp_value posterior_prob
-#>   <int>    <dbl>          <dbl>
-#> 1    60   -0.100              1
+#> Error: object 'res' not found
 ```

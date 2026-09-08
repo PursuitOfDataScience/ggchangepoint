@@ -25358,3 +25358,64 @@ the comment says why the second one needs an empty annotator.
 recorded during exploration and then reused in an assertion whose setup
 had moved. The defence is not more care – it is that the assertion carry
 its own input, which is what these now do.
+
+## 621. R-devel failed three times before `R CMD check` started, and re-running could not help
+
+`6834493` came back with four jobs green and `ubuntu-latest (devel)`
+failed. The failure is upstream of the package entirely:
+
+    x Failed to download xts 0.14.3 (source)
+    ! error in pak subprocess
+    Caused by error in `select_next_task(state)`:
+    ! Cannot select new package installation task.
+    i 1 package still waiting to install: xts.
+    i This is an internal error in pkgdepends, please report an issue at ...
+
+in `r-lib/actions/setup-r-dependencies@v2`, **before `R CMD check` ran a
+single line**. `xts` is a Suggests package (time-index coercion) and the
+four other jobs installed the same dependency set and passed.
+
+Three things had to be established before touching anything:
+
+1.  **Not this commit.** `8d9df7b` and `4d15e1d` both had all five jobs
+    green, R-devel included, hours earlier.
+2.  **Not CRAN.** `xts 0.14.3` is the current version, it is in
+    `src/contrib`, and `curl -I` on the tarball returns 200 from here.
+3.  **Not transient.** Two plain re-runs of the failed job reproduced it
+    exactly.
+
+### 621.1 Why re-running was never going to work
+
+The backtrace names the mechanism:
+
+    1. pak::lockfile_install(".github/pkg.lock")
+
+The action **caches the resolved lockfile** and installs from it. The
+lockfile pins
+
+    "sources": ["https://cloud.R-project.org/src/contrib/xts_0.14.3.tar.gz", ...]
+    "target":  "src/contrib/xts_0.14.3.tar.gz"
+    + xts 0.14.3 [bld][cmp][dl] (481.29 kB)
+
+– a CDN URL that runner could not fetch. A re-run restores the same
+cache and replays the same plan, so it fails identically every time. The
+other four jobs never noticed because `use-public-rspm: true` gets them
+a *binary* for `xts`; R-devel has no RSPM binaries and must build from
+source, which is the one path that needs that download.
+
+pkgdepends compounding a failed download into “an internal error in
+pkgdepends, please report an issue” is what made this read as a tooling
+bug rather than a stale cache.
+
+### 621.2 The fix, and the signature to recognise next time
+
+`cache-version: 2` on the `setup-r-dependencies` step. No
+`cache-version` was set, so nothing could invalidate the lockfile.
+Bumping it forces a fresh resolve and a fresh download plan.
+
+The comment left in the workflow names the diagnostic rule, because this
+cost three CI cycles to see: **a dependency install that fails
+identically on every re-run is the cache, not the network.** A genuine
+network blip does not reproduce twice with byte-identical output.
+
+Nothing in the package changed for this.
