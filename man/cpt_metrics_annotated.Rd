@@ -16,7 +16,33 @@ cpt_metrics_annotated(pred, annotations, n, margin = 5)
 \item{margin}{Tolerance margin (default 5).}
 }
 \value{
-A tibble with averaged metrics.
+A tibble with one row: \code{n}, \code{n_annotators},
+  \code{n_pred}, and the \strong{four} metrics this averages --
+  \code{precision}, \code{recall}, \code{f1} and \code{covering}.
+  Each is a plain unweighted mean of the per-annotator value from
+  \code{\link{cpt_metrics}()}, over all \code{n_annotators} of them.
+
+  \strong{This is a narrower table than \code{\link{cpt_metrics}()}
+  returns}, so a call moved from one to the other loses columns:
+  \code{n_truth} (there is no single truth), and the location metrics
+  \code{hausdorff}, \code{mae_matched}, \code{rmse_matched},
+  \code{rand_index} and \code{annotation_error}.
+
+  The three distance metrics are omitted for a reason worth stating,
+  because it is not obvious: they are \code{NA} whenever an annotator
+  shares no matched pair with the prediction, so averaging them would
+  quietly divide by fewer annotators than \code{n_annotators} reports.
+  Measured on three annotators against one prediction --
+  \code{list(c(100, 200), integer(0), 150)} at \eqn{n = 300} --
+  \code{mae_matched} was available for \strong{one} of the three and
+  \code{hausdorff} for two, while \code{f1} and \code{covering} were
+  finite for all three. Score those per annotator with
+  \code{\link{cpt_metrics}()} and combine them yourself if you want
+  them, so the divisor is yours to choose.
+
+  \code{covering} and \code{f1} are the pair the Turing Change Point
+  Dataset benchmark reports, which is why they are the ones averaged
+  here; \code{precision} and \code{recall} come along as F1's parts.
 }
 \description{
 Computes averaged covering and F1 scores against multiple annotation sets,
@@ -27,4 +53,8 @@ as used in the Turing Change Point Dataset benchmark.
 cpt_metrics_annotated(c(100, 200),
                       annotations = list(c(98, 200), c(100, 203)),
                       n = 300, margin = 5)
+}
+\seealso{
+\code{\link{cpt_metrics}()} for the full single-truth table
+  and what each column means.
 }

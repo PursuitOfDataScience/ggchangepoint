@@ -2704,3 +2704,93 @@ test_that("cpt_leverage() on a real fit is ordered and complete", {
     expect_true(all(which(is.na(r$leverage)) < min(which(!is.na(r$leverage)))))
   }
 })
+
+# ---------------------------------------------------------------------------
+# `cpt_metrics_annotated()` returns a NARROWER table than `cpt_metrics()`,
+# which a call moved from one to the other loses columns to. The four it
+# does average are plain unweighted means; the three distance metrics are
+# omitted because they are NA whenever an annotator shares no matched pair
+# with the prediction, so averaging them would divide by fewer annotators
+# than `n_annotators` reports.
+# ---------------------------------------------------------------------------
+
+test_that("cpt_metrics_annotated() averages exactly four metrics", {
+  full <- names(cpt_metrics(c(100, 200), c(100, 200), n = 300))
+  ann <- names(cpt_metrics_annotated(c(100, 200), list(c(98, 200), c(100, 203)),
+                                     n = 300))
+  expect_setequal(ann, c("n", "n_annotators", "n_pred",
+                         "precision", "recall", "f1", "covering"))
+  # the columns a caller loses, named so a future widening is deliberate
+  expect_setequal(setdiff(full, ann),
+                  c("n_truth", "hausdorff", "rand_index", "annotation_error",
+                    "mae_matched", "rmse_matched"))
+
+  # each averaged value is the plain unweighted mean of the per-annotator one
+  anns <- list(c(98, 200), c(100, 203), c(150))
+  per <- do.call(rbind, lapply(anns, function(t) {
+    cpt_metrics(c(100, 200), t, n = 300, margin = 5)
+  }))
+  got <- cpt_metrics_annotated(c(100, 200), anns, n = 300, margin = 5)
+  for (m in c("precision", "recall", "f1", "covering")) {
+    expect_equal(got[[m]], mean(per[[m]]), info = m)
+  }
+  expect_equal(got$n_annotators, 3L)
+  expect_equal(got$n_pred, 2L)
+
+  # f1 and covering are defined for every annotator, which is what makes
+  # averaging them safe
+  expect_false(any(is.na(per$f1)))
+  expect_false(any(is.na(per$covering)))
+})
+
+test_that("the distance metrics could not have been averaged safely", {
+  # The reason `cpt_metrics_annotated()` omits hausdorff/mae/rmse, on the
+  # input that shows it: an annotator with no changepoints shares no
+  # matched pair with the prediction, so those columns are NA for it and an
+  # average would divide by fewer annotators than `n_annotators` reports.
+  #
+  # This needs its own annotator set. An earlier version asserted these
+  # counts inside the averaging test above, whose annotators all overlap
+  # the prediction -- so the numbers were measured on one input and
+  # asserted about another, which is the mistake this suite exists to
+  # catch.
+  anns <- list(c(100, 200), integer(0), 150)
+  per <- do.call(rbind, lapply(anns, function(t) {
+    cpt_metrics(c(100, 200), t, n = 300, margin = 5)
+  }))
+  expect_equal(sum(!is.na(per$mae_matched)), 1L)
+  expect_equal(sum(!is.na(per$rmse_matched)), 1L)
+  expect_equal(sum(!is.na(per$hausdorff)), 2L)
+  # while the two that ARE averaged are defined throughout
+  expect_false(any(is.na(per$f1)))
+  expect_false(any(is.na(per$covering)))
+  # ...and the reported table averages over all three regardless
+  got <- cpt_metrics_annotated(c(100, 200), anns, n = 300, margin = 5)
+  expect_equal(got$n_annotators, 3L)
+  expect_equal(got$f1, mean(per$f1))
+  expect_equal(got$covering, mean(per$covering))
+})
+
+test_that("cpt_metrics_annotated() reads a bare vector as one annotator", {
+  a <- cpt_metrics_annotated(c(100, 200), c(100, 200), n = 300)
+  expect_equal(a$n_annotators, 1L)
+  expect_equal(a$f1, 1)
+  expect_equal(a$covering, 1)
+
+  # degenerate annotator sets stay finite rather than returning NaN
+  for (anns in list(list(c(100, 200), integer(0)),
+                    list(integer(0), integer(0)),
+                    list(c(100, 200)))) {
+    r <- cpt_metrics_annotated(c(100, 200), anns, n = 300)
+    expect_true(all(is.finite(c(r$precision, r$recall, r$f1, r$covering))))
+    expect_equal(r$n_annotators, length(anns))
+  }
+
+  # and the two shapes that would be read as annotator sets by accident are
+  # refused by name
+  fit <- cpt_detect(c(stats::rnorm(50), stats::rnorm(50, 4)), method = "pelt")
+  expect_error(cpt_metrics_annotated(100, fit, n = 100),
+               "not a `ggcpt` object", fixed = TRUE)
+  expect_error(cpt_metrics_annotated(100, list(data.frame(cp = 100)), n = 300),
+               "not a table", fixed = TRUE)
+})
