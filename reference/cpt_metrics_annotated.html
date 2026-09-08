@@ -75,7 +75,35 @@ as used in the Turing Change Point Dataset benchmark.</p>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble with averaged metrics.</p>
+    <p>A tibble with one row: <code>n</code>, <code>n_annotators</code>,
+  <code>n_pred</code>, and the <strong>four</strong> metrics this averages –
+  <code>precision</code>, <code>recall</code>, <code>f1</code> and <code>covering</code>.
+  Each is a plain unweighted mean of the per-annotator value from
+  <code><a href="cpt_metrics.html">cpt_metrics()</a></code>, over all <code>n_annotators</code> of them.</p>
+<p><strong>This is a narrower table than <code><a href="cpt_metrics.html">cpt_metrics()</a></code>
+  returns</strong>, so a call moved from one to the other loses columns:
+  <code>n_truth</code> (there is no single truth), and the location metrics
+  <code>hausdorff</code>, <code>mae_matched</code>, <code>rmse_matched</code>,
+  <code>rand_index</code> and <code>annotation_error</code>.</p>
+<p>The three distance metrics are omitted for a reason worth stating,
+  because it is not obvious: they are <code>NA</code> whenever an annotator
+  shares no matched pair with the prediction, so averaging them would
+  quietly divide by fewer annotators than <code>n_annotators</code> reports.
+  Measured on three annotators against one prediction –
+  <code>list(c(100, 200), integer(0), 150)</code> at \(n = 300\) –
+  <code>mae_matched</code> was available for <strong>one</strong> of the three and
+  <code>hausdorff</code> for two, while <code>f1</code> and <code>covering</code> were
+  finite for all three. Score those per annotator with
+  <code><a href="cpt_metrics.html">cpt_metrics()</a></code> and combine them yourself if you want
+  them, so the divisor is yours to choose.</p>
+<p><code>covering</code> and <code>f1</code> are the pair the Turing Change Point
+  Dataset benchmark reports, which is why they are the ones averaged
+  here; <code>precision</code> and <code>recall</code> come along as F1's parts.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
+    <div class="dont-index"><p><code><a href="cpt_metrics.html">cpt_metrics()</a></code> for the full single-truth table
+  and what each column means.</p></div>
     </div>
 
     <div class="section level2">

@@ -225,7 +225,7 @@
 </ul></div>
 <div class="section level3">
 <h3 id="fixes-found-in-the-final-pre-submission-sweeps-0-5-0">Fixes found in the final pre-submission sweeps<a class="anchor" aria-label="anchor" href="#fixes-found-in-the-final-pre-submission-sweeps-0-5-0"></a></h3>
-<p>Further passes, each sweeping a surface rather than re-reading code: every wrapper against every argument its engine accepts, every method against every <code>change_in</code> value it advertises, every documented claim against the installed package, and — the ones that found the most — <em>invariances</em>, where the answer is compared against another answer rather than against a recorded value. Fifty-eight further items.</p>
+<p>Further passes, each sweeping a surface rather than re-reading code: every wrapper against every argument its engine accepts, every method against every <code>change_in</code> value it advertises, every documented claim against the installed package, and — the ones that found the most — <em>invariances</em>, where the answer is compared against another answer rather than against a recorded value. 84 further items in all, itemised below.</p>
 <p>Five are wrong answers. Four are below; the fifth has its own section because it is the one that could have reached a publication: a <code>seed</code> argument that reset the caller’s random stream, so a simulation loop analysed the same dataset six times over.</p>
 <div class="section level4">
 <h4 id="wrong-answers-0-5-0">Wrong answers<a class="anchor" aria-label="anchor" href="#wrong-answers-0-5-0"></a></h4>
@@ -313,6 +313,14 @@
 <li><p><strong>The seed is now scoped to the call.</strong> A new internal helper saves <code>.Random.seed</code>, sets it, and restores it when the calling function exits, at all thirty-six sites. A fresh session that had no <code>.Random.seed</code> is left without one, rather than acquiring one. Nested calls stack correctly: an inner scope restores what the outer one set.</p></li>
 <li><p><strong>Nothing documented changed.</strong> A seeded call is still byte-reproducible, and still reproducible across a thousand intervening draws or after an unseeded call has moved the stream on — all three are now tested, as metamorphic assertions that compare calls to each other rather than to a recorded value, which is the only kind that could have caught this.</p></li>
 <li><p>Every <code>@param seed</code> says so: the seed is scoped to the call and does not pin the loop’s own stream.</p></li>
+</ul></div>
+<div class="section level4">
+<h4 id="multi-annotator-scoring-0-5-0">Multi-annotator scoring<a class="anchor" aria-label="anchor" href="#multi-annotator-scoring-0-5-0"></a></h4>
+<ul><li>
+<strong><code><a href="../reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code> returns six fewer columns than <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code>, and <code>@return</code> said only “a tibble with averaged metrics”.</strong> A call moved from one to the other silently loses <code>n_truth</code>, <code>hausdorff</code>, <code>rand_index</code>, <code>annotation_error</code>, <code>mae_matched</code> and <code>rmse_matched</code>. The page now names the four it does average (<code>precision</code>, <code>recall</code>, <code>f1</code>, <code>covering</code>), says they are plain unweighted means over <code>n_annotators</code>, and lists what is gone.</li>
+<li>
+<strong>And why the distance metrics are gone, which is not obvious.</strong> They are <code>NA</code> whenever an annotator shares no matched pair with the prediction, so averaging them would quietly divide by fewer annotators than <code>n_annotators</code> reports. Measured on three annotators against one prediction: <code>mae_matched</code> was available for <strong>one</strong> of the three and <code>hausdorff</code> for two, while <code>f1</code> and <code>covering</code> were finite for all three. The page says to score those per annotator with <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> and combine them yourself, so the divisor is the caller’s choice — and notes that <code>covering</code> and <code>f1</code> are the pair the Turing Change Point Dataset benchmark reports, which is why they are the ones averaged.</li>
+<li>The averaging itself was verified against the per-annotator values, a bare vector is read as one annotator rather than split, degenerate annotator sets stay finite, and both shapes that could be misread as an annotator set (a <code>ggcpt</code>, a data frame) are refused by name.</li>
 </ul></div>
 <div class="section level4">
 <h4 id="influence-diagnostics-0-5-0">Influence diagnostics<a class="anchor" aria-label="anchor" href="#influence-diagnostics-0-5-0"></a></h4>

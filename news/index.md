@@ -766,7 +766,8 @@ every wrapper against every argument its engine accepts, every method
 against every `change_in` value it advertises, every documented claim
 against the installed package, and — the ones that found the most —
 *invariances*, where the answer is compared against another answer
-rather than against a recorded value. Fifty-eight further items.
+rather than against a recorded value. 84 further items in all, itemised
+below.
 
 Five are wrong answers. Four are below; the fifth has its own section
 because it is the one that could have reached a publication: a `seed`
@@ -1094,6 +1095,33 @@ every argument its engine accepts.
 
 - Every `@param seed` says so: the seed is scoped to the call and does
   not pin the loop’s own stream.
+
+#### Multi-annotator scoring
+
+- **[`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md)
+  returns six fewer columns than
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md),
+  and `@return` said only “a tibble with averaged metrics”.** A call
+  moved from one to the other silently loses `n_truth`, `hausdorff`,
+  `rand_index`, `annotation_error`, `mae_matched` and `rmse_matched`.
+  The page now names the four it does average (`precision`, `recall`,
+  `f1`, `covering`), says they are plain unweighted means over
+  `n_annotators`, and lists what is gone.
+- **And why the distance metrics are gone, which is not obvious.** They
+  are `NA` whenever an annotator shares no matched pair with the
+  prediction, so averaging them would quietly divide by fewer annotators
+  than `n_annotators` reports. Measured on three annotators against one
+  prediction: `mae_matched` was available for **one** of the three and
+  `hausdorff` for two, while `f1` and `covering` were finite for all
+  three. The page says to score those per annotator with
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+  and combine them yourself, so the divisor is the caller’s choice — and
+  notes that `covering` and `f1` are the pair the Turing Change Point
+  Dataset benchmark reports, which is why they are the ones averaged.
+- The averaging itself was verified against the per-annotator values, a
+  bare vector is read as one annotator rather than split, degenerate
+  annotator sets stay finite, and both shapes that could be misread as
+  an annotator set (a `ggcpt`, a data frame) are refused by name.
 
 #### Influence diagnostics
 

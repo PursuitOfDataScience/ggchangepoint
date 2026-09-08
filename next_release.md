@@ -25255,3 +25255,106 @@ up above:
   `c(50, 100)` leaves `max_shift = 0` while `delta_n_cp` rises to 1.
 
 All correct. Now tested, along with the ordering rule.
+
+## 619. `cpt_metrics_annotated()` returns six fewer columns than its sibling
+
+The averaging is exact – plain unweighted means of the per-annotator
+[`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+values, verified column by column, with a bare vector read as one
+annotator rather than split into many, degenerate annotator sets staying
+finite, and both shapes that could be misread as an annotator set (a
+`ggcpt`, a data frame) refused by name.
+
+What the page did not say is that the table is **narrower**:
+
+    cpt_metrics():           n n_pred n_truth precision recall f1 covering
+                             hausdorff rand_index annotation_error
+                             mae_matched rmse_matched
+    cpt_metrics_annotated(): n n_annotators n_pred precision recall f1 covering
+
+`@return` read “A tibble with averaged metrics.” A call moved from one
+to the other loses six columns without a word.
+
+### 619.1 The reason the distance metrics are gone is worth stating
+
+Not a shortcut. From §588: `hausdorff`, `mae_matched` and `rmse_matched`
+are `NA` whenever there is no matched pair to measure – so averaging
+them across annotators would divide by fewer annotators than
+`n_annotators` reports. Measured on three annotators against one
+prediction, `list(c(100, 200), integer(0), 150)` at :
+
+| metric           | annotators with a value |
+|------------------|-------------------------|
+| `mae_matched`    | **1 of 3**              |
+| `hausdorff`      | 2 of 3                  |
+| `f1`, `covering` | 3 of 3                  |
+
+An averaged `mae_matched` on that input would be one annotator’s number
+labelled as three. So the page now names the four that are averaged,
+says they are plain unweighted means over `n_annotators`, lists what is
+missing, gives that measurement as the reason, and points at
+[`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+per annotator for anyone who wants the distances with a divisor of their
+own choosing. It also records that `covering` and `f1` are the pair the
+TCPD benchmark reports, which is why those are the ones averaged.
+
+## 620. A stale count in my own bookkeeping, and how it hid
+
+The NEWS section’s opening sentence carried a hand-written item count.
+It has read **“Fifty-eight further items”** since §596, while the list
+under it grew to 84.
+
+The mechanism is the one this loop keeps finding in the package, turned
+on the ledger: each round updated the count with
+
+``` sh
+sed -i 's/recorded value. Seventy further items./.../' NEWS.md
+```
+
+and when the expected string was not there – because a previous round’s
+substitution had already failed – `sed` matched nothing, changed
+nothing, **exited 0**, and said nothing. Every round after the first
+miss was rewriting a string that did not exist. The Python edits in the
+same rounds carried `assert old in s` and would have failed loudly; the
+`sed`s did not, and the count was the one place only `sed` touched.
+
+The per-round figures reported at the time were computed live from the
+file and were right; only this sentence was stale, and
+`cran-comments.md`’s total is recomputed here as 16 + 25 + 84 = 125,
+which is what it says.
+
+Two changes, both to make the next drift visible rather than silent:
+
+- the count is now **digits** (`84 further items`) rather than a
+  spelled-out word, so it reads against the list rather than as prose;
+- and it is set from a count of the bullets, not typed.
+
+Recorded because “the substitution silently did nothing” is exactly the
+failure mode §600 and §605 fixed in the package, and it is worth noting
+that the audit’s own tooling had it too.
+
+### 620.1 And the same slip once more, in the test written this round
+
+The block for §619 asserted the NA counts
+
+``` r
+
+expect_equal(sum(!is.na(per$mae_matched)), 1L)
+expect_equal(sum(!is.na(per$hausdorff)),   2L)
+```
+
+against `list(c(98, 200), c(100, 203), 150)` – the annotator set used
+for the *averaging* assertions, every member of which overlaps the
+prediction. The 1-of-3 and 2-of-3 figures were measured on
+`list(c(100, 200), integer(0), 150)`, which has an empty annotator.
+Actual values on the set the test used: 2 and 3. The suite caught it.
+
+Numbers measured on one input, asserted about another – the third
+instance this loop has produced of the same thing (§615.2, §620, this).
+The two claims now live in separate tests with the input each needs, and
+the comment says why the second one needs an empty annotator.
+
+**The pattern is worth naming.** Every one of the three was a number
+recorded during exploration and then reused in an assertion whose setup
+had moved. The defence is not more care – it is that the assertion carry
+its own input, which is what these now do.

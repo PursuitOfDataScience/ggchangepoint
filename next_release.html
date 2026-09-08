@@ -16037,6 +16037,53 @@ Hannan-Quinn = 2k log log n    sSIC = k (log n)^alpha</code></pre>
 <li>and the two are measuring different things, which is the point of having both: a perturbation that <em>adds</em> a changepoint at 75 to <code>c(50, 100)</code> leaves <code>max_shift = 0</code> while <code>delta_n_cp</code> rises to 1.</li>
 </ul><p>All correct. Now tested, along with the ordering rule.</p>
 </div>
+<div class="section level2">
+<h2 id="id_619-cpt_metrics_annotated-returns-six-fewer-columns-than-its-sibling">619. <code>cpt_metrics_annotated()</code> returns six fewer columns than its sibling<a class="anchor" aria-label="anchor" href="#id_619-cpt_metrics_annotated-returns-six-fewer-columns-than-its-sibling"></a></h2>
+<p>The averaging is exact – plain unweighted means of the per-annotator <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> values, verified column by column, with a bare vector read as one annotator rather than split into many, degenerate annotator sets staying finite, and both shapes that could be misread as an annotator set (a <code>ggcpt</code>, a data frame) refused by name.</p>
+<p>What the page did not say is that the table is <strong>narrower</strong>:</p>
+<pre><code>cpt_metrics():           n n_pred n_truth precision recall f1 covering
+                         hausdorff rand_index annotation_error
+                         mae_matched rmse_matched
+cpt_metrics_annotated(): n n_annotators n_pred precision recall f1 covering</code></pre>
+<p><code>@return</code> read “A tibble with averaged metrics.” A call moved from one to the other loses six columns without a word.</p>
+<div class="section level3">
+<h3 id="id_6191-the-reason-the-distance-metrics-are-gone-is-worth-stating">619.1 The reason the distance metrics are gone is worth stating<a class="anchor" aria-label="anchor" href="#id_6191-the-reason-the-distance-metrics-are-gone-is-worth-stating"></a></h3>
+<p>Not a shortcut. From §588: <code>hausdorff</code>, <code>mae_matched</code> and <code>rmse_matched</code> are <code>NA</code> whenever there is no matched pair to measure – so averaging them across annotators would divide by fewer annotators than <code>n_annotators</code> reports. Measured on three annotators against one prediction, <code>list(c(100, 200), integer(0), 150)</code> at :</p>
+<table class="table"><thead><tr><th>metric</th>
+<th>annotators with a value</th>
+</tr></thead><tbody><tr><td><code>mae_matched</code></td>
+<td><strong>1 of 3</strong></td>
+</tr><tr><td><code>hausdorff</code></td>
+<td>2 of 3</td>
+</tr><tr><td>
+<code>f1</code>, <code>covering</code>
+</td>
+<td>3 of 3</td>
+</tr></tbody></table><p>An averaged <code>mae_matched</code> on that input would be one annotator’s number labelled as three. So the page now names the four that are averaged, says they are plain unweighted means over <code>n_annotators</code>, lists what is missing, gives that measurement as the reason, and points at <code><a href="reference/cpt_metrics.html">cpt_metrics()</a></code> per annotator for anyone who wants the distances with a divisor of their own choosing. It also records that <code>covering</code> and <code>f1</code> are the pair the TCPD benchmark reports, which is why those are the ones averaged.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_620-a-stale-count-in-my-own-bookkeeping-and-how-it-hid">620. A stale count in my own bookkeeping, and how it hid<a class="anchor" aria-label="anchor" href="#id_620-a-stale-count-in-my-own-bookkeeping-and-how-it-hid"></a></h2>
+<p>The NEWS section’s opening sentence carried a hand-written item count. It has read <strong>“Fifty-eight further items”</strong> since §596, while the list under it grew to 84.</p>
+<p>The mechanism is the one this loop keeps finding in the package, turned on the ledger: each round updated the count with</p>
+<div class="sourceCode" id="cb158"><pre class="sourceCode sh"><code class="sourceCode bash"><span id="cb158-1"><a href="#cb158-1" tabindex="-1"></a><span class="fu">sed</span> <span class="at">-i</span> <span class="st">'s/recorded value. Seventy further items./.../'</span> NEWS.md</span></code></pre></div>
+<p>and when the expected string was not there – because a previous round’s substitution had already failed – <code>sed</code> matched nothing, changed nothing, <strong>exited 0</strong>, and said nothing. Every round after the first miss was rewriting a string that did not exist. The Python edits in the same rounds carried <code>assert old in s</code> and would have failed loudly; the <code>sed</code>s did not, and the count was the one place only <code>sed</code> touched.</p>
+<p>The per-round figures reported at the time were computed live from the file and were right; only this sentence was stale, and <code>cran-comments.md</code>’s total is recomputed here as 16 + 25 + 84 = 125, which is what it says.</p>
+<p>Two changes, both to make the next drift visible rather than silent:</p>
+<ul><li>the count is now <strong>digits</strong> (<code>84 further items</code>) rather than a spelled-out word, so it reads against the list rather than as prose;</li>
+<li>and it is set from a count of the bullets, not typed.</li>
+</ul><p>Recorded because “the substitution silently did nothing” is exactly the failure mode §600 and §605 fixed in the package, and it is worth noting that the audit’s own tooling had it too.</p>
+<div class="section level3">
+<h3 id="id_6201-and-the-same-slip-once-more-in-the-test-written-this-round">620.1 And the same slip once more, in the test written this round<a class="anchor" aria-label="anchor" href="#id_6201-and-the-same-slip-once-more-in-the-test-written-this-round"></a></h3>
+<p>The block for §619 asserted the NA counts</p>
+<div class="sourceCode" id="cb159"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu">expect_equal</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">per</span><span class="op">$</span><span class="va">mae_matched</span><span class="op">)</span><span class="op">)</span>, <span class="fl">1L</span><span class="op">)</span></span>
+<span><span class="fu">expect_equal</span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/sum.html" class="external-link">sum</a></span><span class="op">(</span><span class="op">!</span><span class="fu"><a href="https://rdrr.io/r/base/NA.html" class="external-link">is.na</a></span><span class="op">(</span><span class="va">per</span><span class="op">$</span><span class="va">hausdorff</span><span class="op">)</span><span class="op">)</span>,   <span class="fl">2L</span><span class="op">)</span></span></code></pre></div>
+<p>against <code>list(c(98, 200), c(100, 203), 150)</code> – the annotator set used for the <em>averaging</em> assertions, every member of which overlaps the prediction. The 1-of-3 and 2-of-3 figures were measured on <code>list(c(100, 200), integer(0), 150)</code>, which has an empty annotator. Actual values on the set the test used: 2 and 3. The suite caught it.</p>
+<p>Numbers measured on one input, asserted about another – the third instance this loop has produced of the same thing (§615.2, §620, this). The two claims now live in separate tests with the input each needs, and the comment says why the second one needs an empty annotator.</p>
+<p><strong>The pattern is worth naming.</strong> Every one of the three was a number recorded during exploration and then reused in an assertion whose setup had moved. The defence is not more care – it is that the assertion carry its own input, which is what these now do.</p>
+</div>
+</div>
 </div>
 
 
