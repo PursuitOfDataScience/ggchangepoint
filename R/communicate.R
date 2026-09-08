@@ -43,6 +43,24 @@
 #'   changepoint on the original scale, when — and only when — the result
 #'   carries a time index, so \code{"cp_index" \%in\% names(x)} is the
 #'   test for it.
+#'
+#'   \code{tidy()} flattens those three slots into \strong{one} table with
+#'   a \code{status} column, and the row count is therefore the number of
+#'   changepoints \emph{plus} the number of events, not either one alone.
+#'   The three values are
+#'   \code{"matched"} (a pair: both \code{cp} and \code{event} filled,
+#'   with \code{distance}), \code{"unexplained_changepoint"} (a
+#'   changepoint with no event: \code{cp} filled, \code{event} and
+#'   \code{distance} \code{NA}) and \code{"undetected_event"} (an event
+#'   with no changepoint: \code{event} and \code{position} filled,
+#'   \code{cp} and \code{distance} \code{NA}).
+#'
+#'   \strong{Filter on \code{status}, not on \code{is.na(cp)}.} An
+#'   \code{"unexplained_changepoint"} row has a non-missing \code{cp}, so
+#'   \code{subset(tidy(x), !is.na(cp))} returns the matched pairs
+#'   \emph{and} the unexplained changepoints — which is the natural
+#'   mistake to make, and it silently overstates how many changepoints an
+#'   event explains.
 #'   With \code{print()}, \code{tidy()} and \code{autoplot()}.
 #' @seealso \code{\link{geom_cpt_event}()}, \code{\link{cpt_report}()}.
 #' @export

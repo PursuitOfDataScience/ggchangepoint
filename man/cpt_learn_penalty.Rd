@@ -55,6 +55,15 @@ building the curves.}
 \value{
 A \code{ggcpt_penalty_model} object with \code{print()},
   \code{coef()} and \code{predict()} methods.
+
+  The two scales differ and it matters: \code{coef()} gives an
+  intercept plus one weight per feature \strong{on the log-penalty
+  scale}, which is where the interval regression is fitted, while
+  \code{predict()} exponentiates and returns a penalty on the natural
+  scale -- the scale \code{\link{cpt_penalty}()} and
+  \code{\link{cpt_detect}()} consume. So a coefficient of
+  \eqn{-0.04} on \code{log_n} is a multiplicative effect on the
+  penalty, not an additive one.
 }
 \description{
 Fits the supervised penalty model of Hocking et al. (2013): each series
@@ -66,6 +75,37 @@ intervals — max-margin interval regression. The result has a
 directly as \code{penalty}, so a learned penalty is used exactly like a
 number.
 }
+\section{Reading the coefficients}{
+
+\strong{The signs are often not interpretable, and that is a property of
+  the labels rather than of the fit.} A target interval is open above
+  whenever the largest penalty on the grid still achieves the minimum
+  label error -- which is the common case, because a large penalty
+  usually keeps the one changepoint the labels ask for. When every
+  series' interval is open above, any sufficiently large prediction is
+  optimal, the problem does not pin the slopes, and the \eqn{L_2} term
+  settles them near zero with whatever sign the optimiser reached.
+
+  Two measurements on four series of very different length and noise,
+  all with one-change labels, differing only in the data drawn. In one,
+  every non-intercept coefficient came out slightly negative, so the
+  predicted penalty \emph{decreased} with \eqn{n} -- the opposite of the
+  \eqn{\log n} growth a reader would expect from BIC, and not evidence
+  of anything. In the other, every feature weight went to zero and the
+  model became a \strong{constant}: \code{predict()} returned the same
+  penalty for all four series. Both fits put every prediction inside its
+  target, which is the property the model is fitted for, and neither
+  outcome says anything about how a penalty should scale.
+
+  So do not read a \code{ggcpt_penalty_model} as having discovered a
+  relationship, and do not be surprised by a constant one.
+
+  If the coefficients need to mean something, the labels have to
+  constrain the penalty from both sides: widen \code{penalties} until
+  the largest one starts to over-segment, so the target intervals close
+  above. \code{\link{cpt_label_error_curve}()} shows whether they do.
+}
+
 \examples{
 set.seed(2026)
 series <- list(a = c(rnorm(60), rnorm(60, 4)),
