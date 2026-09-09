@@ -56,9 +56,11 @@ mode runs the one-change test and reports its p-value.
 \dontshow{if (requireNamespace("fChange", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
 set.seed(2026)
-X <- matrix(rnorm(60 * 20), nrow = 60)
+# 10 curves and M = 50, not 20 and 200: the example is a demonstration,
+# and the wider version measured 6.7 s against CRAN's 5 s budget.
+X <- matrix(rnorm(60 * 10), nrow = 60)
 X[31:60, ] <- X[31:60, ] + 2
-fmean_wrapper(X, M = 200)
+fmean_wrapper(X, M = 50)
 }
 \dontshow{\}) # examplesIf}
 }

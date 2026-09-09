@@ -82,7 +82,10 @@ power curve, and the number that belongs in a pre-registration.
 }
 \examples{
 \donttest{
-cpt_min_detectable(n = 200, n_sim = 30, max_iter = 4, seed = 1)
+# n_sim = 10, max_iter = 3: the search is n_sim detector fits per
+# iteration, and n_sim = 30 with max_iter = 4 measured 5.4 s against
+# CRAN's 5 s example budget. Raise both for a usable answer.
+cpt_min_detectable(n = 200, n_sim = 10, max_iter = 3, seed = 1)
 }
 }
 \seealso{

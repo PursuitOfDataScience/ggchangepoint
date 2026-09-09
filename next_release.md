@@ -23081,3 +23081,55 @@ disguise: a recorded value is only as good as the thing it was recorded
 against, and the further that thing is from the assertion, the longer a
 disagreement survives. A test that recomputes beats a test that remembers;
 a chunk that seeds itself beats a chunk that inherits.
+
+## 624. The examples nobody had timed, and the guess that was wrong
+
+`R CMD check` flags any Rd example whose user+system time exceeds 5 s. The
+review's §G listed "example timings" as something needing a live session,
+and named three suspects: `?ggcpt_plot_methods`, which "runs three plot()
+calls plus a cpt_crops()", and the shared `?cpt_influence`/`?cpt_leverage`
+page, which "runs ~160 detector fits".
+
+Timing all 118 blocks refuted both. `ggcpt_plot_methods` measures 1.3 s and
+the influence page does not appear in the top twelve. The five over budget
+were:
+
+| topic               | user+sys | after |
+|---------------------|----------|-------|
+| fabisearch_wrapper  | 27.4 s   | 5-6 s |
+| ocd_wrapper         | 10.4 s   | 4.2 s |
+| fmean_wrapper       |  6.7 s   | 2.9 s |
+| fcov_wrapper        |  6.1 s   | 2.8 s |
+| cpt_min_detectable  |  5.3 s   | 1.5 s |
+
+The sixth-slowest is `cpt_power` at 2.6 s, so this was five topics rather
+than a general problem -- and all five are the same kind of thing: an engine
+whose cost is a resampling or calibration parameter the example left at an
+illustrative value.
+
+### 624.1 Two methodological notes worth keeping
+
+**`\donttest{}` is not an exemption.** All five were already inside one.
+`--as-cran` sets `_R_CHECK_DONTTEST_EXAMPLES_` and runs them, and the
+timing NOTE is computed from what runs. A `\donttest` block buys nothing
+against this particular check.
+
+**Measure in a fresh process, or the number is wrong.** fabisearch measured
+3.5 s in a session that had already run four other fabisearch calls, 5.4 s
+in a fresh process, and 8.7 s inside a sweep of all 118 examples. The first
+number went into a source comment before the other two existed, and had to
+be corrected -- which is the same defect as everything else in §622-623: a
+recorded value that was true against a different thing than the one the
+reader will run.
+
+### 624.2 What could not be fixed, and why that is written down
+
+`fabisearch_wrapper` stays at 5-6 s -- 5.4 and 6.1 in two fresh
+sessions, so a point estimate would have needed correcting again. `n_reps = 1` fails inside fabisearch
+with "not enough 'x' observations" (the permutation test needs two), and
+shrinking the matrix is not monotone in cost: a 2 x 10 matrix at
+`min_dist = 8` measured 6.6 s, worse than the 2 x 12 at `min_dist = 10`
+that ships, because the search evaluates more candidate splits relative to
+`min_dist`. So the example is already the smallest input that exercises the
+method. `cran-comments.md` now states this with the measurements, which is
+the right place for a NOTE the maintainer expects and has reasons for.

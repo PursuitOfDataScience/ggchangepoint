@@ -84,9 +84,10 @@ The \dQuote{Benchmarks} article compares the engines that do scale.
 \dontshow{if (requireNamespace("fChange", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 \donttest{
 set.seed(2026)
-X <- matrix(rnorm(60 * 20), nrow = 60)
+# See the note in ?fmean_wrapper on why this is 10 curves and M = 50.
+X <- matrix(rnorm(60 * 10), nrow = 60)
 X[31:60, ] <- X[31:60, ] * 3
-fcov_wrapper(X, target = "trace", M = 200)
+fcov_wrapper(X, target = "trace", M = 50)
 }
 \dontshow{\}) # examplesIf}
 }

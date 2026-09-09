@@ -93,6 +93,24 @@ is still byte-reproducible across intervening draws. The tests for it are
 metamorphic -- they compare calls to each other rather than to a recorded
 value, which is the only kind that could have caught it.
 
+**Example timings.** Every one of the 118 Rd example blocks was timed. Four
+were over CRAN's 5-second budget and are now well under it -- `ocd_wrapper`
+10.4s to 4.2s (its Monte Carlo threshold calibration is linear in
+`mc_reps`, so the example uses 2), `fmean_wrapper` 6.7s to 2.9s and
+`fcov_wrapper` 6.1s to 2.8s (10 curves and M = 50 instead of 20 and 200),
+and `cpt_min_detectable` 5.3s to 1.5s (fewer simulations per iteration).
+
+`fabisearch_wrapper` is the one that remains near the line: 27s down to
+5-6s across fresh sessions, and that is its floor. The engine runs `n_runs * n_reps` non-negative
+matrix factorisations per candidate split; `n_reps = 1` fails inside
+fabisearch itself ("not enough 'x' observations" -- its permutation test
+needs two), and shrinking the matrix further is not reliably cheaper
+because the search then evaluates more splits relative to `min_dist` (a
+2x10 matrix at `min_dist = 8` measured 6.6s). The example is already the
+smallest input that exercises the method, it is inside `\donttest{}`, and
+the help page says in as many words that these settings are chosen for the
+check budget rather than for detection.
+
 Three of the fixes route around a defect in an engine rather than in this
 package, and each is narrow, measured and reversible. `wbsts::wbs.lsw()`
 ends in `suppressWarnings(if (is.na(OUT)) OUT = NULL)`, which R has treated

@@ -46,9 +46,11 @@
 #' @examplesIf requireNamespace("fChange", quietly = TRUE)
 #' \donttest{
 #' set.seed(2026)
-#' X <- matrix(rnorm(60 * 20), nrow = 60)
+#' # 10 curves and M = 50, not 20 and 200: the example is a demonstration,
+#' # and the wider version measured 6.7 s against CRAN's 5 s budget.
+#' X <- matrix(rnorm(60 * 10), nrow = 60)
 #' X[31:60, ] <- X[31:60, ] + 2
-#' fmean_wrapper(X, M = 200)
+#' fmean_wrapper(X, M = 50)
 #' }
 #' @family changepoint engines
 fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
@@ -123,9 +125,10 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #' @examplesIf requireNamespace("fChange", quietly = TRUE)
 #' \donttest{
 #' set.seed(2026)
-#' X <- matrix(rnorm(60 * 20), nrow = 60)
+#' # See the note in ?fmean_wrapper on why this is 10 curves and M = 50.
+#' X <- matrix(rnorm(60 * 10), nrow = 60)
 #' X[31:60, ] <- X[31:60, ] * 3
-#' fcov_wrapper(X, target = "trace", M = 200)
+#' fcov_wrapper(X, target = "trace", M = 50)
 #' }
 #' @family changepoint engines
 fcov_wrapper <- function(x,
@@ -371,9 +374,16 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 #' # A change in *structure*, not in scale: two latent factors drive
 #' # different halves of the node set before and after the change.
 #' # Deliberately tiny -- this is by far the most expensive engine in the
-#' # package (n_runs x n_reps factorisations per candidate split), and the
-#' # settings below are chosen to keep the example inside a check budget,
-#' # not to detect anything. Use the defaults on real data.
+#' # package (n_runs x n_reps factorisations per candidate split). Measured
+#' # at 5-6 s across fresh sessions, against 27 s for the 2 x 25 /
+#' # n_reps = 4
+#' # version this replaced -- and this is the floor: `n_reps = 1` fails
+#' # inside fabisearch with "not enough 'x' observations" (the permutation
+#' # test needs two), and smaller matrices are not reliably cheaper because
+#' # the search then evaluates more splits relative to `min_dist` (2 x 10 at
+#' # min_dist = 8 measured 6.6 s). So this one example stays near CRAN's 5 s
+#' # budget by necessity; `cran-comments.md` says so. Use the defaults on
+#' # real data -- the settings here are for the budget, not for detection.
 #' set.seed(2026)
 #' block <- function(n, cols) {
 #'   f <- abs(stats::rnorm(n)) + 0.5
@@ -381,8 +391,8 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 #'   Y[, cols] <- Y[, cols] + f
 #'   Y
 #' }
-#' Y <- rbind(block(25, 1:2), block(25, 3:5))
-#' fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 4,
+#' Y <- rbind(block(12, 1:2), block(12, 3:5))
+#' fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 2,
 #'                    alpha = 0.25, rank = 2)
 #' }
 #' @family changepoint engines

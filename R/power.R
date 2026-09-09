@@ -344,7 +344,10 @@ autoplot.ggcpt_power <- function(object, ...) {
 #' @export
 #' @examples
 #' \donttest{
-#' cpt_min_detectable(n = 200, n_sim = 30, max_iter = 4, seed = 1)
+#' # n_sim = 10, max_iter = 3: the search is n_sim detector fits per
+#' # iteration, and n_sim = 30 with max_iter = 4 measured 5.4 s against
+#' # CRAN's 5 s example budget. Raise both for a usable answer.
+#' cpt_min_detectable(n = 200, n_sim = 10, max_iter = 3, seed = 1)
 #' }
 cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
                                range = c(0.1, 5), n_sim = 100,

@@ -153,7 +153,8 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #' different absolute numbers; the linearity in \code{mc_reps} is the part
 #' to plan around. Monitoring the observations afterwards is cheap by
 #' comparison — 0.37 s for a thousand of them at \eqn{p = 3}. Lower
-#' \code{mc_reps} while exploring, or pass \code{thresh} directly to skip
+#' \code{mc_reps} while exploring --- the example below uses 2, which
+#' measures 3.8 s --- or pass \code{thresh} directly to skip
 #' calibration entirely, which brings the same fit down to a tenth of a
 #' second.
 #'
@@ -164,7 +165,12 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #' \donttest{
 #' set.seed(2026)
 #' X <- rbind(matrix(rnorm(60 * 3), 60), matrix(rnorm(40 * 3, 3), 40))
-#' res <- ocd_wrapper(X, mc_reps = 5)
+#' # `mc_reps = 2`, not the default 100 and not the 5 this example used to
+#' # pass: the calibration is linear in `mc_reps` and is nearly all of the
+#' # cost, so 5 measured 9.7 s here against CRAN's 5 s budget and 2
+#' # measures 3.8 s for the same answer. Neither is a calibration you
+#' # would trust -- see the timing section above.
+#' res <- ocd_wrapper(X, mc_reps = 2)
 #' res$changepoints
 #' }
 #' @family changepoint engines

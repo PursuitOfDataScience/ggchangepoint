@@ -1598,6 +1598,26 @@ Names, labels and claims that did not match the code.
   with no cap; at 30 coordinates that is 30 unreadable slivers. It says so
   first now.
 
+Example timings, measured for the first time.
+
+- **Five Rd examples were over CRAN's 5-second budget**, and `--as-cran`
+  runs `\donttest{}` blocks, so being wrapped in one exempted none of them.
+  `ocd_wrapper` 10.4s → 4.2s (its Monte Carlo threshold calibration is
+  nearly all of the cost and is linear in `mc_reps`, so the example uses 2),
+  `fmean_wrapper` 6.7s → 2.9s and `fcov_wrapper` 6.1s → 2.8s (10 curves and
+  `M = 50` rather than 20 and 200), `cpt_min_detectable` 5.3s → 1.5s.
+  `fabisearch_wrapper` went from 27s to 5-6s, which is its floor:
+  `n_reps = 1` fails inside fabisearch (its permutation test needs two) and
+  a smaller matrix is not reliably cheaper, because the search then
+  evaluates more splits relative to `min_dist`.
+- That example's own comment claimed its settings were "chosen to keep the
+  example inside a check budget". At 27 seconds it was not, and the comment
+  now carries the measured number instead of an assurance.
+- The review guessed the wrong topics here — it named
+  `?ggcpt_plot_methods` (1.3s) and the shared `cpt_influence`/`cpt_leverage`
+  page for running "~160 detector fits". Neither is in the top five; the
+  four functional and high-dimensional engines are.
+
 And the README, which turned out to be the stalest thing in the repository.
 
 - **Every README figure was named `README-unnamed-chunk-N-1.png`**, from
