@@ -179,7 +179,20 @@ Defaults to <code>100</code>.</p></dd>
 
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>
-<dd><p>Passed to the detector. Defaults to <code>"mean"</code>.</p></dd>
+<dd><p>Passed to the detector, and inherited from <code>x</code>
+  when <code>x</code> is a <code>ggcpt</code> (an explicit value still wins).
+  Defaults to <code>"mean"</code>.</p>
+<p><strong>The three closed-form criteria assume a change in the mean
+  whatever this is set to.</strong> <code>"bic"</code>, <code>"aic"</code> and
+  <code>"mbic"</code> all score the ladder with the Gaussian profile cost
+  \(n\log(\mathrm{RSS}/n)\) – the deviance for a change in mean with
+  a common variance – so on a <code>change_in = "var"</code> ladder the
+  <em>candidates</em> come from the variance detector while the
+  <em>score</em> does not, and splitting a segment whose mean did not move
+  barely reduces \(\mathrm{RSS}\): the criterion will tend to choose
+  \(K = 0\) on a real variance change. Use <code>"cv"</code> or
+  <code>"stability"</code> there, both of which score by re-detection with the
+  same <code>change_in</code> and so carry no such assumption.</p></dd>
 
 
 <dt id="arg-index">index<a class="anchor" aria-label="anchor" href="#arg-index"></a></dt>

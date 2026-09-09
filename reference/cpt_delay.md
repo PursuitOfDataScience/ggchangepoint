@@ -4,9 +4,13 @@ Scores an online result the way the sequential literature does: how long
 after each true change did the first alarm arrive, and how many alarms
 were raised with no change behind them.
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
-is the wrong tool for an online detector — it asks whether the
-*location* was recovered, which a sequential procedure never claims —
-and warns if you point it at one.
+is the wrong tool for an online detector: it asks whether the *location*
+was recovered, which a sequential procedure never claims. It will not
+stop you —
+[`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
+takes bare integer vectors and never sees which detector produced them,
+so it cannot know. (An earlier version of this sentence said it warns.
+It does not, and given that signature it could not.)
 
 ## Usage
 
