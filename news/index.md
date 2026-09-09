@@ -2095,6 +2095,37 @@ Names, labels and claims that did not match the code.
   draws one stacked panel per coordinate with no cap; at 30 coordinates
   that is 30 unreadable slivers. It says so first now.
 
+A documented measurement that had gone stale, and the CI step that
+failed for a reason unrelated to the package.
+
+- **The scale-sensitivity counts in
+  [`?cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md),
+  the README and the introduction vignette were wrong and
+  unreproducible.** All three quoted “`pelt` returns 1 changepoint at σ
+  = 1, 29 at σ = 3 and 138 at σ = 10” without saying how long the series
+  was — so the claim could not be checked. Re-measured at n = 200: 1 /
+  39 / 141 as means over 20 draws, and 1 / 37 / 142 on a single draw, so
+  the 29 was an unrepresentative draw rather than a typical value. The
+  pages now give `n`, say the numbers are means, and note that the
+  effect grows with the series as well as with the noise (21/75 at n =
+  100, 57/266 at n = 400). A test re-runs them with tolerance, so the
+  property is checked without freezing an upstream engine’s exact
+  behaviour into the suite.
+- Two other documented measurements were re-run and are **accurate**:
+  [`?ocd_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)’s
+  “about 10 s at p = 3, 22 s at p = 10” (measured 9.9 and 21.6) and
+  [`?cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)’s
+  “19.9 against 11.8 at n = 360” (exact).
+- **The `Install JAGS (Linux)` CI step now cannot be taken down by an
+  unrelated repository.** `apt-get update` exits non-zero if *any*
+  configured repository fails, and the runner image ships third-party
+  lists this package has nothing to do with: Google’s Chrome index
+  returned “Hash Sum mismatch” and failed all three Linux jobs plus the
+  pkgdown workflow, on a commit whose previous run had passed on all
+  five runners. The step drops those lists first, retries, and lets only
+  the `jags` install decide its exit status — and since JAGS is optional
+  here, even a genuine failure to fetch it now leaves the check running.
+
 Interval coverage, measured for the first time.
 
 - **[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)

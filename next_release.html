@@ -16239,6 +16239,39 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>Two things I suspected and disproved. The reported <code>level</code> is never overstated. And beast’s intervals coming back one-sided (<code>[14, 80]</code>, <code>[138, 160]</code>) is not a separate defect: the growth rule follows the larger neighbour, and the mass immediately right of a break can be exactly zero, so a left-only interval is what the construction implies.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_626-three-documented-measurements-re-run-one-stale-two-exact">626. Three documented measurements, re-run: one stale, two exact<a class="anchor" aria-label="anchor" href="#id_626-three-documented-measurements-re-run-one-stale-two-exact"></a></h2>
+<p>The stale README in §623.5 raised an obvious follow-up: the <em>prose</em> carries recorded measurements too, and unlike a rendered <code>#&gt;</code> block those are never regenerated. So I re-ran the load-bearing ones.</p>
+<p><strong>Stale.</strong> <code><a href="reference/cpt_detect.html">?cpt_detect</a></code>’s scale-sensitivity section, the README and the introduction vignette all quote the same three numbers – “<code>pelt</code> returns 1 changepoint at sigma = 1, 29 at sigma = 3 and 138 at sigma = 10” – and none of the three says how long the series is. That omission is the actual defect: without <code>n</code> the claim cannot be reproduced, and it turns out to matter more than the noise does.</p>
+<table class="table"><thead><tr><th>n</th>
+<th>sigma = 1</th>
+<th>sigma = 3</th>
+<th>sigma = 10</th>
+</tr></thead><tbody><tr><td>100</td>
+<td>1</td>
+<td>21</td>
+<td>75</td>
+</tr><tr><td>200</td>
+<td>1</td>
+<td>37</td>
+<td>142</td>
+</tr><tr><td>300</td>
+<td>1</td>
+<td>42</td>
+<td>199</td>
+</tr><tr><td>400</td>
+<td>1</td>
+<td>57</td>
+<td>266</td>
+</tr></tbody></table><p>Means over 20 draws at n = 200: 1 / 39.1 / 140.8. So the documented 138 is right for n = 200 and the documented 29 is not – it is an unrepresentative single draw against a mean of 39. All three pages now state <code>n</code>, say the numbers are means, and add that the effect grows with the series as well as with the noise, which the original sentence did not mention at all.</p>
+<p>The test asserts this with tolerance and as a property – exactly one at sigma = 1, monotone increase, and each of the other two inside a generous band – rather than pinning three integers. Pinning them would move <code>changepoint</code>’s behaviour into this suite’s contract, and the point of the section is the order of magnitude.</p>
+<p><strong>Exact.</strong> <code><a href="reference/ocd_wrapper.html">?ocd_wrapper</a></code>’s “about 10 s at p = 3, 22 s at p = 10 at mc_reps = 5” measured 9.9 s and 21.6 s. <code><a href="reference/cpt_penalty.html">?cpt_penalty</a></code>’s “19.9 against 11.8 at n = 360” is exact. Recorded so they are not re-swept.</p>
+<div class="section level3">
+<h3 id="id_6261-a-ci-failure-that-was-not-about-the-package">626.1 A CI failure that was not about the package<a class="anchor" aria-label="anchor" href="#id_6261-a-ci-failure-that-was-not-about-the-package"></a></h3>
+<p>Between the two pushes, all three Linux jobs and the pkgdown workflow failed on a commit whose previous run had passed on all five runners. The cause: <code>apt-get update</code> exits non-zero if ANY configured repository fails, the runner image ships a Google Chrome list, and that index returned “Hash Sum mismatch”. The <code>Install JAGS (Linux)</code> step took the whole job down with it.</p>
+<p>Re-running pkgdown fixed pkgdown, which is the tell that it was transient – but “re-run it” is not a fix, and this is the second time in one day that an unrelated mirror decided whether our check ran. The step now removes the third-party lists, retries the update, and lets only the <code>jags</code> install decide its exit status. JAGS is optional here anyway (<code>_R_CHECK_FORCE_SUGGESTS_: false</code>, and every use of <code>mcp</code> is guarded), so even a genuine failure to fetch it should leave the check running rather than abort it – it now emits a warning annotation instead.</p>
+</div>
+</div>
 </div>
 
 

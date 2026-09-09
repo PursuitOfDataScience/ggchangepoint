@@ -25818,3 +25818,64 @@ overstated. And beast’s intervals coming back one-sided (`[14, 80]`,
 `[138, 160]`) is not a separate defect: the growth rule follows the
 larger neighbour, and the mass immediately right of a break can be
 exactly zero, so a left-only interval is what the construction implies.
+
+## 626. Three documented measurements, re-run: one stale, two exact
+
+The stale README in §623.5 raised an obvious follow-up: the *prose*
+carries recorded measurements too, and unlike a rendered `#>` block
+those are never regenerated. So I re-ran the load-bearing ones.
+
+**Stale.**
+[`?cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)’s
+scale-sensitivity section, the README and the introduction vignette all
+quote the same three numbers – “`pelt` returns 1 changepoint at sigma =
+1, 29 at sigma = 3 and 138 at sigma = 10” – and none of the three says
+how long the series is. That omission is the actual defect: without `n`
+the claim cannot be reproduced, and it turns out to matter more than the
+noise does.
+
+| n   | sigma = 1 | sigma = 3 | sigma = 10 |
+|-----|-----------|-----------|------------|
+| 100 | 1         | 21        | 75         |
+| 200 | 1         | 37        | 142        |
+| 300 | 1         | 42        | 199        |
+| 400 | 1         | 57        | 266        |
+
+Means over 20 draws at n = 200: 1 / 39.1 / 140.8. So the documented 138
+is right for n = 200 and the documented 29 is not – it is an
+unrepresentative single draw against a mean of 39. All three pages now
+state `n`, say the numbers are means, and add that the effect grows with
+the series as well as with the noise, which the original sentence did
+not mention at all.
+
+The test asserts this with tolerance and as a property – exactly one at
+sigma = 1, monotone increase, and each of the other two inside a
+generous band – rather than pinning three integers. Pinning them would
+move `changepoint`’s behaviour into this suite’s contract, and the point
+of the section is the order of magnitude.
+
+**Exact.**
+[`?ocd_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)’s
+“about 10 s at p = 3, 22 s at p = 10 at mc_reps = 5” measured 9.9 s and
+21.6 s.
+[`?cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)’s
+“19.9 against 11.8 at n = 360” is exact. Recorded so they are not
+re-swept.
+
+### 626.1 A CI failure that was not about the package
+
+Between the two pushes, all three Linux jobs and the pkgdown workflow
+failed on a commit whose previous run had passed on all five runners.
+The cause: `apt-get update` exits non-zero if ANY configured repository
+fails, the runner image ships a Google Chrome list, and that index
+returned “Hash Sum mismatch”. The `Install JAGS (Linux)` step took the
+whole job down with it.
+
+Re-running pkgdown fixed pkgdown, which is the tell that it was
+transient – but “re-run it” is not a fix, and this is the second time in
+one day that an unrelated mirror decided whether our check ran. The step
+now removes the third-party lists, retries the update, and lets only the
+`jags` install decide its exit status. JAGS is optional here anyway
+(`_R_CHECK_FORCE_SUGGESTS_: false`, and every use of `mcp` is guarded),
+so even a genuine failure to fetch it should leave the check running
+rather than abort it – it now emits a warning annotation instead.

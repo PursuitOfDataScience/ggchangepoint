@@ -130,10 +130,14 @@ against a *raw* segment cost when `change_in = "mean"`: changepoint's
 Normal cost assumes a noise standard deviation of 1, and fpop's `lambda`
 is an absolute penalty on the residual sum of squares. Neither rescales
 the data, so on a series whose noise is much wider than 1 the penalty is
-effectively negligible and the segmentation shatters. On one true
-changepoint with a jump of five standard deviations, `"pelt"` returns 1
-changepoint at \\\sigma = 1\\, 29 at \\\sigma = 3\\ and 138 at \\\sigma
-= 10\\. Three ways to avoid it, in order of convenience:
+effectively negligible and the segmentation shatters. On 200
+observations with one true changepoint in the middle and a jump of five
+standard deviations, `"pelt"` returns 1 changepoint at \\\sigma = 1\\,
+39 at \\\sigma = 3\\ and 141 at \\\sigma = 10\\ — means over 20 draws,
+because a single draw is not stable here: the same three settings gave
+21/75 at \\n = 100\\ and 57/266 at \\n = 400\\, so the effect grows with
+the series as well as with the noise. Three ways to avoid it, in order
+of convenience:
 
 - standardise the series first
   (`cpt_detect(scale(x)[, 1], method = "pelt")`);

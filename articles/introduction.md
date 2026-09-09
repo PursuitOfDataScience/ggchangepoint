@@ -111,9 +111,10 @@ the noise standard deviation fixed at 1, and **fpop** penalises the
 residual sum of squares directly, so multiplying the data by a constant
 multiplies the cost while leaving $`\beta`$ untouched. On a 200-point
 series with a single changepoint whose jump is five standard deviations,
-`pelt` recovers exactly one changepoint at $`\sigma = 1`$ but returns 29
-at $`\sigma = 3`$ and 138 at $`\sigma = 10`$. Standardise the series,
-pass a penalty on the data’s own scale (say
+`pelt` recovers exactly one changepoint at $`\sigma = 1`$ but returns 39
+at $`\sigma = 3`$ and 141 at $`\sigma = 10`$ — means over 20 draws,
+since a single draw is not stable at these settings. Standardise the
+series, pass a penalty on the data’s own scale (say
 `2 * log(n) * var(diff(x)) / 2`), or use `change_in = "meanvar"`, which
 estimates a variance per segment. Methods that estimate the noise level
 as part of their procedure — SMUCE, the WBS family, CPOP, DeCAFS, and
@@ -621,10 +622,11 @@ automatically:
 ``` r
 
 tidy(cpt_detect(x_slope, method = "not", change_in = "slope"))
-#> # A tibble: 1 × 2
+#> # A tibble: 2 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1   100     38.6
+#> 1    85     36.8
+#> 2   101     40.7
 ```
 
 ### Bayesian detection
