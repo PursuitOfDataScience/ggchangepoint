@@ -2870,8 +2870,10 @@ test_that("B4: a JSON null becomes NA rather than vanishing", {
   expect_length(got, 4L)
   expect_true(is.na(got[3]))
   expect_equal(got[c(1, 2, 4)], c(1, 2, 4))
-  # and the source really does substitute before unlisting
-  src <- readLines(test_path("..", "..", "R", "benchmark.R"), warn = FALSE)
+  # and the source really does substitute before unlisting -- readable only
+  # from a checkout, so this half is skipped under R CMD check
+  skip_if_no_sources()
+  src <- pkg_source_lines("R", "benchmark.R")
   i <- grep("v\\[vapply\\(v, is.null, logical\\(1\\)\\)\\] <- NA", src)
   j <- grep("as.numeric\\(unlist\\(v\\)\\)", src)
   expect_true(length(i) > 0 && length(j) > 0)
@@ -2882,10 +2884,10 @@ test_that("C17: no help page promises a warning cpt_metrics() cannot give", {
   # `?cpt_delay` said cpt_metrics() "warns if you point it at" an online
   # detector. It does not, and it cannot: cpt_metrics() takes bare integer
   # vectors and never learns which detector produced them.
-  root <- normalizePath(file.path("..", ".."), mustWork = FALSE)
-  metrics <- readLines(file.path(root, "R", "metrics.R"), warn = FALSE)
+  skip_if_no_sources()
+  metrics <- pkg_source_lines("R", "metrics.R")
   expect_false(any(grepl("online", metrics, ignore.case = TRUE)))
-  monitor <- readLines(file.path(root, "R", "monitor.R"), warn = FALSE)
+  monitor <- pkg_source_lines("R", "monitor.R")
   expect_false(any(grepl("and warns if\\s*$|warns if you point it at",
                          monitor)))
   # and the corrected sentence says why it cannot
@@ -2893,9 +2895,12 @@ test_that("C17: no help page promises a warning cpt_metrics() cannot give", {
 })
 
 test_that("A1/A2/A3: the declared interface matches what the code needs", {
-  root <- normalizePath(file.path("..", ".."), mustWork = FALSE)
-  ns <- readLines(file.path(root, "NAMESPACE"), warn = FALSE)
-  desc <- read.dcf(file.path(root, "DESCRIPTION"))
+  # NAMESPACE and DESCRIPTION both ship, so read them out of the INSTALLED
+  # package: `../../` finds them from a checkout and nothing under R CMD
+  # check, which is what broke this test on every runner.
+  ns <- readLines(system.file("NAMESPACE", package = "ggchangepoint"),
+                  warn = FALSE)
+  desc <- read.dcf(system.file("DESCRIPTION", package = "ggchangepoint"))
 
   # A1: only `changepoint` is full-imported, and it has to be -- glance()'s
   # cost column calls bare logLik(), whose method for class `cpt` is an S4
@@ -2910,13 +2915,18 @@ test_that("A1/A2/A3: the declared interface matches what the code needs", {
   # which only became optional in ggplot2 3.5.0
   sn <- formals(ggplot2::discrete_scale)$scale_name
   expect_true(grepl("deprecated", paste(deparse(sn), collapse = "")))
-  expect_match(desc[1, "Imports"], "ggplot2 \\(>= 3\\.5")
+  # Whitespace-normalised: the INSTALLED DESCRIPTION re-wraps the Imports
+  # field, and the wrap can land between `(>=` and the version -- which is
+  # what made this assertion pass from the source tree and fail under
+  # R CMD check, against a DESCRIPTION that says exactly the right thing.
+  squish <- function(x) gsub("\\s+", " ", paste(x, collapse = " "))
+  expect_match(squish(desc[1, "Imports"]), "ggplot2 \\(>= 3\\.5")
 
   # A3: fourteen S3method(base::plot, ...) entries need R >= 4.0.0, where
   # `plot` moved from graphics to base
   expect_gt(length(grep("^S3method\\(base::plot", ns)), 10L)
   expect_true("Depends" %in% colnames(desc))
-  expect_match(desc[1, "Depends"], "R \\(>= 4")
+  expect_match(squish(desc[1, "Depends"]), "R \\(>= 4")
 })
 
 test_that("B27: .resid is a residual for both data_vec conventions", {

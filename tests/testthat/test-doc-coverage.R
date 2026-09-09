@@ -1540,3 +1540,55 @@ test_that("no vignette chunk depends on a variable only a Suggests chunk defines
   expect_gt(scanned, 5L)
   expect_equal(uncovered, character(0))
 })
+
+test_that("no test reads a package source file without guarding for it", {
+  # `R CMD check` unpacks the tarball into <pkg>.Rcheck/tests/ and does not
+  # ship `R/`, so a test that reads `../../R/<file>.R` fails there with base
+  # R's `cannot open the connection` -- which names neither the file nor the
+  # reason, and passes locally, so it reaches CI. Three tests did exactly
+  # that and failed on all five runners at once. The guard is
+  # skip_if_no_sources() or pkg_source_lines(), both in setup.R.
+  skip_if_no_sources()
+  root <- pkg_source_root()
+  files <- list.files(file.path(root, "tests", "testthat"),
+                      pattern = "^test-.*\\.R$", full.names = TRUE)
+  expect_gt(length(files), 3L)
+
+  offenders <- character()
+  for (f in files) {
+    src <- readLines(f, warn = FALSE)
+    exprs <- tryCatch(parse(f, keep.source = TRUE), error = function(e) NULL)
+    if (is.null(exprs)) next
+    refs <- utils::getSrcref(exprs)
+    for (k in seq_along(exprs)) {
+      r <- refs[[k]]
+      if (is.null(r)) next
+      block <- src[r[1]:r[3]]
+      txt <- paste(block, collapse = "\n")
+      # reads a path under the repository root...
+      reads_root <- grepl('(test_path|file\\.path)\\(\\s*"\\.\\."\\s*,\\s*"\\.\\."', txt) ||
+        grepl('normalizePath\\(file\\.path\\("\\.\\.", "\\.\\."\\)', txt)
+      if (!reads_root) next
+      # ...and either guards for it, or only touches files that ship
+      # A guard is anything that turns the absent file into a skip rather
+      # than an error: either setup.R helper, or a skip that is not
+      # skip_on_cran() -- CI is not CRAN, so that one guards nothing here.
+      # Either a skip or a branch will do: the legitimate cases in this
+      # suite write it four different ways -- dir.exists(), !length(), a
+      # tryCatch feeding skip_if(), and an if (dir.exists()) that DEGRADES
+      # rather than skipping (which is better, and is why the rule accepts
+      # an existence check on its own).
+      body_no_cran <- gsub("skip_on_cran\\(\\)", "", txt)
+      guarded <- grepl("skip_if_no_sources\\(|pkg_source_lines\\(",
+                       body_no_cran) ||
+        grepl("skip\\(|skip_if\\(|skip_if_not\\(", body_no_cran) ||
+        grepl("dir\\.exists\\(|file\\.exists\\(", body_no_cran)
+      if (!guarded) {
+        offenders <- c(offenders, paste0(basename(f), ":", r[1]))
+      }
+    }
+  }
+  expect_equal(offenders, character(0),
+               info = paste("unguarded source reads:",
+                            paste(offenders, collapse = ", ")))
+})

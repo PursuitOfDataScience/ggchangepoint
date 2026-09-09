@@ -50,3 +50,28 @@ engine_usable <- function(pkg) {
     requireNamespace(pkg, quietly = TRUE)
   )))
 }
+
+# The package sources are present when the suite runs from a checkout and
+# ABSENT under `R CMD check`, which unpacks the tarball into
+# `<pkg>.Rcheck/tests/` and leaves `R/` behind. Every test that reads a
+# source file therefore has to say so -- three did not, and failed on all
+# five CI runners with base R's `cannot open the connection`, which names
+# neither the file nor the reason. `NAMESPACE` and `DESCRIPTION` are the
+# exception: they ship, so read those through system.file() and they work
+# in both places.
+pkg_source_root <- function() {
+  root <- normalizePath(file.path("..", ".."), mustWork = FALSE)
+  if (dir.exists(file.path(root, "R"))) root else NA_character_
+}
+
+skip_if_no_sources <- function() {
+  if (is.na(pkg_source_root())) {
+    skip("package sources are not available (R CMD check runs from the tarball)")
+  }
+}
+
+pkg_source_lines <- function(...) {
+  root <- pkg_source_root()
+  if (is.na(root)) skip("package sources are not available")
+  readLines(file.path(root, ...), warn = FALSE)
+}
