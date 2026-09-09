@@ -27,8 +27,8 @@
 #' With \code{change_in = "mean"} the upstream Normal cost assumes a noise
 #' standard deviation of 1 and the penalty is compared against the raw
 #' residual sum of squares, so a series with wider noise is under-penalised
-#' and over-segmented: 29 changepoints instead of 1 at \eqn{\sigma = 3} in a
-#' measured example. Standardise the series first, or use
+#' and over-segmented: about 39 changepoints instead of 1 at
+#' \eqn{\sigma = 3} on 200 observations (mean over 20 draws). Standardise the series first, or use
 #' \code{change_in = "mean_var"}, which estimates a variance per segment and
 #' is unaffected. See the scale-sensitivity section of
 #' \code{\link{cpt_detect}}.

@@ -1598,6 +1598,27 @@ Names, labels and claims that did not match the code.
   with no cap; at 30 coordinates that is 30 unreadable slivers. It says so
   first now.
 
+Every other documented measurement, re-run.
+
+- Four were **accurate** and are recorded as such so they are not
+  re-swept: `?cpt_metrics_annotated`'s annotator-availability counts (1, 2,
+  3, 3 — exact), `?new_ggcpt`'s engine object sizes on a 2000-point series
+  (135.4 / 53.3 / 30.9 MB against a documented 135 / 53 / 31, with the
+  largest of the others at 0.1 MB against a documented "under 4"),
+  `?strucchange_wrapper`'s 1.7 / 5.9 / 22.6 MB size scaling (measured 1.6 /
+  5.8 / 22.1, and the "four times larger each doubling" claim holds), and
+  `?ocd_wrapper`'s and `?cpt_penalty`'s figures.
+- One was **stale**: `?cpt_power`'s reproducibility section quoted
+  `power = 0, 1` sequentially against `0.125, 0.875` on two workers for
+  "two scenarios at `n_sim = 8`" — without saying which two, so it could
+  not be reproduced. The measurement on a named scenario is 0.25, 0.125
+  against 0, 0.375. The claim's point survives; the section now names the
+  scenario and says the numbers depend on it and on the worker count while
+  the disagreement does not.
+- And a **fourth copy** of the scale-sensitivity count turned up in
+  `?cpt_wrapper`, phrased as "29 changepoints instead of 1" so that a grep
+  for the previous fix's wording missed it.
+
 A documented measurement that had gone stale, and the CI step that failed
 for a reason unrelated to the package.
 
