@@ -42,9 +42,11 @@ looked like it changed there* is circular, and the resulting p-values
 are anti-conservative, often severely. The `selection_adjusted` column
 records, per row, whether the test accounts for that:
 
-- `TRUE` for strucchange (the Chow/supF statistics the Bai–Perron
-  framework supplies) and for segmented's Davies test, which is built
-  for a nuisance parameter present only under the alternative;
+- `TRUE` for segmented's Davies test, which is built for a nuisance
+  parameter present only under the alternative. It is one *global* test
+  of "is there a breakpoint", not a test per breakpoint, so on a
+  multi-break fit every row carries the same statistic and p-value — the
+  method string says so.
 
 - `FALSE` for the generic Welch two-sample fallback, which compares the
   segments either side of the changepoint as if the location had been
@@ -52,7 +54,20 @@ records, per row, whether the test accounts for that:
   attached; not a valid significance test for the existence of the
   change.
 
-For a guarantee that survives selection, use
+- `FALSE` for strucchange's route as well, which is the Chow F evaluated
+  *at* each estimated break date. The Chow statistic's reference
+  distribution assumes the date was fixed in advance, so quoting it at a
+  date the Bai–Perron dynamic program chose is exactly the circularity
+  this column exists to flag — reporting it is conventional in that
+  literature, which does not make it adjusted. The selection-adjusted
+  objects there are the sup-type statistics and the Bai–Perron critical
+  values.
+
+Two further limits worth knowing. `type = "segment"` is **always** the
+unadjusted Welch test: the native routes above apply only to
+`type = "jump"`, so a segmented fit tested per-segment does not use
+Davies' test. And the split above is by *engine and type*, not by engine
+alone. For a guarantee that survives selection, use
 [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
 (regions with exact global coverage) or
 [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)

@@ -132,7 +132,11 @@ drawn).</p></dd>
     <p>A <code>ggcpt_path</code> object: a list with a <code>solutions</code> tibble
   (one row per distinct segmentation: <code>penalty</code>, <code>n_cpts</code>,
   <code>cost</code>, and a <code>cpts</code> list-column), the <code>data</code>, and
-  metadata. Methods: <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, and
+  metadata. <code>penalty</code> is the <strong>lower end</strong> of the penalty
+  interval on which that segmentation is optimal — CROPS returns the
+  breakpoints of the penalty axis, so \(K\) segmentations come with
+  \(K + 1\) boundaries and each row is optimal from its own
+  <code>penalty</code> up to the next row's. Methods: <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, and
   <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> (elbow plot by default;
   <code>type = "path"</code> for penalty vs. number of changepoints;
   <code>type = "segmentations"</code> for the faceted segmentations).</p>

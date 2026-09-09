@@ -121,8 +121,10 @@ A `ggcpt_power` object: a tibble with one row per scenario — `n`,
 `jump`, `sigma`, `location`, `power` (proportion of replicates detecting
 the change within `tolerance`), `mc_se` (the Monte Carlo standard error
 of that proportion), `mean_abs_error` (location error among detections),
-`false_positive_rate` (mean number of *extra* changepoints per
-replicate) and `n_sim` — with
+`mean_abs_error` is `NaN` when no replicate detected a changepoint
+within `tolerance` of the true one — there is no distance to average —
+and `power` reads `0` in the same row. `false_positives` (mean number of
+*extra* changepoints per replicate) and `n_sim` — with
 [`print()`](https://rdrr.io/r/base/print.html) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
 
@@ -175,12 +177,11 @@ pw
 #>   3 scenario(s), 30 replicates each
 #> 
 #> # A tibble: 3 × 9
-#>       n  jump sigma location power  mc_se mean_abs_error false_positive_rate
-#>   <int> <dbl> <dbl>    <int> <dbl>  <dbl>          <dbl>               <dbl>
-#> 1   200   0.5     1      100 0.1   0.0548          2.67                0.1  
-#> 2   200   1       1      100 0.833 0.0680          1.32                0.167
-#> 3   200   2       1      100 1     0               0.467               0    
-#> # ℹ 1 more variable: n_sim <int>
+#>       n  jump sigma location power  mc_se mean_abs_error false_positives n_sim
+#>   <int> <dbl> <dbl>    <int> <dbl>  <dbl>          <dbl>           <dbl> <int>
+#> 1   200   0.5     1      100 0.1   0.0548          2.67            0.1      30
+#> 2   200   1       1      100 0.833 0.0680          1.32            0.167    30
+#> 3   200   2       1      100 1     0               0.467           0        30
 #> 
 #> Monte Carlo standard errors are in `mc_se`; a power of 0.80 from 30
 #> replicates is only known to about +/- 0.14.

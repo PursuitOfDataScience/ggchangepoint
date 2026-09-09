@@ -93,16 +93,30 @@ of the <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-lin
 <p>Testing a changepoint at a location that was <em>chosen because the data
 looked like it changed there</em> is circular, and the resulting p-values are
 anti-conservative, often severely. The <code>selection_adjusted</code> column
-records, per row, whether the test accounts for that:</p><ul><li><p><code>TRUE</code> for <span class="pkg">strucchange</span> (the Chow/supF statistics the
-    Bai–Perron framework supplies) and for <span class="pkg">segmented</span>'s Davies test,
-    which is built for a nuisance parameter present only under the
-    alternative;</p></li>
+records, per row, whether the test accounts for that:</p><ul><li><p><code>TRUE</code> for <span class="pkg">segmented</span>'s Davies test, which is built
+    for a nuisance parameter present only under the alternative. It is
+    one <em>global</em> test of "is there a breakpoint", not a test per
+    breakpoint, so on a multi-break fit every row carries the same
+    statistic and p-value — the method string says so.</p></li>
 <li><p><code>FALSE</code> for the generic Welch two-sample fallback, which
     compares the segments either side of the changepoint as if the
     location had been fixed in advance. Useful as a descriptive effect
     size with a scale attached; not a valid significance test for the
     existence of the change.</p></li>
-</ul><p>For a guarantee that survives selection, use <code><a href="nsp_wrapper.html">nsp_wrapper()</a></code>
+<li><p><code>FALSE</code> for <span class="pkg">strucchange</span>'s route as well, which is
+    the Chow F evaluated <em>at</em> each estimated break date. The Chow
+    statistic's reference distribution assumes the date was fixed in
+    advance, so quoting it at a date the Bai–Perron dynamic program chose
+    is exactly the circularity this column exists to flag — reporting
+    it is conventional in that literature, which does not make it
+    adjusted. The selection-adjusted objects there are the sup-type
+    statistics and the Bai–Perron critical values.</p></li>
+</ul><p>Two further limits worth knowing. <code>type = "segment"</code> is
+<strong>always</strong> the unadjusted Welch test: the native routes above apply
+only to <code>type = "jump"</code>, so a <span class="pkg">segmented</span> fit tested
+per-segment does not use Davies' test. And the split above is by
+<em>engine and type</em>, not by engine alone.
+For a guarantee that survives selection, use <code><a href="nsp_wrapper.html">nsp_wrapper()</a></code>
 (regions with exact global coverage) or <code><a href="cpt_confint.html">cpt_confint()</a></code> with
 <code>method = "nsp"</code>. The canonical post-detection tests of Jewell,
 Fearnhead and Witten (2022) are implemented in <code>ChangepointInference</code>,

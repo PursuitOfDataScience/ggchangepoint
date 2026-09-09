@@ -34,7 +34,22 @@ new_ggcpt(
 - segments:
 
   A tibble with segment information: `seg_id`, `start`, `end`, `n`,
-  `param_estimate`.
+  `param_estimate`. `param_estimate` is the segment **mean** for every
+  method in the package, including the variance, distribution and
+  model-change detectors — it is the segment level, not the parameter
+  that changed. A `change_in = "var"` result therefore has a
+  `param_estimate` column that may barely move; read the variance off
+  the data with the segment bounds if that is the quantity you want.
+  Everything derived from this column inherits the convention:
+  [`augment()`](https://generics.r-lib.org/reference/augment.html)'s
+  `.fitted`/ `.resid`,
+  [`cpt_gt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gt.md)'s
+  level columns, [`summary()`](https://rdrr.io/r/base/summary.html), and
+  the residual construction the bootstrap in
+  [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  and
+  [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
+  uses.
 
 - data:
 

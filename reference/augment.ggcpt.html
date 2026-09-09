@@ -75,8 +75,15 @@
     <p>For a multivariate result every coordinate is returned, but the
 changepoints are shared across them, so <code>seg_id</code> and
 <code>is_changepoint</code> apply to the whole row while <code>.fitted</code> and
-<code>.resid</code> describe the <em>first</em> coordinate only — the same
-coordinate <code>$segments$param_estimate</code> summarises. When an engine
+<code>.resid</code> describe the <strong>univariate series the result
+carries</strong> — <code>$data$value</code>, the same series
+<code>$segments$param_estimate</code> summarises, so <code>.resid</code> is always
+<code>value - .fitted</code>. For most multivariate engines that series is
+the first coordinate; <code>fmean</code>, <code>fcov</code>, <code>kwc</code> and
+<code>fabisearch</code> store the cross-sectional mean <code><a href="https://rdrr.io/r/base/colSums.html" class="external-link">rowMeans()</a></code>
+instead, and for those <code>.fitted</code>/<code>.resid</code> describe that mean
+rather than any one column. Either way the two columns agree with each
+other, which is what makes <code>.resid</code> a residual. When an engine
 supplies its own fitted signal that signal is used for <code>.fitted</code> in
 place of the segment means, and rides along in a <code>fitted</code> column of
 its own – so for those engines the two columns agree. The engines that

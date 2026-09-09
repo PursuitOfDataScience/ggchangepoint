@@ -76,7 +76,16 @@ fabisearch_wrapper(
 
 ## Value
 
-A `ggcpt` object with `change_in = "network"`.
+A `ggcpt` object with `change_in = "network"`. Multivariate input is
+reduced to **one series per observation by taking the cross-sectional
+mean** of the columns, and that is the series stored on the result:
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+draws it, [`tidy()`](https://generics.r-lib.org/reference/tidy.html)'s
+`cp_value` reads it, and `$segments$param_estimate` and
+[`augment()`](https://generics.r-lib.org/reference/augment.html)'s
+`.fitted`/`.resid` are computed from it. It is not any one column of the
+input. The full input is kept in `$data_wide` for
+`autoplot(type = "coordinates")`.
 
 ## Non-negativity, cost, and the attached namespace
 

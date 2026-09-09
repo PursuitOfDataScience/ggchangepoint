@@ -71,8 +71,13 @@ autoplot(
   `"mbic"`
 
   :   the modified BIC of Zhang and Siegmund (2007), \\3K\log n + \sum_i
-      \log(l_i/n)\\, which depends on the segment lengths \\l_i\\ and so
-      cannot be expressed by
+      \log(l_i/n)\\ on the **deviance** (\\-2\log L\\) scale, which is
+      the scale the `cost` column is on — the same criterion is
+      \\1.5K\log n + 0.5\sum_i \log(l_i/n)\\ on the log-likelihood
+      scale, which is how
+      [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
+      states it. It depends on the segment lengths \\l_i\\ and so cannot
+      be expressed by
       [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)'s
       function of \\n\\ and \\k\\ alone. This is the one place in the
       package where the real Zhang–Siegmund penalty is computed.

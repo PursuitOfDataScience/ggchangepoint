@@ -113,7 +113,9 @@ autoplot(
 
 - alpha:
 
-  Level for the critical distance. Defaults to `0.05`.
+  Level for the critical distance, in `(0, 1)`. Defaults to `0.05`. Only
+  used by `plot_type = "critical_difference"`, which also needs at least
+  two methods to compare.
 
 ## Value
 
@@ -186,12 +188,12 @@ bm
 #> ggcpt_benchmark (9 dataset(s) x 3 method(s), tolerance 5)
 #> 
 #> Mean rank across datasets (1 = best):
-#> # A tibble: 3 × 3
-#>   method mean_rank n_datasets
-#>   <chr>      <dbl>      <int>
-#> 1 binseg      1.67          9
-#> 2 pelt        1.83          9
-#> 3 amoc        2.5           9
+#> # A tibble: 3 × 4
+#>   method mean_rank n_datasets n_datasets_total
+#>   <chr>      <dbl>      <int>            <int>
+#> 1 binseg      1.67          9                9
+#> 2 pelt        1.83          9                9
+#> 3 amoc        2.5           9                9
 #> 
 #> # A tibble: 27 × 4
 #>    dataset  method covering    f1

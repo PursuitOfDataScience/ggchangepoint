@@ -43,13 +43,20 @@ rcpt(...)
   A list of parameters per segment. For `mean` changes, a vector of
   segment means. For `var` changes, a vector of segment sds. For
   `meanvar`, a list of lists with `mean` and `sd` per segment. For
-  `slope`, a list with `intercept` and `slope` per segment. When `NULL`,
-  every segment gets the same neutral parameters, so the series has no
-  actual change. `changepoints` sets the number of segments – \\k\\
-  changepoints make \\k + 1\\ of them – and a mismatch in either
-  direction warns rather than passing quietly: too few entries recycles
-  the last one, so the trailing `changepoints` would otherwise be
-  recorded as ground truth with no change behind them, and too many
+  `slope`, a list with `intercept` and `slope` per segment — and the
+  time origin **resets in every segment**, so segment \\i\\'s signal is
+  \\\mathrm{intercept}\_i + \mathrm{slope}\_i \cdot (1, \ldots, l_i)\\
+  with the clock restarting at 1. A caller reasoning in absolute time —
+  `list(list(intercept = 0, slope = 1), list(intercept = 100, slope = -1))`,
+  meaning "rise to 100 then fall" — gets segment 2 starting at 99, i.e.
+  a slope change plus an unrequested level jump. For a continuous
+  piecewise-linear signal keep the intercept the same in every segment.
+  When `NULL`, every segment gets the same neutral parameters, so the
+  series has no actual change. `changepoints` sets the number of
+  segments – \\k\\ changepoints make \\k + 1\\ of them – and a mismatch
+  in either direction warns rather than passing quietly: too few entries
+  recycles the last one, so the trailing `changepoints` would otherwise
+  be recorded as ground truth with no change behind them, and too many
   drops the surplus, so a caller who miscounted the changepoints would
   otherwise get an ordinary series back with a parameter silently
   unused.

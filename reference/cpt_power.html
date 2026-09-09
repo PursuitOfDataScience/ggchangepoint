@@ -171,7 +171,11 @@ matters if the power figure is going into a paper.</p></dd>
   (proportion of replicates detecting the change within
   <code>tolerance</code>), <code>mc_se</code> (the Monte Carlo standard error of that
   proportion), <code>mean_abs_error</code> (location error among detections),
-  <code>false_positive_rate</code> (mean number of <em>extra</em> changepoints per
+  <code>mean_abs_error</code> is <code>NaN</code> when no replicate detected a
+  changepoint within <code>tolerance</code> of the true one — there is no
+  distance to average — and <code>power</code> reads <code>0</code> in the same
+  row.
+  <code>false_positives</code> (mean number of <em>extra</em> changepoints per
   replicate) and <code>n_sim</code> — with <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and
   <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</p>
     </div>
@@ -218,12 +222,11 @@ sequential and a two-worker plan, stochastic engines included.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   3 scenario(s), 30 replicates each</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 3 × 9</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>       n  jump sigma location power  mc_se mean_abs_error false_positive_rate</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>               <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   200   0.5     1      100 0.1   0.054<span style="text-decoration: underline;">8</span>          2.67                0.1  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>   200   1       1      100 0.833 0.068<span style="text-decoration: underline;">0</span>          1.32                0.167</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>   200   2       1      100 1     0               0.467               0    </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># ℹ 1 more variable: n_sim &lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>       n  jump sigma location power  mc_se mean_abs_error false_positives n_sim</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>           <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   200   0.5     1      100 0.1   0.054<span style="text-decoration: underline;">8</span>          2.67            0.1      30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>   200   1       1      100 0.833 0.068<span style="text-decoration: underline;">0</span>          1.32            0.167    30</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>   200   2       1      100 1     0               0.467           0        30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Monte Carlo standard errors are in `mc_se`; a power of 0.80 from 30</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> replicates is only known to about +/- 0.14.</span>

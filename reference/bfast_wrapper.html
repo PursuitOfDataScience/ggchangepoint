@@ -82,7 +82,11 @@ it. A bare vector is turned into a <code>ts</code> with <code>frequency</code>.<
 
 <dt id="arg-frequency">frequency<a class="anchor" aria-label="anchor" href="#arg-frequency"></a></dt>
 <dd><p>Observations per season, used when <code>x</code> carries none.
-Defaults to <code>12</code>.</p></dd>
+Defaults to <code>12</code>. <code><a href="cpt_detect.html">cpt_detect()</a></code> reads the frequency
+off a <code>ts</code> and passes it here, so the two calls agree; the panel
+helpers (<code><a href="cpt_batch.html">cpt_batch()</a></code>, <code><a href="ggcpt_compare.html">ggcpt_compare()</a></code>,
+<code><a href="cpt_benchmark.html">cpt_benchmark()</a></code>) normalise their input to bare numeric
+vectors before dispatching, so name <code>frequency</code> explicitly there.</p></dd>
 
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>

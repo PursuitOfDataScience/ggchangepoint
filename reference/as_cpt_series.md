@@ -40,7 +40,11 @@ as_cpt_series(x, index = NULL, check_regular = TRUE)
 
 A list with components `values` (a numeric vector, or a matrix for
 multivariate input), `index` (the time index, or `NULL` when there is
-none) and `index_label` (a name for the x axis).
+none), `index_label` (a name for the x axis) and `frequency` (the
+seasonal frequency a `ts` carried, or `NULL` –
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+hands this to the engines that need one, such as
+[`bfast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bfast_wrapper.md)).
 
 ## See also
 

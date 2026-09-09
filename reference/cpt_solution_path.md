@@ -34,6 +34,23 @@ ggcpt_solution_path(object, max_steps = 40)
 proposed it, plus a `selected` flag marking the changepoints in the
 final model. `ggcpt_solution_path()` draws it.
 
+`contrast` is the engine's own ordering criterion, and it is a
+*different quantity* per engine: a penalty value for `binseg`/`segneigh`
+(from
+[`changepoint::pen.value.full()`](https://rdrr.io/pkg/changepoint/man/pen.value.full.html)),
+\\\|CUSUM\|\\ for `wbs`, \\\|\\`max.contrast`\\\|\\ for `not`, and
+breakfast's candidate criterion for `wbs2`/`tguh`. The values order the
+candidates within one result; they are not comparable across engines,
+and the plot legend names the quantity rather than calling all of them
+"Contrast".
+
+For `wbs2` and `tguh` the path is **recomputed** with breakfast, because
+their fit objects do not keep the candidate list. `wbs2`'s search is
+randomised, so its path is a second search of the same series rather
+than a record of the first — it can differ between calls, and `selected`
+can be `FALSE` throughout if the recomputed candidates miss the fit's
+own changepoints. Every other engine's path is read off the fit.
+
 ## See also
 
 [`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md),

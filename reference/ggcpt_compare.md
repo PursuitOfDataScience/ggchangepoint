@@ -36,7 +36,12 @@ ggcpt_compare(
 - layout:
 
   Layout type. `"facet"` (default) shows one panel per method;
-  `"overlay"` draws all changepoints in one panel, colour-coded.
+  `"overlay"` draws all changepoints in one panel, colour-coded. The
+  overlay **dodges** the rules horizontally so that two methods agreeing
+  on an index are both visible, which moves each rule by up to half an
+  observation — so read positions off `"facet"`, or off
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html), and treat
+  the overlay as a picture of agreement rather than of location.
 
 - change_in:
 
@@ -61,6 +66,21 @@ ggcpt_compare(
 ## Value
 
 A ggplot object.
+
+## Positions, not a time index
+
+Unlike
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md),
+[`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+and
+[`autoplot.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/autoplot.ggcpt.md),
+these two take no `index`: the input is reduced to a bare numeric
+vector, so a `ts`, `xts`, `zoo` or `tsibble` is plotted (and tabulated)
+in observation positions with an "Index" axis. To compare detectors on
+dated data, run `cpt_detect(x, method = m, index = dates)` per method
+and read [`tidy()`](https://generics.r-lib.org/reference/tidy.html)'s
+`cp_index`, or plot the results with
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
 
 ## Examples
 

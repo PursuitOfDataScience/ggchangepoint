@@ -148,7 +148,7 @@ summary(res)
 #>   CP convention:      left
 #>   Series length:      200
 #>   Penalty:            MBIC
-#>   Runtime (seconds):  0.018
+#>   Runtime (seconds):  0.017
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -1233,18 +1233,23 @@ cpt_detect(data.frame(day = dates, v = x), y = v, index = day,
 ```
 
 [`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md)
-is that coercion on its own, returning the values, the index and a label
-for the axis:
+is that coercion on its own, returning the values, the index, a label
+for the axis, and any seasonal frequency the input carried (which is how
+`cpt_detect(monthly_ts, method = "bfast")` fits at the right frequency
+instead of the wrapper’s default):
 
 ``` r
 
 str(as_cpt_series(x, index = dates), max.level = 1)
-#> List of 3
+#> List of 4
 #>  $ values     : num [1:200] 0.5206 -1.0797 0.1392 -0.0847 -0.6666 ...
 #>  $ index      : Date[1:200], format: "2020-01-01" "2020-01-02" ...
 #>  $ index_label: chr "Index"
+#>  $ frequency  : NULL
 as_cpt_series(ts(x, start = c(2020, 1), frequency = 12))$index_label
 #> [1] "Time"
+as_cpt_series(ts(x, start = c(2020, 1), frequency = 4))$frequency
+#> [1] 4
 ```
 
 ### Inference
@@ -1366,16 +1371,16 @@ cpt_recommend(noise = "heavy")
 #> 
 #> 1. cpm (cpm)
 #>    why: handles change_in = "mean"; built for heavy noise
-#> 2. kcp (kcpRS)
+#> 2. ecp (ecp)
 #>    why: handles change_in = "mean"; built for heavy noise
-#> 3. nsp (nsp)
+#> 3. kcp (kcpRS)
 #>    why: handles change_in = "mean"; built for heavy noise
-#> 4. sn (SNSeg)
+#> 4. np (changepoint.np)
 #>    why: handles change_in = "mean"; built for heavy noise
-#> 5. bcp (bcp)
-#>    why: handles change_in = "mean"
+#> 5. nsp (nsp)
+#>    why: handles change_in = "mean"; built for heavy noise
 #> 
-#> (27 further candidate(s); the full table is the return value.)
+#> (31 further candidate(s); the full table is the return value.)
 #> 
 #> Cite the method you use with cpt_cite(). Cross-check the choice with
 #> cpt_consensus() and cpt_sensitivity().

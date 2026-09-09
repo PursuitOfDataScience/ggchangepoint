@@ -83,10 +83,13 @@ changepoint locations.</p>
 
 <dt id="arg-geom">geom<a class="anchor" aria-label="anchor" href="#arg-geom"></a></dt>
 <dd><p>The geometric object to use (default: <code>"vline"</code>). The stat
-computes a single <code>xintercept</code> per changepoint, so only geoms that
-consume that aesthetic fit — <code>"vline"</code> and <code>"rug"</code>. A geom
-needing <code>x</code>/<code>y</code>, such as <code>"point"</code>, errors because the
-stat drops those aesthetics.</p></dd>
+computes a single <code>xintercept</code> per changepoint and drops
+<code>x</code>/<code>y</code>, so <code>"vline"</code> is the geom that fits. A geom
+needing <code>x</code>/<code>y</code> — <code>"point"</code>, and <code>"rug"</code>, which
+consumes <code>x</code>/<code>y</code> rather than <code>xintercept</code> — errors for
+that reason. <code>inherit.aes</code> is fixed at <code>TRUE</code> here: the stat
+re-detects on the plot's own data, so the panel's <code>x</code>/<code>y</code>
+mapping is what it reads.</p></dd>
 
 
 <dt id="arg-position">position<a class="anchor" aria-label="anchor" href="#arg-position"></a></dt>

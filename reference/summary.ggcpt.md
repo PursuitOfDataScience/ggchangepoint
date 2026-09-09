@@ -1,8 +1,10 @@
 # Summary of a ggcpt object
 
 Provides a human-readable digest of a changepoint detection result,
-including the segment table with levels and lengths, total cost,
-penalty, and runtime.
+including the segment table with levels and lengths (the level is the
+segment mean whatever \`change_in\` says — see
+[`new_ggcpt`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)),
+total cost, penalty, and runtime.
 
 ## Usage
 

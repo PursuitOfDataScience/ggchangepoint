@@ -79,6 +79,19 @@ engines:
   generally *ignore* the `penalty` argument. Specify thresholds via the
   wrapper's own arguments.
 
+- **`fastcpd`** takes its penalty as `beta`, on its own scale, and
+  defaults to its native `"MBIC"`.
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  forwards a numeric `penalty` as `beta`, and translates the three names
+  the two packages share (`"MBIC"`, `"BIC"`/`"SIC"`, `"MDL"`). Any other
+  character penalty — `"AIC"`, `"Hannan-Quinn"`, `"sSIC"`, `"None"` —
+  has no fastcpd equivalent and is left to the engine's default rather
+  than being silently approximated; pass `beta` yourself to pin it.
+  Whatever is used is recorded on the result, so
+  [`print()`](https://rdrr.io/r/base/print.html) and
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) report
+  the penalty of the fit in hand.
+
 - **Inference/Bayesian methods** (`smuce`, `bcp`, `bocpd`, `beast`,
   `cpm`, `sn`): are tuned by a significance level, posterior-probability
   threshold, hazard, or average run length rather than a penalty; see
@@ -88,11 +101,16 @@ engines:
   combinatorial term for the number of ways `k` changepoints can be
   placed in `n` observations, \\0.5(k+1)\log n + \log{n \choose k}\\. It
   is deliberately stronger than `"BIC"`. It is *not* the modified BIC of
-  Zhang and Siegmund (2007), whose penalty \\1.5 k \log n + 0.5 \sum_i
-  \log(l_i / n)\\ depends on the segment lengths \\l_i\\ and so cannot
-  be expressed by a function of `n` and `k` alone. Use the character
-  `"MBIC"` with changepoint-based methods to get the engine's native
-  MBIC.
+  Zhang and Siegmund (2007), whose penalty is \\1.5 k \log n + 0.5
+  \sum_i \log(l_i / n)\\ on the **log-likelihood** scale (equivalently
+  \\3 k \log n + \sum_i \log(l_i / n)\\ on the deviance scale, which is
+  how
+  [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  states it and the scale its `cost` column uses). It depends on the
+  segment lengths \\l_i\\ and so cannot be expressed by a function of
+  `n` and `k` alone. Use the character `"MBIC"` with changepoint-based
+  methods to get the engine's native MBIC, and
+  `cpt_select(criterion = "mbic")` for the Zhang–Siegmund one.
 
 ## Examples
 

@@ -72,8 +72,13 @@ ocd_wrapper(
 ## Value
 
 A `ggcpt` object. Because the detector is online, reported locations are
-*declaration times* (the changepoint plus the detection delay), stored
-together with a `declared_at` column.
+*declaration times* (the changepoint plus the detection delay). The
+`declared_at` column holds the same values as `cp`, and deliberately:
+ocd declares a change without also estimating where it began, so there
+is no separate location for the second column to carry. Compare
+[`cpm_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpm_wrapper.md),
+whose engine supplies both, and whose `cp` is an estimated location with
+`detection_time` strictly later.
 
 ## How long this takes
 

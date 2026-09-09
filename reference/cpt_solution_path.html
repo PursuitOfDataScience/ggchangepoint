@@ -86,6 +86,22 @@ the ranking is readable.</p></dd>
   <code>start</code>/<code>end</code> of the interval that proposed it, plus a
   <code>selected</code> flag marking the changepoints in the final model.
   <code>ggcpt_solution_path()</code> draws it.</p>
+<p><code>contrast</code> is the engine's own ordering criterion, and it is a
+  <em>different quantity</em> per engine: a penalty value for
+  <code>binseg</code>/<code>segneigh</code> (from
+  <code><a href="https://rdrr.io/pkg/changepoint/man/pen.value.full.html" class="external-link">changepoint::pen.value.full()</a></code>), \(|CUSUM|\) for <code>wbs</code>,
+  \(|\)<code>max.contrast</code>\(|\) for <code>not</code>, and
+  <span class="pkg">breakfast</span>'s candidate criterion for <code>wbs2</code>/<code>tguh</code>.
+  The values order the candidates within one result; they are not
+  comparable across engines, and the plot legend names the quantity
+  rather than calling all of them "Contrast".</p>
+<p>For <code>wbs2</code> and <code>tguh</code> the path is <strong>recomputed</strong> with
+  <span class="pkg">breakfast</span>, because their fit objects do not keep the candidate
+  list. <code>wbs2</code>'s search is randomised, so its path is a second
+  search of the same series rather than a record of the first — it can
+  differ between calls, and <code>selected</code> can be <code>FALSE</code>
+  throughout if the recomputed candidates miss the fit's own
+  changepoints. Every other engine's path is read off the fit.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

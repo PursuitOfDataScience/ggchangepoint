@@ -31,6 +31,14 @@ bfast_wrapper(
 - frequency:
 
   Observations per season, used when `x` carries none. Defaults to `12`.
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  reads the frequency off a `ts` and passes it here, so the two calls
+  agree; the panel helpers
+  ([`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md),
+  [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md),
+  [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md))
+  normalise their input to bare numeric vectors before dispatching, so
+  name `frequency` explicitly there.
 
 - change_in:
 

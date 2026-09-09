@@ -54,6 +54,23 @@ cpt_registered_methods()
   say) or a bare vector of changepoint indices, which is coerced with
   [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md).
 
+  A returned `ggcpt` may carry a `$diagnostics` list, which is what
+  makes
+  [`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
+  and
+  [`cpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
+  work for the method. Two conventions apply to it.
+  `diagnostics$solution_path` needs a `cp` column and may add
+  `contrast`, `start` and `end`; it goes through the same filtering and
+  step-numbering as a built-in path, so out-of-range candidates are
+  dropped and `selected` is computed rather than trusted.
+  `diagnostics$statistic` (a numeric vector, or a list with `statistic`,
+  `label` and `threshold`) is padded with `NA` to the length of the
+  series when it is shorter, and the pad is **centred** — a
+  moving-window statistic is trimmed at both ends, so a left-aligned pad
+  would shift every value by the bandwidth. Supply a full-length vector
+  if that is not the alignment you want.
+
 - change_in:
 
   Character vector of `change_in` values the detector supports. Defaults

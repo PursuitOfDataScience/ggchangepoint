@@ -94,12 +94,12 @@
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="va">res</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         pelt</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -122,7 +122,7 @@
 <p>Visualise with <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-6-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"></p>
+<p><img src="reference/figures/README-autoplot-1.png" alt="The two-segment series with a dashed vertical rule at the detected changepoint" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="why-ggchangepoint">Why ggchangepoint<a class="anchor" aria-label="anchor" href="#why-ggchangepoint"></a>
@@ -196,12 +196,12 @@
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"binseg"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         binseg</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             binseg</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -210,12 +210,12 @@
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"wbs"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         wbs</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         sSIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             wbs</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            sSIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -224,12 +224,12 @@
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"fpop"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         fpop</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         Manual = 17.846 </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             fpop</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            Manual = 17.846</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -251,7 +251,7 @@
 <span><span class="co">#&gt;  7 fpop     mean             fpop   avail… TRUE      &lt;NA&gt;           FALSE       </span></span>
 <span><span class="co">#&gt;  8 wbs      mean             wbs    avail… TRUE      &lt;NA&gt;           FALSE       </span></span>
 <span><span class="co">#&gt;  9 wbs2     mean             break… avail… TRUE      &lt;NA&gt;           FALSE       </span></span>
-<span><span class="co">#&gt; 10 not      mean, var, slope not    avail… TRUE      &lt;NA&gt;           FALSE       </span></span>
+<span><span class="co">#&gt; 10 not      mean, var, mean… not    avail… TRUE      &lt;NA&gt;           FALSE       </span></span>
 <span><span class="co">#&gt; # ℹ 45 more rows</span></span>
 <span><span class="co">#&gt; # ℹ 8 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span>
 <span><span class="co">#&gt; #   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;</span></span></code></pre></div>
@@ -269,20 +269,20 @@
 <span><span class="co">#&gt;   &lt;int&gt; &lt;date&gt;        &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100 2020-04-09    0.467</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">dated</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-9-1.png" alt="Series with a date axis and a changepoint rule, detected with PELT" width="100%"></p>
+<p><img src="reference/figures/README-detect-3-1.png" alt="Series with a date axis and a changepoint rule, detected with PELT" width="100%"></p>
 <p><code><a href="reference/as_cpt_series.html">as_cpt_series()</a></code> is the same conversion on its own, for code that needs the values and the index before detection runs.</p>
 <p>There is a data-frame interface too, taking a bare column name, a string, or a position:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">df</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>day <span class="op">=</span> <span class="va">dates</span>, value <span class="op">=</span> <span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">df</span>, y <span class="op">=</span> <span class="va">value</span>, index <span class="op">=</span> <span class="va">day</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         pelt</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
-<span><span class="co">#&gt;   Index:           2020-01-01 to 2020-07-18 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
+<span><span class="co">#&gt;   Index:              2020-01-01 to 2020-07-18</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 3</span></span>
@@ -303,7 +303,7 @@
 <span><span class="co">#&gt; 1     7   -1.06         2       94</span></span>
 <span><span class="co">#&gt; 2   100    0.467      100      100</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_smuce</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-11-1.png" alt="Series with the SMUCE step fit, changepoint rules and horizontal confidence intervals for each changepoint location" width="100%"></p>
+<p><img src="reference/figures/README-smuce-1.png" alt="Series with the SMUCE step fit, changepoint rules and horizontal confidence intervals for each changepoint location" width="100%"></p>
 <p>Read the intervals, not just the locations: the genuine shift is pinned to a single index, while the spurious early changepoint carries an interval nearly a hundred observations wide — exactly the distinction a bare list of locations hides.</p>
 <p>Bayesian engines return posterior probabilities instead: <code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code> (posterior probability of a change at every location), <code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code> (Bayesian model averaging), and <code><a href="reference/bocpd_wrapper.html">bocpd_wrapper()</a></code> (online run-length posterior). Two dedicated displays accompany them — <code><a href="reference/ggcpt_posterior.html">ggcpt_posterior()</a></code> and <code><a href="reference/ggcpt_runlength.html">ggcpt_runlength()</a></code>:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -314,31 +314,34 @@
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;dbl&gt;          &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100    0.467              1</span></span>
 <span><span class="fu"><a href="reference/ggcpt_posterior.html">ggcpt_posterior</a></span><span class="op">(</span><span class="va">res_bcp</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-12-1.png" alt="Two-panel Bayesian display: the series with its posterior mean above, the per-location posterior changepoint probability below" width="100%"></p>
+<p><img src="reference/figures/README-bcp-1.png" alt="Two-panel Bayesian display: the series with its posterior mean above, the per-location posterior changepoint probability below" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="the-penalty-path-crops">The penalty path: CROPS<a class="anchor" aria-label="anchor" href="#the-penalty-path-crops"></a>
 </h2>
 <p>Instead of guessing one penalty, <code><a href="reference/cpt_crops.html">cpt_crops()</a></code> computes <strong>every</strong> optimal segmentation over a penalty range (Haynes, Eckley and Fearnhead, 2017) and plots the elbow diagnostic, the penalty path, or the candidate segmentations themselves:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2021</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
+<span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">100</span>, <span class="op">-</span><span class="fl">1</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">path</span></span>
 <span><span class="co">#&gt; ggcpt_path (CROPS penalty path)</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Penalty range:  [5.704, 57.04]</span></span>
-<span><span class="co">#&gt;   Series length:   300 </span></span>
-<span><span class="co">#&gt;   Distinct segmentations: 2 </span></span>
+<span><span class="co">#&gt;   Change in:              mean</span></span>
+<span><span class="co">#&gt;   Penalty range:          [5.704, 57.04]</span></span>
+<span><span class="co">#&gt;   Series length:          300</span></span>
+<span><span class="co">#&gt;   Distinct segmentations: 4</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; # A tibble: 2 × 3</span></span>
+<span><span class="co">#&gt; # A tibble: 4 × 3</span></span>
 <span><span class="co">#&gt;   penalty n_cpts  cost</span></span>
 <span><span class="co">#&gt;     &lt;dbl&gt;  &lt;int&gt; &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1    7.68      2  274.</span></span>
-<span><span class="co">#&gt; 2    5.70      4  259.</span></span>
+<span><span class="co">#&gt; 1    8.44      2  320.</span></span>
+<span><span class="co">#&gt; 2    8.08      4  303.</span></span>
+<span><span class="co">#&gt; 3    6.91      5  295.</span></span>
+<span><span class="co">#&gt; 4    5.70      7  281.</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span><span class="op">)</span>                          <span class="co"># cost elbow</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-13-1.png" alt="CROPS elbow diagnostic: segmentation cost against the number of changepoints" width="100%"></p>
+<p><img src="reference/figures/README-crops-1.png" alt="CROPS elbow diagnostic: segmentation cost against the number of changepoints" width="100%"></p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">path</span>, type <span class="op">=</span> <span class="st">"segmentations"</span><span class="op">)</span>  <span class="co"># see the actual candidate models</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-14-1.png" alt="Faceted small-multiples, one panel per candidate segmentation on the CROPS penalty path" width="100%"></p>
+<p><img src="reference/figures/README-autoplot-2-1.png" alt="Faceted small-multiples, one panel per candidate segmentation on the CROPS penalty path" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="inference-a-region-not-a-point">Inference: a region, not a point<a class="anchor" aria-label="anchor" href="#inference-a-region-not-a-point"></a>
@@ -352,7 +355,7 @@
 <span><span class="co">#&gt;   &lt;int&gt; &lt;int&gt;  &lt;int&gt; &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100   101      2  4.66</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_nsp</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-15-1.png" alt="Series with a shaded vertical band marking an NSP significance region" width="100%"></p>
+<p><img src="reference/figures/README-nsp-1.png" alt="Series with a shaded vertical band marking an NSP significance region" width="100%"></p>
 <p>The <code>cp</code> column of an NSP fit is the interval midpoint, is labelled as such in <code>cp_source</code>, and is never presented as an estimate — the region is the inferential object.</p>
 <p>For every other engine, <code><a href="reference/cpt_confint.html">cpt_confint()</a></code> answers “where could this changepoint be?” behind one contract, and says which of four routes it used:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
@@ -361,7 +364,7 @@
 <span><span class="co">#&gt;      cp ci_lower ci_upper level source    n_replicates</span></span>
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;int&gt;    &lt;int&gt; &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1   100      100      100  0.95 bootstrap           50</span></span></code></pre></div>
-<p><code><a href="reference/cpt_test.html">cpt_test()</a></code> attaches a test to each changepoint, using the engine’s own where it has one and an explicitly unadjusted two-sample test where it does not — with a <code>selection_adjusted</code> column so the two are never confused:</p>
+<p><code><a href="reference/cpt_test.html">cpt_test()</a></code> attaches a test to each changepoint, using the engine’s own where it has one and an explicitly unadjusted two-sample test where it does not — with a <code>selection_adjusted</code> column recording whether the p-value accounts for the fact that the location was <em>chosen</em> by looking at the data, which only one of the engine tests does:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="reference/cpt_test.html">cpt_test</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 6</span></span>
@@ -374,38 +377,40 @@
 </h2>
 <p><code><a href="reference/cpt_crops.html">cpt_crops()</a></code> draws the penalty path; <code><a href="reference/cpt_select.html">cpt_select()</a></code> actually <em>chooses</em>, by BIC, the Zhang–Siegmund segment-length mBIC, AIC, an explicit knee rule on the CROPS curve, order-preserved cross-validation (the criterion with a consistency proof), or bootstrap stability:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">x3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2022</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
+<span><span class="va">x3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">sel</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_select.html">cpt_select</a></span><span class="op">(</span><span class="va">x3</span>, criterion <span class="op">=</span> <span class="st">"mbic"</span>, k_max <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span>
 <span><span class="va">sel</span></span>
 <span><span class="co">#&gt; ggcpt_selection (criterion: mbic, method: pelt)</span></span>
 <span><span class="co">#&gt;   Candidates scored: K = 0 to 6</span></span>
 <span><span class="co">#&gt;   Chosen K:          2</span></span>
-<span><span class="co">#&gt;   Locations:         119, 240</span></span>
+<span><span class="co">#&gt;   Locations:         120, 240</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; # A tibble: 7 × 4</span></span>
-<span><span class="co">#&gt;       k value    cost chosen</span></span>
-<span><span class="co">#&gt;   &lt;int&gt; &lt;dbl&gt;   &lt;dbl&gt; &lt;lgl&gt; </span></span>
-<span><span class="co">#&gt; 1     0 530.  530.    FALSE </span></span>
-<span><span class="co">#&gt; 2     1 398.  382.    FALSE </span></span>
-<span><span class="co">#&gt; 3     2  53.1  21.0   TRUE  </span></span>
-<span><span class="co">#&gt; 4     3  61.6  15.2   FALSE </span></span>
-<span><span class="co">#&gt; 5     4  71.3   9.97  FALSE </span></span>
-<span><span class="co">#&gt; 6     5  79.0   4.14  FALSE </span></span>
-<span><span class="co">#&gt; 7     6  89.5  -0.362 FALSE</span></span>
+<span><span class="co">#&gt;       k value  cost chosen</span></span>
+<span><span class="co">#&gt;   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;lgl&gt; </span></span>
+<span><span class="co">#&gt; 1     0 457.  457.  FALSE </span></span>
+<span><span class="co">#&gt; 2     1 337.  320.  FALSE </span></span>
+<span><span class="co">#&gt; 3     2  14.2 -17.9 TRUE  </span></span>
+<span><span class="co">#&gt; 4     3  18.5 -27.2 FALSE </span></span>
+<span><span class="co">#&gt; 5     4  27.3 -32.5 FALSE </span></span>
+<span><span class="co">#&gt; 6     5  37.7 -37.2 FALSE </span></span>
+<span><span class="co">#&gt; 7     6  42.9 -46.5 FALSE</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sel</span>, plot_type <span class="op">=</span> <span class="st">"ladder"</span>, max_facets <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-18-1.png" alt="Small multiples showing how the segmentation coarsens as the number of changepoints falls, with the chosen model marked" width="100%"></p>
+<p><img src="reference/figures/README-select-1.png" alt="Small multiples showing how the segmentation coarsens as the number of changepoints falls, with the chosen model marked" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="seeing-the-statistic">Seeing the statistic<a class="anchor" aria-label="anchor" href="#seeing-the-statistic"></a>
 </h2>
 <p>Every detector computes something — a MOSUM statistic at each bandwidth, a set of random intervals with contrast values, a nested sequence of splits — and keeping only the argmax throws away the explanation. Three accessors give it back:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">res_mosum</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2023</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
+<span><span class="va">res_mosum</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_mosum</span>, type <span class="op">=</span> <span class="st">"statistic"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-19-1.png" alt="Two-panel display: the series above, the MOSUM statistic against its threshold below" width="100%"></p>
+<p><img src="reference/figures/README-detect-5-1.png" alt="Two-panel display: the series above, the MOSUM statistic against its threshold below" width="100%"></p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_scale_space.html">ggcpt_scale_space</a></span><span class="op">(</span><span class="va">res_mosum</span>, bandwidths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">40</span>, <span class="fl">80</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-20-1.png" alt="Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked" width="100%"></p>
+<p><img src="reference/figures/README-ggscale-space-1.png" alt="Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked" width="100%"></p>
 <p><code><a href="reference/cpt_statistic.html">cpt_statistic()</a></code> returns the profile as a tibble and <code><a href="reference/cpt_statistic.html">ggcpt_statistic()</a></code> draws it on its own; <code><a href="reference/cpt_solution_path.html">cpt_solution_path()</a></code> and <code><a href="reference/cpt_solution_path.html">ggcpt_solution_path()</a></code> do the same for the order in which candidates entered a binary-segmentation or wild-binary-segmentation model.</p>
 </div>
 <div class="section level2">
@@ -422,11 +427,11 @@
 <span><span class="co">#&gt; 2   141          0         0      0.0180     1.66</span></span>
 <span><span class="co">#&gt; 3   181          0         0      0.0179     1.64</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-21-1.png" alt="Series with each observation sized and coloured by how much perturbing it disturbs the segmentation" width="100%"></p>
+<p><img src="reference/figures/README-influence-1.png" alt="Series with each observation sized and coloured by how much perturbing it disturbs the segmentation" width="100%"></p>
 <p><code><a href="reference/cpt_sensitivity.html">cpt_sensitivity()</a></code> is the tuning-parameter analogue, and the direct answer to “is this robust to the penalty?”:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="fu"><a href="reference/cpt_sensitivity.html">cpt_sensitivity</a></span><span class="op">(</span><span class="va">x3</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, over <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">20</span>, <span class="fl">80</span><span class="op">)</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-22-1.png" alt="One facet per penalty setting, each showing the changepoints that setting finds" width="100%"></p>
+<p><img src="reference/figures/README-autoplot-3-1.png" alt="One facet per penalty setting, each showing the changepoints that setting finds" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="supervised-detection-learn-the-penalty-from-labels">Supervised detection: learn the penalty from labels<a class="anchor" aria-label="anchor" href="#supervised-detection-learn-the-penalty-from-labels"></a>
@@ -439,7 +444,7 @@
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_path.html" class="external-link">geom_line</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="reference/scale_fill_cpt_label.html">scale_fill_cpt_label</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="reference/theme_ggcpt.html">theme_ggcpt</a></span><span class="op">(</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-23-1.png" alt="Series with shaded label regions behind it, coloured by whether the label asserts a change" width="100%"></p>
+<p><img src="reference/figures/README-labels-1.png" alt="Series with shaded label regions behind it, coloured by whether the label asserts a change" width="100%"></p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_label_error.html">cpt_label_error</a></span><span class="op">(</span><span class="va">res</span>, <span class="va">labs</span><span class="op">)</span></span>
 <span><span class="co">#&gt; cpt_label_error (2 label(s))</span></span>
@@ -453,23 +458,24 @@
 <span><span class="co">#&gt; 2        2 &lt;NA&gt;     140   190 no_change          0 correct</span></span></code></pre></div>
 <p><code><a href="reference/cpt_label_error_curve.html">cpt_label_error_curve()</a></code> sweeps the penalty and reports false positives, false negatives and total label error at each value — the curve the learned penalty is chosen to minimise. <code><a href="reference/cpt_learn_penalty.html">cpt_learn_penalty()</a></code> fits the max-margin interval regression over a set of labelled series, and the model plugs straight into <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">series</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span>, b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2024</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
+<span><span class="va">series</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span>, b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">labels</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="reference/as_cpt_labels.html">as_cpt_labels</a></span><span class="op">(</span><span class="fl">60</span>, n <span class="op">=</span> <span class="fl">120</span><span class="op">)</span>, b <span class="op">=</span> <span class="fu"><a href="reference/as_cpt_labels.html">as_cpt_labels</a></span><span class="op">(</span><span class="fl">80</span>, n <span class="op">=</span> <span class="fl">160</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">model</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_learn_penalty.html">cpt_learn_penalty</a></span><span class="op">(</span><span class="va">series</span>, <span class="va">labels</span>, penalties <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">4</span>, <span class="fl">16</span>, <span class="fl">64</span>, <span class="fl">256</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">series</span><span class="op">$</span><span class="va">a</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, penalty <span class="op">=</span> <span class="va">model</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         pelt</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         Manual = 43.454 </span></span>
-<span><span class="co">#&gt;   Series length:   120 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            Manual = 43.469</span></span>
+<span><span class="co">#&gt;   Series length:      120</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
 <span><span class="co">#&gt;      cp cp_value</span></span>
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1    60     1.01</span></span></code></pre></div>
+<span><span class="co">#&gt; 1    60  -0.0326</span></span></code></pre></div>
 </div>
 <div class="section level2">
 <h2 id="which-method-should-i-use">Which method should I use?<a class="anchor" aria-label="anchor" href="#which-method-should-i-use"></a>
@@ -490,7 +496,7 @@
 <span><span class="co">#&gt; 5. wbsts (wbsts)</span></span>
 <span><span class="co">#&gt;    why: handles change_in = "mean"; built for autocorrelated noise</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; (27 further candidate(s); the full table is the return value.)</span></span>
+<span><span class="co">#&gt; (31 further candidate(s); the full table is the return value.)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Cite the method you use with cpt_cite(). Cross-check the choice with</span></span>
 <span><span class="co">#&gt; cpt_consensus() and cpt_sensitivity().</span></span></code></pre></div>
@@ -501,10 +507,10 @@
 <span><span class="co">#&gt; # A tibble: 2 × 5</span></span>
 <span><span class="co">#&gt;      cp cp_value votes methods                 spread</span></span>
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;dbl&gt; &lt;int&gt; &lt;chr&gt;                    &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1   120     1.90     4 amoc, binseg, pelt, wbs      1</span></span>
-<span><span class="co">#&gt; 2   240     6.01     3 binseg, pelt, wbs            0</span></span>
+<span><span class="co">#&gt; 1   120   -0.927     4 amoc, binseg, pelt, wbs      0</span></span>
+<span><span class="co">#&gt; 2   240    4.45      3 binseg, pelt, wbs            0</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">cons</span>, plot_type <span class="op">=</span> <span class="st">"agreement"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-27-1.png" alt="Dot matrix of method against location, with shaded bands marking the consensus changepoints" width="100%"></p>
+<p><img src="reference/figures/README-consensus-1.png" alt="Dot matrix of method against location, with shaded bands marking the consensus changepoints" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="from-a-changepoint-to-a-finding">From a changepoint to a finding<a class="anchor" aria-label="anchor" href="#from-a-changepoint-to-a-finding"></a>
@@ -544,13 +550,13 @@
 <span><span class="co">#&gt; ggcpt_benchmark (9 dataset(s) x 4 method(s), tolerance 5)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Mean rank across datasets (1 = best):</span></span>
-<span><span class="co">#&gt; # A tibble: 4 × 3</span></span>
-<span><span class="co">#&gt;   method mean_rank n_datasets</span></span>
-<span><span class="co">#&gt;   &lt;chr&gt;      &lt;dbl&gt;      &lt;int&gt;</span></span>
-<span><span class="co">#&gt; 1 pelt        2.11          9</span></span>
-<span><span class="co">#&gt; 2 wbs         2.11          9</span></span>
-<span><span class="co">#&gt; 3 binseg      2.5           9</span></span>
-<span><span class="co">#&gt; 4 amoc        3.28          9</span></span>
+<span><span class="co">#&gt; # A tibble: 4 × 4</span></span>
+<span><span class="co">#&gt;   method mean_rank n_datasets n_datasets_total</span></span>
+<span><span class="co">#&gt;   &lt;chr&gt;      &lt;dbl&gt;      &lt;int&gt;            &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1 pelt        2.11          9                9</span></span>
+<span><span class="co">#&gt; 2 wbs         2.11          9                9</span></span>
+<span><span class="co">#&gt; 3 binseg      2.5           9                9</span></span>
+<span><span class="co">#&gt; 4 amoc        3.28          9                9</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; # A tibble: 36 × 4</span></span>
 <span><span class="co">#&gt;    dataset  method covering    f1</span></span>
@@ -569,7 +575,7 @@
 <span><span class="co">#&gt; 12 mix      binseg    0.422 0    </span></span>
 <span><span class="co">#&gt; # ℹ 24 more rows</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">bm</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-29-1.png" alt="Heatmap of the covering metric for each method on each benchmark dataset" width="100%"></p>
+<p><img src="reference/figures/README-benchmark-1.png" alt="Heatmap of the covering metric for each method on each benchmark dataset" width="100%"></p>
 <p><code><a href="reference/cpt_datasets.html">cpt_datasets()</a></code> is offline and deterministic. For the real thing, <code><a href="reference/cpt_load_tcpd.html">cpt_load_tcpd()</a></code> downloads and caches the Turing Change Point Dataset, multi-annotator ground truth intact, and <code><a href="reference/cpt_annotations.html">cpt_annotations()</a></code> lays that ground truth out one row per annotator per changepoint.</p>
 </div>
 <div class="section level2">
@@ -577,26 +583,26 @@
 </h2>
 <p><code>cpm</code>, <code>ocd</code> and BOCPD are <em>online</em> methods, and for an online method “did you find the location?” is the wrong question. <code><a href="reference/cpt_monitor.html">cpt_monitor()</a></code> is a stateful detector you feed as data arrive; <code><a href="reference/cpt_delay.html">cpt_delay()</a></code> scores it on detection delay and false alarms:</p>
 <div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"edetector"</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2025</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
+<span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_replay.html">cpt_replay</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"edetector"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/alarms.html">alarms</a></span><span class="op">(</span><span class="va">mon</span><span class="op">)</span></span>
-<span><span class="co">#&gt; # A tibble: 2 × 3</span></span>
+<span><span class="co">#&gt; # A tibble: 1 × 3</span></span>
 <span><span class="co">#&gt;    time statistic threshold</span></span>
 <span><span class="co">#&gt;   &lt;int&gt;     &lt;dbl&gt;     &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1    62      105.       100</span></span>
-<span><span class="co">#&gt; 2   103    10104.       100</span></span>
+<span><span class="co">#&gt; 1   101      191.       100</span></span>
 <span><span class="fu"><a href="reference/cpt_delay.html">cpt_delay</a></span><span class="op">(</span><span class="va">mon</span>, truth <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt_delay</span></span>
-<span><span class="co">#&gt;   True changes:      1</span></span>
-<span><span class="co">#&gt;   Detected:          1</span></span>
-<span><span class="co">#&gt;   Mean delay:        3</span></span>
-<span><span class="co">#&gt;   Median delay:      3</span></span>
-<span><span class="co">#&gt;   False alarms:      1</span></span>
-<span><span class="co">#&gt;   Average run length: 400</span></span>
+<span><span class="co">#&gt;   True changes:       1</span></span>
+<span><span class="co">#&gt;   Detected:           1</span></span>
+<span><span class="co">#&gt;   Mean delay:         1</span></span>
+<span><span class="co">#&gt;   Median delay:       1</span></span>
+<span><span class="co">#&gt;   False alarms:       0</span></span>
+<span><span class="co">#&gt;   Average run length: no false alarms</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 4</span></span>
 <span><span class="co">#&gt;   truth alarm delay detected</span></span>
 <span><span class="co">#&gt;   &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;lgl&gt;   </span></span>
-<span><span class="co">#&gt; 1   200   203     3 TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; 1   200   201     1 TRUE</span></span></code></pre></div>
 <p><code><a href="reference/cpt_replay.html">cpt_replay()</a></code> is the batch convenience; in production you build the monitor once with <code><a href="reference/cpt_monitor.html">cpt_monitor()</a></code> and push each new observation through <code><a href="reference/cpt_update.html">cpt_update()</a></code> as it arrives.</p>
 <p><code>"edetector"</code> is a native implementation of the mixture Shiryaev–Roberts e-detector (Shin, Ramdas and Rinaldo, 2023) — the one method here that is implemented rather than wrapped, because no R package implements it and it carries a finite-sample average-run-length guarantee of at least <code>1 / alpha</code> with no calibration run: the shift mixture is a uniform <em>average</em>, so <code>M_t - t</code> is a mean-zero martingale under the null and optional stopping at the alarm time bounds the in-control run length.</p>
 </div>
@@ -611,18 +617,17 @@
 <span><span class="co">#&gt;   4 scenario(s), 50 replicates each</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; # A tibble: 4 × 9</span></span>
-<span><span class="co">#&gt;       n  jump sigma location power  mc_se mean_abs_error false_positive_rate</span></span>
-<span><span class="co">#&gt;   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;int&gt; &lt;dbl&gt;  &lt;dbl&gt;          &lt;dbl&gt;               &lt;dbl&gt;</span></span>
-<span><span class="co">#&gt; 1   300  0.25     1      150  0    0              NaN                   0   </span></span>
-<span><span class="co">#&gt; 2   300  0.5      1      150  0.38 0.0686           2.11                0.22</span></span>
-<span><span class="co">#&gt; 3   300  1        1      150  0.72 0.0635           1.83                0.28</span></span>
-<span><span class="co">#&gt; 4   300  2        1      150  1    0                0.38                0   </span></span>
-<span><span class="co">#&gt; # ℹ 1 more variable: n_sim &lt;int&gt;</span></span>
+<span><span class="co">#&gt;       n  jump sigma location power  mc_se mean_abs_error false_positives n_sim</span></span>
+<span><span class="co">#&gt;   &lt;int&gt; &lt;dbl&gt; &lt;dbl&gt;    &lt;int&gt; &lt;dbl&gt;  &lt;dbl&gt;          &lt;dbl&gt;           &lt;dbl&gt; &lt;int&gt;</span></span>
+<span><span class="co">#&gt; 1   300  0.25     1      150  0    0              NaN               0       50</span></span>
+<span><span class="co">#&gt; 2   300  0.5      1      150  0.38 0.0686           2.11            0.22    50</span></span>
+<span><span class="co">#&gt; 3   300  1        1      150  0.72 0.0635           1.83            0.28    50</span></span>
+<span><span class="co">#&gt; 4   300  2        1      150  1    0                0.38            0       50</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Monte Carlo standard errors are in `mc_se`; a power of 0.80 from 50</span></span>
 <span><span class="co">#&gt; replicates is only known to about +/- 0.11.</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-31-1.png" alt="Power curve: detection probability against change size, with a Monte Carlo interval" width="100%"></p>
+<p><img src="reference/figures/README-power-1.png" alt="Power curve: detection probability against change size, with a Monte Carlo interval" width="100%"></p>
 <p><code><a href="reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts it and returns the smallest change reaching a target power — the number that belongs in a pre-registration. <code><a href="reference/cpt_scenarios.html">cpt_scenarios()</a></code> builds the matching grid of labelled synthetic series, so the same design can be fed straight to <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code>.</p>
 </div>
 <div class="section level2">
@@ -638,12 +643,12 @@
 <span><span class="op">)</span></span>
 <span><span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"biggest_jump"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         biggest_jump  [user-registered]</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         MBIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             biggest_jump  [user-registered]</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -669,7 +674,7 @@
 <p><code><a href="reference/ggcpt_compare.html">ggcpt_compare()</a></code> runs several detectors on the same series and facets the results, so agreement (and disagreement) is visible at a glance:</p>
 <div class="sourceCode" id="cb34"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"fpop"</span>, <span class="st">"wbs"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-33-1.png" alt="One facet per detection method, each showing the same series with that method's changepoints" width="100%"></p>
+<p><img src="reference/figures/README-ggcompare-1.png" alt="One facet per detection method, each showing the same series with that method's changepoints" width="100%"></p>
 <p>For a numeric summary, use <code><a href="reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code>:</p>
 <div class="sourceCode" id="cb35"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/ggcpt_compare_table.html">ggcpt_compare_table</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"fpop"</span>, <span class="st">"wbs"</span><span class="op">)</span><span class="op">)</span></span>
@@ -686,7 +691,8 @@
 </h2>
 <p><code><a href="reference/cpt_batch.html">cpt_batch()</a></code> runs one detector over many series (a matrix, data frame, or list) and returns a tidy tibble of results — honouring <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for parallel execution. <code><a href="reference/cpt_stability.html">cpt_stability()</a></code> bootstrap-resamples within fitted segments and reports how often each location is re-detected, a cheap confidence signal for engines with no native intervals:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>shifted <span class="op">=</span> <span class="va">x</span>, noise <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>shifted <span class="op">=</span> <span class="va">x</span>, noise <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">batch</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_batch.html">cpt_batch</a></span><span class="op">(</span><span class="va">X</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span></span>
 <span><span class="va">batch</span></span>
 <span><span class="co">#&gt; ggcpt_batch (2 series, method: pelt)</span></span>
@@ -697,7 +703,7 @@
 <span><span class="co">#&gt; 1 shifted              1</span></span>
 <span><span class="co">#&gt; 2 noise                0</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">batch</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-35-1.png" alt="One facet per series in the batch, each with its own detected changepoints" width="100%"></p>
+<p><img src="reference/figures/README-batch-1.png" alt="One facet per series in the batch, each with its own detected changepoints" width="100%"></p>
 <div class="sourceCode" id="cb37"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_stability.html">cpt_stability</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, B <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">st</span></span>
@@ -709,7 +715,7 @@
 <span><span class="co">#&gt;   &lt;int&gt;     &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100         1</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-36-1.png" alt="Bootstrap re-detection frequency for each changepoint location" width="100%"></p>
+<p><img src="reference/figures/README-stability-1.png" alt="Bootstrap re-detection frequency for each changepoint location" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="multivariate-and-high-dimensional-detection">Multivariate and high-dimensional detection<a class="anchor" aria-label="anchor" href="#multivariate-and-high-dimensional-detection"></a>
@@ -727,7 +733,7 @@
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;dbl&gt;    &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1    80   -0.590     21.9</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_hd</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-37-1.png" alt="One facet per coordinate of a multivariate series, sharing the changepoints detected across coordinates" width="100%"></p>
+<p><img src="reference/figures/README-inspect-1.png" alt="One facet per coordinate of a multivariate series, sharing the changepoints detected across coordinates" width="100%"></p>
 <p>Univariate methods never silently flatten a matrix: hand one to <code>pelt</code> and you get an error naming the multivariate alternatives instead. <code><a href="reference/ocd_wrapper.html">ocd_wrapper()</a></code> insists the other way — it projects across coordinates, so it needs a matrix with at least two columns.</p>
 </div>
 <div class="section level2">
@@ -781,12 +787,12 @@
 <div class="sourceCode" id="cb43"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/fpop_wrapper.html">fpop_wrapper</a></span><span class="op">(</span><span class="va">x</span>, penalty <span class="op">=</span> <span class="fl">2</span> <span class="op">*</span> <span class="fu"><a href="https://rdrr.io/r/base/Log.html" class="external-link">log</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         fpop</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         Manual = 10.597 </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             fpop</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            Manual = 10.597</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -795,12 +801,12 @@
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/wbs_wrapper.html">wbs_wrapper</a></span><span class="op">(</span><span class="va">x</span>, n_intervals <span class="op">=</span> <span class="fl">2000</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         wbs</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         sSIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             wbs</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            sSIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -809,12 +815,12 @@
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/wbs2_wrapper.html">wbs2_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         wbs2</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         SDLL </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             wbs2</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            SDLL</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -823,12 +829,12 @@
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/not_wrapper.html">not_wrapper</a></span><span class="op">(</span><span class="va">x</span>, contrast <span class="op">=</span> <span class="st">"pcwsConstMean"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         not</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         sSIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             not</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            sSIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -837,12 +843,12 @@
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/mosum_wrapper.html">mosum_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         mosum</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         threshold = 3.6342 </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             mosum</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            threshold = 3.6342</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -851,12 +857,12 @@
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/idetect_wrapper.html">idetect_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         idetect</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         threshold </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             idetect</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            threshold</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -865,12 +871,12 @@
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/tguh_wrapper.html">tguh_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
-<span><span class="co">#&gt;   Method:         tguh</span></span>
-<span><span class="co">#&gt;   Change in:       mean </span></span>
-<span><span class="co">#&gt;   Changepoints found: 1 </span></span>
-<span><span class="co">#&gt;   CP convention:   left </span></span>
-<span><span class="co">#&gt;   Penalty:         sSIC </span></span>
-<span><span class="co">#&gt;   Series length:   200 </span></span>
+<span><span class="co">#&gt;   Method:             tguh</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Penalty:            sSIC</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Changepoints:</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 2</span></span>
@@ -880,11 +886,12 @@
 <p>And the 0.4.0 wave (each behind its <code>Suggests</code> engine): <code><a href="reference/smuce_wrapper.html">smuce_wrapper()</a></code>, <code><a href="reference/cpop_wrapper.html">cpop_wrapper()</a></code>, <code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code>, <code><a href="reference/bocpd_wrapper.html">bocpd_wrapper()</a></code>, <code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code>, <code><a href="reference/cpm_wrapper.html">cpm_wrapper()</a></code>, <code><a href="reference/kcp_wrapper.html">kcp_wrapper()</a></code>, <code><a href="reference/npmojo_wrapper.html">npmojo_wrapper()</a></code>, <code><a href="reference/decafs_wrapper.html">decafs_wrapper()</a></code>, <code><a href="reference/sn_wrapper.html">sn_wrapper()</a></code>, <code><a href="reference/inspect_wrapper.html">inspect_wrapper()</a></code>, <code><a href="reference/ocd_wrapper.html">ocd_wrapper()</a></code>, <code><a href="reference/geomcp_wrapper.html">geomcp_wrapper()</a></code>, <code><a href="reference/strucchange_wrapper.html">strucchange_wrapper()</a></code>, <code><a href="reference/segmented_wrapper.html">segmented_wrapper()</a></code>, <code><a href="reference/envcpt_wrapper.html">envcpt_wrapper()</a></code>, and <code><a href="reference/fastcpd_wrapper.html">fastcpd_wrapper()</a></code>.</p>
 <p>The 0.5.0 wave adds <code><a href="reference/nsp_wrapper.html">nsp_wrapper()</a></code>, <code><a href="reference/mcp_wrapper.html">mcp_wrapper()</a></code>, <code><a href="reference/esac_wrapper.html">esac_wrapper()</a></code>, <code><a href="reference/pilliat_wrapper.html">pilliat_wrapper()</a></code>, <code><a href="reference/hdcov_wrapper.html">hdcov_wrapper()</a></code>, <code><a href="reference/network_wrapper.html">network_wrapper()</a></code>, <code><a href="reference/var_wrapper.html">var_wrapper()</a></code>, <code><a href="reference/fmean_wrapper.html">fmean_wrapper()</a></code>, <code><a href="reference/fcov_wrapper.html">fcov_wrapper()</a></code>, <code><a href="reference/kwc_wrapper.html">kwc_wrapper()</a></code>, <code><a href="reference/fabisearch_wrapper.html">fabisearch_wrapper()</a></code>, <code><a href="reference/wbsts_wrapper.html">wbsts_wrapper()</a></code>, <code><a href="reference/bfast_wrapper.html">bfast_wrapper()</a></code>, <code><a href="reference/trend_wrapper.html">trend_wrapper()</a></code>, <code><a href="reference/taylor_wrapper.html">taylor_wrapper()</a></code>, <code><a href="reference/hdreg_wrapper.html">hdreg_wrapper()</a></code> and <code><a href="reference/binsegrcpp_wrapper.html">binsegrcpp_wrapper()</a></code>.</p>
 <div class="sourceCode" id="cb44"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="co"># change-in-slope: exact penalised broken-line estimation</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2027</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
+<span><span class="co"># change-in-slope: exact penalised broken-line estimation</span></span>
 <span><span class="va">y_slope</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cumsum.html" class="external-link">cumsum</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fl">0.4</span>, <span class="fl">100</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="op">-</span><span class="fl">0.3</span>, <span class="fl">100</span><span class="op">)</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span></span>
 <span><span class="va">res_slope</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpop_wrapper.html">cpop_wrapper</a></span><span class="op">(</span><span class="va">y_slope</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_slope</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-43-1.png" alt="Piecewise-linear series with the fitted broken line and a change-in-slope changepoint" width="100%"></p>
+<p><img src="reference/figures/README-cpop-1.png" alt="Piecewise-linear series with the fitted broken line and a change-in-slope changepoint" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="custom-geoms-stats-and-theming">Custom geoms, stats, and theming<a class="anchor" aria-label="anchor" href="#custom-geoms-stats-and-theming"></a>
@@ -951,7 +958,8 @@
 </h2>
 <p>Advanced users can construct <code>ggcpt</code> objects directly or test for the class:</p>
 <div class="sourceCode" id="cb48"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="reference/new_ggcpt.html">new_ggcpt</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2028</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
+<span><span class="fu"><a href="reference/new_ggcpt.html">new_ggcpt</a></span><span class="op">(</span></span>
 <span>  changepoints <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>cp <span class="op">=</span> <span class="fl">100L</span>, cp_value <span class="op">=</span> <span class="fl">5.0</span><span class="op">)</span>,</span>
 <span>  data <span class="op">=</span> <span class="fu">tibble</span><span class="fu">::</span><span class="fu"><a href="https://tibble.tidyverse.org/reference/tibble.html" class="external-link">tibble</a></span><span class="op">(</span>index <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">200</span>, value <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>  method <span class="op">=</span> <span class="st">"manual"</span></span>
@@ -972,7 +980,7 @@
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;dbl&gt;</span></span>
 <span><span class="co">#&gt; 1   100    0.467</span></span>
 <span><span class="fu"><a href="reference/ggcptplot.html">ggcptplot</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-49-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"></p>
+<p><img src="reference/figures/README-wrapper-1.png" alt="The same series drawn by ggcptplot(), with a vertical rule at each changepoint the 0.4.0 wrapper found" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="additional-s3-methods">Additional S3 methods<a class="anchor" aria-label="anchor" href="#additional-s3-methods"></a>
@@ -982,13 +990,13 @@
 <code class="sourceCode R"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span>          <span class="co"># human-readable digest</span></span>
 <span><span class="co">#&gt; ggcpt Summary</span></span>
-<span><span class="co">#&gt;   Method:                   pelt </span></span>
-<span><span class="co">#&gt;   Change in:                mean </span></span>
-<span><span class="co">#&gt;   Changepoints found:       1 </span></span>
-<span><span class="co">#&gt;   CP convention:            left </span></span>
-<span><span class="co">#&gt;   Series length:            200 </span></span>
-<span><span class="co">#&gt;   Penalty:                  MBIC </span></span>
-<span><span class="co">#&gt;   Runtime (seconds):        0.007 </span></span>
+<span><span class="co">#&gt;   Method:             pelt</span></span>
+<span><span class="co">#&gt;   Change in:          mean</span></span>
+<span><span class="co">#&gt;   Changepoints found: 1</span></span>
+<span><span class="co">#&gt;   CP convention:      left</span></span>
+<span><span class="co">#&gt;   Series length:      200</span></span>
+<span><span class="co">#&gt;   Penalty:            MBIC</span></span>
+<span><span class="co">#&gt;   Runtime (seconds):  0.008</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; # A tibble: 2 × 5</span></span>
@@ -1013,7 +1021,7 @@
 <span><span class="fu"><a href="https://rdrr.io/r/base/format.html" class="external-link">format</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span>           <span class="co"># one-line summary string</span></span>
 <span><span class="co">#&gt; [1] "ggcpt [pelt] 1 changepoint(s) on 200 observations"</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span>             <span class="co"># base-graphics fallback (delegates to autoplot)</span></span></code></pre></div>
-<p><img src="reference/figures/README-unnamed-chunk-50-1.png" alt="ggchangepoint plot of a time series with detected changepoints" width="100%"></p>
+<p><img src="reference/figures/README-detect-6-1.png" alt="The series with its changepoint rule, drawn by the plot() method rather than autoplot()" width="100%"></p>
 </div>
 <div class="section level2">
 <h2 id="learn-more">Learn more<a class="anchor" aria-label="anchor" href="#learn-more"></a>

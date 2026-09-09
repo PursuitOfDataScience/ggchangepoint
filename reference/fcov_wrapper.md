@@ -57,7 +57,23 @@ fcov_wrapper(
 
 ## Value
 
-A `ggcpt` object with `change_in = "covariance"`.
+A `ggcpt` object with `change_in = "covariance"`. Multivariate input is
+reduced to **one series per observation by taking the cross-sectional
+mean** of the columns, and that is the series stored on the result:
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+draws it, [`tidy()`](https://generics.r-lib.org/reference/tidy.html)'s
+`cp_value` reads it, and `$segments$param_estimate` and
+[`augment()`](https://generics.r-lib.org/reference/augment.html)'s
+`.fitted`/`.resid` are computed from it. It is not any one column of the
+input. The full input is kept in `$data_wide` for
+`autoplot(type = "coordinates")`.
+
+For a covariance change this matters when reading the plot: a change in
+the covariance structure need not move the cross-sectional mean at all,
+so [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+can legitimately show changepoint rules on a series with no visible
+change in it. That is the detector working, not misfiring — use
+`autoplot(type = "coordinates")` to see the columns the change is in.
 
 ## How long this takes
 

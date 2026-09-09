@@ -39,7 +39,16 @@ fastcpd_wrapper(
 - ...:
 
   Additional arguments passed to the corresponding
-  `fastcpd::fastcpd.*()` function (e.g. `beta`, `trim`).
+  `fastcpd::fastcpd.*()` function (e.g. `beta`, `trim`). `beta` is
+  fastcpd's penalty: a number, or one of its own names (`"MBIC"`, the
+  default, `"BIC"`, `"MDL"`). It is recorded on the result, so
+  [`print()`](https://rdrr.io/r/base/print.html) and
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) report
+  the penalty the fit actually used.
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  forwards a numeric `penalty` here and translates the three names it
+  shares with fastcpd; see the penalty-semantics section of
+  [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md).
 
 ## Value
 

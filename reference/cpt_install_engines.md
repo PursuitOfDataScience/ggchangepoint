@@ -53,7 +53,7 @@ cpt_install_engines(bundle = "core", dry_run = FALSE, ...)
 
   `"time"`
 
-  :   index and coercion support: zoo, xts, tsibble, tsbox.
+  :   index and coercion support: zoo, xts, tsibble.
 
   `"reporting"`
 

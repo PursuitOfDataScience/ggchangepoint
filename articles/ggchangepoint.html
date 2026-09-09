@@ -190,7 +190,7 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <span><span class="co">#&gt;   CP convention:      left</span></span>
 <span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt;   Penalty:            MBIC</span></span>
-<span><span class="co">#&gt;   Runtime (seconds):  0.018</span></span>
+<span><span class="co">#&gt;   Runtime (seconds):  0.017</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
@@ -1005,15 +1005,21 @@ and it accepts <code>ts</code>, <code>xts</code>, <code>zoo</code> and
 <span>           method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span><span class="op">$</span><span class="va">cp_index</span></span>
 <span><span class="co">#&gt; [1] "2020-04-09"</span></span></code></pre></div>
 <p><code><a href="../reference/as_cpt_series.html">as_cpt_series()</a></code> is that coercion on its own, returning
-the values, the index and a label for the axis:</p>
+the values, the index, a label for the axis, and any seasonal frequency
+the input carried (which is how
+<code>cpt_detect(monthly_ts, method = "bfast")</code> fits at the right
+frequency instead of the wrapper’s default):</p>
 <div class="sourceCode" id="cb64"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/str.html" class="external-link">str</a></span><span class="op">(</span><span class="fu"><a href="../reference/as_cpt_series.html">as_cpt_series</a></span><span class="op">(</span><span class="va">x</span>, index <span class="op">=</span> <span class="va">dates</span><span class="op">)</span>, max.level <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
-<span><span class="co">#&gt; List of 3</span></span>
+<span><span class="co">#&gt; List of 4</span></span>
 <span><span class="co">#&gt;  $ values     : num [1:200] 0.5206 -1.0797 0.1392 -0.0847 -0.6666 ...</span></span>
 <span><span class="co">#&gt;  $ index      : Date[1:200], format: "2020-01-01" "2020-01-02" ...</span></span>
 <span><span class="co">#&gt;  $ index_label: chr "Index"</span></span>
+<span><span class="co">#&gt;  $ frequency  : NULL</span></span>
 <span><span class="fu"><a href="../reference/as_cpt_series.html">as_cpt_series</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/ts.html" class="external-link">ts</a></span><span class="op">(</span><span class="va">x</span>, start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2020</span>, <span class="fl">1</span><span class="op">)</span>, frequency <span class="op">=</span> <span class="fl">12</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">index_label</span></span>
-<span><span class="co">#&gt; [1] "Time"</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] "Time"</span></span>
+<span><span class="fu"><a href="../reference/as_cpt_series.html">as_cpt_series</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/ts.html" class="external-link">ts</a></span><span class="op">(</span><span class="va">x</span>, start <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2020</span>, <span class="fl">1</span><span class="op">)</span>, frequency <span class="op">=</span> <span class="fl">4</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">frequency</span></span>
+<span><span class="co">#&gt; [1] 4</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="inference">Inference<a class="anchor" aria-label="anchor" href="#inference"></a>
@@ -1104,16 +1110,16 @@ several labelled series — see
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; 1. cpm (cpm)</span></span>
 <span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
-<span><span class="co">#&gt; 2. kcp (kcpRS)</span></span>
+<span><span class="co">#&gt; 2. ecp (ecp)</span></span>
 <span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
-<span><span class="co">#&gt; 3. nsp (nsp)</span></span>
+<span><span class="co">#&gt; 3. kcp (kcpRS)</span></span>
 <span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
-<span><span class="co">#&gt; 4. sn (SNSeg)</span></span>
+<span><span class="co">#&gt; 4. np (changepoint.np)</span></span>
 <span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
-<span><span class="co">#&gt; 5. bcp (bcp)</span></span>
-<span><span class="co">#&gt;    why: handles change_in = "mean"</span></span>
+<span><span class="co">#&gt; 5. nsp (nsp)</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; (27 further candidate(s); the full table is the return value.)</span></span>
+<span><span class="co">#&gt; (31 further candidate(s); the full table is the return value.)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Cite the method you use with cpt_cite(). Cross-check the choice with</span></span>
 <span><span class="co">#&gt; cpt_consensus() and cpt_sensitivity().</span></span>

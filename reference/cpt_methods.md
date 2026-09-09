@@ -123,7 +123,7 @@ cpt_methods()
 #>  7 fpop     mean             fpop   avail… TRUE      NA             FALSE       
 #>  8 wbs      mean             wbs    avail… TRUE      NA             FALSE       
 #>  9 wbs2     mean             break… avail… TRUE      NA             FALSE       
-#> 10 not      mean, var, slope not    avail… TRUE      NA             FALSE       
+#> 10 not      mean, var, mean… not    avail… TRUE      NA             FALSE       
 #> # ℹ 45 more rows
 #> # ℹ 8 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
 #> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>

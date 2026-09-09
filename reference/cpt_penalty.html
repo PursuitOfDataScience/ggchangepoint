@@ -122,6 +122,17 @@ is ignored and the model's prediction for this series is returned.</p></dd>
     TGUH): use internal model-selection criteria (e.g., sSIC, threshold)
     and generally <em>ignore</em> the <code>penalty</code> argument. Specify
     thresholds via the wrapper's own arguments.</p></li>
+<li><p><strong><code>fastcpd</code></strong> takes its penalty as <code>beta</code>, on its
+    own scale, and defaults to its native <code>"MBIC"</code>.
+    <code><a href="cpt_detect.html">cpt_detect()</a></code> forwards a numeric <code>penalty</code> as
+    <code>beta</code>, and translates the three names the two packages share
+    (<code>"MBIC"</code>, <code>"BIC"</code>/<code>"SIC"</code>, <code>"MDL"</code>). Any other
+    character penalty — <code>"AIC"</code>, <code>"Hannan-Quinn"</code>,
+    <code>"sSIC"</code>, <code>"None"</code> — has no <span class="pkg">fastcpd</span> equivalent and
+    is left to the engine's default rather than being silently
+    approximated; pass <code>beta</code> yourself to pin it. Whatever is used
+    is recorded on the result, so <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>
+    report the penalty of the fit in hand.</p></li>
 <li><p><strong>Inference/Bayesian methods</strong> (<code>smuce</code>, <code>bcp</code>,
     <code>bocpd</code>, <code>beast</code>, <code>cpm</code>, <code>sn</code>): are tuned by a
     significance level, posterior-probability threshold, hazard, or
@@ -131,11 +142,16 @@ is ignored and the model's prediction for this series is returned.</p></dd>
     changepoints can be placed in <code>n</code> observations,
     \(0.5(k+1)\log n + \log{n \choose k}\). It is deliberately stronger
     than <code>"BIC"</code>. It is <em>not</em> the modified BIC of Zhang and
-    Siegmund (2007), whose penalty
-    \(1.5 k \log n + 0.5 \sum_i \log(l_i / n)\) depends on the segment
-    lengths \(l_i\) and so cannot be expressed by a function of
-    <code>n</code> and <code>k</code> alone. Use the character <code>"MBIC"</code> with
-    <span class="pkg">changepoint</span>-based methods to get the engine's native MBIC.</p></li>
+    Siegmund (2007), whose penalty is
+    \(1.5 k \log n + 0.5 \sum_i \log(l_i / n)\) on the
+    <strong>log-likelihood</strong> scale (equivalently
+    \(3 k \log n + \sum_i \log(l_i / n)\) on the deviance scale,
+    which is how <code><a href="cpt_select.html">cpt_select()</a></code> states it and the scale its
+    <code>cost</code> column uses). It depends on the segment lengths
+    \(l_i\) and so cannot be expressed by a function of <code>n</code> and
+    <code>k</code> alone. Use the character <code>"MBIC"</code> with
+    <span class="pkg">changepoint</span>-based methods to get the engine's native MBIC, and
+    <code>cpt_select(criterion = "mbic")</code> for the Zhang–Siegmund one.</p></li>
 </ul></div>
 
     <div class="section level2">

@@ -34,9 +34,11 @@ stat_changepoint(
 - geom:
 
   The geometric object to use (default: `"vline"`). The stat computes a
-  single `xintercept` per changepoint, so only geoms that consume that
-  aesthetic fit — `"vline"` and `"rug"`. A geom needing `x`/`y`, such as
-  `"point"`, errors because the stat drops those aesthetics.
+  single `xintercept` per changepoint and drops `x`/`y`, so `"vline"` is
+  the geom that fits. A geom needing `x`/`y` — `"point"`, and `"rug"`,
+  which consumes `x`/`y` rather than `xintercept` — errors for that
+  reason. `inherit.aes` is fixed at `TRUE` here: the stat re-detects on
+  the plot's own data, so the panel's `x`/`y` mapping is what it reads.
 
 - position:
 

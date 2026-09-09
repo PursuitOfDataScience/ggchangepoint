@@ -103,7 +103,20 @@ one column per grid location (the curve's resolution).</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggcpt</code> object with <code>change_in = "covariance"</code>.</p>
+    <p>A <code>ggcpt</code> object with <code>change_in = "covariance"</code>. Multivariate input is
+  reduced to <strong>one series per observation by taking the
+  cross-sectional mean</strong> of the columns, and that is the series stored on
+  the result: <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws it, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>'s
+  <code>cp_value</code> reads it, and <code>$segments$param_estimate</code> and
+  <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>'s <code>.fitted</code>/<code>.resid</code> are computed from it.
+  It is not any one column of the input. The full input is kept in
+  <code>$data_wide</code> for <code>autoplot(type = "coordinates")</code>.</p>
+<p>For a covariance change this matters when reading the plot: a change in
+  the covariance structure need not move the cross-sectional mean at all,
+  so <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> can legitimately show changepoint rules on a
+  series with no visible change in it. That is the detector working, not
+  misfiring — use <code>autoplot(type = "coordinates")</code> to see the
+  columns the change is in.</p>
     </div>
     <div class="section level2">
     <h2 id="how-long-this-takes">How long this takes<a class="anchor" aria-label="anchor" href="#how-long-this-takes"></a></h2>

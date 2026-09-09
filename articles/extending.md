@@ -198,11 +198,11 @@ cpt_benchmark(cpt_datasets(n = 200, seed = 1, names = c("step", "teeth")),
 #> ggcpt_benchmark (2 dataset(s) x 2 method(s), tolerance 5)
 #> 
 #> Mean rank across datasets (1 = best):
-#> # A tibble: 2 × 3
-#>   method       mean_rank n_datasets
-#>   <chr>            <dbl>      <int>
-#> 1 pelt              1.25          2
-#> 2 biggest_jump      1.75          2
+#> # A tibble: 2 × 4
+#>   method       mean_rank n_datasets n_datasets_total
+#>   <chr>            <dbl>      <int>            <int>
+#> 1 pelt              1.25          2                2
+#> 2 biggest_jump      1.75          2                2
 #> 
 #> # A tibble: 4 × 4
 #>   dataset method       covering    f1

@@ -99,8 +99,10 @@ the user means.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with components <code>values</code> (a numeric vector, or a
   matrix for multivariate input), <code>index</code> (the time index, or
-  <code>NULL</code> when there is none) and <code>index_label</code> (a name for the
-  x axis).</p>
+  <code>NULL</code> when there is none), <code>index_label</code> (a name for the
+  x axis) and <code>frequency</code> (the seasonal frequency a <code>ts</code>
+  carried, or <code>NULL</code> – <code><a href="cpt_detect.html">cpt_detect()</a></code> hands this to
+  the engines that need one, such as <code><a href="bfast_wrapper.html">bfast_wrapper()</a></code>).</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

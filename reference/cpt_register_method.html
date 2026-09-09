@@ -98,9 +98,23 @@ not clash with a built-in method.</p></dd>
 
 <dt id="arg-fn">fn<a class="anchor" aria-label="anchor" href="#arg-fn"></a></dt>
 <dd><p>A function called as <code>fn(x, ...)</code>. It may return either a
-<code>ggcpt</code> object (built with <code><a href="as_ggcpt.html">as_ggcpt()</a></code>, say) or a bare
-vector of changepoint indices, which is coerced with
-<code><a href="as_ggcpt.html">as_ggcpt()</a></code>.</p></dd>
+  <code>ggcpt</code> object (built with <code><a href="as_ggcpt.html">as_ggcpt()</a></code>, say) or a bare
+  vector of changepoint indices, which is coerced with
+  <code><a href="as_ggcpt.html">as_ggcpt()</a></code>.</p>
+<p>A returned <code>ggcpt</code> may carry a <code>$diagnostics</code> list, which is
+  what makes <code><a href="cpt_statistic.html">cpt_statistic()</a></code> and
+  <code><a href="cpt_solution_path.html">cpt_solution_path()</a></code> work for the method. Two
+  conventions apply to it. <code>diagnostics$solution_path</code> needs a
+  <code>cp</code> column and may add <code>contrast</code>, <code>start</code> and
+  <code>end</code>; it goes through the same filtering and step-numbering as a
+  built-in path, so out-of-range candidates are dropped and
+  <code>selected</code> is computed rather than trusted.
+  <code>diagnostics$statistic</code> (a numeric vector, or a list with
+  <code>statistic</code>, <code>label</code> and <code>threshold</code>) is padded with
+  <code>NA</code> to the length of the series when it is shorter, and the pad
+  is <strong>centred</strong> — a moving-window statistic is trimmed at both
+  ends, so a left-aligned pad would shift every value by the bandwidth.
+  Supply a full-length vector if that is not the alignment you want.</p></dd>
 
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>

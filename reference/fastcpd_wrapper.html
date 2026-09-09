@@ -94,7 +94,14 @@ Defaults to <code>"mean"</code>.</p></dd>
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments passed to the corresponding
-<code>fastcpd::fastcpd.*()</code> function (e.g. <code>beta</code>, <code>trim</code>).</p></dd>
+<code>fastcpd::fastcpd.*()</code> function (e.g. <code>beta</code>, <code>trim</code>).
+<code>beta</code> is <span class="pkg">fastcpd</span>'s penalty: a number, or one of its own
+names (<code>"MBIC"</code>, the default, <code>"BIC"</code>, <code>"MDL"</code>). It is
+recorded on the result, so <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> report
+the penalty the fit actually used. <code><a href="cpt_detect.html">cpt_detect()</a></code> forwards
+a numeric <code>penalty</code> here and translates the three names it shares
+with <span class="pkg">fastcpd</span>; see the penalty-semantics section of
+<code><a href="cpt_penalty.html">cpt_penalty()</a></code>.</p></dd>
 
 </dl></div>
     <div class="section level2">

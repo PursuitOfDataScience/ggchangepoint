@@ -136,8 +136,13 @@ anti-conservative, often severely.
 
 [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
 never hides that. It uses the engine’s own test where one exists and an
-explicitly unadjusted two-sample test where none does, and the
-`selection_adjusted` column records which you got:
+explicitly unadjusted two-sample test where none does — and the
+`selection_adjusted` column records *whether the p-value accounts for
+selection*, which is not the same question. `segmented`’s Davies test is
+built for it and reads `TRUE`; `strucchange`’s route is the Chow F
+evaluated at an estimated break date, which is conventional to report
+and still assumes the date was fixed in advance, so it reads `FALSE`
+alongside the generic fallback:
 
 ``` r
 
@@ -151,12 +156,12 @@ suppressWarnings(cpt_test(fit))
 
 ``` r
 
-cpt_test(strucchange_wrapper(x))
+suppressWarnings(cpt_test(strucchange_wrapper(x)))
 #> # A tibble: 2 × 6
-#>      cp estimate statistic     p_value method               selection_adjusted
-#>   <int>    <dbl>     <dbl>       <dbl> <chr>                <lgl>             
-#> 1   120    1.95      149.  0           Chow F (strucchange) TRUE              
-#> 2   240   -0.976      28.3 0.000000182 Chow F (strucchange) TRUE
+#>      cp estimate statistic     p_value method                 selection_adjusted
+#>   <int>    <dbl>     <dbl>       <dbl> <chr>                  <lgl>             
+#> 1   120    1.95      149.  0           Chow F at estimated b… FALSE             
+#> 2   240   -0.976      28.3 0.000000182 Chow F at estimated b… FALSE
 ```
 
 If you need a guarantee that survives selection, the route is NSP
@@ -454,7 +459,7 @@ cat(head(cpt_report(fit, session = FALSE), 20), sep = "\n")
     #> - Penalty: MBIC
     #> - Series length: 360
     #> - Changepoints found: 2
-    #> - Detection runtime: 0.021 s
+    #> - Detection runtime: 0.024 s
     #> 
     #> ## Changepoints
     #> 

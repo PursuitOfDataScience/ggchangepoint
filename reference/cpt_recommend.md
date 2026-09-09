@@ -108,7 +108,7 @@ cpt_recommend(noise = "autocorrelated")
 #> 5. sn (SNSeg)
 #>    why: handles change_in = "mean"; built for autocorrelated noise
 #> 
-#> (27 further candidate(s); the full table is the return value.)
+#> (31 further candidate(s); the full table is the return value.)
 #> 
 #> Cite the method you use with cpt_cite(). Cross-check the choice with
 #> cpt_consensus() and cpt_sensitivity().

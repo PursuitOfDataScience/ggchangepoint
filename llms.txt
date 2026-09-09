@@ -59,12 +59,12 @@ Detect changepoints with the unified
 res <- cpt_detect(x, method = "pelt", change_in = "mean")
 res
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -104,8 +104,8 @@ Visualise with
 autoplot(res)
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-6-1.png)
+![The two-segment series with a dashed vertical rule at the detected
+changepoint](reference/figures/README-autoplot-1.png)
 
 ## Why ggchangepoint
 
@@ -160,12 +160,12 @@ dispatches to any supported method by name:
 
 cpt_detect(x, method = "binseg", change_in = "mean")
 #> ggcpt (changepoint detection result)
-#>   Method:         binseg
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
+#>   Method:             binseg
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -174,12 +174,12 @@ cpt_detect(x, method = "binseg", change_in = "mean")
 #> 1   100    0.467
 cpt_detect(x, method = "wbs", change_in = "mean")
 #> ggcpt (changepoint detection result)
-#>   Method:         wbs
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         sSIC 
-#>   Series length:   200 
+#>   Method:             wbs
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            sSIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -188,12 +188,12 @@ cpt_detect(x, method = "wbs", change_in = "mean")
 #> 1   100    0.467
 cpt_detect(x, method = "fpop", change_in = "mean")
 #> ggcpt (changepoint detection result)
-#>   Method:         fpop
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         Manual = 17.846 
-#>   Series length:   200 
+#>   Method:             fpop
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            Manual = 17.846
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -222,7 +222,7 @@ cpt_methods()
 #>  7 fpop     mean             fpop   avail… TRUE      <NA>           FALSE       
 #>  8 wbs      mean             wbs    avail… TRUE      <NA>           FALSE       
 #>  9 wbs2     mean             break… avail… TRUE      <NA>           FALSE       
-#> 10 not      mean, var, slope not    avail… TRUE      <NA>           FALSE       
+#> 10 not      mean, var, mean… not    avail… TRUE      <NA>           FALSE       
 #> # ℹ 45 more rows
 #> # ℹ 8 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
 #> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>
@@ -249,7 +249,7 @@ autoplot(dated)
 ```
 
 ![Series with a date axis and a changepoint rule, detected with
-PELT](reference/figures/README-unnamed-chunk-9-1.png)
+PELT](reference/figures/README-detect-3-1.png)
 
 [`as_cpt_series()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_series.md)
 is the same conversion on its own, for code that needs the values and
@@ -263,13 +263,13 @@ string, or a position:
 df <- data.frame(day = dates, value = x)
 cpt_detect(df, y = value, index = day, method = "pelt")
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
-#>   Index:           2020-01-01 to 2020-07-18 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
+#>   Index:              2020-01-01 to 2020-07-18
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 3
@@ -307,7 +307,7 @@ autoplot(res_smuce, show_ci = TRUE, show_fit = TRUE)
 
 ![Series with the SMUCE step fit, changepoint rules and horizontal
 confidence intervals for each changepoint
-location](reference/figures/README-unnamed-chunk-11-1.png)
+location](reference/figures/README-smuce-1.png)
 
 Read the intervals, not just the locations: the genuine shift is pinned
 to a single index, while the spurious early changepoint carries an
@@ -338,7 +338,7 @@ ggcpt_posterior(res_bcp)
 
 ![Two-panel Bayesian display: the series with its posterior mean above,
 the per-location posterior changepoint probability
-below](reference/figures/README-unnamed-chunk-12-1.png)
+below](reference/figures/README-bcp-1.png)
 
 ## The penalty path: CROPS
 
@@ -350,24 +350,27 @@ path, or the candidate segmentations themselves:
 
 ``` r
 
+set.seed(2021)  # local, so this example does not depend on the chunks above
 path <- cpt_crops(c(rnorm(100), rnorm(100, 3), rnorm(100, -1)))
 path
 #> ggcpt_path (CROPS penalty path)
-#>   Change in:       mean 
-#>   Penalty range:  [5.704, 57.04]
-#>   Series length:   300 
-#>   Distinct segmentations: 2 
+#>   Change in:              mean
+#>   Penalty range:          [5.704, 57.04]
+#>   Series length:          300
+#>   Distinct segmentations: 4
 #> 
-#> # A tibble: 2 × 3
+#> # A tibble: 4 × 3
 #>   penalty n_cpts  cost
 #>     <dbl>  <int> <dbl>
-#> 1    7.68      2  274.
-#> 2    5.70      4  259.
+#> 1    8.44      2  320.
+#> 2    8.08      4  303.
+#> 3    6.91      5  295.
+#> 4    5.70      7  281.
 autoplot(path)                          # cost elbow
 ```
 
 ![CROPS elbow diagnostic: segmentation cost against the number of
-changepoints](reference/figures/README-unnamed-chunk-13-1.png)
+changepoints](reference/figures/README-crops-1.png)
 
 ``` r
 
@@ -375,7 +378,7 @@ autoplot(path, type = "segmentations")  # see the actual candidate models
 ```
 
 ![Faceted small-multiples, one panel per candidate segmentation on the
-CROPS penalty path](reference/figures/README-unnamed-chunk-14-1.png)
+CROPS penalty path](reference/figures/README-autoplot-2-1.png)
 
 ## Inference: a region, not a point
 
@@ -397,7 +400,7 @@ autoplot(res_nsp)
 ```
 
 ![Series with a shaded vertical band marking an NSP significance
-region](reference/figures/README-unnamed-chunk-15-1.png)
+region](reference/figures/README-nsp-1.png)
 
 The `cp` column of an NSP fit is the interval midpoint, is labelled as
 such in `cp_source`, and is never presented as an estimate — the region
@@ -420,7 +423,9 @@ cpt_confint(res, method = "bootstrap", B = 50, seed = 1)
 [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
 attaches a test to each changepoint, using the engine’s own where it has
 one and an explicitly unadjusted two-sample test where it does not —
-with a `selection_adjusted` column so the two are never confused:
+with a `selection_adjusted` column recording whether the p-value
+accounts for the fact that the location was *chosen* by looking at the
+data, which only one of the engine tests does:
 
 ``` r
 
@@ -443,30 +448,31 @@ stability:
 
 ``` r
 
+set.seed(2022)  # local, so this example does not depend on the chunks above
 x3 <- c(rnorm(120), rnorm(120, 4), rnorm(120, 1))
 sel <- cpt_select(x3, criterion = "mbic", k_max = 6)
 sel
 #> ggcpt_selection (criterion: mbic, method: pelt)
 #>   Candidates scored: K = 0 to 6
 #>   Chosen K:          2
-#>   Locations:         119, 240
+#>   Locations:         120, 240
 #> 
 #> # A tibble: 7 × 4
-#>       k value    cost chosen
-#>   <int> <dbl>   <dbl> <lgl> 
-#> 1     0 530.  530.    FALSE 
-#> 2     1 398.  382.    FALSE 
-#> 3     2  53.1  21.0   TRUE  
-#> 4     3  61.6  15.2   FALSE 
-#> 5     4  71.3   9.97  FALSE 
-#> 6     5  79.0   4.14  FALSE 
-#> 7     6  89.5  -0.362 FALSE
+#>       k value  cost chosen
+#>   <int> <dbl> <dbl> <lgl> 
+#> 1     0 457.  457.  FALSE 
+#> 2     1 337.  320.  FALSE 
+#> 3     2  14.2 -17.9 TRUE  
+#> 4     3  18.5 -27.2 FALSE 
+#> 5     4  27.3 -32.5 FALSE 
+#> 6     5  37.7 -37.2 FALSE 
+#> 7     6  42.9 -46.5 FALSE
 autoplot(sel, plot_type = "ladder", max_facets = 5)
 ```
 
 ![Small multiples showing how the segmentation coarsens as the number of
 changepoints falls, with the chosen model
-marked](reference/figures/README-unnamed-chunk-18-1.png)
+marked](reference/figures/README-select-1.png)
 
 ## Seeing the statistic
 
@@ -477,12 +483,13 @@ accessors give it back:
 
 ``` r
 
+set.seed(2023)  # local, so this example does not depend on the chunks above
 res_mosum <- cpt_detect(c(rnorm(200), rnorm(200, 3)), method = "mosum")
 autoplot(res_mosum, type = "statistic")
 ```
 
 ![Two-panel display: the series above, the MOSUM statistic against its
-threshold below](reference/figures/README-unnamed-chunk-19-1.png)
+threshold below](reference/figures/README-detect-5-1.png)
 
 ``` r
 
@@ -491,7 +498,7 @@ ggcpt_scale_space(res_mosum, bandwidths = c(20, 40, 80))
 
 ![Heatmap of the MOSUM statistic by location and bandwidth, with
 accepted changepoints
-marked](reference/figures/README-unnamed-chunk-20-1.png)
+marked](reference/figures/README-ggscale-space-1.png)
 
 [`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md)
 returns the profile as a tibble and
@@ -526,8 +533,7 @@ autoplot(inf)
 ```
 
 ![Series with each observation sized and coloured by how much perturbing
-it disturbs the
-segmentation](reference/figures/README-unnamed-chunk-21-1.png)
+it disturbs the segmentation](reference/figures/README-influence-1.png)
 
 [`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
 is the tuning-parameter analogue, and the direct answer to “is this
@@ -539,7 +545,7 @@ autoplot(cpt_sensitivity(x3, method = "pelt", over = list(penalty = c(4, 20, 80)
 ```
 
 ![One facet per penalty setting, each showing the changepoints that
-setting finds](reference/figures/README-unnamed-chunk-22-1.png)
+setting finds](reference/figures/README-autoplot-3-1.png)
 
 ## Supervised detection: learn the penalty from labels
 
@@ -559,7 +565,7 @@ ggplot(data.frame(t = seq_along(x), y = x), aes(t, y)) +
 ```
 
 ![Series with shaded label regions behind it, coloured by whether the
-label asserts a change](reference/figures/README-unnamed-chunk-23-1.png)
+label asserts a change](reference/figures/README-labels-1.png)
 
 ``` r
 
@@ -586,23 +592,24 @@ and the model plugs straight into
 
 ``` r
 
+set.seed(2024)  # local, so this example does not depend on the chunks above
 series <- list(a = c(rnorm(60), rnorm(60, 4)), b = c(rnorm(80), rnorm(80, 2)))
 labels <- list(a = as_cpt_labels(60, n = 120), b = as_cpt_labels(80, n = 160))
 model <- cpt_learn_penalty(series, labels, penalties = c(1, 4, 16, 64, 256))
 cpt_detect(series$a, method = "pelt", penalty = model)
 #> ggcpt (changepoint detection result)
-#>   Method:         pelt
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         Manual = 43.454 
-#>   Series length:   120 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            Manual = 43.469
+#>   Series length:      120
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1    60     1.01
+#> 1    60  -0.0326
 ```
 
 ## Which method should I use?
@@ -627,7 +634,7 @@ cpt_recommend(noise = "autocorrelated")
 #> 5. wbsts (wbsts)
 #>    why: handles change_in = "mean"; built for autocorrelated noise
 #> 
-#> (27 further candidate(s); the full table is the return value.)
+#> (31 further candidate(s); the full table is the return value.)
 #> 
 #> Cite the method you use with cpt_cite(). Cross-check the choice with
 #> cpt_consensus() and cpt_sensitivity().
@@ -644,13 +651,13 @@ tidy(cons)
 #> # A tibble: 2 × 5
 #>      cp cp_value votes methods                 spread
 #>   <int>    <dbl> <int> <chr>                    <int>
-#> 1   120     1.90     4 amoc, binseg, pelt, wbs      1
-#> 2   240     6.01     3 binseg, pelt, wbs            0
+#> 1   120   -0.927     4 amoc, binseg, pelt, wbs      0
+#> 2   240    4.45      3 binseg, pelt, wbs            0
 autoplot(cons, plot_type = "agreement")
 ```
 
 ![Dot matrix of method against location, with shaded bands marking the
-consensus changepoints](reference/figures/README-unnamed-chunk-27-1.png)
+consensus changepoints](reference/figures/README-consensus-1.png)
 
 ## From a changepoint to a finding
 
@@ -705,13 +712,13 @@ bm
 #> ggcpt_benchmark (9 dataset(s) x 4 method(s), tolerance 5)
 #> 
 #> Mean rank across datasets (1 = best):
-#> # A tibble: 4 × 3
-#>   method mean_rank n_datasets
-#>   <chr>      <dbl>      <int>
-#> 1 pelt        2.11          9
-#> 2 wbs         2.11          9
-#> 3 binseg      2.5           9
-#> 4 amoc        3.28          9
+#> # A tibble: 4 × 4
+#>   method mean_rank n_datasets n_datasets_total
+#>   <chr>      <dbl>      <int>            <int>
+#> 1 pelt        2.11          9                9
+#> 2 wbs         2.11          9                9
+#> 3 binseg      2.5           9                9
+#> 4 amoc        3.28          9                9
 #> 
 #> # A tibble: 36 × 4
 #>    dataset  method covering    f1
@@ -733,7 +740,7 @@ autoplot(bm)
 ```
 
 ![Heatmap of the covering metric for each method on each benchmark
-dataset](reference/figures/README-unnamed-chunk-29-1.png)
+dataset](reference/figures/README-benchmark-1.png)
 
 [`cpt_datasets()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_datasets.md)
 is offline and deterministic. For the real thing,
@@ -754,26 +761,26 @@ scores it on detection delay and false alarms:
 
 ``` r
 
+set.seed(2025)  # local, so this example does not depend on the chunks above
 mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
 alarms(mon)
-#> # A tibble: 2 × 3
+#> # A tibble: 1 × 3
 #>    time statistic threshold
 #>   <int>     <dbl>     <dbl>
-#> 1    62      105.       100
-#> 2   103    10104.       100
+#> 1   101      191.       100
 cpt_delay(mon, truth = 200)
 #> ggcpt_delay
-#>   True changes:      1
-#>   Detected:          1
-#>   Mean delay:        3
-#>   Median delay:      3
-#>   False alarms:      1
-#>   Average run length: 400
+#>   True changes:       1
+#>   Detected:           1
+#>   Mean delay:         1
+#>   Median delay:       1
+#>   False alarms:       0
+#>   Average run length: no false alarms
 #> 
 #> # A tibble: 1 × 4
 #>   truth alarm delay detected
 #>   <int> <int> <dbl> <lgl>   
-#> 1   200   203     3 TRUE
+#> 1   200   201     1 TRUE
 ```
 
 [`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md)
@@ -803,13 +810,12 @@ pw
 #>   4 scenario(s), 50 replicates each
 #> 
 #> # A tibble: 4 × 9
-#>       n  jump sigma location power  mc_se mean_abs_error false_positive_rate
-#>   <int> <dbl> <dbl>    <int> <dbl>  <dbl>          <dbl>               <dbl>
-#> 1   300  0.25     1      150  0    0              NaN                   0   
-#> 2   300  0.5      1      150  0.38 0.0686           2.11                0.22
-#> 3   300  1        1      150  0.72 0.0635           1.83                0.28
-#> 4   300  2        1      150  1    0                0.38                0   
-#> # ℹ 1 more variable: n_sim <int>
+#>       n  jump sigma location power  mc_se mean_abs_error false_positives n_sim
+#>   <int> <dbl> <dbl>    <int> <dbl>  <dbl>          <dbl>           <dbl> <int>
+#> 1   300  0.25     1      150  0    0              NaN               0       50
+#> 2   300  0.5      1      150  0.38 0.0686           2.11            0.22    50
+#> 3   300  1        1      150  0.72 0.0635           1.83            0.28    50
+#> 4   300  2        1      150  1    0                0.38            0       50
 #> 
 #> Monte Carlo standard errors are in `mc_se`; a power of 0.80 from 50
 #> replicates is only known to about +/- 0.11.
@@ -817,7 +823,7 @@ autoplot(pw)
 ```
 
 ![Power curve: detection probability against change size, with a Monte
-Carlo interval](reference/figures/README-unnamed-chunk-31-1.png)
+Carlo interval](reference/figures/README-power-1.png)
 
 [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
 inverts it and returns the smallest change reaching a target power — the
@@ -846,12 +852,12 @@ cpt_register_method(
 )
 cpt_detect(x, method = "biggest_jump")
 #> ggcpt (changepoint detection result)
-#>   Method:         biggest_jump  [user-registered]
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         MBIC 
-#>   Series length:   200 
+#>   Method:             biggest_jump  [user-registered]
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            MBIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -895,7 +901,7 @@ ggcpt_compare(x, methods = c("pelt", "binseg", "fpop", "wbs"))
 ```
 
 ![One facet per detection method, each showing the same series with that
-method's changepoints](reference/figures/README-unnamed-chunk-33-1.png)
+method's changepoints](reference/figures/README-ggcompare-1.png)
 
 For a numeric summary, use
 [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md):
@@ -926,6 +932,7 @@ native intervals:
 
 ``` r
 
+set.seed(2026)  # local, so this example does not depend on the chunks above
 X <- cbind(shifted = x, noise = rnorm(200))
 batch <- cpt_batch(X, method = "pelt")
 batch
@@ -940,7 +947,7 @@ autoplot(batch)
 ```
 
 ![One facet per series in the batch, each with its own detected
-changepoints](reference/figures/README-unnamed-chunk-35-1.png)
+changepoints](reference/figures/README-batch-1.png)
 
 ``` r
 
@@ -957,7 +964,7 @@ autoplot(st)
 ```
 
 ![Bootstrap re-detection frequency for each changepoint
-location](reference/figures/README-unnamed-chunk-36-1.png)
+location](reference/figures/README-stability-1.png)
 
 ## Multivariate and high-dimensional detection
 
@@ -983,7 +990,7 @@ autoplot(res_hd)
 
 ![One facet per coordinate of a multivariate series, sharing the
 changepoints detected across
-coordinates](reference/figures/README-unnamed-chunk-37-1.png)
+coordinates](reference/figures/README-inspect-1.png)
 
 Univariate methods never silently flatten a matrix: hand one to `pelt`
 and you get an error naming the multivariate alternatives instead.
@@ -1089,12 +1096,12 @@ classic search and pruning engines:
 
 fpop_wrapper(x, penalty = 2 * log(200))
 #> ggcpt (changepoint detection result)
-#>   Method:         fpop
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         Manual = 10.597 
-#>   Series length:   200 
+#>   Method:             fpop
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            Manual = 10.597
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -1103,12 +1110,12 @@ fpop_wrapper(x, penalty = 2 * log(200))
 #> 1   100    0.467
 wbs_wrapper(x, n_intervals = 2000)
 #> ggcpt (changepoint detection result)
-#>   Method:         wbs
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         sSIC 
-#>   Series length:   200 
+#>   Method:             wbs
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            sSIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -1117,12 +1124,12 @@ wbs_wrapper(x, n_intervals = 2000)
 #> 1   100    0.467
 wbs2_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:         wbs2
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         SDLL 
-#>   Series length:   200 
+#>   Method:             wbs2
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            SDLL
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -1131,12 +1138,12 @@ wbs2_wrapper(x)
 #> 1   100    0.467
 not_wrapper(x, contrast = "pcwsConstMean")
 #> ggcpt (changepoint detection result)
-#>   Method:         not
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         sSIC 
-#>   Series length:   200 
+#>   Method:             not
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            sSIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -1145,12 +1152,12 @@ not_wrapper(x, contrast = "pcwsConstMean")
 #> 1   100    0.467
 mosum_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:         mosum
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         threshold = 3.6342 
-#>   Series length:   200 
+#>   Method:             mosum
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            threshold = 3.6342
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -1159,12 +1166,12 @@ mosum_wrapper(x)
 #> 1   100    0.467
 idetect_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:         idetect
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         threshold 
-#>   Series length:   200 
+#>   Method:             idetect
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            threshold
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -1173,12 +1180,12 @@ idetect_wrapper(x)
 #> 1   100    0.467
 tguh_wrapper(x)
 #> ggcpt (changepoint detection result)
-#>   Method:         tguh
-#>   Change in:       mean 
-#>   Changepoints found: 1 
-#>   CP convention:   left 
-#>   Penalty:         sSIC 
-#>   Series length:   200 
+#>   Method:             tguh
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Penalty:            sSIC
+#>   Series length:      200
 #> 
 #> Changepoints:
 #> # A tibble: 1 × 2
@@ -1229,6 +1236,7 @@ and
 
 ``` r
 
+set.seed(2027)  # local, so this example does not depend on the chunks above
 # change-in-slope: exact penalised broken-line estimation
 y_slope <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
 res_slope <- cpop_wrapper(y_slope)
@@ -1236,8 +1244,7 @@ autoplot(res_slope, show_fit = TRUE)
 ```
 
 ![Piecewise-linear series with the fitted broken line and a
-change-in-slope
-changepoint](reference/figures/README-unnamed-chunk-43-1.png)
+change-in-slope changepoint](reference/figures/README-cpop-1.png)
 
 ## Custom geoms, stats, and theming
 
@@ -1335,6 +1342,7 @@ class:
 
 ``` r
 
+set.seed(2028)  # local, so this example does not depend on the chunks above
 new_ggcpt(
   changepoints = tibble::tibble(cp = 100L, cp_value = 5.0),
   data = tibble::tibble(index = 1:200, value = rnorm(200)),
@@ -1372,8 +1380,9 @@ cpt_wrapper(x)
 ggcptplot(x)
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-49-1.png)
+![The same series drawn by ggcptplot(), with a vertical rule at each
+changepoint the 0.4.0 wrapper
+found](reference/figures/README-wrapper-1.png)
 
 ## Additional S3 methods
 
@@ -1384,13 +1393,13 @@ The `ggcpt` class also provides:
 res <- cpt_detect(x, method = "pelt", change_in = "mean")
 summary(res)          # human-readable digest
 #> ggcpt Summary
-#>   Method:                   pelt 
-#>   Change in:                mean 
-#>   Changepoints found:       1 
-#>   CP convention:            left 
-#>   Series length:            200 
-#>   Penalty:                  MBIC 
-#>   Runtime (seconds):        0.007 
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Series length:      200
+#>   Penalty:            MBIC
+#>   Runtime (seconds):  0.008
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -1417,8 +1426,8 @@ format(res)           # one-line summary string
 plot(res)             # base-graphics fallback (delegates to autoplot)
 ```
 
-![ggchangepoint plot of a time series with detected
-changepoints](reference/figures/README-unnamed-chunk-50-1.png)
+![The series with its changepoint rule, drawn by the plot() method
+rather than autoplot()](reference/figures/README-detect-6-1.png)
 
 ## Learn more
 

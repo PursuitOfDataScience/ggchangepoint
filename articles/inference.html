@@ -193,8 +193,13 @@ it changed there</em> is circular, and the resulting p-values are
 anti-conservative, often severely.</p>
 <p><code><a href="../reference/cpt_test.html">cpt_test()</a></code> never hides that. It uses the engine’s own
 test where one exists and an explicitly unadjusted two-sample test where
-none does, and the <code>selection_adjusted</code> column records which
-you got:</p>
+none does — and the <code>selection_adjusted</code> column records
+<em>whether the p-value accounts for selection</em>, which is not the
+same question. <code>segmented</code>’s Davies test is built for it and
+reads <code>TRUE</code>; <code>strucchange</code>’s route is the Chow F
+evaluated at an estimated break date, which is conventional to report
+and still assumes the date was fixed in advance, so it reads
+<code>FALSE</code> alongside the generic fallback:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_test.html">cpt_test</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
@@ -203,12 +208,12 @@ you got:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   120     3.25      25.6 4.24<span style="color: #949494;">e</span><span style="color: #BB0000;">-70</span> Welch two-sample t (unad… FALSE             </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   240    -<span style="color: #BB0000;">2.60</span>     -<span style="color: #BB0000;">21.7</span> 2.38<span style="color: #949494;">e</span><span style="color: #BB0000;">-58</span> Welch two-sample t (unad… FALSE</span></span></code></pre></div>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_test.html">cpt_test</a></span><span class="op">(</span><span class="fu"><a href="../reference/strucchange_wrapper.html">strucchange_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_test.html">cpt_test</a></span><span class="op">(</span><span class="fu"><a href="../reference/strucchange_wrapper.html">strucchange_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
-<span><span class="co">#&gt;      cp estimate statistic     p_value method               selection_adjusted</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>             </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   120    1.95      149.  0           Chow F (strucchange) TRUE              </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   240   -<span style="color: #BB0000;">0.976</span>      28.3 0.000<span style="text-decoration: underline;">000</span>182 Chow F (strucchange) TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt;      cp estimate statistic     p_value method                 selection_adjusted</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   120    1.95      149.  0           Chow F at estimated b… FALSE             </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   240   -<span style="color: #BB0000;">0.976</span>      28.3 0.000<span style="text-decoration: underline;">000</span>182 Chow F at estimated b… FALSE</span></span></code></pre></div>
 <p>If you need a guarantee that survives selection, the route is NSP
 (above) or <code>cpt_confint(method = "nsp")</code>, which maps each
 detected changepoint to the narrowest region covering it and returns
@@ -424,7 +429,7 @@ do:</p>
 <span><span class="co">#&gt; - Penalty: MBIC</span></span>
 <span><span class="co">#&gt; - Series length: 360</span></span>
 <span><span class="co">#&gt; - Changepoints found: 2</span></span>
-<span><span class="co">#&gt; - Detection runtime: 0.021 s</span></span>
+<span><span class="co">#&gt; - Detection runtime: 0.024 s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ## Changepoints</span></span>
 <span><span class="co">#&gt; </span></span>

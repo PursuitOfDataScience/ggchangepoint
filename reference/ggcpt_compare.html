@@ -80,7 +80,12 @@ every seam. Use <code><a href="cpt_batch.html">cpt_batch()</a></code> for a pane
 
 <dt id="arg-layout">layout<a class="anchor" aria-label="anchor" href="#arg-layout"></a></dt>
 <dd><p>Layout type. <code>"facet"</code> (default) shows one panel per method;
-<code>"overlay"</code> draws all changepoints in one panel, colour-coded.</p></dd>
+<code>"overlay"</code> draws all changepoints in one panel, colour-coded.
+The overlay <strong>dodges</strong> the rules horizontally so that two methods
+agreeing on an index are both visible, which moves each rule by up to
+half an observation — so read positions off <code>"facet"</code>, or off
+<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, and treat the overlay as a picture of agreement rather
+than of location.</p></dd>
 
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>
@@ -105,6 +110,19 @@ stream.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A ggplot object.</p>
+    </div>
+    <div class="section level2">
+    <h2 id="positions-not-a-time-index">Positions, not a time index<a class="anchor" aria-label="anchor" href="#positions-not-a-time-index"></a></h2>
+
+
+<p>Unlike <code><a href="cpt_detect.html">cpt_detect()</a></code>, <code><a href="cpt_batch.html">cpt_batch()</a></code> and
+<code><a href="autoplot.ggcpt.html">autoplot.ggcpt()</a></code>, these two take no <code>index</code>: the
+input is reduced to a bare numeric vector, so a <code>ts</code>, <code>xts</code>,
+<code>zoo</code> or <code>tsibble</code> is plotted (and tabulated) in observation
+positions with an "Index" axis. To compare detectors on dated data, run
+<code>cpt_detect(x, method = m, index = dates)</code> per method and read
+<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>'s <code>cp_index</code>, or plot the results with
+<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</p>
     </div>
 
     <div class="section level2">

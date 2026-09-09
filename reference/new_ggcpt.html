@@ -81,7 +81,17 @@ entry point for hand-built input – use <code><a href="as_ggcpt.html">as_ggcpt(
 
 <dt id="arg-segments">segments<a class="anchor" aria-label="anchor" href="#arg-segments"></a></dt>
 <dd><p>A tibble with segment information: <code>seg_id</code>, <code>start</code>,
-<code>end</code>, <code>n</code>, <code>param_estimate</code>.</p></dd>
+<code>end</code>, <code>n</code>, <code>param_estimate</code>. <code>param_estimate</code> is
+the segment <strong>mean</strong> for every method in the package, including
+the variance, distribution and model-change detectors — it is the
+segment level, not the parameter that changed. A <code>change_in =
+"var"</code> result therefore has a <code>param_estimate</code> column that may
+barely move; read the variance off the data with the segment bounds if
+that is the quantity you want. Everything derived from this column
+inherits the convention: <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>'s <code>.fitted</code>/
+<code>.resid</code>, <code><a href="cpt_gt.html">cpt_gt()</a></code>'s level columns,
+<code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code>, and the residual construction the bootstrap in
+<code><a href="cpt_confint.html">cpt_confint()</a></code> and <code><a href="cpt_stability.html">cpt_stability()</a></code> uses.</p></dd>
 
 
 <dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>

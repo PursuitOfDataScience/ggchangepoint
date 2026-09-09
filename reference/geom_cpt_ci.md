@@ -25,7 +25,9 @@ geom_cpt_ci(mapping = NULL, data = NULL, ..., na.rm = FALSE, show.legend = NA)
 
 - ...:
 
-  Other arguments passed to `geom_errorbarh`.
+  Other arguments passed to `geom_errorbar` (with `orientation = "y"`;
+  [`geom_errorbarh()`](https://ggplot2.tidyverse.org/reference/geom_linerange.html)
+  is deprecated).
 
 - na.rm:
 
