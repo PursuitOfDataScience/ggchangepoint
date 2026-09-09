@@ -308,9 +308,13 @@ obvious.
 
 Both calibrations — the e-detector's $1/\alpha$ bound and `cpm`'s `arl0`
 — assume the in-control observations are independent. Under the null on
-iid noise they hold up. Measured on 2000-observation in-control streams at
-the defaults, `cpm` raises about **3.7** false alarms against the 4 that
-`arl0 = 500` implies by construction, and `edetector` about **13**.
+iid noise they hold up. Measured over 20 in-control streams of 2000
+observations at the defaults, `cpm` raises **3.0** false alarms on average
+against the 4 that `arl0 = 500` implies by construction, and `edetector`
+**11.5**. The spread matters as much as the mean, and is the reason to
+distrust a single stream: cpm's counts ranged from 0 to 7 across the 20
+(sd 2.0) and the e-detector's from 1 to 19 (sd 5.2), so agreement to within
+one alarm is not something one run can establish.
 
 Serial dependence breaks both, and not gently. Autocorrelated noise
 wanders; a detector that reads a wander as a level shift alarms on it.

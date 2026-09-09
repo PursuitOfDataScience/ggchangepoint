@@ -1599,6 +1599,20 @@ Names, labels and claims that did not match the code.
   first now.
 
 Every other documented measurement, re-run.
+- **The monitoring vignette's false-alarm figures were quoted to a
+  precision one run cannot support.** It read "`cpm` raises about **3.7**
+  false alarms against the 4 that `arl0 = 500` implies, and `edetector`
+  about **13**" — inviting the reader to conclude cpm is calibrated to
+  within 0.3 alarms. Measured over 20 in-control streams of 2000
+  observations: cpm averages 3.0 with a standard deviation of 2.0 and a
+  range of 0–7, and the e-detector 11.5 with a standard deviation of 5.2
+  and a range of 1–19. Neither original number is *wrong* — both sit inside
+  sampling error of the 20-stream estimate — but the spread is larger than
+  the discrepancy they were being compared against. The section now gives
+  the mean, the spread and the replicate count, and says that agreement to
+  within one alarm is not something one run can establish.
+
+
 
 - Four were **accurate** and are recorded as such so they are not
   re-swept: `?cpt_metrics_annotated`'s annotator-availability counts (1, 2,

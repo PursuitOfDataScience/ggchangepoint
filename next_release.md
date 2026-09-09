@@ -23315,3 +23315,30 @@ tolerance test, and `n` stated). The `cpt_power` pair has its conditions
 named and relies on the existing plan-invariance test for the property,
 which is the right division -- pinning those two values would freeze a
 worker count into the suite.
+
+### 627.3 A number that was not wrong and still misled
+
+The monitoring vignette's assumptions section quoted the in-control false
+alarm counts in bold: cpm "about **3.7**" against the 4 that `arl0 = 500`
+implies, and edetector "about **13**". Measured over 20 streams of 2000
+observations at the defaults:
+
+| method    | mean | sd  | median | range |
+|-----------|------|-----|--------|-------|
+| cpm       |  3.0 | 2.0 |  2.0   | 0-7   |
+| edetector | 11.5 | 5.2 | 13.0   | 1-19  |
+
+So neither claim is false -- 3.7 is about 1.6 standard errors from 3.0, and
+13 is the e-detector's exact median. What is wrong is the precision the
+presentation implies. A reader given "3.7 against 4" concludes cpm is
+calibrated to within 0.3 alarms; the run-to-run range is 0 to 7. The
+sampling error is larger than the discrepancy being discussed, and the
+bolding pointed at the discrepancy.
+
+This is the same defect as §625's posterior interval seen from the other
+side: there, an honest interval read as a bug; here, an honest number reads
+as a precision that is not there. Both are reporting defects with correct
+arithmetic underneath, and in both cases the fix is to say what the number
+is and is not -- the section now gives the mean, the spread and the
+replicate count, and states that agreement to within one alarm is not
+something one stream can establish.
