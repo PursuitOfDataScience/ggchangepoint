@@ -16318,6 +16318,51 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>This is the same defect as §625’s posterior interval seen from the other side: there, an honest interval read as a bug; here, an honest number reads as a precision that is not there. Both are reporting defects with correct arithmetic underneath, and in both cases the fix is to say what the number is and is not – the section now gives the mean, the spread and the replicate count, and states that agreement to within one alarm is not something one stream can establish.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_628-the-arguments-had-been-swept-the-data-had-not">628. The arguments had been swept; the data had not<a class="anchor" aria-label="anchor" href="#id_628-the-arguments-had-been-swept-the-data-had-not"></a></h2>
+<p>Every earlier hardening round swept <em>arguments</em>: “measured across all 64 wrapper argument slots” appears in three wrappers’ comments. Nobody had swept the <em>data</em>. So: 30 wired univariate methods against 10 degenerate series shapes – constant, two-valued, three observations, one NA, one Inf, all NA, huge scale (1e8), tiny scale (1e-8), monotone, and a single spike. 300 cells. 194 ran, 103 refused with a message naming the method or the argument, and <strong>3 answered with a base-R error</strong>, which is the signature of an unguarded path because it names neither.</p>
+<table class="table"><colgroup><col width="34%"><col width="40%"><col width="25%"></colgroup><thead><tr><th>method</th>
+<th>shape</th>
+<th>message</th>
+</tr></thead><tbody><tr><td><code>sn</code></td>
+<td>single spike</td>
+<td>missing value where TRUE/FALSE needed</td>
+</tr><tr><td><code>buishand</code></td>
+<td>constant</td>
+<td>NA/NaN/Inf in foreign function call (arg 1)</td>
+</tr><tr><td><code>snht</code></td>
+<td>constant</td>
+<td>NA/NaN/Inf in foreign function call (arg 1)</td>
+</tr></tbody></table><div class="section level3">
+<h3 id="id_6281-sn-and-why-the-guard-is-a-diagnosis-rather-than-a-prediction">628.1 <code>sn</code>, and why the guard is a diagnosis rather than a prediction<a class="anchor" aria-label="anchor" href="#id_6281-sn-and-why-the-guard-is-a-diagnosis-rather-than-a-prediction"></a></h3>
+<p><code><a href="reference/sn_wrapper.html">sn_wrapper()</a></code> already refused a series that never moves, with a comment saying the self-normalised statistic is undefined on one. The failure here is a series that stops moving <em>for a while</em>: a long enough run of identical values puts a zero variance inside one self-normalisation window. Measured by walking the run length:</p>
+<table class="table"><thead><tr><th>n</th>
+<th>shortest constant run that breaks it</th>
+<th>n/10</th>
+</tr></thead><tbody><tr><td>60</td>
+<td>6</td>
+<td>6</td>
+</tr><tr><td>100</td>
+<td>10</td>
+<td>10</td>
+</tr><tr><td>150</td>
+<td>14</td>
+<td>15</td>
+</tr><tr><td>200</td>
+<td>20</td>
+<td>20</td>
+</tr></tbody></table><p>So the threshold tracks SNSeg’s window size, which is a function of <code>grid_size</code>. I could have written <code>max(rle(x)$lengths) &gt;= floor(n / 10)</code> – and at n = 150 that guard would have let a failing series through, because the boundary is 14 and floor(150/10) is 15. Predicting another package’s internal window is the wrong shape of fix. The wrapper instead catches the engine’s error, checks whether the series has a run at all, and reports the longest one. That cannot mis-trigger, needs no reverse-engineering, and matches the idiom already used for the too-short-series case a few lines above.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6282-the-trend-tests-where-the-predicate-is-exact">628.2 The trend tests, where the predicate IS exact<a class="anchor" aria-label="anchor" href="#id_6282-the-trend-tests-where-the-predicate-is-exact"></a></h3>
+<p><code>buishand</code> and <code>snht</code> standardise by <code>sd(x)</code>, so <code>sd == 0</code> is exactly the failing condition and a pre-check is better than a diagnosis – it avoids handing a NaN to Fortran at all. What makes the message useful is the third test in the same wrapper: <code>pettitt</code> is rank-based, and measured, it runs on a constant series and reports no changepoint. So the error can point somewhere rather than just refusing, and the test asserts that the advice is true rather than only that the error fires.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6283-what-the-sweep-says-about-the-rest">628.3 What the sweep says about the rest<a class="anchor" aria-label="anchor" href="#id_6283-what-the-sweep-says-about-the-rest"></a></h3>
+<p>The 103 named refusals are worth a note of their own, because they are the evidence that the earlier argument sweeps worked. Every one of the 30 methods refuses an <code>NA</code>, an <code>Inf</code> and an all-NA series with the same message – “<code>x</code> must be finite (no NA/NaN/Inf); 1 of 60 values are not” – which is <code>validate_data()</code> doing its job at the single door. The n = 3 shape produced twelve distinct messages, each naming the method and its own minimum, and 18 methods segmented it happily, which is the documented contract (<code>validate_data()</code> requires 3).</p>
+<p>Two false positives in my own detector are worth recording so the next sweep does not chase them. My first regex included <code>NA/NaN</code>, which matches the package’s own “must be finite (no NA/NaN/Inf)” message – 93 cells misreported as unguarded. And <code>segmented</code> passes through an upstream message (“at least one coef is NA: breakpoint(s) at the boundary?”) which is the engine’s voice rather than this package’s, but does name a plausible cause, so it is left alone.</p>
+</div>
+</div>
 </div>
 
 

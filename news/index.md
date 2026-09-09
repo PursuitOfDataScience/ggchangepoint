@@ -2169,6 +2169,35 @@ failed for a reason unrelated to the package.
   the `jags` install decide its exit status — and since JAGS is optional
   here, even a genuine failure to fetch it now leaves the check running.
 
+Three engines answered an ordinary degenerate series with a base-R
+error.
+
+- Earlier rounds swept the **arguments** of all 64 wrapper argument
+  slots. Nothing had swept the **data**. A 30-method by 10-shape sweep —
+  constant, two-valued, three observations, one `NA`, one `Inf`, all
+  `NA`, huge and tiny scale, monotone, and a single spike — turned up
+  three unguarded paths out of 300 cells, each reachable with an input a
+  user could plausibly have:
+  - `sn` fails on any series with a long enough flat stretch, because a
+    self-normalisation window ends up with zero variance:
+    `missing value where TRUE/FALSE needed`. The guard that existed
+    caught a series that never moves; this is a series that stops moving
+    for a while. Measured, the breaking run length tracks the window
+    size — 6 at n = 60, 10 at n = 100, 20 at n = 200 — so the wrapper
+    now diagnoses the engine’s failure and reports the longest run
+    rather than trying to predict `grid_size`.
+  - `buishand` and `snht` both standardise by the series’ own standard
+    deviation, so a constant series divides by zero and the statistic
+    reaches ’s Fortran routine as `NaN`:
+    `NA/NaN/Inf in foreign function call (arg 1)`. Both now say what is
+    undefined and point at `test = "pettitt"`, which is rank-based and —
+    measured — runs on a constant series and reports no changepoint.
+- The sweep is now a test, trimmed to the four shapes that discriminated
+  so it runs every time, and the three messages are pinned separately: a
+  future refactor could keep the sweep green by refusing every
+  degenerate input with one generic complaint, which would lose the part
+  that makes them useful.
+
 Interval coverage, measured for the first time.
 
 - **[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
