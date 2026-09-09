@@ -23342,3 +23342,74 @@ arithmetic underneath, and in both cases the fix is to say what the number
 is and is not -- the section now gives the mean, the spread and the
 replicate count, and states that agreement to within one alarm is not
 something one stream can establish.
+
+## 628. The arguments had been swept; the data had not
+
+Every earlier hardening round swept *arguments*: "measured across all 64
+wrapper argument slots" appears in three wrappers' comments. Nobody had
+swept the *data*. So: 30 wired univariate methods against 10 degenerate
+series shapes -- constant, two-valued, three observations, one NA, one Inf,
+all NA, huge scale (1e8), tiny scale (1e-8), monotone, and a single spike.
+300 cells. 194 ran, 103 refused with a message naming the method or the
+argument, and **3 answered with a base-R error**, which is the signature of
+an unguarded path because it names neither.
+
+| method     | shape        | message |
+|------------|--------------|---------|
+| `sn`       | single spike | missing value where TRUE/FALSE needed |
+| `buishand` | constant     | NA/NaN/Inf in foreign function call (arg 1) |
+| `snht`     | constant     | NA/NaN/Inf in foreign function call (arg 1) |
+
+### 628.1 `sn`, and why the guard is a diagnosis rather than a prediction
+
+`sn_wrapper()` already refused a series that never moves, with a comment
+saying the self-normalised statistic is undefined on one. The failure here
+is a series that stops moving *for a while*: a long enough run of identical
+values puts a zero variance inside one self-normalisation window. Measured
+by walking the run length:
+
+| n   | shortest constant run that breaks it | n/10 |
+|-----|--------------------------------------|------|
+| 60  | 6                                    |  6   |
+| 100 | 10                                   | 10   |
+| 150 | 14                                   | 15   |
+| 200 | 20                                   | 20   |
+
+So the threshold tracks SNSeg's window size, which is a function of
+`grid_size`. I could have written `max(rle(x)$lengths) >= floor(n / 10)` --
+and at n = 150 that guard would have let a failing series through, because
+the boundary is 14 and floor(150/10) is 15. Predicting another package's
+internal window is the wrong shape of fix. The wrapper instead catches the
+engine's error, checks whether the series has a run at all, and reports the
+longest one. That cannot mis-trigger, needs no reverse-engineering, and
+matches the idiom already used for the too-short-series case a few lines
+above.
+
+### 628.2 The trend tests, where the predicate IS exact
+
+`buishand` and `snht` standardise by `sd(x)`, so `sd == 0` is exactly the
+failing condition and a pre-check is better than a diagnosis -- it avoids
+handing a NaN to Fortran at all. What makes the message useful is the
+third test in the same wrapper: `pettitt` is rank-based, and measured, it
+runs on a constant series and reports no changepoint. So the error can
+point somewhere rather than just refusing, and the test asserts that the
+advice is true rather than only that the error fires.
+
+### 628.3 What the sweep says about the rest
+
+The 103 named refusals are worth a note of their own, because they are the
+evidence that the earlier argument sweeps worked. Every one of the 30
+methods refuses an `NA`, an `Inf` and an all-NA series with the same
+message -- "`x` must be finite (no NA/NaN/Inf); 1 of 60 values are not" --
+which is `validate_data()` doing its job at the single door. The n = 3
+shape produced twelve distinct messages, each naming the method and its own
+minimum, and 18 methods segmented it happily, which is the documented
+contract (`validate_data()` requires 3).
+
+Two false positives in my own detector are worth recording so the next
+sweep does not chase them. My first regex included `NA/NaN`, which matches
+the package's own "must be finite (no NA/NaN/Inf)" message -- 93 cells
+misreported as unguarded. And `segmented` passes through an upstream
+message ("at least one coef is NA: breakpoint(s) at the boundary?") which
+is the engine's voice rather than this package's, but does name a plausible
+cause, so it is left alone.

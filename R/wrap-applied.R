@@ -62,6 +62,24 @@ trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
   validate_data(x)
   data_vec <- as_uni_vector(x, test)
 
+  # `buishand` and `snht` both standardise by the series' own standard
+  # deviation, so a constant series divides by zero and the statistic
+  # reaches trend's Fortran routine as NaN: "NA/NaN/Inf in foreign function
+  # call (arg 1)", which names neither the argument nor the series.
+  # `pettitt` is rank-based and survives it (measured: it runs and reports
+  # no changepoint), which is the useful thing to tell the caller.
+  if (test %in% c("buishand", "snht")) {
+    sd_x <- stats::sd(data_vec)
+    if (!is.finite(sd_x) || sd_x == 0) {
+      stop("`", test, "` standardises by the series' standard deviation, ",
+           "which is 0 here -- every one of the ", length(data_vec),
+           " observations is identical, so the test statistic is undefined ",
+           "rather than merely insignificant. `test = \"pettitt\"` is ",
+           "rank-based and reports no changepoint on a constant series.",
+           call. = FALSE)
+    }
+  }
+
   fit <- switch(test,
     pettitt = trend::pettitt.test(data_vec, ...),
     buishand = trend::br.test(data_vec, ...),

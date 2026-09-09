@@ -3931,3 +3931,95 @@ test_that("the documented scale-sensitivity counts are still true", {
   expect_equal(nrow(cpt_detect(scale(x)[, 1], method = "pelt")$changepoints),
                1L)
 })
+
+test_that("no engine answers a degenerate series with a base-R error", {
+  skip_on_cran()
+  # Earlier rounds swept the argument slots of all 64 wrapper arguments.
+  # Nothing had swept the DATA. A 30-method by 10-shape sweep found three
+  # unguarded paths, all reachable with ordinary inputs: `sn` on any series
+  # with a long flat stretch ("missing value where TRUE/FALSE needed"), and
+  # `buishand` and `snht` on a constant series ("NA/NaN/Inf in foreign
+  # function call (arg 1)"). A base-R message here is the signature of the
+  # defect: it names neither the method nor what was wrong with the input.
+  #
+  # Four shapes rather than ten: these are the ones that discriminated, and
+  # the sweep is kept narrow enough to run every time.
+  spike <- rep(0, 60); spike[30] <- 100
+  shapes <- list(
+    constant     = rep(1, 60),
+    single_spike = spike,
+    flat_run     = c(rep(0, 20), stats::rnorm(40)),
+    all_na       = rep(NA_real_, 60)
+  )
+  base_r <- paste0(
+    "object of type|invalid 'x'|missing value where|subscript out of ",
+    "bounds|non-numeric argument|argument is of length zero|undefined ",
+    "columns|\\$ operator is invalid|foreign function call|replacement has ",
+    "length zero|only 0's may be mixed|no applicable method|cannot be ",
+    "coerced|arguments imply differing")
+
+  tab <- cpt_methods()
+  avail <- tab$method[tab$status == "available" & tab$installed %in% TRUE &
+                        tab$univariate %in% TRUE]
+  # The engines whose single fit costs seconds to minutes; the point is the
+  # guard, and these are covered by the recorded sweep in next_release.md.
+  avail <- setdiff(avail, c("ocd", "mcp", "fabisearch", "bocpd", "beast",
+                            "taylor", "cpop", "ecp", "npmojo", "kcp"))
+  skip_if(length(avail) < 5)
+
+  offenders <- character()
+  set.seed(4)
+  for (m in avail) {
+    for (nm in names(shapes)) {
+      msg <- tryCatch({
+        utils::capture.output(suppressWarnings(suppressMessages(
+          cpt_detect(shapes[[nm]], method = m))))
+        NA_character_
+      }, error = function(e) conditionMessage(e))
+      if (!is.na(msg) && grepl(base_r, msg)) {
+        offenders <- c(offenders,
+                       sprintf("%s/%s: %s", m, nm, substr(msg, 1, 60)))
+      }
+    }
+  }
+  expect_equal(offenders, character(0),
+               info = paste(offenders, collapse = " | "))
+})
+
+test_that("the three shapes that used to reach a base-R error are named now", {
+  # Kept separately from the sweep above so the messages themselves are
+  # pinned: a future refactor could keep the sweep green by refusing every
+  # degenerate input with one generic complaint, which would lose the part
+  # that makes these useful.
+  skip_if_not(engine_usable("SNSeg"))
+  spike <- rep(0, 60); spike[30] <- 100
+  expect_error(cpt_detect(spike, method = "sn"), "longest run of identical")
+  set.seed(4)
+  expect_error(cpt_detect(c(rep(0, 20), stats::rnorm(40)), method = "sn"),
+               "could not self-normalise")
+  # ...and a series that does vary is still segmented.
+  set.seed(4)
+  expect_s3_class(cpt_detect(c(stats::rnorm(60), stats::rnorm(60, 3)),
+                             method = "sn"), "ggcpt")
+})
+
+test_that("the rank-based trend test survives what the parametric ones cannot", {
+  skip_if_not(engine_usable("trend"))
+  flat <- rep(1, 60)
+  # Both parametric tests standardise by the series' own SD, so a constant
+  # series divided by zero and reached trend's Fortran routine as NaN.
+  for (m in c("buishand", "snht")) {
+    expect_error(cpt_detect(flat, method = m), "standard deviation",
+                 info = m)
+    expect_error(cpt_detect(flat, method = m), "pettitt", info = m)
+  }
+  # The message's advice has to be true: pettitt is rank-based and runs.
+  expect_s3_class(cpt_detect(flat, method = "pettitt"), "ggcpt")
+  expect_equal(nrow(cpt_detect(flat, method = "pettitt")$changepoints), 0L)
+  # And a series with variation is unaffected at all three.
+  set.seed(4)
+  x <- c(stats::rnorm(30), stats::rnorm(30, 3))
+  for (m in c("pettitt", "buishand", "snht")) {
+    expect_true(is_ggcpt(cpt_detect(x, method = m)), info = m)
+  }
+})

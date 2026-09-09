@@ -163,6 +163,29 @@ sn_wrapper <- function(x, parameter = c("mean", "variance", "acf", "bivcor"),
              "windows (about 20 are needed at the default `grid_size`).",
              call. = FALSE)
       }
+      # A constant RUN, not a constant series: the guard above catches a
+      # column that never moves, but a series with a long enough flat
+      # stretch anywhere in it puts a zero variance inside one
+      # self-normalisation window, and the engine answers with base R's
+      # "missing value where TRUE/FALSE needed". Measured on noise with a
+      # leading run of zeros, the smallest breaking run tracks the window
+      # size: 6 at n = 60, 10 at n = 100, 14 at n = 150, 20 at n = 200 --
+      # so this is diagnosed from the engine's failure rather than
+      # predicted, which avoids reverse-engineering `grid_size` and cannot
+      # refuse a series the engine would have handled.
+      if (grepl("missing value where TRUE/FALSE needed",
+                conditionMessage(e), fixed = TRUE)) {
+        runs <- rle(as.numeric(data_vec))$lengths
+        if (max(runs) >= 2L) {
+          stop("`sn` could not self-normalise this series. Its longest run ",
+               "of identical values is ", max(runs), " of ",
+               length(data_vec), " observations, which leaves a window with ",
+               "zero variance -- roughly a tenth of the series is enough to ",
+               "do it. Use `parameter = \"variance\"` on a series that does ",
+               "vary, jitter the ties, or pick a method that tolerates flat ",
+               "stretches (`pelt`, `binseg`, `pettitt`).", call. = FALSE)
+        }
+      }
       stop(e)
     }
   )
