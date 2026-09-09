@@ -168,7 +168,7 @@ cpt_detect <- function(x,
   }
 
   # ---- planned and registered methods --------------------------------------
-  # `cpt_methods()` advertises four engines as "planned", but match.arg()
+  # `cpt_methods()` advertises five engines as "planned", but match.arg()
   # answered a request for one of them with the generic "'arg' should be one
   # of ..." list, which does not contain it -- so the table said the name
   # exists and the dispatcher said it does not. Name the situation instead.
@@ -278,6 +278,36 @@ cpt_detect <- function(x,
            "This is an internal error; please report it.", call. = FALSE)
     }
     derived <- derived_args_for(method, change_in, pen_val)
+    # A seasonal frequency the input carried (see as_cpt_series()) is one of
+    # the derived arguments: the series has been reduced to a bare vector by
+    # now, so an engine that needs a frequency would otherwise fall back to
+    # its own default -- bfast's is 12, which silently re-seasoned a
+    # quarterly `ts` as monthly. Only engines that take a `frequency` get
+    # it, and only when the caller did not name one.
+    if (!is.null(series$frequency) &&
+        "frequency" %in% names(formals(match.fun(wrapper)))) {
+      derived$frequency <- series$frequency
+    }
+    # fastcpd takes its penalty as `beta`, on its own scale -- so the
+    # resolved `pen_val`, computed on the Gaussian change-in-mean scale the
+    # changepoint-family engines use, is not it, and `derived_args_for()`
+    # returned only the family. `cpt_detect(x, method = "fastcpd", penalty =
+    # 5)` therefore resolved the 5 and threw it away. A number is
+    # unambiguous, and three of the names are shared with fastcpd verbatim;
+    # anything else is left to the engine's own default, which the
+    # penalty-semantics section of ?cpt_penalty now states.
+    if (identical(method, "fastcpd")) {
+      if (is.numeric(penalty)) {
+        derived$beta <- as.numeric(penalty)[1]
+      } else if (is.character(penalty) && length(penalty) == 1L &&
+                 toupper(penalty) %in% c("MBIC", "BIC", "SIC", "MDL")) {
+        derived$beta <- if (identical(toupper(penalty), "SIC")) {
+          "BIC"
+        } else {
+          toupper(penalty)
+        }
+      }
+    }
     derived <- derived[setdiff(names(derived), names(dots))]
     res <- do.call(wrapper, c(list(x = quote(x)), derived, dots),
                    envir = environment())
@@ -473,11 +503,17 @@ cpt_methods <- function(capabilities = TRUE) {
   # Installation status: TRUE/FALSE for wired engines, NA for planned and
   # registered ones (a registration supplies the detector itself, so there is
   # no package for this package to look for).
-  methods$installed <- ifelse(
-    methods$status != "available",
-    NA,
-    vapply(methods$engine, engine_installed, logical(1))
-  )
+  # Assign NA first and fill only the `available` subset: ifelse() evaluates
+  # BOTH arms, so this used to call find.package() for all 55 rows -- the
+  # five planned engines and every registered one included -- and then throw
+  # those answers away. A registration made with `engine = NULL` stores
+  # NA_character_, which find.package() is then handed.
+  methods$installed <- NA
+  avail <- methods$status == "available"
+  if (any(avail)) {
+    methods$installed[avail] <- vapply(methods$engine[avail],
+                                       engine_installed, logical(1))
+  }
 
   # Keep the 0.4.0 column order: the capability flags go after `installed`.
   front <- c("method", "change_in", "engine", "status", "installed",
@@ -524,9 +560,17 @@ change_in_mapping <- function(change_in) {
 # Internal: change_in -> engine-specific argument translations
 #' @noRd
 not_contrast_for <- function(change_in) {
+  # `pcwsConstMeanVar` changes the mean AND the variance, and not_wrapper()
+  # labels its result `change_in = "meanvar"` for that reason -- so a "var"
+  # request produced a result whose own `change_in` was not in `not`'s
+  # `supports`, a value validate_method_change_in() would refuse and
+  # cpt_detect() could never be asked for. "meanvar" is now an accepted
+  # request routed to the same contrast, so the label the wrapper writes is
+  # one the registry lists.
   switch(change_in,
     mean = "pcwsConstMean",
     var = "pcwsConstMeanVar",
+    meanvar = "pcwsConstMeanVar",
     slope = "pcwsLinContMean",
     "pcwsConstMean"
   )
@@ -740,6 +784,17 @@ wrap_ecp_to_ggcpt <- function(x, ...) {
 #'     TGUH): use internal model-selection criteria (e.g., sSIC, threshold)
 #'     and generally \emph{ignore} the \code{penalty} argument. Specify
 #'     thresholds via the wrapper's own arguments.
+#'   \item \strong{\code{fastcpd}} takes its penalty as \code{beta}, on its
+#'     own scale, and defaults to its native \code{"MBIC"}.
+#'     \code{cpt_detect()} forwards a numeric \code{penalty} as
+#'     \code{beta}, and translates the three names the two packages share
+#'     (\code{"MBIC"}, \code{"BIC"}/\code{"SIC"}, \code{"MDL"}). Any other
+#'     character penalty --- \code{"AIC"}, \code{"Hannan-Quinn"},
+#'     \code{"sSIC"}, \code{"None"} --- has no \pkg{fastcpd} equivalent and
+#'     is left to the engine's default rather than being silently
+#'     approximated; pass \code{beta} yourself to pin it. Whatever is used
+#'     is recorded on the result, so \code{print()} and \code{glance()}
+#'     report the penalty of the fit in hand.
 #'   \item \strong{Inference/Bayesian methods} (\code{smuce}, \code{bcp},
 #'     \code{bocpd}, \code{beast}, \code{cpm}, \code{sn}): are tuned by a
 #'     significance level, posterior-probability threshold, hazard, or
@@ -749,11 +804,16 @@ wrap_ecp_to_ggcpt <- function(x, ...) {
 #'     changepoints can be placed in \code{n} observations,
 #'     \eqn{0.5(k+1)\log n + \log{n \choose k}}. It is deliberately stronger
 #'     than \code{"BIC"}. It is \emph{not} the modified BIC of Zhang and
-#'     Siegmund (2007), whose penalty
-#'     \eqn{1.5 k \log n + 0.5 \sum_i \log(l_i / n)} depends on the segment
-#'     lengths \eqn{l_i} and so cannot be expressed by a function of
-#'     \code{n} and \code{k} alone. Use the character \code{"MBIC"} with
-#'     \pkg{changepoint}-based methods to get the engine's native MBIC.
+#'     Siegmund (2007), whose penalty is
+#'     \eqn{1.5 k \log n + 0.5 \sum_i \log(l_i / n)} on the
+#'     \strong{log-likelihood} scale (equivalently
+#'     \eqn{3 k \log n + \sum_i \log(l_i / n)} on the deviance scale,
+#'     which is how \code{\link{cpt_select}()} states it and the scale its
+#'     \code{cost} column uses). It depends on the segment lengths
+#'     \eqn{l_i} and so cannot be expressed by a function of \code{n} and
+#'     \code{k} alone. Use the character \code{"MBIC"} with
+#'     \pkg{changepoint}-based methods to get the engine's native MBIC, and
+#'     \code{cpt_select(criterion = "mbic")} for the Zhang–Siegmund one.
 #' }
 #'
 #' @return A numeric penalty value.

@@ -203,6 +203,28 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
          "Pass the locations instead, e.g. `fit$changepoints$cp` or ",
          "`tidy(fit)$cp`.", call. = FALSE)
   }
+  # A data frame IS a list, so `cpt_metrics_annotated(pred, tidy(fit), n)`
+  # read each COLUMN as an annotator -- scoring `cp_value`, which holds raw
+  # data values, as changepoint locations. It emitted "Dropping changepoint
+  # indices outside 1..(n-1)" and then produced plausible-looking numbers.
+  # cpt_metrics() refuses a data frame for either argument.
+  if (is.data.frame(annotations)) {
+    stop("`annotations` is a data frame, and a data frame is a list -- so ",
+         "each COLUMN would be read as one annotator's changepoints. Pass ",
+         "a list of index vectors, one per annotator, e.g. ",
+         "`split(df$cp, df$annotator)` or `list(df$cp)`.", call. = FALSE)
+  }
+  # With no annotators there is nothing to average, and the arithmetic below
+  # does not notice: `do.call(rbind, list())` is NULL, `NULL$n_pred[1]` is
+  # NULL, tibble() drops a NULL argument, and the caller got a one-row
+  # tibble with the `n_pred` column MISSING, four NA metrics and four base-R
+  # warnings about a non-numeric argument to mean().
+  if (length(annotations) == 0L) {
+    stop("`annotations` is empty, so there is no ground truth to score ",
+         "against. Pass one vector of changepoint indices per annotator, ",
+         "e.g. `annotations = list(c(98, 200), c(100, 203))`.",
+         call. = FALSE)
+  }
   if (!is.list(annotations)) {
     annotations <- list(annotations)
   }

@@ -25,7 +25,14 @@ Defaults to \code{"mean"}.}
 \code{1} for AR, \code{c(1, 1)} otherwise.}
 
 \item{...}{Additional arguments passed to the corresponding
-\code{fastcpd::fastcpd.*()} function (e.g. \code{beta}, \code{trim}).}
+\code{fastcpd::fastcpd.*()} function (e.g. \code{beta}, \code{trim}).
+\code{beta} is \pkg{fastcpd}'s penalty: a number, or one of its own
+names (\code{"MBIC"}, the default, \code{"BIC"}, \code{"MDL"}). It is
+recorded on the result, so \code{print()} and \code{glance()} report
+the penalty the fit actually used. \code{\link{cpt_detect}()} forwards
+a numeric \code{penalty} here and translates the three names it shares
+with \pkg{fastcpd}; see the penalty-semantics section of
+\code{\link{cpt_penalty}()}.}
 }
 \value{
 A \code{ggcpt} object.

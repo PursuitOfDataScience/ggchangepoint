@@ -12,7 +12,15 @@
 #'   vector of segment means. For \code{var} changes, a vector of segment sds.
 #'   For \code{meanvar}, a list of lists with \code{mean} and \code{sd} per
 #'   segment. For \code{slope}, a list with \code{intercept} and \code{slope}
-#'   per segment. When \code{NULL}, every segment gets the same neutral
+#'   per segment --- and the time origin \strong{resets in every segment},
+#'   so segment \eqn{i}'s signal is
+#'   \eqn{\mathrm{intercept}_i + \mathrm{slope}_i \cdot (1, \ldots, l_i)}
+#'   with the clock restarting at 1. A caller reasoning in absolute time ---
+#'   \code{list(list(intercept = 0, slope = 1), list(intercept = 100,
+#'   slope = -1))}, meaning "rise to 100 then fall" --- gets segment 2
+#'   starting at 99, i.e. a slope change plus an unrequested level jump. For
+#'   a continuous piecewise-linear signal keep the intercept the same in
+#'   every segment. When \code{NULL}, every segment gets the same neutral
 #'   parameters, so the series has no actual change. \code{changepoints}
 #'   sets the number of segments -- \eqn{k} changepoints make \eqn{k + 1}
 #'   of them -- and a mismatch in either direction warns rather than
@@ -78,7 +86,10 @@ cpt_simulate <- function(n,
 
   change_in <- match.arg(change_in)
   noise <- match.arg(noise)
-  validate_scalar(n, "n", min = 1)
+  # `min = 3`, matching validate_data(): at n < 3 the simulator handed back
+  # a tibble every consumer in the package then refuses, which is a
+  # confusing place to learn the limit.
+  validate_scalar(n, "n", min = 3)
   validate_scalar(sd, "sd", min = 0)
   # rho only enters the AR(1) path, and |rho| >= 1 makes the innovation scale
   # sqrt(1 - rho^2) NaN (or zero), so the whole series comes back NaN with no
@@ -158,6 +169,29 @@ cpt_simulate <- function(n,
             "`params`.", call. = FALSE)
   }
 
+  # "slope" is the one change type whose per-segment parameters are not
+  # numbers: each segment needs an `intercept` and a `slope`. `mean` and
+  # `var` take an atomic vector, so `params = c(0, 1)` is the natural
+  # mistake -- and it reached `p$intercept` on an atomic value, which is base
+  # R's "$ operator is invalid for atomic vectors": a message naming neither
+  # the argument nor the shape it wanted. The "meanvar" branch guards for
+  # the same reason; this one did not.
+  if (identical(change_in, "slope")) {
+    ok <- is.list(params) && length(params) > 0 &&
+      all(vapply(params, function(p) {
+        is.list(p) && all(c("intercept", "slope") %in% names(p)) &&
+          is.numeric(p[["intercept"]]) && is.numeric(p[["slope"]])
+      }, logical(1)))
+    if (!ok) {
+      stop("`change_in = \"slope\"` needs `params` to be a list with one ",
+           "`list(intercept = , slope = )` per segment, e.g. ",
+           "`params = list(list(intercept = 0, slope = 0.1), ",
+           "list(intercept = 5, slope = -0.2))`. Got ",
+           if (is.list(params)) "a list of something else" else
+             paste0("a ", class(params)[1], " vector"), ".", call. = FALSE)
+    }
+  }
+
   # Build the per-observation signal (mean) and noise scale (sd). For "var"
   # and "meanvar" the per-segment standard deviation is applied to the noise,
   # so a change in variance is genuinely simulated.
@@ -197,6 +231,9 @@ cpt_simulate <- function(n,
       }
     } else if (change_in == "slope") {
       p <- params[[j]]
+      # The clock restarts at 1 in every segment (documented in @param
+      # params): the intercept is the segment's own starting level, not a
+      # level at absolute time zero.
       t_vals <- seq_along(idx)
       signal[idx] <- p$intercept + p$slope * t_vals
     }

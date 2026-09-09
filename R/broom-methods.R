@@ -61,8 +61,20 @@ cpt_regions <- function(x) {
   }
   reg <- x$regions
   if (is.null(reg) || nrow(reg) == 0) {
-    return(tibble::tibble(start = integer(), end = integer(),
-                          length = integer()))
+    # The same columns a non-empty return would have, so
+    # rbind(cpt_regions(a), cpt_regions(b)) works when one of the two is
+    # empty and the other is indexed. empty_confint() already does this,
+    # and ?alarms advertises the property.
+    out <- tibble::tibble(start = integer(), end = integer(),
+                          length = integer())
+    # `[[..., exact = TRUE]]`, not `$`: a tibble warns "Unknown or
+    # uninitialised column" when asked for a column it does not have.
+    if ("index_value" %in% names(x$data)) {
+      iv <- x$data[["index_value", exact = TRUE]]
+      out$start_index <- iv[0]
+      out$end_index <- iv[0]
+    }
+    return(out)
   }
   out <- tibble::as_tibble(reg)
   out$length <- out$end - out$start + 1L
@@ -143,9 +155,15 @@ glance.ggcpt <- function(x, ...) {
         },
         error = function(e) NA_real_
       )
-    } else if (is.list(x$fit)) {
+    } else if (is.list(x$fit) && !is.data.frame(x$fit)) {
       # Exact [[ ]] subsetting: $ would partial-match unrelated elements
-      # (e.g. DeCAFS's costFunction).
+      # (e.g. DeCAFS's costFunction). And NOT a data frame: one IS a list,
+      # and fchange_run() stores a frame directly as $fit, so a frame that
+      # ever acquired a `value` column would make `cand` the whole COLUMN
+      # -- whose last element the reconciliation below would then report as
+      # the model's total cost. (The length > 1 case is kept for fpop,
+      # which genuinely exposes a per-position cost vector whose terminal
+      # element IS the total; a data frame column is not that.)
       cand <- x$fit[["cost"]] %||% x$fit[["loss"]] %||% x$fit[["value"]]
       if (!is.null(cand) && is.numeric(cand)) total_cost <- cand
     }
@@ -199,8 +217,15 @@ glance.ggcpt <- function(x, ...) {
 #' For a multivariate result every coordinate is returned, but the
 #' changepoints are shared across them, so \code{seg_id} and
 #' \code{is_changepoint} apply to the whole row while \code{.fitted} and
-#' \code{.resid} describe the \emph{first} coordinate only — the same
-#' coordinate \code{$segments$param_estimate} summarises. When an engine
+#' \code{.resid} describe the \strong{univariate series the result
+#' carries} — \code{$data$value}, the same series
+#' \code{$segments$param_estimate} summarises, so \code{.resid} is always
+#' \code{value - .fitted}. For most multivariate engines that series is
+#' the first coordinate; \code{fmean}, \code{fcov}, \code{kwc} and
+#' \code{fabisearch} store the cross-sectional mean \code{rowMeans()}
+#' instead, and for those \code{.fitted}/\code{.resid} describe that mean
+#' rather than any one column. Either way the two columns agree with each
+#' other, which is what makes \code{.resid} a residual. When an engine
 #' supplies its own fitted signal that signal is used for \code{.fitted} in
 #' place of the segment means, and rides along in a \code{fitted} column of
 #' its own -- so for those engines the two columns agree. The engines that
@@ -224,15 +249,36 @@ augment.ggcpt <- function(x, ...) {
     }
   }
 
-  # The index used to flag changepoints, and the value vector used for .resid
-  # (the first coordinate for the wide multivariate frame).
+  # The index used to flag changepoints, and the value vector used for
+  # `.resid`.
   index_col <- data[["index"]]
-  value_vec <- if (use_wide) {
-    coord_cols <- setdiff(names(data), c("index", "index_value"))
-    as.numeric(data[[coord_cols[1]]])
-  } else {
-    data$value
-  }
+  # `.resid` has to be computed against the series `param_estimate` was
+  # computed FROM, which is always `x$data$value`. Reading coordinate one
+  # out of `data_wide` instead was right for twelve of the sixteen
+  # multivariate wrappers and wrong for four: `fmean`, `fcov`, `kwc` and
+  # `fabisearch` store `rowMeans(X)` as their univariate series (see
+  # wrap-functional.R and wrap-highdim2.R), so build_segments() derived
+  # `param_estimate` from the row averages while this subtracted it from
+  # coordinate one -- two different quantities, and `.resid` was not a
+  # residual at all.
+  #
+  # Measured on a 120x6 `fmean` fit: `.resid` equalled `X[, 1] - .fitted`
+  # and did NOT equal `value - .fitted`. Using `data$value` is identical
+  # for the twelve wrappers where the two agree, so this changes nothing
+  # for them and makes the other four correct.
+  #
+  # Taken from `x$data`, not from the local `data`: on the multivariate path
+  # that has been replaced by the wide frame, which has no `value` column at
+  # all -- reading it there gave a zero-length vector and `$<-` refused to
+  # recycle it to n rows.
+  # Two conventions live in the next twenty lines and they agree only
+  # because `$data$index` is `seq_len(n)`: `.fitted`/`seg_id` are written by
+  # ROW POSITION (`idx <- seq(s$start, s$end)`, and segment bounds are
+  # positions), while `is_changepoint` is written by VALUE MATCH against
+  # `$changepoints$cp`. attach_index() keeps `index` positional and adds the
+  # user's scale as `index_value` precisely so that stays true -- if either
+  # ever became the user's scale, one of the two would silently be wrong.
+  value_vec <- as.numeric(x$data$value)
 
   data$seg_id <- NA_integer_
   data$.fitted <- NA_real_
@@ -285,7 +331,9 @@ cpt_test_stat <- function(fit) {
 #' Summary of a ggcpt object
 #'
 #' Provides a human-readable digest of a changepoint detection result,
-#' including the segment table with levels and lengths, total cost,
+#' including the segment table with levels and lengths (the level is the
+#' segment mean whatever `change_in` says --- see \code{\link{new_ggcpt}}),
+#' total cost,
 #' penalty, and runtime.
 #'
 #' @param object A \code{ggcpt} object.

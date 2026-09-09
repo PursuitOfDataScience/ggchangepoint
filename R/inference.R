@@ -135,6 +135,22 @@ cpt_confint <- function(object, level = 0.95,
     }
   }
 
+  # Outside the `auto` block on purpose: `auto` would have picked "native"
+  # for the engine this matters to (strucchange supplies its own intervals),
+  # so the reachable call is the EXPLICIT `method = "bootstrap"` the review
+  # named, which skipped every check in that block.
+  if (method == "bootstrap" && !rerun_matches_result(object)) {
+    stop("This result reports `change_in = \"",
+         scalar_chr(object$change_in), "\"`, which `",
+         scalar_chr(object$method),
+         "` cannot be asked for through cpt_detect() -- so the bootstrap ",
+         "would re-run a different model than the one that produced it and ",
+         "report the spread of the wrong search as this result's interval. ",
+         "A formula fit keeps neither the formula nor `data` on the object. ",
+         "Use the engine's own intervals with `method = \"native\"`, or ",
+         "supply the interval yourself via as_ggcpt(ci = ).", call. = FALSE)
+  }
+
   out <- switch(method,
     native = {
       if (!has_native) {
@@ -224,6 +240,27 @@ bootstrap_possible <- function(object) {
   method <- scalar_chr(object$method)
   if (is.na(method)) return(FALSE)
   method %in% builtin_registry()$method || !is.null(registry_get(method))
+}
+
+# Internal: can the detector be re-run to reproduce THIS result? Being in the
+# registry is not enough. `strucchange_wrapper(y ~ x1 + x2, data = d)` returns
+# `change_in = "regression"`, and neither the formula nor `data` is
+# recoverable from the object -- `$data$value` is the response alone. So the
+# bootstrap resampled the response and re-ran an INTERCEPT-ONLY breakpoint
+# search, on a series whose changepoints came from a multi-regressor model,
+# and reported the spread of the wrong search as the interval of the right
+# one. bootstrap_possible() said TRUE, because the method is in the registry.
+#
+# The discriminator is the MODEL CONTEXT, not the registry: `"regression"` is
+# the one label in cpt_change_in_levels() that describes a fit to covariates
+# the result does not carry. (`"covariance"` and `"network"` results keep
+# their full input in `$data_wide`, so those re-run correctly.) Keyed on the
+# label rather than on `supports`, because `supports` answers a different
+# question -- what you may ASK cpt_detect() for -- and widening it to make
+# this label "legal" would claim a request route that does not exist.
+#' @noRd
+rerun_matches_result <- function(object) {
+  !identical(scalar_chr(object$change_in), "regression")
 }
 
 #' @noRd
@@ -349,7 +386,15 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
     resampled <- resid
     for (s in seq_len(nrow(seg))) {
       idx <- which(seg_id == s)
-      resampled[idx] <- sample(resid[idx], length(idx), replace = TRUE)
+      # `sample.int()` on the index, not `sample()` on the values: R's
+      # classic pitfall is that `sample(x, n)` means `sample.int(x, n)` when
+      # `x` is a single number >= 1, so a one-observation segment resamples
+      # `1:round(resid)` instead of the residual itself. It is currently
+      # safe only by accident -- a length-1 segment's residual against its
+      # own mean is exactly 0, and `0 >= 1` is FALSE -- which couples this
+      # bootstrap to `param_estimate` staying the exact segment mean.
+      resampled[idx] <- resid[idx][sample.int(length(idx), length(idx),
+                                              replace = TRUE)]
     }
     rep_cp <- tryCatch(
       do.call(cpt_detect,
@@ -452,16 +497,30 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
 #' anti-conservative, often severely. The \code{selection_adjusted} column
 #' records, per row, whether the test accounts for that:
 #' \itemize{
-#'   \item \code{TRUE} for \pkg{strucchange} (the Chow/supF statistics the
-#'     Bai–Perron framework supplies) and for \pkg{segmented}'s Davies test,
-#'     which is built for a nuisance parameter present only under the
-#'     alternative;
+#'   \item \code{TRUE} for \pkg{segmented}'s Davies test, which is built
+#'     for a nuisance parameter present only under the alternative. It is
+#'     one \emph{global} test of "is there a breakpoint", not a test per
+#'     breakpoint, so on a multi-break fit every row carries the same
+#'     statistic and p-value --- the method string says so.
 #'   \item \code{FALSE} for the generic Welch two-sample fallback, which
 #'     compares the segments either side of the changepoint as if the
 #'     location had been fixed in advance. Useful as a descriptive effect
 #'     size with a scale attached; not a valid significance test for the
 #'     existence of the change.
+#'   \item \code{FALSE} for \pkg{strucchange}'s route as well, which is
+#'     the Chow F evaluated \emph{at} each estimated break date. The Chow
+#'     statistic's reference distribution assumes the date was fixed in
+#'     advance, so quoting it at a date the Bai–Perron dynamic program chose
+#'     is exactly the circularity this column exists to flag --- reporting
+#'     it is conventional in that literature, which does not make it
+#'     adjusted. The selection-adjusted objects there are the sup-type
+#'     statistics and the Bai–Perron critical values.
 #' }
+#' Two further limits worth knowing. \code{type = "segment"} is
+#' \strong{always} the unadjusted Welch test: the native routes above apply
+#' only to \code{type = "jump"}, so a \pkg{segmented} fit tested
+#' per-segment does not use Davies' test. And the split above is by
+#' \emph{engine and type}, not by engine alone.
 #' For a guarantee that survives selection, use \code{\link{nsp_wrapper}()}
 #' (regions with exact global coverage) or \code{\link{cpt_confint}()} with
 #' \code{method = "nsp"}. The canonical post-detection tests of Jewell,
@@ -528,7 +587,15 @@ native_jump_test <- function(object) {
 # Internal: a Chow F test at each estimated break date. `sctest()` with
 # `type = "Chow"` is strucchange's own single-break test; running it at the
 # dates the Bai-Perron dynamic program selected is the standard reporting
-# convention in that literature.
+# convention in that literature -- but the convention does not make the
+# p-value selection-adjusted, and this column used to claim it was. The
+# Chow F's reference distribution assumes the break date was fixed IN
+# ADVANCE; evaluating it at a date chosen because the data looked like it
+# broke there is precisely the circularity `selection_adjusted` exists to
+# flag. The selection-adjusted objects in this framework are the sup-type
+# statistics (supF / Fstats) and the Bai-Perron critical values, not a
+# pointwise Chow F, so the flag is FALSE and the method string says
+# "unadjusted" out loud.
 #' @noRd
 strucchange_jump_test <- function(object, fit) {
   cp <- object$changepoints$cp
@@ -546,8 +613,8 @@ strucchange_jump_test <- function(object, fit) {
                    estimate = mean(right) - mean(left),
                    statistic = as.numeric(tst$statistic),
                    p_value = as.numeric(tst$p.value),
-                   method = "Chow F (strucchange)",
-                   selection_adjusted = TRUE)
+                   method = "Chow F at estimated break (unadjusted)",
+                   selection_adjusted = FALSE)
   })
   rows <- Filter(Negate(is.null), rows)
   if (length(rows) == 0) return(NULL)
@@ -585,7 +652,13 @@ segmented_jump_test <- function(object, fit) {
     } else {
       rep(NA_real_, length(cp))
     },
-    method = "Davies test (segmented)",
+    # Davies' test is a single test of "is there A breakpoint", not a test
+    # per breakpoint, so on a three-break fit these rows carry the same
+    # statistic and p-value three times -- which reads as three
+    # per-changepoint tests. It IS the right selection-adjusted object; the
+    # row-wise presentation was the problem, so the method string names the
+    # scope.
+    method = "Davies test (segmented; global, one test per fit)",
     selection_adjusted = TRUE
   )
 }

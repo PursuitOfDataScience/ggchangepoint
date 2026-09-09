@@ -32,16 +32,24 @@ cpt_cite <- function(x) {
            "set. Call cpt_cite() with no argument for the full table.",
            call. = FALSE)
     }
+    # The registry is an environment, so its lookup is CASE-SENSITIVE, and
+    # cpt_register_method() stores the name verbatim. Lowercasing first
+    # meant a registered "MyDetector" was never found -- cpt_detect()
+    # dispatched it fine and cpt_cite() told the user to register a
+    # citation, which is exactly what they had done. Try the name as given
+    # before folding case for the built-in table.
+    registered <- registry_get(method)
+    method_given <- method
     method <- tolower(method)
     out <- refs[refs$method == method, , drop = FALSE]
     if (nrow(out) == 0) {
       # A user-registered detector is cited from what the registration
       # supplied -- or plainly not cited at all. Never invent one, and never
       # let a registered method borrow the credibility of a wired one.
-      entry <- registry_get(method)
+      entry <- registered %||% registry_get(method)
       if (!is.null(entry)) {
         out <- tibble::tibble(
-          method = method,
+          method = method_given,
           reference = entry$citation %||% paste0(
             "No citation was supplied when `", method, "` was registered ",
             "with cpt_register_method(). This method is user-supplied: ",
@@ -106,15 +114,15 @@ cpt_references <- function() {
 
     # ---- 0.5.0 engine wave -------------------------------------------------
     "nsp", "Fryzlewicz, P. (2024). Narrowest Significance Pursuit: inference for multiple change-points in linear models. Journal of the American Statistical Association, 119(546), 1633-1646.",
-    "mcp", "Lindelov, J. K. (2020). mcp: An R package for regression with multiple change points. OSF Preprints. doi:10.31219/osf.io/fzqxv.",
+    "mcp", "Lindel\u00f8v, J. K. (2020). mcp: An R package for regression with multiple change points. OSF Preprints. doi:10.31219/osf.io/fzqxv.",
     "esac", "Moen, P. A. J., Glad, I. K. and Tveten, M. (2024). Efficient sparsity adaptive changepoint estimation. Electronic Journal of Statistics, 18(2), 3975-4038.",
     "pilliat", "Pilliat, E., Carpentier, A. and Verzelen, N. (2023). Optimal multiple change-point detection for high-dimensional data. Electronic Journal of Statistics, 17(1), 1240-1315.",
     "hdcov", "Wang, D., Yu, Y. and Rinaldo, A. (2021). Optimal covariance change point localization in high dimensions. Bernoulli, 27(1), 554-575.",
     "network", "Yu, Y., Padilla, O. H. M., Wang, D. and Rinaldo, A. (2021). Optimal network online change point localisation. arXiv:2101.05477.",
     "var", "Wang, D., Yu, Y., Rinaldo, A. and Willett, R. (2019). Localizing changes in high-dimensional vector autoregressive processes. arXiv:1909.06359.",
     "hdreg", "Rinaldo, A., Wang, D., Wen, Q., Willett, R. and Yu, Y. (2021). Localizing changes in high-dimensional regression models. Proceedings of the 24th International Conference on Artificial Intelligence and Statistics, PMLR 130, 2089-2097.",
-    "fmean", "Aue, A., Rice, G. and Sonmez, O. (2018). Detecting and dating structural breaks in functional data without dimension reduction. Journal of the Royal Statistical Society: Series B, 80(3), 509-529.",
-    "fcov", "Aue, A., Rice, G. and Sonmez, O. (2020). Structural break analysis for spectrum and trace of covariance operators. Environmetrics, 31(1), e2617. See also Aue, Rice and Sonmez (2018), JRSS-B 80(3), 509-529.",
+    "fmean", "Aue, A., Rice, G. and S\u00f6nmez, O. (2018). Detecting and dating structural breaks in functional data without dimension reduction. Journal of the Royal Statistical Society: Series B, 80(3), 509-529.",
+    "fcov", "Aue, A., Rice, G. and S\u00f6nmez, O. (2020). Structural break analysis for spectrum and trace of covariance operators. Environmetrics, 31(1), e2617. See also Aue, Rice and S\u00f6nmez (2018), JRSS-B 80(3), 509-529.",
     "kwc", "Ramsay, K. and Chenouri, S. (2025). Robust changepoint detection in the variability of multivariate functional data. Journal of Nonparametric Statistics. doi:10.1080/10485252.2025.2503891.",
     "fabisearch", "Ondrus, M. and Cribben, I. (2024). fabisearch: a package for change point detection in and visualization of the network structure of multivariate high-dimensional time series in R. Neurocomputing, 578, 127321.",
     "wbsts", "Korkas, K. K. and Fryzlewicz, P. (2017). Multiple change-point detection for non-stationary time series using wild binary segmentation. Statistica Sinica, 27(1), 287-311.",

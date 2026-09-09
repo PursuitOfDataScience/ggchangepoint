@@ -26,7 +26,7 @@
 #'     \item{\code{"applied"}}{\pkg{trend}, \pkg{ChangePointTaylor},
 #'       \pkg{bfast}, \pkg{wbsts}, \pkg{binsegRcpp}.}
 #'     \item{\code{"time"}}{index and coercion support: \pkg{zoo},
-#'       \pkg{xts}, \pkg{tsibble}, \pkg{tsbox}.}
+#'       \pkg{xts}, \pkg{tsibble}.}
 #'     \item{\code{"reporting"}}{\pkg{gt}, \pkg{ggrepel}, \pkg{plotly},
 #'       \pkg{ggiraph}, \pkg{progressr}, \pkg{jsonlite}.}
 #'     \item{\code{"all"}}{every engine and extra the package knows about.}
@@ -104,8 +104,14 @@ engine_bundles <- function() {
                   "penaltyLearning"),
     applied = eng(c("pettitt", "buishand", "snht", "taylor", "bfast",
                     "wbsts", "binsegrcpp")),
-    time = c("zoo", "xts", "tsibble", "tsbox"),
+    # Only packages this one actually reads or writes through. `tsbox` and
+    # `patchwork` were listed here and appear nowhere else in the package --
+    # not in Suggests, not in R/, not in the tests or vignettes -- so the
+    # installer was offering to fetch two dependencies that nothing could
+    # then use, and the `reporting` bundle installed seven packages where
+    # `@param bundle` documented six.
+    time = c("zoo", "xts", "tsibble"),
     reporting = c("gt", "ggrepel", "plotly", "ggiraph", "progressr",
-                  "jsonlite", "patchwork")
+                  "jsonlite")
   )
 }

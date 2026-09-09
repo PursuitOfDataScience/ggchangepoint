@@ -18,14 +18,22 @@ validate_location <- function(location, n) {
          paste(format(utils::head(location, 4)), collapse = ", "), ".",
          call. = FALSE)
   }
-  nmax <- suppressWarnings(max(as.numeric(n)))
+  # The SMALLEST n, not the largest: an integer position is checked against
+  # every scenario it will be used in, and `n = c(50, 500)` with
+  # `location = 400` passed against 500 and was then silently clamped to 48
+  # in the n = 50 scenario. A fraction of n is scale-free and needs no such
+  # check.
+  nmin <- suppressWarnings(min(as.numeric(n)))
   frac <- location > 0 & location < 1
   pos <- !frac & location == round(location) &
-    location >= 1 & location <= nmax - 1
+    location >= 1 & location <= nmin - 1
   bad <- !(frac | pos)
   if (any(bad)) {
     stop("`location` must be a fraction of `n` in (0, 1) or an integer ",
-         "position in [1, ", format(nmax - 1), "]; ",
+         "position in [1, ", format(nmin - 1),
+         if (length(n) > 1) paste0("] (the shortest of the ", length(n),
+                                   " series lengths is ", format(nmin))
+         else "", "]; ",
          paste(format(location[bad]), collapse = ", "),
          if (sum(bad) > 1) " are not." else " is not.", call. = FALSE)
   }
@@ -97,7 +105,11 @@ validate_location <- function(location, n) {
 #'   (proportion of replicates detecting the change within
 #'   \code{tolerance}), \code{mc_se} (the Monte Carlo standard error of that
 #'   proportion), \code{mean_abs_error} (location error among detections),
-#'   \code{false_positive_rate} (mean number of \emph{extra} changepoints per
+#'   \code{mean_abs_error} is \code{NaN} when no replicate detected a
+#'   changepoint within \code{tolerance} of the true one --- there is no
+#'   distance to average --- and \code{power} reads \code{0} in the same
+#'   row.
+#'   \code{false_positives} (mean number of \emph{extra} changepoints per
 #'   replicate) and \code{n_sim} — with \code{print()} and
 #'   \code{autoplot()}.
 #' @seealso \code{\link{cpt_min_detectable}()}, \code{\link{cpt_scenarios}()},
@@ -209,8 +221,18 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
       location = cp,
       power = power,
       mc_se = if (ok > 0) sqrt(power * (1 - power) / ok) else NA_real_,
+      # NaN when no replicate ever detected within the tolerance: there is
+      # no distance to average. Deliberately NOT a warning -- a power sweep
+      # is expected to include jumps too small to find, and the `power`
+      # column already reads 0 in exactly those rows, so a warning per row
+      # would fire on correct output. @return says so instead.
       mean_abs_error = mean(m[, "err"], na.rm = TRUE),
-      false_positive_rate = mean(m[, "extra"], na.rm = TRUE),
+      # A COUNT, not a rate: `extra` is the number of detections outside the
+      # tolerance window per replicate, so on a scale-mismatched run this
+      # reads 137, and `false_positive_rate = 137` invites the reader to see
+      # a percentage. @return always described it correctly; the name did
+      # not.
+      false_positives = mean(m[, "extra"], na.rm = TRUE),
       n_sim = ok
     )
   }

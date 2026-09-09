@@ -14,8 +14,13 @@ is_ggcpt(x)
 }
 \description{
 A class check, useful when a function accepts either a detection result or
-the raw series. It tests the class only; a \code{ggcpt} subclass such as
-\code{ggcpt_batch} is not one of these and returns \code{FALSE}.
+the raw series. It tests for \code{ggcpt} in the class vector, so a
+genuine \code{ggcpt} subclass --- \code{ggcpt_consensus} is the one ---
+returns \code{TRUE}. The other \code{ggcpt_*} classes in the package
+(\code{ggcpt_batch}, \code{ggcpt_benchmark}, \code{ggcpt_monitor},
+\code{ggcpt_selection} and the rest) are \emph{not} subclasses of
+\code{ggcpt} --- most are tibble subclasses --- and return
+\code{FALSE}.
 }
 \examples{
 set.seed(2026)

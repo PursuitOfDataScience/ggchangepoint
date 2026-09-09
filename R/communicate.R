@@ -117,8 +117,33 @@ cpt_annotate_events <- function(object, events, location = NULL,
     # A numeric index whose events fall outside 1..n can only be on the
     # index scale.
     on_index <- TRUE
+  } else if (!on_index && !is.null(idx) && is.numeric(idx) &&
+             is.numeric(raw) && !identical(as.numeric(idx),
+                                           as.numeric(seq_len(n)))) {
+    # ...and one whose events fall INSIDE 1..n is ambiguous: the class test
+    # above cannot separate "row 40" from "the index value 40" when the
+    # index is itself numeric and overlaps the positions. The heuristic
+    # reads them as positions, which is the documented default, but it is a
+    # guess -- so say which reading was used rather than leaving the caller
+    # to infer it from the answer.
+    warning("`", location, "` is numeric and so is the result's index, and ",
+            "the values fall inside 1..", n, " -- they are read as ROW ",
+            "POSITIONS. If they are index values, look them up first, e.g. ",
+            "`events$", location, " <- match(events$", location,
+            ", fit$data$index_value)`.", call. = FALSE)
   }
-  event_pos <- if (on_index) {
+  event_pos <- if (on_index && !is_numeric_like_index(idx)) {
+    # A character index is explicitly supported (see check_index_usable()),
+    # and a character events column matches it on class -- but the nearest-
+    # value lookup below is arithmetic. `as.numeric("Q1 2020")` is NA, so
+    # every position came back NA (with one unsuppressed "NAs introduced by
+    # coercion" warning per event), the events table was then emptied by the
+    # is.na() filter, and the function reported zero matched events, zero
+    # undetected events, and every changepoint unexplained. A label scale
+    # has no nearest -- it has an exact position or none.
+    m <- match(as.character(raw), as.character(idx))
+    as.integer(m)
+  } else if (on_index) {
     vapply(raw, function(v) {
       d <- abs(as.numeric(idx) - as.numeric(v))
       if (all(is.na(d))) NA_integer_ else as.integer(which.min(d))
@@ -135,7 +160,25 @@ cpt_annotate_events <- function(object, events, location = NULL,
   ev <- ev[!is.na(ev$event_position), , drop = FALSE]
 
   cp <- object$changepoints$cp
-  m <- match_changepoints(cp, ev$event_position, tolerance)
+  # Match on event ROW, not on event position.
+  #
+  # match_changepoints() matches per element of `truth`, so two events at
+  # the same position are two separately-claimable slots and two
+  # changepoints could each take one -- correct. Recovering the row
+  # afterwards by value lookup (`which(ev$event_position == m$truth[i])[1]`)
+  # was not: both matched rows reported the FIRST event's label, and the
+  # second event never appeared. It did not appear in `undetected` either,
+  # because that excluded by position and the position was present, so
+  # `%in%` removed both rows. The second event was neither matched nor
+  # undetected: it vanished, from a function whose stated purpose is to
+  # report both.
+  #
+  # Measured before the fix: two events at one changepoint went in, one row
+  # came out, and only the first label was in it. Two events sharing a
+  # position is not exotic -- two announcements in one week of a weekly
+  # series, or any two that round to the same index in a monthly one.
+  ev_rows <- seq_len(nrow(ev))
+  m <- match_event_rows(cp, ev$event_position, tolerance)
 
   # `cp_index` is present only when the result carries a time index --
   # the same rule attach_index() uses for `$changepoints` and
@@ -152,12 +195,13 @@ cpt_annotate_events <- function(object, events, location = NULL,
 
   matched <- if (nrow(m) > 0) {
     rows <- lapply(seq_len(nrow(m)), function(i) {
-      j <- which(ev$event_position == m$truth[i])[1]
+      j <- m$row[i]
       tibble::tibble(cp = as.integer(m$pred[i]),
                      event = ev$event[j],
                      event_value = ev$event_value[j],
-                     event_position = as.integer(m$truth[i]),
-                     distance = as.integer(abs(m$pred[i] - m$truth[i])))
+                     event_position = as.integer(ev$event_position[j]),
+                     distance = as.integer(abs(m$pred[i] -
+                                               ev$event_position[j])))
     })
     with_index(do.call(rbind, rows), as.integer(m$pred))
   } else {
@@ -172,8 +216,9 @@ cpt_annotate_events <- function(object, events, location = NULL,
   unexplained <- with_index(
     tibble::tibble(cp = as.integer(unexplained_cp)),
     as.integer(unexplained_cp))
-  undetected <- ev[!ev$event_position %in% matched$event_position, ,
-                   drop = FALSE]
+  # By row identity, not by position: an event sharing a position with a
+  # matched one is still undetected if nothing claimed *it*.
+  undetected <- ev[setdiff(ev_rows, m$row), , drop = FALSE]
 
   structure(
     list(matched = matched, unexplained = unexplained,
@@ -185,6 +230,40 @@ cpt_annotate_events <- function(object, events, location = NULL,
 
 # Internal: pick the events column holding the location. A column of the
 # same class as the result's index wins; otherwise the first numeric one.
+# Internal: match_changepoints() keyed to event ROW rather than to the
+# position value.
+#
+# Same greedy rule -- changepoints scanned in increasing order, each taking
+# the earliest unclaimed event within `tolerance` -- but it returns the row
+# index of the event claimed, so two events at one position stay
+# distinguishable. See the note in cpt_annotate_events() for what went
+# wrong without it.
+# Internal: can this index be subtracted? Date/POSIXct/difftime and any
+# numeric index answer "nearest" meaningfully; a character or factor index
+# does not, and as.numeric() on one is silently all-NA.
+#' @noRd
+is_numeric_like_index <- function(idx) {
+  is.numeric(idx) || inherits(idx, c("Date", "POSIXct", "POSIXlt", "difftime",
+                                     "yearmon", "yearqtr"))
+}
+
+#' @noRd
+match_event_rows <- function(pred, positions, tolerance) {
+  available <- rep(TRUE, length(positions))
+  out_pred <- integer(0)
+  out_row <- integer(0)
+  for (p in sort(pred)) {
+    cand <- which(available & abs(p - positions) <= tolerance)
+    if (length(cand) > 0) {
+      j <- cand[1]
+      out_pred <- c(out_pred, p)
+      out_row <- c(out_row, j)
+      available[j] <- FALSE
+    }
+  }
+  data.frame(pred = as.integer(out_pred), row = as.integer(out_row))
+}
+
 #' @noRd
 guess_event_column <- function(events, idx) {
   if (!is.null(idx)) {

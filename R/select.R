@@ -36,10 +36,14 @@
 #'       column is otherwise not reproducible: both the cost convention and
 #'       the parameter count vary between authors.}
 #'     \item{\code{"mbic"}}{the modified BIC of Zhang and Siegmund (2007),
-#'       \eqn{3K\log n + \sum_i \log(l_i/n)}, which depends on the segment
+#'       \eqn{3K\log n + \sum_i \log(l_i/n)} on the \strong{deviance}
+#'       (\eqn{-2\log L}) scale, which is the scale the \code{cost} column
+#'       is on --- the same criterion is \eqn{1.5K\log n + 0.5\sum_i
+#'       \log(l_i/n)} on the log-likelihood scale, which is how
+#'       \code{\link{cpt_penalty}()} states it. It depends on the segment
 #'       lengths \eqn{l_i} and so cannot be expressed by
-#'       \code{\link{cpt_penalty}()}'s function of \eqn{n} and \eqn{k}
-#'       alone. This is the one place in the package where the real
+#'       \code{cpt_penalty()}'s function of \eqn{n} and \eqn{k} alone.
+#'       This is the one place in the package where the real
 #'       Zhang–Siegmund penalty is computed.}
 #'     \item{\code{"aic"}}{Gaussian AIC over the ladder,
 #'       \eqn{n\log(\mathrm{RSS}/n) + 2(2K + 1)} — the same cost and the
@@ -201,6 +205,22 @@ cpt_select <- function(x, method = "pelt",
       ks[which.max(value)]
     }
   )
+  # `cv` and `stability` are the two criteria whose answer comes from a
+  # separate search rather than from `value`, and each can come back with
+  # nothing usable: stability_curve() is NA at every rung with no
+  # changepoints, so an all-NA curve makes which.max() return integer(0),
+  # and `if (integer(0) %in% ks)` then failed with base R's "argument is of
+  # length zero"; VfoldCV() returning nothing usable gives NA, which sent
+  # `0:NA` into candidate_ladder(). Neither message names the criterion or
+  # the series.
+  if (length(chosen_k) != 1L || is.na(chosen_k)) {
+    stop("`criterion = \"", criterion, "\"` could not score the candidate ",
+         "segmentations for `", method, "`: it scores by re-detection, and ",
+         "every rung on the ladder (K = ", paste(ks, collapse = ", "),
+         ") came back undefined. Use `criterion = \"bic\"`, `\"aic\"` or ",
+         "`\"mbic\"`, which are closed-form, or a method with an explicit ",
+         "penalty (pelt, binseg, segneigh, amoc, fpop).", call. = FALSE)
+  }
   if (!chosen_k %in% ks) {
     # Cross-validation searches its own ladder, so its answer can exceed the
     # candidates we scored; extend rather than silently snapping to k_max.
@@ -307,9 +327,13 @@ gaussian_cost <- function(y, cp) {
   n * log(rss / n)
 }
 
-# Internal: Zhang & Siegmund's (2007) modified BIC penalty. Unlike the
-# `"MBIC"` of cpt_penalty(), this one reads the segment lengths, which is
-# exactly what makes it unavailable as a function of n and k.
+# Internal: Zhang & Siegmund's (2007) modified BIC penalty, on the DEVIANCE
+# (-2 log L) scale to match gaussian_cost(). ?cpt_penalty states the same
+# criterion on the log-likelihood scale, i.e. half of this -- both pages now
+# name their scale, because a reader comparing them without that would
+# conclude one of the two was a factor-of-two bug. Unlike the `"MBIC"` of
+# cpt_penalty(), this one reads the segment lengths, which is exactly what
+# makes it unavailable as a function of n and k.
 #' @noRd
 zhang_siegmund_penalty <- function(cp, n) {
   cp <- sort(unique(as.integer(cp)))
@@ -371,7 +395,15 @@ stability_curve <- function(series, ladder, method, B, ...) {
       resampled <- resid
       for (s in unique(seg_id)) {
         idx <- which(seg_id == s)
-        resampled[idx] <- sample(resid[idx], length(idx), replace = TRUE)
+        # `sample.int()` on the index, not `sample()` on the values: R's
+      # classic pitfall is that `sample(x, n)` means `sample.int(x, n)` when
+      # `x` is a single number >= 1, so a one-observation segment resamples
+      # `1:round(resid)` instead of the residual itself. It is currently
+      # safe only by accident -- a length-1 segment's residual against its
+      # own mean is exactly 0, and `0 >= 1` is FALSE -- which couples this
+      # bootstrap to `param_estimate` staying the exact segment mean.
+      resampled[idx] <- resid[idx][sample.int(length(idx), length(idx),
+                                              replace = TRUE)]
       }
       rep_cp <- tryCatch(
         cpt_detect(fitted_step + resampled, method = method,

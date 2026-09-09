@@ -79,7 +79,11 @@ A \code{ggcpt_power} object: a tibble with one row per scenario —
   (proportion of replicates detecting the change within
   \code{tolerance}), \code{mc_se} (the Monte Carlo standard error of that
   proportion), \code{mean_abs_error} (location error among detections),
-  \code{false_positive_rate} (mean number of \emph{extra} changepoints per
+  \code{mean_abs_error} is \code{NaN} when no replicate detected a
+  changepoint within \code{tolerance} of the true one --- there is no
+  distance to average --- and \code{power} reads \code{0} in the same
+  row.
+  \code{false_positives} (mean number of \emph{extra} changepoints per
   replicate) and \code{n_sim} — with \code{print()} and
   \code{autoplot()}.
 }

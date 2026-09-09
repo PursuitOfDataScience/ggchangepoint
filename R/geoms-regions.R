@@ -243,10 +243,21 @@ geom_cpt_event <- function(mapping = NULL, data = NULL, ...,
                                                   "color", "linetype",
                                                   "linewidth", "alpha"))]
   class(rule_map) <- class(mapping)
-  rule <- ggplot2::geom_vline(
-    mapping = rule_map, data = data,
-    colour = colour, linetype = linetype, na.rm = na.rm
-  )
+  # Five aesthetics are pulled out of the caller's mapping so they can reach
+  # the rule layer, and two of them -- colour and linetype -- were then set
+  # as fixed parameters from this function's own formals as well. In ggplot2
+  # a fixed parameter beats a mapping, silently, so
+  # `geom_cpt_event(aes(xintercept = x, colour = kind))` could not colour
+  # the rules by `kind` at all -- while `alpha` and `linewidth`, which are
+  # not shadowed, worked. Omit the parameter when the caller maps it, the
+  # way full_height_params() already does for ymin/ymax.
+  rule_params <- list(na.rm = na.rm)
+  if (!aes_has(rule_map, "colour") && !aes_has(rule_map, "color")) {
+    rule_params$colour <- colour
+  }
+  if (!aes_has(rule_map, "linetype")) rule_params$linetype <- linetype
+  rule <- do.call(ggplot2::geom_vline,
+                  c(list(mapping = rule_map, data = data), rule_params))
 
   # The text layer needs an x, and events arrive with `xintercept`; alias it
   # rather than making the caller map the same column twice.

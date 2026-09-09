@@ -36,7 +36,14 @@ the classical mean one? Defaults to \code{FALSE}.}
 }
 \value{
 A \code{ggcpt} object; the changepoints tibble carries the
-  engine's \code{p_value} for each location.
+  engine's \code{p_value} for each location. Multivariate input is
+  reduced to \strong{one series per observation by taking the
+  cross-sectional mean} of the columns, and that is the series stored on
+  the result: \code{autoplot()} draws it, \code{tidy()}'s
+  \code{cp_value} reads it, and \code{$segments$param_estimate} and
+  \code{augment()}'s \code{.fitted}/\code{.resid} are computed from it.
+  It is not any one column of the input. The full input is kept in
+  \code{$data_wide} for \code{autoplot(type = "coordinates")}.
 }
 \description{
 Wraps \code{fChange::fchange()} for changes in the \emph{mean function} of

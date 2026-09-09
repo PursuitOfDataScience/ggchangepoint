@@ -35,7 +35,21 @@ one column per grid location (the curve's resolution).}
 \item{...}{Additional arguments passed to \code{fChange::fchange()}.}
 }
 \value{
-A \code{ggcpt} object with \code{change_in = "covariance"}.
+A \code{ggcpt} object with \code{change_in = "covariance"}. Multivariate input is
+  reduced to \strong{one series per observation by taking the
+  cross-sectional mean} of the columns, and that is the series stored on
+  the result: \code{autoplot()} draws it, \code{tidy()}'s
+  \code{cp_value} reads it, and \code{$segments$param_estimate} and
+  \code{augment()}'s \code{.fitted}/\code{.resid} are computed from it.
+  It is not any one column of the input. The full input is kept in
+  \code{$data_wide} for \code{autoplot(type = "coordinates")}.
+
+  For a covariance change this matters when reading the plot: a change in
+  the covariance structure need not move the cross-sectional mean at all,
+  so \code{autoplot()} can legitimately show changepoint rules on a
+  series with no visible change in it. That is the detector working, not
+  misfiring --- use \code{autoplot(type = "coordinates")} to see the
+  columns the change is in.
 }
 \description{
 Wraps \code{fChange::fchange()} for changes in the covariance operator,

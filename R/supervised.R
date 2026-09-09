@@ -169,6 +169,21 @@ cpt_label_error <- function(object, labels) {
     as_cp_locations(object, "object")
   }
   labels <- check_labels(labels)
+  # The `series` column is carried into the output and described in @return,
+  # and nothing filtered on it -- so a multi-series label set, which is
+  # exactly what cpt_learn_penalty() takes, had every series' labels scored
+  # against this one fit. as_label_list() does the per-series split for the
+  # learning path; this door has no equivalent, so say so rather than
+  # returning a number that mixes them.
+  ser <- unique(labels$series[!is.na(labels$series)])
+  if (length(ser) > 1L) {
+    warning("`labels` names ", length(ser), " series (",
+            paste(utils::head(ser, 3), collapse = ", "),
+            if (length(ser) > 3) ", ..." else "",
+            ") and all of them are scored against this one fit. Subset ",
+            "first, e.g. `labels[labels$series == \"", ser[1],
+            "\", ]`.", call. = FALSE)
+  }
   if (nrow(labels) == 0) {
     return(new_label_error(tibble::tibble(
       label_id = integer(), start = integer(), end = integer(),
@@ -225,12 +240,21 @@ tidy.cpt_label_error <- function(x, ...) {
 #' @param ... Ignored.
 #' @export
 print.cpt_label_error <- function(x, ...) {
-  e <- attr(x, "errors")
+  # `%||%` because tibble's `[` need not carry a custom attribute through a
+  # row subset, and reclass_subset() keeps the subclass whenever the
+  # required COLUMNS survive -- so `err[1, ]` can be a cpt_label_error with
+  # no `errors` attribute, and `NULL[["correct"]]` is an error rather than
+  # a degraded print. print.ggcpt_batch() already guards this way.
+  e <- attr(x, "errors") %||% list()
+  fld <- function(nm) {
+    v <- e[[nm]]
+    if (is.null(v) || length(v) != 1L) "?" else v
+  }
   cat("cpt_label_error (", nrow(x), " label(s))\n", sep = "")
-  cat("  correct: ", e[["correct"]],
-      "   false positives: ", e[["false_positive"]],
-      "   false negatives: ", e[["false_negative"]], "\n", sep = "")
-  cat("  total label errors: ", e[["total_errors"]], "\n\n", sep = "")
+  cat("  correct: ", fld("correct"),
+      "   false positives: ", fld("false_positive"),
+      "   false negatives: ", fld("false_negative"), "\n", sep = "")
+  cat("  total label errors: ", fld("total_errors"), "\n\n", sep = "")
   print(tibble::as_tibble(x), n = 12)
   invisible(x)
 }
@@ -246,6 +270,21 @@ check_labels <- function(labels) {
   if (length(miss) > 0) {
     stop("`labels` needs column(s): ", paste(miss, collapse = ", "),
          ". Build one with cpt_labels().", call. = FALSE)
+  }
+  # cpt_labels() validates the vocabulary; this door only checked that the
+  # columns exist -- and `@param labels` deliberately widens the contract to
+  # "or anything with start/end/change columns". So a documented input with
+  # `change = "maybe"` reached a switch() with no default, which returns
+  # NULL, and `status[i] <- NULL` on a character vector is base R's
+  # "replacement has length zero": a message naming neither the column nor
+  # the legal values.
+  bad <- setdiff(unique(as.character(labels$change)),
+                 c("change", "one_change", "no_change"))
+  if (length(bad) > 0) {
+    stop("Unknown `change` label(s): ", paste(bad, collapse = ", "),
+         ". Use \"change\", \"one_change\" or \"no_change\"; ",
+         "cpt_labels() builds a table with the right vocabulary.",
+         call. = FALSE)
   }
   if (!"label_id" %in% names(labels)) labels$label_id <- seq_len(nrow(labels))
   if (!"series" %in% names(labels)) labels$series <- NA_character_
@@ -432,8 +471,18 @@ autoplot.ggcpt_label_curve <- function(object, ...) {
     ggplot2::labs(x = "Penalty (log scale)", y = "Label errors",
                   title = paste0("Label error curve (",
                                  attr(object, "method"), ")"))
-  if (all(is.finite(tg))) {
-    p <- p + ggplot2::annotate("rect", xmin = exp(tg[1]), xmax = exp(tg[2]),
+  # Two bugs in one guard. `all(logical(0))` is TRUE, so a MISSING `target`
+  # attribute passed it and `annotate()` got zero-length xmin/xmax from
+  # `exp(NULL[1])`. And an infinite endpoint is returned deliberately --
+  # target_interval() uses it for "the minimum extends past the grid", the
+  # standard convention in the penalty-learning literature -- which is
+  # exactly the diagnosis the reader needs (the grid was too narrow), and
+  # the finiteness test hid the band in precisely that case. -Inf/Inf is how
+  # the package draws open-ended bands elsewhere, so draw it.
+  if (length(tg) == 2L && !anyNA(tg) && any(is.finite(tg))) {
+    p <- p + ggplot2::annotate("rect",
+                               xmin = if (is.finite(tg[1])) exp(tg[1]) else -Inf,
+                               xmax = if (is.finite(tg[2])) exp(tg[2]) else Inf,
                                ymin = -Inf, ymax = Inf,
                                fill = "#009E73", alpha = 0.15)
   }
@@ -549,6 +598,43 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
          "to learn: the labels are satisfied at every penalty in the grid. ",
          "Add `no_change` labels, or widen `penalties`.", call. = FALSE)
   }
+  # `usable` gated the error above and nothing else: the unusable rows still
+  # reached the fit. In the native path a (-Inf, Inf) row contributes zero
+  # loss, which is harmless but dilutes nothing; in the penaltyLearning path
+  # IntervalRegressionCV() rejects it, the tryCatch below catches the error,
+  # and the whole fit silently downgrades to the fallback with a warning
+  # naming the wrong cause. Drop them here, and say how many.
+  if (!all(usable)) {
+    dropped <- rownames(targets)[!usable] %||%
+      as.character(which(!usable))
+    warning(length(dropped), " of ", nrow(targets), " series have an ",
+            "unbounded target interval (",
+            paste(utils::head(dropped, 3), collapse = ", "),
+            if (length(dropped) > 3) ", ..." else "",
+            ") and are dropped from the fit: their labels are satisfied at ",
+            "every penalty in the grid, so they say nothing about how the ",
+            "penalty should scale. Widen `penalties` to close them.",
+            call. = FALSE)
+    feats <- feats[usable, , drop = FALSE]
+    targets <- targets[usable, , drop = FALSE]
+  }
+
+  # A constant series has no scale to learn from -- sd, mad and range are
+  # all zero, so cpt_features() floors their logs -- and one of them in the
+  # training set pulls the fit toward that floor.
+  flat <- vapply(series_list, function(v) {
+    sd_v <- stats::sd(as.numeric(v))
+    !is.finite(sd_v) || sd_v == 0
+  }, logical(1))
+  if (any(flat)) {
+    warning(sum(flat), " training series ",
+            if (sum(flat) > 1) "are" else "is", " constant (",
+            paste(utils::head(names(series_list)[flat], 3),
+                  collapse = ", "),
+            "), so the scale features are at their floor rather than at a ",
+            "measured value and the fit is pulled toward it. Drop the flat ",
+            "series, or check the input.", call. = FALSE)
+  }
 
   use_pl <- (engine == "penaltyLearning") ||
     (engine == "auto" && requireNamespace("penaltyLearning", quietly = TRUE) &&
@@ -636,7 +722,14 @@ cpt_features <- function(y) {
   y <- as.numeric(y)
   n <- length(y)
   d <- diff(y)
-  lg <- function(v) log(max(v, .Machine$double.eps))
+  # The floor is .Machine$double.eps, so a CONSTANT series gives
+  # log_sd = log_mad = log_range = log(2.2e-16) ~ -36 against typical
+  # values near 0. interval_regression() ridges only the slopes and starts
+  # from a constant, so one flat series in the training set dominates the
+  # fit -- and validate_data() accepts a flat series. Floor at something
+  # that is small on the log scale rather than astronomically small, and
+  # say so where the features are documented.
+  lg <- function(v) log(max(v, 1e-8))
   c(
     log_n = log(n),
     log_log_n = log(log(max(n, 3))),

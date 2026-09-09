@@ -22,10 +22,13 @@ stat_changepoint(
 \item{data}{A data frame.}
 
 \item{geom}{The geometric object to use (default: \code{"vline"}). The stat
-computes a single \code{xintercept} per changepoint, so only geoms that
-consume that aesthetic fit — \code{"vline"} and \code{"rug"}. A geom
-needing \code{x}/\code{y}, such as \code{"point"}, errors because the
-stat drops those aesthetics.}
+computes a single \code{xintercept} per changepoint and drops
+\code{x}/\code{y}, so \code{"vline"} is the geom that fits. A geom
+needing \code{x}/\code{y} — \code{"point"}, and \code{"rug"}, which
+consumes \code{x}/\code{y} rather than \code{xintercept} — errors for
+that reason. \code{inherit.aes} is fixed at \code{TRUE} here: the stat
+re-detects on the plot's own data, so the panel's \code{x}/\code{y}
+mapping is what it reads.}
 
 \item{position}{Position adjustment.}
 

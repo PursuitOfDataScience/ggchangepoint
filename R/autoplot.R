@@ -158,6 +158,14 @@ autoplot.ggcpt <- function(object,
         status = err$status
       )
       # Drawn beneath everything else, like the regions below.
+      #
+      # Prepending by assigning to `p$layers` is the only way ggplot2 offers
+      # to put a layer UNDER the ones already added -- `+` always appends.
+      # It reaches into the plot object, and ggplot2 4.0.0 replaced that
+      # object with S7: `$` still works through compatibility shims, which
+      # the release notes say are expected to be phased out. So this and the
+      # regions block below are the two places that will need revisiting
+      # when the shims go; nothing else in the package touches `$layers`.
       p$layers <- c(
         list(geom_cpt_label(ggplot2::aes(xmin = xmin, xmax = xmax,
                                          fill = status),
@@ -284,6 +292,26 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
                    coordinate = v)
   }))
   long$coordinate <- factor(long$coordinate, levels = vars)
+
+  # One stacked panel per coordinate, `ncol = 1`, and the coordinate count
+  # is not bounded by anything the user controls: network_wrapper() and
+  # hdcov_wrapper() reshape a p x p x T array into p^2 columns, so p = 20
+  # asks ggplot2 for 400 panels and the device produces an unreadable
+  # sliver each. Every other long display in the package caps and says why
+  # (autoplot.ggcpt_path's max_facets, ggcpt_solution_path's max_steps,
+  # print.ggcpt_influence's head of 5); this one draws whatever it is
+  # given, so at least say so before it takes minutes.
+  # A message, not a warning: the plot is correct, it is just hard to read,
+  # and a functional result (fmean/fcov on a 30-point grid) legitimately
+  # has this many coordinates -- a warning would fire on the package's own
+  # examples. Advice belongs at message severity.
+  if (length(vars) > 24) {
+    message("This result has ", length(vars), " coordinates, so the plot ",
+            "will have ", length(vars), " stacked panels and is unlikely ",
+            "to be readable. `autoplot(object, type = \"series\")` draws ",
+            "the summary series instead, or plot `object$data_wide` ",
+            "yourself.")
+  }
 
   p <- ggplot2::ggplot(long, ggplot2::aes(index, value)) +
     ggplot2::geom_line(color = "grey40") +

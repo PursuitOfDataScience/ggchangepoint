@@ -22,7 +22,17 @@ new_ggcpt(
 \item{changepoints}{A tibble with columns \code{cp} and \code{cp_value}.}
 
 \item{segments}{A tibble with segment information: \code{seg_id}, \code{start},
-\code{end}, \code{n}, \code{param_estimate}.}
+\code{end}, \code{n}, \code{param_estimate}. \code{param_estimate} is
+the segment \strong{mean} for every method in the package, including
+the variance, distribution and model-change detectors --- it is the
+segment level, not the parameter that changed. A \code{change_in =
+"var"} result therefore has a \code{param_estimate} column that may
+barely move; read the variance off the data with the segment bounds if
+that is the quantity you want. Everything derived from this column
+inherits the convention: \code{augment()}'s \code{.fitted}/
+\code{.resid}, \code{\link{cpt_gt}()}'s level columns,
+\code{summary()}, and the residual construction the bootstrap in
+\code{\link{cpt_confint}()} and \code{\link{cpt_stability}()} uses.}
 
 \item{data}{A tibble with \code{index} and \code{value}.}
 

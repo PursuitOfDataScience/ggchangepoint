@@ -55,32 +55,7 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
   validate_scalar(arl0, "arl0")
   validate_scalar(startup, "startup", min = 1)
 
-  # "GLRAdjusted" is documented by cpm but rejected by its own
-  # processStream() dispatch (it prints "not a valid ChangePointModel type"
-  # and returns no changepoints instead of erroring), so it is not offered
-  # here: a silent empty result is worse than a refusal. Re-measured against
-  # cpm 2.3, and note that "ExponentialAdjusted" -- named alongside it in an
-  # earlier version of this comment -- is NOT rejected: it runs and returns
-  # changepoints, so the pair is not interchangeable and only the one type
-  # is withheld.
-  cpm_type <- match.arg(cpm_type, c(
-    "Mann-Whitney", "Mood", "Lepage", "Kolmogorov-Smirnov",
-    "Cramer-von-Mises", "Student", "Bartlett", "GLR", "Exponential", "FET"
-  ))
-
-  # FET is the one type that needs `lambda`, and without it processStream()
-  # dies inside cpm with base R's "only 0's may be mixed with negative
-  # subscripts" -- a message about neither the argument nor the method. cpm
-  # ships FET thresholds for lambda = 0.1 and 0.3 only (measured across
-  # 0.01-1.0 against cpm 2.3); every other value takes the printed-error
-  # path handled below.
-  dots_names <- names(list(...))
-  if (identical(cpm_type, "FET") && !"lambda" %in% dots_names) {
-    stop("`cpm_type = \"FET\"` needs a `lambda` value passed through `...`; ",
-         "cpm has no default for it and fails with an unrelated subscript ",
-         "error when it is missing. Supported values are `lambda = 0.1` and ",
-         "`lambda = 0.3`.", call. = FALSE)
-  }
+  cpm_type <- cpm_check_type(cpm_type, list(...))
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "cpm")
@@ -97,26 +72,7 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
     fit <- cpm::processStream(data_vec, cpmType = cpm_type, ARL0 = arl0,
                               startup = startup, ...)
   )
-  if (any(grepl("No thresholds available", cpm_out, fixed = TRUE))) {
-    # The same printed line covers two different arguments, and it names
-    # which: "selected ARL0" or "selected lambda". Blaming arl0 for a
-    # lambda cpm has no thresholds for sent the reader after an argument
-    # that was already correct, so the branch follows the printed text.
-    if (any(grepl("selected lambda", cpm_out, fixed = TRUE))) {
-      lam <- list(...)[["lambda"]]
-      stop("`lambda = ", if (is.null(lam)) "<unset>" else lam, "` is not a ",
-           "value cpm ships FET thresholds for; it returns no changepoints ",
-           "rather than failing, which is indistinguishable from a genuine ",
-           "\"no changes\" result. Supported values are 0.1 and 0.3.",
-           call. = FALSE)
-    }
-    stop("`arl0 = ", arl0, "` is not an average run length that cpm ships ",
-         "thresholds for; it returns no changepoints rather than failing, ",
-         "which is indistinguishable from a genuine \"no changes\" result. ",
-         "Supported values are 100, 200, 300, 370, 400, 500, 600, 700, ",
-         "800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, ",
-         "10000, 20000, 30000, 40000 and 50000.", call. = FALSE)
-  }
+  cpm_check_printed_error(cpm_out, arl0, list(...))
   # anything else the engine printed is still the user's to see
   if (length(cpm_out)) cat(cpm_out, sep = "\n")
 
@@ -133,6 +89,74 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
       list(detection_time = as.integer(fit$detectionTimes))
     }
   )
+}
+
+# Internal: the cpm argument guards, in one place because there are two
+# doors into the engine. cpm reports a bad `cpmType`, a missing FET `lambda`
+# or an unsupported `ARL0` by *printing* an error and handing back something
+# unusable rather than raising a condition, so each caller has to look for
+# it -- and `cpt_monitor(method = "cpm")` built its model straight from
+# cpm::makeChangePointModel() and so inherited none of these. Measured
+# against cpm 2.3: a withheld type surfaced there as `no applicable method
+# for '@' applied to an object of class "NULL"`, a missing lambda as base R's
+# `only 0's may be mixed with negative subscripts`, and an off-grid arl0 as
+# the same `@`-on-NULL message. None of the three named the argument.
+#
+# "GLRAdjusted" is documented by cpm but rejected by its own dispatch (it
+# prints "not a valid ChangePointModel type" and returns no changepoints
+# instead of erroring), so it is not offered here: a silent empty result is
+# worse than a refusal. Note that "ExponentialAdjusted" -- named alongside it
+# in an earlier version of this comment -- is NOT rejected: it runs and
+# returns changepoints, so the pair is not interchangeable and only the one
+# type is withheld.
+#' @noRd
+cpm_types <- function() {
+  c("Mann-Whitney", "Mood", "Lepage", "Kolmogorov-Smirnov",
+    "Cramer-von-Mises", "Student", "Bartlett", "GLR", "Exponential", "FET")
+}
+
+# Internal: validate `cpm_type` and the `lambda` that one of its values
+# requires. FET is the one type that needs `lambda`, and without it cpm dies
+# with base R's "only 0's may be mixed with negative subscripts" -- a message
+# about neither the argument nor the method. cpm ships FET thresholds for
+# lambda = 0.1 and 0.3 only (measured across 0.01-1.0 against cpm 2.3); every
+# other value takes the printed-error path in cpm_check_printed_error().
+#' @noRd
+cpm_check_type <- function(cpm_type, dots) {
+  cpm_type <- match.arg(cpm_type, cpm_types())
+  if (identical(cpm_type, "FET") && !"lambda" %in% names(dots)) {
+    stop("`cpm_type = \"FET\"` needs a `lambda` value passed through `...`; ",
+         "cpm has no default for it and fails with an unrelated subscript ",
+         "error when it is missing. Supported values are `lambda = 0.1` and ",
+         "`lambda = 0.3`.", call. = FALSE)
+  }
+  cpm_type
+}
+
+# Internal: turn cpm's *printed* threshold complaint into a real error. The
+# same printed line covers two different arguments, and it names which:
+# "selected ARL0" or "selected lambda". Blaming arl0 for a lambda cpm has no
+# thresholds for sent the reader after an argument that was already correct,
+# so the branch follows the printed text.
+#' @noRd
+cpm_check_printed_error <- function(cpm_out, arl0, dots) {
+  if (!any(grepl("No thresholds available", cpm_out, fixed = TRUE))) {
+    return(invisible(NULL))
+  }
+  if (any(grepl("selected lambda", cpm_out, fixed = TRUE))) {
+    lam <- dots[["lambda"]]
+    stop("`lambda = ", if (is.null(lam)) "<unset>" else lam, "` is not a ",
+         "value cpm ships FET thresholds for; it returns no changepoints ",
+         "rather than failing, which is indistinguishable from a genuine ",
+         "\"no changes\" result. Supported values are 0.1 and 0.3.",
+         call. = FALSE)
+  }
+  stop("`arl0 = ", arl0, "` is not an average run length that cpm ships ",
+       "thresholds for; it returns no changepoints rather than failing, ",
+       "which is indistinguishable from a genuine \"no changes\" result. ",
+       "Supported values are 100, 200, 300, 370, 400, 500, 600, 700, ",
+       "800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, ",
+       "10000, 20000, 30000, 40000 and 50000.", call. = FALSE)
 }
 
 #' Kernel changepoint wrapper (KCP on running statistics)
@@ -330,13 +354,21 @@ npmojo_wrapper <- function(x, G = NULL, lag = 0, ...) {
 
   fit <- CptNonPar::np.mojo(X_fit, G = G, lag = lag, ...)
 
-  cp_indices <- as.integer(fit$cpts)
+  cp_indices <- as.integer(fit[["cpts", exact = TRUE]])
 
+  # Exact [[ ]], not `$`: np.mojo has both `threshold` (the RULE, e.g.
+  # "bootstrap") and `threshold.val` (the number), and `$threshold.val`
+  # partial-matches nothing today only because the longer name exists --
+  # rename or drop it upstream and `$` would silently resolve to the
+  # character rule and report a cutoff of NA. cpt_bandwidth_scan() already
+  # reads it exactly for this reason; this door did not.
   ggcpt_build(
     data_vec, cp_indices,
     method = "npmojo",
     change_in = "distribution",
-    penalty = list(type = "threshold", value = fit$threshold.val %||% NA_real_),
+    penalty = list(type = "threshold",
+                   value = fit[["threshold.val", exact = TRUE]] %||%
+                     NA_real_),
     fit = fit,
     call = match.call(),
     data_wide = if (is_mv) mv_data_wide(X)

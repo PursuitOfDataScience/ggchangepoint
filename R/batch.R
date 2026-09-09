@@ -140,12 +140,20 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
     )
   }
 
+  # Above the branch, not inside the sequential one. future.apply documents
+  # that for every `future.seed` value except FALSE/NULL "the RNG state of
+  # the calling R process after this function returns is guaranteed to be
+  # forwarded one step" -- so the parallel path perturbs `.Random.seed` too,
+  # and `@param seed` promises the opposite ("scoped to this call ...  a
+  # seeded call inside a simulation loop does not pin the loop's own
+  # stream"). local_seed() registers the restore on the caller's frame, so
+  # registering it here covers both paths.
+  local_seed(seed)
   results <- if (has_future) {
     future.apply::future_lapply(seq_along(series_list),
                                 with_session_registry(run_one),
                                 future.seed = seed %||% TRUE)
   } else {
-    local_seed(seed)
     lapply(seq_along(series_list), run_one)
   }
   names(results) <- names(series_list)

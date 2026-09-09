@@ -118,6 +118,13 @@ nsp_wrapper <- function(x, alpha = 0.1,
         stop("`covariates` must have one row per observation: the series has ",
              n, " but `covariates` has ", nrow(Xd), ".", call. = FALSE)
       }
+      # The tvreg variant fits a linear model whose COEFFICIENTS change, so
+      # `change_in` -- match.arg'ed from c("mean", "slope") and reported as
+      # given -- labelled a regression-coefficient change as a change in the
+      # mean. The label follows the variant, the way not_wrapper() derives
+      # its own from `contrast`; "regression" is in nsp's registry row so
+      # the result is one validate_method_change_in() accepts.
+      if (!identical(change_in, "slope")) change_in <- "regression"
       nsp::nsp_tvreg(data_vec, x = Xd, M = M, alpha = alpha, ...)
     }
   )
@@ -145,6 +152,58 @@ nsp_wrapper <- function(x, alpha = 0.1,
   }
   regions <- tibble::tibble(start = starts, end = ends,
                             value = as.numeric(iv$values %||% NA_real_))
+
+  # Keep the changepoint rows and the regions in step.
+  #
+  # The two paths used to diverge: `mids` goes through ggcpt_build(), which
+  # deduplicates `cp` and drops anything outside 1..(n-1); `regions` goes
+  # through normalise_regions(), which does neither. Nested or overlapping
+  # intervals are the *normal* output of the narrowest-significance
+  # construction and two of them can round to one midpoint -- [10, 20] and
+  # [11, 19] both give 15 -- so the dedup silently dropped one changepoint
+  # row, taking its `region_start`/`region_end` with it, while `$regions`
+  # kept both.
+  #
+  # Everything downstream then disagreed with itself: print() reported one
+  # fewer changepoint than the regions table it printed underneath, and
+  # `native_bounds()` reads the bounds off `$changepoints`, so
+  # `cpt_confint()` returned one interval fewer than there were regions --
+  # under-reporting the object this method exists to produce.
+  #
+  # Resolved here rather than in normalise_regions(), because which region
+  # to keep is a question about NSP: the narrowest is the informative one,
+  # that being the whole point of narrowest-significance pursuit. Warned
+  # about rather than done silently, since a collision means two distinct
+  # significance statements landed on one location.
+  drop_lo <- mids < 1L | mids > length(data_vec) - 1L
+  width <- ends - starts
+  ord <- order(mids, width)
+  dup <- duplicated(mids[ord])
+  collapsed <- ord[dup]
+  if (length(collapsed) > 0 || any(drop_lo)) {
+    warning("`nsp` returned ", length(mids), " significance regions but ",
+            length(mids) - length(union(collapsed, which(drop_lo))),
+            " distinct usable midpoint(s): ",
+            if (length(collapsed) > 0) {
+              paste0(length(collapsed),
+                     " region(s) share a midpoint with a narrower one")
+            } else "",
+            if (length(collapsed) > 0 && any(drop_lo)) ", and " else "",
+            if (any(drop_lo)) {
+              paste0(sum(drop_lo), " midpoint(s) fall outside 1..",
+                     length(data_vec) - 1L)
+            } else "",
+            ". The regions slot keeps only the rows a changepoint could be ",
+            "keyed to, so `nrow(fit$regions)` and `nrow(fit$changepoints)` ",
+            "agree; read `$fit` for everything the engine returned.",
+            call. = FALSE)
+  }
+  keep_region <- setdiff(seq_along(mids), union(collapsed, which(drop_lo)))
+  keep_region <- keep_region[order(mids[keep_region])]
+  mids <- mids[keep_region]
+  starts <- starts[keep_region]
+  ends <- ends[keep_region]
+  regions <- regions[keep_region, , drop = FALSE]
 
   res <- ggcpt_build(
     data_vec, mids,

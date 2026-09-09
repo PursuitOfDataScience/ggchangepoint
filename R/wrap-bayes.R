@@ -186,10 +186,16 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
   # (each is cheap) and only then fail loudly, rather than reporting "no
   # changepoints" from a broken fit. The perturbed call in between is there
   # because identical retries can stay stuck.
+  # With `mcmc.seed` set from `seed`, every retry runs the same chain, so a
+  # SEEDED call that hits the bug has less variation to recover from than an
+  # unseeded one -- the perturbed call in between is doing all the work.
+  # Vary the perturbation across attempts so the seeded case is not just the
+  # same call six times.
   attempt <- 1
   while (!is.finite(fit$trend$ncp) && attempt < 6) {
     perturbed <- args
     perturbed$dump.ci <- TRUE
+    perturbed$mcmc.seed <- attempt
     try(do.call(Rbeast::beast, perturbed), silent = TRUE)
     fit <- do.call(Rbeast::beast, args)
     attempt <- attempt + 1

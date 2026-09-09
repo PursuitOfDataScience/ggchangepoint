@@ -34,7 +34,15 @@ or \code{"slope"}.}
 vector of segment means. For \code{var} changes, a vector of segment sds.
 For \code{meanvar}, a list of lists with \code{mean} and \code{sd} per
 segment. For \code{slope}, a list with \code{intercept} and \code{slope}
-per segment. When \code{NULL}, every segment gets the same neutral
+per segment --- and the time origin \strong{resets in every segment},
+so segment \eqn{i}'s signal is
+\eqn{\mathrm{intercept}_i + \mathrm{slope}_i \cdot (1, \ldots, l_i)}
+with the clock restarting at 1. A caller reasoning in absolute time ---
+\code{list(list(intercept = 0, slope = 1), list(intercept = 100,
+slope = -1))}, meaning "rise to 100 then fall" --- gets segment 2
+starting at 99, i.e. a slope change plus an unrequested level jump. For
+a continuous piecewise-linear signal keep the intercept the same in
+every segment. When \code{NULL}, every segment gets the same neutral
 parameters, so the series has no actual change. \code{changepoints}
 sets the number of segments -- \eqn{k} changepoints make \eqn{k + 1}
 of them -- and a mismatch in either direction warns rather than

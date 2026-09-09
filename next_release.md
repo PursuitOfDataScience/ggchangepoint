@@ -22589,90 +22589,6 @@ and a wrong component would not have shown up above:
 
 All correct. Now tested, along with the ordering rule.
 
-## 617. The most influential observation ranked last
-
-`cpt_leverage()` exists to answer one question -- which observations
-matter most -- and it put the answer at the bottom.
-
-```
-  index delta_n_cp max_shift param_shift   leverage
-1     2          0         2         0.1  0.8368633
-2     1          0         0         0.0 -1.9915638
-3     3         -2        NA          NA         NA     <- ranked 3 of 3
-```
-
-Row 3 is an observation whose deletion **destroyed a two-changepoint
-segmentation entirely**. It is the most influential observation in the
-series by any reading, and a user looking at `head(cpt_leverage(fit))`
-would never see it.
-
-The mechanism is two lines apart:
-
-```r
-lev <- z(inf$delta_n_cp) + z(inf$max_shift) + z(inf$param_shift)
-out[order(-out$leverage, out$index), , drop = FALSE]
-```
-
-`max_shift` is the distance each original changepoint had to move to find a
-match, and `param_shift` the largest change in a segment parameter. For a
-perturbation that leaves the engine with no changepoints there is nothing
-to match against and no parameters to compare, so both are `NA`,
-`NA + z + z` is `NA`, and `order(-leverage)` puts `NA` last.
-
-### 617.1 Not filling in the NA
-
-The tempting fix is to substitute something -- the maximum observed
-z-score, or the series length for `max_shift`. Rejected: those two
-components are genuinely undefined for that row, and a fabricated number
-would put a made-up quantity into a column a reader compares across rows.
-The `NA` is the honest value.
-
-**What was wrong is where it sorted.** The fix is one line:
-
-```r
-collapsed <- is.na(out$leverage)
-out[order(!collapsed, -out$leverage, out$index), , drop = FALSE]
-```
-
-and the row is self-explaining once it is visible -- `delta_n_cp = -2`
-says exactly how many changepoints were lost.
-
-### 617.2 The distinction that makes the rule safe
-
-An `NA` leverage always means *this particular perturbation* collapsed the
-fit, never something benign, and that is worth checking rather than
-assuming. If the **original** fit found no changepoints then `max_shift` is
-`NA` for every row -- but then `z()`'s own zero-variance guard
-(`if (!is.finite(s) || s == 0) return(rep(0, length(v)))`) returns zeros
-rather than `NA`s, so no leverage is `NA` and the ordering falls back to
-the components that do vary. Measured in all four regimes:
-
-| case | NA leverage rows | first row |
-|---|---|---|
-| one perturbation collapses the fit | 1 | the collapsed one |
-| no collapse | 0 | largest score |
-| original found nothing (all `max_shift` NA) | 0 | largest score |
-| real fit, 12 perturbations | 0 | largest score |
-
-`?cpt_leverage`'s `@return` now states the ordering, why the `NA` is left
-in place, which column to read instead, and this last distinction -- so
-the rule is documented as a property rather than left as a surprise.
-
-## 618. `summarise_influence()` measures what it says
-
-Checked while there, since `cpt_leverage()` is a re-ranking of its output
-and a wrong component would not have shown up above:
-
-- `n_cp` and `delta_n_cp` against hand-built perturbations;
-- `max_shift` is the **worst** distance an original changepoint had to
-  move, not the mean -- `c(50, 100)` against `c(52, 100)` gives 2;
-- `param_shift` is the largest absolute change in a segment parameter;
-- and the two are measuring different things, which is the point of having
-  both: a perturbation that *adds* a changepoint at 75 to `c(50, 100)`
-  leaves `max_shift = 0` while `delta_n_cp` rises to 1.
-
-All correct. Now tested, along with the ordering rule.
-
 ## 619. `cpt_metrics_annotated()` returns six fewer columns than its sibling
 
 The averaging is exact -- plain unweighted means of the per-annotator
@@ -22893,3 +22809,275 @@ green tick bought by churning CI. If it persists, the next lever is
 `extra-packages`/`dependencies` on the install step to let a Suggests
 failure be non-fatal -- a change to what CI installs, which is worth doing
 deliberately rather than while firefighting.
+
+## 622. An external review of 102 findings, answered by measurement
+
+A code audit arrived that had been written from the sources alone — the
+reviewer states plainly that no R session was available, so "nothing below
+was produced by running `R CMD check`, the test suite, or any R code." That
+makes it the exact complement of the work in this ledger, which has been
+measurement-first from §580 on. The right response is not to accept or
+reject the findings but to *run* them.
+
+Seventeen are now fixed, in the review's own priority order. What the
+measurements changed about the review is worth recording, because it cuts
+both ways.
+
+### 622.1 Two findings the measurement refuted
+
+**A1 recommended deleting all seven `import()` directives** as provably
+unnecessary. Six were. `import(changepoint)` is load-bearing:
+`glance()`'s cost column calls bare `logLik(fit)`, and the method for class
+`cpt` is an **S4** method owned by changepoint. Measured:
+`isGeneric("logLik", where = asNamespace("changepoint"))` is `TRUE` with one
+`cpt` method, `stats::logLik` has no S3 method for it, and a qualified
+`changepoint::logLik` call is what breaks — which is why a grep for it finds
+nothing and why the directive looks removable. The audit note now sits in the
+source so the next sweep does not delete it. Also measured: `R CMD INSTALL`
+emits no "replacing previous import" warning for the dplyr/ggplot2 `vars`
+collision the finding leads with, so its CRAN-round-trip framing does not
+materialise. The real cost was `import(dplyr)` masking base
+`setdiff`/`intersect`/`union`/`n` inside the namespace, called bare at
+eighteen sites meaning base semantics.
+
+**B1's demonstration would not have shown the bug.** The finding is real —
+`as_cpt_series()` destroys a `ts`'s seasonal frequency, so
+`cpt_detect(quarterly_ts, method = "bfast")` refits at the wrapper's default
+of 12 — but comparing the changepoints of the two calls does not reveal it.
+Measured on a 120-point quarterly series with a clean level shift: frequency
+4 and frequency 12 both report a changepoint at 60. The quantity that
+distinguishes them is the frequency **bfast actually fitted with**,
+`stats::frequency(fit$Yt)`, which reads 4 after the fix and 12 before. The
+test asserts that, not the changepoint locations. This is the same lesson as
+§615.2 and §620.1 from the other side: a test that measures the answer
+instead of the mechanism can pass for reasons unrelated to the fix.
+
+### 622.2 The findings whose failure mode was worse than described
+
+Three of them.
+
+**B2** says `cpt_monitor(method = "cpm")` bypasses `cpm_wrapper()`'s three
+guards. It does, and the consequence is not a silently wrong answer but an
+unreadable one: cpm *prints* its complaint and returns `NULL`, so a withheld
+`cpm_type` and an off-grid `arl0` both surface as `no applicable method for
+'@' applied to an object of class "NULL"` from inside S4 dispatch, and a
+missing FET `lambda` as base R's `only 0's may be mixed with negative
+subscripts`. None of the three names an argument. The fix is the shape this
+cycle keeps arriving at: the guards moved into `cpm_types()`,
+`cpm_check_type()` and `cpm_check_printed_error()`, and both doors call them.
+
+**B3** says the e-detector's statistic overflows and "the alarm log silently
+truncates". Measured under `reset = FALSE, relearn = 0` on 1500 observations
+shifted by five baseline SDs: 82 alarms, the last at t = 82, then **1418
+observations of total silence**. It is not a truncated log, it is a detector
+that stops detecting precisely when the evidence becomes overwhelming,
+because `hit <- is.finite(stat) && stat >= thr` reads `Inf` as "no alarm".
+Saturating at `.Machine$double.xmax / 2` fixes it and does something `Inf`
+cannot: the statistic still **decays** when the stream returns to baseline
+(measured 8.99e307 down to 1.8e149 over 2000 in-control observations), so a
+long accumulating run is not permanently pinned above the threshold.
+
+**B5** is right about the mechanism and worth stating as a measurement.
+`future.apply`'s documentation says the caller's RNG state is forwarded one
+step for every `future.seed` value except `FALSE`/`NULL`. Confirmed
+directly: `future_lapply(1:2, ..., future.seed = 7)` and the same call with
+`future.seed = TRUE` both leave a different `.Random.seed` behind. So
+`cpt_batch()` and `ggcpt_compare()`, which registered `local_seed()` only
+inside their sequential branch, broke under `plan(multisession)` the promise
+`@param seed` makes verbatim — the promise that §608's whole 36-site sweep
+existed to establish. Two of five call sites did not get it.
+
+### 622.3 The pattern the review named, and it is the right one
+
+The review's §F calls it out: *a fix applied at one door and not the
+others*. Nine cases, each with the rationale written at one site and the
+siblings one grep away. Every batch so far has been that shape —
+`change_in` inherited by four functions and forwarded by none of them
+(B14), the cpm guards on one of two doors (B2), `local_seed()` on three of
+five (B5), the `.resid` convention right for one of two `data_vec`
+conventions (B27). That is not a coincidence about this package; it is what
+happens when a fix is written where the bug was found rather than where the
+invariant lives. The countermeasure that works is the one applied here:
+after fixing a door, grep for the call and fix every hit, then write the
+test over all of them rather than over the one that failed.
+
+### 622.4 What is left
+
+The remaining B items, the C set (statistical and semantic claims), the D
+set (robustness), the E set (hygiene), and the §G items that need a live R
+session the reviewer did not have. The order is the review's own.
+
+## 623. The other 79 findings, and the four the measurement refuted
+
+§622 closed the first seventeen. This closes the rest of the review: the
+remaining B items, all nineteen C items, all thirty-five D items and the
+hygiene set. 96 of the 102 findings are now addressed; the six that are not
+are named at the end.
+
+### 623.1 The four refutations, which are the useful part
+
+A review written from the sources alone gets the *shape* of a defect right
+far more often than the failure mode, and four of these turned out not to be
+defects at all. Recording them matters more than recording the fixes,
+because a later sweep will otherwise find the same code and "fix" it.
+
+**D22 — `cpt_hat` is not nested.** The finding reasoned that
+`changepoints::CV.search.DP.VAR1()`'s CV search is over
+`gamma_set x lambda_set`, that `unlist(test_error)` linearises the grid, and
+that `cpt_hat[[best]]` therefore indexes the top level of a list that might
+be nested by `gamma` -- in which case the surrounding `unlist()` would
+return the union of changepoints across every lambda at one gamma. Measured
+on a 4 x 120 series with two gammas and two lambdas: `test_error` is a 2x2
+matrix, `cpt_hat` is a 2x2 **matrix-list** (`is.matrix()` TRUE, length 4),
+and `cpt_hat[[3]]` is a plain numeric vector of three changepoints. Both
+objects linearise column-major, so `which.min(unlist(test_error))` and
+`cpt_hat[[best]]` address the same cell. The `unlist()` the finding read as
+a tell is defensive, not a symptom.
+
+**D25 — the attributes survive a row subset.** The finding could not settle
+whether tibble's `[` carries a custom attribute through `bm[1, ]`, and
+observed that if it does not, `print.ggcpt_benchmark()` degrades while
+`print.cpt_label_error()` *errors* on `NULL[["correct"]]`. Measured: both
+attributes survive, both prints work. The `%||%` guards went in anyway --
+they cost nothing and the asymmetry the finding identified is real if
+vctrs ever changes -- and the two tests it asked for are now in the suite,
+which is the part that would notice.
+
+**D30 — nothing produces p^2 facets.** The finding's premise was that
+`network_wrapper()` and `hdcov_wrapper()` reshape a `p x p x T` array into
+`p^2` columns, so `p = 20` asks ggplot2 for 400 panels. Measured:
+`network_wrapper()` deliberately carries **no** `data_wide` and its
+`@return` says so in as many words ("This is the one multivariate method
+with no `data_wide` slot"), and `hdcov` takes an `n x p` matrix -- 20
+coordinates at p = 20, not 400. A 30-coordinate `inspect` fit builds in 0.5
+seconds. So the cost is readability, not time, and the fix is a warning
+above a threshold rather than a cap.
+
+**A1's install warning does not fire**, recorded in §622.
+
+Two more findings were *right about the mechanism and wrong about the
+demonstration*, which is the same lesson from the other side. **D21**: the
+finding said the CROPS length-reconciliation block was "right by accident"
+and that the flatten "keeps the lower bounds". Measured on a 240-point
+sweep over [2, 200]: `pen.value.full()` is a length-23 numeric vector,
+`cpts.full()` has 22 rows, and the 23 values are the penalty-axis
+**breakpoints** -- K segmentations come with K + 1 boundaries, so row i is
+optimal on `[pens[i], pens[i+1])`. The truncation keeps `pens[i]`, which is
+the correct label, and the code now derives it that way and documents it
+instead of reconciling two lengths it did not understand. **D26**: the
+finding asked for the rounding convention to be documented; `@return`
+already documented it. What was missing was the *reason* -- a segmented
+breakpoint is a kink position on the continuous scale, so the nearest
+observation is the honest reading and truncating would bias every
+breakpoint left -- which now sits at the code.
+
+### 623.2 The one fix that had to be reverted mid-round
+
+C9 asks for a warning when `mean_abs_error` is `NaN`, on the grounds that
+the all-failed case one branch up gets a careful message and this one gets
+none. I implemented it, and the suite immediately fired it five times --
+from `cpt_power()` sweeps at `jump = 0.01`, from `cpt_min_detectable()`,
+from the plan-invariance test. Every one of those is a *correct* result: a
+power sweep is meant to include jumps too small to find, and the `power`
+column reads 0 in exactly the rows where `mean_abs_error` is `NaN`. A
+warning that fires on correct output trains the reader to ignore warnings.
+Reverted to a sentence in `@return`. The suite caught this because the
+warnings are surfaced in the summary reporter rather than swallowed -- which
+is the argument for reading the warnings block and not just the failure
+count.
+
+### 623.3 The shape of the C and D sets
+
+The C set (statistical and semantic claims) split almost evenly into two
+kinds. Six were *labels* -- a standardised CUSUM called a log-likelihood
+ratio, a count called a rate, three different quantities under one legend
+title, a penalty stated on two scales in two help pages, a wrapper default
+reported as a user-supplied "Manual", a global test presented one row per
+changepoint. None of them computes anything wrong; all of them make a
+reader draw a wrong conclusion from a right number, which is the more
+expensive failure because nothing looks broken. The other kind was the
+`selection_adjusted` flag on the Chow F, which is a genuine claim about
+inference and was simply false.
+
+The D set was dominated by one pattern: **a guard applied to some arguments
+and not their structural twins**. `cpt_monitor()` validated 3 of 10;
+`pilliat_wrapper()` validated three of four thresholds under a comment
+asserting completeness; `cpt_unregister_method()` validated nothing where
+its sibling validates thoroughly; `cpt_register_method()` validated
+capability names and not their values, three lines after a
+`validate_flag()` call. That is the same shape as §622.3's "one door and
+not the others", one level down: not a fix missed at a sibling function but
+a check missed at a sibling *argument*.
+
+### 623.4 What is left, and it is deliberate
+
+- **E1** (`next_release.md` is 1.1 MB in the repository) is a decision, not
+  a defect: it is `.Rbuildignore`d, it does not ship, and it is the record
+  this file exists to be.
+- **E7** (`CRAN-SUBMISSION` still says 0.4.0) is auto-rewritten by
+  `devtools::submit_cran()` and `.Rbuildignore`d.
+- **A5** (1.2 MB of README figures under `README-unnamed-chunk-N-1.png`
+  names) is real and is the next thing to do: the size is harmless at 3.5
+  MB against a 5 MB limit, but the *names* mean inserting one chunk near the
+  top of README.Rmd renumbers every figure and breaks twenty image links in
+  one commit. Naming the chunks requires re-rendering the README, which
+  replaces all 23 PNGs, so it wants its own round rather than being mixed
+  into this one.
+- **A2** (whether ggplot2 3.4.4 actually breaks `scale_colour_cpt()`) cannot
+  be settled here without installing an old ggplot2; the floor was raised to
+  3.5.0 on the reading of `discrete_scale()`'s formals, which is the safe
+  direction either way.
+- **A4** is now measured rather than assumed: `urlchecker::url_check()`
+  reports all URLs correct, and the pkgdown article the Rd links to returns
+  200 today. The ordering dependency the finding names is real for the
+  *next* release -- deploy the site before submitting, or the Rd 404s -- and
+  it is written here so it is written somewhere.
+- **B12** is documented rather than removed. `wbs2`'s solution path is
+  recomputed because breakfast's fit does not keep the candidate list, and
+  the search is randomised; storing the path at detection time would double
+  the cost of every `wbs2` call, and taking a `seed` argument is a feature.
+  So the function now warns that the path is a second search of the same
+  series, and `@return` says every other engine's path is read off the fit.
+
+### 623.5 The README was the stalest file in the repository, and nothing said so
+
+A5 asked for the README figures to be named. Doing it required re-rendering,
+and the re-render is what produced the finding: **README.md had been stale
+since `8d9df7b`** -- the commit that scoped the `seed` argument. Scoping the
+seed changes how much of the random stream a seeded call consumes, so every
+number below the README's first seeded call was the output of a package that
+no longer existed. So was a `print()` layout that had been realigned in an
+earlier round. Seven commits of drift, in the first file anyone reads.
+
+Nothing in the suite could catch it. `test-doc-coverage.R` checks that every
+shipped figure is referenced by something, that every documented claim holds
+against the installed package, and that every `\insertRef` key resolves --
+all properties of the *sources*. Whether the recorded `#>` output in a
+rendered document is what the current code prints is a different question,
+and answering it means re-rendering, which is why it does not happen on
+every run.
+
+Two fixes, and the second is the one that matters:
+
+1. **All 50 chunks are labelled.** The figure names were
+   `README-unnamed-chunk-N-1.png` from knitr's counter over unlabelled
+   chunks, so inserting one chunk near the top renumbers everything below
+   it: 20 orphaned files and 20 broken image links in one commit. The
+   existing test `"every shipped figure is referenced by something"` catches
+   that -- after the damage. A label makes the filename a property of the
+   chunk.
+2. **The eight chunks that generate their own data seed themselves.** This
+   is the general fix for the staleness, not just for this instance: a
+   README with one `set.seed()` at the top is a single 700-line computation
+   in which any change to RNG consumption anywhere shifts every number
+   downstream. The `cpt_crops()` example had already degenerated to a single
+   segmentation for exactly that reason, sitting under a paragraph
+   describing it as computing "every optimal segmentation over a penalty
+   range". With a local seed it shows four again, and it will keep showing
+   four whatever the chunks above it do.
+
+The generalisable lesson is the one from §615.2 and §620.1 in a third
+disguise: a recorded value is only as good as the thing it was recorded
+against, and the further that thing is from the assertion, the longer a
+disagreement survives. A test that recomputes beats a test that remembers;
+a chunk that seeds itself beats a chunk that inherits.

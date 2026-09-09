@@ -37,6 +37,14 @@ decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
   validate_data(x)
   data_vec <- as_uni_vector(x, "decafs")
 
+  # "Manual" is reserved for a number the caller actually supplied
+  # (penalty_descriptor() keys on is.numeric(penalty)), so reporting this
+  # wrapper's own default as "Manual = 11.8" hid a documented consequence:
+  # `?cpt_detect`'s @param penalty explains that the dispatcher's default
+  # MBIC resolves to a STRONGER value than 2*log(n) -- 19.9 against 11.8 at
+  # n = 360 -- and both paths labelled the result the same way, so the
+  # object gave no way to tell which default produced it.
+  pen_type <- if (is.null(penalty)) "2log(n) [wrapper default]" else "Manual"
   penalty <- resolve_penalty_model(penalty, data_vec)
   if (is.null(penalty)) {
     penalty <- 2 * log(length(data_vec))
@@ -50,7 +58,7 @@ decafs_wrapper <- function(x, penalty = NULL, model_param = NULL, ...) {
     data_vec, as.integer(fit$changepoints),
     method = "decafs",
     change_in = "mean",
-    penalty = list(type = "Manual", value = penalty),
+    penalty = list(type = pen_type, value = penalty),
     fit = fit,
     call = match.call(),
     fitted = as.numeric(fit$signal)

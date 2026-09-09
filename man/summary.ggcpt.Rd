@@ -21,6 +21,8 @@ A list with class \code{summary.ggcpt} containing the summary.
 }
 \description{
 Provides a human-readable digest of a changepoint detection result,
-including the segment table with levels and lengths, total cost,
+including the segment table with levels and lengths (the level is the
+segment mean whatever `change_in` says --- see \code{\link{new_ggcpt}}),
+total cost,
 penalty, and runtime.
 }

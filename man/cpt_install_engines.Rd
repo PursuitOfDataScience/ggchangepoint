@@ -26,7 +26,7 @@ cpt_install_engines(bundle = "core", dry_run = FALSE, ...)
   \item{\code{"applied"}}{\pkg{trend}, \pkg{ChangePointTaylor},
     \pkg{bfast}, \pkg{wbsts}, \pkg{binsegRcpp}.}
   \item{\code{"time"}}{index and coercion support: \pkg{zoo},
-    \pkg{xts}, \pkg{tsibble}, \pkg{tsbox}.}
+    \pkg{xts}, \pkg{tsibble}.}
   \item{\code{"reporting"}}{\pkg{gt}, \pkg{ggrepel}, \pkg{plotly},
     \pkg{ggiraph}, \pkg{progressr}, \pkg{jsonlite}.}
   \item{\code{"all"}}{every engine and extra the package knows about.}

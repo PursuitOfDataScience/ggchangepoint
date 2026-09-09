@@ -48,7 +48,12 @@ number of coordinates; see the timing note below.}
 \value{
 A \code{ggcpt} object. Because the detector is online, reported
   locations are \emph{declaration times} (the changepoint plus the
-  detection delay), stored together with a \code{declared_at} column.
+  detection delay). The \code{declared_at} column holds the same values
+  as \code{cp}, and deliberately: \pkg{ocd} declares a change without
+  also estimating where it began, so there is no separate location for
+  the second column to carry. Compare \code{\link{cpm_wrapper}()},
+  whose engine supplies both, and whose \code{cp} is an estimated
+  location with \code{detection_time} strictly later.
 }
 \description{
 Wraps the \code{ocd} package (Chen, Wang and Samworth, 2022): online

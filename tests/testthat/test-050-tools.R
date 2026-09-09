@@ -230,7 +230,7 @@ test_that("cpt_power reports power with a Monte Carlo error", {
   expect_s3_class(pw, "ggcpt_power")
   expect_equal(nrow(pw), 2)
   expect_true(all(c("power", "mc_se", "mean_abs_error",
-                    "false_positive_rate") %in% names(pw)))
+                    "false_positives") %in% names(pw)))
   expect_true(all(pw$power >= 0 & pw$power <= 1))
   # Power must rise with the size of the change.
   expect_gt(pw$power[pw$jump == 3], pw$power[pw$jump == 0.2])

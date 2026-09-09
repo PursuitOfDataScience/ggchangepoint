@@ -55,6 +55,16 @@ the result, because it is wrong in a way that looks like a finding.
 \code{\link{esac_wrapper}()} is unaffected at every dimension. Note that
 constant coordinates are dropped before the count, so 9 coordinates one of
 which is constant is 8 for this purpose.
+
+The same reasoning makes this the one engine that \strong{errors} on a
+degenerate segmentation (a changepoint at more than 90\% of
+observations) where every other engine in the package warns and reports
+what it found. That has a consequence for comparisons:
+\code{\link{cpt_batch}()} and \code{\link{cpt_benchmark}()} record a
+failure row for \code{pilliat} where the same output from \code{pelt}
+gives a result plus a warning, so a benchmark table is not scoring the
+two on equal terms in that case --- read the \code{error} column
+alongside the metrics.
 }
 
 \examples{

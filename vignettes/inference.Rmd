@@ -121,15 +121,20 @@ changed there* is circular, and the resulting p-values are
 anti-conservative, often severely.
 
 `cpt_test()` never hides that. It uses the engine's own test where one
-exists and an explicitly unadjusted two-sample test where none does, and
-the `selection_adjusted` column records which you got:
+exists and an explicitly unadjusted two-sample test where none does — and
+the `selection_adjusted` column records *whether the p-value accounts for
+selection*, which is not the same question. `segmented`'s Davies test is
+built for it and reads `TRUE`; `strucchange`'s route is the Chow F
+evaluated at an estimated break date, which is conventional to report and
+still assumes the date was fixed in advance, so it reads `FALSE` alongside
+the generic fallback:
 
 ```{r test}
 suppressWarnings(cpt_test(fit))
 ```
 
 ```{r test-native, eval = requireNamespace("strucchange", quietly = TRUE)}
-cpt_test(strucchange_wrapper(x))
+suppressWarnings(cpt_test(strucchange_wrapper(x)))
 ```
 
 If you need a guarantee that survives selection, the route is NSP (above)

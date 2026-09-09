@@ -54,7 +54,15 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
     resampled <- resid
     for (s in seq_len(nrow(seg))) {
       idx <- which(seg_id == s)
-      resampled[idx] <- sample(resid[idx], length(idx), replace = TRUE)
+      # `sample.int()` on the index, not `sample()` on the values: R's
+      # classic pitfall is that `sample(x, n)` means `sample.int(x, n)` when
+      # `x` is a single number >= 1, so a one-observation segment resamples
+      # `1:round(resid)` instead of the residual itself. It is currently
+      # safe only by accident -- a length-1 segment's residual against its
+      # own mean is exactly 0, and `0 >= 1` is FALSE -- which couples this
+      # bootstrap to `param_estimate` staying the exact segment mean.
+      resampled[idx] <- resid[idx][sample.int(length(idx), length(idx),
+                                              replace = TRUE)]
     }
     rep_series <- fitted_step + resampled
     rep_cp <- tryCatch(

@@ -26,9 +26,24 @@ cpt_registered_methods()
 not clash with a built-in method.}
 
 \item{fn}{A function called as \code{fn(x, ...)}. It may return either a
-\code{ggcpt} object (built with \code{\link{as_ggcpt}()}, say) or a bare
-vector of changepoint indices, which is coerced with
-\code{\link{as_ggcpt}()}.}
+  \code{ggcpt} object (built with \code{\link{as_ggcpt}()}, say) or a bare
+  vector of changepoint indices, which is coerced with
+  \code{\link{as_ggcpt}()}.
+
+  A returned \code{ggcpt} may carry a \code{$diagnostics} list, which is
+  what makes \code{\link{cpt_statistic}()} and
+  \code{\link{cpt_solution_path}()} work for the method. Two
+  conventions apply to it. \code{diagnostics$solution_path} needs a
+  \code{cp} column and may add \code{contrast}, \code{start} and
+  \code{end}; it goes through the same filtering and step-numbering as a
+  built-in path, so out-of-range candidates are dropped and
+  \code{selected} is computed rather than trusted.
+  \code{diagnostics$statistic} (a numeric vector, or a list with
+  \code{statistic}, \code{label} and \code{threshold}) is padded with
+  \code{NA} to the length of the series when it is shorter, and the pad
+  is \strong{centred} --- a moving-window statistic is trimmed at both
+  ends, so a left-aligned pad would shift every value by the bandwidth.
+  Supply a full-length vector if that is not the alignment you want.}
 
 \item{change_in}{Character vector of \code{change_in} values the detector
 supports. Defaults to \code{"mean"}.}

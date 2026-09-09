@@ -45,8 +45,27 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
   changepoints <- changepoints[order(changepoints$cp), , drop = FALSE]
 
   data_tbl <- tibble::tibble(index = seq_len(n), value = data_vec)
-  if (!is.null(fitted) && length(fitted) == n) {
-    data_tbl$fitted <- as.numeric(fitted)
+  # A wrong-length `fitted` used to be dropped without a word, after which
+  # autoplot(show_fit = TRUE) told the user the result "carries no fitted
+  # signal" -- about a signal the engine had computed. as_ggcpt() was
+  # changed this cycle to ERROR on the same mismatch, which is right for a
+  # slot the user filled in; here the signal comes from an engine, and
+  # failing the whole detection because its fitted vector came back short
+  # would turn a working analysis into no analysis. So warn and drop,
+  # naming the method and both lengths, which is the part that was missing.
+  # (Of the nine `fitted = TRUE` engines only bfast checked the length
+  # itself, and it does so by setting the signal to NULL, so it never
+  # reaches this branch.)
+  if (!is.null(fitted)) {
+    if (length(fitted) == n) {
+      data_tbl$fitted <- as.numeric(fitted)
+    } else {
+      warning("`", method, "` returned a fitted signal of length ",
+              length(fitted), " for a series of length ", n,
+              ", so it is dropped: `autoplot(show_fit = TRUE)` and ",
+              "`augment()` will report no fitted signal for this result.",
+              call. = FALSE)
+    }
   }
 
   if (nrow(changepoints) == 0) {

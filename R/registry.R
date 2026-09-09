@@ -73,7 +73,7 @@ builtin_registry <- function() {
     "fpop",        "mean",                                "fpop",               "mean",                   "fpop_wrapper",         FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     "wbs",         "mean",                                "wbs",                "mean",                   "wbs_wrapper",          FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE,  FALSE,
     "wbs2",        "mean",                                "breakfast",          "mean",                   "wbs2_wrapper",         FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE,
-    "not",         "mean, var, slope",                    "not",                "mean,var,slope",         "not_wrapper",          FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE,  FALSE,
+    "not",         "mean, var, meanvar, slope",           "not",                "mean,var,meanvar,slope", "not_wrapper",          FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  TRUE,  FALSE,
     "mosum",       "mean",                                "mosum",              "mean",                   "mosum_wrapper",        FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, TRUE,
     "idetect",     "mean",                                "IDetect",            "mean",                   "idetect_wrapper",      FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     "tguh",        "mean",                                "breakfast",          "mean",                   "tguh_wrapper",         FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE,
@@ -207,6 +207,21 @@ derived_args_for <- function(method, change_in, pen_val) {
 #'   \code{ggcpt} object (built with \code{\link{as_ggcpt}()}, say) or a bare
 #'   vector of changepoint indices, which is coerced with
 #'   \code{\link{as_ggcpt}()}.
+#'
+#'   A returned \code{ggcpt} may carry a \code{$diagnostics} list, which is
+#'   what makes \code{\link{cpt_statistic}()} and
+#'   \code{\link{cpt_solution_path}()} work for the method. Two
+#'   conventions apply to it. \code{diagnostics$solution_path} needs a
+#'   \code{cp} column and may add \code{contrast}, \code{start} and
+#'   \code{end}; it goes through the same filtering and step-numbering as a
+#'   built-in path, so out-of-range candidates are dropped and
+#'   \code{selected} is computed rather than trusted.
+#'   \code{diagnostics$statistic} (a numeric vector, or a list with
+#'   \code{statistic}, \code{label} and \code{threshold}) is padded with
+#'   \code{NA} to the length of the series when it is shorter, and the pad
+#'   is \strong{centred} --- a moving-window statistic is trimmed at both
+#'   ends, so a left-aligned pad would shift every value by the bandwidth.
+#'   Supply a full-length vector if that is not the alignment you want.
 #' @param change_in Character vector of \code{change_in} values the detector
 #'   supports. Defaults to \code{"mean"}.
 #' @param engine Name of the package or system supplying the detector, for
@@ -299,6 +314,28 @@ cpt_register_method <- function(name, fn, change_in = "mean",
          paste(names(default_capabilities()), collapse = ", "), ".",
          call. = FALSE)
   }
+  # The NAMES were checked and the VALUES were not, and every flag is read
+  # downstream through isTRUE() -- so `capabilities = list(ci = 1)`
+  # registered a method reporting `ci = FALSE`, and cpt_confint(fit, method
+  # = "native") then told the user their own engine supplies no intervals.
+  not_flag <- names(caps)[!vapply(caps, function(v) {
+    is.logical(v) && length(v) == 1L && !is.na(v)
+  }, logical(1))]
+  if (length(not_flag) > 0) {
+    stop("Capability flag(s) ", paste0("`", not_flag, "`", collapse = ", "),
+         " must be TRUE or FALSE: they are read as flags, so a 1 or a ",
+         "\"yes\" registers as FALSE and the capability silently ",
+         "disappears.", call. = FALSE)
+  }
+  # `citation` is put in a tibble column by cpt_cite() and cat()ed, so a
+  # list or a function reached the user as `argument 1 (type 'list') cannot
+  # be handled by 'cat'`.
+  if (!is.null(citation) &&
+      !(is.character(citation) && length(citation) == 1L)) {
+    stop("`citation` must be NULL or a single string -- cpt_cite() prints ",
+         "it verbatim. For a BibTeX entry or a citation object, pass ",
+         "format(citation) or a one-line reference.", call. = FALSE)
+  }
 
   assign(name, list(method = name, fn = fn, change_in = change_in,
                     engine = as.character(engine)[1],
@@ -311,6 +348,14 @@ cpt_register_method <- function(name, fn, change_in = "mean",
 #' @rdname cpt_register_method
 #' @export
 cpt_unregister_method <- function(name) {
+  # cpt_register_method() checks this thoroughly and registry_get() checks
+  # it too; this door handed a non-string straight to exists(), which
+  # answers with base R's "invalid first argument" or a "first element
+  # used" warning.
+  if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
+    stop("`name` must be a single non-empty string. ",
+         "See cpt_registered_methods().", call. = FALSE)
+  }
   if (!exists(name, envir = .cpt_registry, inherits = FALSE)) {
     stop("`", name, "` is not a registered method. ",
          "See cpt_registered_methods().", call. = FALSE)

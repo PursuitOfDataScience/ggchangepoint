@@ -63,6 +63,17 @@ The same penalty name may be interpreted differently by different engines:
     TGUH): use internal model-selection criteria (e.g., sSIC, threshold)
     and generally \emph{ignore} the \code{penalty} argument. Specify
     thresholds via the wrapper's own arguments.
+  \item \strong{\code{fastcpd}} takes its penalty as \code{beta}, on its
+    own scale, and defaults to its native \code{"MBIC"}.
+    \code{cpt_detect()} forwards a numeric \code{penalty} as
+    \code{beta}, and translates the three names the two packages share
+    (\code{"MBIC"}, \code{"BIC"}/\code{"SIC"}, \code{"MDL"}). Any other
+    character penalty --- \code{"AIC"}, \code{"Hannan-Quinn"},
+    \code{"sSIC"}, \code{"None"} --- has no \pkg{fastcpd} equivalent and
+    is left to the engine's default rather than being silently
+    approximated; pass \code{beta} yourself to pin it. Whatever is used
+    is recorded on the result, so \code{print()} and \code{glance()}
+    report the penalty of the fit in hand.
   \item \strong{Inference/Bayesian methods} (\code{smuce}, \code{bcp},
     \code{bocpd}, \code{beast}, \code{cpm}, \code{sn}): are tuned by a
     significance level, posterior-probability threshold, hazard, or
@@ -72,11 +83,16 @@ The same penalty name may be interpreted differently by different engines:
     changepoints can be placed in \code{n} observations,
     \eqn{0.5(k+1)\log n + \log{n \choose k}}. It is deliberately stronger
     than \code{"BIC"}. It is \emph{not} the modified BIC of Zhang and
-    Siegmund (2007), whose penalty
-    \eqn{1.5 k \log n + 0.5 \sum_i \log(l_i / n)} depends on the segment
-    lengths \eqn{l_i} and so cannot be expressed by a function of
-    \code{n} and \code{k} alone. Use the character \code{"MBIC"} with
-    \pkg{changepoint}-based methods to get the engine's native MBIC.
+    Siegmund (2007), whose penalty is
+    \eqn{1.5 k \log n + 0.5 \sum_i \log(l_i / n)} on the
+    \strong{log-likelihood} scale (equivalently
+    \eqn{3 k \log n + \sum_i \log(l_i / n)} on the deviance scale,
+    which is how \code{\link{cpt_select}()} states it and the scale its
+    \code{cost} column uses). It depends on the segment lengths
+    \eqn{l_i} and so cannot be expressed by a function of \code{n} and
+    \code{k} alone. Use the character \code{"MBIC"} with
+    \pkg{changepoint}-based methods to get the engine's native MBIC, and
+    \code{cpt_select(criterion = "mbic")} for the Zhang–Siegmund one.
 }
 }
 

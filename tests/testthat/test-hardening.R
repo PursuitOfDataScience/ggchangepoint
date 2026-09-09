@@ -2584,7 +2584,12 @@ test_that("the penalty model is a function of the series, not a constant", {
     long_loud   = cpt_labels(start = 390, end = 410, change = "one_change"),
     long_quiet  = cpt_labels(start = 390, end = 410, change = "one_change")
   )
-  m <- cpt_learn_penalty(series, labels, method = "pelt")
+  # Two of these four have an unbounded target interval -- their labels are
+  # satisfied at every penalty in the grid -- and are now dropped from the
+  # fit with a warning naming them, rather than contributing a
+  # (-Inf, Inf) row that the penaltyLearning path rejects.
+  expect_warning(m <- cpt_learn_penalty(series, labels, method = "pelt"),
+                 "unbounded target interval")
   cf <- stats::coef(m)
   expect_true("intercept" %in% names(cf))
   expect_gt(length(cf), 1L)
@@ -2912,4 +2917,915 @@ test_that("A1/A2/A3: the declared interface matches what the code needs", {
   expect_gt(length(grep("^S3method\\(base::plot", ns)), 10L)
   expect_true("Depends" %in% colnames(desc))
   expect_match(desc[1, "Depends"], "R \\(>= 4")
+})
+
+test_that("B27: .resid is a residual for both data_vec conventions", {
+  # Two conventions exist for a multivariate result's univariate series:
+  # twelve wrappers store X[, 1], while fmean/fcov/kwc/fabisearch store
+  # rowMeans(X). build_segments() derives `param_estimate` from whichever
+  # the wrapper passed, and augment() was reading the VALUE out of
+  # data_wide's first coordinate -- so for those four it subtracted two
+  # different quantities and `.resid` was not a residual. `?augment.ggcpt`
+  # asserted the coordinate-one convention universally.
+  set.seed(33)
+  X <- matrix(stats::rnorm(120 * 6), nrow = 120)
+
+  resid_is_residual <- function(f) {
+    ag <- augment(f)
+    isTRUE(all.equal(ag$.resid, f$data$value - ag$.fitted))
+  }
+
+  # univariate, and the coordinate-one convention
+  expect_true(resid_is_residual(cpt_detect(X[, 1], method = "pelt")))
+  if (engine_usable("InspectChangepoint")) {
+    fi <- suppressWarnings(cpt_detect(X, method = "inspect"))
+    expect_true(resid_is_residual(fi))
+    # inspect keeps coordinate one, so the two agree there
+    expect_equal(fi$data$value, X[, 1])
+  }
+  # the rowMeans convention -- the four this fixes
+  if (engine_usable("fChange")) {
+    fm <- suppressWarnings(cpt_detect(X, method = "fmean"))
+    expect_true(resid_is_residual(fm))
+    expect_equal(fm$data$value, as.numeric(rowMeans(X)))
+    # and augment() still returns every coordinate plus one row per obs
+    ag <- augment(fm)
+    expect_equal(nrow(ag), nrow(X))
+  }
+})
+
+test_that("B18: every event is matched or undetected, never neither", {
+  # match_changepoints() matched per element of `truth`, but the event row
+  # was recovered by value lookup with [1], so two events at one position
+  # both reported the FIRST label -- and `undetected` excluded by position,
+  # so `%in%` removed both. The second event was neither matched nor
+  # undetected: it vanished from a function whose purpose is to report both.
+  set.seed(34)
+  x <- c(stats::rnorm(100), stats::rnorm(100, 4))
+  f <- cpt_detect(x, method = "pelt")
+  cp <- f$changepoints$cp
+  skip_if(length(cp) != 1)
+
+  accounted <- function(ev, tol) {
+    td <- tidy(cpt_annotate_events(f, ev, tolerance = tol))
+    setequal(as.character(ev$label), as.character(stats::na.omit(td$event)))
+  }
+  # two events on the changepoint: one can be claimed, the other must show
+  # up as undetected -- not disappear
+  ev <- data.frame(index = c(cp, cp), label = c("first", "second"))
+  expect_true(accounted(ev, 2))
+  td <- tidy(cpt_annotate_events(f, ev, tolerance = 2))
+  expect_equal(nrow(td), 2L)
+  expect_setequal(td$status, c("matched", "undetected_event"))
+  expect_equal(td$event[td$status == "matched"], "first")
+  expect_equal(td$event[td$status == "undetected_event"], "second")
+
+  # three at one position, and two at a position no changepoint reaches
+  expect_true(accounted(data.frame(index = rep(cp, 3),
+                                   label = c("a", "b", "c")), 2))
+  expect_true(accounted(data.frame(index = rep(cp + 50, 2),
+                                   label = c("a", "b")), 2))
+  # ordinary distinct events are unchanged
+  expect_true(accounted(data.frame(index = c(cp, cp + 50),
+                                   label = c("hit", "miss")), 5))
+})
+
+test_that("B25: an nsp result's changepoints and regions agree in count", {
+  skip_if_not(engine_usable("nsp"))
+  # `mids` went through ggcpt_build(), which dedups `cp` and range-filters;
+  # `regions` went through normalise_regions(), which does neither. Nested
+  # intervals are the normal output of the narrowest-significance
+  # construction and two can round to one midpoint, so a changepoint row
+  # was dropped -- taking its region bounds with it -- while $regions kept
+  # both. print() then reported one fewer changepoint than the regions
+  # table below it, and cpt_confint() one fewer interval than there were
+  # regions, under-reporting the object the method exists to produce.
+  set.seed(35)
+  for (s in 1:3) {
+    for (a in c(0.05, 0.2)) {
+      x <- c(stats::rnorm(90), stats::rnorm(90, 3), stats::rnorm(90, 1))
+      f <- tryCatch(suppressWarnings(
+        cpt_detect(x, method = "nsp", alpha = a, M = 120, seed = s)),
+        error = function(e) NULL)
+      if (is.null(f)) next
+      info <- paste("seed", s, "alpha", a)
+      expect_equal(nrow(f$changepoints), nrow(f$regions), info = info)
+      if (nrow(f$changepoints) > 0) {
+        # each changepoint sits inside the region it was keyed to
+        expect_true(all(f$changepoints$cp >= f$changepoints$region_start),
+                    info = info)
+        expect_true(all(f$changepoints$cp <= f$changepoints$region_end),
+                    info = info)
+        # and cpt_confint() reports one interval per region
+        ci <- suppressWarnings(cpt_confint(f))
+        expect_equal(nrow(ci), nrow(f$regions), info = info)
+      }
+    }
+  }
+})
+
+test_that("B1: a ts's seasonal frequency reaches the engine that needs it", {
+  # `as_cpt_series()` reduces every accepted input to a bare numeric vector,
+  # which threw away the one piece of information bfast cannot guess and
+  # bfast_wrapper()'s own documentation tells the user to supply by passing a
+  # `ts`. cpt_detect(quarterly_ts, method = "bfast") therefore refitted at
+  # the wrapper's default frequency of 12 -- monthly seasonality on
+  # quarterly data -- with nothing said.
+  y <- stats::ts(1:24, frequency = 4, start = c(2000, 1))
+  expect_equal(as_cpt_series(y)$frequency, 4)
+  # A frequency of 1 is "no seasonality", not a frequency to forward, and a
+  # plain vector has none at all.
+  expect_null(as_cpt_series(stats::ts(1:24))$frequency)
+  expect_null(as_cpt_series(1:24)$frequency)
+  expect_null(as_cpt_series(as.numeric(y), index = seq_along(y))$frequency)
+
+  skip_if_not(engine_usable("bfast"))
+  set.seed(1)
+  season <- rep(c(0, 3, 0, -3), length.out = 120)
+  x <- stats::ts(c(stats::rnorm(60, 1), stats::rnorm(60, 6)) + season,
+                 frequency = 4, start = c(2000, 1))
+  freq_fitted <- function(r) stats::frequency(r$fit$Yt)
+  # The measured quantity is the frequency bfast actually fitted with, not
+  # whether the changepoints happen to agree: a series can give the same
+  # answer at 4 and at 12.
+  expect_equal(freq_fitted(cpt_detect(x, method = "bfast")), 4)
+  expect_equal(freq_fitted(bfast_wrapper(x)), 4)
+  # An explicit `frequency` still wins over the one read off the series.
+  expect_equal(freq_fitted(cpt_detect(x, method = "bfast", frequency = 6)), 6)
+  # And an engine with no `frequency` argument must not be handed one.
+  expect_s3_class(cpt_detect(x, method = "pelt"), "ggcpt")
+})
+
+test_that("B2: cpt_monitor(method = 'cpm') applies the wrapper's guards", {
+  skip_if_not(engine_usable("cpm"))
+  # cpm reports a withheld `cpmType`, a missing FET `lambda` and an off-grid
+  # `ARL0` by *printing* an error and handing back something unusable, so
+  # each door into the engine has to look for it. This one called
+  # cpm::makeChangePointModel() directly and inherited none of the three:
+  # measured, the user saw `no applicable method for '@' applied to an
+  # object of class "NULL"` for the type and for the arl0, and base R's
+  # `only 0's may be mixed with negative subscripts` for the lambda.
+  b <- stats::rnorm(60)
+  expect_error(cpt_monitor("cpm", cpm_type = "GLRAdjusted", baseline = b),
+               "should be one of")
+  expect_error(cpt_monitor("cpm", cpm_type = "FET", baseline = b),
+               "needs a `lambda` value")
+  expect_error(cpt_monitor("cpm", arl0 = 123, baseline = b),
+               "not an average run length")
+  expect_error(cpt_monitor("cpm", arl0 = NA, baseline = b),
+               "single finite number")
+  # The same names cpm_wrapper() accepts still work, partial matching and all.
+  expect_equal(cpt_monitor("cpm", cpm_type = "Mann",
+                           baseline = b)$state$cpm_type, "Mann-Whitney")
+  expect_s3_class(cpt_monitor("cpm", cpm_type = "Mood", baseline = b),
+                  "ggcpt_monitor")
+  expect_s3_class(cpt_monitor("cpm", cpm_type = "FET", lambda = 0.3,
+                              baseline = stats::rbinom(60, 1, 0.2)),
+                  "ggcpt_monitor")
+  # and the batch wrapper's own messages are unchanged.
+  expect_error(cpm_wrapper(stats::rnorm(50), cpm_type = "GLRAdjusted"),
+               "should be one of")
+  expect_error(cpm_wrapper(stats::rnorm(50), arl0 = 123),
+               "not an average run length")
+})
+
+test_that("B3: an accumulating e-detector does not go silent on overflow", {
+  # `R <- (1 + R) * inc` grows multiplicatively, so with reset = FALSE and
+  # relearn = 0 -- the configuration the arguments explicitly offer -- it
+  # passes .Machine$double.xmax a few hundred observations after a real
+  # change and the next product is Inf. The alarm rule reads a non-finite
+  # statistic as "no alarm": measured 82 alarms and then 1418 observations
+  # of total silence on a stream that had shifted by five baseline SDs.
+  set.seed(7)
+  mo <- cpt_monitor("edetector", baseline = stats::rnorm(100),
+                    reset = FALSE, relearn = 0)
+  mo <- cpt_update(mo, stats::rnorm(1500, 5))
+  expect_true(all(is.finite(mo$state$R)))
+  expect_true(all(is.finite(mo$alarms$statistic)))
+  # The detector is still alarming at the end of the stream, not just at the
+  # start of it.
+  expect_gt(sum(mo$alarms$time > mo$t - 100), 0)
+  expect_equal(max(mo$alarms$time), mo$t)
+  # Saturation is not absorbing the way Inf is: in-control data brings the
+  # statistic back down.
+  back <- cpt_update(mo, stats::rnorm(2000))
+  expect_lt(max(back$state$R), max(mo$state$R))
+  # The default (reset = TRUE) path is untouched -- it never reaches the cap.
+  set.seed(7)
+  mor <- cpt_update(cpt_monitor("edetector", baseline = stats::rnorm(100)),
+                    stats::rnorm(300, 5))
+  expect_true(all(mor$state$R < .Machine$double.xmax / 2))
+  expect_gt(nrow(mor$alarms), 0)
+})
+
+test_that("B5: the seed stays scoped under a parallel plan too", {
+  skip_on_cran()
+  skip_if_not_installed("future")
+  skip_if_not_installed("future.apply")
+  # Five functions run detection through future.apply. Three registered the
+  # restore handler above the branch; cpt_batch() and ggcpt_compare() did it
+  # only inside the SEQUENTIAL one -- and future.apply documents that for
+  # every `future.seed` value except FALSE/NULL the caller's RNG state is
+  # forwarded one step. Measured directly: future_lapply(future.seed = 7)
+  # and future_lapply(future.seed = TRUE) both leave a different
+  # `.Random.seed` behind, so under plan(multisession) these two broke the
+  # promise `@param seed` makes verbatim ("scoped to this call ... a seeded
+  # call inside a simulation loop does not pin the loop's own stream").
+  set.seed(13)
+  x <- c(stats::rnorm(90), stats::rnorm(90, 3))
+  d <- list(a = x, b = rev(x))
+  preserved <- function(run) {
+    set.seed(99); before <- get(".Random.seed", envir = globalenv())
+    invisible(run())
+    identical(get(".Random.seed", envir = globalenv()), before)
+  }
+  runs <- list(
+    cpt_batch = function() cpt_batch(d, method = "pelt", seed = 7),
+    ggcpt_compare = function() {
+      ggcpt_compare(x, methods = c("pelt", "binseg"), seed = 7)
+    }
+  )
+  for (nm in names(runs)) expect_true(preserved(runs[[nm]]), info = nm)
+
+  old <- future::plan(future::multisession, workers = 2)
+  withr::defer(future::plan(old))
+  expect_false(inherits(future::plan(), "sequential"))
+  for (nm in names(runs)) expect_true(preserved(runs[[nm]]), info = nm)
+  # and the seed still governs the answer on the parallel path
+  expect_equal(cpt_batch(d, method = "pelt", seed = 7)$changepoints,
+               cpt_batch(d, method = "pelt", seed = 7)$changepoints)
+})
+
+test_that("B6: cpt_metrics_annotated() refuses an empty annotation list", {
+  # `is.list(list())` is TRUE, so the empty list was not wrapped as a single
+  # annotator; do.call(rbind, list()) is NULL, NULL$n_pred[1] is NULL, and
+  # tibble() drops a NULL argument -- so the caller got a one-row tibble
+  # with no `n_pred` column at all, four NA metrics, and four base-R
+  # warnings about a non-numeric argument to mean().
+  expect_error(cpt_metrics_annotated(c(100, 200), annotations = list(),
+                                     n = 300),
+               "no ground truth")
+  # The shape of a real call is unchanged.
+  ok <- cpt_metrics_annotated(c(100, 200),
+                              annotations = list(c(98, 200), c(100, 203)),
+                              n = 300, margin = 5)
+  expect_true("n_pred" %in% names(ok))
+  expect_equal(nrow(ok), 1L)
+})
+
+test_that("B7: a criterion that cannot score says so", {
+  # `stability` is NA at every rung with no changepoints, so on a series
+  # where the method returns one empty segmentation at every penalty the
+  # curve is all-NA, which.max() gives integer(0), and `if (integer(0) %in%
+  # ks)` failed with base R's "argument is of length zero" -- a message
+  # naming neither the criterion nor the series.
+  skip_if_not(engine_usable("wbs"))
+  set.seed(3)
+  flat <- stats::rnorm(120, 0, 0.01)
+  err <- tryCatch(suppressWarnings(
+    cpt_select(flat, method = "wbs", criterion = "stability", B = 5)),
+    error = function(e) conditionMessage(e))
+  # Either it scored the ladder or it refused it by name; what it must not
+  # do is fail with base R's length-zero message.
+  if (is.character(err)) {
+    expect_match(err, "could not score")
+    expect_match(err, "stability")
+    expect_false(grepl("argument is of length zero", err, fixed = TRUE))
+  } else {
+    expect_s3_class(err, "ggcpt_selection")
+  }
+  # A criterion that can score is unaffected.
+  s <- suppressWarnings(cpt_select(c(stats::rnorm(80), stats::rnorm(80, 5)),
+                                   method = "pelt", criterion = "stability",
+                                   B = 5))
+  expect_equal(length(s$k), 1L)
+  expect_false(is.na(s$k))
+})
+
+test_that("B8: every bundled package is one this package can use", {
+  # `tsbox` (in "time") and `patchwork` (in "reporting") appeared nowhere
+  # else in the package -- not in Suggests, not in R/, not in the tests or
+  # vignettes -- so the installer offered to fetch two dependencies nothing
+  # could then use, and "reporting" installed seven packages where
+  # `@param bundle` documented six.
+  bundles <- cpt_install_engines(bundle = c("time", "reporting"),
+                                 dry_run = TRUE)
+  expect_false(any(bundles$package %in% c("tsbox", "patchwork")))
+  # Every non-engine extra must be declared in Suggests, which is the only
+  # thing that makes it reachable from this package.
+  suggests <- strsplit(
+    gsub("\\s+|\\([^)]*\\)", "",
+         paste(read.dcf(system.file("DESCRIPTION", package = "ggchangepoint"),
+                        fields = "Suggests"), collapse = "")),
+    ",")[[1]]
+  expect_true(all(bundles$package %in% suggests),
+              info = paste(setdiff(bundles$package, suggests),
+                           collapse = ", "))
+})
+
+test_that("B10: cpt_simulate(change_in = 'slope') names the shape it wants", {
+  # `mean` and `var` take an atomic vector, so `params = c(0, 1)` is the
+  # natural mistake -- and it reached `p$intercept` on an atomic value,
+  # which is base R's "$ operator is invalid for atomic vectors": a message
+  # naming neither the argument nor the shape. The "meanvar" branch guards.
+  expect_error(cpt_simulate(200, 100, change_in = "slope", params = c(0, 1)),
+               "list\\(intercept")
+  expect_error(suppressWarnings(
+    cpt_simulate(200, 100, change_in = "slope",
+                 params = list(list(a = 1, b = 2)))),
+    "list\\(intercept")
+  expect_equal(nrow(cpt_simulate(200, 100, change_in = "slope",
+                                 params = list(
+                                   list(intercept = 0, slope = 0.1),
+                                   list(intercept = 5, slope = -0.2)))),
+               200L)
+  expect_equal(nrow(cpt_simulate(200, 100, change_in = "slope")), 200L)
+})
+
+test_that("B13: the segneigh solution path keeps every candidate", {
+  # Row i of cpts.full holds the segmentation with i changepoints. Binary
+  # segmentation's rows are nested; Segment Neighbourhood's are NOT -- it
+  # re-solves the dynamic program at each K -- so consecutive rows can
+  # differ by more than one changepoint, and keeping only `new[1]` dropped
+  # the rest and mis-numbered `step`.
+  set.seed(4)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4), stats::rnorm(60, 1),
+         stats::rnorm(60, 5))
+  f <- suppressWarnings(cpt_detect(x, method = "segneigh", penalty = "SIC",
+                                   Q = 6))
+  full <- changepoint::cpts.full(f$fit)
+  cands <- sort(unique(as.integer(full[!is.na(full)])))
+  cands <- cands[cands >= 1 & cands < nrow(f$data)]
+  sp <- cpt_solution_path(f)
+  expect_setequal(sp$cp, cands)
+  expect_identical(sp$step, seq_len(nrow(sp)))
+  # binseg is nested, so its path is one candidate per row either way.
+  fb <- suppressWarnings(cpt_detect(x, method = "binseg", Q = 6))
+  spb <- cpt_solution_path(fb)
+  expect_identical(spb$step, seq_len(nrow(spb)))
+})
+
+test_that("B11: a registered solution path goes through the same contract", {
+  with_diag <- function(nm, dp) function(x, ...) {
+    r <- as_ggcpt(c(50, 100), x, method = nm)
+    r$diagnostics <- list(solution_path = dp)
+    r
+  }
+  cpt_register_method("bp_nocp", with_diag("bp_nocp",
+                                           data.frame(loc = c(50, 100))),
+                      engine = "test")
+  cpt_register_method("bp_range", with_diag("bp_range",
+                                            data.frame(cp = c(50, 100, 9999))),
+                      engine = "test")
+  withr::defer({
+    cpt_unregister_method("bp_nocp"); cpt_unregister_method("bp_range")
+  })
+  z <- stats::rnorm(150)
+  # Without `cp` this used to die inside the plot at `idx_vals[path$cp]`.
+  expect_error(cpt_solution_path(cpt_detect(z, method = "bp_nocp")),
+               "needs a `cp` column")
+  p <- cpt_solution_path(cpt_detect(z, method = "bp_range"))
+  expect_equal(p$cp, c(50L, 100L))                  # 9999 range-filtered
+  expect_true(all(c("step", "cp", "contrast", "start", "end",
+                    "selected") %in% names(p)))
+  expect_true(all(p$selected))                      # both are in the fit
+  expect_s3_class(ggplot2::ggplot_build(
+    ggcpt_solution_path(cpt_detect(z, method = "bp_range"))), "ggplot_built")
+})
+
+test_that("B15: geom_cpt_event() lets the caller map colour and linetype", {
+  # Five aesthetics are pulled out of the caller's mapping for the rule
+  # layer, and two of them were then also set as fixed parameters from the
+  # function's own formals. A fixed parameter beats a mapping in ggplot2,
+  # silently, so the extraction was dead for exactly the two aesthetics a
+  # caller is most likely to map -- while `alpha` and `linewidth`, not
+  # shadowed, worked.
+  ev <- data.frame(x = c(60, 120), kind = c("a", "b"))
+  d <- data.frame(index = 1:180,
+                  value = c(stats::rnorm(60), stats::rnorm(60, 3),
+                            stats::rnorm(60)))
+  p <- ggplot2::ggplot(d, ggplot2::aes(index, value)) + ggplot2::geom_line() +
+    geom_cpt_event(ggplot2::aes(xintercept = x, colour = kind, label = kind),
+                   data = ev)
+  b <- ggplot2::ggplot_build(p)
+  expect_gt(length(unique(b$data[[2]]$colour)), 1L)
+  # and a fixed colour still wins when nothing is mapped
+  p2 <- ggplot2::ggplot(d, ggplot2::aes(index, value)) + ggplot2::geom_line() +
+    geom_cpt_event(ggplot2::aes(xintercept = x, label = kind), data = ev,
+                   colour = "red")
+  b2 <- ggplot2::ggplot_build(p2)
+  expect_identical(unique(b2$data[[2]]$colour), "red")
+})
+
+test_that("B17: every change_in a wrapper can label is one the registry lists", {
+  # not_wrapper() maps `contrast = "pcwsConstMeanVar"` to change_in =
+  # "meanvar", but "meanvar" was not in `not`'s registry row -- so a
+  # `cpt_detect(x, method = "not", change_in = "var")` result carried a
+  # change_in that validate_method_change_in() would refuse and the
+  # dispatcher could never be asked for.
+  levels_for <- function(m) {
+    strsplit(subset(cpt_methods(), method == m)$change_in, ",\\s*")[[1]]
+  }
+  expect_true("meanvar" %in% levels_for("not"))
+  skip_if_not(engine_usable("not"))
+  set.seed(5)
+  x <- c(stats::rnorm(80), stats::rnorm(80, 0, 4))
+  for (ci in c("var", "meanvar")) {
+    f <- suppressWarnings(cpt_detect(x, method = "not", change_in = ci))
+    expect_true(f$change_in %in% levels_for("not"), info = ci)
+  }
+})
+
+test_that("B19: a character index does not empty the events table", {
+  # A character index is explicitly supported, and a character events column
+  # matched it on class -- but the lookup was arithmetic, `as.numeric()` on
+  # a label is NA, and the is.na() filter then emptied the table. The
+  # function reported zero matched events, zero undetected events, and every
+  # changepoint unexplained -- plus one "NAs introduced by coercion" warning
+  # per event.
+  set.seed(6)
+  lab <- sprintf("w%03d", 1:120)
+  f <- cpt_detect(c(stats::rnorm(60), stats::rnorm(60, 4)), method = "pelt",
+                  index = lab)
+  a <- expect_silent(cpt_annotate_events(
+    f, data.frame(when = lab[c(60, 100)], what = c("hit", "miss")),
+    tolerance = 3))
+  td <- tidy(a)
+  expect_equal(nrow(td), 2L)
+  expect_setequal(td$status, c("matched", "undetected_event"))
+  expect_equal(sort(td$position), c(60L, 100L))
+  # A label that is not in the index has no position, and is dropped -- but
+  # it must not take the others with it.
+  b <- suppressWarnings(tidy(cpt_annotate_events(
+    f, data.frame(when = c(lab[60], "nosuchweek"), what = c("hit", "?")),
+    tolerance = 3)))
+  expect_true(any(b$status == "matched"))
+})
+
+test_that("B20: check_labels() validates the change vocabulary", {
+  # cpt_labels() checks it; this door checked only that the columns exist,
+  # and `@param labels` deliberately widens the contract to "anything with
+  # start/end/change columns". So documented input reached a switch() with
+  # no default and failed with "replacement has length zero".
+  set.seed(7)
+  fit <- cpt_detect(c(stats::rnorm(80), stats::rnorm(80, 4)), method = "pelt")
+  expect_error(cpt_label_error(fit, data.frame(start = 1, end = 20,
+                                               change = "maybe")),
+               "Unknown `change` label")
+  expect_s3_class(cpt_label_error(fit, data.frame(start = 1, end = 20,
+                                                  change = "no_change")),
+                  "cpt_label_error")
+})
+
+test_that("B21/B22: cpt_recommend()'s two lists reach the methods they name", {
+  # "changepoints" is an ENGINE, not a method, so it matched no registry row
+  # and the four high-dimensional dynamic-programming methods never got the
+  # "slow at n" caveat.
+  rec <- cpt_recommend(n = 20000, dimension = "multivariate")
+  hd <- subset(rec, method %in% c("hdcov", "network", "var", "hdreg"))
+  if (nrow(hd) > 0) expect_true(all(grepl("slow at n", hd$caveat)))
+  # And `change_in = "mean"` is accepted by every method (the dispatcher's
+  # own rule), so reading `supports` strictly here dropped every
+  # distribution-only method -- including the two this function's own
+  # heavy-tail preference list names first.
+  heavy <- cpt_recommend(dimension = "univariate", change_in = "mean",
+                         noise = "heavy")
+  expect_true("np" %in% heavy$method)
+  expect_true("ecp" %in% heavy$method)
+})
+
+test_that("B23/B24: the benchmark plots refuse what they cannot draw", {
+  skip_on_cran()
+  ds <- cpt_datasets()[1:2]
+  bm1 <- suppressWarnings(cpt_benchmark(ds, methods = "pelt",
+                                        progress = FALSE))
+  # qtukey() is undefined below nmeans = 2 and answers with NaN, which drew
+  # a diagram with an NaN rectangle and an all-NA `within_cd`.
+  expect_error(ggplot2::autoplot(bm1, plot_type = "critical_difference"),
+               "at least two")
+  bm2 <- suppressWarnings(cpt_benchmark(ds, methods = c("pelt", "binseg"),
+                                        progress = FALSE))
+  expect_error(ggplot2::autoplot(bm2, plot_type = "critical_difference",
+                                 alpha = 1.5),
+               "alpha")
+  expect_s3_class(ggplot2::ggplot_build(
+    ggplot2::autoplot(bm2, plot_type = "critical_difference")),
+    "ggplot_built")
+})
+
+test_that("B29/B30: esac and pilliat keep their shape on an all-flat input", {
+  skip_if_not(engine_usable("HDCD"))
+  # Both are `univariate = FALSE`, so their results are always meant to be
+  # multivariate; omitting `data_wide` on the all-flat early return made
+  # n_coordinates() report 1, which sent autoplot() down the univariate
+  # branch and augment() to `use_wide = FALSE`.
+  flat <- matrix(rep(1, 400), ncol = 4)
+  shapes <- vapply(c("esac", "pilliat", "inspect"), function(m) {
+    r <- suppressWarnings(cpt_detect(flat, method = m))
+    ncol(r$data_wide %||% matrix(1))
+  }, numeric(1))
+  expect_equal(length(unique(shapes)), 1L, info = paste(shapes, collapse = ","))
+})
+
+test_that("B31: fastcpd's penalty reaches the engine and is reported", {
+  skip_if_not(engine_usable("fastcpd"))
+  # `derived_args_for("fastcpd", ...)` returned only the family, so
+  # cpt_detect(x, method = "fastcpd", penalty = 5) resolved the 5 and threw
+  # it away; and `penalty = list(type = "MBIC")` was hard-coded, so
+  # fastcpd_wrapper(x, beta = 40) ran at 40 while print() said MBIC.
+  set.seed(9)
+  y <- c(stats::rnorm(60), stats::rnorm(60, 0.8), stats::rnorm(60),
+         stats::rnorm(60, 1.2))
+  loose <- cpt_detect(y, method = "fastcpd", penalty = 1)
+  tight <- cpt_detect(y, method = "fastcpd", penalty = 50)
+  # The measured quantity is that the penalty changes the answer, not just
+  # that the call ran.
+  expect_gt(nrow(loose$changepoints), nrow(tight$changepoints))
+  expect_equal(loose$penalty$type, "Manual")
+  expect_equal(loose$penalty$value, 1)
+  expect_equal(fastcpd_wrapper(y, beta = 40)$penalty$value, 40)
+  # The default is fastcpd's own MBIC, and is still reported as such.
+  expect_equal(cpt_detect(y, method = "fastcpd")$penalty$type, "MBIC")
+  expect_equal(fastcpd_wrapper(y)$penalty$type, "MBIC")
+  # A name the two packages share is translated; one they do not is left to
+  # the engine rather than silently approximated.
+  expect_equal(cpt_detect(y, method = "fastcpd", penalty = "BIC")$penalty$type,
+               "BIC")
+  expect_equal(cpt_detect(y, method = "fastcpd", penalty = "AIC")$penalty$type,
+               "MBIC")
+})
+
+test_that("B33: the label-error target band survives both edge cases", {
+  # `all(logical(0))` is TRUE, so a MISSING target attribute passed the
+  # guard and annotate() got zero-length xmin/xmax. And an infinite endpoint
+  # is returned deliberately for "the minimum extends past the grid" --
+  # which is the diagnosis the reader needs, and the finiteness test hid the
+  # band in exactly that case.
+  mk <- function(target) {
+    structure(tibble::tibble(penalty = c(1, 10, 100),
+                             false_positive = c(2, 0, 0),
+                             false_negative = c(0, 0, 2),
+                             errors = c(2, 0, 2)),
+              class = c("ggcpt_label_curve", "tbl_df", "tbl", "data.frame"),
+              method = "pelt", target = target)
+  }
+  half <- ggplot2::ggplot_build(ggplot2::autoplot(mk(c(log(2), Inf))))
+  closed <- ggplot2::ggplot_build(ggplot2::autoplot(mk(c(log(2), log(20)))))
+  # the band is a layer in both cases
+  expect_equal(length(half$data), length(closed$data))
+  expect_s3_class(ggplot2::ggplot_build(ggplot2::autoplot(mk(NULL))),
+                  "ggplot_built")
+})
+
+test_that("B34: a wrong-length fitted signal is reported, not just dropped", {
+  # as_ggcpt() was changed to error on this; ggcpt_build() -- the door all
+  # nine `fitted = TRUE` engines come through -- still dropped it silently,
+  # after which autoplot(show_fit = TRUE) told the user the result "carries
+  # no fitted signal" about a signal the engine had computed.
+  expect_warning(
+    r <- ggcpt_build(stats::rnorm(50), 25L, method = "toy",
+                     change_in = "mean",
+                     penalty = list(type = "None", value = NA_real_),
+                     fitted = stats::rnorm(40)),
+    "length 40 for a series of length 50")
+  expect_false("fitted" %in% names(r$data))
+  expect_silent(
+    ok <- ggcpt_build(stats::rnorm(50), 25L, method = "toy",
+                      change_in = "mean",
+                      penalty = list(type = "None", value = NA_real_),
+                      fitted = stats::rnorm(50)))
+  expect_true("fitted" %in% names(ok$data))
+})
+
+test_that("B36: a multi-series label set is not silently scored as one", {
+  # The `series` column is carried into the output and described in @return,
+  # and nothing filtered on it -- so the multi-series set cpt_learn_penalty()
+  # takes had every series' labels scored against this one fit.
+  set.seed(8)
+  fit <- cpt_detect(c(stats::rnorm(80), stats::rnorm(80, 4)), method = "pelt")
+  ml <- data.frame(series = c("a", "a", "b"), start = c(1, 40, 1),
+                   end = c(20, 60, 20),
+                   change = c("no_change", "change", "change"))
+  expect_warning(cpt_label_error(fit, ml), "names 2 series")
+  expect_silent(cpt_label_error(fit, ml[ml$series == "a", ]))
+})
+
+test_that("C1/C2: selection_adjusted says what each test can support", {
+  # The Chow F's reference distribution assumes the break date was fixed in
+  # advance, so quoting it AT an estimated break is exactly the circularity
+  # the column exists to flag -- it was set TRUE. And Davies' test is one
+  # global test, so its rows repeat one p-value; the method string now says
+  # so rather than reading as one test per changepoint.
+  skip_if_not(engine_usable("strucchange"))
+  set.seed(21)
+  x <- c(stats::rnorm(80), stats::rnorm(80, 4))
+  f <- suppressWarnings(cpt_detect(x, method = "strucchange"))
+  tt <- suppressWarnings(cpt_test(f))
+  expect_true(all(grepl("Chow", tt$method)))
+  expect_false(any(tt$selection_adjusted))
+  expect_true(all(grepl("unadjusted", tt$method)))
+})
+
+test_that("C6: the residual bootstrap cannot fall into sample()'s trap", {
+  # `sample(x, n)` means `sample.int(x, n)` when x is a single number >= 1,
+  # so a one-observation segment would resample `1:round(resid)`. It was
+  # safe only because a length-1 segment's residual against its own mean is
+  # exactly 0 -- a coupling to param_estimate that no longer has to hold.
+  srcs <- vapply(c("confint_bootstrap", "stability_curve"), function(f) {
+    paste(deparse(get(f, envir = asNamespace("ggchangepoint"))),
+          collapse = " ")
+  }, character(1))
+  for (nm in names(srcs)) {
+    expect_false(grepl("sample(resid[idx]", srcs[[nm]], fixed = TRUE),
+                 info = nm)
+    expect_true(grepl("sample.int(length(idx)", srcs[[nm]], fixed = TRUE),
+                info = nm)
+  }
+})
+
+test_that("C9/C10: the power and benchmark tables name what they hold", {
+  skip_on_cran()
+  set.seed(31)
+  pw <- cpt_power(n = 200, jump = 3, n_sim = 6, seed = 1, parallel = FALSE)
+  # `extra` is a COUNT of detections outside the tolerance window, not a
+  # rate, and the old name invited reading 137 as a percentage.
+  expect_true("false_positives" %in% names(pw))
+  expect_false("false_positive_rate" %in% names(pw))
+  expect_true(all(pw$false_positives >= 0))
+
+  # A dataset every method failed on ties them at the same worst rank -- no
+  # information -- but it still incremented N, and CD shrinks with N. So a
+  # failed dataset made the critical distance NARROWER than the informative
+  # ones support: anti-conservative.
+  ds <- cpt_datasets()[1:2]
+  bm <- suppressWarnings(cpt_benchmark(ds, methods = c("pelt", "binseg"),
+                                       progress = FALSE))
+  metric <- attr(bm, "metrics")[1]
+  rk_ok <- ggchangepoint:::benchmark_ranks(bm, metric)
+  bm_bad <- bm
+  bm_bad[[metric]][bm_bad$dataset == unique(bm$dataset)[1]] <- NA_real_
+  rk_bad <- ggchangepoint:::benchmark_ranks(bm_bad, metric)
+  expect_lt(rk_bad$n_datasets[1], rk_ok$n_datasets[1])
+  expect_equal(rk_bad$n_datasets_total[1], rk_ok$n_datasets_total[1])
+  # ...so the critical distance gets WIDER, not narrower, when a dataset
+  # stops carrying information.
+  expect_gt(ggchangepoint:::nemenyi_cd(2, rk_bad$n_datasets[1]),
+            ggchangepoint:::nemenyi_cd(2, rk_ok$n_datasets[1]))
+})
+
+test_that("D1: cpt_monitor() validates the arguments each method uses", {
+  b <- stats::rnorm(60)
+  # `deltas = 0` makes every likelihood ratio exactly 1, so R grows linearly
+  # whatever the data does and the monitor alarms at t = 1/alpha on noise.
+  expect_error(cpt_monitor("edetector", baseline = b, deltas = 0),
+               "non-zero")
+  expect_error(cpt_monitor("edetector", baseline = b, deltas = c(NA, 1)),
+               "finite")
+  expect_warning(cpt_monitor("edetector", baseline = b, deltas = c(0, 1)),
+                 "contains 0")
+  # `...` reaches the engine in the other two branches and has nowhere to go
+  # in this one, so it used to vanish silently.
+  expect_warning(cpt_monitor("edetector", baseline = b, nosucharg = 3),
+                 "takes no engine arguments")
+  skip_if_not(engine_usable("ocd"))
+  B <- matrix(stats::rnorm(120), ncol = 3)
+  expect_error(cpt_monitor("ocd", baseline = B, patience = 0), "patience")
+  expect_error(cpt_monitor("ocd", baseline = B, mc_reps = 0), "mc_reps")
+})
+
+test_that("D6/D11/D34: three silent drops now say something", {
+  # attach_index() dropped a wrong-length index without a word, leaving a
+  # result that plots in positions and a caller with no way to know. Every
+  # public door validates the length first -- cpt_detect() refuses it in
+  # validate_index() -- so this is the internal backstop, reached only if a
+  # future caller forgets, and it must not go back to being silent.
+  fit50 <- cpt_detect(stats::rnorm(50), method = "pelt")
+  expect_warning(
+    dropped <- ggchangepoint:::attach_index(fit50,
+                                            as.Date("2020-01-01") + 0:9),
+    "value\\(s\\) for a series of length 50")
+  expect_null(dropped$index)
+  expect_error(cpt_detect(stats::rnorm(50), method = "pelt",
+                          index = as.Date("2020-01-01") + 0:9),
+               "one value per observation")
+  # cpt_simulate() accepted an n every consumer in the package then refuses.
+  expect_error(cpt_simulate(2), "n")
+  expect_s3_class(cpt_simulate(3), "tbl_df")
+  # And the influence loop's index shift is type-stable when a perturbed
+  # fit finds nothing: `ifelse(logical(0), ...)` returned logical(0), so the
+  # list of segmentations mixed integer and logical vectors.
+  set.seed(41)
+  x <- c(stats::rnorm(40), stats::rnorm(40, 5))
+  fit <- cpt_detect(x, method = "pelt")
+  inf <- suppressWarnings(cpt_influence(fit, type = "delete"))
+  cpts <- attr(inf, "cpts") %||% inf$cpts
+  if (!is.null(cpts)) {
+    expect_true(all(vapply(cpts, function(v) {
+      length(v) == 0L || is.numeric(v)
+    }, logical(1))))
+  } else {
+    expect_s3_class(inf, "ggcpt_influence")
+  }
+})
+
+test_that("D10: a data frame is not a list of annotators", {
+  # A data frame IS a list, so tidy(fit) was read column-by-column and
+  # `cp_value` -- raw data values -- was scored as changepoint locations.
+  expect_error(cpt_metrics_annotated(c(100, 200),
+                                     annotations = data.frame(cp = c(100, 200)),
+                                     n = 300),
+               "data frame is a list")
+  expect_s3_class(cpt_metrics_annotated(c(100, 200),
+                                        annotations = list(c(100, 200)),
+                                        n = 300), "tbl_df")
+})
+
+test_that("D15/D16/D17/D18: the registration doors validate what they store", {
+  # ifelse() evaluates both arms, so find.package() ran for every planned
+  # and registered row and the answers were then overwritten with NA.
+  cpt_register_method("d15_probe", function(x, ...) as_ggcpt(50, x),
+                      engine = NULL)
+  withr::defer(try(cpt_unregister_method("d15_probe"), silent = TRUE))
+  tab <- cpt_methods()
+  expect_true(is.na(tab$installed[tab$method == "d15_probe"]))
+  expect_true(all(is.na(tab$installed[tab$status != "available"])))
+
+  # Flags are read through isTRUE(), so a non-logical registered as FALSE
+  # and the capability silently disappeared.
+  expect_error(cpt_register_method("d17_probe", function(x, ...) 50,
+                                   capabilities = list(ci = 1)),
+               "must be TRUE or FALSE")
+  # A citation is cat()ed verbatim.
+  expect_error(cpt_register_method("d18_probe", function(x, ...) 50,
+                                   citation = list("a", "b")),
+               "single string")
+  # And the unregister door checked nothing.
+  expect_error(cpt_unregister_method(42), "single non-empty string")
+  expect_error(cpt_unregister_method(character(0)), "single non-empty string")
+})
+
+test_that("D19: an empty cpt_regions() has the columns the docs promise", {
+  # rbind(cpt_regions(a), cpt_regions(b)) failed whenever one was empty and
+  # the other indexed, because the empty return was always three columns.
+  set.seed(42)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+  d <- as.Date("2020-01-01") + seq_along(x) - 1
+  plain <- cpt_detect(x, method = "pelt", index = d)
+  expect_equal(nrow(cpt_regions(plain)), 0L)
+  expect_true(all(c("start_index", "end_index") %in%
+                    names(cpt_regions(plain))))
+  withreg <- as_ggcpt(60, x, index = d,
+                      regions = data.frame(start = 55, end = 66))
+  expect_s3_class(rbind(cpt_regions(plain), cpt_regions(withreg)), "tbl_df")
+})
+
+test_that("D20: a location is validated against the shortest n", {
+  # nmax meant `n = c(50, 500)` with `location = 400` passed against 500 and
+  # was then silently clamped to 48 in the n = 50 scenario.
+  expect_error(cpt_power(n = c(50, 500), jump = 2, location = 400, n_sim = 2),
+               "shortest")
+  expect_s3_class(cpt_power(n = c(50, 500), jump = 2, location = 0.5,
+                            n_sim = 2, parallel = FALSE, seed = 1),
+                  "ggcpt_power")
+})
+
+test_that("D25: a row subset of a subclassed tibble still prints", {
+  # reclass_subset() keeps the subclass when the required COLUMNS survive,
+  # and the tests asserted exactly that and never that the result prints --
+  # which reads an attribute. Measured: tibble's `[` does carry the
+  # attributes through a row subset here, so the guards are belt-and-braces
+  # and this is the test that would notice if that changed.
+  skip_on_cran()
+  ds <- cpt_datasets()[1:2]
+  bm <- suppressWarnings(cpt_benchmark(ds, methods = c("pelt", "binseg"),
+                                       progress = FALSE))
+  expect_s3_class(bm[1, ], "ggcpt_benchmark")
+  expect_output(print(bm[1, ]))
+  expect_output(print(bm[, names(bm)]))
+  fit <- cpt_detect(c(stats::rnorm(80), stats::rnorm(80, 4)), method = "pelt")
+  err <- cpt_label_error(fit, data.frame(start = c(1, 40), end = c(20, 100),
+                                         change = c("no_change", "change")))
+  expect_s3_class(err[1, ], "cpt_label_error")
+  expect_output(print(err[1, ]))
+})
+
+test_that("D21: the CROPS penalty column is the interval's lower end", {
+  # pen.value.full() returns the penalty-axis BREAKPOINTS, so K
+  # segmentations come with K + 1 of them -- measured 23 against 22 rows on
+  # a 240-point sweep. The old code reconciled the lengths blind; the
+  # pairing it happened to keep is the correct one, and now says so.
+  set.seed(2)
+  x <- c(stats::rnorm(80), stats::rnorm(80, 3), stats::rnorm(80))
+  p <- cpt_crops(x, pen_min = 2, pen_max = 200)
+  sol <- p$solutions
+  expect_true(nrow(sol) > 1)
+  expect_false(anyNA(sol$penalty))
+  # The invariant, whatever order the table is returned in: a larger
+  # penalty buys fewer changepoints. Measured on this series -- 22
+  # segmentations against 23 penalty breakpoints -- so an off-by-one in the
+  # pairing would break the monotonicity somewhere.
+  by_pen <- sol[order(sol$penalty), , drop = FALSE]
+  expect_true(all(diff(by_pen$n_cpts) <= 0))
+  expect_equal(min(sol$penalty), 2)
+  expect_lt(max(sol$penalty), 200)
+})
+
+test_that("D30: a wide multivariate plot warns before it draws", {
+  skip_if_not(engine_usable("InspectChangepoint"))
+  # Measured: no wrapper actually produces p^2 coordinates (network_wrapper()
+  # deliberately carries no data_wide, and hdcov takes an n x p matrix), and
+  # 30 panels build in half a second -- so the cost is readability, not
+  # time. Say so rather than drawing 30 unreadable slivers silently.
+  set.seed(4)
+  X <- matrix(stats::rnorm(80 * 30), nrow = 80)
+  f <- suppressWarnings(cpt_detect(X, method = "inspect"))
+  # A message, not a warning: "this will be hard to read" is advice about a
+  # correct plot, and a 30-coordinate functional result is an ordinary
+  # thing for fmean/fcov to produce.
+  expect_message(ggplot2::ggplot_build(ggplot2::autoplot(f)), "coordinates")
+  small <- matrix(stats::rnorm(80 * 4), nrow = 80)
+  fs <- suppressWarnings(cpt_detect(small, method = "inspect"))
+  expect_s3_class(ggplot2::ggplot_build(ggplot2::autoplot(fs)),
+                  "ggplot_built")
+})
+
+test_that("E8: a registered method with an uppercase name can be cited", {
+  # The registry is an environment, so its lookup is case-sensitive, and
+  # cpt_cite() lowercased the name before looking there -- so cpt_cite() on
+  # a "MyDetector" result told the user to supply a citation with
+  # cpt_register_method(), which is exactly what they had done.
+  cpt_register_method("MyDetector", function(x, ...) as_ggcpt(50, x),
+                      citation = "Someone (2026). A detector.")
+  withr::defer(cpt_unregister_method("MyDetector"))
+  cited <- cpt_cite("MyDetector")
+  expect_equal(nrow(cited), 1L)
+  expect_match(cited$reference, "Someone")
+  expect_equal(cited$method, "MyDetector")
+  fit <- cpt_detect(stats::rnorm(100), method = "MyDetector")
+  expect_match(cpt_cite(fit)$reference, "Someone")
+})
+
+test_that("E9: a short engine statistic is padded at both ends", {
+  # A moving window trims BOTH ends, so left-aligning the pad shifted every
+  # value left by the bandwidth -- the mis-alignment the branch exists to
+  # prevent.
+  n <- 101
+  short <- c(rep(0, 20), 5, rep(0, 20))          # peak at position 21 of 41
+  cpt_register_method("e9_probe", function(x, ...) {
+    r <- as_ggcpt(50, x, method = "e9_probe")
+    r$diagnostics <- list(statistic = list(statistic = short,
+                                           label = "probe"))
+    r
+  }, capabilities = list(statistic = TRUE))
+  withr::defer(cpt_unregister_method("e9_probe"))
+  st <- cpt_statistic(cpt_detect(stats::rnorm(n), method = "e9_probe"))
+  expect_equal(nrow(st), n)
+  peak <- which.max(replace(st$statistic, is.na(st$statistic), -Inf))
+  # Centred: 60 NAs to distribute, 30 before, so the peak lands at 30 + 21.
+  expect_equal(peak, 30L + 21L)
+  expect_equal(sum(is.na(st$statistic[seq_len(30)])), 30L)
+})
+
+test_that("B16: the bootstrap refuses a result it cannot reproduce", {
+  # A `strucchange` formula fit reports change_in = "regression" and keeps
+  # neither the formula nor `data` -- `$data$value` is the response alone.
+  # So the bootstrap resampled the response and re-ran an INTERCEPT-ONLY
+  # breakpoint search, then reported the spread of that search as this
+  # result's interval. bootstrap_possible() said TRUE because the method is
+  # in the registry.
+  skip_if_not(engine_usable("strucchange"))
+  set.seed(51)
+  n <- 160
+  x1 <- stats::rnorm(n)
+  y <- c(stats::rnorm(80), stats::rnorm(80, 4)) + 2 * x1
+  d <- data.frame(y = y, x1 = x1)
+  f <- tryCatch(suppressWarnings(strucchange_wrapper(y ~ x1, data = d)),
+                error = function(e) NULL)
+  skip_if(is.null(f))
+  skip_if(!identical(f$change_in, "regression"))
+  expect_error(suppressWarnings(cpt_confint(f, method = "bootstrap", B = 5)),
+               "re-run a different model")
+  # The engine's own intervals are still available, and that is what `auto`
+  # picks for this engine.
+  expect_s3_class(cpt_confint(f, method = "native"), "tbl_df")
+  # A plain change-in-mean strucchange fit is unaffected.
+  g <- suppressWarnings(cpt_detect(c(stats::rnorm(80), stats::rnorm(80, 4)),
+                                   method = "strucchange"))
+  expect_s3_class(suppressWarnings(cpt_confint(g, method = "bootstrap",
+                                               B = 5)), "tbl_df")
+})
+
+test_that("B12: a recomputed solution path says that it is one", {
+  skip_if_not(engine_usable("breakfast"))
+  # breakfast's fit keeps no candidate list, so this is the only branch that
+  # recomputes -- and wbs2 is randomised, so the path is a second search of
+  # the same series and need not contain the fit's own changepoints.
+  set.seed(52)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 3))
+  f <- suppressWarnings(cpt_detect(x, method = "wbs2"))
+  expect_warning(sp <- cpt_solution_path(f), "recomputed")
+  expect_true(all(c("step", "cp", "contrast", "selected") %in% names(sp)))
+  # Every other engine's path is read off the fit, and stays silent.
+  fb <- suppressWarnings(cpt_detect(x, method = "binseg", Q = 5))
+  expect_silent(cpt_solution_path(fb))
 })

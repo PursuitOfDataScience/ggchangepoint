@@ -189,7 +189,12 @@ ggcpt_interactive <- function(x, engine = c("plotly", "ggiraph"),
          "`engine = \"", engine, "\"`. Install it with ",
          "install.packages('", engine, "').", call. = FALSE)
   }
-  p <- if (is_ggcpt(x)) autoplot.ggcpt(x, ...) else x
+  # Dispatch, don't hard-code: `ggcpt_consensus` inherits `ggcpt` (so
+  # is_ggcpt() is TRUE) and registers its own autoplot method, so calling
+  # autoplot.ggcpt() directly rendered the plain series plot for it and sent
+  # `plot_type = "agreement"` through `...` to a method that has no such
+  # argument.
+  p <- if (is_ggcpt(x)) ggplot2::autoplot(x, ...) else x
   if (!inherits(p, "ggplot")) {
     stop("`x` must be a ggcpt object or a ggplot.", call. = FALSE)
   }

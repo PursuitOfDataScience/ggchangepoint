@@ -112,8 +112,9 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
 #' near a tie. Measured over eight other series with three identical calls
 #' each, \code{wbs2} was stable on all eight; the flip above reproduces
 #' only on that one configuration. \code{tguh}, which uses the same
-#' package, was stable throughout, as were the other 35 methods this
-#' experiment covered. If you need a segmentation you can reproduce
+#' package, was stable throughout, as were the other 35 of the 50 wired
+#' methods this experiment covered (the rest need an engine that was not
+#' installed when it was run). If you need a segmentation you can reproduce
 #' exactly, take the result of the first call in a session, or use an
 #' engine with a \code{seed} argument (\code{\link{cpt_methods}()}
 #' reports which wrappers have one).

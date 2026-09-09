@@ -54,10 +54,14 @@ to one or two rungs and the function warns.}
     column is otherwise not reproducible: both the cost convention and
     the parameter count vary between authors.}
   \item{\code{"mbic"}}{the modified BIC of Zhang and Siegmund (2007),
-    \eqn{3K\log n + \sum_i \log(l_i/n)}, which depends on the segment
+    \eqn{3K\log n + \sum_i \log(l_i/n)} on the \strong{deviance}
+    (\eqn{-2\log L}) scale, which is the scale the \code{cost} column
+    is on --- the same criterion is \eqn{1.5K\log n + 0.5\sum_i
+    \log(l_i/n)} on the log-likelihood scale, which is how
+    \code{\link{cpt_penalty}()} states it. It depends on the segment
     lengths \eqn{l_i} and so cannot be expressed by
-    \code{\link{cpt_penalty}()}'s function of \eqn{n} and \eqn{k}
-    alone. This is the one place in the package where the real
+    \code{cpt_penalty()}'s function of \eqn{n} and \eqn{k} alone.
+    This is the one place in the package where the real
     Zhang–Siegmund penalty is computed.}
   \item{\code{"aic"}}{Gaussian AIC over the ladder,
     \eqn{n\log(\mathrm{RSS}/n) + 2(2K + 1)} — the same cost and the

@@ -97,10 +97,18 @@ esac_wrapper <- function(x, threshold_d = 1.5, threshold_s = 1,
   X <- as_mv_matrix(x)
   X <- drop_constant_cols(X, "esac")
   if (is.null(X)) {
-    return(ggcpt_build(as.numeric(as.matrix(x)[, 1]), integer(0),
+    # `data_wide` too: esac is `univariate = FALSE` in the registry, so its
+    # result is always meant to be multivariate. Omitting it made
+    # n_coordinates() report 1, which cascaded -- autoplot() took the
+    # UNIVARIATE branch, augment() took `use_wide = FALSE`, and
+    # ggcpt_compare(X, methods = c("inspect", "esac")) returned two
+    # structurally different objects for one input.
+    XX <- as_mv_matrix(x)
+    return(ggcpt_build(as.numeric(XX[, 1]), integer(0),
                        method = "esac", change_in = "mean",
                        penalty = list(type = "threshold", value = NA_real_),
-                       call = match.call()))
+                       call = match.call(),
+                       data_wide = mv_data_wide(XX)))
   }
   data_vec <- as.numeric(X[, 1])
   local_seed(seed)
@@ -109,20 +117,32 @@ esac_wrapper <- function(x, threshold_d = 1.5, threshold_s = 1,
   fit <- HDCD::ESAC(t(X), threshold_d = threshold_d,
                     threshold_s = threshold_s, empirical = empirical,
                     N = N, ...)
-  cp <- as.integer(fit$changepoints)
-  cp <- cp[!is.na(cp)]
-  ord <- order(cp)
+  # Filter and order in lockstep across all three engine vectors. `ord` used
+  # to be computed from the NA-filtered `cp` and then applied to the
+  # UNFILTERED CUSUMval and depth, so one NA changepoint drew those two
+  # columns from the wrong rows -- silently, because the lengths still
+  # agreed and ggcpt_build()'s assignment succeeded. This is the rule
+  # ggcpt_build() states for itself: build the row set before filtering, so
+  # the optional extra columns stay row-aligned.
+  cp_raw <- as.integer(fit$changepoints)
+  cusum_raw <- as.numeric(fit$CUSUMval)
+  depth_raw <- as.integer(fit$depth)
+  keep <- !is.na(cp_raw)
+  ord <- which(keep)[order(cp_raw[keep])]
+  cp <- cp_raw[ord]
 
   ggcpt_build(
-    data_vec, cp[ord],
+    data_vec, cp,
     method = "esac",
     change_in = "mean",
     penalty = list(type = "threshold", value = threshold_d),
     fit = fit,
     call = match.call(),
     extra_cp_cols = if (length(cp) > 0) {
-      list(cusum = as.numeric(fit$CUSUMval)[ord],
-           depth = as.integer(fit$depth)[ord])
+      list(cusum = if (length(cusum_raw) == length(cp_raw)) cusum_raw[ord]
+                   else rep(NA_real_, length(cp)),
+           depth = if (length(depth_raw) == length(cp_raw)) depth_raw[ord]
+                   else rep(NA_integer_, length(cp)))
     },
     data_wide = mv_data_wide(X)
   )
@@ -194,6 +214,16 @@ pilliat_dimension_guard <- function(p, p_supplied) {
 #' \code{\link{esac_wrapper}()} is unaffected at every dimension. Note that
 #' constant coordinates are dropped before the count, so 9 coordinates one of
 #' which is constant is 8 for this purpose.
+#'
+#' The same reasoning makes this the one engine that \strong{errors} on a
+#' degenerate segmentation (a changepoint at more than 90\% of
+#' observations) where every other engine in the package warns and reports
+#' what it found. That has a consequence for comparisons:
+#' \code{\link{cpt_batch}()} and \code{\link{cpt_benchmark}()} record a
+#' failure row for \code{pilliat} where the same output from \code{pelt}
+#' gives a result plus a warning, so a benchmark table is not scoring the
+#' two on equal terms in that case --- read the \code{error} column
+#' alongside the metrics.
 #' @references
 #' \insertRef{pilliat2023optimal}{ggchangepoint}
 #' @export
@@ -214,6 +244,9 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
   # none of which names the argument. Measured across all 64 wrapper
   # argument slots; these are the ones that needed it.
   validate_scalar(threshold_d_const, "threshold_d_const", min = 0, min_open = TRUE)
+  # `threshold_bj_const` is structurally identical to the other two and was
+  # the one omitted, while the comment above claims the set is complete.
+  validate_scalar(threshold_bj_const, "threshold_bj_const", min = 0, min_open = TRUE)
   validate_scalar(threshold_partial_const, "threshold_partial_const", min = 0, min_open = TRUE)
   validate_scalar(N, "N", min = 1)
   validate_flag(empirical, "empirical")
@@ -221,10 +254,14 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
   X <- as_mv_matrix(x)
   X <- drop_constant_cols(X, "pilliat")
   if (is.null(X)) {
-    return(ggcpt_build(as.numeric(as.matrix(x)[, 1]), integer(0),
+    # See the note in esac_wrapper(): the shape has to survive an all-flat
+    # input, because this method is high-dimensional only.
+    XX <- as_mv_matrix(x)
+    return(ggcpt_build(as.numeric(XX[, 1]), integer(0),
                        method = "pilliat", change_in = "mean",
                        penalty = list(type = "threshold", value = NA_real_),
-                       call = match.call()))
+                       call = match.call(),
+                       data_wide = mv_data_wide(XX)))
   }
   data_vec <- as.numeric(X[, 1])
   pilliat_dimension_guard(ncol(X), ncol(as_mv_matrix(x)))
@@ -238,6 +275,14 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
   cp <- cp[!is.na(cp)]
   # Backstop, in case a later HDCD moves the fault rather than fixing it: a
   # changepoint at nearly every observation is not a segmentation.
+  #
+  # This is the one engine that STOPS on a degenerate segmentation where
+  # warn_if_degenerate() gives every other one a warning plus a diagnosis.
+  # That is deliberate -- the cited upstream fault produces this output
+  # rather than a plausible one -- but it has a consequence worth naming:
+  # cpt_batch() and cpt_benchmark() record a failure row here where the
+  # same output from `pelt` yields a result plus a warning, so the two are
+  # not directly comparable in a benchmark table. @section notes it.
   if (length(cp) > 0.9 * nrow(X)) {
     stop("`pilliat` returned ", length(cp), " changepoints on ", nrow(X),
          " observations, which is a degenerate threshold rather than a ",

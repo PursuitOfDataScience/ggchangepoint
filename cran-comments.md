@@ -67,7 +67,7 @@ redistributed, the function is not called by any example, test or vignette
 against `cpt_datasets()`, which is built from the package's own simulated
 signals.
 
-One hundred and twenty-five defects found while building and auditing this release were fixed
+Two hundred and twenty-one defects found while building and auditing this release were fixed
 in the same cycle; NEWS.md itemises them and each has a regression test. The
 most instructive: a `tibble::tribble()` list-column silently deparsed into a
 string, which made every multi-capability method lose its extra `change_in`

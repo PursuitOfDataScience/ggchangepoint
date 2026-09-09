@@ -23,6 +23,24 @@ the ranking is readable.}
   \code{start}/\code{end} of the interval that proposed it, plus a
   \code{selected} flag marking the changepoints in the final model.
   \code{ggcpt_solution_path()} draws it.
+
+  \code{contrast} is the engine's own ordering criterion, and it is a
+  \emph{different quantity} per engine: a penalty value for
+  \code{binseg}/\code{segneigh} (from
+  \code{changepoint::pen.value.full()}), \eqn{|CUSUM|} for \code{wbs},
+  \eqn{|}\code{max.contrast}\eqn{|} for \code{not}, and
+  \pkg{breakfast}'s candidate criterion for \code{wbs2}/\code{tguh}.
+  The values order the candidates within one result; they are not
+  comparable across engines, and the plot legend names the quantity
+  rather than calling all of them "Contrast".
+
+  For \code{wbs2} and \code{tguh} the path is \strong{recomputed} with
+  \pkg{breakfast}, because their fit objects do not keep the candidate
+  list. \code{wbs2}'s search is randomised, so its path is a second
+  search of the same series rather than a record of the first --- it can
+  differ between calls, and \code{selected} can be \code{FALSE}
+  throughout if the recomputed candidates miss the fit's own
+  changepoints. Every other engine's path is read off the fit.
 }
 \description{
 The order in which candidate changepoints entered the model, with the

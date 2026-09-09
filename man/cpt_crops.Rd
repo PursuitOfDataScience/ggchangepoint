@@ -55,7 +55,11 @@ drawn).}
 A \code{ggcpt_path} object: a list with a \code{solutions} tibble
   (one row per distinct segmentation: \code{penalty}, \code{n_cpts},
   \code{cost}, and a \code{cpts} list-column), the \code{data}, and
-  metadata. Methods: \code{print()}, \code{tidy()}, and
+  metadata. \code{penalty} is the \strong{lower end} of the penalty
+  interval on which that segmentation is optimal --- CROPS returns the
+  breakpoints of the penalty axis, so \eqn{K} segmentations come with
+  \eqn{K + 1} boundaries and each row is optimal from its own
+  \code{penalty} up to the next row's. Methods: \code{print()}, \code{tidy()}, and
   \code{autoplot()} (elbow plot by default;
   \code{type = "path"} for penalty vs. number of changepoints;
   \code{type = "segmentations"} for the faceted segmentations).

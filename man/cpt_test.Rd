@@ -36,16 +36,30 @@ looked like it changed there} is circular, and the resulting p-values are
 anti-conservative, often severely. The \code{selection_adjusted} column
 records, per row, whether the test accounts for that:
 \itemize{
-  \item \code{TRUE} for \pkg{strucchange} (the Chow/supF statistics the
-    Bai–Perron framework supplies) and for \pkg{segmented}'s Davies test,
-    which is built for a nuisance parameter present only under the
-    alternative;
+  \item \code{TRUE} for \pkg{segmented}'s Davies test, which is built
+    for a nuisance parameter present only under the alternative. It is
+    one \emph{global} test of "is there a breakpoint", not a test per
+    breakpoint, so on a multi-break fit every row carries the same
+    statistic and p-value --- the method string says so.
   \item \code{FALSE} for the generic Welch two-sample fallback, which
     compares the segments either side of the changepoint as if the
     location had been fixed in advance. Useful as a descriptive effect
     size with a scale attached; not a valid significance test for the
     existence of the change.
+  \item \code{FALSE} for \pkg{strucchange}'s route as well, which is
+    the Chow F evaluated \emph{at} each estimated break date. The Chow
+    statistic's reference distribution assumes the date was fixed in
+    advance, so quoting it at a date the Bai–Perron dynamic program chose
+    is exactly the circularity this column exists to flag --- reporting
+    it is conventional in that literature, which does not make it
+    adjusted. The selection-adjusted objects there are the sup-type
+    statistics and the Bai–Perron critical values.
 }
+Two further limits worth knowing. \code{type = "segment"} is
+\strong{always} the unadjusted Welch test: the native routes above apply
+only to \code{type = "jump"}, so a \pkg{segmented} fit tested
+per-segment does not use Davies' test. And the split above is by
+\emph{engine and type}, not by engine alone.
 For a guarantee that survives selection, use \code{\link{nsp_wrapper}()}
 (regions with exact global coverage) or \code{\link{cpt_confint}()} with
 \code{method = "nsp"}. The canonical post-detection tests of Jewell,

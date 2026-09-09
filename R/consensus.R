@@ -342,7 +342,17 @@ cpt_recommend <- function(dimension = c("univariate", "multivariate"),
   tab <- cpt_methods()
   reg$installed <- tab$installed[match(reg$method, tab$method)]
 
-  supports <- vapply(reg$supports, function(s) change_in %in% s, logical(1))
+  # The same rule validate_method_change_in() applies, and for the same
+  # reason: `change_in = "mean"` is accepted by every method, because a
+  # method targeting something else (distribution, slope) treats a "mean"
+  # request as its native change type. Reading `supports` strictly here
+  # dropped every distribution-only method -- np, ecp, geomcp, npmojo -- so
+  # at `noise = "heavy"`, where this function's own preference list names np
+  # and ecp first, the two canonical univariate nonparametric answers were
+  # filtered out before scoring and could not be recommended at all.
+  supports <- vapply(reg$supports, function(s) {
+    identical(change_in, "mean") || change_in %in% s
+  }, logical(1))
   reg <- reg[supports, , drop = FALSE]
   if (dimension == "multivariate") {
     reg <- reg[reg$multivariate, , drop = FALSE]
@@ -403,8 +413,14 @@ cpt_recommend <- function(dimension = c("univariate", "multivariate"),
     why[reg$posterior] <- paste0(why[reg$posterior], "; supplies a posterior")
   }
   if (!is.null(n)) {
+    # "changepoints" is an ENGINE, not a method -- it is the engine behind
+    # `hdcov`, `network`, `var` and `hdreg` -- so that element matched no
+    # registry row at all, and the four high-dimensional dynamic-programming
+    # methods, the ones with quadratic-or-worse cost and a cross-validation
+    # grid on top, never got the "slow at n = ..." caveat. Named by method,
+    # like the other six.
     slow <- c("segneigh", "ecp", "bcp", "kcp", "mcp", "fabisearch",
-              "changepoints")
+              "hdcov", "network", "var", "hdreg")
     big <- n >= 5000 & reg$method %in% slow
     score[big] <- score[big] - 2
     caveat[big] <- paste0(ifelse(is.na(caveat[big]), "", paste0(caveat[big],
@@ -465,6 +481,10 @@ tidy.ggcpt_recommendation <- function(x, ...) {
 #' @param ... Ignored.
 #' @export
 print.ggcpt_recommendation <- function(x, top = 5, ...) {
+  # The only numeric argument in this file that skipped validate_scalar():
+  # `top = -1` reached seq_len(-1) and failed with base R's "argument of
+  # length 0"-adjacent complaint about a negative length.
+  validate_scalar(top, "top", min = 0)
   q <- attr(x, "query")
   cat("Recommended methods for: ", q$dimension, " series, change in ",
       q$change_in, ", ", q$noise, " noise",
@@ -472,10 +492,18 @@ print.ggcpt_recommendation <- function(x, top = 5, ...) {
       if (q$need_uncertainty) ", uncertainty required" else "",
       if (q$online) ", online" else "", "\n\n", sep = "")
   n_show <- min(top, nrow(x))
+  # `installed` is NA for a registered method BY DESIGN -- a registration
+  # supplies the detector itself, so there is no package to look for -- and
+  # `isTRUE(NA)` is FALSE, so a detector the user wrote and registered this
+  # session was advertised as not installed. Only an explicit FALSE means
+  # missing.
+  tag <- function(i) if (identical(x$installed[i], FALSE)) {
+    "  [not installed]"
+  } else {
+    ""
+  }
   for (i in seq_len(n_show)) {
-    cat(i, ". ", x$method[i], " (", x$engine[i], ")",
-        if (isTRUE(x$installed[i])) "" else "  [not installed]", "\n",
-        sep = "")
+    cat(i, ". ", x$method[i], " (", x$engine[i], ")", tag(i), "\n", sep = "")
     cat("   why: ", x$why[i], "\n", sep = "")
     if (!is.na(x$caveat[i])) cat("   caveat: ", x$caveat[i], "\n", sep = "")
   }

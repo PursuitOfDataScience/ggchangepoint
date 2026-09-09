@@ -161,6 +161,45 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
                   min_open = TRUE, max_open = TRUE)
   validate_scalar(relearn, "relearn", min = 0)
   validate_flag(reset, "reset")
+  # Three of ten arguments were checked. The rest reached their engine (or,
+  # for `deltas`, this function's own arithmetic) unvalidated: `deltas = 0`
+  # makes every `inc` exactly 1, so `R` grows LINEARLY whatever the data
+  # does and the monitor alarms at t = 1/alpha on pure noise.
+  if (identical(method, "edetector")) {
+    if (!is.numeric(deltas) || length(deltas) == 0L ||
+        any(!is.finite(deltas)) || all(deltas == 0)) {
+      stop("`deltas` must be one or more finite non-zero numbers: the shift ",
+           "sizes, in baseline standard deviations, the e-detector mixes ",
+           "over. A zero shift contributes a likelihood ratio of exactly 1 ",
+           "at every observation, so the statistic grows on nothing.",
+           call. = FALSE)
+    }
+    if (any(deltas == 0)) {
+      warning("`deltas` contains 0, which contributes a likelihood ratio of ",
+              "exactly 1 at every observation and only dilutes the mixture. ",
+              "Dropping it.", call. = FALSE)
+      deltas <- deltas[deltas != 0]
+    }
+    # `...` reaches the engine in the cpm and ocd branches and has nowhere
+    # to go in this one, so it used to vanish -- the same silent-discard
+    # ggcptplot_internal() warns about.
+    extra <- names(list(...))
+    if (length(list(...)) > 0) {
+      warning("`method = \"edetector\"` is native to this package and takes ",
+              "no engine arguments, so ",
+              if (length(extra) && all(nzchar(extra))) {
+                paste0("`", paste(extra, collapse = "`, `"), "` ")
+              } else {
+                paste0(length(list(...)), " unnamed argument(s) ")
+              },
+              "would be ignored. It is tuned by `alpha` and `deltas`.",
+              call. = FALSE)
+    }
+  }
+  if (identical(method, "ocd")) {
+    validate_scalar(patience, "patience", min = 1)
+    validate_scalar(mc_reps, "mc_reps", min = 1)
+  }
 
   # Normalise the series ONCE, before the switch. Each branch used to coerce
   # `baseline` its own way -- as.numeric() for edetector and cpm, a matrix
@@ -213,7 +252,20 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
     },
     cpm = {
       need_pkg("cpm")
-      m <- cpm::makeChangePointModel(cpmType = cpm_type, ARL0 = arl0, ...)
+      # The same three guards cpm_wrapper() applies, from the same helpers:
+      # this branch used to call makeChangePointModel() directly, so a
+      # withheld `cpm_type`, a missing FET `lambda` or an off-grid `arl0`
+      # each reached the user as an error from inside cpm or base R that
+      # named no argument at all (`no applicable method for '@' applied to
+      # an object of class "NULL"`, because cpm *prints* its complaint and
+      # returns NULL). See cpm_check_type() for what each one looks like.
+      validate_scalar(arl0, "arl0")
+      cpm_type <- cpm_check_type(cpm_type, list(...))
+      cpm_out <- utils::capture.output(
+        m <- cpm::makeChangePointModel(cpmType = cpm_type, ARL0 = arl0, ...)
+      )
+      cpm_check_printed_error(cpm_out, arl0, list(...))
+      if (length(cpm_out)) cat(cpm_out, sep = "\n")
       if (!is.null(baseline)) {
         for (v in as.numeric(baseline)) m <- cpm::processObservation(m, v)
       }
@@ -314,11 +366,19 @@ cpt_update <- function(monitor, new_obs) {
 
   st <- monitor$state
   new_alarms <- list()
+  # Grown once at the end, not re-allocated per observation. cpt_replay()
+  # hands the whole series to a single cpt_update() call, so
+  # `monitor$data <- c(monitor$data, xt[1])` inside the loop made replaying
+  # 10,000 observations do on the order of 50 million element copies.
+  seen <- numeric(nrow(X))
 
   for (i in seq_len(nrow(X))) {
     monitor$t <- monitor$t + 1L
     xt <- X[i, ]
-    monitor$data <- c(monitor$data, xt[1])
+    # Coordinate one only, for every method: `$data` is the series
+    # autoplot() draws, and a multivariate `ocd` monitor is drawn as its
+    # first coordinate (see @return).
+    seen[i] <- xt[1]
 
     # Re-learning window after an alarm: collect the new regime and stay
     # silent, then adopt it as the in-control baseline. Without this a
@@ -342,6 +402,19 @@ cpt_update <- function(monitor, new_obs) {
       inc <- exp(st$deltas * (xt[1] - st$mu0) / st$sd0^2 -
                    st$deltas^2 / (2 * st$sd0^2))
       st$R <- (1 + st$R) * inc
+      # An e-detector's mixture grows multiplicatively, so under `reset =
+      # FALSE` with `relearn = 0` -- the "keep accumulating" configuration
+      # the arguments offer -- it passes .Machine$double.xmax a few hundred
+      # observations after a real change and the next product is `Inf`. The
+      # alarm rule below reads a non-finite statistic as "no alarm", so the
+      # monitor went permanently silent exactly when the evidence was
+      # overwhelming: measured 82 alarms and then 1418 observations of
+      # silence on a shifted stream. Saturating instead keeps the statistic
+      # ordered against the threshold, which is all the rule needs, and --
+      # unlike `Inf`, which is absorbing -- it still decays when the stream
+      # returns to its baseline (measured: 8.99e307 down to 1.8e149 over
+      # 2000 in-control observations, where `Inf` would have stayed `Inf`).
+      st$R <- pmin(st$R, .Machine$double.xmax / 2)
       # AVERAGE, not max: a convex combination of e-detectors is an
       # e-detector and keeps E[M_t] = t, which is what the average-run-length
       # bound rests on. A maximum over K shifts crosses the threshold roughly
@@ -392,6 +465,7 @@ cpt_update <- function(monitor, new_obs) {
   }
 
   monitor$state <- st
+  monitor$data <- c(monitor$data, seen)
   if (length(new_alarms) > 0) {
     monitor$alarms <- rbind(monitor$alarms, do.call(rbind, new_alarms))
   }

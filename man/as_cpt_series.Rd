@@ -24,8 +24,10 @@ the user means.}
 \value{
 A list with components \code{values} (a numeric vector, or a
   matrix for multivariate input), \code{index} (the time index, or
-  \code{NULL} when there is none) and \code{index_label} (a name for the
-  x axis).
+  \code{NULL} when there is none), \code{index_label} (a name for the
+  x axis) and \code{frequency} (the seasonal frequency a \code{ts}
+  carried, or \code{NULL} -- \code{\link{cpt_detect}()} hands this to
+  the engines that need one, such as \code{\link{bfast_wrapper}()}).
 }
 \description{
 Detection itself runs on positions — every wrapped engine assumes an

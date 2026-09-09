@@ -22,8 +22,15 @@ Returns the original data with added columns: \code{seg_id}, \code{.fitted},
 For a multivariate result every coordinate is returned, but the
 changepoints are shared across them, so \code{seg_id} and
 \code{is_changepoint} apply to the whole row while \code{.fitted} and
-\code{.resid} describe the \emph{first} coordinate only — the same
-coordinate \code{$segments$param_estimate} summarises. When an engine
+\code{.resid} describe the \strong{univariate series the result
+carries} — \code{$data$value}, the same series
+\code{$segments$param_estimate} summarises, so \code{.resid} is always
+\code{value - .fitted}. For most multivariate engines that series is
+the first coordinate; \code{fmean}, \code{fcov}, \code{kwc} and
+\code{fabisearch} store the cross-sectional mean \code{rowMeans()}
+instead, and for those \code{.fitted}/\code{.resid} describe that mean
+rather than any one column. Either way the two columns agree with each
+other, which is what makes \code{.resid} a residual. When an engine
 supplies its own fitted signal that signal is used for \code{.fitted} in
 place of the segment means, and rides along in a \code{fitted} column of
 its own -- so for those engines the two columns agree. The engines that

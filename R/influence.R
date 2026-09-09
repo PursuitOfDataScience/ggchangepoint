@@ -209,7 +209,12 @@ influence_recompute <- function(object, type, subset, outlier_sd, ...) {
       # columns keep meaning "position in the original series". Positions
       # after the deletion shift by one, which is also why the changepoint
       # locations are shifted back below.
-      cp <- ifelse(cp >= i, cp + 1L, cp)
+      # Not ifelse(): on an empty `cp` -- which is what a perturbed fit that
+      # found nothing returns -- `ifelse(logical(0), ...)` gives
+      # logical(0), so the list of segmentations mixed integer and logical
+      # vectors. unlist() absorbed it downstream, but it is a type-stability
+      # hole in the hot loop of a diagnostic.
+      cp[cp >= i] <- cp[cp >= i] + 1L
       par_i <- append(par_i, NA_real_, after = i - 1L)[seq_len(n)]
     }
     list(cp = cp, param = par_i)
@@ -217,7 +222,16 @@ influence_recompute <- function(object, type, subset, outlier_sd, ...) {
 
   outs <- if (has_future) {
     future.apply::future_lapply(subset, with_session_registry(run_one),
-                                future.seed = TRUE)
+                                # `seed %||% TRUE`, as the other three
+                                # parallel call sites do. local_seed(seed)
+                                # above means future.apply derives its
+                                # streams from the seeded state, so results
+                                # are reproducible either way today -- but
+                                # a hard-coded TRUE makes that a property
+                                # of two lines being in the right order,
+                                # with no test that would notice if either
+                                # moved.
+                                future.seed = seed %||% TRUE)
   } else {
     lapply(subset, run_one)
   }
@@ -547,7 +561,16 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
   outs <- if (has_future) {
     future.apply::future_lapply(seq_len(nrow(grid)),
                                 with_session_registry(run_one),
-                                future.seed = TRUE)
+                                # `seed %||% TRUE`, as the other three
+                                # parallel call sites do. local_seed(seed)
+                                # above means future.apply derives its
+                                # streams from the seeded state, so results
+                                # are reproducible either way today -- but
+                                # a hard-coded TRUE makes that a property
+                                # of two lines being in the right order,
+                                # with no test that would notice if either
+                                # moved.
+                                future.seed = seed %||% TRUE)
   } else {
     lapply(seq_len(nrow(grid)), run_one)
   }

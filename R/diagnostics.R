@@ -56,10 +56,18 @@ extract_statistic <- function(object) {
   mk <- function(stat, label, threshold = NA_real_) {
     stat <- as.numeric(stat)
     if (length(stat) != n) {
-      # Some engines report a statistic on a shorter grid (boundary
-      # trimming); pad rather than silently mis-aligning it.
+      # Some engines report a statistic on a shorter grid, because a moving
+      # window trims BOTH ends. Left-aligning the pad therefore shifted
+      # every value left by the bandwidth -- exactly the mis-alignment this
+      # branch exists to prevent. Centre it instead: the two ends get the
+      # same number of NAs (the extra one, when the shortfall is odd, goes
+      # at the end), which is where a symmetric window has no value to
+      # report. A statistic that is genuinely a prefix of the series is the
+      # rarer case, and off-by-half-a-bandwidth in the readable direction.
       full <- rep(NA_real_, n)
-      full[seq_len(min(n, length(stat)))] <- stat[seq_len(min(n, length(stat)))]
+      m <- min(n, length(stat))
+      off <- (n - m) %/% 2L
+      full[off + seq_len(m)] <- stat[seq_len(m)]
       stat <- full
     }
     tibble::tibble(index = seq_len(n), statistic = stat,
@@ -106,7 +114,7 @@ extract_statistic <- function(object) {
   }
   if (method == "amoc") {
     return(mk(amoc_lr_profile(object$data$value),
-              "AMOC log-likelihood-ratio profile"))
+              "AMOC standardised CUSUM profile"))
   }
   if (method == "nsp" && !is.null(object$regions)) {
     stat <- rep(0, n)
@@ -134,9 +142,16 @@ extract_statistic <- function(object) {
   NULL
 }
 
-# Internal: the AMOC single-changepoint log-likelihood-ratio profile for a
-# change in mean with common variance. AMOC *is* this statistic maximised,
-# so drawing it is drawing the method rather than inventing a diagnostic.
+# Internal: the AMOC single-changepoint scan statistic for a change in mean
+# with common variance. AMOC *is* this statistic maximised, so drawing it is
+# drawing the method rather than inventing a diagnostic.
+#
+# It is a standardised CUSUM divided by the WHOLE-SERIES sd, not a
+# log-likelihood ratio, and it used to be labelled as one. The argmax is
+# unaffected -- sd(y) is a constant in k -- so the peak location was always
+# honest; the y-axis values were not, because under a real change sd(y) is
+# inflated by the change itself and the profile is systematically
+# compressed. The label now says which quantity is drawn.
 #' @noRd
 amoc_lr_profile <- function(y) {
   n <- length(y)
@@ -207,6 +222,24 @@ ggcpt_statistic <- function(object) {
 #'   \code{start}/\code{end} of the interval that proposed it, plus a
 #'   \code{selected} flag marking the changepoints in the final model.
 #'   \code{ggcpt_solution_path()} draws it.
+#'
+#'   \code{contrast} is the engine's own ordering criterion, and it is a
+#'   \emph{different quantity} per engine: a penalty value for
+#'   \code{binseg}/\code{segneigh} (from
+#'   \code{changepoint::pen.value.full()}), \eqn{|CUSUM|} for \code{wbs},
+#'   \eqn{|}\code{max.contrast}\eqn{|} for \code{not}, and
+#'   \pkg{breakfast}'s candidate criterion for \code{wbs2}/\code{tguh}.
+#'   The values order the candidates within one result; they are not
+#'   comparable across engines, and the plot legend names the quantity
+#'   rather than calling all of them "Contrast".
+#'
+#'   For \code{wbs2} and \code{tguh} the path is \strong{recomputed} with
+#'   \pkg{breakfast}, because their fit objects do not keep the candidate
+#'   list. \code{wbs2}'s search is randomised, so its path is a second
+#'   search of the same series rather than a record of the first --- it can
+#'   differ between calls, and \code{selected} can be \code{FALSE}
+#'   throughout if the recomputed candidates miss the fit's own
+#'   changepoints. Every other engine's path is read off the fit.
 #' @seealso \code{\link{cpt_statistic}()}, \code{\link{cpt_crops}()} for the
 #'   penalty path of an optimal-partitioning method.
 #' @export
@@ -256,9 +289,14 @@ extract_solution_path <- function(object) {
     full <- changepoint::cpts.full(fit)
     if (is.null(dim(full))) full <- matrix(full, nrow = 1)
     pens <- as.numeric(changepoint::pen.value.full(fit))
-    # Row i of cpts.full holds the segmentation with i changepoints, and the
-    # rows are nested, so the new entry in each row is the split that step
-    # added.
+    # Row i of cpts.full holds the segmentation with i changepoints. For
+    # binary segmentation the rows are nested, so the one new entry per row
+    # is the split that step added. Segment Neighbourhood is NOT nested --
+    # it re-solves the dynamic program at each K, so consecutive rows can
+    # differ by more than one changepoint -- and keeping only `new[1]`
+    # discarded the rest, leaving the segneigh path missing candidates with
+    # a `step` numbering that did not match its own rows. Emitting all of
+    # `new` is a no-op for binseg, where `new` has length one.
     order_cp <- integer(0)
     contrast <- numeric(0)
     prev <- integer(0)
@@ -266,8 +304,10 @@ extract_solution_path <- function(object) {
       row <- as.integer(full[i, ][!is.na(full[i, ])])
       new <- setdiff(row, prev)
       if (length(new) > 0) {
-        order_cp <- c(order_cp, new[1])
-        contrast <- c(contrast, if (i <= length(pens)) pens[i] else NA_real_)
+        order_cp <- c(order_cp, new)
+        contrast <- c(contrast,
+                      rep(if (i <= length(pens)) pens[i] else NA_real_,
+                          length(new)))
       }
       prev <- row
     }
@@ -294,6 +334,24 @@ extract_solution_path <- function(object) {
   }
   if (method %in% c("wbs2", "tguh") &&
       requireNamespace("breakfast", quietly = TRUE)) {
+    # The only branch that RECOMPUTES rather than reading `object$fit`,
+    # because breakfast's fit object does not keep the candidate list. wbs2
+    # is randomised (see the reproducibility note in ?wbs2_wrapper), so two
+    # calls on the same object can return different paths, the recomputed
+    # candidates need not contain the fit's own changepoints -- in which
+    # case `selected` comes back all FALSE and the plot shows a path with
+    # nothing selected -- and any `seed` given to the original cpt_detect()
+    # is not in scope here. Say so rather than presenting a second search
+    # as the first one's path.
+    if (identical(method, "wbs2")) {
+      warning("`wbs2`'s solution path is recomputed here: breakfast's fit ",
+              "does not keep its candidate list, and the search is ",
+              "randomised, so this path is a second search of the same ",
+              "series and need not contain every changepoint in the ",
+              "result. Read it as which splits the method considers ",
+              "strong, not as the exact path behind this fit.",
+              call. = FALSE)
+    }
     sol <- tryCatch(
       if (method == "wbs2") {
         breakfast::sol.wbs2(object$data$value)
@@ -309,7 +367,27 @@ extract_solution_path <- function(object) {
   }
   diag_path <- object$diagnostics[["solution_path", exact = TRUE]]
   if (!is.null(diag_path)) {
-    return(tibble::as_tibble(diag_path))
+    # A registered detector's path used to be returned untouched, bypassing
+    # the contract every built-in branch goes through: one without `cp`
+    # reached ggcpt_solution_path() and died at `path$cp_x <-
+    # idx_vals[path$cp]`, one with an out-of-range `cp` got NA x-positions,
+    # and one without `selected` broke the colour scale. extract_statistic()
+    # already defaults its three fields the same way.
+    diag_path <- tibble::as_tibble(diag_path)
+    if (!"cp" %in% names(diag_path)) {
+      stop("A registered method's `solution_path` needs a `cp` column ",
+           "holding the candidate locations; this one has ",
+           if (ncol(diag_path) == 0) "no columns" else
+             paste0("(", paste(names(diag_path), collapse = ", "), ")"),
+           ". The columns are described in the `@return` of ",
+           "?cpt_solution_path.", call. = FALSE)
+    }
+    fill <- function(nm, default) {
+      v <- if (nm %in% names(diag_path)) diag_path[[nm]] else default
+      if (length(v) == 1L) rep(v, nrow(diag_path)) else v
+    }
+    return(finish(diag_path$cp, fill("contrast", NA_real_),
+                  fill("start", NA_integer_), fill("end", NA_integer_)))
   }
   NULL
 }
@@ -346,7 +424,12 @@ ggcpt_solution_path <- function(object, max_steps = 40) {
     ggplot2::scale_colour_manual(values = c(`FALSE` = "grey60",
                                             `TRUE` = "#D55E00"),
                                  name = "In final model") +
-    ggplot2::scale_size_continuous(range = c(0.6, 3), name = "Contrast") +
+    # The `contrast` column carries a different quantity per engine -- a
+    # penalty value for binseg/segneigh, |CUSUM| for wbs, |max.contrast| for
+    # not, breakfast's own candidate criterion for wbs2/tguh -- and one
+    # legend title of "Contrast" claimed they were all the same thing.
+    ggplot2::scale_size_continuous(range = c(0.6, 3),
+                                   name = contrast_label(object$method)) +
     ggplot2::labs(x = x_lab, y = "Step in the solution path",
                   title = paste0("Solution path (", object$method, ")"),
                   subtitle = if (has_interval) {
@@ -354,6 +437,21 @@ ggcpt_solution_path <- function(object, max_steps = 40) {
                   } else {
                     NULL
                   })
+}
+
+# Internal: what the `contrast` column of a solution path actually holds,
+# which depends on the engine. Used for the plot legend so the reader is not
+# told a penalty value and a CUSUM are the same quantity.
+#' @noRd
+contrast_label <- function(method) {
+  switch(method %||% "",
+    binseg = "Penalty value",
+    segneigh = "Penalty value",
+    wbs = "|CUSUM|",
+    not = "|Contrast|",
+    wbs2 = "Split criterion",
+    tguh = "Split criterion",
+    "Contrast")
 }
 
 # Internal: integer axis breaks without pulling in the scales package.
@@ -460,9 +558,14 @@ cpt_scale_space <- function(x, bandwidths = NULL,
       fit <- tryCatch(mosum::mosum(series, G = G, ...),
                       error = function(e) NULL)
       if (is.null(fit)) return(NULL)
-      thr <- as.numeric(fit$threshold.value %||% NA_real_)
-      stat <- as.numeric(fit$stat)
-      cp <- as.integer(fit$cpts)
+      # Exact [[ ]] for the same reason as the np.mojo branch below: mosum
+      # returns both `threshold` (the rule) and `threshold.value` (the
+      # number), and the same file argues the case twice and then read this
+      # one with a bare `$`.
+      fm <- function(nm) if (is.list(fit)) fit[[nm, exact = TRUE]] else NULL
+      thr <- as.numeric(fm("threshold.value") %||% NA_real_)
+      stat <- as.numeric(fm("stat") %||% rep(NA_real_, n))
+      cp <- as.integer(fm("cpts") %||% integer(0))
     } else {
       fit <- tryCatch(CptNonPar::np.mojo(series, G = G, ...),
                       error = function(e) NULL)

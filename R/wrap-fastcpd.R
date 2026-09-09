@@ -18,6 +18,13 @@
 #'   \code{1} for AR, \code{c(1, 1)} otherwise.
 #' @param ... Additional arguments passed to the corresponding
 #'   \code{fastcpd::fastcpd.*()} function (e.g. \code{beta}, \code{trim}).
+#'   \code{beta} is \pkg{fastcpd}'s penalty: a number, or one of its own
+#'   names (\code{"MBIC"}, the default, \code{"BIC"}, \code{"MDL"}). It is
+#'   recorded on the result, so \code{print()} and \code{glance()} report
+#'   the penalty the fit actually used. \code{\link{cpt_detect}()} forwards
+#'   a numeric \code{penalty} here and translates the three names it shares
+#'   with \pkg{fastcpd}; see the penalty-semantics section of
+#'   \code{\link{cpt_penalty}()}.
 #' @return A \code{ggcpt} object.
 #' @references
 #' \insertRef{li2024fastcpd}{ggchangepoint}
@@ -58,11 +65,26 @@ fastcpd_wrapper <- function(x, family = c("mean", "variance", "meanvariance",
     ar = "model (AR)", arma = "model (ARMA)", garch = "model (GARCH)"
   )
 
+  # fastcpd's penalty argument is `beta`, and it reaches the engine through
+  # `...`. Hard-coding "MBIC" here meant `fastcpd_wrapper(x, beta = 20)` ran
+  # at 20 while print() reported `Penalty: MBIC` and glance()$penalty_type
+  # said "MBIC" -- the object misdescribing the fit it holds. Report what
+  # was used; "MBIC" is right only when nothing was passed, which is
+  # fastcpd's own default.
+  beta <- list(...)[["beta"]]
+  pen <- if (is.null(beta)) {
+    list(type = "MBIC", value = NA_real_)
+  } else if (is.numeric(beta)) {
+    list(type = "Manual", value = as.numeric(beta)[1])
+  } else {
+    list(type = as.character(beta)[1], value = NA_real_)
+  }
+
   ggcpt_build(
     data_vec, as.integer(fit@cp_set),
     method = "fastcpd",
     change_in = change_lab,
-    penalty = list(type = "MBIC", value = NA_real_),
+    penalty = pen,
     fit = fit,
     call = match.call(),
     data_wide = if (is_mv) mv_data_wide(X)

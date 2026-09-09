@@ -7,7 +7,17 @@
 #'
 #' @param changepoints A tibble with columns \code{cp} and \code{cp_value}.
 #' @param segments A tibble with segment information: \code{seg_id}, \code{start},
-#'   \code{end}, \code{n}, \code{param_estimate}.
+#'   \code{end}, \code{n}, \code{param_estimate}. \code{param_estimate} is
+#'   the segment \strong{mean} for every method in the package, including
+#'   the variance, distribution and model-change detectors --- it is the
+#'   segment level, not the parameter that changed. A \code{change_in =
+#'   "var"} result therefore has a \code{param_estimate} column that may
+#'   barely move; read the variance off the data with the segment bounds if
+#'   that is the quantity you want. Everything derived from this column
+#'   inherits the convention: \code{augment()}'s \code{.fitted}/
+#'   \code{.resid}, \code{\link{cpt_gt}()}'s level columns,
+#'   \code{summary()}, and the residual construction the bootstrap in
+#'   \code{\link{cpt_confint}()} and \code{\link{cpt_stability}()} uses.
 #' @param data A tibble with \code{index} and \code{value}.
 #' @param method Character. The detection method used. A length-one string;
 #'   defaults to \code{NA_character_}. (A zero-length value would make
@@ -118,8 +128,13 @@ format_penalty <- function(penalty) {
 #' Test if an object is a ggcpt object
 #'
 #' A class check, useful when a function accepts either a detection result or
-#' the raw series. It tests the class only; a \code{ggcpt} subclass such as
-#' \code{ggcpt_batch} is not one of these and returns \code{FALSE}.
+#' the raw series. It tests for \code{ggcpt} in the class vector, so a
+#' genuine \code{ggcpt} subclass --- \code{ggcpt_consensus} is the one ---
+#' returns \code{TRUE}. The other \code{ggcpt_*} classes in the package
+#' (\code{ggcpt_batch}, \code{ggcpt_benchmark}, \code{ggcpt_monitor},
+#' \code{ggcpt_selection} and the rest) are \emph{not} subclasses of
+#' \code{ggcpt} --- most are tibble subclasses --- and return
+#' \code{FALSE}.
 #'
 #' @param x An object to test.
 #' @return \code{TRUE} if \code{x} inherits from \code{ggcpt}.

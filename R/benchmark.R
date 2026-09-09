@@ -217,10 +217,14 @@ normalise_dataset <- function(d, name = NULL) {
 #' @param x A \code{ggcpt_benchmark} object.
 #' @export
 print.ggcpt_benchmark <- function(x, ...) {
-  metrics <- attr(x, "metrics")
+  # `%||%` on both attributes: reclass_subset() keeps the subclass whenever
+  # the required COLUMNS survive a subset, and tibble's `[` need not carry
+  # a custom attribute through a row subset -- so `bm[1, ]` can arrive here
+  # with neither. print.ggcpt_batch() guards the same way.
+  metrics <- attr(x, "metrics") %||% intersect(names(x), cpt_metric_names())
   cat("ggcpt_benchmark (", length(unique(x$dataset)), " dataset(s) x ",
       length(unique(x$method)), " method(s), tolerance ",
-      attr(x, "tolerance"), ")\n", sep = "")
+      attr(x, "tolerance") %||% "?", ")\n", sep = "")
   n_err <- sum(!is.na(x[["error", exact = TRUE]]))
   if (n_err > 0) {
     cat("  ", n_err, " cell(s) errored; see the `error` column.\n", sep = "")
@@ -238,7 +242,8 @@ print.ggcpt_benchmark <- function(x, ...) {
 #' @rdname cpt_benchmark
 #' @export
 tidy.ggcpt_benchmark <- function(x, ...) {
-  metrics <- attr(x, "metrics")
+  # Same fallback as print(): a row subset can arrive without the attribute.
+  metrics <- attr(x, "metrics") %||% intersect(names(x), cpt_metric_names())
   rows <- lapply(metrics, function(m) {
     tibble::tibble(dataset = x$dataset, method = x$method,
                    metric = m, value = x[[m]])
@@ -251,8 +256,9 @@ tidy.ggcpt_benchmark <- function(x, ...) {
 # ones, which are inverted here so a rank of 1 always means best).
 #' @noRd
 benchmark_ranks <- function(x, metric = NULL) {
-  metrics <- attr(x, "metrics")
+  metrics <- attr(x, "metrics") %||% intersect(names(x), cpt_metric_names())
   metric <- metric %||% metrics[1]
+  if (length(metric) != 1L || is.na(metric)) return(NULL)
   if (!metric %in% names(x) || all(is.na(x[[metric]]))) return(NULL)
   lower_better <- metric %in% c("hausdorff", "annotation_error",
                                 "mae_matched", "rmse_matched")
@@ -266,8 +272,19 @@ benchmark_ranks <- function(x, metric = NULL) {
   })
   rk <- do.call(rbind, rk)
   agg <- stats::aggregate(rank ~ method, data = rk, FUN = mean)
+  # A dataset on which every method scored NA ties them all at the same
+  # worst rank -- no information about which is better -- but it still
+  # incremented N, and the Nemenyi critical distance
+  # CD = q sqrt(k(k+1)/(6N)) SHRINKS with N. So a benchmark where 3 of 8
+  # datasets failed drew a narrower critical distance than the 5
+  # informative ones support and called more methods distinguishable than
+  # they are: anti-conservative, which is the dangerous direction. Count
+  # the datasets that carry at least one score.
+  informative <- vapply(per, function(ii) any(!is.na(x[[metric]][ii])),
+                        logical(1))
   out <- tibble::tibble(method = agg$method, mean_rank = agg$rank,
-                        n_datasets = length(per))
+                        n_datasets = sum(informative),
+                        n_datasets_total = length(per))
   out[order(out$mean_rank), , drop = FALSE]
 }
 
@@ -279,7 +296,10 @@ benchmark_ranks <- function(x, metric = NULL) {
 #'   Nemenyi critical distance, the standard way this literature says
 #'   "method A beats method B").
 #' @param metric Which metric to plot. Defaults to the first one scored.
-#' @param alpha Level for the critical distance. Defaults to \code{0.05}.
+#' @param alpha Level for the critical distance, in \code{(0, 1)}.
+#'   Defaults to \code{0.05}. Only used by
+#'   \code{plot_type = "critical_difference"}, which also needs at least two
+#'   methods to compare.
 #' @section Reading the critical-difference diagram:
 #' Rank 1 is best. Each method's mean rank is taken over the datasets, in
 #' the direction the metric calls for -- higher is better for
@@ -318,7 +338,8 @@ autoplot.ggcpt_benchmark <- function(object,
                                                    "critical_difference"),
                                      metric = NULL, alpha = 0.05, ...) {
   plot_type <- match.arg(plot_type)
-  metrics <- attr(object, "metrics")
+  metrics <- attr(object, "metrics") %||%
+    intersect(names(object), cpt_metric_names())
   metric <- metric %||% metrics[1]
   if (!metric %in% names(object)) {
     stop("`metric = \"", metric, "\"` was not scored. Available: ",
@@ -349,8 +370,30 @@ autoplot.ggcpt_benchmark <- function(object,
 
   rk <- benchmark_ranks(object, metric)
   if (is.null(rk)) {
-    stop("No dataset carries ground truth, so there is nothing to rank. ",
-         "Supply `truth` or `annotations` with each dataset.", call. = FALSE)
+    # benchmark_ranks() returns NULL on two different conditions and this
+    # reported both as the first one. An all-NA metric column is also what
+    # you get when every detector ERRORED on every dataset, and sending that
+    # user to fix `annotations` points away from the `error` column that
+    # holds the diagnosis.
+    if (!metric %in% names(object)) {
+      stop("No dataset carries ground truth, so there is nothing to rank. ",
+           "Supply `truth` or `annotations` with each dataset.",
+           call. = FALSE)
+    }
+    failed <- if ("error" %in% names(object)) sum(!is.na(object$error)) else 0L
+    if (failed == nrow(object)) {
+      stop("Every method failed on every dataset, so there is nothing to ",
+           "rank. The `error` column of the benchmark table holds the ",
+           "message from each run: `subset(bm, !is.na(error))$error`.",
+           call. = FALSE)
+    }
+    stop("`", metric, "` is NA for every row, so there is nothing to rank. ",
+         if (failed > 0) paste0(failed, " of ", nrow(object),
+                                " runs failed (see the `error` column); ")
+         else "",
+         "a metric is NA when the dataset carries no ground truth or the ",
+         "metric is undefined for the result -- `cpt_metrics()` on one row ",
+         "shows which.", call. = FALSE)
   }
   rk$method <- factor(rk$method, levels = rev(rk$method))
 
@@ -389,6 +432,14 @@ autoplot.ggcpt_benchmark <- function(object,
                                     " methods, N = ", N, " datasets"))
 }
 
+# Internal: the metric columns cpt_benchmark() can score, used as the
+# fallback when a subset has dropped the `metrics` attribute.
+#' @noRd
+cpt_metric_names <- function() {
+  c("f1", "precision", "recall", "covering", "hausdorff", "mae_matched",
+    "rmse_matched", "annotation_error", "n_pred", "n_true")
+}
+
 # Internal: the Nemenyi critical distance,
 #   CD = q_alpha * sqrt(k (k + 1) / (6 N)),
 # where q_alpha is the studentised range statistic divided by sqrt(2)
@@ -398,6 +449,25 @@ autoplot.ggcpt_benchmark <- function(object,
 # a cross-check for the common cases.
 #' @noRd
 nemenyi_cd <- function(k, N, alpha = 0.05) {
+  # qtukey() is undefined below nmeans = 2 and for a probability outside
+  # (0, 1), and it answers both with NaN rather than an error -- which then
+  # propagated to `annotate("rect", xmax = NaN)`, an all-NA `within_cd`
+  # column and an NA level in the shape scale, i.e. a diagram that drew
+  # without saying anything was wrong. The test itself also needs more than
+  # one method to compare.
+  validate_scalar(alpha, "alpha", min = 0, max = 1,
+                  min_open = TRUE, max_open = TRUE)
+  if (!is.numeric(k) || length(k) != 1L || is.na(k) || k < 2) {
+    stop("A critical-difference diagram compares methods to each other, so ",
+         "it needs at least two; got ", if (is.numeric(k)) k else "none",
+         ". Use `plot_type = \"heatmap\"` or `\"ranks\"` for a single ",
+         "method.", call. = FALSE)
+  }
+  if (!is.numeric(N) || length(N) != 1L || is.na(N) || N < 1) {
+    stop("The Nemenyi critical distance is computed over datasets, so it ",
+         "needs at least one; got ", if (is.numeric(N)) N else "none", ".",
+         call. = FALSE)
+  }
   q <- stats::qtukey(1 - alpha, nmeans = k, df = Inf) / sqrt(2)
   q * sqrt(k * (k + 1) / (6 * N))
 }
@@ -457,6 +527,10 @@ cpt_datasets <- function(source = c("simulated", "tcpd"), n = 500, seed = 1,
                    params = c(1, 3), seed = seed + 8)
     }
   )
+  # `names` is this function's own argument, which is why every call to the
+  # base function inside it (and inside its siblings below) has to be
+  # written `base::names()`. Keep it that way: a plain `names(x)` here
+  # silently resolves to the argument.
   if (!is.null(names)) {
     unknown <- setdiff(names, base::names(builders))
     if (length(unknown) > 0) {
@@ -564,9 +638,10 @@ cpt_load_tcpd <- function(name = NULL, cache_dir = NULL, refresh = FALSE,
       ok <- tcpd_download(paste0(base_url, "/datasets/", nm, "/", nm,
                                  ".json"), dst)
       if (!ok) {
-        warning("TCPD dataset '", nm, "' is not in the repository (its ",
-                "source does not permit redistribution); skipping it.",
-                call. = FALSE)
+        warning("TCPD dataset '", nm, "' could not be downloaded from ",
+                base_url, ": either it is not in the repository (several ",
+                "series' sources do not permit redistribution) or the ",
+                "network call failed. Skipping it.", call. = FALSE)
         next
       }
     }
@@ -603,12 +678,22 @@ cpt_load_tcpd <- function(name = NULL, cache_dir = NULL, refresh = FALSE,
 # rather than as an error.
 #' @noRd
 tcpd_download <- function(url, dst) {
+  # A warning is not a failure. download.file() warns about things that do
+  # not stop it -- a redirect, a missing content length, a non-fatal libcurl
+  # note -- and treating any warning as failure threw away a successful but
+  # noisy download and then reported the specific, wrong diagnosis "not in
+  # the repository (its source does not permit redistribution)". Judge the
+  # file, not the noise: only an ERROR is fatal on its own.
   ok <- tryCatch({
-    utils::download.file(url, dst, quiet = TRUE, mode = "wb")
+    withCallingHandlers(
+      utils::download.file(url, dst, quiet = TRUE, mode = "wb"),
+      warning = function(w) invokeRestart("muffleWarning")
+    )
     TRUE
-  }, error = function(e) FALSE, warning = function(w) FALSE)
-  if (!ok && file.exists(dst)) unlink(dst)
-  ok && file.exists(dst) && file.size(dst) > 0
+  }, error = function(e) FALSE)
+  got <- file.exists(dst) && file.size(dst) > 0
+  if (!got && file.exists(dst)) unlink(dst)
+  ok && got
 }
 
 #' Per-annotator ground truth for a benchmark dataset

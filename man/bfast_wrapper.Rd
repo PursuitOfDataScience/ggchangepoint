@@ -20,7 +20,11 @@ preferred, because BFAST needs the seasonal frequency and cannot guess
 it. A bare vector is turned into a \code{ts} with \code{frequency}.}
 
 \item{frequency}{Observations per season, used when \code{x} carries none.
-Defaults to \code{12}.}
+Defaults to \code{12}. \code{\link{cpt_detect}()} reads the frequency
+off a \code{ts} and passes it here, so the two calls agree; the panel
+helpers (\code{\link{cpt_batch}()}, \code{\link{ggcpt_compare}()},
+\code{\link{cpt_benchmark}()}) normalise their input to bare numeric
+vectors before dispatching, so name \code{frequency} explicitly there.}
 
 \item{change_in}{Which component's breaks to report: \code{"mean"} or
 \code{"slope"} give the trend breaks (the usual choice),

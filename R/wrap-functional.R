@@ -32,7 +32,14 @@
 #'   the classical mean one? Defaults to \code{FALSE}.
 #' @param ... Additional arguments passed to \code{fChange::fchange()}.
 #' @return A \code{ggcpt} object; the changepoints tibble carries the
-#'   engine's \code{p_value} for each location.
+#'   engine's \code{p_value} for each location. Multivariate input is
+#'   reduced to \strong{one series per observation by taking the
+#'   cross-sectional mean} of the columns, and that is the series stored on
+#'   the result: \code{autoplot()} draws it, \code{tidy()}'s
+#'   \code{cp_value} reads it, and \code{$segments$param_estimate} and
+#'   \code{augment()}'s \code{.fitted}/\code{.resid} are computed from it.
+#'   It is not any one column of the input. The full input is kept in
+#'   \code{$data_wide} for \code{autoplot(type = "coordinates")}.
 #' @references
 #' \insertRef{aue2018fchange}{ggchangepoint}
 #' @export
@@ -74,7 +81,21 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #' @inheritParams fmean_wrapper
 #' @param target What to test: \code{"covariance"} (default), \code{"trace"},
 #'   \code{"eigenjoint"} or \code{"eigensingle"}.
-#' @return A \code{ggcpt} object with \code{change_in = "covariance"}.
+#' @return A \code{ggcpt} object with \code{change_in = "covariance"}. Multivariate input is
+#'   reduced to \strong{one series per observation by taking the
+#'   cross-sectional mean} of the columns, and that is the series stored on
+#'   the result: \code{autoplot()} draws it, \code{tidy()}'s
+#'   \code{cp_value} reads it, and \code{$segments$param_estimate} and
+#'   \code{augment()}'s \code{.fitted}/\code{.resid} are computed from it.
+#'   It is not any one column of the input. The full input is kept in
+#'   \code{$data_wide} for \code{autoplot(type = "coordinates")}.
+#'
+#'   For a covariance change this matters when reading the plot: a change in
+#'   the covariance structure need not move the cross-sectional mean at all,
+#'   so \code{autoplot()} can legitimately show changepoint rules on a
+#'   series with no visible change in it. That is the detector working, not
+#'   misfiring --- use \code{autoplot(type = "coordinates")} to see the
+#'   columns the change is in.
 #' @section How long this takes:
 #' \strong{Minutes, not seconds, on a series of a hundred points} -- by a
 #' wide margin the most expensive engine in the package, and slow enough
@@ -172,12 +193,26 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
 
   loc <- integer(0)
   pval <- numeric(0)
+  # The p-value vector's length was taken on trust when the engine supplied
+  # one, so a mismatch recycled or truncated it silently and p-values
+  # attached to the WRONG changepoints. as_ggcpt() refuses exactly this by
+  # name for a user-supplied column; the same rule belongs here.
+  pval_for <- function(v, loc) {
+    if (is.null(v)) return(rep(NA_real_, length(loc)))
+    v <- as.numeric(v)
+    if (length(v) == length(loc)) return(v)
+    warning("`", method_name, "` returned ", length(v), " p-value(s) for ",
+            length(loc), " changepoint(s), so they cannot be matched up ",
+            "and are dropped rather than recycled onto the wrong ",
+            "locations.", call. = FALSE)
+    rep(NA_real_, length(loc))
+  }
   if (is.data.frame(fit) && nrow(fit) > 0) {
     loc <- as.integer(fit$location)
-    pval <- as.numeric(fit$pvalue %||% rep(NA_real_, length(loc)))
+    pval <- pval_for(fit[["pvalue"]], loc)
   } else if (is.list(fit) && !is.null(fit$location)) {
     loc <- as.integer(fit$location)
-    pval <- as.numeric(fit$pvalue %||% rep(NA_real_, length(loc)))
+    pval <- pval_for(fit[["pvalue"]], loc)
   }
   keep <- !is.na(loc)
   loc <- loc[keep]; pval <- pval[keep]
@@ -219,7 +254,14 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
 #'   \code{.Random.seed} is saved and restored, so a seeded call inside a
 #'   simulation loop does not pin the loop's own stream.
 #' @param ... Additional arguments passed to the engine.
-#' @return A \code{ggcpt} object.
+#' @return A \code{ggcpt} object. Multivariate input is
+#'   reduced to \strong{one series per observation by taking the
+#'   cross-sectional mean} of the columns, and that is the series stored on
+#'   the result: \code{autoplot()} draws it, \code{tidy()}'s
+#'   \code{cp_value} reads it, and \code{$segments$param_estimate} and
+#'   \code{augment()}'s \code{.fitted}/\code{.resid} are computed from it.
+#'   It is not any one column of the input. The full input is kept in
+#'   \code{$data_wide} for \code{autoplot(type = "coordinates")}.
 #' @references
 #' \insertRef{ramsay2024kwc}{ggchangepoint}
 #' @export
@@ -313,7 +355,14 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 #' loaded; this wrapper therefore attaches \pkg{NMF} for the duration of the
 #' call and detaches it again afterwards.
 #'
-#' @return A \code{ggcpt} object with \code{change_in = "network"}.
+#' @return A \code{ggcpt} object with \code{change_in = "network"}. Multivariate input is
+#'   reduced to \strong{one series per observation by taking the
+#'   cross-sectional mean} of the columns, and that is the series stored on
+#'   the result: \code{autoplot()} draws it, \code{tidy()}'s
+#'   \code{cp_value} reads it, and \code{$segments$param_estimate} and
+#'   \code{augment()}'s \code{.fitted}/\code{.resid} are computed from it.
+#'   It is not any one column of the input. The full input is kept in
+#'   \code{$data_wide} for \code{autoplot(type = "coordinates")}.
 #' @references
 #' \insertRef{ondrus2024fabisearch}{ggchangepoint}
 #' @export

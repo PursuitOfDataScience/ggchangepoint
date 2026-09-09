@@ -825,8 +825,12 @@ test_that("every registry capability flag is delivered by the accessor", {
                   info = paste(m, "claims statistic but exposes none"))
     }
     if (isTRUE(reg$path[i])) {
-      sp <- tryCatch(get("extract_solution_path", envir = ns)(res),
-                     error = function(e) NULL)
+      # `wbs2` warns that its path is recomputed rather than read off the
+      # fit (see ?cpt_solution_path); that is the point of the warning, not
+      # a problem with the capability.
+      sp <- tryCatch(suppressWarnings(
+        get("extract_solution_path", envir = ns)(res)),
+        error = function(e) NULL)
       expect_true(!is.null(sp) && NROW(sp) > 0,
                   info = paste(m, "claims path but exposes none"))
     }

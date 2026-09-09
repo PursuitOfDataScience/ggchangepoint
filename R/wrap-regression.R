@@ -194,6 +194,12 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
   }
 
   psi <- fit$psi[, "Est."]
+  # `round()`, not the truncation as_cp_locations() and as_ggcpt() use: a
+  # `segmented` breakpoint is a KINK POSITION estimated on the continuous
+  # scale, so the nearest observation is the honest reading of it, where
+  # truncating would bias every breakpoint left by half an observation on
+  # average. It is the one place in the package that rounds rather than
+  # truncates a fractional location, so @return says so.
   cp_indices <- as.integer(round(psi))
 
   ci <- tryCatch(segmented::confint.segmented(fit, level = conf_level),

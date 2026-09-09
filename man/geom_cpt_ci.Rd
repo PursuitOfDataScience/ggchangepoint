@@ -16,7 +16,8 @@ as \code{autoplot(show_ci = TRUE)} does.}
 
 \item{data}{A data frame with CI information.}
 
-\item{...}{Other arguments passed to \code{geom_errorbarh}.}
+\item{...}{Other arguments passed to \code{geom_errorbar} (with
+\code{orientation = "y"}; \code{geom_errorbarh()} is deprecated).}
 
 \item{na.rm}{If \code{FALSE}, missing values are removed.}
 

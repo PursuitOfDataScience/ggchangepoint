@@ -23,8 +23,10 @@
 #'
 #' @return A list with components \code{values} (a numeric vector, or a
 #'   matrix for multivariate input), \code{index} (the time index, or
-#'   \code{NULL} when there is none) and \code{index_label} (a name for the
-#'   x axis).
+#'   \code{NULL} when there is none), \code{index_label} (a name for the
+#'   x axis) and \code{frequency} (the seasonal frequency a \code{ts}
+#'   carried, or \code{NULL} -- \code{\link{cpt_detect}()} hands this to
+#'   the engines that need one, such as \code{\link{bfast_wrapper}()}).
 #' @export
 #' @examples
 #' as_cpt_series(1:10)$index
@@ -34,6 +36,14 @@
 as_cpt_series <- function(x, index = NULL, check_regular = TRUE) {
   validate_flag(check_regular, "check_regular")
   label <- "Index"
+  # A `ts` is the only input class here that states its seasonal frequency,
+  # and it is the input bfast_wrapper()'s documentation tells the user to
+  # pass for exactly that reason. Reducing the series to a bare vector threw
+  # it away, so cpt_detect(monthly_ts, method = "bfast") silently refitted
+  # at the wrapper's default of 12. Record it and let the dispatcher hand it
+  # on. (xts/zoo and tsibble describe spacing rather than seasonality, so
+  # there is nothing equivalent to read off them.)
+  freq <- NULL
 
   if (inherits(x, "tbl_ts")) {
     parts <- tsibble_parts(x)
@@ -52,6 +62,8 @@ as_cpt_series <- function(x, index = NULL, check_regular = TRUE) {
     values <- if (is.matrix(x)) unclass(x)[, , drop = FALSE] else as.numeric(x)
     carried <- as.numeric(stats::time(x))
     label <- "Time"
+    f <- stats::frequency(x)
+    if (length(f) == 1L && is.finite(f) && f > 1) freq <- f
   } else {
     values <- x
     carried <- NULL
@@ -75,7 +87,7 @@ as_cpt_series <- function(x, index = NULL, check_regular = TRUE) {
     if (!is.null(index)) label <- "Index"
   }
 
-  list(values = values, index = idx, index_label = label)
+  list(values = values, index = idx, index_label = label, frequency = freq)
 }
 
 # Internal: pull values + index out of a tsibble without importing it.
@@ -160,7 +172,16 @@ check_index_usable <- function(idx, check_regular = TRUE) {
 attach_index <- function(res, index, label = "Index") {
   if (is.null(index)) return(res)
   n <- nrow(res$data)
-  if (length(index) != n) return(res)
+  if (length(index) != n) {
+    # Silently dropping it left the caller with a result that plots in
+    # positions and a plausible reason to think the index had been used.
+    # Every other optional slot reports a length mismatch by name.
+    warning("`index` has ", length(index), " value(s) for a series of ",
+            "length ", n, ", so it is ignored: the result reports and plots ",
+            "observation positions. Pass one index value per observation.",
+            call. = FALSE)
+    return(res)
+  }
   res$index <- index
   res$index_label <- label
   res$data$index_value <- index

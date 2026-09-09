@@ -124,9 +124,17 @@ test_that("cpt_test uses a native test when the engine has one", {
   skip_if_not_installed("strucchange")
   fit <- strucchange_wrapper(x_step)
   skip_if(nrow(fit$changepoints) == 0)
-  res <- cpt_test(fit)
-  expect_true(all(res$selection_adjusted))
+  # The unadjusted-p warning fires here now, and should: this route's
+  # p-values are anti-conservative.
+  expect_warning(res <- cpt_test(fit), "selection_adjusted` is FALSE")
   expect_match(res$method[1], "Chow")
+  # `selection_adjusted` is FALSE for this route, and deliberately: the Chow
+  # F's reference distribution assumes the break date was fixed in advance,
+  # so evaluating it AT a date the Bai-Perron program chose is the
+  # circularity the column exists to flag. Reporting it is conventional in
+  # that literature; that does not make it adjusted.
+  expect_false(any(res$selection_adjusted))
+  expect_match(res$method[1], "unadjusted")
 })
 
 test_that("cpt_test on an empty result returns a typed zero-row tibble", {

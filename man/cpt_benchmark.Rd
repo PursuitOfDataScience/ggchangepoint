@@ -75,7 +75,10 @@ Nemenyi critical distance, the standard way this literature says
 
 \item{metric}{Which metric to plot. Defaults to the first one scored.}
 
-\item{alpha}{Level for the critical distance. Defaults to \code{0.05}.}
+\item{alpha}{Level for the critical distance, in \code{(0, 1)}.
+Defaults to \code{0.05}. Only used by
+\code{plot_type = "critical_difference"}, which also needs at least two
+methods to compare.}
 }
 \value{
 A \code{ggcpt_benchmark} object: a tibble with one row per

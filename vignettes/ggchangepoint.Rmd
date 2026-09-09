@@ -658,11 +658,14 @@ cpt_detect(data.frame(day = dates, v = x), y = v, index = day,
 ```
 
 `as_cpt_series()` is that coercion on its own, returning the values, the
-index and a label for the axis:
+index, a label for the axis, and any seasonal frequency the input carried
+(which is how `cpt_detect(monthly_ts, method = "bfast")` fits at the right
+frequency instead of the wrapper's default):
 
 ```{r as-cpt-series}
 str(as_cpt_series(x, index = dates), max.level = 1)
 as_cpt_series(ts(x, start = c(2020, 1), frequency = 12))$index_label
+as_cpt_series(ts(x, start = c(2020, 1), frequency = 4))$frequency
 ```
 
 ## Inference

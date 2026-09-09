@@ -133,7 +133,12 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #'   \code{ocd::ChangepointDetector()}.
 #' @return A \code{ggcpt} object. Because the detector is online, reported
 #'   locations are \emph{declaration times} (the changepoint plus the
-#'   detection delay), stored together with a \code{declared_at} column.
+#'   detection delay). The \code{declared_at} column holds the same values
+#'   as \code{cp}, and deliberately: \pkg{ocd} declares a change without
+#'   also estimating where it began, so there is no separate location for
+#'   the second column to carry. Compare \code{\link{cpm_wrapper}()},
+#'   whose engine supplies both, and whose \code{cp} is an estimated
+#'   location with \code{detection_time} strictly later.
 #' @section How long this takes:
 #' Nearly all of the run time is \code{ocd}'s Monte Carlo threshold
 #' calibration, which happens before a single observation is read. It is
@@ -223,7 +228,16 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
     utils::capture.output(detector <- ocd::getData(detector, z))
     if (!identical(ocd::status(detector), "monitoring")) {
       declared <- c(declared, i)
-      if (i + 2 > n) break  # no room to re-train after the declaration
+      # Stop monitoring rather than re-train on a window the baseline cannot
+      # be estimated from. `i + 2 > n` only guaranteed TWO remaining
+      # observations, and a per-coordinate sd from two points is noise for a
+      # high-dimensional stream -- `s[s == 0 | is.na(s)] <- 1` catches only
+      # the fully degenerate case, so everything after such a re-training
+      # was standardised by a scale estimate that was wrong rather than
+      # missing, and spurious later declarations are the expected result.
+      # The re-training window now has to clear the same floor `train` was
+      # validated against.
+      if (n - i < train) break
       detector <- ocd::reset(detector)
       # Re-estimate the baseline from a window after the declaration —
       # keeping the pre-change baseline would re-declare immediately on the
@@ -244,6 +258,10 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
     fit = detector,
     call = match.call(),
     extra_cp_cols = if (length(declared) > 0) {
+      # The same values as `cp`, because ocd declares a change without
+      # estimating where it began -- see @return. Kept as a column so the
+      # online engines have one name for "when the alarm fired" whether or
+      # not the engine also estimates a location.
       list(declared_at = as.integer(declared))
     },
     data_wide = mv_data_wide(X)
