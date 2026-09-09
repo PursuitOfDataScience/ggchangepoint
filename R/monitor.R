@@ -657,9 +657,12 @@ cpt_replay <- function(x, method = c("edetector", "cpm", "ocd"),
 #' Scores an online result the way the sequential literature does: how long
 #' after each true change did the first alarm arrive, and how many alarms
 #' were raised with no change behind them. \code{\link{cpt_metrics}()} is the
-#' wrong tool for an online detector — it asks whether the \emph{location}
-#' was recovered, which a sequential procedure never claims — and warns if
-#' you point it at one.
+#' wrong tool for an online detector: it asks whether the \emph{location}
+#' was recovered, which a sequential procedure never claims. It will not
+#' stop you — \code{cpt_metrics()} takes bare integer vectors and never
+#' sees which detector produced them, so it cannot know. (An earlier
+#' version of this sentence said it warns. It does not, and given that
+#' signature it could not.)
 #'
 #' @param object A \code{ggcpt_monitor}, or a tibble of alarms with a
 #'   \code{time} column.

@@ -30,9 +30,10 @@
 #'   because \code{ecp::e.agglo()}'s cluster-progression matrix is quadratic
 #'   in the series length; call the \pkg{ecp} functions directly if you need
 #'   their full output.
-#' @import tibble
-#' @import ecp
-#' @import Rdpack
+# `@import tibble`, `ecp` and `Rdpack` removed: no unqualified call reaches
+# any of them. `Rdpack` in particular was folklore -- `RdMacros: Rdpack`
+# plus `Imports: Rdpack` in DESCRIPTION is what makes `\insertRef` resolve,
+# and the `@import` tag never contributed to it.
 #' @references
 #' \insertRef{james2014ecp}{ggchangepoint}
 #' @export

@@ -71,7 +71,21 @@
 #'   \code{2} gives the original COPPS split.
 #' @param B Bootstrap replicates for \code{criterion = "stability"}.
 #'   Defaults to \code{100}.
-#' @param change_in Passed to the detector. Defaults to \code{"mean"}.
+#' @param change_in Passed to the detector, and inherited from \code{x}
+#'   when \code{x} is a \code{ggcpt} (an explicit value still wins).
+#'   Defaults to \code{"mean"}.
+#'
+#'   \strong{The three closed-form criteria assume a change in the mean
+#'   whatever this is set to.} \code{"bic"}, \code{"aic"} and
+#'   \code{"mbic"} all score the ladder with the Gaussian profile cost
+#'   \eqn{n\log(\mathrm{RSS}/n)} -- the deviance for a change in mean with
+#'   a common variance -- so on a \code{change_in = "var"} ladder the
+#'   \emph{candidates} come from the variance detector while the
+#'   \emph{score} does not, and splitting a segment whose mean did not move
+#'   barely reduces \eqn{\mathrm{RSS}}: the criterion will tend to choose
+#'   \eqn{K = 0} on a real variance change. Use \code{"cv"} or
+#'   \code{"stability"} there, both of which score by re-detection with the
+#'   same \code{change_in} and so carry no such assumption.
 #' @param index Optional time index (a vector of dates, or a \code{ts},
 #'   \code{xts}, \code{zoo} or \code{tsibble} passed as \code{x}), carried
 #'   onto the chosen fit so \code{tidy()} and \code{autoplot()} report the
@@ -115,6 +129,14 @@ cpt_select <- function(x, method = "pelt",
   criterion <- match.arg(criterion)
   if (is_ggcpt(x)) {
     method <- x$method
+    # ...and the change type, which was left at this function's own default
+    # of "mean" however the fit was made. `@param x` says "its series and
+    # method are used" -- honest about the method and silent about the
+    # change type -- so a meanvar fit was re-segmented as a change in the
+    # mean at every rung of the ladder, and scored with gaussian_cost(),
+    # which is a Gaussian-mean cost. `missing()` is what keeps an explicit
+    # argument winning over the object.
+    if (missing(change_in)) change_in <- x$change_in %||% change_in
     series <- x$data$value
     # A selection made from an indexed fit has to stay on the user's scale:
     # dropping the index here would hand back a result plotted in positions

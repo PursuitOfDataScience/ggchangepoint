@@ -162,6 +162,24 @@ influence_recompute <- function(object, type, subset, outlier_sd, ...) {
   y <- object$data$value
   n <- length(y)
   method <- object$method
+  # Inherit the change type from the result, not just the method.
+  #
+  # Every entry point that takes raw data forwards `change_in` to
+  # cpt_detect() explicitly; every one that takes a finished `ggcpt` read
+  # `object$method` and stopped there, leaving `change_in` at its own
+  # default of "mean" -- so a meanvar or var fit was silently re-detected as
+  # a change in the MEAN. `object$change_in` was on the object the whole
+  # time and never read.
+  #
+  # The symptom pointed away from the cause. On a pure variance change the
+  # mean detector finds nothing, every replicate is discarded, and the
+  # caller gets a zero-width interval plus a warning blaming the detector
+  # for finding no changepoints.
+  #
+  # `...` still wins, so an explicit `change_in` overrides the object --
+  # same precedence cpt_detect() gives `dots` over `derived_args_for()`.
+  dots <- list(...)
+  if (is.null(dots$change_in)) dots$change_in <- object$change_in %||% "mean"
   orig_cp <- object$changepoints$cp
   fitted_step <- rep(object$segments$param_estimate, times = object$segments$n)
   orig_param <- fitted_step
@@ -180,7 +198,8 @@ influence_recompute <- function(object, type, subset, outlier_sd, ...) {
       pert <- y
       pert[i] <- fitted_step[i] + outlier_sd * resid_sd
     }
-    fit <- tryCatch(cpt_detect(pert, method = method, ...),
+    fit <- tryCatch(do.call(cpt_detect,
+                            c(list(pert, method = method), dots)),
                     error = function(e) NULL)
     if (is.null(fit)) return(list(cp = NA_integer_, param = rep(NA_real_, n)))
     cp <- fit$changepoints$cp
@@ -485,8 +504,16 @@ autoplot.ggcpt_influence <- function(object,
 #' ggplot2::autoplot(s)
 cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
                             ...) {
+  # Same omission as cpt_select() and the two recompute paths: the method
+  # was inherited from the fit and the change type was not, so a var or
+  # meanvar fit had its penalty sensitivity measured on a change-in-mean
+  # re-detection. `...` still wins.
+  dots_ci <- list(...)
   if (is_ggcpt(x)) {
     method <- x$method
+    if (is.null(dots_ci$change_in)) {
+      dots_ci$change_in <- x$change_in %||% "mean"
+    }
     series <- x$data$value
   } else {
     validate_data(x)
@@ -507,7 +534,7 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
 
   run_one <- function(i) {
     args <- c(list(x = series, method = method),
-              as.list(grid[i, , drop = FALSE]), list(...))
+              as.list(grid[i, , drop = FALSE]), dots_ci)
     fit <- tryCatch(do.call(cpt_detect, args),
                     error = function(e) structure(conditionMessage(e),
                                                   class = "cpt_error"))

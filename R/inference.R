@@ -303,6 +303,24 @@ confint_posterior <- function(object, level) {
 #' @noRd
 confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
   method <- object$method
+  # Inherit the change type from the result, not just the method.
+  #
+  # Every entry point that takes raw data forwards `change_in` to
+  # cpt_detect() explicitly; every one that takes a finished `ggcpt` read
+  # `object$method` and stopped there, leaving `change_in` at its own
+  # default of "mean" -- so a meanvar or var fit was silently re-detected as
+  # a change in the MEAN. `object$change_in` was on the object the whole
+  # time and never read.
+  #
+  # The symptom pointed away from the cause. On a pure variance change the
+  # mean detector finds nothing, every replicate is discarded, and the
+  # caller gets a zero-width interval plus a warning blaming the detector
+  # for finding no changepoints.
+  #
+  # `...` still wins, so an explicit `change_in` overrides the object --
+  # same precedence cpt_detect() gives `dots` over `derived_args_for()`.
+  dots <- list(...)
+  if (is.null(dots$change_in)) dots$change_in <- object$change_in %||% "mean"
   if (isTRUE(object$registered) && is.null(registry_get(method))) {
     stop("This result came from a registered method (`", method,
          "`) that is no longer registered, so it cannot be re-run for a ",
@@ -334,7 +352,9 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
       resampled[idx] <- sample(resid[idx], length(idx), replace = TRUE)
     }
     rep_cp <- tryCatch(
-      cpt_detect(fitted_step + resampled, method = method, ...)$changepoints$cp,
+      do.call(cpt_detect,
+              c(list(fitted_step + resampled, method = method),
+                dots))$changepoints$cp,
       error = function(e) integer(0)
     )
     if (length(rep_cp) == 0) next

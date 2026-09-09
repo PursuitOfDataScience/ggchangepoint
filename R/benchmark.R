@@ -572,9 +572,19 @@ cpt_load_tcpd <- function(name = NULL, cache_dir = NULL, refresh = FALSE,
     }
     j <- jsonlite::fromJSON(dst, simplifyVector = FALSE)
     raws <- lapply(j$series, function(s) {
-      v <- unlist(s$raw)
+      # NA-substitute BEFORE unlist(), not after. `unlist()` *drops* NULLs
+      # rather than preserving a slot for them -- `unlist(list(1, 2, NULL,
+      # 4))` has length 3 -- so running the substitution afterwards found
+      # nothing left to find, and a JSON `null` did not become `NA`: it
+      # vanished, shifting every later observation down by one and
+      # invalidating the human annotations cpt_benchmark() scores against.
+      # TCPD ships series with missing values, so this was reachable with
+      # the real data the function exists to load. If coordinates carried
+      # different numbers of nulls, the do.call(cbind, .) below then
+      # recycled them against each other.
+      v <- s$raw
       v[vapply(v, is.null, logical(1))] <- NA
-      as.numeric(v)
+      as.numeric(unlist(v))
     })
     series <- if (length(raws) == 1) raws[[1]] else do.call(cbind, raws)
     ann <- lapply(annotations[[nm]], function(v) as.integer(unlist(v)))

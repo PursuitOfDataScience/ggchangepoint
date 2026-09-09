@@ -2794,3 +2794,122 @@ test_that("cpt_metrics_annotated() reads a bare vector as one annotator", {
   expect_error(cpt_metrics_annotated(100, list(data.frame(cp = 100)), n = 300),
                "not a table", fixed = TRUE)
 })
+
+# ---------------------------------------------------------------------------
+# Findings from the external pre-CRAN audit. Each block names the finding it
+# pins, and each fix was verified by measurement before being written.
+# ---------------------------------------------------------------------------
+
+test_that("B14: an object-consuming path inherits the fit's change type", {
+  # Every raw-data entry point forwarded `change_in` to cpt_detect(); every
+  # object-consuming one read `object$method` and left `change_in` at its own
+  # default of "mean". So a var or meanvar fit was silently re-detected as a
+  # change in the MEAN -- and on a pure variance change the mean detector
+  # finds nothing, so every bootstrap replicate was discarded and the caller
+  # got a ZERO-WIDTH interval plus a warning blaming the detector.
+  set.seed(32)
+  x <- c(stats::rnorm(150, 0, 1), stats::rnorm(150, 0, 4))   # variance only
+  f <- cpt_detect(x, method = "pelt", change_in = "var")
+  skip_if(nrow(f$changepoints) == 0)
+  expect_equal(f$change_in, "var")
+
+  ci <- cpt_confint(f, method = "bootstrap", B = 25, seed = 1)
+  # the interval must have width, i.e. replicates actually found the change
+  expect_true(all(ci$ci_upper - ci$ci_lower > 0))
+  # and it must not warn that the detector found nothing
+  expect_silent(cpt_confint(f, method = "bootstrap", B = 25, seed = 1))
+
+  # `...` still wins over the object, which is the precedence cpt_detect()
+  # gives dots over derived args
+  expect_silent(cpt_confint(f, method = "bootstrap", B = 15, seed = 1,
+                            change_in = "var"))
+
+  # cpt_sensitivity() re-detects with the fit's change type, so the penalty
+  # actually moves the answer
+  sn <- cpt_sensitivity(f, over = list(penalty = c(5, 20)))
+  expect_gt(length(unique(sn$grid$n_cp)), 1L)
+
+  # cpt_select() inherits it too, and an explicit value still overrides
+  s <- cpt_select(f, criterion = "cv", k_max = 3, seed = 1)
+  expect_s3_class(s, "ggcpt_selection")
+})
+
+test_that("B9: cpt_simulate() reports a changepoint it had to drop", {
+  # The ground truth recorded on the result is the FILTERED set, so a
+  # discarded location becomes a scoring error nothing can see --
+  # cpt_datasets() and cpt_benchmark() read that attribute directly.
+  expect_warning(r <- cpt_simulate(200, changepoints = c(100, 500), seed = 1),
+                 "1 of 2 outside 1..199", fixed = TRUE)
+  expect_warning(cpt_simulate(200, changepoints = c(100, 500), seed = 1),
+                 "(500)", fixed = TRUE)
+  expect_equal(as.integer(attr(r, "true_changepoints")), 100L)
+  # in range, and the boundary cases, stay silent
+  expect_silent(cpt_simulate(200, changepoints = c(50, 150), seed = 1))
+  expect_silent(cpt_simulate(200, changepoints = 199, seed = 1))
+  expect_silent(cpt_simulate(200, changepoints = integer(0), seed = 1))
+})
+
+test_that("B4: a JSON null becomes NA rather than vanishing", {
+  # cpt_load_tcpd() substituted NA *after* unlist(), by which point there
+  # were no NULLs left to find -- so a null did not become NA, it
+  # disappeared, shifting every later observation down one and invalidating
+  # the annotations cpt_benchmark() scores against. The order is what
+  # matters, so the order is what this pins.
+  v <- list(1, 2, NULL, 4)
+  # the old order silently shortens
+  expect_length(unlist(v), 3L)
+  # the new order preserves the slot
+  v2 <- v
+  v2[vapply(v2, is.null, logical(1))] <- NA
+  got <- as.numeric(unlist(v2))
+  expect_length(got, 4L)
+  expect_true(is.na(got[3]))
+  expect_equal(got[c(1, 2, 4)], c(1, 2, 4))
+  # and the source really does substitute before unlisting
+  src <- readLines(test_path("..", "..", "R", "benchmark.R"), warn = FALSE)
+  i <- grep("v\\[vapply\\(v, is.null, logical\\(1\\)\\)\\] <- NA", src)
+  j <- grep("as.numeric\\(unlist\\(v\\)\\)", src)
+  expect_true(length(i) > 0 && length(j) > 0)
+  expect_lt(min(i), min(j))
+})
+
+test_that("C17: no help page promises a warning cpt_metrics() cannot give", {
+  # `?cpt_delay` said cpt_metrics() "warns if you point it at" an online
+  # detector. It does not, and it cannot: cpt_metrics() takes bare integer
+  # vectors and never learns which detector produced them.
+  root <- normalizePath(file.path("..", ".."), mustWork = FALSE)
+  metrics <- readLines(file.path(root, "R", "metrics.R"), warn = FALSE)
+  expect_false(any(grepl("online", metrics, ignore.case = TRUE)))
+  monitor <- readLines(file.path(root, "R", "monitor.R"), warn = FALSE)
+  expect_false(any(grepl("and warns if\\s*$|warns if you point it at",
+                         monitor)))
+  # and the corrected sentence says why it cannot
+  expect_true(any(grepl("takes bare integer vectors", monitor, fixed = TRUE)))
+})
+
+test_that("A1/A2/A3: the declared interface matches what the code needs", {
+  root <- normalizePath(file.path("..", ".."), mustWork = FALSE)
+  ns <- readLines(file.path(root, "NAMESPACE"), warn = FALSE)
+  desc <- read.dcf(file.path(root, "DESCRIPTION"))
+
+  # A1: only `changepoint` is full-imported, and it has to be -- glance()'s
+  # cost column calls bare logLik(), whose method for class `cpt` is an S4
+  # method owned by changepoint. stats::logLik has no S3 method for it.
+  imports <- grep("^import\\(", ns, value = TRUE)
+  expect_equal(imports, "import(changepoint)")
+  expect_true(isGeneric("logLik", where = asNamespace("changepoint")))
+  expect_length(methods::findMethods("logLik", classes = "cpt"), 1L)
+  expect_null(utils::getS3method("logLik", "cpt", optional = TRUE))
+
+  # A2: three exported scales call discrete_scale() without `scale_name`,
+  # which only became optional in ggplot2 3.5.0
+  sn <- formals(ggplot2::discrete_scale)$scale_name
+  expect_true(grepl("deprecated", paste(deparse(sn), collapse = "")))
+  expect_match(desc[1, "Imports"], "ggplot2 \\(>= 3\\.5")
+
+  # A3: fourteen S3method(base::plot, ...) entries need R >= 4.0.0, where
+  # `plot` moved from graphics to base
+  expect_gt(length(grep("^S3method\\(base::plot", ns)), 10L)
+  expect_true("Depends" %in% colnames(desc))
+  expect_match(desc[1, "Depends"], "R \\(>= 4")
+})

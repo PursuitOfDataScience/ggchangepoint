@@ -39,10 +39,19 @@
 #'   last index of the left segment. The upstream \code{cpt} object is
 #'   attached as the \code{"ggcpt_fit"} attribute, which is what
 #'   \code{\link{cpt_detect}()} stores in the result's \code{$fit}.
+# `@import changepoint` is load-bearing and must stay. `broom-methods.R`
+# calls bare `logLik(fit)` to fill glance()'s `cost` column, and the method
+# for class `cpt` is an **S4** method owned by changepoint: measured,
+# `isGeneric("logLik", where = asNamespace("changepoint"))` is TRUE with one
+# `cpt` method, while `stats::logLik` has no S3 method for it and errors
+# with "no applicable method". Only the full import puts that S4 generic in
+# this package's imports environment, so plain dispatch finds it.
+#
+# The other six full imports were removed as dead weight (see below); this
+# is the one that is not, and the audit note is here so it survives the next
+# sweep for unqualified calls -- a grep for `changepoint::` finds nothing
+# for `logLik` precisely because qualifying it is what breaks it.
 #' @import changepoint
-#' @import changepoint.np
-#' @import tibble
-#' @import Rdpack
 #' @references
 #' \insertRef{killick2014changepoint}{ggchangepoint}
 #' @export
@@ -187,9 +196,20 @@ cpt_wrapper <- function(data,
 #' @return A line plot with data points along with the vertical lines
 #'   representing changepoints.
 #' @export
-#' @import ggplot2
-#' @import dplyr
-#' @import tibble
+# `@import ggplot2`, `dplyr` and `tibble` removed: every call into all
+# three is namespace-qualified, so the full imports bought nothing and
+# `import(dplyr)` cost something. It rebinds base's `setdiff`, `intersect`,
+# `union`, `filter`, `lag` and `n` inside the namespace, and this package
+# calls the bare set operations at eighteen sites meaning base semantics.
+# They agree today because dplyr's generics dispatch to base for atomic
+# vectors -- but `dplyr::setdiff.data.frame` is row-wise, so the first time
+# one of those sites is handed a data frame the meaning changes with no diff
+# to point at. `autoplot` is still available: it comes in through
+# `importFrom(ggplot2, autoplot)`, which is what re-exports the generic.
+#
+# Measured before removing: `R CMD INSTALL` emitted no "replacing previous
+# import" warning for the dplyr/ggplot2 `vars` collision, so this is not a
+# check finding -- it is a latent-semantics one.
 #' @examples
 #' ggcptplot(c(rnorm(100,0,1),rnorm(100,0,10)))
 #' ggcptplot(c(rnorm(100,0,1),rnorm(100,10,1)))

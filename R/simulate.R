@@ -92,7 +92,28 @@ cpt_simulate <- function(n,
   local_seed(seed)
 
   changepoints <- as_cp_locations(changepoints, "changepoints", sort = TRUE)
-  changepoints <- changepoints[changepoints > 0 & changepoints < n]
+  # Out-of-range locations are dropped, and `attr(res, "true_changepoints")`
+  # below records the *filtered* set -- so this used to return a series with
+  # ground truth the caller never asked for and no indication of it:
+  # `cpt_simulate(200, changepoints = c(100, 500))` gave a one-changepoint
+  # series whose truth was 100, silently.
+  #
+  # That is the same corruption the two `params` checks below were added to
+  # prevent ("corrupt ground truth for benchmarking", in their own words),
+  # and the same silent drop `as_ggcpt()` was changed to report this cycle.
+  # cpt_datasets() and cpt_benchmark() read that attribute directly, so a
+  # discarded location becomes a scoring error nobody can see.
+  keep <- changepoints > 0 & changepoints < n
+  if (any(!keep)) {
+    warning("`changepoints`: ", sum(!keep), " of ", length(changepoints),
+            " outside 1..", n - 1L, " (",
+            paste(utils::head(changepoints[!keep], 5), collapse = ", "),
+            if (sum(!keep) > 5) ", ..." else "",
+            ") and dropped. The ground truth recorded on the result is the ",
+            "set that survived, so a benchmark scored against it would not ",
+            "see the difference.", call. = FALSE)
+  }
+  changepoints <- changepoints[keep]
 
   # Build segment boundaries
   seg_ends <- unique(c(changepoints, n))

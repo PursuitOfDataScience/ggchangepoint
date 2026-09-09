@@ -93,7 +93,21 @@ to one or two rungs and the function warns.}
 \item{B}{Bootstrap replicates for \code{criterion = "stability"}.
 Defaults to \code{100}.}
 
-\item{change_in}{Passed to the detector. Defaults to \code{"mean"}.}
+\item{change_in}{Passed to the detector, and inherited from \code{x}
+  when \code{x} is a \code{ggcpt} (an explicit value still wins).
+  Defaults to \code{"mean"}.
+
+  \strong{The three closed-form criteria assume a change in the mean
+  whatever this is set to.} \code{"bic"}, \code{"aic"} and
+  \code{"mbic"} all score the ladder with the Gaussian profile cost
+  \eqn{n\log(\mathrm{RSS}/n)} -- the deviance for a change in mean with
+  a common variance -- so on a \code{change_in = "var"} ladder the
+  \emph{candidates} come from the variance detector while the
+  \emph{score} does not, and splitting a segment whose mean did not move
+  barely reduces \eqn{\mathrm{RSS}}: the criterion will tend to choose
+  \eqn{K = 0} on a real variance change. Use \code{"cv"} or
+  \code{"stability"} there, both of which score by re-detection with the
+  same \code{change_in} and so carry no such assumption.}
 
 \item{index}{Optional time index (a vector of dates, or a \code{ts},
 \code{xts}, \code{zoo} or \code{tsibble} passed as \code{x}), carried
