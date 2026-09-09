@@ -171,21 +171,23 @@ simulation loop does not pin the loop's own stream.</p></dd>
     <div class="section level2">
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
-<span class="r-in"><span><span class="fu">cpt_min_detectable</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, n_sim <span class="op">=</span> <span class="fl">30</span>, max_iter <span class="op">=</span> <span class="fl">4</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># n_sim = 10, max_iter = 3: the search is n_sim detector fits per</span></span></span>
+<span class="r-in"><span><span class="co"># iteration, and n_sim = 30 with max_iter = 4 measured 5.4 s against</span></span></span>
+<span class="r-in"><span><span class="co"># CRAN's 5 s example budget. Raise both for a usable answer.</span></span></span>
+<span class="r-in"><span><span class="fu">cpt_min_detectable</span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, n_sim <span class="op">=</span> <span class="fl">10</span>, max_iter <span class="op">=</span> <span class="fl">3</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Smallest detectable change</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Target power:      0.8</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Change size:       1.02 standard deviations</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Achieved power:    0.9 (Monte Carlo SE 0.055)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change size:       1.32 standard deviations</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Achieved power:    1 (Monte Carlo SE 0)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 6 × 3</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>    jump power  mc_se</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 0.1   0     0     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 0.712 0.5   0.091<span style="text-decoration: underline;">3</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 1.02  0.9   0.054<span style="text-decoration: underline;">8</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 1.32  0.967 0.032<span style="text-decoration: underline;">8</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 2.55  1     0     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">6</span> 5     1     0     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 5 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    jump power mc_se</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span> 0.1     0   0    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span> 0.712   0.4 0.155</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span> 1.32    1   0    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span> 2.55    1   0    </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">5</span> 5       1   0    </span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

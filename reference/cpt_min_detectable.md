@@ -124,20 +124,22 @@ A list with `jump` (the smallest change reaching `power`),
 
 ``` r
 # \donttest{
-cpt_min_detectable(n = 200, n_sim = 30, max_iter = 4, seed = 1)
+# n_sim = 10, max_iter = 3: the search is n_sim detector fits per
+# iteration, and n_sim = 30 with max_iter = 4 measured 5.4 s against
+# CRAN's 5 s example budget. Raise both for a usable answer.
+cpt_min_detectable(n = 200, n_sim = 10, max_iter = 3, seed = 1)
 #> Smallest detectable change
 #>   Target power:      0.8
-#>   Change size:       1.02 standard deviations
-#>   Achieved power:    0.9 (Monte Carlo SE 0.055)
+#>   Change size:       1.32 standard deviations
+#>   Achieved power:    1 (Monte Carlo SE 0)
 #> 
-#> # A tibble: 6 × 3
-#>    jump power  mc_se
-#>   <dbl> <dbl>  <dbl>
-#> 1 0.1   0     0     
-#> 2 0.712 0.5   0.0913
-#> 3 1.02  0.9   0.0548
-#> 4 1.32  0.967 0.0328
-#> 5 2.55  1     0     
-#> 6 5     1     0     
+#> # A tibble: 5 × 3
+#>    jump power mc_se
+#>   <dbl> <dbl> <dbl>
+#> 1 0.1     0   0    
+#> 2 0.712   0.4 0.155
+#> 3 1.32    1   0    
+#> 4 2.55    1   0    
+#> 5 5       1   0    
 # }
 ```

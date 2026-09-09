@@ -178,9 +178,11 @@ the classical mean one? Defaults to <code>FALSE</code>.</p></dd>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span> <span class="op">*</span> <span class="fl">20</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="co"># 10 curves and M = 50, not 20 and 200: the example is a demonstration,</span></span></span>
+<span class="r-in"><span><span class="co"># and the wider version measured 6.7 s against CRAN's 5 s budget.</span></span></span>
+<span class="r-in"><span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span> <span class="op">*</span> <span class="fl">10</span><span class="op">)</span>, nrow <span class="op">=</span> <span class="fl">60</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">X</span><span class="op">[</span><span class="fl">31</span><span class="op">:</span><span class="fl">60</span>, <span class="op">]</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">[</span><span class="fl">31</span><span class="op">:</span><span class="fl">60</span>, <span class="op">]</span> <span class="op">+</span> <span class="fl">2</span></span></span>
-<span class="r-in"><span><span class="fu">fmean_wrapper</span><span class="op">(</span><span class="va">X</span>, M <span class="op">=</span> <span class="fl">200</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">fmean_wrapper</span><span class="op">(</span><span class="va">X</span>, M <span class="op">=</span> <span class="fl">50</span><span class="op">)</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Method:             fmean</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:          mean</span>
@@ -193,7 +195,7 @@ the classical mean one? Defaults to <code>FALSE</code>.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value p_value</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    30    0.380       0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    30    0.439       0</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

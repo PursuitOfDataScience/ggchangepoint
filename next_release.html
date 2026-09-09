@@ -16161,6 +16161,84 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 </ol><p>The generalisable lesson is the one from §615.2 and §620.1 in a third disguise: a recorded value is only as good as the thing it was recorded against, and the further that thing is from the assertion, the longer a disagreement survives. A test that recomputes beats a test that remembers; a chunk that seeds itself beats a chunk that inherits.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_624-the-examples-nobody-had-timed-and-the-guess-that-was-wrong">624. The examples nobody had timed, and the guess that was wrong<a class="anchor" aria-label="anchor" href="#id_624-the-examples-nobody-had-timed-and-the-guess-that-was-wrong"></a></h2>
+<p><code>R CMD check</code> flags any Rd example whose user+system time exceeds 5 s. The review’s §G listed “example timings” as something needing a live session, and named three suspects: <code><a href="reference/ggcpt_plot_methods.html">?ggcpt_plot_methods</a></code>, which “runs three plot() calls plus a cpt_crops()”, and the shared <code><a href="reference/cpt_influence.html">?cpt_influence</a></code>/<code><a href="reference/cpt_leverage.html">?cpt_leverage</a></code> page, which “runs ~160 detector fits”.</p>
+<p>Timing all 118 blocks refuted both. <code>ggcpt_plot_methods</code> measures 1.3 s and the influence page does not appear in the top twelve. The five over budget were:</p>
+<table class="table"><thead><tr><th>topic</th>
+<th>user+sys</th>
+<th>after</th>
+</tr></thead><tbody><tr><td>fabisearch_wrapper</td>
+<td>27.4 s</td>
+<td>5-6 s</td>
+</tr><tr><td>ocd_wrapper</td>
+<td>10.4 s</td>
+<td>4.2 s</td>
+</tr><tr><td>fmean_wrapper</td>
+<td>6.7 s</td>
+<td>2.9 s</td>
+</tr><tr><td>fcov_wrapper</td>
+<td>6.1 s</td>
+<td>2.8 s</td>
+</tr><tr><td>cpt_min_detectable</td>
+<td>5.3 s</td>
+<td>1.5 s</td>
+</tr></tbody></table><p>The sixth-slowest is <code>cpt_power</code> at 2.6 s, so this was five topics rather than a general problem – and all five are the same kind of thing: an engine whose cost is a resampling or calibration parameter the example left at an illustrative value.</p>
+<div class="section level3">
+<h3 id="id_6241-two-methodological-notes-worth-keeping">624.1 Two methodological notes worth keeping<a class="anchor" aria-label="anchor" href="#id_6241-two-methodological-notes-worth-keeping"></a></h3>
+<p><strong><code>\donttest{}</code> is not an exemption.</strong> All five were already inside one. <code>--as-cran</code> sets <code>_R_CHECK_DONTTEST_EXAMPLES_</code> and runs them, and the timing NOTE is computed from what runs. A <code>\donttest</code> block buys nothing against this particular check.</p>
+<p><strong>Measure in a fresh process, or the number is wrong.</strong> fabisearch measured 3.5 s in a session that had already run four other fabisearch calls, 5.4 s in a fresh process, and 8.7 s inside a sweep of all 118 examples. The first number went into a source comment before the other two existed, and had to be corrected – which is the same defect as everything else in §622-623: a recorded value that was true against a different thing than the one the reader will run.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6242-what-could-not-be-fixed-and-why-that-is-written-down">624.2 What could not be fixed, and why that is written down<a class="anchor" aria-label="anchor" href="#id_6242-what-could-not-be-fixed-and-why-that-is-written-down"></a></h3>
+<p><code>fabisearch_wrapper</code> stays at 5-6 s – 5.4 and 6.1 in two fresh sessions, so a point estimate would have needed correcting again. <code>n_reps = 1</code> fails inside fabisearch with “not enough ‘x’ observations” (the permutation test needs two), and shrinking the matrix is not monotone in cost: a 2 x 10 matrix at <code>min_dist = 8</code> measured 6.6 s, worse than the 2 x 12 at <code>min_dist = 10</code> that ships, because the search evaluates more candidate splits relative to <code>min_dist</code>. So the example is already the smallest input that exercises the method. <code>cran-comments.md</code> now states this with the measurements, which is the right place for a NOTE the maintainer expects and has reasons for.</p>
+</div>
+</div>
+<div class="section level2">
+<h2 id="id_625-nobody-had-asked-whether-the-intervals-cover">625. Nobody had asked whether the intervals cover<a class="anchor" aria-label="anchor" href="#id_625-nobody-had-asked-whether-the-intervals-cover"></a></h2>
+<p><code><a href="reference/cpt_confint.html">cpt_confint()</a></code> offers four routes and documents a <code>level</code> for each. No test and no note had ever asked whether an interval contains the true changepoint <code>level</code> of the time. 120 replicates, n = 200, one changepoint at 100, jump of three standard deviations, nominal 0.95:</p>
+<table class="table"><thead><tr><th>route</th>
+<th>coverage</th>
+<th>mean width</th>
+</tr></thead><tbody><tr><td>pelt / bootstrap</td>
+<td>0.992 +/- 0.016</td>
+<td>2.2</td>
+</tr><tr><td>strucchange / native</td>
+<td>1.000 +/- 0.000</td>
+<td>4.4</td>
+</tr><tr><td>smuce / native</td>
+<td>0.992 +/- 0.016</td>
+<td>4.6</td>
+</tr><tr><td>bcp / posterior</td>
+<td>1.000 +/- 0.000</td>
+<td>157.4</td>
+</tr></tbody></table><p>Every route is conservative and none under-covers, which is the direction you want and is worth stating once – so <code><a href="reference/cpt_confint.html">?cpt_confint</a></code> now has the table. The interesting row is the last one.</p>
+<div class="section level3">
+<h3 id="id_6251-a-95-interval-covering-83-of-the-series-and-why-it-is-not-a-bug">625.1 A 95% interval covering 83% of the series, and why it is not a bug<a class="anchor" aria-label="anchor" href="#id_6251-a-95-interval-covering-83-of-the-series-and-why-it-is-not-a-bug"></a></h3>
+<p>The posterior route builds the narrowest contiguous set around the estimate holding <code>level</code> of the window’s posterior changepoint mass. Measured on a 200-point series with one clean change:</p>
+<ul><li>bcp’s profile sums to 1.466, peaks at 0.994 <strong>at the changepoint</strong>, and that single position holds 67.8% of the total mass.</li>
+<li>beast’s sums to 1.573, peaks at 1.000, and holds 63.6%.</li>
+</ul><p>So about a third of the mass is a thin floor spread across the other 199 positions, and reaching a high level means swallowing it:</p>
+<table class="table"><thead><tr><th>level</th>
+<th>bcp width</th>
+<th>beast width</th>
+</tr></thead><tbody><tr><td>0.50</td>
+<td>0</td>
+<td>0</td>
+</tr><tr><td>0.80</td>
+<td>72</td>
+<td>91</td>
+</tr><tr><td>0.95</td>
+<td>166</td>
+<td>187</td>
+</tr></tbody></table><p>I went looking for the arithmetic error and there is not one. I checked whether the reported level is actually achieved – 0.95 delivers 0.9509, 0.99 delivers 0.9945, 0.999 delivers 1.0000 – so the interval is honest about what it holds. The construction is right; <code>level</code> simply is not a useful knob against a profile shaped like this, because it switches between the mode and most of the window with almost nothing in between.</p>
+<p>That makes this a <em>reporting</em> defect rather than a computation one, and the distinction decided the fix. Widening or narrowing the interval would make it lie. What was missing was any way for a reader to tell this apart from a bug while looking at a bootstrap interval two observations wide sitting next to it. So <code><a href="reference/cpt_confint.html">cpt_confint()</a></code> warns when an interval covers more than half its window and names the share of the mass at the estimate, and the help page says what a wide interval means. The test asserts the property that IS true – the level is delivered, and the width is monotone in the level – which is what a future “fix” must not break.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6252-refuted-while-measuring">625.2 Refuted while measuring<a class="anchor" aria-label="anchor" href="#id_6252-refuted-while-measuring"></a></h3>
+<p>Two things I suspected and disproved. The reported <code>level</code> is never overstated. And beast’s intervals coming back one-sided (<code>[14, 80]</code>, <code>[138, 160]</code>) is not a separate defect: the growth rule follows the larger neighbour, and the mass immediately right of a break can be exactly zero, so a left-only interval is what the construction implies.</p>
+</div>
+</div>
 </div>
 
 

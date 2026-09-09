@@ -25697,3 +25697,124 @@ disguise: a recorded value is only as good as the thing it was recorded
 against, and the further that thing is from the assertion, the longer a
 disagreement survives. A test that recomputes beats a test that
 remembers; a chunk that seeds itself beats a chunk that inherits.
+
+## 624. The examples nobody had timed, and the guess that was wrong
+
+`R CMD check` flags any Rd example whose user+system time exceeds 5 s.
+The review’s §G listed “example timings” as something needing a live
+session, and named three suspects:
+[`?ggcpt_plot_methods`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md),
+which “runs three plot() calls plus a cpt_crops()”, and the shared
+[`?cpt_influence`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)/[`?cpt_leverage`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_leverage.md)
+page, which “runs ~160 detector fits”.
+
+Timing all 118 blocks refuted both. `ggcpt_plot_methods` measures 1.3 s
+and the influence page does not appear in the top twelve. The five over
+budget were:
+
+| topic              | user+sys | after |
+|--------------------|----------|-------|
+| fabisearch_wrapper | 27.4 s   | 5-6 s |
+| ocd_wrapper        | 10.4 s   | 4.2 s |
+| fmean_wrapper      | 6.7 s    | 2.9 s |
+| fcov_wrapper       | 6.1 s    | 2.8 s |
+| cpt_min_detectable | 5.3 s    | 1.5 s |
+
+The sixth-slowest is `cpt_power` at 2.6 s, so this was five topics
+rather than a general problem – and all five are the same kind of thing:
+an engine whose cost is a resampling or calibration parameter the
+example left at an illustrative value.
+
+### 624.1 Two methodological notes worth keeping
+
+**`\donttest{}` is not an exemption.** All five were already inside one.
+`--as-cran` sets `_R_CHECK_DONTTEST_EXAMPLES_` and runs them, and the
+timing NOTE is computed from what runs. A `\donttest` block buys nothing
+against this particular check.
+
+**Measure in a fresh process, or the number is wrong.** fabisearch
+measured 3.5 s in a session that had already run four other fabisearch
+calls, 5.4 s in a fresh process, and 8.7 s inside a sweep of all 118
+examples. The first number went into a source comment before the other
+two existed, and had to be corrected – which is the same defect as
+everything else in §622-623: a recorded value that was true against a
+different thing than the one the reader will run.
+
+### 624.2 What could not be fixed, and why that is written down
+
+`fabisearch_wrapper` stays at 5-6 s – 5.4 and 6.1 in two fresh sessions,
+so a point estimate would have needed correcting again. `n_reps = 1`
+fails inside fabisearch with “not enough ‘x’ observations” (the
+permutation test needs two), and shrinking the matrix is not monotone in
+cost: a 2 x 10 matrix at `min_dist = 8` measured 6.6 s, worse than the 2
+x 12 at `min_dist = 10` that ships, because the search evaluates more
+candidate splits relative to `min_dist`. So the example is already the
+smallest input that exercises the method. `cran-comments.md` now states
+this with the measurements, which is the right place for a NOTE the
+maintainer expects and has reasons for.
+
+## 625. Nobody had asked whether the intervals cover
+
+[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+offers four routes and documents a `level` for each. No test and no note
+had ever asked whether an interval contains the true changepoint `level`
+of the time. 120 replicates, n = 200, one changepoint at 100, jump of
+three standard deviations, nominal 0.95:
+
+| route                | coverage        | mean width |
+|----------------------|-----------------|------------|
+| pelt / bootstrap     | 0.992 +/- 0.016 | 2.2        |
+| strucchange / native | 1.000 +/- 0.000 | 4.4        |
+| smuce / native       | 0.992 +/- 0.016 | 4.6        |
+| bcp / posterior      | 1.000 +/- 0.000 | 157.4      |
+
+Every route is conservative and none under-covers, which is the
+direction you want and is worth stating once – so
+[`?cpt_confint`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+now has the table. The interesting row is the last one.
+
+### 625.1 A 95% interval covering 83% of the series, and why it is not a bug
+
+The posterior route builds the narrowest contiguous set around the
+estimate holding `level` of the window’s posterior changepoint mass.
+Measured on a 200-point series with one clean change:
+
+- bcp’s profile sums to 1.466, peaks at 0.994 **at the changepoint**,
+  and that single position holds 67.8% of the total mass.
+- beast’s sums to 1.573, peaks at 1.000, and holds 63.6%.
+
+So about a third of the mass is a thin floor spread across the other 199
+positions, and reaching a high level means swallowing it:
+
+| level | bcp width | beast width |
+|-------|-----------|-------------|
+| 0.50  | 0         | 0           |
+| 0.80  | 72        | 91          |
+| 0.95  | 166       | 187         |
+
+I went looking for the arithmetic error and there is not one. I checked
+whether the reported level is actually achieved – 0.95 delivers 0.9509,
+0.99 delivers 0.9945, 0.999 delivers 1.0000 – so the interval is honest
+about what it holds. The construction is right; `level` simply is not a
+useful knob against a profile shaped like this, because it switches
+between the mode and most of the window with almost nothing in between.
+
+That makes this a *reporting* defect rather than a computation one, and
+the distinction decided the fix. Widening or narrowing the interval
+would make it lie. What was missing was any way for a reader to tell
+this apart from a bug while looking at a bootstrap interval two
+observations wide sitting next to it. So
+[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+warns when an interval covers more than half its window and names the
+share of the mass at the estimate, and the help page says what a wide
+interval means. The test asserts the property that IS true – the level
+is delivered, and the width is monotone in the level – which is what a
+future “fix” must not break.
+
+### 625.2 Refuted while measuring
+
+Two things I suspected and disproved. The reported `level` is never
+overstated. And beast’s intervals coming back one-sided (`[14, 80]`,
+`[138, 160]`) is not a separate defect: the growth rule follows the
+larger neighbour, and the mass immediately right of a break can be
+exactly zero, so a left-only interval is what the construction implies.

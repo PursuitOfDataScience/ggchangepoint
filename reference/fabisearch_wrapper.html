@@ -212,9 +212,16 @@ call and detaches it again afterwards.</p>
 <span class="r-in"><span><span class="co"># A change in *structure*, not in scale: two latent factors drive</span></span></span>
 <span class="r-in"><span><span class="co"># different halves of the node set before and after the change.</span></span></span>
 <span class="r-in"><span><span class="co"># Deliberately tiny -- this is by far the most expensive engine in the</span></span></span>
-<span class="r-in"><span><span class="co"># package (n_runs x n_reps factorisations per candidate split), and the</span></span></span>
-<span class="r-in"><span><span class="co"># settings below are chosen to keep the example inside a check budget,</span></span></span>
-<span class="r-in"><span><span class="co"># not to detect anything. Use the defaults on real data.</span></span></span>
+<span class="r-in"><span><span class="co"># package (n_runs x n_reps factorisations per candidate split). Measured</span></span></span>
+<span class="r-in"><span><span class="co"># at 5-6 s across fresh sessions, against 27 s for the 2 x 25 /</span></span></span>
+<span class="r-in"><span><span class="co"># n_reps = 4</span></span></span>
+<span class="r-in"><span><span class="co"># version this replaced -- and this is the floor: `n_reps = 1` fails</span></span></span>
+<span class="r-in"><span><span class="co"># inside fabisearch with "not enough 'x' observations" (the permutation</span></span></span>
+<span class="r-in"><span><span class="co"># test needs two), and smaller matrices are not reliably cheaper because</span></span></span>
+<span class="r-in"><span><span class="co"># the search then evaluates more splits relative to `min_dist` (2 x 10 at</span></span></span>
+<span class="r-in"><span><span class="co"># min_dist = 8 measured 6.6 s). So this one example stays near CRAN's 5 s</span></span></span>
+<span class="r-in"><span><span class="co"># budget by necessity; `cran-comments.md` says so. Use the defaults on</span></span></span>
+<span class="r-in"><span><span class="co"># real data -- the settings here are for the budget, not for detection.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">block</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">cols</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.5</span></span></span>
@@ -222,20 +229,25 @@ call and detaches it again afterwards.</p>
 <span class="r-in"><span>  <span class="va">Y</span><span class="op">[</span>, <span class="va">cols</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">Y</span><span class="op">[</span>, <span class="va">cols</span><span class="op">]</span> <span class="op">+</span> <span class="va">f</span></span></span>
 <span class="r-in"><span>  <span class="va">Y</span></span></span>
 <span class="r-in"><span><span class="op">}</span></span></span>
-<span class="r-in"><span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu">block</span><span class="op">(</span><span class="fl">25</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span>, <span class="fu">block</span><span class="op">(</span><span class="fl">25</span>, <span class="fl">3</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
-<span class="r-in"><span><span class="fu">fabisearch_wrapper</span><span class="op">(</span><span class="va">Y</span>, min_dist <span class="op">=</span> <span class="fl">10</span>, n_runs <span class="op">=</span> <span class="fl">1</span>, n_reps <span class="op">=</span> <span class="fl">4</span>,</span></span>
+<span class="r-in"><span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu">block</span><span class="op">(</span><span class="fl">12</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span>, <span class="fu">block</span><span class="op">(</span><span class="fl">12</span>, <span class="fl">3</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">fabisearch_wrapper</span><span class="op">(</span><span class="va">Y</span>, min_dist <span class="op">=</span> <span class="fl">10</span>, n_runs <span class="op">=</span> <span class="fl">1</span>, n_reps <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                   alpha <span class="op">=</span> <span class="fl">0.25</span>, rank <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: foreach</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: rngtools</span>
+<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>With `n_reps = 2` the smallest attainable permutation p-value is 0.5, which is above `alpha = 0.25`, so no split can be significant whatever the data. Raise `n_reps` to at least 4, or raise `alpha`.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Method:             fabisearch</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:          network</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 0</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:      left</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:            engine alpha = 0.25</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:      50</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:      24</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> No changepoints detected.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    12    0.754</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

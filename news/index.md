@@ -2095,6 +2095,55 @@ Names, labels and claims that did not match the code.
   draws one stacked panel per coordinate with no cap; at 30 coordinates
   that is 30 unreadable slivers. It says so first now.
 
+Interval coverage, measured for the first time.
+
+- **[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  had never been checked against its own nominal level.** Over 120
+  replicates on a 200-point series with one changepoint and a three-SD
+  jump, at a nominal 0.95: `"bootstrap"` on `pelt` covered 0.992 at a
+  mean width of 2.2, `strucchange`’s native intervals 1.000 at 4.4,
+  `smuce`’s 0.992 at 4.6, and `"posterior"` on `bcp` 1.000 at width
+  **157**. Every route is conservative; none under-covers.
+  [`?cpt_confint`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  now carries the table, because “conservative” is the useful thing to
+  know about an interval and nothing said it.
+- **The posterior route’s width is the engine’s noise floor, and now
+  says so.** Both supplying engines put roughly two-thirds of a window’s
+  posterior changepoint mass at the estimate and spread the rest thinly
+  over every other position, so `level` behaves less like a confidence
+  level than like a switch: width 0 at 0.5, 72–91 at 0.8, and 166–187 at
+  0.95 on a 200-point series. This is not an arithmetic error — the
+  requested level is delivered in every case, which is now asserted — so
+  the fix is that
+  [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  warns when an interval covers more than half its window and names the
+  mass at the estimate, and
+  [`?cpt_confint`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+  explains that a wide interval means the posterior did not localise the
+  change rather than that the location is uncertain by that much.
+
+Example timings, measured for the first time.
+
+- **Five Rd examples were over CRAN’s 5-second budget**, and `--as-cran`
+  runs `\donttest{}` blocks, so being wrapped in one exempted none of
+  them. `ocd_wrapper` 10.4s → 4.2s (its Monte Carlo threshold
+  calibration is nearly all of the cost and is linear in `mc_reps`, so
+  the example uses 2), `fmean_wrapper` 6.7s → 2.9s and `fcov_wrapper`
+  6.1s → 2.8s (10 curves and `M = 50` rather than 20 and 200),
+  `cpt_min_detectable` 5.3s → 1.5s. `fabisearch_wrapper` went from 27s
+  to 5-6s, which is its floor: `n_reps = 1` fails inside fabisearch (its
+  permutation test needs two) and a smaller matrix is not reliably
+  cheaper, because the search then evaluates more splits relative to
+  `min_dist`.
+- That example’s own comment claimed its settings were “chosen to keep
+  the example inside a check budget”. At 27 seconds it was not, and the
+  comment now carries the measured number instead of an assurance.
+- The review guessed the wrong topics here — it named
+  [`?ggcpt_plot_methods`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  (1.3s) and the shared `cpt_influence`/`cpt_leverage` page for running
+  “~160 detector fits”. Neither is in the top five; the four functional
+  and high-dimensional engines are.
+
 And the README, which turned out to be the stalest thing in the
 repository.
 
