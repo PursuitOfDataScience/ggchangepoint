@@ -2095,6 +2095,49 @@ Names, labels and claims that did not match the code.
   draws one stacked panel per coordinate with no cap; at 30 coordinates
   that is 30 unreadable slivers. It says so first now.
 
+Every other documented measurement, re-run. - **The monitoring
+vignette’s false-alarm figures were quoted to a precision one run cannot
+support.** It read “`cpm` raises about **3.7** false alarms against the
+4 that `arl0 = 500` implies, and `edetector` about **13**” — inviting
+the reader to conclude cpm is calibrated to within 0.3 alarms. Measured
+over 20 in-control streams of 2000 observations: cpm averages 3.0 with a
+standard deviation of 2.0 and a range of 0–7, and the e-detector 11.5
+with a standard deviation of 5.2 and a range of 1–19. Neither original
+number is *wrong* — both sit inside sampling error of the 20-stream
+estimate — but the spread is larger than the discrepancy they were being
+compared against. The section now gives the mean, the spread and the
+replicate count, and says that agreement to within one alarm is not
+something one run can establish.
+
+- Four were **accurate** and are recorded as such so they are not
+  re-swept:
+  [`?cpt_metrics_annotated`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md)’s
+  annotator-availability counts (1, 2, 3, 3 — exact),
+  [`?new_ggcpt`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)’s
+  engine object sizes on a 2000-point series (135.4 / 53.3 / 30.9 MB
+  against a documented 135 / 53 / 31, with the largest of the others at
+  0.1 MB against a documented “under 4”),
+  [`?strucchange_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md)’s
+  1.7 / 5.9 / 22.6 MB size scaling (measured 1.6 / 5.8 / 22.1, and the
+  “four times larger each doubling” claim holds), and
+  [`?ocd_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)’s
+  and
+  [`?cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)’s
+  figures.
+- One was **stale**:
+  [`?cpt_power`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)’s
+  reproducibility section quoted `power = 0, 1` sequentially against
+  `0.125, 0.875` on two workers for “two scenarios at `n_sim = 8`” —
+  without saying which two, so it could not be reproduced. The
+  measurement on a named scenario is 0.25, 0.125 against 0, 0.375. The
+  claim’s point survives; the section now names the scenario and says
+  the numbers depend on it and on the worker count while the
+  disagreement does not.
+- And a **fourth copy** of the scale-sensitivity count turned up in
+  [`?cpt_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
+  phrased as “29 changepoints instead of 1” so that a grep for the
+  previous fix’s wording missed it.
+
 A documented measurement that had gone stale, and the CI step that
 failed for a reason unrelated to the package.
 

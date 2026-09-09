@@ -433,10 +433,14 @@ change is obvious.</p>
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mi>α</mi></mrow><annotation encoding="application/x-tex">1/\alpha</annotation></semantics></math>
 bound and <code>cpm</code>’s <code>arl0</code> — assume the in-control
 observations are independent. Under the null on iid noise they hold up.
-Measured on 2000-observation in-control streams at the defaults,
-<code>cpm</code> raises about <strong>3.7</strong> false alarms against
-the 4 that <code>arl0 = 500</code> implies by construction, and
-<code>edetector</code> about <strong>13</strong>.</p>
+Measured over 20 in-control streams of 2000 observations at the
+defaults, <code>cpm</code> raises <strong>3.0</strong> false alarms on
+average against the 4 that <code>arl0 = 500</code> implies by
+construction, and <code>edetector</code> <strong>11.5</strong>. The
+spread matters as much as the mean, and is the reason to distrust a
+single stream: cpm’s counts ranged from 0 to 7 across the 20 (sd 2.0)
+and the e-detector’s from 1 to 19 (sd 5.2), so agreement to within one
+alarm is not something one run can establish.</p>
 <p>Serial dependence breaks both, and not gently. Autocorrelated noise
 wanders; a detector that reads a wander as a level shift alarms on
 it.</p>

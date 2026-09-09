@@ -136,8 +136,11 @@ and not across plans. Under a parallel plan the replicates' random
 numbers come from future.apply's parallel-safe L'Ecuyer streams, derived
 from `seed`; run sequentially they come from the calling stream that
 `seed` set. Both are deterministic, and they are not the same numbers.
-Measured on two scenarios at `n_sim = 8`, one and the same `seed = 11`
-gave `power = 0, 1` sequentially and `0.125, 0.875` on two workers.
+Measured on
+`cpt_power(n = c(100, 200), jump = 0.5, n_sim = 8, seed = 11)`:
+`power = 0.25, 0.125` sequentially and `0, 0.375` on two workers. The
+scenario is named because the numbers depend on it and on the worker
+count — what does not depend on either is that the two disagree.
 
 So the guarantee is: same seed and same plan, same answer – every time,
 whichever plan it is. If a power figure needs to be reproducible by

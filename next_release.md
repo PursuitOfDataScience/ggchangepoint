@@ -25879,3 +25879,109 @@ now removes the third-party lists, retries the update, and lets only the
 (`_R_CHECK_FORCE_SUGGESTS_: false`, and every use of `mcp` is guarded),
 so even a genuine failure to fetch it should leave the check running
 rather than abort it – it now emits a warning annotation instead.
+
+## 627. The claims with tests stayed true; the claims without tests did not
+
+§626 corrected one stale documented measurement. This tick swept the
+rest of them, and the pattern is clean enough to be worth stating as a
+rule.
+
+Verified accurate:
+
+- [`?cpt_metrics_annotated`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md):
+  “`mae_matched` was available for one of the three and `hausdorff` for
+  two, while `f1` and `covering` were finite for all three” on
+  `list(c(100, 200), integer(0), 150)` at n = 300. Measured: 1, 2, 3, 3.
+  Exact.
+- [`?new_ggcpt`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md):
+  “strucchange costs about 135 MB, bfast about 53 MB and bocpd about 31
+  MB, while every other engine stays under 4 MB” on a 2000-point series.
+  Measured: 135.4, 53.3, 30.9, and 0.1 MB for the largest of the others.
+  Exact.
+- [`?strucchange_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md):
+  “about 1.7 MB at n = 200, 5.9 MB at n = 400 and 22.6 MB at n = 800 –
+  roughly four times larger each time the series doubles”. Measured 1.6
+  / 5.8 / 22.1, i.e. within 2-3% and the scaling claim holds (x3.6,
+  x3.8). Left as written.
+- §626 already confirmed
+  [`?ocd_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)’s
+  timings and
+  [`?cpt_penalty`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)’s
+  19.9-against-11.8.
+
+Stale:
+
+- [`?cpt_power`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)’s
+  reproducibility section: “Measured on two scenarios at `n_sim = 8`,
+  one and the same `seed = 11` gave `power = 0, 1` sequentially and
+  `0.125, 0.875` on two workers.” It does not say WHICH two scenarios,
+  so it cannot be reproduced. On
+  `cpt_power(n = c(100, 200), jump = 0.5, n_sim = 8, seed = 11)` the
+  measurement is 0.25, 0.125 sequentially and 0, 0.375 on two workers.
+  The claim’s *point* survives – the two plans disagree – but the
+  numbers do not, so the section now names the scenario and says that
+  the numbers depend on it and on the worker count while the
+  disagreement does not.
+
+### 627.1 A fourth copy of the claim I had just fixed, in my own blind spot
+
+§626 fixed the scale-sensitivity counts in
+[`?cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md),
+the README and the introduction vignette, and I grepped for other copies
+with `grep -n "29 at\|138 at"`. That found nothing else. There WAS a
+fourth copy, in
+[`?cpt_wrapper`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md):
+“29 changepoints instead of 1 at sigma = 3 in a measured example” –
+phrased so that neither pattern matched.
+
+This is §622.3’s cross-cutting pattern committed by the person who wrote
+§622.3, one tick later: a fix applied at three doors and not the fourth,
+because the search for siblings was keyed on the phrasing rather than on
+the number. The lesson is narrow and practical – grep for the DATUM
+(`29`), not for the sentence around it – and it is why this file now has
+the count in three separate places, so the next sweep has something to
+match.
+
+### 627.2 The rule the two lists imply
+
+The accurate claims all have a test standing next to them. The annotator
+availability counts are asserted at `test-hardening.R:2762`. The engine
+object sizes and the strucchange scaling are structural facts about
+upstream objects that nothing here perturbs. The stale ones – the
+scale-sensitivity counts and the `cpt_power` pair – had no test, and
+both had drifted in the same way: the number was right once, for
+conditions the prose did not record.
+
+So: **a measurement in prose needs either a test or its conditions, and
+preferably both.** The scale-sensitivity numbers now have both (a
+tolerance test, and `n` stated). The `cpt_power` pair has its conditions
+named and relies on the existing plan-invariance test for the property,
+which is the right division – pinning those two values would freeze a
+worker count into the suite.
+
+### 627.3 A number that was not wrong and still misled
+
+The monitoring vignette’s assumptions section quoted the in-control
+false alarm counts in bold: cpm “about **3.7**” against the 4 that
+`arl0 = 500` implies, and edetector “about **13**”. Measured over 20
+streams of 2000 observations at the defaults:
+
+| method    | mean | sd  | median | range |
+|-----------|------|-----|--------|-------|
+| cpm       | 3.0  | 2.0 | 2.0    | 0-7   |
+| edetector | 11.5 | 5.2 | 13.0   | 1-19  |
+
+So neither claim is false – 3.7 is about 1.6 standard errors from 3.0,
+and 13 is the e-detector’s exact median. What is wrong is the precision
+the presentation implies. A reader given “3.7 against 4” concludes cpm
+is calibrated to within 0.3 alarms; the run-to-run range is 0 to 7. The
+sampling error is larger than the discrepancy being discussed, and the
+bolding pointed at the discrepancy.
+
+This is the same defect as §625’s posterior interval seen from the other
+side: there, an honest interval read as a bug; here, an honest number
+reads as a precision that is not there. Both are reporting defects with
+correct arithmetic underneath, and in both cases the fix is to say what
+the number is and is not – the section now gives the mean, the spread
+and the replicate count, and states that agreement to within one alarm
+is not something one stream can establish.
