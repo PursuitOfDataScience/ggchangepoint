@@ -23133,3 +23133,65 @@ that ships, because the search evaluates more candidate splits relative to
 `min_dist`. So the example is already the smallest input that exercises the
 method. `cran-comments.md` now states this with the measurements, which is
 the right place for a NOTE the maintainer expects and has reasons for.
+
+## 625. Nobody had asked whether the intervals cover
+
+`cpt_confint()` offers four routes and documents a `level` for each. No test
+and no note had ever asked whether an interval contains the true changepoint
+`level` of the time. 120 replicates, n = 200, one changepoint at 100, jump
+of three standard deviations, nominal 0.95:
+
+| route                | coverage        | mean width |
+|----------------------|-----------------|------------|
+| pelt / bootstrap     | 0.992 +/- 0.016 | 2.2        |
+| strucchange / native | 1.000 +/- 0.000 | 4.4        |
+| smuce / native       | 0.992 +/- 0.016 | 4.6        |
+| bcp / posterior      | 1.000 +/- 0.000 | 157.4      |
+
+Every route is conservative and none under-covers, which is the direction
+you want and is worth stating once -- so `?cpt_confint` now has the table.
+The interesting row is the last one.
+
+### 625.1 A 95% interval covering 83% of the series, and why it is not a bug
+
+The posterior route builds the narrowest contiguous set around the estimate
+holding `level` of the window's posterior changepoint mass. Measured on a
+200-point series with one clean change:
+
+- bcp's profile sums to 1.466, peaks at 0.994 **at the changepoint**, and
+  that single position holds 67.8% of the total mass.
+- beast's sums to 1.573, peaks at 1.000, and holds 63.6%.
+
+So about a third of the mass is a thin floor spread across the other 199
+positions, and reaching a high level means swallowing it:
+
+| level | bcp width | beast width |
+|-------|-----------|-------------|
+| 0.50  | 0         | 0           |
+| 0.80  | 72        | 91          |
+| 0.95  | 166       | 187         |
+
+I went looking for the arithmetic error and there is not one. I checked
+whether the reported level is actually achieved -- 0.95 delivers 0.9509,
+0.99 delivers 0.9945, 0.999 delivers 1.0000 -- so the interval is honest
+about what it holds. The construction is right; `level` simply is not a
+useful knob against a profile shaped like this, because it switches between
+the mode and most of the window with almost nothing in between.
+
+That makes this a *reporting* defect rather than a computation one, and the
+distinction decided the fix. Widening or narrowing the interval would make
+it lie. What was missing was any way for a reader to tell this apart from a
+bug while looking at a bootstrap interval two observations wide sitting next
+to it. So `cpt_confint()` warns when an interval covers more than half its
+window and names the share of the mass at the estimate, and the help page
+says what a wide interval means. The test asserts the property that IS true
+-- the level is delivered, and the width is monotone in the level -- which
+is what a future "fix" must not break.
+
+### 625.2 Refuted while measuring
+
+Two things I suspected and disproved. The reported `level` is never
+overstated. And beast's intervals coming back one-sided (`[14, 80]`,
+`[138, 160]`) is not a separate defect: the growth rule follows the larger
+neighbour, and the mass immediately right of a break can be exactly zero,
+so a left-only interval is what the construction implies.

@@ -3839,3 +3839,56 @@ test_that("B12: a recomputed solution path says that it is one", {
   fb <- suppressWarnings(cpt_detect(x, method = "binseg", Q = 5))
   expect_silent(cpt_solution_path(fb))
 })
+
+test_that("the posterior interval delivers its level, and says when it is wide", {
+  skip_if_not(engine_usable("bcp"))
+  # Measured, and it is the reason this needs saying rather than fixing:
+  # bcp and beast both put about two-thirds of a window's posterior
+  # changepoint mass at the estimate and spread the remaining third as a
+  # thin floor over every other position. So `level` behaves less like a
+  # confidence level than like a switch -- width 0 at 0.5, 166 of 199 at
+  # 0.95 -- and a reader comparing that against a bootstrap interval two
+  # observations wide has no way to tell it from a bug.
+  set.seed(7)
+  y <- c(stats::rnorm(100), stats::rnorm(100, 3))
+  f <- suppressWarnings(cpt_detect(y, method = "bcp"))
+  skip_if(nrow(f$changepoints) == 0)
+  prob <- ggchangepoint:::posterior_prob_profile(f)
+  skip_if(is.null(prob))
+
+  # The property that IS true: the interval holds at least the requested
+  # share of its window's mass. This is what makes the width honest rather
+  # than a miscalculation, and it is what a future "fix" must not break.
+  achieved <- function(lv) {
+    ci <- suppressWarnings(cpt_confint(f, method = "posterior", level = lv))
+    n <- length(prob)
+    cp <- f$changepoints$cp
+    out <- numeric(nrow(ci))
+    for (i in seq_len(nrow(ci))) {
+      left <- if (i == 1L) 1L else as.integer(floor((cp[i - 1] + cp[i]) / 2)) + 1L
+      right <- if (i == length(cp)) n else as.integer(floor((cp[i] + cp[i + 1]) / 2))
+      win <- seq.int(max(1L, left), max(max(1L, left), right))
+      inside <- intersect(seq.int(ci$ci_lower[i], ci$ci_upper[i]), win)
+      out[i] <- sum(prob[inside], na.rm = TRUE) / sum(prob[win], na.rm = TRUE)
+    }
+    out
+  }
+  for (lv in c(0.8, 0.95)) {
+    expect_true(all(achieved(lv) >= lv - 1e-8), info = paste("level", lv))
+  }
+  # The interval is nested in the level, which a switch-like width could
+  # still violate if the growth rule were wrong.
+  w <- vapply(c(0.5, 0.8, 0.95), function(lv) {
+    ci <- suppressWarnings(cpt_confint(f, method = "posterior", level = lv))
+    ci$ci_upper[1] - ci$ci_lower[1]
+  }, numeric(1))
+  expect_true(all(diff(w) >= 0))
+
+  # And a wide one is announced, so it cannot be mistaken for a defect.
+  expect_warning(cpt_confint(f, method = "posterior", level = 0.95),
+                 "That is the profile, not the location")
+  # ...while a narrow one is silent, and the bootstrap is untouched.
+  expect_silent(cpt_confint(f, method = "posterior", level = 0.5))
+  expect_silent(cpt_confint(cpt_detect(y, method = "pelt"),
+                            method = "bootstrap", B = 20, seed = 1))
+})

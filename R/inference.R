@@ -60,8 +60,39 @@
 #'       is not exact.}
 #'     \item{\code{"posterior"}}{a credible interval from the engine's
 #'       posterior changepoint-probability profile (\code{bcp},
-#'       \code{beast}).}
+#'       \code{beast}): the narrowest \emph{contiguous} set of positions
+#'       around the estimate holding \code{level} of the posterior
+#'       changepoint mass in that changepoint's window, where the window is
+#'       bounded by the neighbouring changepoints so two of them cannot
+#'       claim the same mass twice.
+#'
+#'       Expect these to be wide, and read the width as a statement about
+#'       the profile rather than about the location. Both supplying engines
+#'       put roughly two-thirds of the window's mass at the estimate itself
+#'       and spread the remaining third as a thin floor across every other
+#'       position, so reaching a high \code{level} means swallowing that
+#'       floor. Measured on a 200-point series with one clean change:
+#'       \code{level = 0.5} gives a width of 0 (the mode alone holds more
+#'       than half), \code{0.8} gives 72 (\pkg{bcp}) and 91
+#'       (\pkg{beast}), and \code{0.95} gives 166 and 187 --- 83\% and
+#'       94\% of the series. The requested level \emph{is} delivered in
+#'       each case; what a wide interval says is that the posterior did not
+#'       localise the change, not that the location is uncertain by that
+#'       much. \code{cpt_confint()} warns when an interval covers more than
+#'       half its window, for exactly that reason.}
 #'   }
+#'
+#' @section How well these cover:
+#' Measured over 120 replicates on a 200-point series with one changepoint
+#' at 100 and a jump of three standard deviations, at a nominal level of
+#' 0.95: \code{"bootstrap"} on \code{pelt} covered 0.992 of the time with
+#' a mean width of 2.2; \pkg{strucchange}'s native intervals covered 1.000
+#' at width 4.4; \pkg{stepR}'s (\code{smuce}) covered 0.992 at width 4.6;
+#' and \code{"posterior"} on \pkg{bcp} covered 1.000 at width 157. Every
+#' route is \emph{conservative} --- none under-covers --- and the width is
+#' what separates them. The two native routes and the bootstrap are the
+#' ones to quote; see the note on \code{"posterior"} above for why its
+#' interval is so much wider.
 #' @param B Bootstrap replicates for \code{method = "bootstrap"}. Defaults to
 #'   \code{200}.
 #' @param seed Optional seed (bootstrap and NSP are both random). The seed
@@ -328,6 +359,28 @@ confint_posterior <- function(object, level) {
       }
     }
     lo[i] <- win[l]; hi[i] <- win[r]
+    # A wide interval here is not a wide uncertainty about the location, it
+    # is a diffuse profile: measured, bcp and beast both put about
+    # two-thirds of a window's posterior changepoint mass at the estimate
+    # and the rest as a thin floor over every other position, so `level`
+    # acts less like a confidence level than like a switch between the mode
+    # (width 0 at 0.5) and most of the window (width 166 of 199 at 0.95).
+    # The construction is right and the requested level is delivered -- what
+    # is missing is any way for the reader to tell this apart from a bug,
+    # standing next to a bootstrap interval two observations wide.
+    span <- hi[i] - lo[i] + 1L
+    if (span > length(win) / 2 && length(win) > 4L) {
+      at_mode <- p[centre] / total
+      warning("The posterior interval for the changepoint at ", cp[i],
+              " covers ", span, " of the ", length(win),
+              " positions in its window. That is the profile, not the ",
+              "location: ", format(100 * at_mode, digits = 2),
+              "% of the window's posterior changepoint mass sits at the ",
+              "estimate itself and the rest is spread thinly, so reaching ",
+              format(level), " requires most of the window. Compare ",
+              "`method = \"bootstrap\"`, and see the `\"posterior\"` note ",
+              "in ?cpt_confint.", call. = FALSE)
+    }
   }
   tibble::tibble(cp = cp, ci_lower = lo, ci_upper = hi, level = level,
                  source = "posterior")

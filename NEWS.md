@@ -1598,6 +1598,28 @@ Names, labels and claims that did not match the code.
   with no cap; at 30 coordinates that is 30 unreadable slivers. It says so
   first now.
 
+Interval coverage, measured for the first time.
+
+- **`cpt_confint()` had never been checked against its own nominal level.**
+  Over 120 replicates on a 200-point series with one changepoint and a
+  three-SD jump, at a nominal 0.95: `"bootstrap"` on `pelt` covered 0.992
+  at a mean width of 2.2, `strucchange`'s native intervals 1.000 at 4.4,
+  `smuce`'s 0.992 at 4.6, and `"posterior"` on `bcp` 1.000 at width **157**.
+  Every route is conservative; none under-covers. `?cpt_confint` now carries
+  the table, because "conservative" is the useful thing to know about an
+  interval and nothing said it.
+- **The posterior route's width is the engine's noise floor, and now says
+  so.** Both supplying engines put roughly two-thirds of a window's
+  posterior changepoint mass at the estimate and spread the rest thinly over
+  every other position, so `level` behaves less like a confidence level than
+  like a switch: width 0 at 0.5, 72–91 at 0.8, and 166–187 at 0.95 on a
+  200-point series. This is not an arithmetic error — the requested level is
+  delivered in every case, which is now asserted — so the fix is that
+  `cpt_confint()` warns when an interval covers more than half its window
+  and names the mass at the estimate, and `?cpt_confint` explains that a
+  wide interval means the posterior did not localise the change rather than
+  that the location is uncertain by that much.
+
 Example timings, measured for the first time.
 
 - **Five Rd examples were over CRAN's 5-second budget**, and `--as-cran`

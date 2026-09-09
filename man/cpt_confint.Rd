@@ -28,36 +28,55 @@ level the answer does not carry now warns rather than passing
 silently. To choose the level yourself, name a computing route.}
 
 \item{method}{Which route to use:
-\describe{
-  \item{\code{"auto"}}{(default) native if the engine supplied
-    intervals, else posterior if it supplied one, else bootstrap.}
-  \item{\code{"native"}}{the engine's own \code{ci_lower}/\code{ci_upper}
-    (SMUCE/HSMUCE simultaneous confidence sets, \pkg{strucchange}
-    break-date intervals, \pkg{segmented} breakpoint intervals,
-    \pkg{mcp} posterior intervals, \pkg{bfast} break confidence
-    intervals, and \code{taylor}'s bootstrap confidence limits). The
-    engines that supply them are the ones
-    \code{\link{cpt_methods}()} marks in its \code{ci} column;
-    \code{nsp} is marked there too but is reported under its own
-    provenance below, because its regions are not intervals around an
-    estimate.}
-  \item{\code{"nsp"}}{Narrowest Significance Pursuit regions computed on
-    the same series and matched to the changepoints. These are
-    \emph{not} intervals around an estimate — see
-    \code{\link{nsp_wrapper}()} — but they are the strongest guarantee
-    available, so the mapping is reported as
-    \code{source = "nsp_region"} and a changepoint in no region gets
-    \code{NA}.}
-  \item{\code{"bootstrap"}}{within-segment residual resampling (the
-    \code{\link{cpt_stability}()} scheme), re-running the detector and
-    taking quantiles of the re-detected location. Model-agnostic and
-    available for every engine; it measures the sampling variability of
-    the \emph{procedure}, conditional on the fitted segmentation, and it
-    is not exact.}
-  \item{\code{"posterior"}}{a credible interval from the engine's
-    posterior changepoint-probability profile (\code{bcp},
-    \code{beast}).}
-}}
+  \describe{
+    \item{\code{"auto"}}{(default) native if the engine supplied
+      intervals, else posterior if it supplied one, else bootstrap.}
+    \item{\code{"native"}}{the engine's own \code{ci_lower}/\code{ci_upper}
+      (SMUCE/HSMUCE simultaneous confidence sets, \pkg{strucchange}
+      break-date intervals, \pkg{segmented} breakpoint intervals,
+      \pkg{mcp} posterior intervals, \pkg{bfast} break confidence
+      intervals, and \code{taylor}'s bootstrap confidence limits). The
+      engines that supply them are the ones
+      \code{\link{cpt_methods}()} marks in its \code{ci} column;
+      \code{nsp} is marked there too but is reported under its own
+      provenance below, because its regions are not intervals around an
+      estimate.}
+    \item{\code{"nsp"}}{Narrowest Significance Pursuit regions computed on
+      the same series and matched to the changepoints. These are
+      \emph{not} intervals around an estimate — see
+      \code{\link{nsp_wrapper}()} — but they are the strongest guarantee
+      available, so the mapping is reported as
+      \code{source = "nsp_region"} and a changepoint in no region gets
+      \code{NA}.}
+    \item{\code{"bootstrap"}}{within-segment residual resampling (the
+      \code{\link{cpt_stability}()} scheme), re-running the detector and
+      taking quantiles of the re-detected location. Model-agnostic and
+      available for every engine; it measures the sampling variability of
+      the \emph{procedure}, conditional on the fitted segmentation, and it
+      is not exact.}
+    \item{\code{"posterior"}}{a credible interval from the engine's
+      posterior changepoint-probability profile (\code{bcp},
+      \code{beast}): the narrowest \emph{contiguous} set of positions
+      around the estimate holding \code{level} of the posterior
+      changepoint mass in that changepoint's window, where the window is
+      bounded by the neighbouring changepoints so two of them cannot
+      claim the same mass twice.
+
+      Expect these to be wide, and read the width as a statement about
+      the profile rather than about the location. Both supplying engines
+      put roughly two-thirds of the window's mass at the estimate itself
+      and spread the remaining third as a thin floor across every other
+      position, so reaching a high \code{level} means swallowing that
+      floor. Measured on a 200-point series with one clean change:
+      \code{level = 0.5} gives a width of 0 (the mode alone holds more
+      than half), \code{0.8} gives 72 (\pkg{bcp}) and 91
+      (\pkg{beast}), and \code{0.95} gives 166 and 187 --- 83\% and
+      94\% of the series. The requested level \emph{is} delivered in
+      each case; what a wide interval says is that the posterior did not
+      localise the change, not that the location is uncertain by that
+      much. \code{cpt_confint()} warns when an interval covers more than
+      half its window, for exactly that reason.}
+  }}
 
 \item{B}{Bootstrap replicates for \code{method = "bootstrap"}. Defaults to
 \code{200}.}
@@ -88,6 +107,20 @@ generic covers the rest, and — because the four routes mean genuinely
 different things — reports the provenance in a \code{source} column
 rather than presenting them as interchangeable.
 }
+\section{How well these cover}{
+
+Measured over 120 replicates on a 200-point series with one changepoint
+at 100 and a jump of three standard deviations, at a nominal level of
+0.95: \code{"bootstrap"} on \code{pelt} covered 0.992 of the time with
+a mean width of 2.2; \pkg{strucchange}'s native intervals covered 1.000
+at width 4.4; \pkg{stepR}'s (\code{smuce}) covered 0.992 at width 4.6;
+and \code{"posterior"} on \pkg{bcp} covered 1.000 at width 157. Every
+route is \emph{conservative} --- none under-covers --- and the width is
+what separates them. The two native routes and the bootstrap are the
+ones to quote; see the note on \code{"posterior"} above for why its
+interval is so much wider.
+}
+
 \examples{
 set.seed(2026)
 x <- c(rnorm(80), rnorm(80, 4))

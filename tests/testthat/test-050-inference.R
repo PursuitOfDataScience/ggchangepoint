@@ -85,7 +85,9 @@ test_that("a posterior credible interval brackets its changepoint", {
   skip_if_not_installed("bcp")
   fit <- bcp_wrapper(x_step, seed = 1)
   skip_if(nrow(fit$changepoints) == 0)
-  ci <- cpt_confint(fit, method = "posterior", level = 0.9)
+  # The wide-interval warning may fire here, and correctly: bcp's profile
+  # is diffuse, which is what the warning exists to say. See ?cpt_confint.
+  ci <- suppressWarnings(cpt_confint(fit, method = "posterior", level = 0.9))
   expect_equal(unique(ci$source), "posterior")
   expect_true(all(ci$ci_lower <= ci$cp & ci$cp <= ci$ci_upper))
 })
