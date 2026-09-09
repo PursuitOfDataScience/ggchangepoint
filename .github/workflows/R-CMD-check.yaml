@@ -52,7 +52,22 @@ jobs:
 
       - name: Install JAGS (Linux)
         if: runner.os == 'Linux'
-        run: sudo apt-get update && sudo apt-get install -y jags
+        # `apt-get update` exits non-zero if ANY configured repository fails,
+        # and the runner image ships third-party lists this package has
+        # nothing to do with. On 2026-09-09 Google's Chrome index returned
+        # "Hash Sum mismatch" and took down all three Linux jobs plus the
+        # pkgdown workflow, on a commit whose previous run had passed on all
+        # five runners. So: drop the third-party lists first, then update,
+        # then let ONLY the jags install decide the step's exit status. JAGS
+        # itself is optional here (`_R_CHECK_FORCE_SUGGESTS_: false` above,
+        # and every use of mcp is guarded), so even a genuine failure to
+        # fetch it should leave the check running rather than abort it.
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list \
+                     /etc/apt/sources.list.d/microsoft-prod.list || true
+          sudo apt-get update -o Acquire::Retries=3 || true
+          sudo apt-get install -y jags || \
+            echo "::warning::jags did not install; mcp-dependent tests will skip"
 
       - name: Install JAGS (macOS)
         if: runner.os == 'macOS'

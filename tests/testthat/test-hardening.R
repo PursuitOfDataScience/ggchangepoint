@@ -3892,3 +3892,42 @@ test_that("the posterior interval delivers its level, and says when it is wide",
   expect_silent(cpt_confint(cpt_detect(y, method = "pelt"),
                             method = "bootstrap", B = 20, seed = 1))
 })
+
+test_that("the documented scale-sensitivity counts are still true", {
+  skip_on_cran()
+  # ?cpt_detect, README and the introduction vignette all quote the same
+  # three numbers for how badly a raw-scale penalty shatters on wide noise.
+  # They had drifted: the pages said 1 / 29 / 138 and the measurement says
+  # 1 / 39 / 141 at n = 200 -- close on the third, half a factor out on the
+  # second, and quoted without the `n` that produced them, so neither
+  # reproducible nor checkable. Nothing had ever re-run them.
+  #
+  # Asserted with tolerance and as a property, not as three fixed integers:
+  # the point of the section is the ORDER of magnitude and the direction,
+  # and pinning exact counts would freeze an upstream engine's behaviour
+  # into this suite.
+  counts <- vapply(c(1, 3, 10), function(s) {
+    mean(vapply(1:6, function(k) {
+      set.seed(k)
+      x <- c(stats::rnorm(100, 0, s), stats::rnorm(100, 5 * s, s))
+      nrow(cpt_detect(x, method = "pelt")$changepoints)
+    }, numeric(1)))
+  }, numeric(1))
+
+  # sigma = 1: the penalty is calibrated for this, so exactly one.
+  expect_equal(counts[1], 1)
+  # sigma = 3 and sigma = 10: shattered, monotonically, and in the
+  # neighbourhood of the documented 39 and 141.
+  expect_gt(counts[2], counts[1])
+  expect_gt(counts[3], counts[2])
+  expect_true(counts[2] > 20 && counts[2] < 70,
+              info = paste("sigma = 3 gave", counts[2], "(docs say ~39)"))
+  expect_true(counts[3] > 90 && counts[3] < 190,
+              info = paste("sigma = 10 gave", counts[3], "(docs say ~141)"))
+
+  # ...and the first documented remedy really does recover the changepoint.
+  set.seed(1)
+  x <- c(stats::rnorm(100, 0, 10), stats::rnorm(100, 50, 10))
+  expect_equal(nrow(cpt_detect(scale(x)[, 1], method = "pelt")$changepoints),
+               1L)
+})
