@@ -2230,6 +2230,24 @@ error.
   fails at two columns, `fmean` returns a fit at two as well — which is
   why the shared guard cannot be raised without refusing grids `fmean`
   handles.
+- **A flaky vignette build, and the flake is a socket port.** Running
+  every Rd example three times in fresh processes found nothing — 118 of
+  118 pass, three times over. Running `R CMD build` **twice in
+  parallel** killed one of them:
+  [`kcpRS::kcpRS()`](https://rdrr.io/pkg/kcpRS/man/kcpRS.html) opens a
+  PSOCK cluster unconditionally (`kcpRS.default()` calls
+  `makeCluster(ncpu)` whenever `ncpu <= detectCores()`, so no value of
+  `ncpu`, not even `1`, avoids it), and
+  [`base::serverSocket()`](https://rdrr.io/r/base/connections.html)
+  fails outright when the port it picked is taken. The two builds
+  collided on port 11246 and one died mid-vignette with *“creation of
+  server socket failed”* — which is exactly the shape of failure CRAN’s
+  parallel package checks produce.
+  [`kcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/kcp_wrapper.md)
+  now retries up to three times on that error and only that error, since
+  `makeCluster()` picks a fresh port each time; a genuine engine or
+  argument failure is still raised on the first attempt. Both parallel
+  builds now complete.
 - **The fourth channel is clean, and looking at it found a latent CI
   flake.** Engines can also just print, and this codebase knows that
   hazard — several wrappers wrap the engine in

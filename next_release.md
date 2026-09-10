@@ -26549,3 +26549,71 @@ not that it is safe.
 
 That last one is the pattern worth keeping: a conditional-evaluation
 gate should test the capability the chunk needs, not a proxy for it.
+
+## 637. Rolling the dice more than once, which is what a check does not do
+
+§636 found a latent flake by asking what a known upstream defect would
+break. The general form: a CRAN check gets **one** attempt at the
+examples and one at the vignettes. So run them more than once and see
+whether they agree with themselves.
+
+**Examples: clean.** All 118 Rd example blocks, three times, in three
+fresh processes. 118 of 118 pass every time. Nothing to do, and worth
+recording so the next tick does not repeat it.
+
+**Vignettes: not clean.** Two `R CMD build` runs launched in parallel on
+this machine. One completed; the other died in `ggchangepoint.Rmd`:
+
+``` R
+Quitting from ggchangepoint.Rmd:315-317 [kcp]
+Error in `serverSocket()`:
+! creation of server socket failed: port 11246 cannot be opened
+ 5. parallel::makeCluster(ncpu)
+ 6. parallel::makePSOCKcluster(names = spec, ...)
+ 7. base::serverSocket(port = port)
+```
+
+### 637.1 There is no `ncpu` that avoids the cluster
+
+[`kcpRS::kcpRS()`](https://rdrr.io/pkg/kcpRS/man/kcpRS.html) opens a
+PSOCK cluster whether you want one or not. `kcpRS.default()` reads:
+
+``` R
+if (ncpu <= detectCores()) {
+  cl <- makeCluster(ncpu)
+```
+
+so `ncpu = 1` – which is already kcpRS’s default, and what this wrapper
+was getting – creates a one-worker socket cluster rather than skipping
+the parallel path. Every `cpt_detect(x, method = "kcp")` call opens a
+server socket, in an example, in a test, and in a vignette chunk.
+
+That is a CRAN hazard rather than a local one: the farm checks packages
+in parallel, so ports are contended exactly as they were in my two
+builds. [`serverSocket()`](https://rdrr.io/r/base/connections.html) does
+not retry and does not fall back; it errors, and the error kills the
+vignette.
+
+The fix is a bounded retry on that error alone. `makeCluster()` chooses
+the port itself, so a second attempt gets a different one – the retry is
+not hoping the same call behaves differently, which is what made §636’s
+beast retry so unreliable, but re-drawing the thing that collided. Three
+attempts, gated on the message, so a genuine engine failure is raised on
+the first: measured, a too-short series still errors in 0.2 s with the
+wrapper’s own message.
+
+Verified by reproducing the failing condition: two parallel
+`R CMD build` runs, both complete.
+
+### 637.2 The methodological point
+
+“Run it twice” is a cheap and unusually productive test, because almost
+nothing else in a package’s own suite exercises *contention*. The
+single-process suite passes; the single build passes; two builds at once
+do not. CRAN’s farm is the two-builds-at-once case, and the failure mode
+– one vignette, one port, one unlucky draw – is indistinguishable from a
+flaky package unless you know where to look.
+
+Worth adding to the pre-submission list alongside
+`urlchecker::url_check()`: build twice, in parallel, at least once
+before submitting.
