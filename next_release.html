@@ -16417,6 +16417,29 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p><code>fchange_run()</code> serves both <code>fmean</code> and <code>fcov</code>, and its comment read “Measured on 60 time points, two columns fail and three, four and six all return a fit”. Re-measured per engine: <code>fcov</code> fails at two columns and <code>fmean</code> returns a fit at two. So the sentence was true of <code>fcov</code> and false of <code>fmean</code>, in a helper whose whole point is that it is shared – and it was the justification for not raising the <code>ncol &gt;= 2</code> guard, which is now correct for a better reason than it was.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_631-the-third-face-of-the-object-and-it-is-clean">631. The third face of the object, and it is clean<a class="anchor" aria-label="anchor" href="#id_631-the-third-face-of-the-object-and-it-is-clean"></a></h2>
+<p>§628-630 swept the input data after earlier rounds had swept the arguments. The third face is the RESULT: what the accessors do with a degenerate <code>ggcpt</code>. Nine result shapes – no changepoints, a changepoint at position 1, one at n-1, two adjacent ones leaving a single-observation segment, 58 changepoints on 60 points, a hand-built result with no fit, an indexed result, a detected result, a multivariate result – against sixteen accessors: <code>tidy</code>, <code>glance</code>, <code>augment</code>, <code>autoplot</code>, <code>summary</code>, <code>print</code>, <code>format</code>, <code>as_tibble</code>, <code>as.data.frame</code>, <code>cpt_regions</code>, <code>cpt_cite</code>, <code>cpt_metrics</code>, <code>cpt_test</code>, <code>cpt_confint</code>, <code>cpt_statistic</code>, <code>cpt_report</code>.</p>
+<p>144 cells: 124 ran, 20 refused with a named reason, <strong>zero base-R errors</strong>. All twenty refusals are correct and specific – <code>cpt_cite</code> on a hand-built result whose method is <code>"custom"</code>, <code>cpt_statistic</code> on an engine that exposes none, <code>cpt_confint(method = "bootstrap")</code> on a method <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> cannot re-run.</p>
+<div class="section level3">
+<h3 id="id_6311-absence-of-a-crash-is-the-weaker-question">631.1 Absence of a crash is the weaker question<a class="anchor" aria-label="anchor" href="#id_6311-absence-of-a-crash-is-the-weaker-question"></a></h3>
+<p>A sweep that only asks “did it error” would have stopped there. The harder question is whether the VALUES are right when a segment holds one observation, or when 59 of 60 segments do. Nine invariants that must hold for any result whatsoever, over the seven cheap shapes:</p>
+<ul><li>
+<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> returns exactly <code>nrow(x$data)</code> rows</li>
+<li>no <code>seg_id</code> is NA</li>
+<li>
+<code>.resid</code> equals <code>value - .fitted</code> (the property B27 restored)</li>
+<li>the segment lengths sum to n</li>
+<li>the segments tile <code>1..n</code> exactly – no gap, no overlap</li>
+<li>
+<code>param_estimate</code> is each segment’s own mean, including a one-observation one</li>
+<li>
+<code>glance()$n_changepoints</code>, <code>nrow(tidy())</code> and <code>sum(augment()$is_changepoint)</code> all agree with <code>nrow(x$changepoints)</code>
+</li>
+</ul><p>63 checks, all pass. So this is the second clean sweep in a row (§629.1 was the multivariate one), and both are recorded rather than discarded – that is what stops the next sweep re-walking ground that has been walked.</p>
+<p>The difference is what happens to a clean sweep afterwards. The multivariate shape sweep is too slow to keep (fcov alone is minutes), so it lives here as a record. This one runs in well under a minute, so it went into the suite: nine invariants that a refactor could break in silence are worth more as a test than as a paragraph.</p>
+</div>
+</div>
 </div>
 
 

@@ -2230,6 +2230,16 @@ error.
   fails at two columns, `fmean` returns a fit at two as well — which is
   why the shared guard cannot be raised without refusing grids `fmean`
   handles.
+- The **accessor** face is clean too: 16 accessors against 9 degenerate
+  result shapes — a changepoint at position 1, two adjacent ones leaving
+  a single-observation segment, 58 changepoints on 60 points, a
+  hand-built result with no fit — gave 124 ran, 20 named refusals and
+  **zero** base-R errors in 144 cells. The nine value invariants that
+  matter more than the absence of a crash (segments tile `1..n` exactly,
+  `.resid` is a residual, `param_estimate` is each segment’s own mean
+  even for a one-observation segment, and the three summaries agree with
+  the object about how many changepoints there are) now run as a test
+  rather than sitting in a scratch script.
 - The **multivariate** half of the sweep came back clean: 15 engines
   against 10 degenerate matrix shapes — a constant column, a duplicated
   column, a collinear column, p \> n, a single column handed to a
