@@ -26748,3 +26748,43 @@ skip and runs everywhere: an unknown method to `cpt_consensus`, `B = 0`
 to `cpt_stability`, an out-of-range `location` to `cpt_power`, and bad
 slope `params` to `cpt_simulate`. Fewer dependencies is also a better
 test – four error paths that always run beat four that might skip.
+
+## 640. The rest of the save-and-restore contracts, on the path nobody tested
+
+§639 found that the `seed` contract had only ever been tested when
+nothing went wrong. The package has three other pieces of caller state
+it saves and gives back, and the same question applies to each.
+
+**The search path.** Two wrappers attach packages: `bcp`, because
+[`require()`](https://rdrr.io/r/base/library.html) inside the engine
+puts it and grid on the search path, and `fabisearch`, because NMF must
+be *attached* for the engine to dispatch – and detaching NMF alone left
+eight packages behind, which is why the helper restores everything the
+call attached rather than the one thing it asked for. Both use
+`on.exit`. Measured on the error path:
+
+- `with_search_path_restored({ attachNamespace("tools"); stop("boom") })`
+  propagates the error and restores the path exactly.
+- `bcp` restores after a successful call and after a failing one.
+- `fabisearch` restores after a failure that occurs *after* the NMF
+  attach, with NMF gone.
+
+**The registry.** `with_session_registry()` turned out not to be a
+save/restore at all – it is a forward mechanism, closing over a snapshot
+so a parallel worker can rebuild the session’s registered methods. There
+is no caller state to give back, so there is nothing to test on the
+error path. Recorded so the next sweep does not look for a restore that
+does not exist.
+
+**Options and graphics parameters.** None: a grep of `R/` for
+`options(`, `par(`, `Sys.setenv` and `Sys.setlocale` finds no call that
+sets global state. The only
+[`assign()`](https://rdrr.io/r/base/assign.html)s are `local_seed()`’s
+restore closure, the `wbsts` seed replay, and the registry’s own
+environment.
+
+So all four are clean, three of them now with a test on the failure
+path. The pattern worth keeping: **an `on.exit` restore is a claim about
+the error path, and a test that only exercises success is not testing
+the mechanism at all** – it would pass just as well if the restore were
+the last line of the function body.

@@ -16625,6 +16625,20 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>Rewritten to reach only <code>changepoint</code>, an Import, so the test needs no skip and runs everywhere: an unknown method to <code>cpt_consensus</code>, <code>B = 0</code> to <code>cpt_stability</code>, an out-of-range <code>location</code> to <code>cpt_power</code>, and bad slope <code>params</code> to <code>cpt_simulate</code>. Fewer dependencies is also a better test – four error paths that always run beat four that might skip.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_640-the-rest-of-the-save-and-restore-contracts-on-the-path-nobody-tested">640. The rest of the save-and-restore contracts, on the path nobody tested<a class="anchor" aria-label="anchor" href="#id_640-the-rest-of-the-save-and-restore-contracts-on-the-path-nobody-tested"></a></h2>
+<p>§639 found that the <code>seed</code> contract had only ever been tested when nothing went wrong. The package has three other pieces of caller state it saves and gives back, and the same question applies to each.</p>
+<p><strong>The search path.</strong> Two wrappers attach packages: <code>bcp</code>, because <code><a href="https://rdrr.io/r/base/library.html" class="external-link">require()</a></code> inside the engine puts it and grid on the search path, and <code>fabisearch</code>, because NMF must be <em>attached</em> for the engine to dispatch – and detaching NMF alone left eight packages behind, which is why the helper restores everything the call attached rather than the one thing it asked for. Both use <code>on.exit</code>. Measured on the error path:</p>
+<ul><li>
+<code>with_search_path_restored({ attachNamespace("tools"); stop("boom") })</code> propagates the error and restores the path exactly.</li>
+<li>
+<code>bcp</code> restores after a successful call and after a failing one.</li>
+<li>
+<code>fabisearch</code> restores after a failure that occurs <em>after</em> the NMF attach, with NMF gone.</li>
+</ul><p><strong>The registry.</strong> <code>with_session_registry()</code> turned out not to be a save/restore at all – it is a forward mechanism, closing over a snapshot so a parallel worker can rebuild the session’s registered methods. There is no caller state to give back, so there is nothing to test on the error path. Recorded so the next sweep does not look for a restore that does not exist.</p>
+<p><strong>Options and graphics parameters.</strong> None: a grep of <code>R/</code> for <code>options(</code>, <code>par(</code>, <code>Sys.setenv</code> and <code>Sys.setlocale</code> finds no call that sets global state. The only <code><a href="https://rdrr.io/r/base/assign.html" class="external-link">assign()</a></code>s are <code>local_seed()</code>’s restore closure, the <code>wbsts</code> seed replay, and the registry’s own environment.</p>
+<p>So all four are clean, three of them now with a test on the failure path. The pattern worth keeping: <strong>an <code>on.exit</code> restore is a claim about the error path, and a test that only exercises success is not testing the mechanism at all</strong> – it would pass just as well if the restore were the last line of the function body.</p>
+</div>
 </div>
 
 
