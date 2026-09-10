@@ -24003,3 +24003,22 @@ the three share a shape: **the instrument touched the thing it was
 measuring**. The rule that would have caught all three: build the input,
 and anything else that consumes the resource under test, outside the region
 being measured, and always run a control you know the answer to.
+
+### 639.2 The suite caught my own commit, which is the point of a meta-test
+
+The first version of the error-path test used `nsp` and `wbs` for two of
+its four error paths, and the full run failed:
+
+    no test reaches a Suggests engine without skip_if_not_installed()
+    test-hardening.R:4442 uses wbs, nsp without skip_if_not_installed()
+
+That meta-test exists because a test which silently requires an optional
+engine passes here and fails on a machine without it. It fired on a commit
+of mine, one tick after I wrote up "the accurate claims all have a test
+standing next to them" -- which is the same lesson from the other side.
+
+Rewritten to reach only `changepoint`, an Import, so the test needs no skip
+and runs everywhere: an unknown method to `cpt_consensus`, `B = 0` to
+`cpt_stability`, an out-of-range `location` to `cpt_power`, and bad slope
+`params` to `cpt_simulate`. Fewer dependencies is also a better test --
+four error paths that always run beat four that might skip.

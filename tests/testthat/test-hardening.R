@@ -4454,7 +4454,6 @@ test_that("a seeded call leaves .Random.seed alone when it FAILS too", {
   # look like leaks on the first pass.
   set.seed(1)
   x <- c(stats::rnorm(60), stats::rnorm(60, 4))
-  tiny <- c(1, 2, 3)
 
   preserved <- function(f) {
     set.seed(99)
@@ -4477,14 +4476,22 @@ test_that("a seeded call leaves .Random.seed alone when it FAILS too", {
 
   # And the error path: each of these raises, and must still unwind through
   # the restore.
+  # Every error path below reaches only `changepoint`, which is an Import,
+  # so this test needs no skip and runs everywhere. (The first version used
+  # `nsp` and `wbs`, and the suite's own "no test reaches a Suggests engine
+  # without skip_if_not_installed()" meta-test caught it -- on my commit,
+  # which is the meta-test working.)
   errs <- list(
-    nsp_bad_alpha = function() {
-      cpt_detect(x, method = "nsp", seed = 7, alpha = 5)
-    },
     consensus_unknown_method = function() {
       cpt_consensus(x, methods = c("pelt", "nope"), seed = 1)
     },
-    wbs_too_short = function() cpt_detect(tiny, method = "wbs", seed = 7),
+    stability_bad_B = function() {
+      cpt_stability(x, method = "pelt", B = 0, seed = 7)
+    },
+    power_bad_location = function() {
+      cpt_power(n = c(50, 500), jump = 2, location = 400, n_sim = 2,
+                seed = 11)
+    },
     simulate_bad_params = function() {
       cpt_simulate(200, 100, change_in = "slope", params = c(0, 1), seed = 3)
     }
