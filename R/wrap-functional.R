@@ -82,7 +82,10 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #'
 #' @inheritParams fmean_wrapper
 #' @param target What to test: \code{"covariance"} (default), \code{"trace"},
-#'   \code{"eigenjoint"} or \code{"eigensingle"}.
+#'   \code{"eigenjoint"} or \code{"eigensingle"}. This is also by far the
+#'   biggest lever on run time --- see the timing section below, and note
+#'   that the four answer different questions, so a cheaper one is a
+#'   different test rather than a faster route to the same answer.
 #' @return A \code{ggcpt} object with \code{change_in = "covariance"}. Multivariate input is
 #'   reduced to \strong{one series per observation by taking the
 #'   cross-sectional mean} of the columns, and that is the series stored on
@@ -112,12 +115,31 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #' }
 #'
 #' The cost is roughly linear in the number of time points and it is in the
-#' engine's own covariance-operator estimation, not in this wrapper, so
-#' there is no argument here that reduces it. Two practical consequences:
-#' size the call before starting it, and do not put this method in a loop --
-#' a twelve-replicate study at \eqn{n = 120} is two hours. Another machine
-#' will give different absolute numbers; the ratio to \code{fmean}, which
-#' is a factor of about seventy to two hundred, is the part to plan around.
+#' engine's own estimation rather than in this wrapper. It is, however,
+#' dominated by \code{target}, which the rest of this section used to deny
+#' --- measured at \eqn{n = 60}, \eqn{p = 6}, \code{M = 50} on one Linux
+#' x86-64 machine:
+#'
+#' \tabular{lrl}{
+#'   \strong{target} \tab \strong{time} \tab \strong{changepoints found} \cr
+#'   \code{"covariance"} (default) \tab \strong{477 s} \tab none \cr
+#'   \code{"eigenjoint"}  \tab 21.7 s \tab none \cr
+#'   \code{"eigensingle"} \tab 21.7 s \tab none \cr
+#'   \code{"trace"}       \tab \strong{2.1 s} \tab 16, 30, 38
+#' }
+#'
+#' So the default is some two hundred times the cost of \code{"trace"}, and
+#' the example below uses \code{"trace"} for that reason. Read that as a
+#' choice of test and not as a free speedup: the trace is a scalar summary
+#' of the covariance operator, so it is a weaker instrument that happens to
+#' be cheap, and the row above is one series rather than a comparison of
+#' power. If a covariance change matters and the full operator test is the
+#' one you want, budget for it.
+#'
+#' Two practical consequences either way: size the call before starting it,
+#' and do not put the default in a loop -- a twelve-replicate study at
+#' \eqn{n = 120} is two hours. Another machine will give different
+#' absolute numbers; the ratios are the part to plan around.
 #' The \dQuote{Benchmarks} article compares the engines that do scale.
 #' @references
 #' \insertRef{aue2020covariance}{ggchangepoint}
@@ -167,12 +189,14 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
 
   # fChange takes curves down the columns (grid x time).
   #
-  # Exactly two columns satisfy the ncol >= 2 guard above and are still too
-  # coarse a grid for the basis expansion: fChange then stops with base R's
-  # "subscript out of bounds", which names neither the argument nor the
-  # shape. Measured on 60 time points, two columns fail and three, four and
-  # six all return a fit, so the guard above cannot be raised to cover this
-  # without refusing grids the engine handles. The upstream message is
+  # Exactly two columns satisfy the ncol >= 2 guard above and can still be
+  # too coarse a grid for the basis expansion: fChange then stops with base
+  # R's "subscript out of bounds", which names neither the argument nor the
+  # shape. Re-measured per engine at 60 time points, because this helper is
+  # shared and the two do NOT behave alike: `fcov` fails at two columns and
+  # returns a fit at three, four and six, while `fmean` returns a fit at two
+  # as well. So the guard above cannot be raised to cover the fcov case
+  # without refusing grids that fmean handles. The upstream message is
   # passed through verbatim rather than replaced -- the grid is the usual
   # cause, not the only one.
   fit <- tryCatch(

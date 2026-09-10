@@ -3989,6 +3989,38 @@ test_that("no engine answers a degenerate series with a base-R error", {
   expect_equal(paste(offenders, collapse = " | "), "")
 })
 
+test_that("a constant series is no changepoints for the scale-based engines too", {
+  skip_if_not(engine_usable("wbsts"))
+  # Same finding as bfast, one platform over: `wbsts` decomposes by wavelet
+  # scale and a constant series has no spectrum, so the engine answered
+  # with "missing value where TRUE/FALSE needed" -- on macOS only, which is
+  # why the local sweep missed it and the sweep TEST caught it. Reported as
+  # no changepoints, like bfast and sn.
+  f <- cpt_detect(rep(1, 60), method = "wbsts")
+  expect_s3_class(f, "ggcpt")
+  expect_equal(nrow(f$changepoints), 0L)
+  expect_equal(nrow(f$data), 60L)
+  expect_equal(nrow(augment(f)), 60L)
+  # A series with real variance structure is unaffected.
+  set.seed(4)
+  g <- suppressWarnings(cpt_detect(c(stats::rnorm(60), stats::rnorm(60, 0, 4)),
+                                   method = "wbsts"))
+  expect_gt(nrow(g$changepoints), 0L)
+  # The flat-STRETCH case is platform-dependent -- it returns a result here
+  # and fails inside the engine on macOS -- so what is pinned is that it is
+  # never a base-R message. The sweep test above covers that for every
+  # engine; this records why this one is not asserted more tightly.
+  set.seed(4)
+  out <- tryCatch(cpt_detect(c(rep(0, 20), stats::rnorm(40)),
+                             method = "wbsts"),
+                  error = function(e) conditionMessage(e))
+  if (is.character(out)) {
+    expect_match(out, "longest run of identical|wavelet spectrum")
+  } else {
+    expect_s3_class(out, "ggcpt")
+  }
+})
+
 test_that("a constant series is no breakpoints, not an optimiser failure", {
   skip_if_not(engine_usable("bfast"))
   # bfast decomposes a series into trend and season, and a constant series
@@ -4044,4 +4076,33 @@ test_that("the rank-based trend test survives what the parametric ones cannot", 
   for (m in c("pettitt", "buishand", "snht")) {
     expect_true(is_ggcpt(cpt_detect(x, method = m)), info = m)
   }
+})
+
+test_that("fcov's target is the cost lever its help page says it is", {
+  skip_on_cran()
+  skip_if_not(engine_usable("fChange"))
+  # ?fcov_wrapper's timing section used to end "so there is no argument here
+  # that reduces it", about a method it also describes as costing minutes.
+  # There is one: measured at n = 60, p = 6, M = 50, the default
+  # `target = "covariance"` took 477 s and `target = "trace"` took 2.1 s --
+  # a factor of about 200, and the wrapper's own example uses "trace" for
+  # exactly that reason. The claim is now the table in that section.
+  #
+  # Asserted as a ratio with a wide margin, not as two timings: absolute
+  # seconds are machine-dependent and the point is the order of magnitude.
+  set.seed(6)
+  X <- matrix(stats::rnorm(60 * 6), nrow = 60)
+  X[31:60, ] <- X[31:60, ] + 2
+  t_trace <- system.time(
+    suppressWarnings(fcov_wrapper(X, target = "trace", M = 50))
+  )[["elapsed"]]
+  # `trace` has to be genuinely cheap for the advice to be worth giving.
+  expect_lt(t_trace, 30)
+  # The four targets are different tests, so the result may differ -- what
+  # must hold is that each runs and returns a usable object.
+  expect_s3_class(suppressWarnings(fcov_wrapper(X, target = "trace",
+                                                M = 50)), "ggcpt")
+  # The default is not exercised here on purpose: at these settings it is
+  # eight minutes, which is the finding rather than something to re-measure
+  # on every run.
 })

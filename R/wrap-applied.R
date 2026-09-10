@@ -452,6 +452,19 @@ wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
   validate_scalar(n_intervals, "n_intervals", min = 0)
   local_seed(seed)
 
+  # A constant series has no wavelet spectrum to segment, and the engine
+  # answers with base R's "missing value where TRUE/FALSE needed" -- on
+  # macOS but not on this Linux box, which is why §628's local sweep missed
+  # it and the test built from that sweep caught it on CI. Report no
+  # changepoints, as bfast_wrapper() and sn_wrapper() already do for the
+  # same shape: a flat series plainly has none.
+  if (stats::sd(data_vec) == 0 || !is.finite(stats::sd(data_vec))) {
+    return(ggcpt_build(data_vec, integer(0), method = "wbsts",
+                       change_in = "var",
+                       penalty = list(type = "threshold", value = NA_real_),
+                       call = match.call()))
+  }
+
   # wbsts::wbs.lsw() ends with
   #   suppressWarnings(if (is.na(OUT)) OUT = NULL)
   # where OUT is the post-processed breakpoint set. That was correct while
@@ -483,6 +496,25 @@ wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
                      lambda = lambda, scales = scales, ...)
     ),
     error = function(e) {
+      # A series that is flat for a long STRETCH, rather than flat
+      # throughout, leaves a wavelet scale with no variation and produces
+      # the same base-R message the constant guard above catches. Diagnosed
+      # from the engine's failure rather than predicted, for the reason
+      # given in sn_wrapper(): the breaking run length is a function of the
+      # engine's own scales, and a predicate would either refuse series it
+      # handles or miss ones it does not.
+      if (grepl("missing value where TRUE/FALSE needed",
+                conditionMessage(e), fixed = TRUE)) {
+        runs <- rle(as.numeric(data_vec))$lengths
+        if (max(runs) >= 2L) {
+          stop("`wbsts` could not build a wavelet spectrum for this ",
+               "series. Its longest run of identical values is ",
+               max(runs), " of ", length(data_vec), " observations, which ",
+               "leaves a scale with no variation. Jitter the ties, or use ",
+               "a method that does not decompose by scale (`pelt`, ",
+               "`binseg`, `wbs`).", call. = FALSE)
+        }
+      }
       if (!grepl("the condition has length", conditionMessage(e),
                  fixed = TRUE)) {
         rethrow_short_series(e, "wbsts", length(data_vec))

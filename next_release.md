@@ -23460,3 +23460,66 @@ argument for the sweep test comparing `paste(offenders, collapse = " | ")`
 against `""` rather than a character vector against `character(0)`:
 testthat prints the diff, and the diff is what made a Windows-only failure
 actionable from a log.
+
+## 630. A fifth unguarded path, and a help page that denied its own escape hatch
+
+### 630.1 wbsts, on macOS only
+
+The sweep test failed again, on macOS alone this time, and the
+readable-diff change from §629.2 paid for itself immediately -- the log
+named both cells rather than saying "expected character(0)":
+
+    wbsts/constant: missing value where TRUE/FALSE needed |
+    wbsts/single_spike: missing value where TRUE/FALSE needed
+
+`wbsts` decomposes a series by wavelet scale. A constant series has no
+spectrum, so it reports no changepoints now, like `bfast` (§629.2) and `sn`.
+The single-spike case is the flat-STRETCH pathology from §628.1 again -- a
+long run of identical values leaves a scale with no variation -- and it is
+diagnosed from the engine's failure rather than predicted, for the same
+reason: the breaking run length is a function of the engine's own scales.
+
+Worth being explicit about a consequence: on the flat-stretch input this
+now returns a result on Linux and a named refusal on macOS, because the
+engine genuinely differs. The test pins the property (never a base-R
+message) and accepts either, with a comment saying why it is not pinned
+more tightly. Three of the five unguarded paths in §628-630 were platform-
+dependent, which is the whole argument for the sweep living in the suite
+rather than in a scratch script.
+
+### 630.2 "There is no argument here that reduces it"
+
+`?fcov_wrapper` has a careful \section{How long this takes} -- 316 s at
+n = 60, p = 5; 598 s at n = 120 -- and ended it with "the cost is ... in
+the engine's own covariance-operator estimation, not in this wrapper, so
+there is no argument here that reduces it."
+
+Measured at n = 60, p = 6, M = 50:
+
+| target                    | time    | changepoints found |
+|---------------------------|---------|--------------------|
+| `"covariance"` (default)  | 477 s   | none               |
+| `"eigenjoint"`            | 21.7 s  | none               |
+| `"eigensingle"`           | 21.7 s  | none               |
+| `"trace"`                 | 2.1 s   | 16, 30, 38         |
+
+The default is some two hundred times the cost of the cheapest target. The
+wrapper's own example passes `target = "trace"` -- which is how the example
+timing work in §624 measured it at 2.8 s and never saw this -- so the
+package was already relying on the escape hatch its help page denied.
+
+The correction has to be careful not to overclaim in the other direction.
+The four targets are different tests: the trace is a scalar summary of the
+covariance operator, so it is a weaker instrument that happens to be cheap,
+and the "changepoints found" column above is one series rather than a
+comparison of power. The section now gives the table and says exactly that.
+
+### 630.3 And the shared helper spoke for one engine as if for two
+
+`fchange_run()` serves both `fmean` and `fcov`, and its comment read
+"Measured on 60 time points, two columns fail and three, four and six all
+return a fit". Re-measured per engine: `fcov` fails at two columns and
+`fmean` returns a fit at two. So the sentence was true of `fcov` and false
+of `fmean`, in a helper whose whole point is that it is shared -- and it
+was the justification for not raising the `ncol >= 2` guard, which is now
+correct for a better reason than it was.
