@@ -267,7 +267,23 @@ need_pkg <- function(pkg) {
   # `cpt_scale_space()` call warns "no DISPLAY variable so Tk is not
   # available". That is never actionable here, and a load that warns still
   # succeeds; a load that fails returns FALSE and is reported below.
-  if (!suppressWarnings(requireNamespace(pkg, quietly = TRUE))) {
+  #
+  # It can also *message* about the library rather than the data. `bfast`
+  # pulls in `strucchangeRcpp`, which overwrites `strucchange`'s S3
+  # methods, so R announced the overwrite -- a table of method names on
+  # stderr -- on every `cpt_detect(x, method = "bfast")` call. Nothing the
+  # caller can act on: they did not ask for either package and cannot stop
+  # one shadowing the other. Measured for the thing that would matter if it
+  # were true: running bfast first does NOT change what `strucchange`
+  # answers. Before and after, the same changepoint at 60 and the same
+  # interval [59, 61] -- strucchangeRcpp is loaded but never attached, so
+  # this package's own use of strucchange is unaffected.
+  #
+  # Suppressed here and only here, because this function's job is to make
+  # the engine available; the fit runs afterwards, outside this call, so
+  # nothing an engine says about the data can be hidden by it.
+  if (!suppressMessages(suppressWarnings(
+        requireNamespace(pkg, quietly = TRUE)))) {
     stop("Package '", pkg, "' is required. ",
          "Install it with install.packages('", pkg, "').",
          call. = FALSE)

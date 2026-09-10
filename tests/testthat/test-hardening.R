@@ -4324,3 +4324,49 @@ test_that("an engine hint the caller cannot act on does not reach them", {
     })
   expect_equal(keeps_others, "something else entirely")
 })
+
+test_that("an engine's load says nothing about the library", {
+  skip_if_not(engine_usable("bfast"))
+  # The third condition class. Errors stop, warnings are visible, and a
+  # message() goes to stderr where it is easiest to miss. Swept every
+  # engine and verb on a clean series: one leak, and it is a load-time
+  # announcement rather than anything about the data -- `bfast` pulls in
+  # `strucchangeRcpp`, which overwrites `strucchange`'s S3 methods, so R
+  # printed a table of method names on every bfast call. Unactionable by
+  # the §634.1 rule: the caller asked for neither package and cannot stop
+  # one shadowing the other.
+  msgs_of <- function(f) {
+    out <- character()
+    withCallingHandlers(
+      tryCatch({
+        utils::capture.output(suppressWarnings(f()))
+        NULL
+      }, error = function(e) NULL),
+      message = function(m) {
+        out <<- c(out, sub("\n$", "", conditionMessage(m)))
+        invokeRestart("muffleMessage")
+      })
+    out[nzchar(trimws(out))]
+  }
+  set.seed(15)
+  x <- stats::ts(c(stats::rnorm(60), stats::rnorm(60, 4)), frequency = 12)
+  expect_length(msgs_of(function() cpt_detect(x, method = "bfast")), 0L)
+  # ...and the engine still runs, at the frequency the ts carried.
+  f <- suppressWarnings(cpt_detect(x, method = "bfast"))
+  expect_s3_class(f, "ggcpt")
+  expect_equal(stats::frequency(f$fit$Yt), 12)
+  # A genuinely missing engine is still reported, by name -- the suppression
+  # covers what a successful load SAYS, not whether it succeeded.
+  expect_error(ggchangepoint:::need_pkg("nosuchpkg42"),
+               "Package 'nosuchpkg42' is required")
+
+  # And the thing that would matter if it were true: the S3 overwrite does
+  # not change what `strucchange` answers in the same session.
+  skip_if_not(engine_usable("strucchange"))
+  before <- suppressWarnings(cpt_detect(as.numeric(x), method = "strucchange"))
+  suppressWarnings(cpt_detect(x, method = "bfast"))
+  after <- suppressWarnings(cpt_detect(as.numeric(x), method = "strucchange"))
+  expect_equal(before$changepoints$cp, after$changepoints$cp)
+  expect_equal(suppressWarnings(cpt_confint(before, method = "native")),
+               suppressWarnings(cpt_confint(after, method = "native")))
+})

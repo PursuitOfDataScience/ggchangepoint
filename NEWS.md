@@ -1715,6 +1715,20 @@ Three engines answered an ordinary degenerate series with a base-R error.
   return a fit". Re-measured per engine at 60 time points — `fcov` fails at
   two columns, `fmean` returns a fit at two as well — which is why the
   shared guard cannot be raised without refusing grids `fmean` handles.
+- **And a leaked `message()`, which is the easiest of the three to miss.**
+  Swept every engine and verb on a clean series: exactly one is not silent.
+  `bfast` pulls in \pkg{strucchangeRcpp}, which overwrites
+  \pkg{strucchange}'s S3 methods, so R printed a table of method names on
+  stderr on every `cpt_detect(x, method = "bfast")` call — about two
+  packages the caller did not ask for and cannot stop shadowing each other.
+  `need_pkg()` now suppresses messages while loading an engine, which is
+  where it already suppresses the headless-machine Tk warning and for the
+  same reason: that function's job is to make the engine available, and the
+  fit runs afterwards, so nothing an engine says about the *data* can be
+  hidden by it. Measured for the thing that would matter if it were true —
+  running `bfast` first does **not** change what `strucchange` answers: the
+  same changepoint and the same interval before and after, because
+  \pkg{strucchangeRcpp} is loaded but never attached.
 - **A leaked engine warning nobody had looked for.** Errors stop; warnings
   do not, so a warning that leaks out of base R or an engine reaches the
   user as noise and nothing fails. The same provenance test applied to
