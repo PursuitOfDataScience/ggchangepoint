@@ -2207,6 +2207,29 @@ error.
   [`glance()`](https://generics.r-lib.org/reference/glance.html) and
   [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
   all working on it.
+- And a **fifth**, on macOS only: `wbsts` decomposes by wavelet scale,
+  and a constant series has no spectrum. It now reports no changepoints
+  for a flat series, like `bfast` and `sn`, and diagnoses the
+  flat-*stretch* case by naming the longest run of identical values
+  rather than letting the engine’s
+  `missing value where TRUE/FALSE needed` through.
+- **`fcov`’s help page said “there is no argument here that reduces
+  it”** about a method it also describes as costing minutes. There is
+  one, and it is the biggest lever in the wrapper. Measured at n = 60, p
+  = 6, M = 50: `target = "covariance"` (the default) 477 s,
+  `"eigenjoint"` and `"eigensingle"` 21.7 s, and `"trace"` **2.1 s** —
+  the default is some two hundred times the cheapest, and the wrapper’s
+  own example uses `"trace"` for exactly that reason while the help page
+  denied the option existed. The timing section now carries the table,
+  and says plainly that a cheaper target is a *different test* rather
+  than a free speedup: the trace is a scalar summary of the covariance
+  operator, so it is a weaker instrument that happens to be cheap.
+- A related claim in the shared `fmean`/`fcov` helper attributed one
+  engine’s behaviour to both: “two columns fail and three, four and six
+  all return a fit”. Re-measured per engine at 60 time points — `fcov`
+  fails at two columns, `fmean` returns a fit at two as well — which is
+  why the shared guard cannot be raised without refusing grids `fmean`
+  handles.
 - The **multivariate** half of the sweep came back clean: 15 engines
   against 10 degenerate matrix shapes — a constant column, a duplicated
   column, a collinear column, p \> n, a single column handed to a

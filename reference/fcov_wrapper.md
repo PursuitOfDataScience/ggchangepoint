@@ -30,7 +30,10 @@ fcov_wrapper(
 - target:
 
   What to test: `"covariance"` (default), `"trace"`, `"eigenjoint"` or
-  `"eigensingle"`.
+  `"eigensingle"`. This is also by far the biggest lever on run time —
+  see the timing section below, and note that the four answer different
+  questions, so a cheaper one is a different test rather than a faster
+  route to the same answer.
 
 - statistic:
 
@@ -92,13 +95,31 @@ same data:
 | \\n = 120\\, \\p = 5\\ | 2.9 s     | **598 s** |
 
 The cost is roughly linear in the number of time points and it is in the
-engine's own covariance-operator estimation, not in this wrapper, so
-there is no argument here that reduces it. Two practical consequences:
-size the call before starting it, and do not put this method in a loop –
-a twelve-replicate study at \\n = 120\\ is two hours. Another machine
-will give different absolute numbers; the ratio to `fmean`, which is a
-factor of about seventy to two hundred, is the part to plan around. The
-“Benchmarks” article compares the engines that do scale.
+engine's own estimation rather than in this wrapper. It is, however,
+dominated by `target`, which the rest of this section used to deny —
+measured at \\n = 60\\, \\p = 6\\, `M = 50` on one Linux x86-64 machine:
+
+|                          |           |                        |
+|--------------------------|-----------|------------------------|
+| **target**               | **time**  | **changepoints found** |
+| `"covariance"` (default) | **477 s** | none                   |
+| `"eigenjoint"`           | 21.7 s    | none                   |
+| `"eigensingle"`          | 21.7 s    | none                   |
+| `"trace"`                | **2.1 s** | 16, 30, 38             |
+
+So the default is some two hundred times the cost of `"trace"`, and the
+example below uses `"trace"` for that reason. Read that as a choice of
+test and not as a free speedup: the trace is a scalar summary of the
+covariance operator, so it is a weaker instrument that happens to be
+cheap, and the row above is one series rather than a comparison of
+power. If a covariance change matters and the full operator test is the
+one you want, budget for it.
+
+Two practical consequences either way: size the call before starting it,
+and do not put the default in a loop – a twelve-replicate study at \\n =
+120\\ is two hours. Another machine will give different absolute
+numbers; the ratios are the part to plan around. The “Benchmarks”
+article compares the engines that do scale.
 
 ## References
 

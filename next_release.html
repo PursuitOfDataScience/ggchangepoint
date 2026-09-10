@@ -16378,6 +16378,45 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>The generalisable point is about where a sweep belongs. A sweep run once, on one machine, against one set of installed engine versions, is a snapshot; the same sweep as a test runs on five platforms every push. I would not have found this one by looking harder locally. It is also the argument for the sweep test comparing <code>paste(offenders, collapse = " | ")</code> against <code>""</code> rather than a character vector against <code>character(0)</code>: testthat prints the diff, and the diff is what made a Windows-only failure actionable from a log.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_630-a-fifth-unguarded-path-and-a-help-page-that-denied-its-own-escape-hatch">630. A fifth unguarded path, and a help page that denied its own escape hatch<a class="anchor" aria-label="anchor" href="#id_630-a-fifth-unguarded-path-and-a-help-page-that-denied-its-own-escape-hatch"></a></h2>
+<div class="section level3">
+<h3 id="id_6301-wbsts-on-macos-only">630.1 wbsts, on macOS only<a class="anchor" aria-label="anchor" href="#id_6301-wbsts-on-macos-only"></a></h3>
+<p>The sweep test failed again, on macOS alone this time, and the readable-diff change from §629.2 paid for itself immediately – the log named both cells rather than saying “expected character(0)”:</p>
+<div class="sourceCode" id="cb161"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb161-1"><a href="#cb161-1" tabindex="-1"></a>wbsts<span class="sc">/</span>constant<span class="sc">:</span> missing value where <span class="cn">TRUE</span><span class="sc">/</span><span class="cn">FALSE</span> needed <span class="sc">|</span></span>
+<span id="cb161-2"><a href="#cb161-2" tabindex="-1"></a>wbsts<span class="sc">/</span>single_spike<span class="sc">:</span> missing value where <span class="cn">TRUE</span><span class="sc">/</span><span class="cn">FALSE</span> needed</span></code></pre></div>
+<p><code>wbsts</code> decomposes a series by wavelet scale. A constant series has no spectrum, so it reports no changepoints now, like <code>bfast</code> (§629.2) and <code>sn</code>. The single-spike case is the flat-STRETCH pathology from §628.1 again – a long run of identical values leaves a scale with no variation – and it is diagnosed from the engine’s failure rather than predicted, for the same reason: the breaking run length is a function of the engine’s own scales.</p>
+<p>Worth being explicit about a consequence: on the flat-stretch input this now returns a result on Linux and a named refusal on macOS, because the engine genuinely differs. The test pins the property (never a base-R message) and accepts either, with a comment saying why it is not pinned more tightly. Three of the five unguarded paths in §628-630 were platform- dependent, which is the whole argument for the sweep living in the suite rather than in a scratch script.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6302-there-is-no-argument-here-that-reduces-it">630.2 “There is no argument here that reduces it”<a class="anchor" aria-label="anchor" href="#id_6302-there-is-no-argument-here-that-reduces-it"></a></h3>
+<code><a href="reference/fcov_wrapper.html">?fcov_wrapper</a></code> has a careful
+<p>– 316 s at n = 60, p = 5; 598 s at n = 120 – and ended it with “the cost is … in the engine’s own covariance-operator estimation, not in this wrapper, so there is no argument here that reduces it.”</p>
+<p>Measured at n = 60, p = 6, M = 50:</p>
+<table class="table"><thead><tr><th>target</th>
+<th>time</th>
+<th>changepoints found</th>
+</tr></thead><tbody><tr><td>
+<code>"covariance"</code> (default)</td>
+<td>477 s</td>
+<td>none</td>
+</tr><tr><td><code>"eigenjoint"</code></td>
+<td>21.7 s</td>
+<td>none</td>
+</tr><tr><td><code>"eigensingle"</code></td>
+<td>21.7 s</td>
+<td>none</td>
+</tr><tr><td><code>"trace"</code></td>
+<td>2.1 s</td>
+<td>16, 30, 38</td>
+</tr></tbody></table><p>The default is some two hundred times the cost of the cheapest target. The wrapper’s own example passes <code>target = "trace"</code> – which is how the example timing work in §624 measured it at 2.8 s and never saw this – so the package was already relying on the escape hatch its help page denied.</p>
+<p>The correction has to be careful not to overclaim in the other direction. The four targets are different tests: the trace is a scalar summary of the covariance operator, so it is a weaker instrument that happens to be cheap, and the “changepoints found” column above is one series rather than a comparison of power. The section now gives the table and says exactly that.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6303-and-the-shared-helper-spoke-for-one-engine-as-if-for-two">630.3 And the shared helper spoke for one engine as if for two<a class="anchor" aria-label="anchor" href="#id_6303-and-the-shared-helper-spoke-for-one-engine-as-if-for-two"></a></h3>
+<p><code>fchange_run()</code> serves both <code>fmean</code> and <code>fcov</code>, and its comment read “Measured on 60 time points, two columns fail and three, four and six all return a fit”. Re-measured per engine: <code>fcov</code> fails at two columns and <code>fmean</code> returns a fit at two. So the sentence was true of <code>fcov</code> and false of <code>fmean</code>, in a helper whose whole point is that it is shared – and it was the justification for not raising the <code>ncol &gt;= 2</code> guard, which is now correct for a better reason than it was.</p>
+</div>
+</div>
 </div>
 
 
