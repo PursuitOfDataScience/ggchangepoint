@@ -16502,6 +16502,23 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>Recorded because the next sweep will find more leaks as engines change versions, and the question will be the same one.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_635-the-third-condition-class-and-a-hazard-that-turned-out-not-to-be-one">635. The third condition class, and a hazard that turned out not to be one<a class="anchor" aria-label="anchor" href="#id_635-the-third-condition-class-and-a-hazard-that-turned-out-not-to-be-one"></a></h2>
+<p>Errors stop, so an unguarded one surfaces on first use (§633). Warnings are printed but do not stop, so a leak can sit for a release (§634). A <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> goes to stderr, is not collected by <code><a href="https://rdrr.io/r/base/warnings.html" class="external-link">warnings()</a></code>, and does not appear in a test summary unless something looks for it – the easiest of the three to carry indefinitely.</p>
+<p>The standard here cannot be provenance: <code><a href="https://rdrr.io/r/base/message.html" class="external-link">message()</a></code> carries its own call either way. So the test is §634.1’s rule plus a stronger baseline – <strong>on ordinary input a call should be silent</strong> unless this package chose to speak. Swept every installed engine on a clean mean change and a clean variance change, and thirteen verbs and accessors on a clean series.</p>
+<p>Exactly one is not silent. <code>bfast</code> loads <code>strucchangeRcpp</code>, which overwrites <code>strucchange</code>’s S3 methods, and R announces the overwrite with a table of method names. The caller asked for neither package and cannot stop one shadowing the other, so by the rule it is noise.</p>
+<div class="section level3">
+<h3 id="id_6351-the-interesting-part-was-the-hazard-and-it-is-not-real">635.1 The interesting part was the hazard, and it is not real<a class="anchor" aria-label="anchor" href="#id_6351-the-interesting-part-was-the-hazard-and-it-is-not-real"></a></h3>
+<p>An S3 overwrite is not just noise: it says dispatch for <code>strucchange</code>’s classes changed inside the session. If that were true, then running <code>bfast</code> before <code>strucchange</code> could change what <code>strucchange</code> reports – an order-dependence between two engines in the same package, which would be a serious defect and exactly the kind of thing that hides behind a message nobody reads.</p>
+<p>Measured. Same series, <code>strucchange</code> before and after a <code>bfast</code> call: changepoint at 60 both times, native interval [59, 61] both times, <code><a href="https://rdrr.io/r/base/identical.html" class="external-link">identical()</a></code> on the changepoints and <code><a href="https://rdrr.io/r/base/all.equal.html" class="external-link">all.equal()</a></code> on the interval tables. <code>strucchangeRcpp</code> is loaded as a namespace but never <em>attached</em>, so this package’s own <code>strucchange::</code> calls resolve exactly as before. The hazard the message advertises does not reach us.</p>
+<p>That is worth recording as a negative result with its evidence, because the message will come back the moment anyone upgrades bfast, and the question “does this change our answers?” now has a measurement rather than a guess attached to it. The test asserts both halves: the load is silent, and the before/after answers agree.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6352-where-the-suppression-went-and-why-not-wider">635.2 Where the suppression went, and why not wider<a class="anchor" aria-label="anchor" href="#id_6352-where-the-suppression-went-and-why-not-wider"></a></h3>
+<p>Into <code>need_pkg()</code>, which is where the headless-machine Tk warning is already suppressed and for the same reason. That function’s whole job is to make an engine available; the fit happens afterwards, in the wrapper, so suppressing messages <em>there</em> cannot hide anything an engine says about the data. The test pins that boundary too – a genuinely missing package is still reported by name.</p>
+<p>The alternative, muffling by message text in <code><a href="reference/bfast_wrapper.html">bfast_wrapper()</a></code>, would have covered one engine and left the next dependency that overwrites something to print again.</p>
+</div>
+</div>
 </div>
 
 

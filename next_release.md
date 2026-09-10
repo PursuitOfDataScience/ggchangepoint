@@ -26410,3 +26410,61 @@ advice from noise.
 
 Recorded because the next sweep will find more leaks as engines change
 versions, and the question will be the same one.
+
+## 635. The third condition class, and a hazard that turned out not to be one
+
+Errors stop, so an unguarded one surfaces on first use (§633). Warnings
+are printed but do not stop, so a leak can sit for a release (§634). A
+[`message()`](https://rdrr.io/r/base/message.html) goes to stderr, is
+not collected by [`warnings()`](https://rdrr.io/r/base/warnings.html),
+and does not appear in a test summary unless something looks for it –
+the easiest of the three to carry indefinitely.
+
+The standard here cannot be provenance:
+[`message()`](https://rdrr.io/r/base/message.html) carries its own call
+either way. So the test is §634.1’s rule plus a stronger baseline – **on
+ordinary input a call should be silent** unless this package chose to
+speak. Swept every installed engine on a clean mean change and a clean
+variance change, and thirteen verbs and accessors on a clean series.
+
+Exactly one is not silent. `bfast` loads `strucchangeRcpp`, which
+overwrites `strucchange`’s S3 methods, and R announces the overwrite
+with a table of method names. The caller asked for neither package and
+cannot stop one shadowing the other, so by the rule it is noise.
+
+### 635.1 The interesting part was the hazard, and it is not real
+
+An S3 overwrite is not just noise: it says dispatch for `strucchange`’s
+classes changed inside the session. If that were true, then running
+`bfast` before `strucchange` could change what `strucchange` reports –
+an order-dependence between two engines in the same package, which would
+be a serious defect and exactly the kind of thing that hides behind a
+message nobody reads.
+
+Measured. Same series, `strucchange` before and after a `bfast` call:
+changepoint at 60 both times, native interval \[59, 61\] both times,
+[`identical()`](https://rdrr.io/r/base/identical.html) on the
+changepoints and [`all.equal()`](https://rdrr.io/r/base/all.equal.html)
+on the interval tables. `strucchangeRcpp` is loaded as a namespace but
+never *attached*, so this package’s own `strucchange::` calls resolve
+exactly as before. The hazard the message advertises does not reach us.
+
+That is worth recording as a negative result with its evidence, because
+the message will come back the moment anyone upgrades bfast, and the
+question “does this change our answers?” now has a measurement rather
+than a guess attached to it. The test asserts both halves: the load is
+silent, and the before/after answers agree.
+
+### 635.2 Where the suppression went, and why not wider
+
+Into `need_pkg()`, which is where the headless-machine Tk warning is
+already suppressed and for the same reason. That function’s whole job is
+to make an engine available; the fit happens afterwards, in the wrapper,
+so suppressing messages *there* cannot hide anything an engine says
+about the data. The test pins that boundary too – a genuinely missing
+package is still reported by name.
+
+The alternative, muffling by message text in
+[`bfast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bfast_wrapper.md),
+would have covered one engine and left the next dependency that
+overwrites something to print again.
