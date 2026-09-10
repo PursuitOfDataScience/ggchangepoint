@@ -16519,6 +16519,46 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>The alternative, muffling by message text in <code><a href="reference/bfast_wrapper.html">bfast_wrapper()</a></code>, would have covered one engine and left the next dependency that overwrites something to print again.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_636-the-fourth-channel-and-the-flake-it-exposed">636. The fourth channel, and the flake it exposed<a class="anchor" aria-label="anchor" href="#id_636-the-fourth-channel-and-the-flake-it-exposed"></a></h2>
+<p>§633-635 swept errors, warnings and messages. The fourth way a package can speak is to print, and this codebase already knows the hazard: several wrappers wrap the engine in <code><a href="https://rdrr.io/r/utils/capture.output.html" class="external-link">capture.output()</a></code>, and B2 was a printed ERROR that <code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">tryCatch()</a></code> never saw. So: every installed engine on a clean mean change and a clean variance change, plus fifteen verbs and accessors, with stdout captured. <strong>All silent.</strong></p>
+<p>The probe was wrong the first time, which is worth recording because it would flag every engine as noisy. <code>capture.output(f())</code> auto-prints a returned value at top level, so the first run captured <code><a href="reference/print.ggcpt.html">print.ggcpt()</a></code>’s own twelve lines for all 29 engines. <code>capture.output(invisible(f()))</code> is the correct form.</p>
+<div class="section level3">
+<h3 id="id_6361-the-documented-failure-rate-was-one-session-reported-as-a-rate">636.1 The documented failure rate was one session reported as a rate<a class="anchor" aria-label="anchor" href="#id_6361-the-documented-failure-rate-was-one-session-reported-as-a-rate"></a></h3>
+<p>The sweep did turn up something: <code>beast</code> failing on ordinary input. The note in <code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code> said the all-NaN fit happens “at roughly 0.7% of calls, and more often when other compiled engines are loaded in the same session”. Re-measured on one identical series, in fresh processes:</p>
+<table class="table"><thead><tr><th>condition</th>
+<th>all-NaN</th>
+</tr></thead><tbody><tr><td>
+<code><a href="https://github.com/zhaokg/Rbeast" class="external-link">library(Rbeast)</a></code>, 8 direct calls</td>
+<td>0 of 8</td>
+</tr><tr><td>ggchangepoint attached, 8 direct calls</td>
+<td>0 of 8</td>
+</tr><tr><td>ggchangepoint attached, 8 <code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code> calls</td>
+<td>7 of 8</td>
+</tr><tr><td>
+<code><a href="https://github.com/zhaokg/Rbeast" class="external-link">library(Rbeast)</a></code>, 30 identical calls</td>
+<td>30 of 30</td>
+</tr><tr><td>ggchangepoint attached, 10 direct calls</td>
+<td>1 of 10</td>
+</tr></tbody></table><p>So the failure is real, it is session-scoped rather than per-call, and no rate is quotable – 0.7% was one session’s experience written down as a property. The comment now says that, with the range.</p>
+<p>Three explanations measured and refuted, so nobody re-chases them:</p>
+<ol style="list-style-type: decimal"><li>
+<strong>Other compiled engines loaded.</strong> The old note blamed these. A session with 66 namespaces loaded ran 5 of 5 seeds clean.</li>
+<li>
+<strong><code><a href="https://rdrr.io/r/base/do.call.html" class="external-link">do.call()</a></code> inlining the whole series into the call object.</strong> A real hazard this package avoids elsewhere on purpose (<code><a href="reference/cpt_detect.html">cpt_detect()</a></code> passes <code>x</code> as a symbol “so the wrapper’s match.call() stays compact”). Measured: inline and quoted-symbol forms were both 10 of 10 clean, and a plain direct call produced the all-NaN in the same process.</li>
+<li>
+<strong>The chain configuration.</strong> <code>mcmc.seed</code> 1-5, <code>mcmc.chains</code> 1 and 5, <code>mcmc.samples = 2000</code> and <code>mcmc.burnin = 500</code> all returned a finite fit on every seed that had just failed through the wrapper.</li>
+</ol><p>I could not find the mechanism, and the honest end of that is to say so rather than to keep a guess in a comment.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6362-the-part-that-actually-needed-fixing">636.2 The part that actually needed fixing<a class="anchor" aria-label="anchor" href="#id_6362-the-part-that-actually-needed-fixing"></a></h3>
+<p>The <code>beast</code> example, its test and one vignette chunk all called the wrapper unguarded. In a session where the rate is 100% – which measurably happens – <code>R CMD check</code> fails on examples or on the vignette rebuild, and the failure looks like a defect in this package rather than in Rbeast. CI has been green throughout, which means it has been lucky, not that it is safe.</p>
+<ul><li>The test catches the wrapper’s own error and <code>skip()</code>s with it, so the suite says which upstream defect it stepped around.</li>
+<li>The example wraps the call in <code><a href="https://rdrr.io/r/base/try.html" class="external-link">try()</a></code> and prints the tibble only if it worked, with a comment saying why.</li>
+<li>The vignette’s <code>has_rbeast</code> flag was “is Rbeast installed and are we off Windows”. It is now that <em>and</em> a trial fit, so the chunk is skipped in a bad session exactly as it already was when the package is absent.</li>
+</ul><p>That last one is the pattern worth keeping: a conditional-evaluation gate should test the capability the chunk needs, not a proxy for it.</p>
+</div>
+</div>
 </div>
 
 

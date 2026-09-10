@@ -2230,6 +2230,35 @@ error.
   fails at two columns, `fmean` returns a fit at two as well — which is
   why the shared guard cannot be raised without refusing grids `fmean`
   handles.
+- **The fourth channel is clean, and looking at it found a latent CI
+  flake.** Engines can also just print, and this codebase knows that
+  hazard — several wrappers wrap the engine in
+  [`capture.output()`](https://rdrr.io/r/utils/capture.output.html), and
+  one of the review’s findings was a printed *error*
+  [`tryCatch()`](https://rdrr.io/r/base/conditions.html) never saw.
+  Swept every engine and verb on clean input for stray stdout: all
+  silent. What the sweep did turn up is ’s all-NaN fit, and it is far
+  worse than documented. The note here claimed “roughly 0.7% of calls,
+  and more often when other compiled engines are loaded”; re-measured
+  across fresh processes on one identical series the rate was **0 of 8,
+  1 of 8, 1 of 10 and 30 of 30** — so a session either mostly works or
+  mostly does not, no rate is quotable, and the old figure was one
+  session reported as a rate. Three explanations were measured and
+  refuted: other engines loaded (a 66-namespace session ran 5 of 5 seeds
+  clean), [`do.call()`](https://rdrr.io/r/base/do.call.html) inlining
+  the series into the call object (inline and quoted-symbol forms were
+  both 10 of 10 clean while a plain direct call produced the all-NaN in
+  the same process), and the chain configuration (`mcmc.seed`,
+  `mcmc.chains`, `mcmc.samples` and `mcmc.burnin` all gave a finite fit
+  on seeds that had just failed).
+- The consequence mattered more than the note. The `beast` **example**,
+  its **test** and one **vignette chunk** all called the wrapper
+  unguarded, so a check landing in a bad session would have failed on an
+  upstream defect the wrapper already reports honestly — a red build
+  that looks like a bug in this package. The test now skips with the
+  engine’s own message, the example tolerates it, and the vignette’s
+  `has_rbeast` gate is no longer “is it installed” but “does it fit
+  here”, tried once.
 - **And a leaked [`message()`](https://rdrr.io/r/base/message.html),
   which is the easiest of the three to miss.** Swept every engine and
   verb on a clean series: exactly one is not silent. `bfast` pulls in ,

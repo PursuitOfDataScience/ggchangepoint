@@ -101,8 +101,12 @@ Other changepoint engines:
 ## Examples
 
 ``` r
-res <- beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
-res$changepoints
+# try(): Rbeast intermittently returns an all-NaN fit and the condition
+# can persist for a session, so a check must not fail on it -- the
+# wrapper reports it by name when it happens.
+res <- try(beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026),
+           silent = TRUE)
+if (!inherits(res, "try-error")) res$changepoints
 #> # A tibble: 1 × 3
 #>      cp cp_value posterior_prob
 #>   <int>    <dbl>          <dbl>
