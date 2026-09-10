@@ -1715,6 +1715,17 @@ Three engines answered an ordinary degenerate series with a base-R error.
   return a fit". Re-measured per engine at 60 time points — `fcov` fails at
   two columns, `fmean` returns a fit at two as well — which is why the
   shared guard cannot be raised without refusing grids `fmean` handles.
+- **So does the search-path contract.** Two wrappers attach packages the
+  caller did not ask for — `bcp` because `require()` inside the engine puts
+  it and \pkg{grid} on the search path, and `fabisearch` because
+  \pkg{NMF} has to be attached for the engine to dispatch (detaching NMF
+  alone left eight packages behind, which is why the helper gives back
+  everything the call attached). Both restore through `on.exit`, and the
+  error path was never asserted; a leak would leave eight packages on a
+  user's search path silently. Measured: the helper restores when its
+  expression throws, `bcp` restores after both a successful and a failing
+  call, and `fabisearch` restores after a failure that happens *after* the
+  attach. Another negative result, now a test.
 - **The `seed` contract now covers the failure path, and three functions it
   never covered.** Every existing seed test measured a *successful* call,
   and an error is exactly when a hand-rolled save/restore leaks —

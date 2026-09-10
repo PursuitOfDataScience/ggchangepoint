@@ -4502,3 +4502,46 @@ test_that("a seeded call leaves .Random.seed alone when it FAILS too", {
     expect_true(preserved(errs[[nm]]), info = nm)
   }
 })
+
+test_that("an engine that attaches packages gives the search path back on failure", {
+  # Two wrappers attach packages the caller did not ask for: `bcp` because
+  # `require()` inside the engine puts it and `grid` on the search path, and
+  # `fabisearch` because NMF has to be attached for the engine to dispatch
+  # (detaching NMF alone left eight packages behind, which is why the
+  # helper restores everything the call attached). Both restore through
+  # `on.exit`, so the claim is that an error unwinds through it -- the same
+  # untested half as the seed contract, and a leak here would leave eight
+  # packages on a user's search path silently.
+  before <- search()
+  expect_error(
+    ggchangepoint:::with_search_path_restored({
+      suppressPackageStartupMessages(attachNamespace("tools"))
+      stop("boom")
+    }), "boom")
+  expect_identical(search(), before)
+  expect_false("package:tools" %in% search())
+
+  skip_on_cran()
+  skip_if_not_installed("bcp")
+  # A successful call and a failing one must both leave it as they found it.
+  b <- search()
+  set.seed(21)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+  invisible(utils::capture.output(suppressWarnings(
+    cpt_detect(x, method = "bcp"))))
+  expect_identical(search(), b)
+  invisible(tryCatch(cpt_detect(c(1, 2, 3), method = "bcp"),
+                     error = function(e) NULL))
+  expect_identical(search(), b)
+
+  skip_if_not_installed("fabisearch")
+  # fabisearch fails here AFTER the attach, which is the case that matters.
+  b2 <- search()
+  set.seed(1)
+  Y <- matrix(abs(stats::rnorm(24 * 5)) + 0.1, 24, 5)
+  invisible(tryCatch(utils::capture.output(suppressWarnings(suppressMessages(
+    fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 2,
+                       rank = -1)))), error = function(e) NULL))
+  expect_identical(search(), b2)
+  expect_false("package:NMF" %in% search())
+})
