@@ -26670,3 +26670,81 @@ rather than from running anything. One hit, and it was the whole cache.
 That is a cheap check worth repeating whenever a package grows a cache
 or a lock file: a fixed path is where concurrency and partial-failure
 bugs live, and there are usually very few of them to look at.
+
+## 639. The seed contract had only ever been tested when nothing went wrong
+
+`local_seed()` and the 36-site sweep behind it exist so that a seeded
+call does not disturb the caller’s random stream. Every test of that
+property – “a seeded call leaves .Random.seed exactly as it found it”,
+and the B5 test for the parallel branch – measures a call that SUCCEEDS.
+An error is exactly when a save/restore pair leaks, and the mechanism
+here is an [`on.exit()`](https://rdrr.io/r/base/on.exit.html) registered
+in the caller’s frame, whose whole point is that it runs on the way out
+however the exit happens.
+
+Measured across four error paths – an out-of-range `alpha` to `nsp`, an
+unknown method to `cpt_consensus`, a too-short series to `wbs`, bad
+slope `params` to `cpt_simulate` – plus three functions that appear in
+neither existing test’s list: `cpt_consensus`, `cpt_influence`,
+`cpt_sensitivity`.
+
+All eleven preserve the seed, and a session that began with no
+`.Random.seed` is still left with none after an error. Negative result,
+and now a test, because the error path is the half that was never
+checked and `on.exit` semantics are the kind of thing a refactor to
+[`withr::defer`](https://withr.r-lib.org/reference/defer.html) or a
+`tryCatch` wrapper could quietly break.
+
+### 639.1 The probe was wrong first, and the flaw is worth naming
+
+My first pass reported two leaks – `nsp` and `cpt_consensus` – and both
+were artefacts. The probe was:
+
+``` R
+set.seed(99); before <- .Random.seed
+tryCatch(f(), error = function(e) NULL)
+identical(before, .Random.seed)
+```
+
+with `f()` bodies like
+`function() cpt_detect(rnorm(100), method = "nsp", seed = 7, alpha = 5)`.
+The `rnorm(100)` is evaluated **inside the measured region, in the
+caller’s own frame**, so the argument itself advances `.Random.seed` and
+no restore inside the callee can undo it. The cases that “passed” were
+exactly the ones whose data was a literal.
+
+The tell that broke it open was the control: `cpt_consensus` with
+all-known methods, a fully successful call, also “leaked”. A property
+that fails on the happy path when a dozen existing tests say it holds is
+far more likely to be a broken measurement than a new defect.
+
+This is the third measurement artefact this loop – after the phrase-list
+classifier in §632.2 and
+[`capture.output()`](https://rdrr.io/r/utils/capture.output.html)
+auto-printing in §636 – and the three share a shape: **the instrument
+touched the thing it was measuring**. The rule that would have caught
+all three: build the input, and anything else that consumes the resource
+under test, outside the region being measured, and always run a control
+you know the answer to.
+
+### 639.2 The suite caught my own commit, which is the point of a meta-test
+
+The first version of the error-path test used `nsp` and `wbs` for two of
+its four error paths, and the full run failed:
+
+``` R
+no test reaches a Suggests engine without skip_if_not_installed()
+test-hardening.R:4442 uses wbs, nsp without skip_if_not_installed()
+```
+
+That meta-test exists because a test which silently requires an optional
+engine passes here and fails on a machine without it. It fired on a
+commit of mine, one tick after I wrote up “the accurate claims all have
+a test standing next to them” – which is the same lesson from the other
+side.
+
+Rewritten to reach only `changepoint`, an Import, so the test needs no
+skip and runs everywhere: an unknown method to `cpt_consensus`, `B = 0`
+to `cpt_stability`, an out-of-range `location` to `cpt_power`, and bad
+slope `params` to `cpt_simulate`. Fewer dependencies is also a better
+test – four error paths that always run beat four that might skip.

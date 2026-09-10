@@ -2230,6 +2230,17 @@ error.
   fails at two columns, `fmean` returns a fit at two as well — which is
   why the shared guard cannot be raised without refusing grids `fmean`
   handles.
+- **The `seed` contract now covers the failure path, and three functions
+  it never covered.** Every existing seed test measured a *successful*
+  call, and an error is exactly when a hand-rolled save/restore leaks —
+  `local_seed()` registers its restore through
+  [`on.exit()`](https://rdrr.io/r/base/on.exit.html) in the caller’s
+  frame, so the claim is that an error unwinds through it, and nothing
+  asserted that. Measured across four error paths and three functions
+  that were in neither existing test’s list (`cpt_consensus`,
+  `cpt_influence`, `cpt_sensitivity`): the seed is preserved in every
+  case, and a session that started without a `.Random.seed` is still
+  left without one after an error. A negative result, now a test.
 - **A failed TCPD refresh destroyed the cache it was refreshing.**
   [`download.file()`](https://rdrr.io/r/utils/download.file.html) opens
   its destination for writing before it knows whether the transfer will
