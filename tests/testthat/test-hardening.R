@@ -4438,3 +4438,60 @@ test_that("a failed TCPD refresh does not destroy the cached copy", {
   expect_true(ggchangepoint:::tcpd_download(paste0("file://", src), f))
   expect_equal(readLines(f, warn = FALSE), '{"a": 1}')
 })
+
+test_that("a seeded call leaves .Random.seed alone when it FAILS too", {
+  skip_on_cran()
+  # Every existing seed test measures a successful call, and an error is
+  # exactly when a hand-rolled save/restore leaks -- local_seed() registers
+  # its restore through on.exit() in the caller's frame, so the claim is
+  # that an error unwinds through it. Never asserted. Three of the
+  # functions below (cpt_consensus, cpt_influence, cpt_sensitivity) were
+  # not in either existing seed test's list at all.
+  #
+  # The data is built ONCE, before the measured region. Evaluating
+  # `rnorm()` inside the call under test advances `.Random.seed` in the
+  # CALLER, which no restore can undo -- that artefact made two of these
+  # look like leaks on the first pass.
+  set.seed(1)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+  tiny <- c(1, 2, 3)
+
+  preserved <- function(f) {
+    set.seed(99)
+    before <- get(".Random.seed", envir = globalenv())
+    invisible(tryCatch(suppressWarnings(f()), error = function(e) NULL))
+    identical(before, get(".Random.seed", envir = globalenv()))
+  }
+
+  # Happy path, for the three functions the other tests never listed.
+  expect_true(preserved(function() {
+    cpt_consensus(x, methods = c("pelt", "amoc"), seed = 1)
+  }))
+  expect_true(preserved(function() {
+    cpt_influence(cpt_detect(x, method = "pelt"))
+  }))
+  expect_true(preserved(function() {
+    cpt_sensitivity(x, method = "pelt", over = list(penalty = c(4, 10)),
+                    seed = 1)
+  }))
+
+  # And the error path: each of these raises, and must still unwind through
+  # the restore.
+  errs <- list(
+    nsp_bad_alpha = function() {
+      cpt_detect(x, method = "nsp", seed = 7, alpha = 5)
+    },
+    consensus_unknown_method = function() {
+      cpt_consensus(x, methods = c("pelt", "nope"), seed = 1)
+    },
+    wbs_too_short = function() cpt_detect(tiny, method = "wbs", seed = 7),
+    simulate_bad_params = function() {
+      cpt_simulate(200, 100, change_in = "slope", params = c(0, 1), seed = 3)
+    }
+  )
+  for (nm in names(errs)) {
+    # it really does error -- a silent success would make the check vacuous
+    expect_error(suppressWarnings(errs[[nm]]()), info = nm)
+    expect_true(preserved(errs[[nm]]), info = nm)
+  }
+})
