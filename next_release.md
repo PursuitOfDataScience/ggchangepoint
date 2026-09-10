@@ -26230,3 +26230,77 @@ multivariate shape sweep is too slow to keep (fcov alone is minutes), so
 it lives here as a record. This one runs in well under a minute, so it
 went into the suite: nine invariants that a refactor could break in
 silence are worth more as a test than as a paragraph.
+
+## 632. The fourth face: fourteen verbs that are not cpt_detect()
+
+The sweeps so far: arguments (earlier rounds), input data through
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+(§628-630), the result object and its accessors (§631). The fourth face
+is the set of verbs that take a *series* and normalise it themselves:
+`cpt_batch`, `ggcpt_compare`, `ggcpt_compare_table`, `cpt_consensus`,
+`cpt_sensitivity`, `cpt_stability`, `cpt_select`, `cpt_crops`,
+`cpt_scale_space`, `cpt_replay`, `cpt_influence`, `cpt_learn_penalty`,
+`cpt_label_error`.
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+being well-guarded says nothing about them, and it is worth remembering
+that B5, B9, B14 and B20 all lived in exactly these functions.
+
+56 cells against the four discriminating shapes: 29 ran, 27 refused with
+a named reason, and **one** answered with a base-R message that my first
+regex did not even catch.
+
+### 632.1 `cpt_learn_penalty`, and the second door
+
+`as_series_list()` is the shared coercion, and it was
+`lapply(series, as.numeric)` and nothing else. So a series with an NA
+reached `cpt_features()` and failed inside
+[`stats::mad()`](https://rdrr.io/r/stats/mad.html):
+
+``` R
+missing values and NaN's not allowed if 'na.rm' is FALSE
+```
+
+Thirteen of the fourteen verbs answer the same input with
+`` `x` must be finite (no NA/NaN/Inf); 1 of 60 values are not ``. This
+one named neither the argument, the series, nor – in a function whose
+input is a *panel* – which member was bad. It now names the member as
+[`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+does: `` Series `b` (2 of 2): `x` must be finite ... ``.
+
+And then the pattern this audit keeps finding, one more time.
+[`predict.ggcpt_penalty_model()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+has a bare-vector fast path that does `list(newdata)` instead of calling
+`as_series_list()`, so fixing the shared coercion fixed the learner and
+left [`predict()`](https://rdrr.io/r/stats/predict.html) failing in
+[`stats::mad()`](https://rdrr.io/r/stats/mad.html) exactly as before.
+Both doors now validate. Measured after the fix: a clean vector predicts
+21.7, a vector with an NA is refused by name, and a one-element *list*
+containing the same vector is refused with the member named.
+
+### 632.2 My detector missed it, which is the reusable part
+
+The base-R signature list I have been carrying since §628 did not
+contain “missing values and NaN’s not allowed”, so the cell was
+classified `named` and would have been passed over. I only saw it
+because the sweep prints every cell and I read the `with_na` column by
+hand.
+
+That is the argument for printing the whole grid rather than only the
+verdicts. A classifier over error messages is a heuristic built from the
+failures already seen; it cannot recognise a phrasing it has never met,
+and the one cell in fifty-six that mattered was the one it got wrong.
+The per-shape columns are cheap to scan and the classifier is the
+convenience, not the evidence.
+
+### 632.3 A function name I invented two ticks ago
+
+While reading the sweep I called `cpt_bandwidth_scan()`, because a
+comment in `wrap-nonparam.R` says “cpt_bandwidth_scan() already reads it
+exactly for this reason”. There is no such function – the real one is
+[`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md).
+I wrote that comment in §627’s `$`-discipline fix, so this is a pointer
+I created and then followed into nothing. Corrected.
+
+Small, but it is the same failure as the stale measurements in §626-627:
+prose that was true of the author’s mental model rather than of the
+code, in a file where nothing checks prose.

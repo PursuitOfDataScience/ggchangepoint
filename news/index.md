@@ -2230,6 +2230,24 @@ error.
   fails at two columns, `fmean` returns a fit at two as well — which is
   why the shared guard cannot be raised without refusing grids `fmean`
   handles.
+- The **higher-level verbs** each normalise their own input, so
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  being well-guarded says nothing about them — and `cpt_batch`,
+  `ggcpt_compare`, `cpt_simulate` and `cpt_label_error` are where four
+  of the review’s findings lived. A 14-verb by 4-shape sweep turned up
+  one more unguarded path:
+  [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+  coerced its series with
+  [`as.numeric()`](https://rdrr.io/r/base/numeric.html) and nothing
+  else, so an `NA` reached `cpt_features()` and failed inside
+  [`stats::mad()`](https://rdrr.io/r/stats/mad.html) with base R’s
+  `missing values and NaN's not allowed if 'na.rm' is FALSE` — naming
+  neither the argument, the series, nor which of several was bad. It now
+  names the member the way
+  [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
+  does, and [`predict()`](https://rdrr.io/r/stats/predict.html)’s
+  bare-vector branch, which bypassed the shared coercion entirely, is
+  guarded at the same standard.
 - The **accessor** face is clean too: 16 accessors against 9 degenerate
   result shapes — a changepoint at position 1, two adjacent ones leaving
   a single-observation segment, 58 changepoints on 60 points, a

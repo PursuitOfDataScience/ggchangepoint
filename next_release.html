@@ -16440,6 +16440,28 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>The difference is what happens to a clean sweep afterwards. The multivariate shape sweep is too slow to keep (fcov alone is minutes), so it lives here as a record. This one runs in well under a minute, so it went into the suite: nine invariants that a refactor could break in silence are worth more as a test than as a paragraph.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_632-the-fourth-face-fourteen-verbs-that-are-not-cpt_detect">632. The fourth face: fourteen verbs that are not cpt_detect()<a class="anchor" aria-label="anchor" href="#id_632-the-fourth-face-fourteen-verbs-that-are-not-cpt_detect"></a></h2>
+<p>The sweeps so far: arguments (earlier rounds), input data through <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> (§628-630), the result object and its accessors (§631). The fourth face is the set of verbs that take a <em>series</em> and normalise it themselves: <code>cpt_batch</code>, <code>ggcpt_compare</code>, <code>ggcpt_compare_table</code>, <code>cpt_consensus</code>, <code>cpt_sensitivity</code>, <code>cpt_stability</code>, <code>cpt_select</code>, <code>cpt_crops</code>, <code>cpt_scale_space</code>, <code>cpt_replay</code>, <code>cpt_influence</code>, <code>cpt_learn_penalty</code>, <code>cpt_label_error</code>. <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> being well-guarded says nothing about them, and it is worth remembering that B5, B9, B14 and B20 all lived in exactly these functions.</p>
+<p>56 cells against the four discriminating shapes: 29 ran, 27 refused with a named reason, and <strong>one</strong> answered with a base-R message that my first regex did not even catch.</p>
+<div class="section level3">
+<h3 id="id_6321-cpt_learn_penalty-and-the-second-door">632.1 <code>cpt_learn_penalty</code>, and the second door<a class="anchor" aria-label="anchor" href="#id_6321-cpt_learn_penalty-and-the-second-door"></a></h3>
+<p><code>as_series_list()</code> is the shared coercion, and it was <code>lapply(series, as.numeric)</code> and nothing else. So a series with an NA reached <code>cpt_features()</code> and failed inside <code><a href="https://rdrr.io/r/stats/mad.html" class="external-link">stats::mad()</a></code>:</p>
+<div class="sourceCode" id="cb162"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb162-1"><a href="#cb162-1" tabindex="-1"></a>missing values and NaN<span class="st">'s not allowed if '</span>na.rm<span class="st">' is FALSE</span></span></code></pre></div>
+<p>Thirteen of the fourteen verbs answer the same input with <code>`x` must be finite (no NA/NaN/Inf); 1 of 60 values are not</code>. This one named neither the argument, the series, nor – in a function whose input is a <em>panel</em> – which member was bad. It now names the member as <code><a href="reference/cpt_batch.html">cpt_batch()</a></code> does: <code>Series `b` (2 of 2): `x` must be finite ...</code>.</p>
+<p>And then the pattern this audit keeps finding, one more time. <code><a href="reference/cpt_learn_penalty.html">predict.ggcpt_penalty_model()</a></code> has a bare-vector fast path that does <code>list(newdata)</code> instead of calling <code>as_series_list()</code>, so fixing the shared coercion fixed the learner and left <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> failing in <code><a href="https://rdrr.io/r/stats/mad.html" class="external-link">stats::mad()</a></code> exactly as before. Both doors now validate. Measured after the fix: a clean vector predicts 21.7, a vector with an NA is refused by name, and a one-element <em>list</em> containing the same vector is refused with the member named.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6322-my-detector-missed-it-which-is-the-reusable-part">632.2 My detector missed it, which is the reusable part<a class="anchor" aria-label="anchor" href="#id_6322-my-detector-missed-it-which-is-the-reusable-part"></a></h3>
+<p>The base-R signature list I have been carrying since §628 did not contain “missing values and NaN’s not allowed”, so the cell was classified <code>named</code> and would have been passed over. I only saw it because the sweep prints every cell and I read the <code>with_na</code> column by hand.</p>
+<p>That is the argument for printing the whole grid rather than only the verdicts. A classifier over error messages is a heuristic built from the failures already seen; it cannot recognise a phrasing it has never met, and the one cell in fifty-six that mattered was the one it got wrong. The per-shape columns are cheap to scan and the classifier is the convenience, not the evidence.</p>
+</div>
+<div class="section level3">
+<h3 id="id_6323-a-function-name-i-invented-two-ticks-ago">632.3 A function name I invented two ticks ago<a class="anchor" aria-label="anchor" href="#id_6323-a-function-name-i-invented-two-ticks-ago"></a></h3>
+<p>While reading the sweep I called <code>cpt_bandwidth_scan()</code>, because a comment in <code>wrap-nonparam.R</code> says “cpt_bandwidth_scan() already reads it exactly for this reason”. There is no such function – the real one is <code><a href="reference/cpt_scale_space.html">cpt_scale_space()</a></code>. I wrote that comment in §627’s <code>$</code>-discipline fix, so this is a pointer I created and then followed into nothing. Corrected.</p>
+<p>Small, but it is the same failure as the stale measurements in §626-627: prose that was true of the author’s mental model rather than of the code, in a file where nothing checks prose.</p>
+</div>
+</div>
 </div>
 
 
