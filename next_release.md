@@ -24058,3 +24058,36 @@ The pattern worth keeping: **an `on.exit` restore is a claim about the
 error path, and a test that only exercises success is not testing the
 mechanism at all** -- it would pass just as well if the restore were the
 last line of the function body.
+
+## 641. Seventy-seven S3 methods, four conventions, nothing checking any
+
+The method surface is large -- `grep -c "^S3method" NAMESPACE` gives 77:
+19 `print`, 14 `tidy`, 14 `base::plot`, 14 `autoplot`, 6 `[`, 2 `glance`,
+and one each of `format`, `summary`, `augment`, `as_tibble`,
+`as.data.frame`, `stats::coef`, `predict` and `alarms`. Individual methods
+have tests; the *conventions* they all share had none.
+
+Four that are checkable for every method:
+
+1. **`print()` returns its argument invisibly.** A method that forgets
+   `invisible(x)` double-prints at the top level -- once from the method's
+   own `cat()` and once from R auto-printing the return value.
+2. **`glance()` is exactly one row and `tidy()` is a tibble.** The broom
+   contract, and `glance()`'s one-row promise is load-bearing: `new_ggcpt`'s
+   docs record that a zero-length `method` made it return zero rows because
+   every other column was recycled against it.
+3. **`[` keeps the subclass when every required column survives, and drops
+   it when one does not.** Both directions matter, and the second is the
+   one a test is likely to skip -- a class kept without its columns is what
+   makes a later `print()` fail, which is exactly D25's failure mode.
+4. **`autoplot()` returns a ggplot that builds.**
+
+Measured across 17 result classes, using only Imports so the sweep needs no
+skip: all four hold everywhere. 17 print methods invisible and returning
+their argument; every `glance()` one row; all six `[` methods keeping the
+class on a row subset and on an all-column subset and losing it when the
+first column is dropped; all 13 reachable `autoplot()` methods building.
+
+A negative result, and one worth keeping as a test rather than a paragraph,
+for the same reason as §631: these are conventions, so a new class or a
+refactored method is exactly what breaks them, and the breakage is silent.

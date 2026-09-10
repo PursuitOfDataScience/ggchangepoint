@@ -4545,3 +4545,79 @@ test_that("an engine that attaches packages gives the search path back on failur
   expect_identical(search(), b2)
   expect_false("package:NMF" %in% search())
 })
+
+test_that("the S3 surface obeys R's conventions, in both directions", {
+  skip_on_cran()
+  # 77 registered S3 methods: 19 print, 14 tidy, 14 plot, 14 autoplot, 6
+  # `[`, 2 glance, and one each of the rest. Four conventions are checkable
+  # for all of them and nothing checked any:
+  #
+  #   print()  must return its argument INVISIBLY -- a method that forgets
+  #            invisible(x) double-prints at the top level
+  #   glance() must be exactly one row, tidy() a tibble
+  #   `[`      must keep the subclass when every required column survives
+  #            and DROP it when one does not; keeping a class whose columns
+  #            are gone is what makes a later print() fail (see D25)
+  #   autoplot() must return a ggplot that builds
+  #
+  # Everything below reaches only Imports, so there is nothing to skip.
+  set.seed(23)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+  lab2 <- cpt_labels(start = c(10, 40), end = c(20, 50),
+                     change = c("change", "no_change"))
+  fit <- cpt_detect(x, method = "pelt")
+
+  objs <- list(
+    ggcpt = fit,
+    ggcpt_batch = cpt_batch(list(a = x, b = rev(x)), method = "pelt"),
+    ggcpt_consensus = cpt_consensus(x, methods = c("pelt", "amoc"), seed = 1),
+    ggcpt_selection = suppressWarnings(cpt_select(x, criterion = "bic",
+                                                  k_max = 3)),
+    ggcpt_path = suppressWarnings(cpt_crops(x, pen_min = 2, pen_max = 50)),
+    ggcpt_stability = cpt_stability(x, method = "pelt", B = 4, seed = 1),
+    ggcpt_monitor = cpt_replay(x, method = "edetector"),
+    cpt_labels = lab2,
+    cpt_label_error = cpt_label_error(fit, lab2),
+    ggcpt_recommendation = cpt_recommend(n = 500)
+  )
+
+  for (nm in names(objs)) {
+    o <- objs[[nm]]
+    utils::capture.output(w <- withVisible(print(o)))
+    expect_false(w$visible, info = paste(nm, "print() is visible"))
+    expect_identical(w$value, o, info = paste(nm, "print() return value"))
+
+    g <- tryCatch(glance(o), error = function(e) NULL)
+    if (!is.null(g)) {
+      expect_s3_class(g, "tbl_df")
+      expect_equal(nrow(g), 1L, info = nm)
+    }
+    t <- tryCatch(suppressWarnings(tidy(o)), error = function(e) NULL)
+    if (!is.null(t)) expect_s3_class(t, "tbl_df")
+  }
+
+  # The six `[` methods, both directions.
+  subsettable <- list(
+    cpt_labels = lab2,
+    cpt_label_error = objs$cpt_label_error,
+    ggcpt_batch = objs$ggcpt_batch,
+    ggcpt_recommendation = objs$ggcpt_recommendation
+  )
+  for (nm in names(subsettable)) {
+    o <- subsettable[[nm]]
+    expect_true(inherits(o[1, ], nm), info = paste(nm, "row subset"))
+    expect_output(print(o[1, ]))
+    expect_true(inherits(o[, names(o)], nm), info = paste(nm, "all columns"))
+    # ...and the drop half, which is the direction a test is likely to miss
+    expect_false(inherits(o[, -1, drop = FALSE], nm),
+                 info = paste(nm, "kept its class without a required column"))
+  }
+
+  # And every autoplot method returns a ggplot that builds.
+  for (nm in c("ggcpt", "ggcpt_batch", "ggcpt_consensus", "ggcpt_selection",
+               "ggcpt_path", "ggcpt_stability", "ggcpt_monitor")) {
+    p <- suppressWarnings(suppressMessages(ggplot2::autoplot(objs[[nm]])))
+    expect_s3_class(p, "ggplot")
+    expect_s3_class(suppressWarnings(ggplot2::ggplot_build(p)), "ggplot_built")
+  }
+})
