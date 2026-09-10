@@ -23777,3 +23777,72 @@ still reported by name.
 The alternative, muffling by message text in `bfast_wrapper()`, would have
 covered one engine and left the next dependency that overwrites something
 to print again.
+
+## 636. The fourth channel, and the flake it exposed
+
+§633-635 swept errors, warnings and messages. The fourth way a package can
+speak is to print, and this codebase already knows the hazard: several
+wrappers wrap the engine in `capture.output()`, and B2 was a printed ERROR
+that `tryCatch()` never saw. So: every installed engine on a clean mean
+change and a clean variance change, plus fifteen verbs and accessors, with
+stdout captured. **All silent.**
+
+The probe was wrong the first time, which is worth recording because it
+would flag every engine as noisy. `capture.output(f())` auto-prints a
+returned value at top level, so the first run captured `print.ggcpt()`'s
+own twelve lines for all 29 engines. `capture.output(invisible(f()))` is
+the correct form.
+
+### 636.1 The documented failure rate was one session reported as a rate
+
+The sweep did turn up something: `beast` failing on ordinary input. The
+note in `beast_wrapper()` said the all-NaN fit happens "at roughly 0.7% of
+calls, and more often when other compiled engines are loaded in the same
+session". Re-measured on one identical series, in fresh processes:
+
+| condition | all-NaN |
+|---|---|
+| `library(Rbeast)`, 8 direct calls | 0 of 8 |
+| ggchangepoint attached, 8 direct calls | 0 of 8 |
+| ggchangepoint attached, 8 `beast_wrapper()` calls | 7 of 8 |
+| `library(Rbeast)`, 30 identical calls | 30 of 30 |
+| ggchangepoint attached, 10 direct calls | 1 of 10 |
+
+So the failure is real, it is session-scoped rather than per-call, and no
+rate is quotable -- 0.7% was one session's experience written down as a
+property. The comment now says that, with the range.
+
+Three explanations measured and refuted, so nobody re-chases them:
+
+1. **Other compiled engines loaded.** The old note blamed these. A session
+   with 66 namespaces loaded ran 5 of 5 seeds clean.
+2. **`do.call()` inlining the whole series into the call object.** A real
+   hazard this package avoids elsewhere on purpose (`cpt_detect()` passes
+   `x` as a symbol "so the wrapper's match.call() stays compact"). Measured:
+   inline and quoted-symbol forms were both 10 of 10 clean, and a plain
+   direct call produced the all-NaN in the same process.
+3. **The chain configuration.** `mcmc.seed` 1-5, `mcmc.chains` 1 and 5,
+   `mcmc.samples = 2000` and `mcmc.burnin = 500` all returned a finite fit
+   on every seed that had just failed through the wrapper.
+
+I could not find the mechanism, and the honest end of that is to say so
+rather than to keep a guess in a comment.
+
+### 636.2 The part that actually needed fixing
+
+The `beast` example, its test and one vignette chunk all called the wrapper
+unguarded. In a session where the rate is 100% -- which measurably happens
+-- `R CMD check` fails on examples or on the vignette rebuild, and the
+failure looks like a defect in this package rather than in Rbeast. CI has
+been green throughout, which means it has been lucky, not that it is safe.
+
+- The test catches the wrapper's own error and `skip()`s with it, so the
+  suite says which upstream defect it stepped around.
+- The example wraps the call in `try()` and prints the tibble only if it
+  worked, with a comment saying why.
+- The vignette's `has_rbeast` flag was "is Rbeast installed and are we off
+  Windows". It is now that *and* a trial fit, so the chunk is skipped in a
+  bad session exactly as it already was when the package is absent.
+
+That last one is the pattern worth keeping: a conditional-evaluation gate
+should test the capability the chunk needs, not a proxy for it.

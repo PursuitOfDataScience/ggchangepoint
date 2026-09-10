@@ -38,8 +38,16 @@ has_bcp       <- requireNamespace("bcp", quietly = TRUE)
 has_ocp       <- requireNamespace("ocp", quietly = TRUE)
 # Rbeast (<= 1.0.2) can crash the vignette-building subprocess on Windows
 # (its C internals have known memory-state issues); run it elsewhere only.
+# It also intermittently returns an all-NaN fit, and the condition can
+# persist for a whole session -- measured from 0 to 100 per cent of calls
+# depending on the process. So the gate is not "is it installed" but "does
+# it fit here", tried once: a vignette must not fail to build over an
+# upstream defect the wrapper already reports honestly at run time.
 has_rbeast    <- requireNamespace("Rbeast", quietly = TRUE) &&
-  .Platform$OS.type != "windows"
+  .Platform$OS.type != "windows" &&
+  !inherits(try(suppressWarnings(ggchangepoint::beast_wrapper(
+    c(stats::rnorm(40), stats::rnorm(40, 4)), seed = 1)), silent = TRUE),
+    "try-error")
 has_cpm       <- requireNamespace("cpm", quietly = TRUE)
 has_kcprs     <- requireNamespace("kcpRS", quietly = TRUE)
 has_cptnonpar <- requireNamespace("CptNonPar", quietly = TRUE)

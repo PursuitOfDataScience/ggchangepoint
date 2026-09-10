@@ -158,8 +158,12 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
 #' \insertRef{zhao2019beast}{ggchangepoint}
 #' @export
 #' @examplesIf requireNamespace("Rbeast", quietly = TRUE) && .Platform$OS.type != "windows"
-#' res <- beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026)
-#' res$changepoints
+#' # try(): Rbeast intermittently returns an all-NaN fit and the condition
+#' # can persist for a session, so a check must not fail on it -- the
+#' # wrapper reports it by name when it happens.
+#' res <- try(beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026),
+#'            silent = TRUE)
+#' if (!inherits(res, "try-error")) res$changepoints
 #' @family changepoint engines
 beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
   need_pkg("Rbeast")
@@ -180,12 +184,27 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
   # mcmc.seed (0 means "random").
   if (!is.null(seed)) args$mcmc.seed <- seed
   fit <- do.call(Rbeast::beast, args)
-  # Rbeast (<= 1.0.2) intermittently returns an all-NaN fit -- measured at
-  # roughly 0.7% of calls, and more often when other compiled engines are
-  # loaded in the same session. A retry recovers it, so retry a few times
-  # (each is cheap) and only then fail loudly, rather than reporting "no
+  # Rbeast (<= 1.0.2) intermittently returns an all-NaN fit. The rate is not
+  # quotable: re-measured across fresh processes on one identical series it
+  # was 0 of 8, 1 of 8, 1 of 10 and 30 of 30, so a session either mostly
+  # works or mostly does not, and an earlier note here claiming "roughly
+  # 0.7% of calls" was reporting one session as if it were a rate. A retry
+  # recovers it often enough to be worth trying -- and sometimes not at
+  # all: five consecutive attempts failed in one session. So retry a few
+  # times (each is cheap) and then fail loudly, rather than reporting "no
   # changepoints" from a broken fit. The perturbed call in between is there
   # because identical retries can stay stuck.
+  #
+  # Three explanations measured and refuted, so they are not re-chased.
+  # (1) Other compiled engines loaded in the same session: an earlier note
+  # blamed these, but a session with 66 namespaces loaded ran 5 of 5 seeds
+  # clean. (2) `do.call()` inlining the whole series into the call object,
+  # which is a real hazard this package avoids elsewhere: inline and
+  # quoted-symbol forms were both 10 of 10 clean while a plain direct call
+  # produced the all-NaN in the same process. (3) `mcmc.seed`, and the
+  # chain configuration generally: `mcmc.chains`, `mcmc.samples` and
+  # `mcmc.burnin` all gave a finite fit on every seed that had just failed
+  # through the wrapper.
   # With `mcmc.seed` set from `seed`, every retry runs the same chain, so a
   # SEEDED call that hits the bug has less variation to recover from than an
   # unseeded one -- the perturbed call in between is doing all the work.
@@ -201,9 +220,12 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
     attempt <- attempt + 1
   }
   if (!is.finite(fit$trend$ncp)) {
-    stop("Rbeast::beast() returned an invalid (all-NaN) fit repeatedly; ",
-         "this is an intermittent upstream issue - retry the call.",
-         call. = FALSE)
+    stop("Rbeast::beast() returned an invalid (all-NaN) fit on ", attempt,
+         " attempts. This is an intermittent upstream issue, and it is not ",
+         "always transient: it can persist for the rest of an R session, ",
+         "so a fresh session is a better bet than another call. Measured ",
+         "rates across sessions on one identical series ranged from 0 to ",
+         "100 percent.", call. = FALSE)
   }
 
   # beast reports candidate changepoints (most probable first) as the first
