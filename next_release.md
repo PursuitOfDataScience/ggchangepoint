@@ -23523,3 +23523,48 @@ return a fit". Re-measured per engine: `fcov` fails at two columns and
 of `fmean`, in a helper whose whole point is that it is shared -- and it
 was the justification for not raising the `ncol >= 2` guard, which is now
 correct for a better reason than it was.
+
+## 631. The third face of the object, and it is clean
+
+§628-630 swept the input data after earlier rounds had swept the arguments.
+The third face is the RESULT: what the accessors do with a degenerate
+`ggcpt`. Nine result shapes -- no changepoints, a changepoint at position 1,
+one at n-1, two adjacent ones leaving a single-observation segment, 58
+changepoints on 60 points, a hand-built result with no fit, an indexed
+result, a detected result, a multivariate result -- against sixteen
+accessors: `tidy`, `glance`, `augment`, `autoplot`, `summary`, `print`,
+`format`, `as_tibble`, `as.data.frame`, `cpt_regions`, `cpt_cite`,
+`cpt_metrics`, `cpt_test`, `cpt_confint`, `cpt_statistic`, `cpt_report`.
+
+144 cells: 124 ran, 20 refused with a named reason, **zero base-R errors**.
+All twenty refusals are correct and specific -- `cpt_cite` on a
+hand-built result whose method is `"custom"`, `cpt_statistic` on an engine
+that exposes none, `cpt_confint(method = "bootstrap")` on a method
+`cpt_detect()` cannot re-run.
+
+### 631.1 Absence of a crash is the weaker question
+
+A sweep that only asks "did it error" would have stopped there. The
+harder question is whether the VALUES are right when a segment holds one
+observation, or when 59 of 60 segments do. Nine invariants that must hold
+for any result whatsoever, over the seven cheap shapes:
+
+- `augment()` returns exactly `nrow(x$data)` rows
+- no `seg_id` is NA
+- `.resid` equals `value - .fitted` (the property B27 restored)
+- the segment lengths sum to n
+- the segments tile `1..n` exactly -- no gap, no overlap
+- `param_estimate` is each segment's own mean, including a one-observation
+  one
+- `glance()$n_changepoints`, `nrow(tidy())` and `sum(augment()$is_changepoint)`
+  all agree with `nrow(x$changepoints)`
+
+63 checks, all pass. So this is the second clean sweep in a row (§629.1 was
+the multivariate one), and both are recorded rather than discarded --
+that is what stops the next sweep re-walking ground that has been walked.
+
+The difference is what happens to a clean sweep afterwards. The
+multivariate shape sweep is too slow to keep (fcov alone is minutes), so it
+lives here as a record. This one runs in well under a minute, so it went
+into the suite: nine invariants that a refactor could break in silence are
+worth more as a test than as a paragraph.

@@ -4106,3 +4106,63 @@ test_that("fcov's target is the cost lever its help page says it is", {
   # eight minutes, which is the finding rather than something to re-measure
   # on every run.
 })
+
+test_that("every accessor holds its invariants on a degenerate result", {
+  skip_on_cran()
+  # The third face of the object, after the arguments (earlier rounds) and
+  # the input data (§628-630): the RESULT. A changepoint at position 1, two
+  # adjacent changepoints leaving a one-observation segment, 58
+  # changepoints on 60 points, a hand-built result with no fit.
+  #
+  # A 16-accessor by 9-result sweep found no crash in 144 cells, and every
+  # refusal named its reason -- so what is worth keeping is not the crash
+  # check but these VALUE invariants, which a refactor could break in
+  # silence. Nine properties that must hold for any result whatsoever.
+  set.seed(9)
+  n <- 60L
+  x <- c(stats::rnorm(30), stats::rnorm(30, 4))
+  dates <- as.Date("2020-01-01") + seq_len(n) - 1
+
+  results <- list(
+    empty      = as_ggcpt(integer(0), x),
+    cp_at_1    = as_ggcpt(1, x),
+    cp_at_nm1  = as_ggcpt(n - 1L, x),
+    adjacent   = as_ggcpt(c(30, 31), x),
+    nearly_all = as_ggcpt(2:(n - 1L), x),
+    indexed    = suppressWarnings(cpt_detect(x, method = "pelt",
+                                             index = dates)),
+    detected   = cpt_detect(x, method = "pelt")
+  )
+  if (engine_usable("InspectChangepoint")) {
+    results$mv <- suppressWarnings(
+      cpt_detect(matrix(stats::rnorm(n * 3), nrow = n), method = "inspect"))
+  }
+
+  for (rn in names(results)) {
+    f <- results[[rn]]
+    s <- f$segments
+    ag <- augment(f)
+    nn <- nrow(f$data)
+
+    expect_equal(nrow(ag), nn, info = rn)
+    expect_false(anyNA(ag$seg_id), info = rn)
+    # `.resid` is a residual against the series the result carries -- the
+    # property B27 restored for the rowMeans wrappers.
+    expect_equal(ag$.resid, f$data$value - ag$.fitted, info = rn)
+    # The segments partition the series: no gap, no overlap, nothing lost.
+    expect_equal(sum(s$n), nn, info = rn)
+    expect_identical(sort(unlist(Map(seq, s$start, s$end))), seq_len(nn),
+                     info = rn)
+    # `param_estimate` is the segment mean for every method (see
+    # ?new_ggcpt), including on a one-observation segment.
+    expect_equal(s$param_estimate,
+                 vapply(seq_len(nrow(s)), function(i) {
+                   mean(f$data$value[s$start[i]:s$end[i]])
+                 }, numeric(1)), info = rn)
+    # ...and the three summaries agree with the object about how many
+    # changepoints there are.
+    expect_equal(glance(f)$n_changepoints, nrow(f$changepoints), info = rn)
+    expect_equal(nrow(tidy(f)), nrow(f$changepoints), info = rn)
+    expect_equal(sum(ag$is_changepoint), nrow(f$changepoints), info = rn)
+  }
+})
