@@ -26304,3 +26304,57 @@ I created and then followed into nothing. Corrected.
 Small, but it is the same failure as the stale measurements in §626-627:
 prose that was true of the author’s mental model rather than of the
 code, in a file where nothing checks prose.
+
+## 633. Replacing the detector, which is worth more than any single fix
+
+§632.2 recorded that my base-R phrase list classified the one defect in
+fifty-six cells as a deliberate refusal, and that I only caught it by
+reading the grid by hand. The fix for that is not a longer list.
+
+R conditions carry a call. `stop(msg, call. = FALSE)` produces a
+condition whose
+[`conditionCall()`](https://rdrr.io/r/base/conditions.html) is NULL; a
+[`stop()`](https://rdrr.io/r/base/stop.html) without it, and every error
+raised inside base R or an engine, carries the call that raised it. This
+package uses `call. = FALSE` everywhere – 241
+[`stop()`](https://rdrr.io/r/base/stop.html) calls and an AST walk finds
+no exception – so:
+
+``` R
+conditionCall(e) is NULL   <=>   this package meant to raise this
+```
+
+That is provenance rather than phrasing, and it recognises messages no
+regex has ever met. Re-swept all three faces with it: 116 engine cells,
+56 verb cells, 60 accessor cells, 232 in total. 67 named refusals, 165
+ran, **zero leaked**. The earlier sweeps’ conclusions hold, now
+established by an instrument that cannot be blindsided by an unfamiliar
+phrasing.
+
+Two changes went into the suite:
+
+1.  The shape sweep’s classifier is now `!is.null(conditionCall(e))`. It
+    would have flagged the
+    [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+    case on the first run.
+2.  A new test asserts the convention the first one depends on – that
+    every message-building [`stop()`](https://rdrr.io/r/base/stop.html)
+    in `R/` passes `call. = FALSE`. It walks the parsed AST rather than
+    grepping, and it allows `stop(e)`, which re-raises a condition
+    object and takes no `call.`.
+
+### 633.1 The second test is self-testing, and that was not optional
+
+A meta-test that walks source and asserts “no offenders” passes
+trivially if the walker is broken – which is a real risk here, because
+the walker recurses through arbitrary R expressions and I wrapped the
+recursion in [`try()`](https://rdrr.io/r/base/try.html) to survive the
+odd corner. So it also builds a synthetic file with three
+[`stop()`](https://rdrr.io/r/base/stop.html) calls – one correct, one
+bare, one re-raise – and requires the walker to find exactly the bare
+one.
+
+This is the same discipline as the srcref fix in §620: when a checker’s
+value depends entirely on its own correctness, demonstrating it on a
+known input costs three lines and is the difference between a test and a
+comment that looks like a test.

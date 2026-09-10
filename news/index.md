@@ -2230,6 +2230,21 @@ error.
   fails at two columns, `fmean` returns a fit at two as well — which is
   why the shared guard cannot be raised without refusing grids `fmean`
   handles.
+- **The sweep test now checks provenance rather than phrasing.** Every
+  error this package raises uses `call. = FALSE`, so
+  [`conditionCall()`](https://rdrr.io/r/base/conditions.html) is `NULL`
+  for a deliberate refusal and non-`NULL` for one that leaked out of
+  base R or an engine. The old version carried a list of base-R
+  phrasings — a heuristic assembled from the failures already seen,
+  which is exactly why it classified
+  [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)’s
+  `missing values and NaN's not allowed if 'na.rm' is FALSE` as
+  deliberate and would have passed over it. A companion test asserts the
+  `call. = FALSE` convention that makes the discriminator valid, since
+  one bare [`stop()`](https://rdrr.io/r/base/stop.html) would make a
+  real leak indistinguishable from a refusal. Re-swept all three faces
+  with it — 232 cells across engines, verbs and accessors — and
+  **nothing leaks**.
 - The **higher-level verbs** each normalise their own input, so
   [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
   being well-guarded says nothing about them — and `cpt_batch`,

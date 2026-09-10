@@ -16462,6 +16462,21 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>Small, but it is the same failure as the stale measurements in §626-627: prose that was true of the author’s mental model rather than of the code, in a file where nothing checks prose.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_633-replacing-the-detector-which-is-worth-more-than-any-single-fix">633. Replacing the detector, which is worth more than any single fix<a class="anchor" aria-label="anchor" href="#id_633-replacing-the-detector-which-is-worth-more-than-any-single-fix"></a></h2>
+<p>§632.2 recorded that my base-R phrase list classified the one defect in fifty-six cells as a deliberate refusal, and that I only caught it by reading the grid by hand. The fix for that is not a longer list.</p>
+<p>R conditions carry a call. <code>stop(msg, call. = FALSE)</code> produces a condition whose <code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">conditionCall()</a></code> is NULL; a <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> without it, and every error raised inside base R or an engine, carries the call that raised it. This package uses <code>call. = FALSE</code> everywhere – 241 <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> calls and an AST walk finds no exception – so:</p>
+<div class="sourceCode" id="cb163"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb163-1"><a href="#cb163-1" tabindex="-1"></a><span class="fu">conditionCall</span>(e) is <span class="cn">NULL</span>   <span class="sc">&lt;=</span><span class="er">&gt;</span>   this package meant to raise this</span></code></pre></div>
+<p>That is provenance rather than phrasing, and it recognises messages no regex has ever met. Re-swept all three faces with it: 116 engine cells, 56 verb cells, 60 accessor cells, 232 in total. 67 named refusals, 165 ran, <strong>zero leaked</strong>. The earlier sweeps’ conclusions hold, now established by an instrument that cannot be blindsided by an unfamiliar phrasing.</p>
+<p>Two changes went into the suite:</p>
+<ol style="list-style-type: decimal"><li>The shape sweep’s classifier is now <code>!is.null(conditionCall(e))</code>. It would have flagged the <code><a href="reference/cpt_learn_penalty.html">cpt_learn_penalty()</a></code> case on the first run.</li>
+<li>A new test asserts the convention the first one depends on – that every message-building <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> in <code>R/</code> passes <code>call. = FALSE</code>. It walks the parsed AST rather than grepping, and it allows <code>stop(e)</code>, which re-raises a condition object and takes no <code>call.</code>.</li>
+</ol><div class="section level3">
+<h3 id="id_6331-the-second-test-is-self-testing-and-that-was-not-optional">633.1 The second test is self-testing, and that was not optional<a class="anchor" aria-label="anchor" href="#id_6331-the-second-test-is-self-testing-and-that-was-not-optional"></a></h3>
+<p>A meta-test that walks source and asserts “no offenders” passes trivially if the walker is broken – which is a real risk here, because the walker recurses through arbitrary R expressions and I wrapped the recursion in <code><a href="https://rdrr.io/r/base/try.html" class="external-link">try()</a></code> to survive the odd corner. So it also builds a synthetic file with three <code><a href="https://rdrr.io/r/base/stop.html" class="external-link">stop()</a></code> calls – one correct, one bare, one re-raise – and requires the walker to find exactly the bare one.</p>
+<p>This is the same discipline as the srcref fix in §620: when a checker’s value depends entirely on its own correctness, demonstrating it on a known input costs three lines and is the difference between a test and a comment that looks like a test.</p>
+</div>
+</div>
 </div>
 
 
