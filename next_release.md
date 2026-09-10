@@ -26057,3 +26057,56 @@ cells misreported as unguarded. And `segmented` passes through an
 upstream message (“at least one coef is NA: breakpoint(s) at the
 boundary?”) which is the engine’s voice rather than this package’s, but
 does name a plausible cause, so it is left alone.
+
+## 629. The multivariate half is clean, and the test found what the sweep could not
+
+Two follow-ups to §628, and the second is the more interesting.
+
+### 629.1 Fifteen multivariate engines, ten matrix shapes, zero base-R errors
+
+§628 swept univariate methods against degenerate series. The
+multivariate engines take a matrix, and the things that can go wrong are
+different: a column that never moves, a duplicated column, a perfectly
+collinear column, p \> n, a single column handed to a method that is
+high-dimensional only, six observations. Fifteen engines (ecp, kcp,
+npmojo, inspect, geomcp, fastcpd, esac, pilliat, hdcov, network, var,
+hdreg, fmean, fcov, kwc) against ten shapes: 93 ran, 57 refused with a
+message naming the method or the argument, and **none** produced a
+base-R error.
+
+That is worth recording as a negative result, because it says the
+earlier multivariate hardening worked. `drop_constant_cols()`, the
+dimension guards, `reject_multicolumn()` and `validate_data()` between
+them cover every shape I could construct. All 15 refuse an NA and an Inf
+with `validate_data()`’s single message; eight of the fifteen refuse a
+single column by name; `hdreg` refuses eight of the ten because it needs
+a `response` it was not given, which is its documented contract.
+
+### 629.2 The sweep missed a defect the test caught, because platforms differ
+
+The sweep found three unguarded paths on this Linux box. The test built
+from it – trimmed to four shapes so it could run every time – then
+failed on **Windows and macOS only**, with a fourth: `bfast/constant`,
+`missing value where TRUE/FALSE needed`, from inside `stats`’ optimiser.
+
+bfast decomposes a series into a trend and a season, and a constant
+series has neither, so the iteration has nothing to fit. The fix matches
+the precedent already in
+[`sn_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/sn_wrapper.md)
+for a column that never moves: report no breakpoints rather than
+erroring, because a flat series plainly has none. The test checks that
+the empty result is a usable one –
+[`augment()`](https://generics.r-lib.org/reference/augment.html) returns
+n rows, [`glance()`](https://generics.r-lib.org/reference/glance.html)
+one,
+[`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+builds – and not a stub.
+
+The generalisable point is about where a sweep belongs. A sweep run
+once, on one machine, against one set of installed engine versions, is a
+snapshot; the same sweep as a test runs on five platforms every push. I
+would not have found this one by looking harder locally. It is also the
+argument for the sweep test comparing
+`paste(offenders, collapse = " | ")` against `""` rather than a
+character vector against `character(0)`: testthat prints the diff, and
+the diff is what made a Windows-only failure actionable from a log.

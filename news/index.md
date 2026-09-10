@@ -2197,6 +2197,21 @@ error.
   future refactor could keep the sweep green by refusing every
   degenerate input with one generic complaint, which would lose the part
   that makes them useful.
+- That test then found a **fourth**, on Windows and macOS but not on
+  Linux: `bfast` decomposes a series into trend and season and a
+  constant series has neither, so its iteration answered with
+  `missing value where TRUE/FALSE needed` from inside the optimiser. It
+  now reports no breakpoints, the way `sn` already did for a column that
+  never moves — and the empty result is a usable one, with
+  [`augment()`](https://generics.r-lib.org/reference/augment.html),
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) and
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  all working on it.
+- The **multivariate** half of the sweep came back clean: 15 engines
+  against 10 degenerate matrix shapes — a constant column, a duplicated
+  column, a collinear column, p \> n, a single column handed to a
+  high-dimensional method, six observations — and **zero** base-R errors
+  in 150 cells. Every refusal names the method or the argument.
 
 Interval coverage, measured for the first time.
 
