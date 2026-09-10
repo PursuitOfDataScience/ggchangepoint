@@ -16477,6 +16477,31 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>This is the same discipline as the srcref fix in §620: when a checker’s value depends entirely on its own correctness, demonstrating it on a known input costs three lines and is the difference between a test and a comment that looks like a test.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_634-the-same-detector-pointed-at-warnings">634. The same detector, pointed at warnings<a class="anchor" aria-label="anchor" href="#id_634-the-same-detector-pointed-at-warnings"></a></h2>
+<p>§633 replaced a phrase list with <code><a href="https://rdrr.io/r/base/conditions.html" class="external-link">conditionCall()</a></code>. The obvious next use is the condition class nobody had swept: <strong>warnings</strong>. Errors stop, so an unguarded one shows up the first time anybody runs that path. A warning does not stop anything, so a leak can sit in the package indefinitely – noise the user cannot act on, attached to a result that is otherwise correct.</p>
+<p>The convention holds for warnings too: every <code><a href="https://rdrr.io/r/base/warning.html" class="external-link">warning()</a></code> in <code>R/</code> passes <code>call. = FALSE</code>, and the one classed condition (<code>ggchangepoint_cp_dropped</code> in <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code>) sets <code>call = NULL</code> explicitly. So the same test applies.</p>
+<p>Swept the engines against five inputs – two clean, and the three degenerate shapes – plus ten verbs against three. Eleven leaked warnings in nine cells, and the interesting part is the triage, because most leaks are not defects:</p>
+<table class="table"><colgroup><col width="50%"><col width="50%"></colgroup><thead><tr><th>leaked warning</th>
+<th>verdict</th>
+</tr></thead><tbody><tr><td>changepoint: “The number of changepoints identified is Q, it is advised to increase Q”</td>
+<td>
+<strong>keep</strong> – the answer is censored, and <code>Q</code> is an argument of this wrapper</td>
+</tr><tr><td>changepoint: “SegNeigh is computationally slow, use PELT instead”</td>
+<td>keep – real advice about a real cost</td>
+</tr><tr><td>DeCAFS: “Lag parameter K is too big. Setting lag to n-1”</td>
+<td>keep – reports what the engine DID, not a suggestion</td>
+</tr><tr><td>EnvCpt/summary.lm: “essentially perfect fit: summary may be unreliable”</td>
+<td>keep – already covered by a test</td>
+</tr><tr><td>binsegRcpp: “…convert your data to use a run-length encoding”</td>
+<td><strong>muffle</strong></td>
+</tr></tbody></table><p>The last one is the defect. It fires whenever the series contains ties – a constant stretch is enough – and it advises an input format <code><a href="reference/binsegrcpp_wrapper.html">binsegrcpp_wrapper()</a></code> does not accept, since <code>x</code> is documented as a numeric vector. Worse, <code>set=subtrain</code> names binsegRcpp’s internal train/subtrain split, which this wrapper never exposes. So the reader is told to change something they cannot reach, about a split they cannot see. Muffled by message rather than blanket-suppressed, so the “increase max_segments” advice from the same engine still arrives.</p>
+<div class="section level3">
+<h3 id="id_6341-the-rule-the-triage-suggests">634.1 The rule the triage suggests<a class="anchor" aria-label="anchor" href="#id_6341-the-rule-the-triage-suggests"></a></h3>
+<p>A leaked warning is worth keeping when the reader can act on it <em>through this package’s own interface</em>. “Increase Q” passes because <code>Q</code> is an argument here. “Convert to a run-length encoding” fails because there is no argument that accepts one. That is a sharper test than “is the warning true” – all five are true – and it is the one that separates advice from noise.</p>
+<p>Recorded because the next sweep will find more leaks as engines change versions, and the question will be the same one.</p>
+</div>
+</div>
 </div>
 
 
