@@ -4370,3 +4370,37 @@ test_that("an engine's load says nothing about the library", {
   expect_equal(suppressWarnings(cpt_confint(before, method = "native")),
                suppressWarnings(cpt_confint(after, method = "native")))
 })
+
+test_that("kcp survives a socket-port collision, and does not retry real errors", {
+  skip_on_cran()
+  skip_if_not(engine_usable("kcpRS"))
+  # `kcpRS::kcpRS()` opens a PSOCK cluster unconditionally --
+  # `kcpRS.default()` runs `makeCluster(ncpu)` whenever
+  # `ncpu <= detectCores()`, so no value of `ncpu` avoids it -- and
+  # `serverSocket()` fails outright if the port it picked is taken. Two
+  # `R CMD build` runs on this machine collided on port 11246 and one died
+  # mid-vignette with "creation of server socket failed", which is the
+  # shape of failure CRAN's parallel package checks produce. With the retry
+  # in place both parallel builds complete.
+  set.seed(17)
+  x <- c(stats::rnorm(120), stats::rnorm(120, 3))
+  f <- suppressWarnings(cpt_detect(x, method = "kcp", nperm = 50))
+  expect_s3_class(f, "ggcpt")
+  expect_gt(nrow(f$changepoints), 0L)
+
+  # The retry is gated on the message, so a genuine engine or argument
+  # failure is still raised on the first attempt rather than tried three
+  # times. Timed, because "did it retry" is a claim about work done.
+  t0 <- proc.time()[["elapsed"]]
+  expect_error(cpt_detect(stats::rnorm(10), method = "kcp", wsize = 25),
+               "needs at least `wsize` observations")
+  expect_lt(proc.time()[["elapsed"]] - t0, 10)
+
+  # ...and the retry is bounded, so a permanently unavailable port cannot
+  # spin. Read off the source, since forcing a collision is not reliable.
+  skip_if_no_sources()
+  src <- pkg_source_lines("R", "wrap-nonparam.R")
+  i <- grep("attempt < 3L", src)
+  expect_length(i, 1L)
+  expect_true(any(grepl("server socket", src[i:(i + 2)])))
+})

@@ -267,9 +267,33 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
 
   local_seed(seed)
 
-  fit <- kcpRS::kcpRS(data = as.data.frame(X_fit), RS_fun = rs_fun,
-                      RS_name = running_stat, wsize = wsize, nperm = nperm,
-                      Kmax = kmax, alpha = alpha, ...)
+  # kcpRS::kcpRS() opens a PSOCK cluster unconditionally --
+  # `kcpRS.default()` runs `makeCluster(ncpu)` whenever
+  # `ncpu <= detectCores()`, so no value of `ncpu`, not even 1, avoids it --
+  # and `base::serverSocket()` fails outright when the port it picked is
+  # taken. Two `R CMD build` runs on the same machine collided on port
+  # 11246 and one of them died mid-vignette with "creation of server socket
+  # failed", which is the shape of failure CRAN's parallel package checks
+  # produce. The port is chosen inside makeCluster(), so a retry gets a
+  # different one; three attempts, and only for that error, so a genuine
+  # engine failure is still raised on the first try.
+  attempt <- 1L
+  repeat {
+    fit <- tryCatch(
+      kcpRS::kcpRS(data = as.data.frame(X_fit), RS_fun = rs_fun,
+                   RS_name = running_stat, wsize = wsize, nperm = nperm,
+                   Kmax = kmax, alpha = alpha, ...),
+      error = function(e) {
+        if (attempt < 3L &&
+            grepl("server socket|cannot be opened|port",
+                  conditionMessage(e))) {
+          return(NULL)
+        }
+        stop(e)
+      })
+    if (!is.null(fit)) break
+    attempt <- attempt + 1L
+  }
 
   # kcpRS reports the first index of the new phase (right convention);
   # normalise to the package's left convention.
