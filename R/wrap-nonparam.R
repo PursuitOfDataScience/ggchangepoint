@@ -360,7 +360,7 @@ npmojo_wrapper <- function(x, G = NULL, lag = 0, ...) {
   # "bootstrap") and `threshold.val` (the number), and `$threshold.val`
   # partial-matches nothing today only because the longer name exists --
   # rename or drop it upstream and `$` would silently resolve to the
-  # character rule and report a cutoff of NA. cpt_bandwidth_scan() already
+  # character rule and report a cutoff of NA. cpt_scale_space() already
   # reads it exactly for this reason; this door did not.
   ggcpt_build(
     data_vec, cp_indices,

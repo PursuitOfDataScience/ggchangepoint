@@ -754,6 +754,22 @@ as_series_list <- function(series) {
   nms[!nzchar(nms) | is.na(nms)] <- paste0("series_",
                                            which(!nzchar(nms) | is.na(nms)))
   names(out) <- make.unique(nms)
+  # `as.numeric()` was the whole of the coercion, so a series with an NA
+  # reached cpt_features() and failed inside stats::mad() with base R's
+  # "missing values and NaN's not allowed if 'na.rm' is FALSE" -- naming
+  # neither the argument, the series, nor which of several was bad. Every
+  # other door into the package refuses a non-finite series with one
+  # message; this one is a panel, so it names the member as cpt_batch()
+  # does.
+  for (i in seq_along(out)) {
+    label <- paste0("Series `", names(out)[i], "` (", i, " of ",
+                    length(out), ")")
+    withCallingHandlers(
+      validate_data(out[[i]]),
+      error = function(e) {
+        stop(label, ": ", conditionMessage(e), call. = FALSE)
+      })
+  }
   out
 }
 
@@ -818,6 +834,12 @@ coef.ggcpt_penalty_model <- function(object, ...) {
 #' @export
 predict.ggcpt_penalty_model <- function(object, newdata, ...) {
   series_list <- if (is.numeric(newdata) && is.null(dim(newdata))) {
+    # The bare-vector branch bypasses as_series_list(), so it bypassed its
+    # validation too and a non-finite `newdata` failed inside
+    # stats::mad() -- the same base-R message, at the second door. The
+    # features are scale statistics of the series, so an NA makes the
+    # prediction undefined rather than merely awkward.
+    validate_data(newdata)
     list(newdata)
   } else {
     as_series_list(newdata)

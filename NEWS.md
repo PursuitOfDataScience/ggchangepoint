@@ -1715,6 +1715,17 @@ Three engines answered an ordinary degenerate series with a base-R error.
   return a fit". Re-measured per engine at 60 time points — `fcov` fails at
   two columns, `fmean` returns a fit at two as well — which is why the
   shared guard cannot be raised without refusing grids `fmean` handles.
+- The **higher-level verbs** each normalise their own input, so
+  `cpt_detect()` being well-guarded says nothing about them — and `cpt_batch`,
+  `ggcpt_compare`, `cpt_simulate` and `cpt_label_error` are where four of the
+  review's findings lived. A 14-verb by 4-shape sweep turned up one more
+  unguarded path: `cpt_learn_penalty()` coerced its series with
+  `as.numeric()` and nothing else, so an `NA` reached `cpt_features()` and
+  failed inside `stats::mad()` with base R's `missing values and NaN's not
+  allowed if 'na.rm' is FALSE` — naming neither the argument, the series,
+  nor which of several was bad. It now names the member the way
+  `cpt_batch()` does, and `predict()`'s bare-vector branch, which bypassed
+  the shared coercion entirely, is guarded at the same standard.
 - The **accessor** face is clean too: 16 accessors against 9 degenerate
   result shapes — a changepoint at position 1, two adjacent ones leaving a
   single-observation segment, 58 changepoints on 60 points, a hand-built

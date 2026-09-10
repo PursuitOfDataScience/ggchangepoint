@@ -4166,3 +4166,40 @@ test_that("every accessor holds its invariants on a degenerate result", {
     expect_equal(sum(ag$is_changepoint), nrow(f$changepoints), info = rn)
   }
 })
+
+test_that("the penalty learner refuses a non-finite series at both doors", {
+  skip_on_cran()
+  # The higher-level verbs each normalise their own input, so cpt_detect()
+  # being well-guarded says nothing about them. A 14-verb by 4-shape sweep
+  # found one unguarded path: as_series_list() coerced with as.numeric() and
+  # nothing else, so a series with an NA reached cpt_features() and failed
+  # inside stats::mad() with base R's "missing values and NaN's not allowed
+  # if 'na.rm' is FALSE" -- naming neither the argument, the series, nor
+  # which of several was bad. Every other verb answers with one message.
+  set.seed(11)
+  good <- c(stats::rnorm(30), stats::rnorm(30, 3))
+  bad <- c(stats::rnorm(30), NA, stats::rnorm(29))
+  lab <- cpt_labels(start = 10, end = 20, change = "change")
+  expect_error(cpt_learn_penalty(list(a = good, b = bad),
+                                 list(a = lab, b = lab),
+                                 penalties = c(2, 20)),
+               "Series `b` \\(2 of 2\\)")
+  expect_error(cpt_learn_penalty(list(a = good, b = bad),
+                                 list(a = lab, b = lab),
+                                 penalties = c(2, 20)),
+               "must be finite")
+
+  # And the same guard at the second door: predict()'s bare-vector branch
+  # bypassed as_series_list() entirely, so it bypassed the validation too.
+  set.seed(2026)
+  series <- list(a = c(stats::rnorm(60), stats::rnorm(60, 4)),
+                 b = c(stats::rnorm(80), stats::rnorm(80, 2)))
+  labels <- list(a = as_cpt_labels(60, n = 120),
+                 b = as_cpt_labels(80, n = 160))
+  m <- suppressWarnings(cpt_learn_penalty(series, labels,
+                                          penalties = c(2, 8, 32, 128)))
+  expect_true(is.finite(stats::predict(m, series$a)))
+  expect_error(stats::predict(m, c(stats::rnorm(30), NA)), "must be finite")
+  expect_error(stats::predict(m, list(z = c(stats::rnorm(30), NA))),
+               "Series `z`")
+})
