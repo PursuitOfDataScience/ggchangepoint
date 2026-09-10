@@ -3982,8 +3982,30 @@ test_that("no engine answers a degenerate series with a base-R error", {
       }
     }
   }
-  expect_equal(offenders, character(0),
-               info = paste(offenders, collapse = " | "))
+  # Compared as one string, not as a character vector: testthat prints the
+  # diff, and a vector's `info` is easy to lose in a CI log. This test found
+  # its fourth offender on Windows and macOS only, and the log had to be
+  # readable for that to be actionable.
+  expect_equal(paste(offenders, collapse = " | "), "")
+})
+
+test_that("a constant series is no breakpoints, not an optimiser failure", {
+  skip_if_not(engine_usable("bfast"))
+  # bfast decomposes a series into trend and season, and a constant series
+  # has neither -- its iteration answered with base R's "missing value
+  # where TRUE/FALSE needed" from inside the optimiser. Platform-dependent:
+  # the local shape sweep did not reproduce it on Linux and the test built
+  # from that sweep caught it on Windows and macOS. Reported as no
+  # breakpoints, the way sn_wrapper() already treats a column that never
+  # moves.
+  f <- cpt_detect(rep(1, 60), method = "bfast")
+  expect_s3_class(f, "ggcpt")
+  expect_equal(nrow(f$changepoints), 0L)
+  expect_equal(nrow(f$data), 60L)
+  # ...and the empty result is a usable one, not a stub.
+  expect_equal(nrow(augment(f)), 60L)
+  expect_equal(nrow(glance(f)), 1L)
+  expect_s3_class(ggplot2::ggplot_build(ggplot2::autoplot(f)), "ggplot_built")
 })
 
 test_that("the three shapes that used to reach a base-R error are named now", {

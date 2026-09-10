@@ -305,6 +305,19 @@ bfast_wrapper <- function(x, frequency = 12,
          "component; pass a `ts` with the right frequency, set `frequency`, ",
          "or use `season = \"none\"`.", call. = FALSE)
   }
+  # A constant series has neither a trend nor a season to decompose, and
+  # bfast's iteration answers that with base R's "missing value where
+  # TRUE/FALSE needed" from inside the optimiser -- on Windows and macOS
+  # but not on this Linux box, which is why the shape sweep in §628 missed
+  # it and the test built from that sweep caught it on CI. Report no
+  # breakpoints, the way sn_wrapper() already does for a column that never
+  # moves: a flat series plainly has none.
+  if (stats::sd(data_vec) == 0 || !is.finite(stats::sd(data_vec))) {
+    return(ggcpt_build(data_vec, integer(0), method = "bfast",
+                       change_in = change_in,
+                       penalty = list(type = "h", value = h),
+                       call = match.call()))
+  }
 
   fit <- engine_short_series(
     bfast::bfast(yt, h = h, season = season, max.iter = max_iter, ...),
