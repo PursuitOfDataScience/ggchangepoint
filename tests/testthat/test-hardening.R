@@ -3951,12 +3951,16 @@ test_that("no engine answers a degenerate series with a base-R error", {
     flat_run     = c(rep(0, 20), stats::rnorm(40)),
     all_na       = rep(NA_real_, 60)
   )
-  base_r <- paste0(
-    "object of type|invalid 'x'|missing value where|subscript out of ",
-    "bounds|non-numeric argument|argument is of length zero|undefined ",
-    "columns|\\$ operator is invalid|foreign function call|replacement has ",
-    "length zero|only 0's may be mixed|no applicable method|cannot be ",
-    "coerced|arguments imply differing")
+  # Provenance, not phrasing. This package raises every error with
+  # `call. = FALSE`, so `conditionCall(e)` is NULL for an error it meant to
+  # raise and non-NULL for one that leaked from base R or an engine. The
+  # earlier version of this test carried a list of base-R phrasings, which
+  # is a heuristic built from the failures already seen: it classified
+  # `cpt_learn_penalty()`'s "missing values and NaN's not allowed if
+  # 'na.rm' is FALSE" as a deliberate refusal and would have passed over
+  # it. The test below asserts the `call. = FALSE` convention that makes
+  # this discriminator valid.
+  leaked <- function(e) !is.null(conditionCall(e))
 
   tab <- cpt_methods()
   avail <- tab$method[tab$status == "available" & tab$installed %in% TRUE &
@@ -3975,8 +3979,8 @@ test_that("no engine answers a degenerate series with a base-R error", {
         utils::capture.output(suppressWarnings(suppressMessages(
           cpt_detect(shapes[[nm]], method = m))))
         NA_character_
-      }, error = function(e) conditionMessage(e))
-      if (!is.na(msg) && grepl(base_r, msg)) {
+      }, error = function(e) if (leaked(e)) conditionMessage(e) else NA_character_)
+      if (!is.na(msg)) {
         offenders <- c(offenders,
                        sprintf("%s/%s: %s", m, nm, substr(msg, 1, 60)))
       }
@@ -4202,4 +4206,61 @@ test_that("the penalty learner refuses a non-finite series at both doors", {
   expect_error(stats::predict(m, c(stats::rnorm(30), NA)), "must be finite")
   expect_error(stats::predict(m, list(z = c(stats::rnorm(30), NA))),
                "Series `z`")
+})
+
+test_that("every error this package raises carries no call", {
+  # The convention that makes the provenance check above valid: an error
+  # raised with `call. = FALSE` has a NULL `conditionCall()`, so anything
+  # with a call leaked from base R or from an engine. 241 `stop()` calls in
+  # R/ follow it; this asserts there is no exception, because one bare
+  # `stop()` would make a real leak indistinguishable from a deliberate
+  # refusal and quietly blunt the sweep.
+  skip_if_no_sources()
+  root <- pkg_source_root()
+  files <- list.files(file.path(root, "R"), pattern = "\\.R$",
+                      full.names = TRUE)
+  expect_gt(length(files), 10L)
+
+  offenders <- character()
+  walk <- function(e, file) {
+    if (is.call(e)) {
+      fn <- e[[1]]
+      if (is.name(fn) && identical(as.character(fn), "stop")) {
+        args <- as.list(e)[-1]
+        nms <- names(args) %||% rep("", length(args))
+        # `stop(e)` re-raises a condition object and takes no `call.`; only
+        # a message-building stop() needs it.
+        reraise <- length(args) == 1L && is.name(args[[1]])
+        if (!reraise && !("call." %in% nms)) {
+          offenders <<- c(offenders,
+                          paste0(basename(file), ": ",
+                                 paste(deparse(e), collapse = " ")))
+        }
+      }
+      for (i in seq_along(e)) {
+        if (!is.null(e[[i]])) try(walk(e[[i]], file), silent = TRUE)
+      }
+    }
+  }
+  for (f in files) {
+    exprs <- parse(f, keep.source = FALSE)
+    for (ex in exprs) walk(ex, f)
+  }
+  expect_equal(paste(substr(offenders, 1, 70), collapse = " | "), "")
+
+  # ...and the walker has to be able to find one, or this test passes for
+  # the wrong reason. Demonstrated on a synthetic file rather than trusted.
+  probe <- tempfile(fileext = ".R")
+  on.exit(unlink(probe), add = TRUE)
+  writeLines(c(
+    "f <- function(x) {",
+    '  if (x < 0) stop("negative", call. = FALSE)',
+    '  if (x > 9) stop("too big")',
+    "  g <- function(e) stop(e)",
+    "  x",
+    "}"), probe)
+  offenders <- character()
+  for (ex in parse(probe, keep.source = FALSE)) walk(ex, probe)
+  expect_length(offenders, 1L)
+  expect_match(offenders, "too big")
 })
