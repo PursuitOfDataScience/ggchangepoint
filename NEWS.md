@@ -1715,6 +1715,21 @@ Three engines answered an ordinary degenerate series with a base-R error.
   return a fit". Re-measured per engine at 60 time points — `fcov` fails at
   two columns, `fmean` returns a fit at two as well — which is why the
   shared guard cannot be raised without refusing grids `fmean` handles.
+- **A leaked engine warning nobody had looked for.** Errors stop; warnings
+  do not, so a warning that leaks out of base R or an engine reaches the
+  user as noise and nothing fails. The same provenance test applied to
+  warnings — this package raises every one with a `NULL` call — found
+  eleven leaks across roughly a thousand cells, and triage kept ten of
+  them: \pkg{changepoint}'s "increase Q" (the answer is censored, and `Q`
+  *is* an argument here), its SegNeigh cost advice, \pkg{DeCAFS} reporting
+  that it adapted its lag, and \pkg{EnvCpt}'s perfect-fit note. The one
+  that had to go is \pkg{binsegRcpp}'s *"some consecutive data values are
+  identical in set=subtrain, so you could get speedups by converting your
+  data to use a run-length encoding"*: it fires whenever the series has
+  ties, it advises an input format `binsegrcpp_wrapper()` does not accept
+  (`x` is a numeric vector), and `set=subtrain` names an internal split the
+  caller never sees. Muffled by message, so everything else the engine says
+  still gets through.
 - **The sweep test now checks provenance rather than phrasing.** Every
   error this package raises uses `call. = FALSE`, so `conditionCall()` is
   `NULL` for a deliberate refusal and non-`NULL` for one that leaked out of

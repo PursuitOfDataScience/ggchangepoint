@@ -603,7 +603,25 @@ binsegrcpp_wrapper <- function(x, change_in = c("mean", "meanvar"),
   if (!is.null(min_segment_length)) {
     args$min.segment.length <- as.integer(min_segment_length)
   }
-  fit <- do.call(binsegRcpp::binseg, args)
+  # binsegRcpp warns "some consecutive data values are identical in
+  # set=subtrain, so you could get speedups by converting your data to use a
+  # run-length encoding" whenever the series has any ties -- a constant
+  # stretch is enough. It is advice about an input format this wrapper does
+  # not accept (`x` is a numeric vector) and it names an internal
+  # train/subtrain split the caller never sees, so there is nothing the
+  # reader can do with it. Muffled by message, not blanket-suppressed:
+  # anything else the engine says still reaches the caller, including the
+  # "increase max_segments" advice, which IS actionable and names an
+  # argument this wrapper has.
+  fit <- withCallingHandlers(
+    do.call(binsegRcpp::binseg, args),
+    warning = function(w) {
+      if (grepl("run-length encoding", conditionMessage(w), fixed = TRUE) ||
+          grepl("set=subtrain", conditionMessage(w), fixed = TRUE)) {
+        invokeRestart("muffleWarning")
+      }
+    }
+  )
   splits <- as.data.frame(fit$splits)
 
   if (is.null(n_segments)) {

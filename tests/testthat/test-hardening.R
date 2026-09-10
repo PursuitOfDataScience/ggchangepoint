@@ -4264,3 +4264,63 @@ test_that("every error this package raises carries no call", {
   expect_length(offenders, 1L)
   expect_match(offenders, "too big")
 })
+
+test_that("an engine hint the caller cannot act on does not reach them", {
+  skip_if_not(engine_usable("binsegRcpp"))
+  # Errors stop; warnings do not, so a leaked warning reaches the user as
+  # noise and nothing fails. A provenance sweep over 1,000-odd cells found
+  # eleven leaked warnings, and triage kept ten of them: changepoint's
+  # "increase Q" (the answer is censored -- actionable, and `Q` is an
+  # argument here), its SegNeigh cost advice, DeCAFS reporting that it
+  # adapted its lag, and envcpt's perfect-fit note.
+  #
+  # The one that had to go is binsegRcpp's "some consecutive data values
+  # are identical in set=subtrain, so you could get speedups by converting
+  # your data to use a run-length encoding". It fires whenever the series
+  # has ties, it advises an input format this wrapper does not accept (`x`
+  # is a numeric vector), and `set=subtrain` names an internal split the
+  # caller never sees.
+  leaked_msgs <- function(f) {
+    out <- character()
+    withCallingHandlers(
+      tryCatch({
+        utils::capture.output(suppressMessages(f()))
+        NULL
+      }, error = function(e) NULL),
+      warning = function(w) {
+        out <<- c(out, conditionMessage(w))
+        invokeRestart("muffleWarning")
+      })
+    out
+  }
+  spike <- rep(0, 60); spike[30] <- 100
+  for (v in list(rep(1, 60), spike)) {
+    msgs <- leaked_msgs(function() cpt_detect(v, method = "binsegrcpp"))
+    expect_false(any(grepl("run-length encoding|set=subtrain", msgs)),
+                 info = paste(msgs, collapse = " ; "))
+  }
+  # ...and the muffle is by message, so detection is untouched and any
+  # other warning the engine raises still gets through. Demonstrated on the
+  # predicate rather than hoping the engine emits a second kind.
+  set.seed(3)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 4))
+  expect_gt(nrow(cpt_detect(x, method = "binsegrcpp")$changepoints), 0L)
+  keeps_others <- withCallingHandlers(
+    {
+      seen <- character()
+      withCallingHandlers(
+        warning("something else entirely", call. = FALSE),
+        warning = function(w) {
+          if (grepl("run-length encoding", conditionMessage(w),
+                    fixed = TRUE)) {
+            invokeRestart("muffleWarning")
+          }
+        })
+      seen
+    },
+    warning = function(w) {
+      seen <<- conditionMessage(w)
+      invokeRestart("muffleWarning")
+    })
+  expect_equal(keeps_others, "something else entirely")
+})

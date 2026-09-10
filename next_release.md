@@ -23676,3 +23676,50 @@ This is the same discipline as the srcref fix in §620: when a checker's
 value depends entirely on its own correctness, demonstrating it on a known
 input costs three lines and is the difference between a test and a comment
 that looks like a test.
+
+## 634. The same detector, pointed at warnings
+
+§633 replaced a phrase list with `conditionCall()`. The obvious next use is
+the condition class nobody had swept: **warnings**. Errors stop, so an
+unguarded one shows up the first time anybody runs that path. A warning
+does not stop anything, so a leak can sit in the package indefinitely --
+noise the user cannot act on, attached to a result that is otherwise
+correct.
+
+The convention holds for warnings too: every `warning()` in `R/` passes
+`call. = FALSE`, and the one classed condition (`ggchangepoint_cp_dropped`
+in `as_ggcpt()`) sets `call = NULL` explicitly. So the same test applies.
+
+Swept the engines against five inputs -- two clean, and the three
+degenerate shapes -- plus ten verbs against three. Eleven leaked warnings
+in nine cells, and the interesting part is the triage, because most leaks
+are not defects:
+
+| leaked warning | verdict |
+|---|---|
+| changepoint: "The number of changepoints identified is Q, it is advised to increase Q" | **keep** -- the answer is censored, and `Q` is an argument of this wrapper |
+| changepoint: "SegNeigh is computationally slow, use PELT instead" | keep -- real advice about a real cost |
+| DeCAFS: "Lag parameter K is too big. Setting lag to n-1" | keep -- reports what the engine DID, not a suggestion |
+| EnvCpt/summary.lm: "essentially perfect fit: summary may be unreliable" | keep -- already covered by a test |
+| binsegRcpp: "...convert your data to use a run-length encoding" | **muffle** |
+
+The last one is the defect. It fires whenever the series contains ties -- a
+constant stretch is enough -- and it advises an input format
+`binsegrcpp_wrapper()` does not accept, since `x` is documented as a
+numeric vector. Worse, `set=subtrain` names binsegRcpp's internal
+train/subtrain split, which this wrapper never exposes. So the reader is
+told to change something they cannot reach, about a split they cannot see.
+Muffled by message rather than blanket-suppressed, so the "increase
+max_segments" advice from the same engine still arrives.
+
+### 634.1 The rule the triage suggests
+
+A leaked warning is worth keeping when the reader can act on it *through
+this package's own interface*. "Increase Q" passes because `Q` is an
+argument here. "Convert to a run-length encoding" fails because there is no
+argument that accepts one. That is a sharper test than "is the warning
+true" -- all five are true -- and it is the one that separates advice from
+noise.
+
+Recorded because the next sweep will find more leaks as engines change
+versions, and the question will be the same one.
