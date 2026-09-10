@@ -2230,6 +2230,24 @@ error.
   fails at two columns, `fmean` returns a fit at two as well — which is
   why the shared guard cannot be raised without refusing grids `fmean`
   handles.
+- **The whole S3 surface, against R’s own conventions.** 77 registered
+  methods — 19 `print`, 14 `tidy`, 14 `plot`, 14 `autoplot`, 6 `[`, 2
+  `glance`, and one each of the rest — and nothing checked any of four
+  properties that hold for all of them:
+  [`print()`](https://rdrr.io/r/base/print.html) must return its
+  argument *invisibly* (a method that forgets `invisible(x)`
+  double-prints at the top level),
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) must be
+  exactly one row and
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html) a tibble,
+  `[` must keep the subclass when every required column survives **and
+  drop it when one does not**, and
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  must return a ggplot that builds. Measured across 17 result classes:
+  all clean, in both directions. Now a test, because these are precisely
+  the conventions a refactor breaks in silence — and keeping a class
+  whose required column is gone is what makes a later
+  [`print()`](https://rdrr.io/r/base/print.html) fail.
 - **So does the search-path contract.** Two wrappers attach packages the
   caller did not ask for — `bcp` because
   [`require()`](https://rdrr.io/r/base/library.html) inside the engine
