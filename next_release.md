@@ -26617,3 +26617,56 @@ flaky package unless you know where to look.
 Worth adding to the pre-submission list alongside
 `urlchecker::url_check()`: build twice, in parallel, at least once
 before submitting.
+
+## 638. The same question one layer down: what does a failure leave behind?
+
+§637 asked what happens when two things run at once. The neighbouring
+question is what a *failure* leaves behind, and the answer for the one
+cache in the package was: less than it started with.
+
+`tcpd_download(url, dst)` passed the final cache path straight to
+[`download.file()`](https://rdrr.io/r/utils/download.file.html). That
+function opens its destination for writing before it knows whether the
+transfer will work, so the cached file is truncated at the moment the
+attempt begins – and `tcpd_download()`’s own `if (!got) unlink(dst)`
+then removed what was left. Measured on a 72-byte cached `nile.json`
+against one unreachable URL:
+
+``` R
+before: exists TRUE   size 72
+after:  exists FALSE  -- CACHED COPY DESTROYED
+```
+
+So `cpt_load_tcpd("nile", refresh = TRUE)` on a flaky network loses the
+dataset it was refreshing and reports “Could not download the TCPD
+annotations. Check the network connection, or point `cache_dir` at a
+copy you already have.” – advice about a copy it has just deleted.
+
+No concurrency required: one user, one network hiccup. The download is
+the slow, network-dependent step the cache exists to avoid repeating,
+which is what makes losing it expensive.
+
+The fix is the standard one, and it happens to close the concurrency
+case too: download to `paste0(dst, ".part-", Sys.getpid())`, and
+[`file.rename()`](https://rdrr.io/r/base/files.html) into place only
+when the transfer produced a non-empty file. A rename is atomic within a
+filesystem, so a reader sees either the old file or the new one and
+never a partial one, and two processes fetching the same dataset each
+write their own part file.
+
+Four properties measured after the change: a failed download returns
+FALSE with the cache byte-identical, no `.part-` file is left behind, a
+`file://` download still lands with the right content, and a refresh
+over an existing file still replaces it – the guard must not quietly
+turn `refresh = TRUE` into a no-op, which is the obvious way to get this
+wrong.
+
+### 638.1 Why the static grep found it
+
+This came from grepping `R/` for fixed-name paths –
+[`tempdir()`](https://rdrr.io/r/base/tempfile.html), `R_user_dir`,
+anything not [`tempfile()`](https://rdrr.io/r/base/tempfile.html) –
+rather than from running anything. One hit, and it was the whole cache.
+That is a cheap check worth repeating whenever a package grows a cache
+or a lock file: a fixed path is where concurrency and partial-failure
+bugs live, and there are usually very few of them to look at.

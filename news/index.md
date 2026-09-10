@@ -2230,6 +2230,20 @@ error.
   fails at two columns, `fmean` returns a fit at two as well — which is
   why the shared guard cannot be raised without refusing grids `fmean`
   handles.
+- **A failed TCPD refresh destroyed the cache it was refreshing.**
+  [`download.file()`](https://rdrr.io/r/utils/download.file.html) opens
+  its destination for writing before it knows whether the transfer will
+  work, so `tcpd_download()` writing straight to the cache path
+  truncated the cached file — and its own
+  [`unlink()`](https://rdrr.io/r/base/unlink.html) then removed the
+  remains. Measured: a 72-byte cached `nile.json` plus one unreachable
+  URL left **no file at all**, so a single
+  `cpt_load_tcpd(refresh = TRUE)` on a flaky network lost the dataset
+  and reported only “could not download”. One user and one network
+  hiccup; no concurrency needed. The download now goes to a
+  process-unique file beside the target and is renamed into place only
+  on success, which leaves a failed refresh with the cache intact and
+  also makes two processes downloading the same dataset safe.
 - **A flaky vignette build, and the flake is a socket port.** Running
   every Rd example three times in fresh processes found nothing — 118 of
   118 pass, three times over. Running `R CMD build` **twice in

@@ -16586,6 +16586,21 @@ v Got RcppArmadillo 15.6.0-1 (source) (1.10 MB)</code></pre>
 <p>Worth adding to the pre-submission list alongside <code>urlchecker::url_check()</code>: build twice, in parallel, at least once before submitting.</p>
 </div>
 </div>
+<div class="section level2">
+<h2 id="id_638-the-same-question-one-layer-down-what-does-a-failure-leave-behind">638. The same question one layer down: what does a failure leave behind?<a class="anchor" aria-label="anchor" href="#id_638-the-same-question-one-layer-down-what-does-a-failure-leave-behind"></a></h2>
+<p>§637 asked what happens when two things run at once. The neighbouring question is what a <em>failure</em> leaves behind, and the answer for the one cache in the package was: less than it started with.</p>
+<p><code>tcpd_download(url, dst)</code> passed the final cache path straight to <code><a href="https://rdrr.io/r/utils/download.file.html" class="external-link">download.file()</a></code>. That function opens its destination for writing before it knows whether the transfer will work, so the cached file is truncated at the moment the attempt begins – and <code>tcpd_download()</code>’s own <code>if (!got) unlink(dst)</code> then removed what was left. Measured on a 72-byte cached <code>nile.json</code> against one unreachable URL:</p>
+<div class="sourceCode" id="cb166"><pre class="sourceCode R"><code class="sourceCode r"><span id="cb166-1"><a href="#cb166-1" tabindex="-1"></a>before<span class="sc">:</span> exists <span class="cn">TRUE</span>   size <span class="dv">72</span></span>
+<span id="cb166-2"><a href="#cb166-2" tabindex="-1"></a>after<span class="sc">:</span>  exists <span class="cn">FALSE</span>  <span class="sc">--</span> CACHED COPY DESTROYED</span></code></pre></div>
+<p>So <code>cpt_load_tcpd("nile", refresh = TRUE)</code> on a flaky network loses the dataset it was refreshing and reports “Could not download the TCPD annotations. Check the network connection, or point <code>cache_dir</code> at a copy you already have.” – advice about a copy it has just deleted.</p>
+<p>No concurrency required: one user, one network hiccup. The download is the slow, network-dependent step the cache exists to avoid repeating, which is what makes losing it expensive.</p>
+<p>The fix is the standard one, and it happens to close the concurrency case too: download to <code>paste0(dst, ".part-", Sys.getpid())</code>, and <code><a href="https://rdrr.io/r/base/files.html" class="external-link">file.rename()</a></code> into place only when the transfer produced a non-empty file. A rename is atomic within a filesystem, so a reader sees either the old file or the new one and never a partial one, and two processes fetching the same dataset each write their own part file.</p>
+<p>Four properties measured after the change: a failed download returns FALSE with the cache byte-identical, no <code>.part-</code> file is left behind, a <code>file://</code> download still lands with the right content, and a refresh over an existing file still replaces it – the guard must not quietly turn <code>refresh = TRUE</code> into a no-op, which is the obvious way to get this wrong.</p>
+<div class="section level3">
+<h3 id="id_6381-why-the-static-grep-found-it">638.1 Why the static grep found it<a class="anchor" aria-label="anchor" href="#id_6381-why-the-static-grep-found-it"></a></h3>
+<p>This came from grepping <code>R/</code> for fixed-name paths – <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempdir()</a></code>, <code>R_user_dir</code>, anything not <code><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile()</a></code> – rather than from running anything. One hit, and it was the whole cache. That is a cheap check worth repeating whenever a package grows a cache or a lock file: a fixed path is where concurrency and partial-failure bugs live, and there are usually very few of them to look at.</p>
+</div>
+</div>
 </div>
 
 
