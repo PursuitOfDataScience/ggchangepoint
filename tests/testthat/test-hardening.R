@@ -4404,3 +4404,37 @@ test_that("kcp survives a socket-port collision, and does not retry real errors"
   expect_length(i, 1L)
   expect_true(any(grepl("server socket", src[i:(i + 2)])))
 })
+
+test_that("a failed TCPD refresh does not destroy the cached copy", {
+  # `download.file()` opens its destination for writing before it knows
+  # whether the transfer will work, so writing straight to the cache path
+  # truncated the cached file and `tcpd_download()`'s own unlink() then
+  # removed the remains. Measured: a 72-byte cached nile.json plus one
+  # unreachable URL left no file at all -- so a single `refresh = TRUE` on
+  # a flaky network destroyed the cache it was refreshing and reported only
+  # "could not download". One user, one network hiccup, no concurrency
+  # needed.
+  d <- withr::local_tempdir()
+  f <- file.path(d, "nile.json")
+  writeLines(rep('{"good": "cached copy"}', 3), f)
+  before_size <- file.size(f)
+  before_text <- readLines(f, warn = FALSE)
+
+  expect_false(ggchangepoint:::tcpd_download(
+    "https://invalid.invalid/nope.json", f))
+  expect_true(file.exists(f))
+  expect_equal(file.size(f), before_size)
+  expect_equal(readLines(f, warn = FALSE), before_text)
+  # and no partial file is left in the cache directory
+  expect_length(list.files(d, pattern = "\\.part-"), 0L)
+
+  # A download that can succeed still lands, and still replaces an existing
+  # file -- the guard must not turn `refresh = TRUE` into a no-op.
+  src <- file.path(d, "src.json")
+  writeLines('{"a": 1}', src)
+  tgt <- file.path(d, "landed.json")
+  expect_true(ggchangepoint:::tcpd_download(paste0("file://", src), tgt))
+  expect_equal(readLines(tgt, warn = FALSE), '{"a": 1}')
+  expect_true(ggchangepoint:::tcpd_download(paste0("file://", src), f))
+  expect_equal(readLines(f, warn = FALSE), '{"a": 1}')
+})

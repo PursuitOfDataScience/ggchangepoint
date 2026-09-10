@@ -684,16 +684,28 @@ tcpd_download <- function(url, dst) {
   # noisy download and then reported the specific, wrong diagnosis "not in
   # the repository (its source does not permit redistribution)". Judge the
   # file, not the noise: only an ERROR is fatal on its own.
+  # Download beside the target and rename into place, never onto it.
+  # `download.file()` opens the destination for writing before it knows
+  # whether the transfer will work, so writing straight to the cache path
+  # truncated the cached copy and the `unlink()` below then removed the
+  # remains: measured, a 72-byte cached `nile.json` and one unreachable URL
+  # left no file at all, so a single `refresh = TRUE` on a flaky network
+  # destroyed the cache it was refreshing and reported only "could not
+  # download". The rename is atomic within a filesystem, which also makes
+  # two processes downloading the same dataset safe -- each writes its own
+  # temp file and the loser's rename simply wins last.
+  tmp <- paste0(dst, ".part-", Sys.getpid())
+  on.exit(if (file.exists(tmp)) unlink(tmp), add = TRUE)
   ok <- tryCatch({
     withCallingHandlers(
-      utils::download.file(url, dst, quiet = TRUE, mode = "wb"),
+      utils::download.file(url, tmp, quiet = TRUE, mode = "wb"),
       warning = function(w) invokeRestart("muffleWarning")
     )
     TRUE
   }, error = function(e) FALSE)
-  got <- file.exists(dst) && file.size(dst) > 0
-  if (!got && file.exists(dst)) unlink(dst)
-  ok && got
+  got <- file.exists(tmp) && file.size(tmp) > 0
+  if (!(ok && got)) return(FALSE)
+  isTRUE(file.rename(tmp, dst))
 }
 
 #' Per-annotator ground truth for a benchmark dataset
