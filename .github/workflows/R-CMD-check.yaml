@@ -83,7 +83,14 @@ jobs:
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          extra-packages: any::rcmdcheck
+          # fpop was archived from CRAN on 2026-09-14 at its maintainer's
+          # request. It is in Suggests, and pak resolves Suggests as hard
+          # requirements when building the lockfile, so every job died at
+          # dependency setup rather than at check time. Point pak at the
+          # archived tarball so the optional engine still gets tested,
+          # rather than dropping Suggests and checking less.
+          extra-packages: any::rcmdcheck,
+            url::https://cran.r-project.org/src/contrib/Archive/fpop/fpop_2019.08.26.tar.gz
           needs: check
           # Pinned so the dependency cache can be invalidated deliberately;
           # there was no way to do that before.
