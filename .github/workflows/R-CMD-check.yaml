@@ -130,46 +130,55 @@ jobs:
 
       - name: Drop Suggests that install but cannot load here
         shell: Rscript {0}
-        # The real failure mode on these runners is not a missing package, it
-        # is a package that installs and then will not load, which no guard in
-        # this package can see: requireNamespace() is FALSE either way, but an
-        # installed-and-broken package makes R CMD check treat it as present.
+        # A Suggests package that installs and then will not load is worse
+        # than one that is absent. Every guard in this package calls
+        # requireNamespace(), which is FALSE either way, but R CMD check sees
+        # an installed package and runs the code paths regardless.
         #
-        #   rjags  Library not loaded: /usr/local/lib/libjags.4.dylib
-        #          macos-latest is arm64, brew's prefix is /opt/homebrew, and
-        #          the CRAN binary has the old path linked in. Symlinking it
-        #          across was tried and does not help.
-        #   roll   symbol not found in flat namespace ___kmpc_critical
-        #          built with OpenMP; a flat-namespace symbol is not resolved
-        #          by putting libomp on disk.
+        #   rjags  Library not loaded: /usr/local/lib/libjags.4.dylib  (arm64
+        #          macOS: brew is /opt/homebrew, the CRAN binary wants the old
+        #          path) and, on Windows, no JAGS at all.
+        #   roll   symbol not found in flat namespace ___kmpc_critical.
         #
-        # CRAN's own machines simply do not have these installed, which is why
-        # all 13 flavours are OK there while we go red. Uninstalling anything
-        # that cannot load reproduces that, and it is honest: a package that
-        # will not load is not available, whatever the library says. Every use
-        # of these is already guarded, so the tests skip rather than vanish.
+        # CRAN has all 13 flavours OK because CRAN does not have these
+        # installed. This reproduces that.
+        #
+        # Two details that the first version of this step got wrong. The load
+        # test runs in a subprocess, because a failed loadNamespace() leaves
+        # state in the caller and cannot be undone. And it repeats until a
+        # pass removes nothing: removing rjags orphans mcp, which imports it,
+        # and a single pass left mcp installed and broken, which is how the
+        # Windows test run ended up dying at top level on
+        # "there is no package called 'rjags'" instead of skipping.
         run: |
           desc <- read.dcf("DESCRIPTION")
           if (!"Suggests" %in% colnames(desc)) quit(save = "no")
           sug <- trimws(strsplit(gsub("\\([^)]*\\)", "", desc[, "Suggests"]), ",")[[1]])
           sug <- sug[nzchar(sug)]
 
-          for (pkg in sug) {
-            where <- find.package(pkg, quiet = TRUE)
-            if (!length(where)) next
-            ok <- tryCatch({
-              loadNamespace(pkg)
-              TRUE
-            }, error = function(e) {
-              message("  ", pkg, " will not load: ", conditionMessage(e))
-              FALSE
-            })
-            if (!ok) {
-              message("  removing ", pkg, " so requireNamespace() tells the truth")
-              try(remove.packages(pkg, lib = dirname(where[1])), silent = TRUE)
-            }
+          rscript <- file.path(R.home("bin"), "Rscript")
+          loads <- function(pkg) {
+            f <- tempfile(fileext = ".R")
+            writeLines(sprintf('loadNamespace("%s")', pkg), f)
+            identical(system2(rscript, shQuote(f), stdout = NULL, stderr = NULL), 0L)
           }
-          cat("Suggests checked:", length(sug), "\n")
+
+          for (pass in 1:5) {
+            removed <- character()
+            for (pkg in sug) {
+              where <- find.package(pkg, quiet = TRUE)
+              if (!length(where)) next
+              if (!loads(pkg)) {
+                message("  pass ", pass, ": removing ", pkg, ", it will not load here")
+                try(remove.packages(pkg, lib = dirname(where[1])), silent = TRUE)
+                removed <- c(removed, pkg)
+              }
+            }
+            if (!length(removed)) break
+          }
+
+          have <- sug[vapply(sug, function(p) length(find.package(p, quiet = TRUE)) > 0, logical(1))]
+          cat("Suggests declared:", length(sug), " usable:", length(have), "\n")
 
       - uses: r-lib/actions/check-r-package@v2
         with:
