@@ -169,9 +169,15 @@ jobs:
           # workers it spawns. That is why Windows was intermittent rather
           # than reliably red. So the sweep checks declared hard dependencies
           # too, not just whether the namespace loads.
+          # Depends and Imports only. LinkingTo is a build-time header
+          # dependency and is absent after a binary install by design, so
+          # including it removed vdiffr and svglite (both LinkingTo cpp11)
+          # and fastcpd (LinkingTo progress). That turned the visual
+          # regression tests and a whole changepoint engine off silently,
+          # which is a worse outcome than the red build it was fixing.
           base_pkgs <- rownames(installed.packages(priority = "base"))
           hard_deps <- function(pkg) {
-            d <- packageDescription(pkg, fields = c("Depends", "Imports", "LinkingTo"))
+            d <- packageDescription(pkg, fields = c("Depends", "Imports"))
             d <- unlist(d)
             d <- d[!is.na(d)]
             if (!length(d)) return(character())
