@@ -45,7 +45,9 @@ jobs:
       # -- and the testthat failure names had been pushed off the top, so
       # they appeared in neither `gh run view --log-failed` nor the full
       # job log. They were never written at all.
-      _R_CHECK_TESTS_NLINES_: 1000
+      # 0 is unlimited. At 1000 the test output is cut off before the
+      # testthat summary, which is the only part naming what failed.
+      _R_CHECK_TESTS_NLINES_: 0
 
     steps:
       - uses: actions/checkout@v4
@@ -181,25 +183,41 @@ jobs:
       # one it is.
       - name: Diagnose the vignette rebuild
         if: failure()
+        shell: bash
+        # Two bugs fixed here, both of which hid the real failure on Windows.
+        # Rscript -e with a multi-line single-quoted string does not survive
+        # Windows argument passing: R sees the first line only and dies with
+        # "unexpected end of input". And because Actions runs bash with -e,
+        # that death took the step with it, so section 3, the only one that
+        # prints testthat's own output, never ran. Snippets now go through
+        # files, and every command is allowed to fail.
         run: |
-          R CMD INSTALL --no-manual .
+          R CMD INSTALL --no-manual . || true
+
           echo "--- 1. rmarkdown::render(), one at a time ---"
-          Rscript -e 'for (v in list.files("vignettes", "[.]Rmd$", full.names = TRUE)) {
+          cat > /tmp/diag1.R <<'RS'
+          for (v in list.files("vignettes", "[.]Rmd$", full.names = TRUE)) {
             cat("\n=====", v, "=====\n")
             r <- tryCatch({rmarkdown::render(v, output_dir = tempdir(), quiet = TRUE); "ok"},
                           error = function(e) paste("ERROR:", conditionMessage(e)))
             cat(r, "\n")
-          }'
+          }
+          RS
+          Rscript /tmp/diag1.R || true
+
           echo "--- 2. tools::buildVignettes(), which is what R CMD check runs ---"
-          Rscript -e 'd <- file.path(tempdir(), "pkg"); dir.create(d)
-            file.copy(c("DESCRIPTION","NAMESPACE","R","vignettes","inst","man"), d,
-                      recursive = TRUE)
-            r <- tryCatch({tools::buildVignettes(dir = d, ser_elibs = NULL); "ok"},
-                          error = function(e) paste("ERROR:", conditionMessage(e)))
-            cat(r, "\n")
-            cat("produced:", paste(list.files(file.path(d, "vignettes"),
-                                              "[.]html$"), collapse = ", "), "\n")'
+          cat > /tmp/diag2.R <<'RS'
+          d <- file.path(tempdir(), "pkg"); dir.create(d)
+          file.copy(c("DESCRIPTION","NAMESPACE","R","vignettes","inst","man"), d,
+                    recursive = TRUE)
+          r <- tryCatch({tools::buildVignettes(dir = d, ser_elibs = NULL); "ok"},
+                        error = function(e) paste("ERROR:", conditionMessage(e)))
+          cat(r, "\n")
+          cat("produced:", paste(list.files(file.path(d, "vignettes"),
+                                            "[.]html$"), collapse = ", "), "\n")
+          RS
+          Rscript /tmp/diag2.R || true
+
           echo "--- 3. anything the check left behind ---"
           find check -name "build_vignettes.log" -exec cat {} \; 2>/dev/null || true
-          find check -name "*.Rout.fail" -exec sh -c 'echo "== $1"; tail -60 "$1"' _ {} \; 2>/dev/null || true
-        shell: bash
+          find check -name "*.Rout.fail" -exec sh -c 'echo "== $1"; cat "$1"' _ {} \; 2>/dev/null || true
