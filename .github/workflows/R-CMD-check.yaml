@@ -71,7 +71,46 @@ jobs:
 
       - name: Install JAGS (macOS)
         if: runner.os == 'macOS'
-        run: brew install jags
+        # brew installs jags fine, and rjags still fails .onLoad, because
+        # macos-latest is arm64: brew's prefix is /opt/homebrew while the CRAN
+        # rjags binary has /usr/local/lib/libjags.4.dylib baked into it. The
+        # same mismatch takes down roll, whose binary is built with OpenMP and
+        # cannot resolve ___kmpc_critical without libomp on the load path. Both
+        # arrive as test and example ERRORs rather than as skips, so symlink
+        # the three libraries where the CRAN binaries expect them.
+        run: |
+          brew install jags libomp
+          sudo mkdir -p /usr/local/lib
+          for lib in \
+            "$(brew --prefix jags)/lib/libjags.4.dylib" \
+            "$(brew --prefix jags)/lib/libjrmath.0.dylib" \
+            "$(brew --prefix libomp)/lib/libomp.dylib"; do
+            [ -f "$lib" ] && sudo ln -sf "$lib" "/usr/local/lib/$(basename "$lib")"
+          done
+          ls -l /usr/local/lib/libjags* /usr/local/lib/libomp* || true
+
+      - name: Install JAGS (Windows)
+        if: runner.os == 'Windows'
+        shell: bash
+        # There was no Windows step at all, so rjags installed and then failed
+        # .onLoad on every run looking for a JAGS that was never there.
+        # Tolerant like the Linux step above: a download failure should leave
+        # the check running rather than abort it.
+        run: |
+          set -x
+          if curl -fsSL -o jags-setup.exe \
+            "https://downloads.sourceforge.net/project/mcmc-jags/JAGS/4.x/Windows/JAGS-4.3.1.exe"; then
+            ./jags-setup.exe /S
+            JAGS_DIR="/c/Program Files/JAGS/JAGS-4.3.1"
+            if [ -d "$JAGS_DIR" ]; then
+              echo "JAGS_HOME=C:\\Program Files\\JAGS\\JAGS-4.3.1" >> "$GITHUB_ENV"
+              echo "$JAGS_DIR/bin" >> "$GITHUB_PATH"
+            else
+              echo "::warning::JAGS installer ran but the directory is missing; mcp tests will skip"
+            fi
+          else
+            echo "::warning::jags did not download; mcp-dependent tests will skip"
+          fi
 
       - uses: r-lib/actions/setup-pandoc@v2
 
