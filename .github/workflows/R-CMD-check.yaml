@@ -163,13 +163,40 @@ jobs:
             identical(system2(rscript, shQuote(f), stdout = NULL, stderr = NULL), 0L)
           }
 
-          for (pass in 1:5) {
+          # A package can also be broken without failing loadNamespace():
+          # mcp Imports rjags (>= 4.9) but reaches it lazily, so it loads
+          # cleanly with rjags gone and only dies later, inside the future
+          # workers it spawns. That is why Windows was intermittent rather
+          # than reliably red. So the sweep checks declared hard dependencies
+          # too, not just whether the namespace loads.
+          base_pkgs <- rownames(installed.packages(priority = "base"))
+          hard_deps <- function(pkg) {
+            d <- packageDescription(pkg, fields = c("Depends", "Imports", "LinkingTo"))
+            d <- unlist(d)
+            d <- d[!is.na(d)]
+            if (!length(d)) return(character())
+            x <- trimws(unlist(strsplit(gsub("\\([^)]*\\)", "", d), ",")))
+            setdiff(x[nzchar(x)], c("R", base_pkgs))
+          }
+
+          for (pass in 1:6) {
             removed <- character()
             for (pkg in sug) {
               where <- find.package(pkg, quiet = TRUE)
               if (!length(where)) next
-              if (!loads(pkg)) {
-                message("  pass ", pass, ": removing ", pkg, ", it will not load here")
+
+              why <- NULL
+              orphaned <- setdiff(hard_deps(pkg),
+                                  rownames(installed.packages()))
+              if (length(orphaned)) {
+                why <- paste0("its hard dependencies are gone (",
+                              paste(orphaned, collapse = ", "), ")")
+              } else if (!loads(pkg)) {
+                why <- "it will not load here"
+              }
+
+              if (!is.null(why)) {
+                message("  pass ", pass, ": removing ", pkg, ", ", why)
                 try(remove.packages(pkg, lib = dirname(where[1])), silent = TRUE)
                 removed <- c(removed, pkg)
               }
