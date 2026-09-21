@@ -244,11 +244,11 @@ predict a log-penalty that lands inside its interval.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Coefficients (predicting log penalty):</span></span>
 <span><span class="co">#&gt;        intercept            log_n        log_log_n           log_sd </span></span>
-<span><span class="co">#&gt;           3.7140          -0.3358          -0.1005           0.4148 </span></span>
+<span><span class="co">#&gt;           3.6976          -0.3293          -0.1116           0.4154 </span></span>
 <span><span class="co">#&gt;          log_mad        log_range      log_sd_diff     log_mad_diff </span></span>
-<span><span class="co">#&gt;           0.4245           0.3636           0.3031           0.3735 </span></span>
+<span><span class="co">#&gt;           0.4252           0.3666           0.3014           0.3730 </span></span>
 <span><span class="co">#&gt; log_q90_abs_diff </span></span>
-<span><span class="co">#&gt;           0.2757 </span></span>
+<span><span class="co">#&gt;           0.2716 </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Use it directly: cpt_detect(x, method = "pelt", penalty = model)</span></span></code></pre></div>
 <p>The features are scale-free summaries on the log scale, which is why
@@ -259,7 +259,7 @@ whole exercise — <code><a href="../reference/cpt_detect.html">cpt_detect()</a>
 goes:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">series</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 347.4859</span></span>
+<span><span class="co">#&gt; [1] 347.4854</span></span>
 <span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">series</span><span class="op">$</span><span class="va">d</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, penalty <span class="op">=</span> <span class="va">model</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt (changepoint detection result)</span></span>
 <span><span class="co">#&gt;   Method:             pelt</span></span>
@@ -278,7 +278,7 @@ goes:</p>
 accept a numeric penalty:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_penalty.html">cpt_penalty</a></span><span class="op">(</span><span class="va">model</span>, series <span class="op">=</span> <span class="va">series</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 347.4859</span></span></code></pre></div>
+<span><span class="co">#&gt; [1] 347.4854</span></span></code></pre></div>
 <p>Compare that with the unsupervised default on the same series, which
 reads its penalty against a raw cost calibrated for unit noise:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
