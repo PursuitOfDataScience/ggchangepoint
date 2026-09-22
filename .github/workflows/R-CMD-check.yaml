@@ -34,6 +34,25 @@ jobs:
     env:
       GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
       R_KEEP_PKG_SOURCE: yes
+      # Set up PSOCK workers one at a time instead of concurrently.
+      #
+      # The Windows job dies during tests with no testthat summary at all,
+      # which is a session that died rather than a test that failed. The
+      # output stops just before test-050-tools.R:500, "session-registered
+      # methods work under a multisession plan", which is the only place the
+      # suite calls future::plan(future::multisession, workers = 2). That
+      # test guards against plan() throwing, but a worker that hangs during
+      # setup is not an error and the guard never fires.
+      #
+      # parallelly's default setup_strategy is "parallel", which brings the
+      # nodes up concurrently and is the part that races on constrained CI.
+      # "sequential" is slower by a second or two and keeps both workers, so
+      # the test still runs for real rather than being skipped.
+      #
+      # Evidence is circumstantial: 2 of 2 push attempts failed while 5 of 5
+      # dispatch runs passed on the same commit, so this needs several runs
+      # to confirm, not one.
+      R_PARALLELLY_MAKENODEPSOCK_SETUP_STRATEGY: sequential
       # 'mcp' imports 'rjags', which needs JAGS -- a system library installed
       # below on Linux and macOS but not readily on Windows. A suggested
       # package that will not install is a NOTE here rather than an ERROR;
