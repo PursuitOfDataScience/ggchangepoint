@@ -28,6 +28,23 @@ full_height_params <- function(mapping) {
   out
 }
 
+# Internal: the fixed styling parameters a layer passes, minus any the caller
+# has MAPPED. In ggplot2 a fixed parameter silently beats a mapping, so a
+# layer that always passes `fill = "steelblue"` cannot be filled by a column:
+# `geom_cpt_region(aes(xmin, xmax, fill = level))` drew every band
+# steelblue, `geom_cpt_label(aes(..., colour = change))` drew no borders,
+# and geom_cpt_event() coloured its rules by `kind` while its labels stayed
+# grey30. The same rule full_height_params() applies to ymin/ymax, for the
+# styling arguments. `colour` and `color` are one aesthetic.
+#' @noRd
+unmapped_params <- function(mapping, params) {
+  keep <- vapply(names(params), function(nm) {
+    alias <- if (nm %in% c("colour", "color")) c("colour", "color") else nm
+    !any(vapply(alias, function(a) aes_has(mapping, a), logical(1)))
+  }, logical(1))
+  params[keep]
+}
+
 #' Significance region geom
 #'
 #' Draws a changepoint that is an \emph{interval}: a vertical band spanning
@@ -45,7 +62,7 @@ full_height_params <- function(mapping) {
 #' @param data A data frame of regions, e.g. \code{\link{cpt_regions}()}
 #'   output.
 #' @param ... Other arguments passed to \code{ggplot2::geom_rect()}.
-#' @param alpha Fill transparency. Defaults to \code{0.2} — light enough that
+#' @param alpha Fill transparency. Defaults to \code{0.2}: light enough that
 #'   the series stays readable through overlapping bands.
 #' @param fill Band fill colour. Defaults to \code{"steelblue"}.
 #' @param na.rm If \code{FALSE}, missing values are removed with a warning.
@@ -70,16 +87,16 @@ geom_cpt_region <- function(mapping = NULL, data = NULL, ..., alpha = 0.2,
                             fill = "steelblue", na.rm = FALSE,
                             show.legend = NA, inherit.aes = FALSE) {
   do.call(ggplot2::geom_rect, c(
-    list(mapping = mapping, data = data, alpha = alpha, fill = fill,
-         na.rm = na.rm, show.legend = show.legend,
-         inherit.aes = inherit.aes),
+    list(mapping = mapping, data = data, na.rm = na.rm,
+         show.legend = show.legend, inherit.aes = inherit.aes),
+    unmapped_params(mapping, list(alpha = alpha, fill = fill)),
     full_height_params(mapping), list(...)
   ))
 }
 
 #' Changepoint label geom
 #'
-#' Draws labelled regions behind a series — the central object of supervised
+#' Draws labelled regions behind a series: the central object of supervised
 #' changepoint detection (Hocking et al.), where an expert marks intervals as
 #' containing a change or not and the penalty is learned from those labels.
 #' Fill defaults to the label's \code{change} status, so a plot of labels
@@ -118,9 +135,9 @@ geom_cpt_label <- function(mapping = NULL, data = NULL, ..., alpha = 0.25,
                            colour = NA, na.rm = FALSE, show.legend = NA,
                            inherit.aes = FALSE) {
   do.call(ggplot2::geom_rect, c(
-    list(mapping = mapping, data = data, alpha = alpha, colour = colour,
-         na.rm = na.rm, show.legend = show.legend,
-         inherit.aes = inherit.aes),
+    list(mapping = mapping, data = data, na.rm = na.rm,
+         show.legend = show.legend, inherit.aes = inherit.aes),
+    unmapped_params(mapping, list(alpha = alpha, colour = colour)),
     full_height_params(mapping), list(...)
   ))
 }
@@ -195,7 +212,7 @@ cpt_label_palette <- function() {
 #' @param ... Other arguments passed to the text layer.
 #' @param colour Rule and text colour. Defaults to \code{"grey30"}.
 #' @param linetype Rule linetype. Defaults to \code{"dotted"}.
-#' @param angle Text angle in degrees. Defaults to \code{90} — event labels
+#' @param angle Text angle in degrees. Defaults to \code{90}, because event labels
 #'   are usually longer than the space between events.
 #' @param size Text size. Defaults to \code{3}.
 #' @param vjust,hjust Text justification.
@@ -273,17 +290,20 @@ geom_cpt_event <- function(mapping = NULL, data = NULL, ...,
   if (!aes_has(text_map, "y")) text_map[["y"]] <- ggplot2::aes(y = -Inf)$y
   class(text_map) <- class(mapping)
 
+  # The label layer follows the same rule as the rule layer above: a colour
+  # the caller mapped must reach the text too, not only the rules.
+  text_params <- unmapped_params(text_map, list(colour = colour))
   text_layer <- if (isTRUE(repel)) {
-    ggrepel::geom_text_repel(
-      mapping = text_map, data = data, colour = colour, size = size,
-      angle = angle, na.rm = na.rm, inherit.aes = inherit.aes, ...
-    )
+    do.call(ggrepel::geom_text_repel, c(
+      list(mapping = text_map, data = data, size = size, angle = angle,
+           na.rm = na.rm, inherit.aes = inherit.aes),
+      text_params, list(...)))
   } else {
-    ggplot2::geom_text(
-      mapping = text_map, data = data, colour = colour, size = size,
-      angle = angle, vjust = vjust, hjust = hjust, na.rm = na.rm,
-      inherit.aes = inherit.aes, ...
-    )
+    do.call(ggplot2::geom_text, c(
+      list(mapping = text_map, data = data, size = size, angle = angle,
+           vjust = vjust, hjust = hjust, na.rm = na.rm,
+           inherit.aes = inherit.aes),
+      text_params, list(...)))
   }
 
   list(rule, text_layer)

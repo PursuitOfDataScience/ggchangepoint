@@ -19,9 +19,12 @@
 #'
 #' @param object A \code{ggcpt} object.
 #' @param events A data frame of events with a location column and a label
-#'   column. The location may be on the position scale or — when the result
-#'   carries a time index — on the index scale (dates, say); which one is
-#'   detected automatically from the column's type and reported.
+#'   column. The location may be on the position scale or, when the result
+#'   carries a time index, on the index scale (dates, say); which one is
+#'   detected automatically from the column's type and reported. An event
+#'   whose location cannot be placed on the series (a missing value, text
+#'   that is not a number, or a date string against a \code{Date} index)
+#'   is left out of all three outcomes, with a warning that names it.
 #' @param location Name of the location column. Defaults to the first column
 #'   whose type matches the result's index (or the first numeric column).
 #' @param label Name of the label column. Defaults to the first character or
@@ -40,7 +43,7 @@
 #'       (\code{event}, \code{event_value}, \code{event_position}).}
 #'   }
 #'   \code{matched} and \code{unexplained} carry \code{cp_index}, the
-#'   changepoint on the original scale, when — and only when — the result
+#'   changepoint on the original scale, when (and only when) the result
 #'   carries a time index, so \code{"cp_index" \%in\% names(x)} is the
 #'   test for it.
 #'
@@ -58,7 +61,7 @@
 #'   \strong{Filter on \code{status}, not on \code{is.na(cp)}.} An
 #'   \code{"unexplained_changepoint"} row has a non-missing \code{cp}, so
 #'   \code{subset(tidy(x), !is.na(cp))} returns the matched pairs
-#'   \emph{and} the unexplained changepoints — which is the natural
+#'   \emph{and} the unexplained changepoints, which is the natural
 #'   mistake to make, and it silently overstates how many changepoints an
 #'   event explains.
 #'   With \code{print()}, \code{tidy()} and \code{autoplot()}.
@@ -149,7 +152,10 @@ cpt_annotate_events <- function(object, events, location = NULL,
       if (all(is.na(d))) NA_integer_ else as.integer(which.min(d))
     }, integer(1))
   } else {
-    as.integer(round(as.numeric(raw)))
+    # suppressWarnings(): text that is not a number is reported below with
+    # the events it belongs to, not as base R's bare "NAs introduced by
+    # coercion".
+    as.integer(round(suppressWarnings(as.numeric(raw))))
   }
 
   ev <- tibble::tibble(
@@ -157,7 +163,31 @@ cpt_annotate_events <- function(object, events, location = NULL,
     event_value = raw,
     event_position = event_pos
   )
-  ev <- ev[!is.na(ev$event_position), , drop = FALSE]
+  # An event that cannot be placed used to vanish here without a word, so
+  # it was in none of the three outcomes this function exists to report:
+  # not matched, not undetected, simply gone. Measured on a Date-indexed
+  # fit given `when = c("2020-03-01", "2020-04-15")` as text, both events
+  # disappeared and the result read "0 events with no changepoint", with
+  # only base R's coercion warning to go on.
+  lost <- is.na(ev$event_position)
+  if (any(lost)) {
+    why <- if (all(is.na(raw[lost]))) {
+      "their location is missing"
+    } else if (!is.null(idx) && is.character(raw) && !is.character(idx)) {
+      paste0("`", location, "` is text while the result's index is a ",
+             class(idx)[1], "; convert it first, e.g. with as.Date()")
+    } else if (on_index) {
+      "their location matches no value of the result's index"
+    } else {
+      "their location is not a position in the series"
+    }
+    warning(sum(lost), " of ", nrow(ev), " event(s) could not be placed ",
+            "on the series and are left out of all three outcomes (",
+            paste(utils::head(ev$event[lost], 3), collapse = ", "),
+            if (sum(lost) > 3) ", ..." else "", "): ", why, ".",
+            call. = FALSE)
+  }
+  ev <- ev[!lost, , drop = FALSE]
 
   cp <- object$changepoints$cp
   # Match on event ROW, not on event position.

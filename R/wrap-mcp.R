@@ -11,7 +11,7 @@ mcp_has_samples <- function(fit) {
 #'
 #' Wraps \code{mcp::mcp()} (Lindeløv): a Bayesian multiple-changepoint
 #' regression specified as a \emph{list of formulas}, one per segment. This
-#' is the most expressive detector in the package — each segment can have its
+#' is the most expressive detector in the package: each segment can have its
 #' own intercept, slope, variance and autocorrelation, and the changepoints
 #' themselves get full posterior distributions rather than point estimates,
 #' summarised here as \code{ci_lower}/\code{ci_upper} on the changepoints
@@ -42,7 +42,7 @@ mcp_has_samples <- function(fit) {
 #' Having the \emph{package} is not the same as being able to \emph{run} it:
 #' \pkg{mcp} imports \pkg{rjags}, and on some platforms \pkg{rjags}
 #' installs happily and only fails when it looks for the JAGS library at run
-#' time — in which case \code{mcp::mcp()} returns a fit carrying no
+#' time, in which case \code{mcp::mcp()} returns a fit carrying no
 #' posterior samples, with a warning rather than an error. This wrapper
 #' checks for that and says so plainly instead of failing several frames
 #' later inside \code{summary()}. Everything else in the package works
@@ -50,7 +50,10 @@ mcp_has_samples <- function(fit) {
 #'
 #' @return A \code{ggcpt} object. The changepoints tibble carries the
 #'   posterior mean location together with \code{ci_lower}/\code{ci_upper}
-#'   from the posterior quantiles, and \code{$data$fitted} holds the
+#'   from the posterior quantiles, each converted from \pkg{mcp}'s
+#'   continuous \code{cp_1}, \code{cp_2}, ... to the last observation
+#'   before the change (\code{ceiling(cp) - 1}, because \pkg{mcp} starts a
+#'   segment at \code{x >= cp}), and \code{$data$fitted} holds the
 #'   posterior predictive mean, so \code{autoplot(show_ci = TRUE,
 #'   show_fit = TRUE)} shows both.
 #' @references
@@ -143,9 +146,17 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
                        penalty = list(type = "posterior", value = NA_real_),
                        fit = fit, call = match.call()))
   }
-  cp <- as.integer(round(smry$mean[cp_rows]))
-  lo <- as.integer(floor(smry$lower[cp_rows]))
-  hi <- as.integer(ceiling(smry$upper[cp_rows]))
+  # mcp starts segment k at `x >= cp_k` (the indicator its get_formula_str()
+  # writes into the JAGS model), so on the integer grid `t` the first
+  # observation of the new segment is ceiling(cp_k) and the last one before
+  # it, this package's "left" location, is ceiling(cp_k) - 1. round() was
+  # off by one whenever the posterior mean's fraction exceeded one half,
+  # which for a sharp change between two observations (a posterior spread
+  # evenly across the gap) is about half the time. The interval bounds are
+  # locations of the same kind and convert the same way.
+  cp <- as.integer(ceiling(smry$mean[cp_rows])) - 1L
+  lo <- as.integer(ceiling(smry$lower[cp_rows])) - 1L
+  hi <- as.integer(ceiling(smry$upper[cp_rows])) - 1L
   ord <- order(cp)
 
   fitted <- tryCatch({

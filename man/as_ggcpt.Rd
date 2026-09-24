@@ -21,8 +21,8 @@ as_ggcpt(
 }
 \arguments{
 \item{cp}{Integer vector of changepoint locations. Out-of-range,
-duplicated and missing values are dropped and the result is sorted —
-the same contract every built-in wrapper is held to — but unlike a
+duplicated and missing values are dropped and the result is sorted,
+the same contract every built-in wrapper is held to. But unlike a
 wrapper, which is normalising an engine's output, this function is
 given yours, so \strong{anything it drops it warns about}, with the
 values and the range they had to fall in. A fractional index is
@@ -30,7 +30,8 @@ included in that: it is truncated rather than rounded, which makes
 \code{50.5} into a changepoint at 50.}
 
 \item{x}{The series the changepoints refer to: a numeric vector, or a
-matrix/data frame (rows are time points) for a multivariate result.}
+matrix/data frame (rows are time points) for a multivariate result. A
+one-column matrix or data frame is read as a univariate series.}
 
 \item{fitted}{Optional length-\code{n} fitted signal, used by
 \code{autoplot(show_fit = TRUE)} and \code{augment()}.}
@@ -42,17 +43,20 @@ matrix/data frame (rows are time points) for a multivariate result.}
 
 \item{ci}{Optional two-column matrix or data frame of location confidence
 intervals, one row per changepoint, giving lower and upper bounds as
-positions.}
+positions in the same \code{cp_convention} as \code{cp}: with
+\code{"right"} they are converted along with \code{cp}, so an
+interval keeps bracketing its changepoint.}
 
 \item{regions}{Optional two-column matrix or data frame of significance
 regions (\code{start}, \code{end}); see \code{\link{nsp_wrapper}()} for
-the interval-valued case this exists to serve.}
+the interval-valued case this exists to serve. A region with a missing
+bound is dropped with a warning.}
 
 \item{penalty}{Optional penalty descriptor: a number, a string, or a list
 with \code{type} and \code{value}.}
 
 \item{cp_convention}{\code{"left"} (the changepoint is the last index of
-the left segment — this package's convention) or \code{"right"} (the
+the left segment, this package's convention) or \code{"right"} (the
 first index of the right segment, which is converted on the way in).}
 
 \item{index}{Optional time index, one value per observation.}
@@ -63,13 +67,15 @@ first index of the right segment, which is converted on the way in).}
 same length as \code{cp}, appended to the changepoints tibble.}
 }
 \value{
-A \code{ggcpt} object.
+A \code{ggcpt} object, with the same components as any
+  detector in the package returns -- see \code{\link{new_ggcpt}()}
+  for the full list, and \code{\link{cpt_detect}()} for the summary.
 }
 \description{
-Wraps a set of changepoint locations — from a detector this package does
+Wraps a set of changepoint locations (from a detector this package does
 not wrap, a Python tool called through \pkg{reticulate}, a neural
 detector, a published paper's reported breaks, or an analyst's own
-annotations — into a first-class \code{ggcpt} object. Everything built on
+annotations) into a first-class \code{ggcpt} object. Everything built on
 the \code{ggcpt} contract then applies: \code{autoplot()}, the composable
 geoms, \code{tidy()}/\code{glance()}/\code{augment()},
 \code{\link{cpt_metrics}()}, \code{\link{cpt_consensus}()},

@@ -46,14 +46,17 @@ simulation loop does not pin the loop's own stream.}
 \value{
 A \code{ggcpt} object. The changepoints tibble carries the
   posterior mean location together with \code{ci_lower}/\code{ci_upper}
-  from the posterior quantiles, and \code{$data$fitted} holds the
+  from the posterior quantiles, each converted from \pkg{mcp}'s
+  continuous \code{cp_1}, \code{cp_2}, ... to the last observation
+  before the change (\code{ceiling(cp) - 1}, because \pkg{mcp} starts a
+  segment at \code{x >= cp}), and \code{$data$fitted} holds the
   posterior predictive mean, so \code{autoplot(show_ci = TRUE,
   show_fit = TRUE)} shows both.
 }
 \description{
 Wraps \code{mcp::mcp()} (Lindeløv): a Bayesian multiple-changepoint
 regression specified as a \emph{list of formulas}, one per segment. This
-is the most expressive detector in the package — each segment can have its
+is the most expressive detector in the package: each segment can have its
 own intercept, slope, variance and autocorrelation, and the changepoints
 themselves get full posterior distributions rather than point estimates,
 summarised here as \code{ci_lower}/\code{ci_upper} on the changepoints
@@ -67,7 +70,7 @@ does not accept an \code{mcp} result.)
 Having the \emph{package} is not the same as being able to \emph{run} it:
 \pkg{mcp} imports \pkg{rjags}, and on some platforms \pkg{rjags}
 installs happily and only fails when it looks for the JAGS library at run
-time — in which case \code{mcp::mcp()} returns a fit carrying no
+time, in which case \code{mcp::mcp()} returns a fit carrying no
 posterior samples, with a warning rather than an error. This wrapper
 checks for that and says so plainly instead of failing several frames
 later inside \code{summary()}. Everything else in the package works

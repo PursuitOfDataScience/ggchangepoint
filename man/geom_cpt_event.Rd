@@ -32,7 +32,7 @@ and \code{label} for the text.}
 
 \item{linetype}{Rule linetype. Defaults to \code{"dotted"}.}
 
-\item{angle}{Text angle in degrees. Defaults to \code{90} — event labels
+\item{angle}{Text angle in degrees. Defaults to \code{90}, because event labels
 are usually longer than the space between events.}
 
 \item{size}{Text size. Defaults to \code{3}.}

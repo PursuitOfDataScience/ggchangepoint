@@ -34,8 +34,10 @@ are series) or a list of numeric vectors; for the \code{print()} and
 \code{\link{cpt_detect}()}.}
 
 \item{index}{Optional time index shared by every series in the panel (a
-vector of dates, say), or a named list of one index per series. Carried
-onto each result and used by \code{tidy()} and \code{autoplot()}, so a
+vector of dates, say), or a named list of one index per series. A list
+has to cover every series, with indices of one type, because
+\code{tidy()} and \code{autoplot()} stack them into one table and one
+axis. Carried onto each result and used by \code{tidy()} and \code{autoplot()}, so a
 faceted plot of fifty series shows dates rather than positions.}
 
 \item{seed}{Optional seed for reproducible parallel execution (passed to
@@ -47,10 +49,10 @@ inside a simulation loop does not pin the loop's own stream.}
 \item{keep_fit}{Keep each engine's raw fit in \code{result[[i]]$fit}?
 Defaults to \code{TRUE}, which is what makes a batch result as
 inspectable as a single one. Set it to \code{FALSE} for a large panel:
-a few engines return fits far bigger than the data they were given —
+a few engines return fits far bigger than the data they were given.
 \code{strucchange} keeps a triangular \eqn{O(n^2)} RSS matrix, so a
 single 2000-point series costs about 135 MB, and \code{bfast} and
-\code{bocpd} are in the tens of MB — and a panel multiplies that by the
+\code{bocpd} are in the tens of MB, and a panel multiplies that by the
 number of series. Everything else on the object, including
 \code{tidy()} and \code{autoplot()}, is unaffected; only accessors
 that read \code{$fit} (\code{cpt_statistic()},
@@ -66,11 +68,12 @@ A \code{ggcpt_batch} object: a tibble with one row per series and
   columns \code{series}, \code{n_changepoints}, \code{changepoints} (a
   list-column of tidy tibbles), and \code{result} (a list-column of
   \code{ggcpt} objects). Methods: \code{print()}, \code{tidy()} (one row
-  per changepoint across all series), and \code{autoplot()} (faceted
+  per changepoint across all series, with columns \code{series},
+  \code{cp} and \code{cp_value}), and \code{autoplot()} (faceted
   small-multiples with each series' changepoints).
 }
 \description{
-Runs one detector over every series in a collection — the panel-data loop
+Runs one detector over every series in a collection: the panel-data loop
 that methodological and applied work both need constantly. Accepts a
 matrix/data frame (one column per series) or a named list of numeric
 vectors. Honours \code{future::plan()} for parallel execution when the

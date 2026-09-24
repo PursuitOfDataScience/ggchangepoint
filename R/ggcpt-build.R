@@ -215,6 +215,14 @@ normalise_regions <- function(regions, n) {
   regions$start <- as.integer(pmax(1L, pmin(as.integer(round(regions$start)),
                                             n)))
   regions$end <- as.integer(pmax(1L, pmin(as.integer(round(regions$end)), n)))
+  # Drop the unusable rows BEFORE the flip below, not after it. A missing
+  # bound made `start > end` NA, so `if (any(flip))` stopped with base R's
+  # "missing value where TRUE/FALSE needed" when no other row was reversed,
+  # and "NAs are not allowed in subscripted assignments" when one was:
+  # `as_ggcpt(60, x, regions = data.frame(start = c(50, NA), end = c(70,
+  # 80)))` failed outright instead of keeping the one usable region.
+  keep <- !is.na(regions$start) & !is.na(regions$end)
+  regions <- regions[keep, , drop = FALSE]
   # An interval given the other way round is a data-entry slip, not a
   # different meaning; ordering it is what every plotting call assumes.
   flip <- regions$start > regions$end
@@ -223,8 +231,6 @@ normalise_regions <- function(regions, n) {
     regions$start[flip] <- regions$end[flip]
     regions$end[flip] <- tmp
   }
-  keep <- !is.na(regions$start) & !is.na(regions$end)
-  regions <- regions[keep, , drop = FALSE]
   regions[order(regions$start, regions$end), , drop = FALSE]
 }
 
@@ -299,6 +305,19 @@ as_uni_vector <- function(x, method) {
   if (is.matrix(x) || is.data.frame(x)) {
     X <- as.matrix(x)
     if (ncol(X) > 1) {
+      # The tools that resample or re-fit one series (cpt_stability(),
+      # cpt_select(), cpt_sensitivity(), cpt_label_error_curve()) pass the
+      # detector the caller chose, which may well be multivariate -- and
+      # "Method `ecp` is univariate" then told them something false about
+      # the method rather than the true thing about the function.
+      reg <- full_registry()
+      mv <- isTRUE(reg$multivariate[match(method, reg$method)])
+      if (mv) {
+        stop("`x` has ", ncol(X), " columns, but this function works on a ",
+             "single series, even with `method = \"", method, "\"`, which ",
+             "is multivariate. Pass one column, or run the multivariate ",
+             "fit with cpt_detect() directly.", call. = FALSE)
+      }
       stop("Method `", method, "` is univariate, but `x` has ", ncol(X),
            " columns. See cpt_methods() for multivariate methods.",
            call. = FALSE)

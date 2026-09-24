@@ -2,9 +2,12 @@
 % Please edit documentation in R/supervised.R
 \name{cpt_labels}
 \alias{cpt_labels}
+\alias{tidy.cpt_labels}
 \title{Changepoint labels}
 \usage{
 cpt_labels(start, end, change = "change", series = NA_character_)
+
+\method{tidy}{cpt_labels}(x, ...)
 }
 \arguments{
 \item{start, end}{Integer vectors of region boundaries (positions,
@@ -13,13 +16,18 @@ inclusive).}
 \item{change}{What the region asserts, recycled to length:
 \describe{
   \item{\code{"change"}}{at least one changepoint lies in the region.}
-  \item{\code{"one_change"}}{exactly one does — a stricter label, and
+  \item{\code{"one_change"}}{exactly one does: a stricter label, and
     the one that makes false positives detectable inside a positive
     region.}
   \item{\code{"no_change"}}{none does.}
 }}
 
 \item{series}{Optional series identifier, for label sets spanning a panel.}
+
+\item{x}{A \code{cpt_labels} tibble (for \code{tidy()}, which returns it
+as a plain tibble).}
+
+\item{...}{Ignored.}
 }
 \value{
 A \code{cpt_labels} tibble with columns \code{label_id},

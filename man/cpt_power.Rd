@@ -49,7 +49,14 @@ runs one scenario per value.}
 \item{tolerance}{A detection counts as finding the change when it falls
 within this many positions of it. Defaults to \code{5}.}
 
-\item{change_in}{What changes. Defaults to \code{"mean"}.}
+\item{change_in}{What changes. Defaults to \code{"mean"}. The scenario
+\code{jump} describes, in units of \code{sigma}: \code{"mean"} shifts
+the mean by \code{jump}; \code{"var"} takes the noise standard
+deviation from \code{sigma} to \code{sigma * (1 + jump)};
+\code{"meanvar"} does both at once, shifting the mean by \code{jump}
+and the standard deviation to \code{sigma * (1 + jump / 2)}, the same
+design \code{\link{cpt_scenarios}()} simulates; \code{"slope"} bends
+a flat line into one rising by \code{jump * sigma} over the series.}
 
 \item{noise}{Noise model, passed to \code{\link{cpt_simulate}()}.}
 
@@ -74,17 +81,16 @@ matters if the power figure is going into a paper.}
 \item{object}{A \code{ggcpt_power} object (for \code{autoplot()}).}
 }
 \value{
-A \code{ggcpt_power} object: a tibble with one row per scenario —
-  \code{n}, \code{jump}, \code{sigma}, \code{location}, \code{power}
-  (proportion of replicates detecting the change within
+A \code{ggcpt_power} object: a tibble with one row per scenario,
+  with columns \code{n}, \code{jump}, \code{sigma}, \code{location},
+  \code{power} (proportion of replicates detecting the change within
   \code{tolerance}), \code{mc_se} (the Monte Carlo standard error of that
-  proportion), \code{mean_abs_error} (location error among detections),
-  \code{mean_abs_error} is \code{NaN} when no replicate detected a
-  changepoint within \code{tolerance} of the true one --- there is no
-  distance to average --- and \code{power} reads \code{0} in the same
-  row.
+  proportion), \code{mean_abs_error} (location error among detections;
+  \code{NaN} when no replicate detected a changepoint within
+  \code{tolerance} of the true one, because there is no distance to
+  average, and \code{power} reads \code{0} in the same row),
   \code{false_positives} (mean number of \emph{extra} changepoints per
-  replicate) and \code{n_sim} — with \code{print()} and
+  replicate) and \code{n_sim}; with \code{print()} and
   \code{autoplot()}.
 }
 \description{
@@ -104,7 +110,7 @@ from \code{seed}; run sequentially they come from the calling stream that
 numbers. Measured on \code{cpt_power(n = c(100, 200), jump = 0.5,
 n_sim = 8, seed = 11)}: \code{power = 0.25, 0.125} sequentially and
 \code{0, 0.375} on two workers. The scenario is named because the
-numbers depend on it and on the worker count --- what does not depend on
+numbers depend on it and on the worker count; what does not depend on
 either is that the two disagree.
 
 So the guarantee is: same seed and same plan, same answer -- every time,

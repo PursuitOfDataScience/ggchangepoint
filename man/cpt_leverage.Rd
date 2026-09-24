@@ -31,15 +31,18 @@ A tibble ordered most influential first, with columns
   An \code{NA} here is always that case. If the \emph{original} fit
   found no changepoints then \code{max_shift} is missing for every
   observation, the standardisation returns zeros rather than
-  \code{NA}s, and every \code{leverage} is finite.
+  \code{NA}s, and every \code{leverage} is finite. A perturbation whose
+  re-fit \emph{failed} is not one of these: it carries
+  \code{delta_n_cp = NA} as well and is sorted last, since nothing is
+  known about it.
 }
 \description{
 Orders the observations of a \code{\link{cpt_influence}()} result by how
 much perturbing them disturbs the segmentation, most influential first.
 The composite \code{leverage} score is the sum of three standardised
-components — the change in the number of changepoints, the largest
-movement of a changepoint, and the largest change in a segment parameter
-— so an observation that shifts a location without changing the count is
+components (the change in the number of changepoints, the largest
+movement of a changepoint, and the largest change in a segment
+parameter), so an observation that shifts a location without changing the count is
 still ranked.
 }
 \examples{

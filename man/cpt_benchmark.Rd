@@ -33,11 +33,12 @@ cpt_benchmark(
 }
 \arguments{
 \item{datasets}{A named list of datasets. Each element is either a plain
-numeric vector (no ground truth — only descriptive columns are filled)
+numeric vector (no ground truth, so only descriptive columns are filled)
 or a list with \code{series} and one of \code{truth},
 \code{changepoints} (an integer vector) or \code{annotations} (a list
 of integer vectors, one per annotator). A list carrying none of those
-is scored \code{NA} and warns.
+is scored \code{NA} and warns. A \code{series} with several columns
+stays a matrix, so only the multivariate methods can score it.
 \code{\link{cpt_datasets}()} builds a ready-made collection.}
 
 \item{methods}{Character vector of method names.}
@@ -82,9 +83,10 @@ methods to compare.}
 }
 \value{
 A \code{ggcpt_benchmark} object: a tibble with one row per
-  (dataset, method) — \code{dataset}, \code{method}, \code{n},
+  (dataset, method): \code{dataset}, \code{method}, \code{n},
   \code{n_annotators} (how many ground-truth sets the dataset supplied),
-  \code{n_cp}, the requested metrics, \code{runtime}, \code{error} — with
+  \code{n_cp}, the requested metrics, \code{runtime} and \code{error},
+  with
   \code{print()}, \code{tidy()} and \code{autoplot()}
   (\code{"heatmap"}, \code{"ranks"}, \code{"critical_difference"}).
 }

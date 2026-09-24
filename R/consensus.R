@@ -11,7 +11,7 @@
 #'
 #' Runs a set of detectors on one series and reports the locations they agree
 #' on. Two detections count as the same changepoint when they fall within
-#' \code{tolerance} of each other — the same tolerance window
+#' \code{tolerance} of each other, the same tolerance window
 #' \code{\link{cpt_metrics}()} matches on (van den Burg and Williams, 2020),
 #' so the package has one notion of "close enough" and not two. The
 #' \emph{grouping} necessarily differs: \code{cpt_metrics()} matches two
@@ -27,7 +27,8 @@
 #'   it to enter the consensus. Defaults to \code{2}.
 #'
 #'   A value \strong{strictly between 0 and 1} is read as a proportion of
-#'   the methods that ran; anything else is a count. The boundary is worth
+#'   the methods that ran; anything else is a count, rounded \emph{up}
+#'   (\code{2.5} needs three methods, never two). The boundary is worth
 #'   knowing, because it falls exactly where a reader thinking in
 #'   proportions would write \dQuote{unanimous}: with three methods,
 #'   \code{min_votes = 0.99} needs all three, while
@@ -51,15 +52,15 @@
 #' by six of seven methods is not thereby significant at any level: the
 #' methods are run on the same data and are strongly correlated, several of
 #' them share an engine, and none of the votes is independent. Read the vote
-#' count as a robustness display — "this feature does not depend on which
-#' detector I picked" — and use \code{\link{nsp_wrapper}()} or
+#' count as a robustness display ("this feature does not depend on which
+#' detector I picked"), and use \code{\link{nsp_wrapper}()} or
 #' \code{\link{cpt_confint}()} when you need a guarantee.
 #'
 #' @return A \code{ggcpt} object (so it plots and tidies like any other
 #'   result) whose changepoints tibble carries \code{votes} and
 #'   \code{methods} (a comma-separated list of the methods that found each
 #'   location), with the per-method detections kept in a
-#'   \code{consensus} attribute and printed by \code{autoplot(type =
+#'   \code{consensus} attribute and drawn by \code{autoplot(plot_type =
 #'   "agreement")}.
 #' @references
 #' \insertRef{vandenburg2020evaluation}{ggchangepoint}
@@ -122,7 +123,12 @@ cpt_consensus <- function(x, methods = c("pelt", "binseg", "amoc"),
   threshold <- if (min_votes > 0 && min_votes < 1) {
     max(1, ceiling(min_votes * length(ok)))
   } else {
-    max(1, as.integer(min_votes))
+    # ceiling(), not as.integer(): "at least 2.5 methods" means three, and
+    # truncating made a fractional count LESS strict than the number asked
+    # for (2.5 resolved to a threshold of 2).
+    # The tolerance keeps a count computed in floating point (0.1 * 30 is
+    # 3.0000000000000004) from being rounded up past the number it means.
+    max(1, as.integer(ceiling(min_votes - 1e-8)))
   }
   # A threshold no method can reach makes the empty result certain, and an
   # empty consensus is indistinguishable from "the methods agreed on
@@ -293,9 +299,9 @@ print.ggcpt_consensus <- function(x, ...) {
 #' Recommend a detection method
 #'
 #' Turns the capability matrix into an answer. Given what the analyst knows
-#' about their problem — how many dimensions, what kind of change, what the
+#' about their problem (how many dimensions, what kind of change, what the
 #' noise looks like, how long the series is, whether they need uncertainty or
-#' an online alarm — this returns the shortlist of methods that actually fit,
+#' an online alarm), this returns the shortlist of methods that actually fit,
 #' with a reason for each and the reference to cite. It is a decision table,
 #' not a model: everything it knows is in \code{\link{cpt_methods}()}, and
 #' making that explicit and printable is the point.

@@ -13,7 +13,12 @@ cpt_update(monitor, new_obs)
 as time points for a multivariate monitor.}
 }
 \value{
-The updated \code{ggcpt_monitor}.
+The updated \code{ggcpt_monitor} -- the same structure as the
+  input (see \code{\link{cpt_monitor}()}), with \code{t} advanced by
+  the number of new observations (rows, for a matrix) and any new rows
+  appended to \code{alarms}.
+  Re-assign it: the monitor is a value, not a mutable object, so
+  \code{cpt_update(mon, y)} without assignment discards the update.
 }
 \description{
 Pushes new data through a \code{\link{cpt_monitor}()}, updating its

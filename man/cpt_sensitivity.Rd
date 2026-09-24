@@ -47,7 +47,7 @@ The parameter analogue of \code{\link{cpt_influence}()}: instead of asking
 which observation drives the answer, it asks which \emph{setting} does.
 Runs the detector over a grid of tuning values and reports the detected
 locations for each, which is the direct answer to the commonest reviewer
-question about a changepoint analysis — "is this robust to the penalty?".
+question about a changepoint analysis: "is this robust to the penalty?".
 }
 \examples{
 set.seed(2026)

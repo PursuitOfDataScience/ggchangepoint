@@ -111,6 +111,7 @@
 #'
 #' @importFrom generics tidy glance augment
 #' @importFrom utils globalVariables
+#' @importFrom Rdpack reprompt
 #' @keywords internal
 "_PACKAGE"
 
@@ -134,7 +135,9 @@ if (getRversion() >= "2.15.1") {
     # 0.5.0: consensus, benchmarking, monitoring and power
     "method", "series", "dataset", "mean_rank", "within_cd", "delay",
     "detected", "jump", "power", "lower", "upper", "truth", "ci",
-    "scale_space", "path", ".at"
+    "scale_space", "path", ".at",
+    # cpt_power()'s autoplot() maps the series length `n`
+    "n"
   ))
 }
 

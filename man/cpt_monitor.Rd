@@ -31,7 +31,7 @@ cpt_monitor(
 \arguments{
 \item{method}{Which sequential detector:
 \describe{
-  \item{\code{"edetector"}}{(default) a mixture Shiryaev–Roberts
+  \item{\code{"edetector"}}{(default) a mixture Shiryaev-Roberts
     e-detector; see the section below.}
   \item{\code{"cpm"}}{\pkg{cpm}'s sequential change-point model, tuned
     by \code{ARL0}.}
@@ -77,7 +77,7 @@ the in-control baseline, during which no further alarm can fire.
 Defaults to \code{20}. This matters more than it looks: a real change
 is \emph{persistent}, so a detector that restarts against the stale
 pre-change baseline alarms again on the very next observation and keeps
-alarming for the rest of the series — the monitor reports one change as
+alarming for the rest of the series: the monitor reports one change as
 hundreds, and \code{\link{cpt_delay}()} then counts them all as false
 alarms. Set \code{relearn = 0} to switch the behaviour off and see
 every threshold crossing.}
@@ -85,8 +85,8 @@ every threshold crossing.}
 \item{thresh}{Threshold rule for \code{"ocd"}: \code{"MC"} (default)
 calibrates by Monte Carlo against \code{patience}, or supply a numeric
 vector of three thresholds. The Monte Carlo calibration is the
-expensive part of building an \code{"ocd"} monitor — a minute or more
-at the default \code{patience} — so pass thresholds directly when you
+expensive part of building an \code{"ocd"} monitor (a minute or more
+at the default \code{patience}), so pass thresholds directly when you
 already have them, or lower \code{mc_reps} while exploring.}
 
 \item{mc_reps}{Monte Carlo repetitions for the \code{"ocd"} threshold.}
@@ -98,20 +98,47 @@ already have them, or lower \code{mc_reps} while exploring.}
 \item{object}{A \code{ggcpt_monitor} object (for \code{autoplot()}).}
 
 \item{plot_type}{\code{"timeline"} (the monitored series with the alarms
-marked), \code{"statistic"} (the running detection statistic against its
-threshold) or \code{"runlength"} (the gaps between alarms, which
+marked), \code{"statistic"} (the detection statistic at each alarm,
+against its threshold: a monitor records its statistic only when an
+alarm fires) or \code{"runlength"} (the gaps between alarms, which
 estimate the run length). For a multivariate monitor the timeline draws
-the first coordinate — the alarms are shared, so the rules are right
+the first coordinate: the alarms are shared, so the rules are right
 whichever coordinate is shown, but the line is one of several.}
 }
 \value{
-A \code{ggcpt_monitor} object.
+A \code{ggcpt_monitor} object: a list carrying the detector's
+  state between calls, so it is meant to be passed to
+  \code{\link{cpt_update}()} and re-assigned rather than read field by
+  field. The parts worth reading are
+  \describe{
+    \item{\code{alarms}}{the tibble \code{\link{alarms}()} and
+      \code{\link[=tidy.ggcpt_monitor]{tidy}()} return -- one row per
+      alarm, with \code{time}, \code{statistic} and
+      \code{threshold}. Empty (zero rows) until something fires.}
+    \item{\code{t}}{how many observations the monitor has consumed
+      through \code{\link{cpt_update}()}, \strong{not} counting the
+      baseline; an alarm's \code{time} is on this same clock. A monitor
+      built by \code{\link{cpt_replay}()} also carries \code{offset},
+      the number of leading observations it trained on, so
+      \code{time + offset} is a position in the replayed series
+      (\code{\link{cpt_delay}()} applies it for you).}
+    \item{\code{data}}{every monitored observation so far, baseline
+      excluded (the first coordinate, for a multivariate monitor),
+      which is what \code{autoplot()} draws.}
+    \item{\code{method}, \code{alpha}, \code{n_baseline},
+      \code{reset}, \code{relearn}}{the settings this call fixed,
+      kept so a later \code{cpt_update()} cannot silently disagree
+      with them.}
+    \item{\code{state}}{the detector's internal statistics. Engine
+      internals: their shape differs by \code{method} and is not part
+      of the interface.}
+  }
 }
 \description{
 Creates a detector that consumes observations as they arrive and raises
 alarms, rather than segmenting a series that is already complete. Feed it
 with \code{\link{cpt_update}()}, read its alarm log with
-\code{\link{alarms}()}, and score it with \code{\link{cpt_delay}()} —
+\code{\link{alarms}()}, and score it with \code{\link{cpt_delay}()},
 because for an online method "did you find the location?" is the wrong
 question and "how long did you take, and how often do you false-alarm?"
 is the right one.
@@ -120,7 +147,7 @@ is the right one.
 
 Shin, Ramdas and Rinaldo (2023) give a nonparametric sequential framework
 with non-asymptotic control of the average run length, and it has no R
-implementation. The construction used here is the mixture Shiryaev–Roberts
+implementation. The construction used here is the mixture Shiryaev-Roberts
 e-detector for a sub-Gaussian shift. For each candidate shift
 \eqn{\delta} the increment is the likelihood ratio
 \eqn{e_t^{(\delta)} = \exp(\delta (X_t - \mu_0)/\sigma^2 -

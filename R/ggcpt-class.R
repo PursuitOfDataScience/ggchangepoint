@@ -70,7 +70,10 @@
 #' \code{\link{as_ggcpt}()} is the validating way to build one of these from
 #' the outside; this constructor does not check its arguments.
 #'
-#' @return An object of class \code{ggcpt}.
+#' @return An object of class \code{ggcpt}, holding exactly the
+#'   components passed in (documented one by one above) plus any of the
+#'   optional slots listed below. Nothing is validated or derived --
+#'   \code{\link{as_ggcpt}()} is the constructor that does both.
 #' @export
 #' @family result class
 #' @examples

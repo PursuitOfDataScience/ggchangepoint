@@ -25,15 +25,17 @@
 #'   raw changepoint value corresponding to that changepoint. Changepoint
 #'   locations follow the \code{ecp} package convention: the first index of the
 #'   right segment. When no changepoint is found, an empty tibble is returned
-#'   (0 rows). The upstream fit is not retained — and \code{$fit} is
-#'   \code{NULL} on a \code{ggcpt} from \code{cpt_detect(method = "ecp")} —
+#'   (0 rows). The upstream fit is not retained (\code{$fit} is
+#'   \code{NULL} on a \code{ggcpt} from \code{cpt_detect(method = "ecp")}),
 #'   because \code{ecp::e.agglo()}'s cluster-progression matrix is quadratic
 #'   in the series length; call the \pkg{ecp} functions directly if you need
 #'   their full output.
 # `@import tibble`, `ecp` and `Rdpack` removed: no unqualified call reaches
-# any of them. `Rdpack` in particular was folklore -- `RdMacros: Rdpack`
-# plus `Imports: Rdpack` in DESCRIPTION is what makes `\insertRef` resolve,
-# and the `@import` tag never contributed to it.
+# any of them. `RdMacros: Rdpack` plus `Imports: Rdpack` in DESCRIPTION is
+# what makes `\insertRef` resolve. The NAMESPACE import was not folklore,
+# though: without one, R CMD check reports "Namespace in Imports field not
+# imported from: 'Rdpack'". Rdpack's own remedy, `importFrom(Rdpack,
+# reprompt)`, now sits in the package block in R/ggchangepoint.R.
 #' @references
 #' \insertRef{james2014ecp}{ggchangepoint}
 #' @export

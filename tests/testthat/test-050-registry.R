@@ -371,11 +371,17 @@ test_that("dispatch refuses every return shape that is not changepoints", {
                  "must return a ggcpt object", info = nm)
   }
 
-  # and the shapes that ARE changepoints go through as_ggcpt()'s contract
-  for (fn in list(function(x, ...) 80L, function(x, ...) 80.4,
+  # and the shapes that ARE changepoints go through as_ggcpt()'s contract.
+  # The two that it has to alter are reported (in the registered path's own
+  # wording -- see test-hardening.R); the clean one is silent.
+  cpt_register_method("retprobe", fn = function(x, ...) 80L, overwrite = TRUE)
+  expect_silent(fit <- cpt_detect(x, method = "retprobe"))
+  expect_equal(fit$changepoints$cp, 80L)
+  for (fn in list(function(x, ...) 80.4,
                   function(x, ...) c(0L, 80L, 500L))) {
     cpt_register_method("retprobe", fn = fn, overwrite = TRUE)
-    fit <- cpt_detect(x, method = "retprobe")
+    expect_warning(fit <- cpt_detect(x, method = "retprobe"),
+                   "registered for `retprobe`", fixed = TRUE)
     expect_equal(fit$changepoints$cp, 80L)
   }
 })

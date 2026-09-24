@@ -28,7 +28,7 @@
 #' \code{strucchange} return the optimal segmentation for \emph{any} number
 #' of breaks without refitting. Measured here, the whole result is about
 #' 1.7 MB at \code{n = 200}, 5.9 MB at \code{n = 400} and 22.6 MB at
-#' \code{n = 800} — roughly four times larger each time the series doubles —
+#' \code{n = 800}, roughly four times larger each time the series doubles,
 #' and that one table outweighs everything else in the fit put together, by a
 #' margin that widens as the series grows. A single fit is not a problem; a
 #' few hundred of them are, so when running this engine over a panel with
@@ -228,11 +228,11 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
   )
 }
 
-#' EnvCpt wrapper — changepoints versus trends versus autocorrelation
+#' EnvCpt wrapper: changepoints versus trends versus autocorrelation
 #'
 #' Wraps \code{EnvCpt::envcpt()} (Beaulieu and Killick, 2018), which fits up
-#' to twelve competing models — constant mean or linear trend, each with or
-#' without changepoints, and with white-noise, AR(1) or AR(2) errors — and
+#' to twelve competing models (constant mean or linear trend, each with or
+#' without changepoints, and with white-noise, AR(1) or AR(2) errors) and
 #' lets an information criterion decide whether the series really contains
 #' changepoints or merely trend/autocorrelation ("memory"). The changepoints
 #' of the winning model (if any) are returned, and the winning model's name
@@ -249,9 +249,11 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
 #' @return A \code{ggcpt} object. \code{$fit} holds the full \code{envcpt}
 #'   output; the selected model name is stored in the penalty descriptor and
 #'   printed by \code{glance()} via \code{penalty_type}. Individual model
-#'   fits that fail are expected — the criterion ignores them — so the
+#'   fits that fail are expected (the criterion ignores them), so the
 #'   engine's own \code{try()} output is not passed on; genuine warnings
 #'   still are, and a series on which no model fits at all raises an error.
+#'   A constant series has no changepoints and is not handed to the engine,
+#'   so \code{$fit} is \code{NULL} there.
 #' @references
 #' \insertRef{beaulieu2018envcpt}{ggchangepoint}
 #' @export
@@ -280,6 +282,19 @@ envcpt_wrapper <- function(x, models = c("mean", "meancpt", "meanar1",
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "envcpt")
+
+  # A constant series plainly has no changepoints, and the engine fits its
+  # twelve models to it anyway: every `lm()` in there is an exact fit, so
+  # `summary.lm()` warned "essentially perfect fit: summary may be
+  # unreliable" twice per call -- the only two warnings the whole test suite
+  # raised. Advice about an internal regression the caller never ran. Every
+  # other wrapper that meets a flat series reports none; so does this one.
+  if (is_constant(data_vec)) {
+    return(ggcpt_build(data_vec, integer(0), method = "envcpt",
+                       change_in = "mean",
+                       penalty = list(type = criterion, value = NA_real_),
+                       call = match.call()))
+  }
 
   # EnvCpt fits up to twelve models with try(), and a try() that is not
   # silent prints its error straight to stderr, where it reads as a failure

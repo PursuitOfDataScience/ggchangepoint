@@ -70,7 +70,7 @@ Fits the supervised penalty model of Hocking et al. (2013): each series
 contributes a target \emph{interval} of log-penalties (those achieving the
 fewest label errors), a feature vector is computed from the series, and a
 linear model is fitted by minimising the squared hinge loss on those
-intervals — max-margin interval regression. The result has a
+intervals, which is max-margin interval regression. The result has a
 \code{predict()} method, and \code{\link{cpt_detect}()} accepts it
 directly as \code{penalty}, so a learned penalty is used exactly like a
 number.

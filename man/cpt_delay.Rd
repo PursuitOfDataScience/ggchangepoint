@@ -37,7 +37,10 @@ A \code{ggcpt_delay} object: a list with \code{per_change} (one
   row per true change: \code{truth}, \code{alarm}, \code{delay},
   \code{detected}), \code{false_alarms}, and the summary statistics
   \code{mean_delay}, \code{median_delay}, \code{n_false_alarms} and
-  \code{arl} (mean observations per false alarm).
+  \code{arl}: monitored observations per false alarm. The baseline a
+  \code{\link{cpt_replay}()} monitor trained on is not counted, because
+  no alarm can fire there; \code{n_obs} is the length of the stream in
+  series positions, baseline included.
 }
 \description{
 Scores an online result the way the sequential literature does: how long
@@ -45,7 +48,7 @@ after each true change did the first alarm arrive, and how many alarms
 were raised with no change behind them. \code{\link{cpt_metrics}()} is the
 wrong tool for an online detector: it asks whether the \emph{location}
 was recovered, which a sequential procedure never claims. It will not
-stop you — \code{cpt_metrics()} takes bare integer vectors and never
+stop you: \code{cpt_metrics()} takes bare integer vectors and never
 sees which detector produced them, so it cannot know. (An earlier
 version of this sentence said it warns. It does not, and given that
 signature it could not.)

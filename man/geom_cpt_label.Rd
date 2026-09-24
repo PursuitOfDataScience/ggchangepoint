@@ -39,7 +39,7 @@ commonly mapped to \code{change} or \code{status}.}
 A ggplot layer.
 }
 \description{
-Draws labelled regions behind a series — the central object of supervised
+Draws labelled regions behind a series: the central object of supervised
 changepoint detection (Hocking et al.), where an expert marks intervals as
 containing a change or not and the penalty is learned from those labels.
 Fill defaults to the label's \code{change} status, so a plot of labels

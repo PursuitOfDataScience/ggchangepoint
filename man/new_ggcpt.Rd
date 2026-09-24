@@ -71,7 +71,10 @@ by \code{ecp}). Defaults to \code{"left"}.}
 Defaults to \code{NA}.}
 }
 \value{
-An object of class \code{ggcpt}.
+An object of class \code{ggcpt}, holding exactly the
+  components passed in (documented one by one above) plus any of the
+  optional slots listed below. Nothing is validated or derived --
+  \code{\link{as_ggcpt}()} is the constructor that does both.
 }
 \description{
 The low-level constructor for the class every detector in this package

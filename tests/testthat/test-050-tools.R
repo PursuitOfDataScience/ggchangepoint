@@ -1016,18 +1016,28 @@ test_that("a parallel plan does not change the answer", {
   set.seed(21)
   series <- lapply(1:4, function(i) c(rnorm(80), rnorm(80, 3 + i * 0.2)))
   names(series) <- paste0("s", 1:4)
-  labs <- lapply(series, function(s) as_cpt_labels(80, n = length(s)))
+  # Ground truth goes IN each dataset. It used to be passed as `truth =`,
+  # which cpt_benchmark() does not have, so it rode `...` into every
+  # cpt_detect() call and every cell errored: the comparison below was NA
+  # against NA under both plans and checked nothing.
+  datasets <- lapply(series, function(s) list(series = s, truth = 80))
+  fit1 <- cpt_detect(series[[1]], method = "pelt")
 
   snapshot <- function() {
     tb <- tidy(suppressWarnings(cpt_batch(series, method = "pelt", seed = 1)))
     cm <- suppressWarnings(
       ggcpt_compare_table(series[[1]], methods = c("pelt", "binseg")))
     bm <- suppressWarnings(
-      cpt_benchmark(series, methods = c("pelt", "amoc"), truth = labs,
-                    parallel = TRUE))
+      cpt_benchmark(datasets, methods = c("pelt", "amoc"), parallel = TRUE))
+    # The recompute route's parallel branch read a `seed` it did not have,
+    # so under any non-sequential plan it stopped with "object 'seed' not
+    # found".
+    inf <- cpt_influence(fit1, engine = "recompute", subset = 1:4)
     list(batch = paste(tb$series, tb$cp, collapse = "|"),
          compare = paste(cm$method, cm$cp, collapse = "|"),
-         bench = paste(bm$method, round(bm$f1, 8), collapse = "|"))
+         bench = paste(bm$method, round(bm$f1, 8), collapse = "|"),
+         bench_errors = sum(!is.na(bm$error)),
+         influence = paste(inf$influence$n_cp, collapse = "|"))
   }
 
   old <- future::plan("sequential")
@@ -1041,6 +1051,10 @@ test_that("a parallel plan does not change the answer", {
   expect_identical(seq_run$batch, par_run$batch)
   expect_identical(seq_run$compare, par_run$compare)
   expect_identical(seq_run$bench, par_run$bench)
+  expect_identical(seq_run$influence, par_run$influence)
+  # and the benchmark cells are real scores, not failures
+  expect_identical(seq_run$bench_errors, 0L)
+  expect_identical(par_run$bench_errors, 0L)
 })
 
 test_that("streaming one observation at a time equals a bulk update", {

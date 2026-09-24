@@ -45,7 +45,14 @@ Monte Carlo interval at the solution.}
 \item{tolerance}{A detection counts as finding the change when it falls
 within this many positions of it. Defaults to \code{5}.}
 
-\item{change_in}{What changes. Defaults to \code{"mean"}.}
+\item{change_in}{What changes. Defaults to \code{"mean"}. The scenario
+\code{jump} describes, in units of \code{sigma}: \code{"mean"} shifts
+the mean by \code{jump}; \code{"var"} takes the noise standard
+deviation from \code{sigma} to \code{sigma * (1 + jump)};
+\code{"meanvar"} does both at once, shifting the mean by \code{jump}
+and the standard deviation to \code{sigma * (1 + jump / 2)}, the same
+design \code{\link{cpt_scenarios}()} simulates; \code{"slope"} bends
+a flat line into one rising by \code{jump * sigma} over the series.}
 
 \item{location}{Changepoint position, as a fraction of \code{n} in
 \eqn{(0, 1)} or an integer position. Defaults to \code{0.5}. A vector

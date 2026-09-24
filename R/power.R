@@ -59,7 +59,14 @@ validate_location <- function(location, n) {
 #' @param n_sim Replicates per scenario. Defaults to \code{200}.
 #' @param tolerance A detection counts as finding the change when it falls
 #'   within this many positions of it. Defaults to \code{5}.
-#' @param change_in What changes. Defaults to \code{"mean"}.
+#' @param change_in What changes. Defaults to \code{"mean"}. The scenario
+#'   \code{jump} describes, in units of \code{sigma}: \code{"mean"} shifts
+#'   the mean by \code{jump}; \code{"var"} takes the noise standard
+#'   deviation from \code{sigma} to \code{sigma * (1 + jump)};
+#'   \code{"meanvar"} does both at once, shifting the mean by \code{jump}
+#'   and the standard deviation to \code{sigma * (1 + jump / 2)}, the same
+#'   design \code{\link{cpt_scenarios}()} simulates; \code{"slope"} bends
+#'   a flat line into one rising by \code{jump * sigma} over the series.
 #' @param noise Noise model, passed to \code{\link{cpt_simulate}()}.
 #' @param rho AR(1) parameter when \code{noise = "ar1"}.
 #' @param df Degrees of freedom when \code{noise = "t"}.
@@ -82,7 +89,7 @@ validate_location <- function(location, n) {
 #' numbers. Measured on \code{cpt_power(n = c(100, 200), jump = 0.5,
 #' n_sim = 8, seed = 11)}: \code{power = 0.25, 0.125} sequentially and
 #' \code{0, 0.375} on two workers. The scenario is named because the
-#' numbers depend on it and on the worker count --- what does not depend on
+#' numbers depend on it and on the worker count; what does not depend on
 #' either is that the two disagree.
 #'
 #' So the guarantee is: same seed and same plan, same answer -- every time,
@@ -102,17 +109,16 @@ validate_location <- function(location, n) {
 #' given its input, and were measured to return identical results under a
 #' sequential and a two-worker plan, stochastic engines included.
 #'
-#' @return A \code{ggcpt_power} object: a tibble with one row per scenario —
-#'   \code{n}, \code{jump}, \code{sigma}, \code{location}, \code{power}
-#'   (proportion of replicates detecting the change within
+#' @return A \code{ggcpt_power} object: a tibble with one row per scenario,
+#'   with columns \code{n}, \code{jump}, \code{sigma}, \code{location},
+#'   \code{power} (proportion of replicates detecting the change within
 #'   \code{tolerance}), \code{mc_se} (the Monte Carlo standard error of that
-#'   proportion), \code{mean_abs_error} (location error among detections),
-#'   \code{mean_abs_error} is \code{NaN} when no replicate detected a
-#'   changepoint within \code{tolerance} of the true one --- there is no
-#'   distance to average --- and \code{power} reads \code{0} in the same
-#'   row.
+#'   proportion), \code{mean_abs_error} (location error among detections;
+#'   \code{NaN} when no replicate detected a changepoint within
+#'   \code{tolerance} of the true one, because there is no distance to
+#'   average, and \code{power} reads \code{0} in the same row),
 #'   \code{false_positives} (mean number of \emph{extra} changepoints per
-#'   replicate) and \code{n_sim} — with \code{print()} and
+#'   replicate) and \code{n_sim}; with \code{print()} and
 #'   \code{autoplot()}.
 #' @seealso \code{\link{cpt_min_detectable}()}, \code{\link{cpt_scenarios}()},
 #'   \code{\link{cpt_simulate}()}.
@@ -172,9 +178,13 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
     params <- switch(change_in,
       mean = c(0, scen$jump[i] * scen$sigma[i]),
       var = c(scen$sigma[i], scen$sigma[i] * (1 + scen$jump[i])),
+      # Both parameters move. The second segment's sd used to be `sigma`
+      # again, so a "meanvar" power figure was the power against a pure
+      # MEAN change, under a label promising more; cpt_scenarios() has
+      # always moved both, by the same design.
       meanvar = list(list(mean = 0, sd = scen$sigma[i]),
                      list(mean = scen$jump[i] * scen$sigma[i],
-                          sd = scen$sigma[i])),
+                          sd = scen$sigma[i] * (1 + scen$jump[i] / 2))),
       slope = list(list(intercept = 0, slope = 0),
                    list(intercept = 0,
                         slope = scen$jump[i] * scen$sigma[i] / ni))
@@ -467,7 +477,9 @@ print.ggcpt_min_detectable <- function(x, ...) {
 #' @param jump Change sizes, in standard deviations.
 #' @param location Change positions, as fractions of \code{n}.
 #' @param noise Noise models; any value \code{\link{cpt_simulate}()} accepts.
-#' @param rho AR(1) parameters (used by \code{noise = "ar1"}).
+#' @param rho AR(1) parameters (used by \code{noise = "ar1"}). Crossed
+#'   with the other arguments for the \code{"ar1"} rows, like every other
+#'   argument here; ignored, and recorded as \code{0}, for the others.
 #' @param change_in Change types.
 #' @param n_rep Replicates per scenario. Defaults to \code{1}.
 #' @param seed Base seed; replicate \code{r} of scenario \code{i} uses
@@ -495,13 +507,26 @@ cpt_scenarios <- function(n = 500, jump = c(0.5, 1, 2), location = 0.5,
   # "non-numeric argument to binary operator" and a length-2 seed silently
   # vectorised.
   validate_scalar(seed, "seed")
+  # `rho` is crossed like everything else. It used to be assigned with
+  # ifelse() after the grid was built, so a vector was RECYCLED down the
+  # rows: `rho = c(0.2, 0.8)` gave jump 1 an AR coefficient of 0.2 and jump
+  # 2 one of 0.8, and neither saw the other. Rows whose noise ignores rho
+  # record 0 and are de-duplicated.
   scen <- expand.grid(n = as.integer(n), jump = as.numeric(jump),
                       location = as.numeric(location), noise = noise,
-                      change_in = change_in, stringsAsFactors = FALSE,
-                      KEEP.OUT.ATTRS = FALSE)
-  scen$rho <- ifelse(scen$noise == "ar1", rho, 0)
+                      change_in = change_in, rho = as.numeric(rho),
+                      stringsAsFactors = FALSE, KEEP.OUT.ATTRS = FALSE)
+  scen$rho[scen$noise != "ar1"] <- 0
+  scen <- unique(scen)
+  rownames(scen) <- NULL
   scen$scenario <- paste0(scen$change_in, "_n", scen$n, "_j", scen$jump,
-                          "_", scen$noise)
+                          "_", scen$noise,
+                          if (length(unique(as.numeric(rho))) > 1L) {
+                            ifelse(scen$noise == "ar1",
+                                   paste0("_rho", scen$rho), "")
+                          } else {
+                            ""
+                          })
   scen$scenario <- make.unique(scen$scenario)
   if (!as_datasets) return(tibble::as_tibble(scen))
 

@@ -110,7 +110,18 @@
 #' multivariate methods all estimate or cancel the noise scale internally,
 #' and return the same segmentation whatever the units.
 #'
-#' @return A \code{ggcpt} object.
+#' @return A \code{ggcpt} object: a list with \code{changepoints}
+#'   (\code{cp}, \code{cp_value}), \code{segments} (\code{seg_id},
+#'   \code{start}, \code{end}, \code{n}, \code{param_estimate}),
+#'   \code{data} (\code{index}, \code{value}), the \code{method},
+#'   \code{change_in}, \code{penalty}, \code{cp_convention} and
+#'   \code{runtime} that produced it, the matched \code{call}, and
+#'   \code{fit}, the raw upstream object. Optional slots
+#'   (\code{data_wide}, \code{regions}, \code{diagnostics}, ...) appear
+#'   only when an engine supplies them; \code{\link{new_ggcpt}()}
+#'   documents all of them, and \code{\link{tidy.ggcpt}()},
+#'   \code{\link{glance.ggcpt}()} and \code{\link{augment.ggcpt}()}
+#'   are the supported way to read one.
 #' @seealso \code{\link{cpt_methods}()} for what is available and what each
 #'   method can do. To get the result out: \code{\link{tidy.ggcpt}()},
 #'   \code{\link{glance.ggcpt}()}, \code{\link{augment.ggcpt}()},
@@ -339,7 +350,23 @@ run_registered_method <- function(entry, x, change_in, penalty, ...) {
          "registered method `", entry$method, "`. Supported: ",
          paste(entry$change_in, collapse = ", "), ".", call. = FALSE)
   }
-  out <- entry$fn(x, ...)
+  # A registration is arbitrary user code, so it can fail in two different
+  # ways and they want different treatment. An error it raises deliberately
+  # -- `stop(..., call. = FALSE)`, as this package does throughout -- is the
+  # author's own message and passes through untouched. An error that LEAKS
+  # from base R or from a package the detector called carries the call that
+  # raised it (see the provenance note in the sweep tests), and arrived here
+  # as e.g. "non-numeric argument to mathematical function" with nothing to
+  # say which method produced it. Every built-in wrapper names itself when
+  # its engine fails; the registered path did not.
+  out <- withCallingHandlers(
+    entry$fn(x, ...),
+    error = function(e) {
+      if (!is.null(conditionCall(e))) {
+        stop("The function registered for `", entry$method, "` failed: ",
+             conditionMessage(e), call. = FALSE)
+      }
+    })
   if (is_ggcpt(out)) {
     # A returned ggcpt used to be taken entirely on trust, which let
     # cpt_detect(x, method = <registered>) hand back a result about a
@@ -370,17 +397,55 @@ run_registered_method <- function(entry, x, change_in, penalty, ...) {
          "indices; it returned an object of class ", class(out)[1], ".",
          call. = FALSE)
   }
-  # `as_ggcpt()` reports what it drops from `cp`, because there it is a
-  # person's transcription of published breaks. Here the indices came from
-  # the registered detector itself, which is the wrapper case: normalising
-  # an engine's output is what the builder is for, and telling the caller to
-  # "check the values against the series" would be advice about code they
-  # did not write. Muffled by class, so only this one report is suppressed
-  # and every other warning as_ggcpt() might raise still reaches them.
+  # `as_ggcpt()` reports what it drops from `cp`, and its advice -- "check
+  # the values against the series rather than relying on this
+  # normalisation" -- is aimed at a person transcribing published breaks.
+  # That is the wrong reader here, which is why this report used to be
+  # muffled outright. But silence is the wrong answer too: a registered
+  # detector is code the CALLER wrote (an in-house method, a Python
+  # detector through reticulate), so an index this package cannot use is a
+  # bug in their detector, and dropping it without a word hides exactly the
+  # thing they need to see. Measured before this changed: a registration
+  # returning `c(30, NA, 60)` gave two changepoints and no warning, while
+  # `as_ggcpt(c(30, NA, 60), x)` warned -- so "the same contract checks as
+  # every built-in wrapper" was not what the registered path got.
+  #
+  # So: same information, re-aimed. The class-specific report is replaced
+  # rather than suppressed, and every other warning as_ggcpt() might raise
+  # still reaches the caller untouched.
+  n_supplied <- length(out)
   res <- withCallingHandlers(
     as_ggcpt(out, x, method = entry$method, change_in = change_in,
              penalty = penalty, cp_convention = entry$cp_convention),
     ggchangepoint_cp_dropped = function(w) invokeRestart("muffleWarning"))
+  n_kept <- nrow(res$changepoints)
+  # Two ways the detector's output can be altered, and a count catches only
+  # the first: values DROPPED (out of range, missing, duplicated) and values
+  # TRUNCATED (a fractional index becomes the whole number below it). The
+  # count-only version of this check was silent on `c(30.7, 60.2)` -- two
+  # supplied, two kept, and both quietly moved.
+  num <- suppressWarnings(as.numeric(out))
+  truncated <- sum(is.finite(num) & num != trunc(num))
+  if (n_kept < n_supplied || truncated > 0L) {
+    warning("The function registered for `", entry$method, "` returned ",
+            n_supplied, " changepoint(s); ",
+            if (n_kept < n_supplied) {
+              paste0(n_supplied - n_kept, " could not be used and ",
+                     if (n_kept == 1L) "1 was" else paste0(n_kept, " were"),
+                     " kept")
+            } else {
+              "all were kept"
+            },
+            if (truncated > 0L) {
+              paste0(", and ", truncated,
+                     " fractional value(s) were truncated to whole numbers")
+            } else {
+              ""
+            },
+            ". A location must be a whole number in 1..",
+            nrow(res$data) - 1L, ", and duplicates collapse. Check what ",
+            "the detector returns against that range.", call. = FALSE)
+  }
   res$registered <- TRUE
   res
 }

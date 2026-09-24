@@ -141,6 +141,58 @@ test_that("every column a result tibble returns is named in its @return", {
                             unlist(strsplit(val, "[^A-Za-z0-9_.]+")))
     expect_equal(undocumented, character(0), info = topic)
   }
+
+  # The list above is hand-maintained, so it covered the functions someone
+  # thought of and none of the broom methods. Resolving `verb.class` to the
+  # page that aliases it closes that: augment.ggcpt promised "a tibble with
+  # the original data plus augment columns" and named none of its six,
+  # cpt_monitor()'s whole \value was "A ggcpt_monitor object", and
+  # tidy.ggcpt_batch's `cp`/`cp_value` appeared nowhere on cpt_batch's page.
+  alias_of <- list()
+  for (nm in names(db)) {
+    rd <- db[[nm]]
+    tags <- vapply(rd, function(z) attr(z, "Rd_tag") %||% "", character(1))
+    for (i in which(tags == "\\alias")) {
+      alias_of[[trimws(paste(unlist(rd[[i]]), collapse = ""))]] <- nm
+    }
+  }
+  bank <- list(
+    ggcpt = fit,
+    ggcpt_batch = results$cpt_batch,
+    cpt_labels = labs,
+    cpt_label_error = results$cpt_label_error,
+    ggcpt_selection = suppressWarnings(cpt_select(x, criterion = "bic",
+                                                  k_max = 3)),
+    ggcpt_path = suppressWarnings(cpt_crops(x, pen_min = 2, pen_max = 50)),
+    ggcpt_monitor = cpt_replay(x, method = "edetector"),
+    ggcpt_recommendation = cpt_recommend(n = 500),
+    ggcpt_influence = cpt_influence(fit)
+  )
+  n_checked <- 0L
+  for (cls in names(bank)) {
+    for (verb in c("tidy", "glance", "augment")) {
+      # Only a method of its own -- an inherited one is documented with the
+      # class it was written for.
+      if (is.null(utils::getS3method(verb, cls, optional = TRUE))) next
+      out <- tryCatch(suppressWarnings(do.call(verb, list(bank[[cls]]))),
+                      error = function(e) NULL)
+      if (!is.data.frame(out)) next
+      key <- paste0(verb, ".", cls)
+      rdf <- alias_of[[key]]
+      expect_false(is.null(rdf),
+                   info = paste(key, "is registered but no help page",
+                                "aliases it"))
+      if (is.null(rdf)) next
+      val <- value_text(sub("[.]Rd$", "", rdf))
+      expect_false(is.na(val), info = paste(rdf, "has no \\value"))
+      if (is.na(val)) next
+      undocumented <- setdiff(names(out),
+                              unlist(strsplit(val, "[^A-Za-z0-9_.]+")))
+      expect_equal(undocumented, character(0), info = key)
+      n_checked <- n_checked + 1L
+    }
+  }
+  expect_gt(n_checked, 6L)
 })
 
 test_that("no test reaches a Suggests engine outside a guarded block", {
@@ -440,7 +492,7 @@ test_that("the 0.5.0 method count agrees across registry, NEWS and the tour", {
   # for the upstream package -- a registry column with 38 distinct values,
   # 35 of them in Suggests and 3 Imports -- whereas 19 is the delta in
   # *methods*: 31 at 0.4.0, 50 now. NEWS.md gets it right in its own
-  # heading ("Engine wave #2 - 19 new methods"), so the two documents
+  # heading ("Engine wave #2: 19 new methods"), so the two documents
   # disagreed about what was being counted, and a reader checking
   # `length(unique(cpt_methods()$engine))` got 38 with no way to reach 19.
   #
@@ -463,7 +515,9 @@ test_that("the 0.5.0 method count agrees across registry, NEWS and the tour", {
   }
   reached  <- grab(".*reaches ([0-9]+) wired methods.*")
   baseline <- grab(".*from 13 to ([0-9]+) wired methods.*")
-  delta    <- grab(".*Engine wave #2 . ([0-9]+) new methods.*")
+  # Any separator between "#2" and the count: the heading has been written
+  # with a dash and with a colon, and the count is the part that matters.
+  delta    <- grab(".*Engine wave #2[^0-9]+([0-9]+) new methods.*")
   expect_false(anyNA(c(reached, baseline, delta)))
 
   expect_identical(reached, live)

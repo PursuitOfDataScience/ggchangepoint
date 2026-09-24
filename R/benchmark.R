@@ -22,11 +22,12 @@
 #' the grid continues.
 #'
 #' @param datasets A named list of datasets. Each element is either a plain
-#'   numeric vector (no ground truth — only descriptive columns are filled)
+#'   numeric vector (no ground truth, so only descriptive columns are filled)
 #'   or a list with \code{series} and one of \code{truth},
 #'   \code{changepoints} (an integer vector) or \code{annotations} (a list
 #'   of integer vectors, one per annotator). A list carrying none of those
-#'   is scored \code{NA} and warns.
+#'   is scored \code{NA} and warns. A \code{series} with several columns
+#'   stays a matrix, so only the multivariate methods can score it.
 #'   \code{\link{cpt_datasets}()} builds a ready-made collection.
 #' @param methods Character vector of method names.
 #' @param metrics Which metrics to keep. Defaults to
@@ -45,9 +46,10 @@
 #' @param ... Additional arguments passed to every \code{cpt_detect()} call.
 #'
 #' @return A \code{ggcpt_benchmark} object: a tibble with one row per
-#'   (dataset, method) — \code{dataset}, \code{method}, \code{n},
+#'   (dataset, method): \code{dataset}, \code{method}, \code{n},
 #'   \code{n_annotators} (how many ground-truth sets the dataset supplied),
-#'   \code{n_cp}, the requested metrics, \code{runtime}, \code{error} — with
+#'   \code{n_cp}, the requested metrics, \code{runtime} and \code{error},
+#'   with
 #'   \code{print()}, \code{tidy()} and \code{autoplot()}
 #'   (\code{"heatmap"}, \code{"ranks"}, \code{"critical_difference"}).
 #' @references
@@ -136,7 +138,7 @@ cpt_benchmark <- function(datasets, methods = c("pelt", "binseg", "wbs"),
   rows <- lapply(seq_len(nrow(grid)), function(i) {
     d <- datasets[[grid$dataset[i]]]
     cell <- cells[[i]]
-    n <- length(d$series)
+    n <- NROW(d$series)
     base <- tibble::tibble(dataset = grid$dataset[i],
                            method = grid$method[i],
                            n = n,
@@ -144,7 +146,12 @@ cpt_benchmark <- function(datasets, methods = c("pelt", "binseg", "wbs"),
                            n_cp = length(cell$cp),
                            runtime = cell$runtime,
                            error = cell$error)
-    if (length(d$annotations) == 0) {
+    # A run that ERRORED has no segmentation to score. It used to be scored
+    # as `cp = integer(0)` -- the trivial segmentation -- so an engine that
+    # failed on every dataset collected covering 0.5 per cell and could
+    # outrank one that ran and over-segmented, while the heatmap called
+    # such cells blank and ?cpt_benchmark promised a failure the worst rank.
+    if (length(d$annotations) == 0 || !is.na(cell$error)) {
       for (m in metrics) base[[m]] <- NA_real_
       return(base)
     }
@@ -210,7 +217,17 @@ normalise_dataset <- function(d, name = NULL) {
             paste(setdiff(names(d), "series"), collapse = ", "), ".",
             call. = FALSE)
   }
-  list(series = as.numeric(el("series")), annotations = ann)
+  # A matrix stays a matrix. as.numeric() on one concatenates its columns,
+  # so a 200 x 2 series (TCPD ships several) was scored as a 400-point one
+  # with a changepoint invented at the seam, and n doubled for every metric.
+  s <- el("series")
+  series <- if (is.matrix(s) || is.data.frame(s)) {
+    X <- as_mv_matrix(s, arg = "series")
+    if (ncol(X) == 1L) as.numeric(X[, 1]) else X
+  } else {
+    coerce_series_values(s, arg = "series")
+  }
+  list(series = series, annotations = ann)
 }
 
 #' @rdname cpt_benchmark
@@ -352,10 +369,9 @@ autoplot.ggcpt_benchmark <- function(object,
     return(
       ggplot2::ggplot(d, ggplot2::aes(method, dataset, fill = value)) +
         ggplot2::geom_tile(colour = "white", linewidth = 0.4) +
-        # "\u2014" rather than the literal em dash: R code must be ASCII to
-        # be portable, and only comments are exempt.
+        # A missing score is labelled "NA", which says what it is.
         ggplot2::geom_text(
-          ggplot2::aes(label = ifelse(is.na(value), "\u2014",
+          ggplot2::aes(label = ifelse(is.na(value), "NA",
                                       format(round(value, 2)))),
           size = 3, colour = "grey15") +
         ggplot2::scale_fill_viridis_c(option = "D", na.value = "grey90",
@@ -364,7 +380,8 @@ autoplot.ggcpt_benchmark <- function(object,
                       title = paste0("Benchmark: ", metric),
                       subtitle = paste0("Tolerance ",
                                         attr(object, "tolerance"),
-                                        "; blank cells are engine failures"))
+                                        "; NA cells are failed runs or ",
+                                        "undefined metrics"))
     )
   }
 
@@ -437,7 +454,8 @@ autoplot.ggcpt_benchmark <- function(object,
 #' @noRd
 cpt_metric_names <- function() {
   c("f1", "precision", "recall", "covering", "hausdorff", "mae_matched",
-    "rmse_matched", "annotation_error", "n_pred", "n_true")
+    "rmse_matched", "annotation_error", "rand_index", "n_pred",
+    "n_truth")
 }
 
 # Internal: the Nemenyi critical distance,
@@ -476,7 +494,7 @@ nemenyi_cd <- function(k, N, alpha = 0.05) {
 #'
 #' Builds a ready-made collection of labelled series for
 #' \code{\link{cpt_benchmark}()}. By default these are the canonical
-#' simulated signals this package already ships — which means the benchmark
+#' simulated signals this package already ships, which means the benchmark
 #' runs offline, deterministically, and inside \code{R CMD check}. Pass
 #' \code{source = "tcpd"} for the Turing Change Point Dataset instead, which
 #' is downloaded and cached.
@@ -549,9 +567,9 @@ cpt_datasets <- function(source = c("simulated", "tcpd"), n = 500, seed = 1,
 
 #' Download and cache the Turing Change Point Dataset
 #'
-#' Fetches the benchmark of van den Burg and Williams (2020) — real series
-#' from many domains, each annotated independently by several human
-#' annotators — and caches it under \code{tools::R_user_dir()}. The
+#' Fetches the benchmark of van den Burg and Williams (2020), real series
+#' from many domains each annotated independently by several human
+#' annotators, and caches it under \code{tools::R_user_dir()}. The
 #' multi-annotator structure is the point: scoring against a single "true"
 #' set silently discards the disagreement, and
 #' \code{\link{cpt_metrics_annotated}()} is built to keep it.
@@ -564,7 +582,8 @@ cpt_datasets <- function(source = c("simulated", "tcpd"), n = 500, seed = 1,
 #'   \code{FALSE}.
 #' @param quiet Suppress progress messages. Defaults to \code{FALSE}.
 #' @return With \code{name = NULL}, a tibble catalogue (\code{name},
-#'   \code{n_obs}, \code{n_dim}, \code{n_annotators}, \code{cached}).
+#'   \code{n_annotators}, \code{cached}), read from the annotations file
+#'   alone, so listing it downloads no series.
 #'   Otherwise a named list of \code{list(series, annotations, index,
 #'   longname)} datasets, in the shape \code{\link{cpt_benchmark}()} takes.
 #' @section Network access and licences:
@@ -723,7 +742,12 @@ tcpd_download <- function(url, dst) {
 #' cpt_annotations(cpt_datasets(n = 200, names = "step"))
 #' @family result class
 cpt_annotations <- function(dataset) {
-  if (!is.null(dataset$series)) dataset <- list(dataset = dataset)
+  # Exact: `$series` partially matched a dataset NAMED "series_1" (the
+  # name cpt_batch() and friends generate), so a named list of datasets was
+  # mistaken for a single one.
+  if (!is.null(dataset[["series", exact = TRUE]])) {
+    dataset <- list(dataset = dataset)
+  }
   rows <- lapply(base::names(dataset), function(nm) {
     d <- normalise_dataset(dataset[[nm]])
     if (length(d$annotations) == 0) return(NULL)

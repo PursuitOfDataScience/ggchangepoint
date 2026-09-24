@@ -43,8 +43,8 @@ silently. To choose the level yourself, name a computing route.}
       estimate.}
     \item{\code{"nsp"}}{Narrowest Significance Pursuit regions computed on
       the same series and matched to the changepoints. These are
-      \emph{not} intervals around an estimate — see
-      \code{\link{nsp_wrapper}()} — but they are the strongest guarantee
+      \emph{not} intervals around an estimate (see
+      \code{\link{nsp_wrapper}()}), but they are the strongest guarantee
       available, so the mapping is reported as
       \code{source = "nsp_region"} and a changepoint in no region gets
       \code{NA}.}
@@ -70,8 +70,8 @@ silently. To choose the level yourself, name a computing route.}
       floor. Measured on a 200-point series with one clean change:
       \code{level = 0.5} gives a width of 0 (the mode alone holds more
       than half), \code{0.8} gives 72 (\pkg{bcp}) and 91
-      (\pkg{beast}), and \code{0.95} gives 166 and 187 --- 83\% and
-      94\% of the series. The requested level \emph{is} delivered in
+      (\pkg{beast}), and \code{0.95} gives 166 and 187, which is 83\%
+      and 94\% of the series. The requested level \emph{is} delivered in
       each case; what a wide interval says is that the posterior did not
       localise the change, not that the location is uncertain by that
       much. \code{cpt_confint()} warns when an interval covers more than
@@ -103,8 +103,8 @@ A tibble with one row per changepoint: \code{cp},
 Answers "where could this changepoint be?" for any result, and says which
 of four routes it used. \code{show_ci = TRUE} in \code{autoplot()} works
 only for the handful of engines that ship intervals of their own; this
-generic covers the rest, and — because the four routes mean genuinely
-different things — reports the provenance in a \code{source} column
+generic covers the rest, and (because the four routes mean genuinely
+different things) reports the provenance in a \code{source} column
 rather than presenting them as interchangeable.
 }
 \section{How well these cover}{
@@ -115,7 +115,7 @@ at 100 and a jump of three standard deviations, at a nominal level of
 a mean width of 2.2; \pkg{strucchange}'s native intervals covered 1.000
 at width 4.4; \pkg{stepR}'s (\code{smuce}) covered 0.992 at width 4.6;
 and \code{"posterior"} on \pkg{bcp} covered 1.000 at width 157. Every
-route is \emph{conservative} --- none under-covers --- and the width is
+route is \emph{conservative} (none under-covers), and the width is
 what separates them. The two native routes and the bootstrap are the
 ones to quote; see the note on \code{"posterior"} above for why its
 interval is so much wider.

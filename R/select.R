@@ -38,15 +38,15 @@
 #'     \item{\code{"mbic"}}{the modified BIC of Zhang and Siegmund (2007),
 #'       \eqn{3K\log n + \sum_i \log(l_i/n)} on the \strong{deviance}
 #'       (\eqn{-2\log L}) scale, which is the scale the \code{cost} column
-#'       is on --- the same criterion is \eqn{1.5K\log n + 0.5\sum_i
+#'       is on; the same criterion is \eqn{1.5K\log n + 0.5\sum_i
 #'       \log(l_i/n)} on the log-likelihood scale, which is how
 #'       \code{\link{cpt_penalty}()} states it. It depends on the segment
 #'       lengths \eqn{l_i} and so cannot be expressed by
 #'       \code{cpt_penalty()}'s function of \eqn{n} and \eqn{k} alone.
 #'       This is the one place in the package where the real
-#'       Zhang–Siegmund penalty is computed.}
+#'       Zhang-Siegmund penalty is computed.}
 #'     \item{\code{"aic"}}{Gaussian AIC over the ladder,
-#'       \eqn{n\log(\mathrm{RSS}/n) + 2(2K + 1)} — the same cost and the
+#'       \eqn{n\log(\mathrm{RSS}/n) + 2(2K + 1)}: the same cost and the
 #'       same parameter count as \code{"bic"}, with \eqn{2} in place of
 #'       \eqn{\log n}. That penalty does not grow with \eqn{n}, so it
 #'       over-selects changepoints, often taking every rung offered: on a
@@ -57,11 +57,14 @@
 #'       \code{"mbic"} is the better default.}
 #'     \item{\code{"crops_elbow"}}{the knee of the CROPS cost-against-\eqn{K}
 #'       curve, made an explicit rule (maximum distance from the chord
-#'       joining the endpoints — the standard Kneedle construction) rather
+#'       joining the endpoints, the standard Kneedle construction) rather
 #'       than something eyeballed off a plot.}
 #'     \item{\code{"cv"}}{order-preserved sample-splitting cross-validation
 #'       (COPPS) via \pkg{crossvalidationCP}. This is the criterion with a
-#'       consistency guarantee. Note that \code{cpss}, the authors' own
+#'       consistency guarantee. It chooses \eqn{K} with that package's own
+#'       least-squares estimator (a change in the \emph{mean}), not by
+#'       re-running \code{method}, which then supplies the segmentation at
+#'       that \eqn{K}. Note that \code{cpss}, the authors' own
 #'       package, was removed from CRAN; \pkg{crossvalidationCP} is the
 #'       supportable route.}
 #'     \item{\code{"stability"}}{the \eqn{K} whose changepoints are
@@ -87,9 +90,10 @@
 #'   \emph{candidates} come from the variance detector while the
 #'   \emph{score} does not, and splitting a segment whose mean did not move
 #'   barely reduces \eqn{\mathrm{RSS}}: the criterion will tend to choose
-#'   \eqn{K = 0} on a real variance change. Use \code{"cv"} or
-#'   \code{"stability"} there, both of which score by re-detection with the
-#'   same \code{change_in} and so carry no such assumption.
+#'   \eqn{K = 0} on a real variance change. Use \code{"stability"}
+#'   there, which scores by re-detection with the same \code{change_in} and
+#'   so carries no such assumption. \code{"cv"} does not help: its
+#'   estimator is a least-squares change in the mean as well.
 #' @param index Optional time index (a vector of dates, or a \code{ts},
 #'   \code{xts}, \code{zoo} or \code{tsibble} passed as \code{x}), carried
 #'   onto the chosen fit so \code{tidy()} and \code{autoplot()} report the
@@ -140,7 +144,14 @@ cpt_select <- function(x, method = "pelt",
     # mean at every rung of the ladder, and scored with gaussian_cost(),
     # which is a Gaussian-mean cost. `missing()` is what keeps an explicit
     # argument winning over the object.
-    if (missing(change_in)) change_in <- x$change_in %||% change_in
+    #
+    # Through rerun_dots(), which also refuses a multivariate result and a
+    # change type cpt_detect() cannot be asked for (kcp's "running mean"
+    # used to reach every rung as an error, swallowed, leaving K = 0).
+    change_in <- rerun_dots(
+      x, list(change_in = if (!missing(change_in)) change_in),
+      "cpt_select()")$change_in
+    method <- check_detect_request(method, change_in)
     series <- x$data$value
     # A selection made from an indexed fit has to stay on the user's scale:
     # dropping the index here would hand back a result plotted in positions
@@ -148,6 +159,12 @@ cpt_select <- function(x, method = "pelt",
     if (is.null(index)) index <- x$index
     index_label <- x$index_label %||% "Index"
   } else {
+    # Up front, because every rung of the ladder calls cpt_detect() inside
+    # tryCatch(): a typo'd method or an unsupported change type used to
+    # come back as a K = 0 "selection" labelled with the typo, and
+    # `method = "fpop", change_in = "var"` silently built a changepoint
+    # variance ladder under the fpop label.
+    method <- check_detect_request(method, change_in)
     validate_data(x)
     parts <- as_cpt_series(x, index = index)
     series <- as_uni_vector(parts$values, method)
@@ -201,7 +218,8 @@ cpt_select <- function(x, method = "pelt",
     crops_elbow = ks[knee_point(ks, costs)],
     cv = select_by_cv(series, k_max, folds),
     stability = {
-      value <- stability_curve(series, ladder, method, B, ...)
+      value <- stability_curve(series, ladder, method, B,
+                               change_in = change_in, ...)
       ks[which.max(value)]
     }
   )
@@ -381,10 +399,22 @@ select_by_cv <- function(series, k_max, folds) {
 
 # Internal: mean re-detection frequency of each candidate segmentation under
 # within-segment residual resampling.
+#
+# `change_in` is passed on explicitly. It used to be left to cpt_detect()'s
+# default of "mean", so on a `change_in = "var"` ladder the re-detection
+# looked for mean changes -- while @param change_in recommended this
+# criterion precisely because it re-detects with the same change type. A
+# re-run that ERRORS is counted apart from one that finds nothing, and if
+# every one errors the criterion stops with the engine's message instead of
+# reporting a curve of zeros.
 #' @noRd
-stability_curve <- function(series, ladder, method, B, ...) {
+stability_curve <- function(series, ladder, method, B, change_in = "mean",
+                            ...) {
   n <- length(series)
-  vapply(seq_along(ladder$k), function(i) {
+  n_tried <- 0L
+  n_failed <- 0L
+  first_error <- NULL
+  curve <- vapply(seq_along(ladder$k), function(i) {
     cp <- ladder$cpts[[i]]
     if (length(cp) == 0) return(NA_real_)
     fitted_step <- rep_segment_means(series, cp)
@@ -405,10 +435,15 @@ stability_curve <- function(series, ladder, method, B, ...) {
       resampled[idx] <- resid[idx][sample.int(length(idx), length(idx),
                                               replace = TRUE)]
       }
+      n_tried <<- n_tried + 1L
       rep_cp <- tryCatch(
         cpt_detect(fitted_step + resampled, method = method,
-                   ...)$changepoints$cp,
-        error = function(e) integer(0)
+                   change_in = change_in, ...)$changepoints$cp,
+        error = function(e) {
+          n_failed <<- n_failed + 1L
+          if (is.null(first_error)) first_error <<- conditionMessage(e)
+          integer(0)
+        }
       )
       if (length(rep_cp) == 0) next
       hits <- hits + vapply(cp, function(k) {
@@ -417,6 +452,12 @@ stability_curve <- function(series, ladder, method, B, ...) {
     }
     mean(hits / B)
   }, numeric(1))
+  if (n_tried > 0L && n_failed == n_tried) {
+    stop("`criterion = \"stability\"` could not re-run `", method,
+         "` on any bootstrap replicate. The first error was: ", first_error,
+         call. = FALSE)
+  }
+  curve
 }
 
 #' @noRd
@@ -464,7 +505,7 @@ tidy.ggcpt_selection <- function(x, ...) {
 #' @param plot_type \code{"criterion"} (the criterion against \eqn{K}, with
 #'   the choice marked), \code{"segmentation"} (the series with the chosen
 #'   segmentation) or \code{"ladder"} (small multiples showing how the
-#'   segmentation coarsens as \eqn{K} falls — the display that makes the
+#'   segmentation coarsens as \eqn{K} falls, the display that makes the
 #'   choice inspectable rather than asserted).
 #' @param max_facets Maximum number of rungs drawn by
 #'   \code{plot_type = "ladder"}. Defaults to \code{12}.
@@ -508,8 +549,11 @@ autoplot.ggcpt_selection <- function(object,
   # plot_type == "ladder"
   rungs <- utils::head(tab[order(-tab$k), , drop = FALSE], max_facets)
   rungs <- rungs[order(rungs$k), , drop = FALSE]
-  series <- tibble::tibble(index = seq_along(object$data),
-                           value = object$data)
+  # On the selection's own time index when it carries one, as the
+  # "segmentation" view (autoplot() of the chosen fit) already is: the two
+  # views of one selection disagreed about the x axis.
+  idx_vals <- object$index %||% seq_along(object$data)
+  series <- tibble::tibble(index = idx_vals, value = object$data)
   panels <- do.call(rbind, lapply(seq_len(nrow(rungs)), function(i) {
     d <- series
     d$panel <- paste0("K = ", rungs$k[i], if (rungs$chosen[i]) "  *" else "")
@@ -522,13 +566,15 @@ autoplot.ggcpt_selection <- function(object,
     if (length(cp) == 0) return(NULL)
     data.frame(panel = paste0("K = ", rungs$k[i],
                               if (rungs$chosen[i]) "  *" else ""),
-               cp = cp)
+               cp = idx_vals[cp])
   }))
 
   p <- ggplot2::ggplot(panels, ggplot2::aes(index, value)) +
     ggplot2::geom_line(colour = "grey55") +
     ggplot2::facet_wrap(~panel, ncol = 1, strip.position = "right") +
-    ggplot2::labs(x = "Index", y = "Value",
+    ggplot2::labs(x = if (is.null(object$index)) "Index" else {
+                    object$index_label %||% "Index"
+                  }, y = "Value",
                   title = "Segmentation ladder",
                   subtitle = "* marks the chosen K")
   if (!is.null(cp_panels)) {

@@ -56,15 +56,15 @@ to one or two rungs and the function warns.}
   \item{\code{"mbic"}}{the modified BIC of Zhang and Siegmund (2007),
     \eqn{3K\log n + \sum_i \log(l_i/n)} on the \strong{deviance}
     (\eqn{-2\log L}) scale, which is the scale the \code{cost} column
-    is on --- the same criterion is \eqn{1.5K\log n + 0.5\sum_i
+    is on; the same criterion is \eqn{1.5K\log n + 0.5\sum_i
     \log(l_i/n)} on the log-likelihood scale, which is how
     \code{\link{cpt_penalty}()} states it. It depends on the segment
     lengths \eqn{l_i} and so cannot be expressed by
     \code{cpt_penalty()}'s function of \eqn{n} and \eqn{k} alone.
     This is the one place in the package where the real
-    Zhang–Siegmund penalty is computed.}
+    Zhang-Siegmund penalty is computed.}
   \item{\code{"aic"}}{Gaussian AIC over the ladder,
-    \eqn{n\log(\mathrm{RSS}/n) + 2(2K + 1)} — the same cost and the
+    \eqn{n\log(\mathrm{RSS}/n) + 2(2K + 1)}: the same cost and the
     same parameter count as \code{"bic"}, with \eqn{2} in place of
     \eqn{\log n}. That penalty does not grow with \eqn{n}, so it
     over-selects changepoints, often taking every rung offered: on a
@@ -75,11 +75,14 @@ to one or two rungs and the function warns.}
     \code{"mbic"} is the better default.}
   \item{\code{"crops_elbow"}}{the knee of the CROPS cost-against-\eqn{K}
     curve, made an explicit rule (maximum distance from the chord
-    joining the endpoints — the standard Kneedle construction) rather
+    joining the endpoints, the standard Kneedle construction) rather
     than something eyeballed off a plot.}
   \item{\code{"cv"}}{order-preserved sample-splitting cross-validation
     (COPPS) via \pkg{crossvalidationCP}. This is the criterion with a
-    consistency guarantee. Note that \code{cpss}, the authors' own
+    consistency guarantee. It chooses \eqn{K} with that package's own
+    least-squares estimator (a change in the \emph{mean}), not by
+    re-running \code{method}, which then supplies the segmentation at
+    that \eqn{K}. Note that \code{cpss}, the authors' own
     package, was removed from CRAN; \pkg{crossvalidationCP} is the
     supportable route.}
   \item{\code{"stability"}}{the \eqn{K} whose changepoints are
@@ -109,9 +112,10 @@ Defaults to \code{100}.}
   \emph{candidates} come from the variance detector while the
   \emph{score} does not, and splitting a segment whose mean did not move
   barely reduces \eqn{\mathrm{RSS}}: the criterion will tend to choose
-  \eqn{K = 0} on a real variance change. Use \code{"cv"} or
-  \code{"stability"} there, both of which score by re-detection with the
-  same \code{change_in} and so carry no such assumption.}
+  \eqn{K = 0} on a real variance change. Use \code{"stability"}
+  there, which scores by re-detection with the same \code{change_in} and
+  so carries no such assumption. \code{"cv"} does not help: its
+  estimator is a least-squares change in the mean as well.}
 
 \item{index}{Optional time index (a vector of dates, or a \code{ts},
 \code{xts}, \code{zoo} or \code{tsibble} passed as \code{x}), carried
@@ -131,7 +135,7 @@ the ladder is built by repeated detection.}
 \item{plot_type}{\code{"criterion"} (the criterion against \eqn{K}, with
 the choice marked), \code{"segmentation"} (the series with the chosen
 segmentation) or \code{"ladder"} (small multiples showing how the
-segmentation coarsens as \eqn{K} falls — the display that makes the
+segmentation coarsens as \eqn{K} falls, the display that makes the
 choice inspectable rather than asserted).}
 
 \item{max_facets}{Maximum number of rungs drawn by

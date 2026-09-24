@@ -55,9 +55,9 @@ A tibble of candidate methods ordered by suitability, with columns
 }
 \description{
 Turns the capability matrix into an answer. Given what the analyst knows
-about their problem — how many dimensions, what kind of change, what the
+about their problem (how many dimensions, what kind of change, what the
 noise looks like, how long the series is, whether they need uncertainty or
-an online alarm — this returns the shortlist of methods that actually fit,
+an online alarm), this returns the shortlist of methods that actually fit,
 with a reason for each and the reference to cite. It is a decision table,
 not a model: everything it knows is in \code{\link{cpt_methods}()}, and
 making that explicit and printable is the point.

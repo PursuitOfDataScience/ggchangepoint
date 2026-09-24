@@ -24,8 +24,8 @@ a false positive.}
 A \code{cpt_labels} tibble.
 }
 \description{
-Turns a plain ground-truth changepoint set — the kind
-\code{\link{cpt_metrics}()} takes — into labelled regions, so one
+Turns a plain ground-truth changepoint set (the kind
+\code{\link{cpt_metrics}()} takes) into labelled regions, so one
 annotation can drive both the metric and the supervised machinery. Each
 true changepoint becomes a \code{"one_change"} region of width
 \code{2 * margin + 1}, and the stretches between them become

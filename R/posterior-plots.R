@@ -48,9 +48,13 @@ ggcpt_posterior <- function(x, prob_threshold = NULL) {
   }
 
   n <- nrow(x$data)
-  top <- tibble::tibble(index = x$data$index, y = x$data$value,
+  # On the result's own time index, like autoplot(fit) and every other
+  # plot drawn against series position: a dated bcp fit was drawn here in
+  # positions 1..n.
+  idx_vals <- plot_index(x)
+  top <- tibble::tibble(index = idx_vals, y = x$data$value,
                         panel = "Series and posterior mean")
-  bottom <- tibble::tibble(index = seq_len(n), y = prob,
+  bottom <- tibble::tibble(index = idx_vals, y = prob,
                            panel = "Posterior changepoint probability")
   both <- rbind(top, bottom)
   both$panel <- factor(both$panel, levels = unique(both$panel))
@@ -61,12 +65,12 @@ ggcpt_posterior <- function(x, prob_threshold = NULL) {
     ggplot2::geom_col(data = both[both$panel == levels(both$panel)[2], ],
                       fill = "steelblue", width = 1) +
     ggplot2::facet_grid(panel ~ ., scales = "free_y", switch = "y") +
-    ggplot2::labs(x = "Index", y = NULL,
+    ggplot2::labs(x = plot_index_label(x), y = NULL,
                   title = paste0("Bayesian changepoint posterior (",
                                  x$method, ")"))
 
   if ("fitted" %in% names(x$data)) {
-    fit_df <- tibble::tibble(index = x$data$index, y = x$data$fitted,
+    fit_df <- tibble::tibble(index = idx_vals, y = x$data$fitted,
                              panel = levels(both$panel)[1])
     p <- p + ggplot2::geom_line(data = fit_df, color = "darkred",
                                 linewidth = 0.8)
@@ -135,12 +139,23 @@ ggcpt_runlength <- function(x, prob_floor = 1e-3) {
 
   R <- as.matrix(R)
   # ocp stores one time point per COLUMN (each column is a probability
-  # distribution over run lengths, the rows).
+  # distribution over run lengths, the rows), and the FIRST column is the
+  # prior, before any observation: all its mass sits at run length 0, and
+  # `R` has n + 1 columns for n observations. So column t is the posterior
+  # after observation t - 1. Plotting column t at x = t drew the whole
+  # heatmap one position late: on a change after observation 60 the run
+  # length fell to 1 at x = 62 rather than at 61, the first observation of
+  # the new segment. The prior column is dropped, since it describes no
+  # observation.
+  n <- nrow(x$data)
+  shift <- max(0L, ncol(R) - n)
   df <- do.call(rbind, lapply(seq_len(ncol(R)), function(t) {
+    obs <- t - shift
+    if (obs < 1L || obs > n) return(NULL)
     probs <- R[, t]
     keep <- which(is.finite(probs) & probs > prob_floor)
     if (length(keep) == 0) return(NULL)
-    data.frame(time = t, run_length = keep - 1L, prob = probs[keep])
+    data.frame(time = obs, run_length = keep - 1L, prob = probs[keep])
   }))
 
   if (is.null(df)) {
@@ -148,14 +163,17 @@ ggcpt_runlength <- function(x, prob_floor = 1e-3) {
          "; lower it (probabilities are at most 1).", call. = FALSE)
   }
 
+  # The time axis on the result's own index, as for ggcpt_posterior().
+  idx_vals <- plot_index(x)
+  df$time <- idx_vals[df$time]
   ggplot2::ggplot(df, ggplot2::aes(time, run_length, fill = prob)) +
     ggplot2::geom_raster() +
     ggplot2::scale_fill_gradient(low = "grey95", high = "darkblue",
                                  name = "Posterior") +
-    ggplot2::labs(x = "Index", y = "Run length",
+    ggplot2::labs(x = plot_index_label(x), y = "Run length",
                   title = "BOCPD run-length posterior") +
-    ggplot2::geom_vline(xintercept = x$changepoints$cp, color = "red",
-                        linetype = "dashed", linewidth = 0.4)
+    ggplot2::geom_vline(xintercept = idx_vals[x$changepoints$cp],
+                        color = "red", linetype = "dashed", linewidth = 0.4)
 }
 
 #' Interactive changepoint plot

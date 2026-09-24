@@ -47,7 +47,7 @@ near the bottom of the panel. Defaults to \code{FALSE}.}
 \code{FALSE}.}
 
 \item{show_regions}{Logical. Whether to shade the significance regions an
-interval-valued method returns (the \code{regions} slot — currently
+interval-valued method returns (the \code{regions} slot; currently
 \code{\link{nsp_wrapper}()}). Each band is an interval that contains at
 least one changepoint at the stated global level; it is not a confidence
 interval around a point estimate. Defaults to \code{TRUE} when the
@@ -72,9 +72,10 @@ the observation position when there is none.}
 
 \item{labels}{Optional \code{\link{cpt_labels}()} tibble. When supplied,
 the labelled regions are shaded behind the series and coloured by the
-outcome \code{\link{cpt_label_error}()} gives them — correct, false
-positive, false negative — so scoring a segmentation against expert
-labels becomes a picture rather than a table.}
+outcome \code{\link{cpt_label_error}()} gives them (correct, false
+positive, false negative), so scoring a segmentation against expert
+labels becomes a picture rather than a table. Not drawn for a
+multivariate result, which warns instead.}
 
 \item{type}{Which view to draw. \code{"series"} (default) is the series
 with its changepoints; \code{"statistic"} and \code{"path"} delegate

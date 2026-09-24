@@ -25,7 +25,7 @@ output.}
 
 \item{...}{Other arguments passed to \code{ggplot2::geom_rect()}.}
 
-\item{alpha}{Fill transparency. Defaults to \code{0.2} — light enough that
+\item{alpha}{Fill transparency. Defaults to \code{0.2}: light enough that
 the series stays readable through overlapping bands.}
 
 \item{fill}{Band fill colour. Defaults to \code{"steelblue"}.}

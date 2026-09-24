@@ -27,7 +27,7 @@
 #'   \code{decafs}, \code{segmented}, \code{mcp} and \code{bfast}). Defaults to
 #'   \code{FALSE}.
 #' @param show_regions Logical. Whether to shade the significance regions an
-#'   interval-valued method returns (the \code{regions} slot — currently
+#'   interval-valued method returns (the \code{regions} slot; currently
 #'   \code{\link{nsp_wrapper}()}). Each band is an interval that contains at
 #'   least one changepoint at the stated global level; it is not a confidence
 #'   interval around a point estimate. Defaults to \code{TRUE} when the
@@ -44,9 +44,10 @@
 #'   the observation position when there is none.
 #' @param labels Optional \code{\link{cpt_labels}()} tibble. When supplied,
 #'   the labelled regions are shaded behind the series and coloured by the
-#'   outcome \code{\link{cpt_label_error}()} gives them — correct, false
-#'   positive, false negative — so scoring a segmentation against expert
-#'   labels becomes a picture rather than a table.
+#'   outcome \code{\link{cpt_label_error}()} gives them (correct, false
+#'   positive, false negative), so scoring a segmentation against expert
+#'   labels becomes a picture rather than a table. Not drawn for a
+#'   multivariate result, which warns instead.
 #' @param type Which view to draw. \code{"series"} (default) is the series
 #'   with its changepoints; \code{"statistic"} and \code{"path"} delegate
 #'   to \code{\link{ggcpt_statistic}()} and
@@ -115,9 +116,18 @@ autoplot.ggcpt <- function(object,
   # coordinate columns rather than the frame's width: `data_wide` also
   # carries `index`, and (when the result has a time index) `index_value`.
   if (n_coordinates(object) > 1) {
+    # `labels` and unknown arguments too: the univariate path warns about
+    # an argument it cannot use ("Ignoring unknown argument(s)"), and this
+    # one dropped both without a word.
+    extra <- list(...)
+    if (length(extra) > 0) {
+      warning("Ignoring unknown argument(s): ",
+              paste(names(extra), collapse = ", "), call. = FALSE)
+    }
     unsupported <- c(show_segments = isTRUE(show_segments),
                      show_ci = isTRUE(show_ci),
-                     show_fit = isTRUE(show_fit))
+                     show_fit = isTRUE(show_fit),
+                     labels = !is.null(labels))
     if (any(unsupported)) {
       warning("Ignoring ", paste(names(unsupported)[unsupported],
                                  collapse = ", "),
@@ -305,12 +315,17 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
   # and a functional result (fmean/fcov on a 30-point grid) legitimately
   # has this many coordinates -- a warning would fire on the package's own
   # examples. Advice belongs at message severity.
+  #
+  # The way out it names has to be one that works. It used to recommend
+  # `autoplot(object, type = "series")`, which is the default and is exactly
+  # the call that just produced the stacked panels; the summary series is
+  # drawn once the wide frame is out of the way.
   if (length(vars) > 24) {
     message("This result has ", length(vars), " coordinates, so the plot ",
             "will have ", length(vars), " stacked panels and is unlikely ",
-            "to be readable. `autoplot(object, type = \"series\")` draws ",
-            "the summary series instead, or plot `object$data_wide` ",
-            "yourself.")
+            "to be readable. To draw the one summary series the result ",
+            "carries, drop the wide frame first (`object$data_wide <- NULL; ",
+            "autoplot(object)`), or plot `object$data_wide` yourself.")
   }
 
   p <- ggplot2::ggplot(long, ggplot2::aes(index, value)) +

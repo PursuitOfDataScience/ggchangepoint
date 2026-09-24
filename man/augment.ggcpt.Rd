@@ -12,7 +12,28 @@
 \item{...}{Additional arguments (ignored).}
 }
 \value{
-A tibble with the original data plus augment columns.
+A tibble with one row per observation: the data as the result
+  carries it, plus four added columns. The data half depends on the
+  result -- \code{index} and \code{value} for a univariate one,
+  \code{index} plus \strong{one column per coordinate} (named as the
+  input's columns were) for a multivariate one, and an extra
+  \code{fitted} column for the engines that supply their own fitted
+  signal. The added four are always the same:
+  \describe{
+    \item{\code{seg_id}}{which segment the observation falls in,
+      counting from 1.}
+    \item{\code{.fitted}}{the segment's \code{param_estimate} -- the
+      segment \strong{mean}, for every method in the package, or the
+      engine's own fitted signal where there is one. See the details
+      below for the multivariate case.}
+    \item{\code{.resid}}{\code{value - .fitted}, against the
+      univariate series the result carries.}
+    \item{\code{is_changepoint}}{\code{TRUE} at each detected
+      location, under the result's \code{cp_convention}.}
+  }
+  Measured on a \code{pelt} fit the columns are \code{index},
+  \code{value}, \code{seg_id}, \code{.fitted}, \code{.resid},
+  \code{is_changepoint}.
 }
 \description{
 Returns the original data with added columns: \code{seg_id}, \code{.fitted},

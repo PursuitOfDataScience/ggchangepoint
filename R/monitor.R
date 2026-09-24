@@ -19,14 +19,14 @@
 #' Creates a detector that consumes observations as they arrive and raises
 #' alarms, rather than segmenting a series that is already complete. Feed it
 #' with \code{\link{cpt_update}()}, read its alarm log with
-#' \code{\link{alarms}()}, and score it with \code{\link{cpt_delay}()} —
+#' \code{\link{alarms}()}, and score it with \code{\link{cpt_delay}()},
 #' because for an online method "did you find the location?" is the wrong
 #' question and "how long did you take, and how often do you false-alarm?"
 #' is the right one.
 #'
 #' @param method Which sequential detector:
 #'   \describe{
-#'     \item{\code{"edetector"}}{(default) a mixture Shiryaev–Roberts
+#'     \item{\code{"edetector"}}{(default) a mixture Shiryaev-Roberts
 #'       e-detector; see the section below.}
 #'     \item{\code{"cpm"}}{\pkg{cpm}'s sequential change-point model, tuned
 #'       by \code{ARL0}.}
@@ -64,15 +64,15 @@
 #'   Defaults to \code{20}. This matters more than it looks: a real change
 #'   is \emph{persistent}, so a detector that restarts against the stale
 #'   pre-change baseline alarms again on the very next observation and keeps
-#'   alarming for the rest of the series — the monitor reports one change as
+#'   alarming for the rest of the series: the monitor reports one change as
 #'   hundreds, and \code{\link{cpt_delay}()} then counts them all as false
 #'   alarms. Set \code{relearn = 0} to switch the behaviour off and see
 #'   every threshold crossing.
 #' @param thresh Threshold rule for \code{"ocd"}: \code{"MC"} (default)
 #'   calibrates by Monte Carlo against \code{patience}, or supply a numeric
 #'   vector of three thresholds. The Monte Carlo calibration is the
-#'   expensive part of building an \code{"ocd"} monitor — a minute or more
-#'   at the default \code{patience} — so pass thresholds directly when you
+#'   expensive part of building an \code{"ocd"} monitor (a minute or more
+#'   at the default \code{patience}), so pass thresholds directly when you
 #'   already have them, or lower \code{mc_reps} while exploring.
 #' @param mc_reps Monte Carlo repetitions for the \code{"ocd"} threshold.
 #' @param ... Additional arguments passed to the engine's constructor.
@@ -80,7 +80,7 @@
 #' @section The e-detector, and why it is implemented rather than wrapped:
 #' Shin, Ramdas and Rinaldo (2023) give a nonparametric sequential framework
 #' with non-asymptotic control of the average run length, and it has no R
-#' implementation. The construction used here is the mixture Shiryaev–Roberts
+#' implementation. The construction used here is the mixture Shiryaev-Roberts
 #' e-detector for a sub-Gaussian shift. For each candidate shift
 #' \eqn{\delta} the increment is the likelihood ratio
 #' \eqn{e_t^{(\delta)} = \exp(\delta (X_t - \mu_0)/\sigma^2 -
@@ -101,7 +101,33 @@
 #' separately maintained code; this one does not, and is labelled as such
 #' wherever it appears.
 #'
-#' @return A \code{ggcpt_monitor} object.
+#' @return A \code{ggcpt_monitor} object: a list carrying the detector's
+#'   state between calls, so it is meant to be passed to
+#'   \code{\link{cpt_update}()} and re-assigned rather than read field by
+#'   field. The parts worth reading are
+#'   \describe{
+#'     \item{\code{alarms}}{the tibble \code{\link{alarms}()} and
+#'       \code{\link[=tidy.ggcpt_monitor]{tidy}()} return -- one row per
+#'       alarm, with \code{time}, \code{statistic} and
+#'       \code{threshold}. Empty (zero rows) until something fires.}
+#'     \item{\code{t}}{how many observations the monitor has consumed
+#'       through \code{\link{cpt_update}()}, \strong{not} counting the
+#'       baseline; an alarm's \code{time} is on this same clock. A monitor
+#'       built by \code{\link{cpt_replay}()} also carries \code{offset},
+#'       the number of leading observations it trained on, so
+#'       \code{time + offset} is a position in the replayed series
+#'       (\code{\link{cpt_delay}()} applies it for you).}
+#'     \item{\code{data}}{every monitored observation so far, baseline
+#'       excluded (the first coordinate, for a multivariate monitor),
+#'       which is what \code{autoplot()} draws.}
+#'     \item{\code{method}, \code{alpha}, \code{n_baseline},
+#'       \code{reset}, \code{relearn}}{the settings this call fixed,
+#'       kept so a later \code{cpt_update()} cannot silently disagree
+#'       with them.}
+#'     \item{\code{state}}{the detector's internal statistics. Engine
+#'       internals: their shape differs by \code{method} and is not part
+#'       of the interface.}
+#'   }
 #' @references
 #' \insertRef{shin2023edetectors}{ggchangepoint}
 #' @seealso \code{\link{cpt_update}()}, \code{\link{alarms}()},
@@ -328,7 +354,12 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
 #' @param monitor A \code{ggcpt_monitor} object.
 #' @param new_obs New observations: a numeric vector, or a matrix with rows
 #'   as time points for a multivariate monitor.
-#' @return The updated \code{ggcpt_monitor}.
+#' @return The updated \code{ggcpt_monitor} -- the same structure as the
+#'   input (see \code{\link{cpt_monitor}()}), with \code{t} advanced by
+#'   the number of new observations (rows, for a matrix) and any new rows
+#'   appended to \code{alarms}.
+#'   Re-assign it: the monitor is a value, not a mutable object, so
+#'   \code{cpt_update(mon, y)} without assignment discards the update.
 #' @seealso \code{\link{cpt_monitor}()}, \code{\link{alarms}()}.
 #' @export
 #' @examples
@@ -566,10 +597,11 @@ print.ggcpt_monitor <- function(x, ...) {
 #' @rdname cpt_monitor
 #' @param object A \code{ggcpt_monitor} object (for \code{autoplot()}).
 #' @param plot_type \code{"timeline"} (the monitored series with the alarms
-#'   marked), \code{"statistic"} (the running detection statistic against its
-#'   threshold) or \code{"runlength"} (the gaps between alarms, which
+#'   marked), \code{"statistic"} (the detection statistic at each alarm,
+#'   against its threshold: a monitor records its statistic only when an
+#'   alarm fires) or \code{"runlength"} (the gaps between alarms, which
 #'   estimate the run length). For a multivariate monitor the timeline draws
-#'   the first coordinate — the alarms are shared, so the rules are right
+#'   the first coordinate: the alarms are shared, so the rules are right
 #'   whichever coordinate is shown, but the line is one of several.
 #' @export
 autoplot.ggcpt_monitor <- function(object,
@@ -597,9 +629,13 @@ autoplot.ggcpt_monitor <- function(object,
 
   if (plot_type == "statistic") {
     if (nrow(al) == 0) {
-      stop("No alarm has fired, so there is no statistic history to draw. ",
-           "The running statistic is only recorded at alarms; use ",
-           "cpt_replay() for a full statistic trace.", call. = FALSE)
+      # cpt_replay() used to be offered here as the way to a "full
+      # statistic trace". It returns the same object, which records the
+      # statistic at alarms only, so the advice led nowhere.
+      stop("No alarm has fired, so there is no statistic to draw: a ",
+           "monitor records its statistic only when an alarm fires. ",
+           "`plot_type = \"timeline\"` shows the monitored series.",
+           call. = FALSE)
     }
     return(
       ggplot2::ggplot(al, ggplot2::aes(time, statistic)) +
@@ -645,7 +681,9 @@ autoplot.ggcpt_monitor <- function(object,
 #'   data (an integer), or an explicit baseline vector. Defaults to
 #'   \code{min(100, floor(n / 4))}.
 #' @param ... Additional arguments passed to \code{\link{cpt_monitor}()}.
-#' @return A \code{ggcpt_monitor} that has already consumed the series.
+#' @return A \code{ggcpt_monitor} that has already consumed the series --
+#'   the same object \code{\link{cpt_monitor}()} returns, described
+#'   there, with \code{alarms} filled in for whatever fired.
 #' @seealso \code{\link{cpt_delay}()}, \code{\link{cpt_monitor}()}.
 #' @export
 #' @examples
@@ -733,7 +771,7 @@ cpt_replay <- function(x, method = c("edetector", "cpm", "ocd"),
 #' were raised with no change behind them. \code{\link{cpt_metrics}()} is the
 #' wrong tool for an online detector: it asks whether the \emph{location}
 #' was recovered, which a sequential procedure never claims. It will not
-#' stop you — \code{cpt_metrics()} takes bare integer vectors and never
+#' stop you: \code{cpt_metrics()} takes bare integer vectors and never
 #' sees which detector produced them, so it cannot know. (An earlier
 #' version of this sentence said it warns. It does not, and given that
 #' signature it could not.)
@@ -749,7 +787,10 @@ cpt_replay <- function(x, method = c("edetector", "cpm", "ocd"),
 #'   row per true change: \code{truth}, \code{alarm}, \code{delay},
 #'   \code{detected}), \code{false_alarms}, and the summary statistics
 #'   \code{mean_delay}, \code{median_delay}, \code{n_false_alarms} and
-#'   \code{arl} (mean observations per false alarm).
+#'   \code{arl}: monitored observations per false alarm. The baseline a
+#'   \code{\link{cpt_replay}()} monitor trained on is not counted, because
+#'   no alarm can fire there; \code{n_obs} is the length of the stream in
+#'   series positions, baseline included.
 #' @seealso \code{\link{cpt_monitor}()}, \code{\link{cpt_replay}()}.
 #' @export
 #' @examples
@@ -783,6 +824,7 @@ cpt_delay <- function(object, truth, max_delay = Inf) {
   } else {
     max(c(al$time, truth), na.rm = TRUE)
   }
+  n_monitored <- if (inherits(object, "ggcpt_monitor")) object$t else n_obs
   # A truth past the end of the stream can never be detected, so scoring it
   # would report a miss that says more about the argument than the detector.
   if (inherits(object, "ggcpt_monitor") && any(truth > n_obs)) {
@@ -818,7 +860,16 @@ cpt_delay <- function(object, truth, max_delay = Inf) {
       n_false_alarms = nrow(false_alarms),
       n_detected = sum(per_change$detected),
       n_changes = length(truth),
-      arl = if (nrow(false_alarms) > 0) n_obs / nrow(false_alarms) else Inf,
+      # Monitored observations, not the whole stream: a replay's training
+      # baseline cannot raise an alarm, so counting it inflated the ARL by
+      # n_baseline / n_false_alarms (300 monitored observations with three
+      # false alarms read as 133, not 100), in the direction that flatters
+      # the calibration the ARL exists to check.
+      arl = if (nrow(false_alarms) > 0) {
+        n_monitored / nrow(false_alarms)
+      } else {
+        Inf
+      },
       n_obs = n_obs
     ),
     class = "ggcpt_delay"

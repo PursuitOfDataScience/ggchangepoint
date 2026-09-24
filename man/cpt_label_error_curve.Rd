@@ -30,7 +30,7 @@ cpt_label_error_curve(
 (the default) the grid is chosen \emph{adaptively}: it starts below
 \code{log(n)}, where the segmentation shatters, and the top end is
 found by doubling until the detector reports no changepoints at all.
-A fixed grid cannot do this — on a series with a large change, a grid
+A fixed grid cannot do this: on a series with a large change, a grid
 that stops at a few hundred never produces a false negative, the error
 curve never turns back up, and the target interval comes out unbounded
 above, which is useless to \code{\link{cpt_learn_penalty}()}. The
@@ -53,7 +53,7 @@ A \code{ggcpt_label_curve} object: a tibble with \code{penalty},
 }
 \description{
 Runs one detector across a penalty grid and counts label errors at each
-setting — the curve penalty learning is fitted to, and the honest way to
+setting: the curve penalty learning is fitted to, and the honest way to
 see whether \emph{any} penalty can satisfy the labels.
 }
 \examples{

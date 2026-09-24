@@ -1,6 +1,6 @@
 #' Batch changepoint detection over many series
 #'
-#' Runs one detector over every series in a collection — the panel-data loop
+#' Runs one detector over every series in a collection: the panel-data loop
 #' that methodological and applied work both need constantly. Accepts a
 #' matrix/data frame (one column per series) or a named list of numeric
 #' vectors. Honours \code{future::plan()} for parallel execution when the
@@ -13,8 +13,10 @@
 #' @param change_in What to detect change in, passed to
 #'   \code{\link{cpt_detect}()}.
 #' @param index Optional time index shared by every series in the panel (a
-#'   vector of dates, say), or a named list of one index per series. Carried
-#'   onto each result and used by \code{tidy()} and \code{autoplot()}, so a
+#'   vector of dates, say), or a named list of one index per series. A list
+#'   has to cover every series, with indices of one type, because
+#'   \code{tidy()} and \code{autoplot()} stack them into one table and one
+#'   axis. Carried onto each result and used by \code{tidy()} and \code{autoplot()}, so a
 #'   faceted plot of fifty series shows dates rather than positions.
 #' @param seed Optional seed for reproducible parallel execution (passed to
 #'   \code{future.apply::future_lapply()} as \code{future.seed}; applied via
@@ -24,10 +26,10 @@
 #' @param keep_fit Keep each engine's raw fit in \code{result[[i]]$fit}?
 #'   Defaults to \code{TRUE}, which is what makes a batch result as
 #'   inspectable as a single one. Set it to \code{FALSE} for a large panel:
-#'   a few engines return fits far bigger than the data they were given —
+#'   a few engines return fits far bigger than the data they were given.
 #'   \code{strucchange} keeps a triangular \eqn{O(n^2)} RSS matrix, so a
 #'   single 2000-point series costs about 135 MB, and \code{bfast} and
-#'   \code{bocpd} are in the tens of MB — and a panel multiplies that by the
+#'   \code{bocpd} are in the tens of MB, and a panel multiplies that by the
 #'   number of series. Everything else on the object, including
 #'   \code{tidy()} and \code{autoplot()}, is unaffected; only accessors
 #'   that read \code{$fit} (\code{cpt_statistic()},
@@ -38,7 +40,8 @@
 #'   columns \code{series}, \code{n_changepoints}, \code{changepoints} (a
 #'   list-column of tidy tibbles), and \code{result} (a list-column of
 #'   \code{ggcpt} objects). Methods: \code{print()}, \code{tidy()} (one row
-#'   per changepoint across all series), and \code{autoplot()} (faceted
+#'   per changepoint across all series, with columns \code{series},
+#'   \code{cp} and \code{cp_value}), and \code{autoplot()} (faceted
 #'   small-multiples with each series' changepoints).
 #' @export
 #' @examples
@@ -118,6 +121,12 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
   # user to bisect the list to find which.
   # One index for the whole panel, or one per series. A named list is
   # matched by name so the caller does not have to keep the order straight.
+  #
+  # A POSIXlt is a list internally, so is.list() read a shared POSIXlt
+  # index as a per-series list and handed each series one of its
+  # components (seconds, minutes, ...). Converted up front, it is the
+  # vector it means to be.
+  if (inherits(index, "POSIXlt")) index <- as.POSIXct(index)
   index_for <- function(i) {
     if (is.null(index)) return(NULL)
     if (is.list(index)) {
@@ -127,6 +136,33 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
       return(NULL)
     }
     index
+  }
+
+  # A per-series list that skips a series, or mixes index types, cannot be
+  # stacked: tidy() and autoplot() both failed on it with base R's
+  # "numbers of columns of arguments do not match", naming nothing. Refuse
+  # it here, where the series can be named.
+  if (is.list(index)) {
+    have <- vapply(seq_along(series_list),
+                   function(i) !is.null(index_for(i)), logical(1))
+    if (!all(have)) {
+      miss <- names(series_list)[!have]
+      stop("`index` is a list, so it gives one index per series, but it has ",
+           "none for ", length(miss), " of ", length(series_list), ": ",
+           paste(utils::head(miss, 3), collapse = ", "),
+           if (length(miss) > 3) ", ..." else "", ". Supply one for every ",
+           "series, or pass one vector shared by the whole panel.",
+           call. = FALSE)
+    }
+    kinds <- unique(vapply(seq_along(series_list), function(i) {
+      class(index_for(i))[1]
+    }, character(1)))
+    if (length(kinds) > 1L) {
+      stop("`index` mixes index types across series (",
+           paste(kinds, collapse = ", "), "); tidy() and autoplot() stack ",
+           "them into one column and one axis, so they must share one.",
+           call. = FALSE)
+    }
   }
 
   run_one <- function(i) {

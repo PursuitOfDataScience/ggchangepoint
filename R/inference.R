@@ -16,8 +16,8 @@
 #' Answers "where could this changepoint be?" for any result, and says which
 #' of four routes it used. \code{show_ci = TRUE} in \code{autoplot()} works
 #' only for the handful of engines that ship intervals of their own; this
-#' generic covers the rest, and — because the four routes mean genuinely
-#' different things — reports the provenance in a \code{source} column
+#' generic covers the rest, and (because the four routes mean genuinely
+#' different things) reports the provenance in a \code{source} column
 #' rather than presenting them as interchangeable.
 #'
 #' @param object A \code{ggcpt} object.
@@ -47,8 +47,8 @@
 #'       estimate.}
 #'     \item{\code{"nsp"}}{Narrowest Significance Pursuit regions computed on
 #'       the same series and matched to the changepoints. These are
-#'       \emph{not} intervals around an estimate — see
-#'       \code{\link{nsp_wrapper}()} — but they are the strongest guarantee
+#'       \emph{not} intervals around an estimate (see
+#'       \code{\link{nsp_wrapper}()}), but they are the strongest guarantee
 #'       available, so the mapping is reported as
 #'       \code{source = "nsp_region"} and a changepoint in no region gets
 #'       \code{NA}.}
@@ -74,8 +74,8 @@
 #'       floor. Measured on a 200-point series with one clean change:
 #'       \code{level = 0.5} gives a width of 0 (the mode alone holds more
 #'       than half), \code{0.8} gives 72 (\pkg{bcp}) and 91
-#'       (\pkg{beast}), and \code{0.95} gives 166 and 187 --- 83\% and
-#'       94\% of the series. The requested level \emph{is} delivered in
+#'       (\pkg{beast}), and \code{0.95} gives 166 and 187, which is 83\%
+#'       and 94\% of the series. The requested level \emph{is} delivered in
 #'       each case; what a wide interval says is that the posterior did not
 #'       localise the change, not that the location is uncertain by that
 #'       much. \code{cpt_confint()} warns when an interval covers more than
@@ -89,7 +89,7 @@
 #' a mean width of 2.2; \pkg{strucchange}'s native intervals covered 1.000
 #' at width 4.4; \pkg{stepR}'s (\code{smuce}) covered 0.992 at width 4.6;
 #' and \code{"posterior"} on \pkg{bcp} covered 1.000 at width 157. Every
-#' route is \emph{conservative} --- none under-covers --- and the width is
+#' route is \emph{conservative} (none under-covers), and the width is
 #' what separates them. The two native routes and the bootstrap are the
 #' ones to quote; see the note on \code{"posterior"} above for why its
 #' interval is so much wider.
@@ -182,6 +182,14 @@ cpt_confint <- function(object, level = 0.95,
          "supply the interval yourself via as_ggcpt(ci = ).", call. = FALSE)
   }
 
+  if (method %in% c("bootstrap", "nsp")) {
+    # Both routes re-derive the interval from `$data$value`; see rerun_dots().
+    if (n_coordinates(object) > 1L) {
+      rerun_dots(object, list(), paste0("cpt_confint(method = \"", method,
+                                        "\")"))
+    }
+  }
+
   out <- switch(method,
     native = {
       if (!has_native) {
@@ -230,6 +238,19 @@ cpt_confint <- function(object, level = 0.95,
   # friends; this is the same courtesy.
   if (level_supplied) {
     got <- unique(out$level[is.finite(out$level)])
+    # Most engines' own intervals carry no recorded level at all (smuce,
+    # strucchange, segmented, bfast and taylor report bounds, not the level
+    # they were computed at), and the check below needs a level to compare,
+    # so an explicit `level = 0.8` passed through without a word there --
+    # the silence the paragraph above exists to prevent.
+    if (length(got) == 0 && nrow(out) > 0 && identical(method, "native")) {
+      warning("`level = ", format(requested), "` was not applied: `method = ",
+              "\"native\"` reports the interval the engine already ",
+              "computed, and this result does not record the level it was ",
+              "computed at (see the engine's own `alpha` or `conf_level`). ",
+              "Use `method = \"bootstrap\"` or `\"nsp\"` for an interval ",
+              "computed at the level you ask for.", call. = FALSE)
+    }
     if (length(got) > 0 && !any(abs(got - requested) < 1e-9)) {
       warning("`level = ", format(requested), "` was not applied: `method = ",
               "\"", method, "\"` reports the interval the engine already ",
@@ -292,6 +313,164 @@ bootstrap_possible <- function(object) {
 #' @noRd
 rerun_matches_result <- function(object) {
   !identical(scalar_chr(object$change_in), "regression")
+}
+
+# ---------------------------------------------------------------------------
+# Re-running a finished result.
+#
+# Six tools take a finished `ggcpt` and call cpt_detect() again on (a
+# perturbation of) its series: the bootstrap route here, cpt_influence(),
+# cpt_leverage(), cpt_sensitivity() and cpt_select(). Each used to rebuild
+# the request from `object$method` and `object$change_in` alone, and three
+# things went wrong in all of them at once:
+#
+#   * the fit's PENALTY was dropped, so a `penalty = 40` pelt fit was
+#     bootstrapped, perturbed and re-segmented under the default MBIC;
+#   * `change_in` was passed back verbatim, but a result records what it
+#     DETECTED, which is not always something cpt_detect() can be ASKED for:
+#     kcp says "running mean", envcpt names its selected model ("trend"),
+#     wbsts says "var" for its one request type, sn says "acf". Every re-run
+#     then failed in match.arg(), and the failures were swallowed -- a
+#     zero-width interval blamed on "the detector found no changepoints",
+#     and an influence table in which every observation destroyed the
+#     segmentation;
+#   * a multivariate result was re-run on `$data$value`, its first
+#     coordinate (or the cross-sectional mean), so the re-fit answered a
+#     different question from the one that produced the changepoints.
+#
+# These helpers are the one place those three are decided.
+# ---------------------------------------------------------------------------
+
+# Internal: the `change_in` to request when re-running `object`, or NULL
+# when the label it records cannot be turned back into a request.
+#' @noRd
+rerun_change_in <- function(object) {
+  method <- scalar_chr(object$method)
+  label <- scalar_chr(object$change_in)
+  support <- method_change_in_support()[[method]]
+  registered <- !is.null(registry_get(method))
+  requestable <- function(v) {
+    if (length(v) != 1L || is.na(v) || !v %in% cpt_change_in_levels()) {
+      return(FALSE)
+    }
+    # cpt_detect() accepts "mean" for every built-in method and routes it to
+    # the native change type; a registration accepts only what it declared.
+    if (registered) return(v %in% support)
+    identical(v, "mean") || is.null(support) || v %in% support
+  }
+  if (requestable(label)) return(label)
+  # kcp labels a result by its running statistic, and the two statistics
+  # cpt_detect() can ask for map back one to one.
+  stripped <- sub("^running ", "", label)
+  if (!identical(stripped, label) && requestable(stripped)) return(stripped)
+  # An engine with a single request type records its own label for what
+  # that request found (wbsts' "var", envcpt's selected model), so that one
+  # request is what produced the result.
+  if (length(support) == 1L && requestable(support)) return(support)
+  NULL
+}
+
+# Internal: the `penalty` to request when re-running `object`, or NULL to
+# leave the engine's default. Only a number the fit was given, or a name
+# cpt_detect() itself understands, is forwarded: an engine-specific
+# descriptor ("alpha", "threshold", "prob_threshold", ...) describes a tuning
+# argument `penalty` does not reach.
+#' @noRd
+rerun_penalty <- function(object) {
+  pen <- object$penalty
+  if (!is.list(pen)) return(NULL)
+  type <- scalar_chr(pen[["type", exact = TRUE]])
+  value <- suppressWarnings(as.numeric(pen[["value", exact = TRUE]]))
+  if (identical(type, "Manual") && length(value) == 1L && is.finite(value)) {
+    return(value)
+  }
+  if (!is.na(type) && type %in% c("MBIC", "BIC", "SIC", "AIC",
+                                  "Hannan-Quinn", "None", "sSIC", "MDL")) {
+    return(type)
+  }
+  NULL
+}
+
+# Internal: the request a re-run makes, with the caller's `...` winning over
+# anything derived from the result (the precedence cpt_detect() gives `...`
+# over its own derived arguments). `what` names the calling function in the
+# errors.
+#' @noRd
+rerun_dots <- function(object, dots, what) {
+  if (n_coordinates(object) > 1L) {
+    stop("`", what, "` re-runs the detector on the result's series, but ",
+         "this `", scalar_chr(object$method), "` result has ",
+         n_coordinates(object), " coordinates and the re-run would see only ",
+         "`$data$value` (the first coordinate, or the cross-sectional ",
+         "mean): a different problem from the one that produced these ",
+         "changepoints. Re-run the multivariate detector yourself, or use ",
+         "an interval the engine supplied (`cpt_confint(method = ",
+         "\"native\")`).", call. = FALSE)
+  }
+  if (is.null(dots[["change_in", exact = TRUE]])) {
+    ci <- rerun_change_in(object)
+    if (is.null(ci)) {
+      stop("`", what, "` re-runs `", scalar_chr(object$method), "`, but ",
+           "this result records `change_in = \"",
+           scalar_chr(object$change_in), "\"`, which cpt_detect() cannot ",
+           "be asked for, so the re-run would fit a different model. Pass ",
+           "`change_in` through `...`, together with the engine argument ",
+           "that produced this result (for example `family`, ",
+           "`running_stat` or `parameter`).", call. = FALSE)
+    }
+    dots$change_in <- ci
+  }
+  if (is.null(dots[["penalty", exact = TRUE]])) {
+    dots$penalty <- rerun_penalty(object)
+  }
+  dots
+}
+
+# Internal: refuse a detection request up front, for the tools that call
+# cpt_detect() inside tryCatch() and would otherwise turn a typo into a
+# result. cpt_select(x, method = "wbz") built a ladder in which every rung
+# errored, reported K = 0 labelled "wbz", and blamed the method for
+# "tuning itself"; cpt_label_error_curve() returned an all-NA curve, after
+# which cpt_learn_penalty() said the labels were satisfied at every
+# penalty. Resolves the name the way cpt_detect() does (a registered name
+# first, then partial matching against the built-ins) and returns it.
+#' @noRd
+check_detect_request <- function(method, change_in = "mean") {
+  if (!is.character(method) || length(method) != 1L || is.na(method) ||
+      !nzchar(method)) {
+    stop("`method` must be a single method name; see cpt_methods().",
+         call. = FALSE)
+  }
+  if (method %in% planned_methods()$method) {
+    stop("`", method, "` is planned but not wired in this release: see the ",
+         "\"planned\" rows of `cpt_methods()`.", call. = FALSE)
+  }
+  entry <- registry_get(method)
+  if (is.null(entry)) {
+    hit <- pmatch(method, builtin_registry()$method)
+    if (is.na(hit)) {
+      stop("`", method, "` is not a method cpt_detect() knows. See ",
+           "cpt_methods() for the available ones, or register a detector ",
+           "with cpt_register_method().", call. = FALSE)
+    }
+    method <- builtin_registry()$method[hit]
+  }
+  if (!is.character(change_in) || length(change_in) != 1L ||
+      !change_in %in% cpt_change_in_levels()) {
+    stop("`change_in` must be one of ",
+         paste0("\"", cpt_change_in_levels(), "\"", collapse = ", "), ".",
+         call. = FALSE)
+  }
+  if (!is.null(entry)) {
+    if (!change_in %in% entry$change_in) {
+      stop("`change_in = \"", change_in, "\"` is not supported by the ",
+           "registered method `", method, "`. Supported: ",
+           paste(entry$change_in, collapse = ", "), ".", call. = FALSE)
+    }
+  } else {
+    validate_method_change_in(method, change_in)
+  }
+  method
 }
 
 #' @noRd
@@ -409,8 +588,6 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
   #
   # `...` still wins, so an explicit `change_in` overrides the object --
   # same precedence cpt_detect() gives `dots` over `derived_args_for()`.
-  dots <- list(...)
-  if (is.null(dots$change_in)) dots$change_in <- object$change_in %||% "mean"
   if (isTRUE(object$registered) && is.null(registry_get(method))) {
     stop("This result came from a registered method (`", method,
          "`) that is no longer registered, so it cannot be re-run for a ",
@@ -423,6 +600,9 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
          "detector with cpt_register_method() so it can be re-run.",
          call. = FALSE)
   }
+  # ...and the penalty, and a change type cpt_detect() can be asked for;
+  # see rerun_dots().
+  dots <- rerun_dots(object, list(...), "cpt_confint(method = \"bootstrap\")")
 
   data_vec <- object$data$value
   n <- length(data_vec)
@@ -435,6 +615,11 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
   local_seed(seed)
 
   draws <- matrix(NA_real_, nrow = B, ncol = length(cp))
+  # A replicate the detector FAILED on is not one on which it found nothing,
+  # and counting the two together blamed the detector for an error it
+  # raised: the one diagnostic this bootstrap gave was the wrong one.
+  n_failed <- 0L
+  first_error <- NULL
   for (b in seq_len(B)) {
     resampled <- resid
     for (s in seq_len(nrow(seg))) {
@@ -453,7 +638,11 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
       do.call(cpt_detect,
               c(list(fitted_step + resampled, method = method),
                 dots))$changepoints$cp,
-      error = function(e) integer(0)
+      error = function(e) {
+        n_failed <<- n_failed + 1L
+        if (is.null(first_error)) first_error <<- conditionMessage(e)
+        NULL
+      }
     )
     if (length(rep_cp) == 0) next
     # Nearest re-detection to each original changepoint. A replicate that
@@ -479,12 +668,23 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
     lo[j] <- as.integer(floor(q[1]))
     hi[j] <- as.integer(ceiling(q[2]))
   }
-  if (any(n_eff < B)) {
-    warning("The detector found no changepoints in ", sum(B - n_eff),
-            " of ", B * length(cp), " (replicate, changepoint) draws; those ",
-            "draws are excluded, so the interval is based on fewer than `B` ",
-            "replicates. `n_replicates` records how many were used.",
-            call. = FALSE)
+  if (n_failed == B) {
+    stop("The detector could not be re-run on any of the ", B, " bootstrap ",
+         "replicates, so there is no interval to report. The first error ",
+         "was: ", first_error, call. = FALSE)
+  }
+  if (n_failed > 0L) {
+    warning("The detector failed on ", n_failed, " of ", B, " bootstrap ",
+            "replicate(s), which are excluded; the first error was: ",
+            first_error, call. = FALSE)
+  }
+  n_empty <- sum(B - n_failed - n_eff)
+  if (n_empty > 0) {
+    warning("The detector found no changepoints in ", n_empty,
+            " of ", (B - n_failed) * length(cp), " (replicate, changepoint) ",
+            "draws; those draws are excluded, so the interval is based on ",
+            "fewer than `B` replicates. `n_replicates` records how many were ",
+            "used.", call. = FALSE)
   }
 
   tibble::tibble(cp = cp, ci_lower = lo, ci_upper = hi, level = level,
@@ -544,7 +744,7 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
 #'   \code{"bonferroni"}, \code{"holm"}, \code{"BH"}, ...). Defaults to
 #'   \code{"none"}; a \code{p_adjusted} column is added when it is not.
 #'
-#' @section Selection bias — read this before quoting a p-value:
+#' @section Selection bias: read this before quoting a p-value:
 #' Testing a changepoint at a location that was \emph{chosen because the data
 #' looked like it changed there} is circular, and the resulting p-values are
 #' anti-conservative, often severely. The \code{selection_adjusted} column
@@ -554,7 +754,7 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
 #'     for a nuisance parameter present only under the alternative. It is
 #'     one \emph{global} test of "is there a breakpoint", not a test per
 #'     breakpoint, so on a multi-break fit every row carries the same
-#'     statistic and p-value --- the method string says so.
+#'     statistic and p-value, and the method string says so.
 #'   \item \code{FALSE} for the generic Welch two-sample fallback, which
 #'     compares the segments either side of the changepoint as if the
 #'     location had been fixed in advance. Useful as a descriptive effect
@@ -563,11 +763,11 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
 #'   \item \code{FALSE} for \pkg{strucchange}'s route as well, which is
 #'     the Chow F evaluated \emph{at} each estimated break date. The Chow
 #'     statistic's reference distribution assumes the date was fixed in
-#'     advance, so quoting it at a date the Bai–Perron dynamic program chose
-#'     is exactly the circularity this column exists to flag --- reporting
+#'     advance, so quoting it at a date the Bai-Perron dynamic program chose
+#'     is exactly the circularity this column exists to flag. Reporting
 #'     it is conventional in that literature, which does not make it
 #'     adjusted. The selection-adjusted objects there are the sup-type
-#'     statistics and the Bai–Perron critical values.
+#'     statistics and the Bai-Perron critical values.
 #' }
 #' Two further limits worth knowing. \code{type = "segment"} is
 #' \strong{always} the unadjusted Welch test: the native routes above apply
@@ -583,7 +783,14 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
 #'
 #' @return A tibble with columns \code{cp} (or \code{seg_id}),
 #'   \code{estimate}, \code{statistic}, \code{p_value}, \code{method} and
-#'   \code{selection_adjusted}.
+#'   \code{selection_adjusted}, plus \code{cp_index} on the original scale
+#'   when the result carries a time index (as \code{\link{cpt_confint}()}
+#'   does), and \code{p_adjusted} when \code{correction} is not
+#'   \code{"none"}. \code{estimate} is the change in the segment mean
+#'   (the breakpoint's slope change for \pkg{segmented}), and \code{NA}
+#'   for a regression-mode \pkg{strucchange} fit, whose change is a vector
+#'   of coefficients; its Chow test is run on the full regression model.
+#'   A multivariate result is refused: both routes test one series.
 #' @seealso \code{\link{cpt_confint}()}, \code{\link{nsp_wrapper}()}.
 #' @export
 #' @examples
@@ -597,6 +804,18 @@ cpt_test <- function(object, type = c("jump", "segment"),
   }
   type <- match.arg(type)
   correction <- match.arg(correction, stats::p.adjust.methods)
+  # Every route below tests `$data$value`, the result's one univariate
+  # series; for a multivariate result that is its first coordinate (or the
+  # cross-sectional mean), which need not carry the change at all.
+  if (n_coordinates(object) > 1L) {
+    stop("`cpt_test()` compares the segments either side of each ",
+         "changepoint on a single series, but this `",
+         scalar_chr(object$method), "` result has ", n_coordinates(object),
+         " coordinates and the test would see only `$data$value` (the ",
+         "first coordinate, or the cross-sectional mean). Test a ",
+         "coordinate you care about with cpt_test(as_ggcpt(",
+         "fit$changepoints$cp, <that column>)).", call. = FALSE)
+  }
 
   out <- if (type == "segment") {
     test_segments(object)
@@ -605,6 +824,18 @@ cpt_test <- function(object, type = c("jump", "segment"),
     native %||% naive_jump_test(object)
   }
 
+  # On the original scale too, when there is one. `cpt_confint()` has
+  # reported `cp_index` since the time index was added; this table is the
+  # other half of the same question about the same changepoints and reported
+  # positions only, so a user with dates got a date from one function and an
+  # integer from the other.
+  if (!is.null(object$index) && "cp" %in% names(out)) {
+    # No `nrow(out) > 0` guard: `index[integer(0)]` is a zero-length value
+    # of the index's own type, which is what keeps the column set the same
+    # whether or not anything was found -- `empty_confint()` does the same,
+    # and it is what makes rbind() over several fits line up.
+    out$cp_index <- object$index[out$cp]
+  }
   if (nrow(out) > 0 && correction != "none") {
     out$p_adjusted <- stats::p.adjust(out$p_value, method = correction)
     attr(out, "correction") <- correction
@@ -654,19 +885,36 @@ strucchange_jump_test <- function(object, fit) {
   cp <- object$changepoints$cp
   y <- object$data$value
   d <- data.frame(.y = y)
+  # A formula fit's breaks are in its regression COEFFICIENTS, and the test
+  # has to be of that model. It used to be `.y ~ 1` whatever the fit, so a
+  # break in a slope from 2 to -1 (Chow F = 772 on the fitted model) was
+  # reported as F = 0.26, p = 0.61: an intercept-only test of the response,
+  # i.e. no evidence at all for the break the method had just dated. The
+  # breakpoints object keeps its own response and design matrix.
+  X <- fit[["X", exact = TRUE]]
+  yy <- fit[["y", exact = TRUE]]
+  full <- is.matrix(X) && ncol(X) > 1L && length(yy) == nrow(X)
   rows <- lapply(cp, function(k) {
     tst <- tryCatch(
-      strucchange::sctest(.y ~ 1, data = d, type = "Chow", point = k),
+      if (full) {
+        strucchange::sctest(yy ~ X - 1, type = "Chow", point = k)
+      } else {
+        strucchange::sctest(.y ~ 1, data = d, type = "Chow", point = k)
+      },
       error = function(e) NULL
     )
     if (is.null(tst)) return(NULL)
     left <- y[seq_len(k)]
     right <- y[seq.int(k + 1L, length(y))]
     tibble::tibble(cp = k,
-                   estimate = mean(right) - mean(left),
+                   estimate = if (full) NA_real_ else mean(right) - mean(left),
                    statistic = as.numeric(tst$statistic),
                    p_value = as.numeric(tst$p.value),
-                   method = "Chow F at estimated break (unadjusted)",
+                   method = if (full) {
+                     "Chow F at estimated break, full regression model (unadjusted)"
+                   } else {
+                     "Chow F at estimated break (unadjusted)"
+                   },
                    selection_adjusted = FALSE)
   })
   rows <- Filter(Negate(is.null), rows)

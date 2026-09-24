@@ -23,7 +23,7 @@
 #' @param change What the region asserts, recycled to length:
 #'   \describe{
 #'     \item{\code{"change"}}{at least one changepoint lies in the region.}
-#'     \item{\code{"one_change"}}{exactly one does — a stricter label, and
+#'     \item{\code{"one_change"}}{exactly one does: a stricter label, and
 #'       the one that makes false positives detectable inside a positive
 #'       region.}
 #'     \item{\code{"no_change"}}{none does.}
@@ -71,8 +71,10 @@ cpt_labels <- function(start, end, change = "change", series = NA_character_) {
   new_cpt_labels(out[order(out$series, out$start), , drop = FALSE])
 }
 
-#' @noRd
 #' @rdname cpt_labels
+#' @param x A \code{cpt_labels} tibble (for \code{tidy()}, which returns it
+#'   as a plain tibble).
+#' @param ... Ignored.
 #' @export
 tidy.cpt_labels <- function(x, ...) {
   tibble::as_tibble(unclass_keep_tbl(x))
@@ -86,8 +88,8 @@ new_cpt_labels <- function(x) {
 
 #' Coerce annotations to changepoint labels
 #'
-#' Turns a plain ground-truth changepoint set — the kind
-#' \code{\link{cpt_metrics}()} takes — into labelled regions, so one
+#' Turns a plain ground-truth changepoint set (the kind
+#' \code{\link{cpt_metrics}()} takes) into labelled regions, so one
 #' annotation can drive both the metric and the supervised machinery. Each
 #' true changepoint becomes a \code{"one_change"} region of width
 #' \code{2 * margin + 1}, and the stretches between them become
@@ -140,7 +142,7 @@ as_cpt_labels <- function(truth, n, margin = 5, negatives = TRUE,
 #' negative, a negative region with one is a false positive, and a
 #' \code{"one_change"} region with two or more is a false positive as well.
 #' This is the accuracy measure supervised changepoint detection is built on,
-#' and — unlike an information criterion — it is defined by what the expert
+#' and, unlike an information criterion, it is defined by what the expert
 #' asserted rather than by a model assumption.
 #'
 #' @param object A \code{ggcpt} object, or an integer vector of changepoint
@@ -148,12 +150,13 @@ as_cpt_labels <- function(truth, n, margin = 5, negatives = TRUE,
 #' @param labels A \code{cpt_labels} tibble (or anything with
 #'   \code{start}/\code{end}/\code{change} columns).
 #'
-#' @return A tibble with one row per label — \code{label_id},
+#' @return A tibble with one row per label: \code{label_id},
 #'   \code{series} (the label set's series identifier, \code{NA} for a
 #'   single unnamed series), \code{start}, \code{end}, \code{change},
 #'   \code{n_changes} (how many detections fell inside), \code{status} (\code{"correct"}, \code{"false_positive"} or
-#'   \code{"false_negative"}) — carrying the totals in an \code{errors}
-#'   attribute and printing them.
+#'   \code{"false_negative"}), carrying the totals in an \code{errors}
+#'   attribute and printing them. An empty label set gives a zero-row
+#'   tibble with the same columns.
 #' @seealso \code{\link{cpt_labels}()},
 #'   \code{\link{cpt_label_error_curve}()}, \code{\link{geom_cpt_label}()}.
 #' @export
@@ -185,9 +188,12 @@ cpt_label_error <- function(object, labels) {
             "\", ]`.", call. = FALSE)
   }
   if (nrow(labels) == 0) {
+    # `series` too: the non-empty return carries it, and a column set that
+    # depends on whether there were labels breaks rbind() across fits.
     return(new_label_error(tibble::tibble(
-      label_id = integer(), start = integer(), end = integer(),
-      change = character(), n_changes = integer(), status = character()
+      label_id = integer(), series = character(), start = integer(),
+      end = integer(), change = character(), n_changes = integer(),
+      status = character()
     )))
   }
   n_changes <- vapply(seq_len(nrow(labels)), function(i) {
@@ -294,7 +300,7 @@ check_labels <- function(labels) {
 #' Label error as a function of the penalty
 #'
 #' Runs one detector across a penalty grid and counts label errors at each
-#' setting — the curve penalty learning is fitted to, and the honest way to
+#' setting: the curve penalty learning is fitted to, and the honest way to
 #' see whether \emph{any} penalty can satisfy the labels.
 #'
 #' @param x A numeric vector (the series).
@@ -304,7 +310,7 @@ check_labels <- function(labels) {
 #'   (the default) the grid is chosen \emph{adaptively}: it starts below
 #'   \code{log(n)}, where the segmentation shatters, and the top end is
 #'   found by doubling until the detector reports no changepoints at all.
-#'   A fixed grid cannot do this — on a series with a large change, a grid
+#'   A fixed grid cannot do this: on a series with a large change, a grid
 #'   that stops at a few hundred never produces a false negative, the error
 #'   curve never turns back up, and the target interval comes out unbounded
 #'   above, which is useless to \code{\link{cpt_learn_penalty}()}. The
@@ -329,6 +335,12 @@ check_labels <- function(labels) {
 #' curve
 cpt_label_error_curve <- function(x, labels, method = "pelt",
                                   penalties = NULL, change_in = "mean", ...) {
+  # Up front: every penalty below calls cpt_detect() inside tryCatch(), so
+  # a typo'd method used to come back as an all-NA curve, and
+  # cpt_learn_penalty() then reported that "the labels are satisfied at
+  # every penalty in the grid", a diagnosis of the labels for a problem
+  # with the method name.
+  method <- check_detect_request(method, change_in)
   validate_data(x)
   series <- as_uni_vector(x, method)
   labels <- check_labels(labels)
@@ -495,7 +507,7 @@ autoplot.ggcpt_label_curve <- function(object, ...) {
 #' contributes a target \emph{interval} of log-penalties (those achieving the
 #' fewest label errors), a feature vector is computed from the series, and a
 #' linear model is fitted by minimising the squared hinge loss on those
-#' intervals — max-margin interval regression. The result has a
+#' intervals, which is max-margin interval regression. The result has a
 #' \code{predict()} method, and \code{\link{cpt_detect}()} accepts it
 #' directly as \code{penalty}, so a learned penalty is used exactly like a
 #' number.
@@ -646,6 +658,7 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
          "install.packages('penaltyLearning').", call. = FALSE)
   }
 
+  pl_why <- NULL
   fit <- if (use_pl) {
     # IntervalRegressionCV() draws internally with a deprecated ggplot2
     # aesthetic, so it emits a lifecycle warning the caller did not ask for
@@ -661,12 +674,25 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
           }
         }
       ),
-      error = function(e) NULL
+      error = function(e) {
+        # Keep why. "Failed on this training set" is an attribution, and
+        # the engine may have failed for a reason that has nothing to do
+        # with the training set -- the same misdiagnosis cpt_scale_space()
+        # used to make about its bandwidths.
+        pl_why <<- gsub("[[:space:]]+", " ", conditionMessage(e))
+        NULL
+      }
     )
     if (is.null(pl)) {
-      warning("penaltyLearning::IntervalRegressionCV() failed on this ",
-              "training set; falling back to the built-in squared-hinge ",
-              "fit.", call. = FALSE)
+      warning("penaltyLearning::IntervalRegressionCV() failed",
+              if (is.null(pl_why)) {
+                "."
+              } else {
+                # The engine's message may or may not end in punctuation.
+                paste0(": ", sub("[.[:space:]]*$", "", pl_why), ".")
+              },
+              " Falling back to the built-in squared-hinge fit.",
+              call. = FALSE)
       interval_regression(feats, targets)
     } else {
       list(engine = "penaltyLearning", model = pl,
@@ -745,7 +771,19 @@ cpt_features <- function(y) {
 #' @noRd
 as_series_list <- function(series) {
   out <- if (is.list(series) && !is.data.frame(series)) {
-    lapply(series, as.numeric)
+    # coerce_series_values(), not as.numeric(): a factor member would
+    # otherwise be learned from as its LEVEL CODES, silently, since
+    # validate_data() below only ever sees the numbers.
+    stats::setNames(lapply(seq_along(series), function(i) {
+      nm <- names(series)[i] %||% ""
+      withCallingHandlers(
+        coerce_series_values(series[[i]], arg = "series"),
+        error = function(e) {
+          stop("Series ", if (nzchar(nm)) paste0("`", nm, "` ") else "",
+               "(", i, " of ", length(series), "): ", conditionMessage(e),
+               call. = FALSE)
+        })
+    }), names(series))
   } else {
     X <- as_mv_matrix(series, arg = "series")
     stats::setNames(lapply(seq_len(ncol(X)), function(j) X[, j]), colnames(X))

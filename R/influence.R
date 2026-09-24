@@ -10,8 +10,8 @@
 
 #' Influence diagnostics for a changepoint segmentation
 #'
-#' Perturbs one observation at a time — deleting it, or replacing it with an
-#' outlier — re-runs the detector, and reports what changed: the number of
+#' Perturbs one observation at a time (deleting it, or replacing it with an
+#' outlier), re-runs the detector, and reports what changed: the number of
 #' changepoints, where they moved to, and how the segment parameters
 #' responded. This is the diagnostic family of Wilms, Killick and Matteson
 #' (2022), rendered in \pkg{ggplot2} so it composes with the rest of the
@@ -21,9 +21,10 @@
 #' @param type \code{"delete"} (drop the observation) or \code{"outlier"}
 #'   (replace it with a large value). Defaults to \code{"delete"}.
 #' @param engine Which implementation to use:
-#'   \code{"auto"} (default) uses \pkg{changepoint.influence} when the result
-#'   came from a \pkg{changepoint} engine and that package is installed, and
-#'   the generic recomputation otherwise; \code{"changepoint.influence"}
+#'   \code{"auto"} (default) uses \pkg{changepoint.influence} for a
+#'   \code{type = "delete"} diagnostic of a change-in-mean fit from a
+#'   \pkg{changepoint} engine when that package is installed (the only
+#'   models it supports), and the generic recomputation otherwise; \code{"changepoint.influence"}
 #'   insists on the former; \code{"recompute"} insists on the latter, which
 #'   works for every wired and registered method.
 #' @param subset Optional integer vector of observation positions to perturb.
@@ -32,7 +33,10 @@
 #'   diagnostic affordable. Defaults to every observation.
 #' @param outlier_sd For \code{type = "outlier"}, how many residual standard
 #'   deviations the substituted value sits above the fitted level. Defaults
-#'   to \code{5}.
+#'   to \code{5}. Used by the recomputation engine, which is what
+#'   \code{"auto"} picks for an outlier diagnostic;
+#'   \code{engine = "changepoint.influence"} places its outliers by its own
+#'   rule and does not read it.
 #' @param seed Optional seed, for detectors that randomise. The seed is
 #'   scoped to this call: \code{.Random.seed} is saved and restored, so a
 #'   seeded call inside a simulation loop does not pin the loop's own
@@ -43,13 +47,14 @@
 #' @return A \code{ggcpt_influence} object: a list with
 #'   \describe{
 #'     \item{\code{influence}}{a tibble with one row per perturbed
-#'       observation — \code{index}, \code{n_cp}, \code{delta_n_cp} (against
+#'       observation: \code{index}, \code{n_cp}, \code{delta_n_cp} (against
 #'       the unperturbed fit), \code{max_shift} (largest movement of a
 #'       surviving changepoint, in positions), \code{param_shift} (largest
 #'       absolute change in a segment parameter) and \code{cpts} (a
-#'       list-column of the perturbed changepoint sets);}
+#'       list-column of the perturbed changepoint sets). A perturbation
+#'       whose re-fit failed has \code{n_cp = NA}, and is warned about;}
 #'     \item{\code{param}}{an \eqn{n \times n} matrix of per-observation
-#'       segment parameters, one row per perturbation — the input to the
+#'       segment parameters, one row per perturbation: the input to the
 #'       influence map;}
 #'     \item{\code{original}, \code{type}, \code{engine}, \code{method}}{}
 #'   }
@@ -92,14 +97,30 @@ cpt_influence <- function(object, type = c("delete", "outlier"),
     }
   }
 
-  can_native <- inherits(object$fit, "cpt") &&
+  # changepoint.influence supports cpt.mean() models only ("Currently only
+  # models generated from the cpt.mean function are supported"), and "auto"
+  # used to send it every changepoint-package fit, so cpt_influence() and
+  # cpt_leverage() errored on any pelt/binseg/segneigh/amoc fit with
+  # `change_in = "var"` or `"meanvar"`, a call the recompute engine handles.
+  mean_cpt <- inherits(object$fit, "cpt") && identical(
+    tryCatch(changepoint::cpttype(object$fit), error = function(e) NA),
+    "mean")
+  can_native <- mean_cpt &&
     requireNamespace("changepoint.influence", quietly = TRUE)
   if (engine == "changepoint.influence" && !can_native) {
-    stop("`engine = \"changepoint.influence\"` needs a result from a ",
-         "changepoint-package engine (pelt, binseg, segneigh, amoc) and the ",
-         "changepoint.influence package installed.", call. = FALSE)
+    stop("`engine = \"changepoint.influence\"` needs a change-in-mean result ",
+         "from a changepoint-package engine (pelt, binseg, segneigh, amoc), ",
+         "which is all that package supports, and the ",
+         "changepoint.influence package installed. `engine = \"recompute\"` ",
+         "works for every method.", call. = FALSE)
   }
-  use_native <- (engine == "auto" && can_native && identical(subset, seq_len(n))) ||
+  # Only a DELETION goes to changepoint.influence under "auto". The two
+  # engines agree on what deleting an observation means; they do not agree
+  # on what an outlier is (that package places it by its own rule and never
+  # reads `outlier_sd`), so an outlier diagnostic's meaning used to depend on
+  # whether a Suggests package happened to be installed.
+  use_native <- (engine == "auto" && can_native && type == "delete" &&
+                   identical(subset, seq_len(n))) ||
     engine == "changepoint.influence"
 
   if (!use_native && length(subset) > 500) {
@@ -114,7 +135,7 @@ cpt_influence <- function(object, type = c("delete", "outlier"),
   res <- if (use_native) {
     influence_native(object, type)
   } else {
-    influence_recompute(object, type, subset, outlier_sd, ...)
+    influence_recompute(object, type, subset, outlier_sd, seed = seed, ...)
   }
 
   structure(
@@ -157,8 +178,15 @@ influence_native <- function(object, type) {
 # Internal: the generic route -- re-run whatever detector produced the
 # result, once per perturbed observation. Works for every method, including
 # registered ones.
+#
+# `seed` is passed in for the parallel branch below. It used to be read from
+# nowhere: the function had no `seed`, so under any non-sequential plan the
+# lookup fell through to the package namespace and every call stopped with
+# "object 'seed' not found". Sequential runs never evaluate it, which is how
+# it survived.
 #' @noRd
-influence_recompute <- function(object, type, subset, outlier_sd, ...) {
+influence_recompute <- function(object, type, subset, outlier_sd, seed = NULL,
+                                ...) {
   y <- object$data$value
   n <- length(y)
   method <- object$method
@@ -178,8 +206,10 @@ influence_recompute <- function(object, type, subset, outlier_sd, ...) {
   #
   # `...` still wins, so an explicit `change_in` overrides the object --
   # same precedence cpt_detect() gives `dots` over `derived_args_for()`.
-  dots <- list(...)
-  if (is.null(dots$change_in)) dots$change_in <- object$change_in %||% "mean"
+  #
+  # Now also its penalty, a change type cpt_detect() can be asked for, and
+  # a refusal for a multivariate result: see rerun_dots().
+  dots <- rerun_dots(object, list(...), "cpt_influence()")
   orig_cp <- object$changepoints$cp
   fitted_step <- rep(object$segments$param_estimate, times = object$segments$n)
   orig_param <- fitted_step
@@ -198,10 +228,16 @@ influence_recompute <- function(object, type, subset, outlier_sd, ...) {
       pert <- y
       pert[i] <- fitted_step[i] + outlier_sd * resid_sd
     }
+    err <- NULL
     fit <- tryCatch(do.call(cpt_detect,
                             c(list(pert, method = method), dots)),
-                    error = function(e) NULL)
-    if (is.null(fit)) return(list(cp = NA_integer_, param = rep(NA_real_, n)))
+                    error = function(e) {
+                      err <<- conditionMessage(e)
+                      NULL
+                    })
+    if (is.null(fit)) {
+      return(list(cp = NA_integer_, param = rep(NA_real_, n), error = err))
+    }
     cp <- fit$changepoints$cp
     par_i <- rep(fit$segments$param_estimate, times = fit$segments$n)
     if (type == "delete") {
@@ -238,15 +274,34 @@ influence_recompute <- function(object, type, subset, outlier_sd, ...) {
 
   cpts <- lapply(outs, function(o) o$cp)
   param_mat <- do.call(rbind, lapply(outs, function(o) o$param))
-  summarise_influence(cpts, param_mat, orig_cp, orig_param, subset)
+  # A re-fit that ERRORED used to be recorded as one that found no
+  # changepoints, so it ranked as the most influential observation there
+  # is: every observation of a kcp fit "destroyed the segmentation" because
+  # every re-fit failed. Keep the two apart, and say so.
+  errs <- vapply(outs, function(o) o$error %||% NA_character_, character(1))
+  failed <- !is.na(errs)
+  if (all(failed)) {
+    stop("The detector could not be re-run on any of the ", length(failed),
+         " perturbed series, so there is no influence to report. The first ",
+         "error was: ", errs[failed][1], call. = FALSE)
+  }
+  if (any(failed)) {
+    warning("The detector failed on ", sum(failed), " of ", length(failed),
+            " perturbed series; those rows have `n_cp = NA`. The first error ",
+            "was: ", errs[failed][1], call. = FALSE)
+  }
+  summarise_influence(cpts, param_mat, orig_cp, orig_param, subset,
+                      failed = failed)
 }
 
 # Internal: turn per-perturbation changepoint sets and parameter rows into
 # the one-row-per-observation summary both the print method and the plots
 # read.
 #' @noRd
-summarise_influence <- function(cpts, param_mat, orig_cp, orig_param, index) {
+summarise_influence <- function(cpts, param_mat, orig_cp, orig_param, index,
+                                failed = rep(FALSE, length(cpts))) {
   n_cp <- vapply(cpts, function(v) sum(!is.na(v)), integer(1))
+  n_cp[failed] <- NA_integer_
   max_shift <- vapply(cpts, function(v) {
     v <- v[!is.na(v)]
     if (length(orig_cp) == 0 || length(v) == 0) return(NA_real_)
@@ -283,6 +338,10 @@ print.ggcpt_influence <- function(x, ...) {
   changed <- sum(inf$delta_n_cp != 0, na.rm = TRUE)
   cat("  Perturbations changing the number of changepoints: ", changed,
       " (", format(100 * changed / nrow(inf), digits = 3), "%)\n", sep = "")
+  n_failed <- sum(is.na(inf$n_cp))
+  if (n_failed > 0) {
+    cat("  Re-fits that failed: ", n_failed, "\n", sep = "")
+  }
   top <- utils::head(cpt_leverage(x), 5)
   if (nrow(top) > 0) {
     cat("\nMost influential observations:\n")
@@ -296,9 +355,9 @@ print.ggcpt_influence <- function(x, ...) {
 #' Orders the observations of a \code{\link{cpt_influence}()} result by how
 #' much perturbing them disturbs the segmentation, most influential first.
 #' The composite \code{leverage} score is the sum of three standardised
-#' components — the change in the number of changepoints, the largest
-#' movement of a changepoint, and the largest change in a segment parameter
-#' — so an observation that shifts a location without changing the count is
+#' components (the change in the number of changepoints, the largest
+#' movement of a changepoint, and the largest change in a segment
+#' parameter), so an observation that shifts a location without changing the count is
 #' still ranked.
 #'
 #' @param object A \code{ggcpt_influence} object, or a \code{ggcpt} object
@@ -322,7 +381,10 @@ print.ggcpt_influence <- function(x, ...) {
 #'   An \code{NA} here is always that case. If the \emph{original} fit
 #'   found no changepoints then \code{max_shift} is missing for every
 #'   observation, the standardisation returns zeros rather than
-#'   \code{NA}s, and every \code{leverage} is finite.
+#'   \code{NA}s, and every \code{leverage} is finite. A perturbation whose
+#'   re-fit \emph{failed} is not one of these: it carries
+#'   \code{delta_n_cp = NA} as well and is sorted last, since nothing is
+#'   known about it.
 #' @export
 #' @examples
 #' set.seed(2026)
@@ -369,8 +431,12 @@ cpt_leverage <- function(object, ...) {
   # `max_shift` is NA for every row, `z()`'s zero-variance guard returns
   # zeros, and no leverage is NA -- so an NA here always means this
   # particular perturbation collapsed the fit.
-  collapsed <- is.na(out$leverage)
-  out[order(!collapsed, -out$leverage, out$index), , drop = FALSE]
+  #
+  # A FAILED re-fit (n_cp NA; see influence_recompute()) is the other way
+  # to have no leverage, and it means nothing is known, so it goes last.
+  failed <- is.na(out$delta_n_cp)
+  collapsed <- is.na(out$leverage) & !failed
+  out[order(failed, !collapsed, -out$leverage, out$index), , drop = FALSE]
 }
 
 #' @rdname cpt_influence
@@ -408,9 +474,12 @@ autoplot.ggcpt_influence <- function(object,
       ggplot2::labs(x = x_lab, y = "Value", colour = "Leverage",
                     title = paste0("Influence overview (", object$type,
                                    " perturbation)"),
-                    subtitle = "Point size and colour show how much
-                                perturbing that observation disturbs the
-                                segmentation")
+                    # One line: a string literal broken across source
+                    # lines keeps the breaks AND the indentation, so the
+                    # subtitle rendered with runs of 32 spaces in it.
+                    subtitle = paste("Point size and colour show how much",
+                                     "perturbing that observation disturbs",
+                                     "the segmentation"))
     if (length(orig_cp) > 0) {
       p <- p + ggplot2::geom_vline(xintercept = idx_vals[orig_cp],
                                    colour = "blue", linetype = "dashed",
@@ -487,7 +556,7 @@ autoplot.ggcpt_influence <- function(object,
 #' which observation drives the answer, it asks which \emph{setting} does.
 #' Runs the detector over a grid of tuning values and reports the detected
 #' locations for each, which is the direct answer to the commonest reviewer
-#' question about a changepoint analysis — "is this robust to the penalty?".
+#' question about a changepoint analysis: "is this robust to the penalty?".
 #'
 #' @param x A numeric vector (the series), or a \code{ggcpt} object, in which
 #'   case its series and method are used.
@@ -522,12 +591,15 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
   # was inherited from the fit and the change type was not, so a var or
   # meanvar fit had its penalty sensitivity measured on a change-in-mean
   # re-detection. `...` still wins.
+  #
+  # And its penalty, unless `over` sweeps the penalty itself; see
+  # rerun_dots().
   dots_ci <- list(...)
   if (is_ggcpt(x)) {
     method <- x$method
-    if (is.null(dots_ci$change_in)) {
-      dots_ci$change_in <- x$change_in %||% "mean"
-    }
+    user_pen <- !is.null(dots_ci[["penalty", exact = TRUE]])
+    dots_ci <- rerun_dots(x, dots_ci, "cpt_sensitivity()")
+    if (!user_pen && "penalty" %in% names(over)) dots_ci$penalty <- NULL
     series <- x$data$value
   } else {
     validate_data(x)

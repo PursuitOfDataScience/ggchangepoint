@@ -34,7 +34,7 @@ A named list of \code{list(series, annotations)} datasets, ready
 \description{
 Builds a ready-made collection of labelled series for
 \code{\link{cpt_benchmark}()}. By default these are the canonical
-simulated signals this package already ships — which means the benchmark
+simulated signals this package already ships, which means the benchmark
 runs offline, deterministically, and inside \code{R CMD check}. Pass
 \code{source = "tcpd"} for the Turing Change Point Dataset instead, which
 is downloaded and cached.

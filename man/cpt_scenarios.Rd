@@ -25,7 +25,9 @@ cpt_scenarios(
 
 \item{noise}{Noise models; any value \code{\link{cpt_simulate}()} accepts.}
 
-\item{rho}{AR(1) parameters (used by \code{noise = "ar1"}).}
+\item{rho}{AR(1) parameters (used by \code{noise = "ar1"}). Crossed
+with the other arguments for the \code{"ar1"} rows, like every other
+argument here; ignored, and recorded as \code{0}, for the others.}
 
 \item{change_in}{Change types.}
 

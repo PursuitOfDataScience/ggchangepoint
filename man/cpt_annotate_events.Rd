@@ -25,9 +25,12 @@ cpt_annotate_events(
 \item{object}{A \code{ggcpt_events} object (for \code{autoplot()}).}
 
 \item{events}{A data frame of events with a location column and a label
-column. The location may be on the position scale or — when the result
-carries a time index — on the index scale (dates, say); which one is
-detected automatically from the column's type and reported.}
+column. The location may be on the position scale or, when the result
+carries a time index, on the index scale (dates, say); which one is
+detected automatically from the column's type and reported. An event
+whose location cannot be placed on the series (a missing value, text
+that is not a number, or a date string against a \code{Date} index)
+is left out of all three outcomes, with a warning that names it.}
 
 \item{location}{Name of the location column. Defaults to the first column
 whose type matches the result's index (or the first numeric column).}
@@ -57,7 +60,7 @@ A \code{ggcpt_events} object: a list with
       (\code{event}, \code{event_value}, \code{event_position}).}
   }
   \code{matched} and \code{unexplained} carry \code{cp_index}, the
-  changepoint on the original scale, when — and only when — the result
+  changepoint on the original scale, when (and only when) the result
   carries a time index, so \code{"cp_index" \%in\% names(x)} is the
   test for it.
 
@@ -75,7 +78,7 @@ A \code{ggcpt_events} object: a list with
   \strong{Filter on \code{status}, not on \code{is.na(cp)}.} An
   \code{"unexplained_changepoint"} row has a non-missing \code{cp}, so
   \code{subset(tidy(x), !is.na(cp))} returns the matched pairs
-  \emph{and} the unexplained changepoints — which is the natural
+  \emph{and} the unexplained changepoints, which is the natural
   mistake to make, and it silently overstates how many changepoints an
   event explains.
   With \code{print()}, \code{tidy()} and \code{autoplot()}.

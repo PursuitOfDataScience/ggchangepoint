@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-regression.R
 \name{envcpt_wrapper}
 \alias{envcpt_wrapper}
-\title{EnvCpt wrapper — changepoints versus trends versus autocorrelation}
+\title{EnvCpt wrapper: changepoints versus trends versus autocorrelation}
 \usage{
 envcpt_wrapper(
   x,
@@ -30,14 +30,16 @@ envcpt_wrapper(
 A \code{ggcpt} object. \code{$fit} holds the full \code{envcpt}
   output; the selected model name is stored in the penalty descriptor and
   printed by \code{glance()} via \code{penalty_type}. Individual model
-  fits that fail are expected — the criterion ignores them — so the
+  fits that fail are expected (the criterion ignores them), so the
   engine's own \code{try()} output is not passed on; genuine warnings
   still are, and a series on which no model fits at all raises an error.
+  A constant series has no changepoints and is not handed to the engine,
+  so \code{$fit} is \code{NULL} there.
 }
 \description{
 Wraps \code{EnvCpt::envcpt()} (Beaulieu and Killick, 2018), which fits up
-to twelve competing models — constant mean or linear trend, each with or
-without changepoints, and with white-noise, AR(1) or AR(2) errors — and
+to twelve competing models (constant mean or linear trend, each with or
+without changepoints, and with white-noise, AR(1) or AR(2) errors) and
 lets an information criterion decide whether the series really contains
 changepoints or merely trend/autocorrelation ("memory"). The changepoints
 of the winning model (if any) are returned, and the winning model's name

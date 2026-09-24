@@ -34,9 +34,10 @@ cpt_influence(
 (replace it with a large value). Defaults to \code{"delete"}.}
 
 \item{engine}{Which implementation to use:
-\code{"auto"} (default) uses \pkg{changepoint.influence} when the result
-came from a \pkg{changepoint} engine and that package is installed, and
-the generic recomputation otherwise; \code{"changepoint.influence"}
+\code{"auto"} (default) uses \pkg{changepoint.influence} for a
+\code{type = "delete"} diagnostic of a change-in-mean fit from a
+\pkg{changepoint} engine when that package is installed (the only
+models it supports), and the generic recomputation otherwise; \code{"changepoint.influence"}
 insists on the former; \code{"recompute"} insists on the latter, which
 works for every wired and registered method.}
 
@@ -47,7 +48,10 @@ diagnostic affordable. Defaults to every observation.}
 
 \item{outlier_sd}{For \code{type = "outlier"}, how many residual standard
 deviations the substituted value sits above the fitted level. Defaults
-to \code{5}.}
+to \code{5}. Used by the recomputation engine, which is what
+\code{"auto"} picks for an outlier diagnostic;
+\code{engine = "changepoint.influence"} places its outliers by its own
+rule and does not read it.}
 
 \item{seed}{Optional seed, for detectors that randomise. The seed is
 scoped to this call: \code{.Random.seed} is saved and restored, so a
@@ -70,21 +74,22 @@ observation on x, position on y, parameter shift as fill).}
 A \code{ggcpt_influence} object: a list with
   \describe{
     \item{\code{influence}}{a tibble with one row per perturbed
-      observation — \code{index}, \code{n_cp}, \code{delta_n_cp} (against
+      observation: \code{index}, \code{n_cp}, \code{delta_n_cp} (against
       the unperturbed fit), \code{max_shift} (largest movement of a
       surviving changepoint, in positions), \code{param_shift} (largest
       absolute change in a segment parameter) and \code{cpts} (a
-      list-column of the perturbed changepoint sets);}
+      list-column of the perturbed changepoint sets). A perturbation
+      whose re-fit failed has \code{n_cp = NA}, and is warned about;}
     \item{\code{param}}{an \eqn{n \times n} matrix of per-observation
-      segment parameters, one row per perturbation — the input to the
+      segment parameters, one row per perturbation: the input to the
       influence map;}
     \item{\code{original}, \code{type}, \code{engine}, \code{method}}{}
   }
   with \code{print()} and \code{autoplot()} methods.
 }
 \description{
-Perturbs one observation at a time — deleting it, or replacing it with an
-outlier — re-runs the detector, and reports what changed: the number of
+Perturbs one observation at a time (deleting it, or replacing it with an
+outlier), re-runs the detector, and reports what changed: the number of
 changepoints, where they moved to, and how the segment parameters
 responded. This is the diagnostic family of Wilms, Killick and Matteson
 (2022), rendered in \pkg{ggplot2} so it composes with the rest of the

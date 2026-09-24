@@ -1,24 +1,25 @@
 #' Turn external changepoints into a ggcpt result
 #'
-#' Wraps a set of changepoint locations — from a detector this package does
+#' Wraps a set of changepoint locations (from a detector this package does
 #' not wrap, a Python tool called through \pkg{reticulate}, a neural
 #' detector, a published paper's reported breaks, or an analyst's own
-#' annotations — into a first-class \code{ggcpt} object. Everything built on
+#' annotations) into a first-class \code{ggcpt} object. Everything built on
 #' the \code{ggcpt} contract then applies: \code{autoplot()}, the composable
 #' geoms, \code{tidy()}/\code{glance()}/\code{augment()},
 #' \code{\link{cpt_metrics}()}, \code{\link{cpt_consensus}()},
 #' \code{\link{cpt_report}()}.
 #'
 #' @param cp Integer vector of changepoint locations. Out-of-range,
-#'   duplicated and missing values are dropped and the result is sorted —
-#'   the same contract every built-in wrapper is held to — but unlike a
+#'   duplicated and missing values are dropped and the result is sorted,
+#'   the same contract every built-in wrapper is held to. But unlike a
 #'   wrapper, which is normalising an engine's output, this function is
 #'   given yours, so \strong{anything it drops it warns about}, with the
 #'   values and the range they had to fall in. A fractional index is
 #'   included in that: it is truncated rather than rounded, which makes
 #'   \code{50.5} into a changepoint at 50.
 #' @param x The series the changepoints refer to: a numeric vector, or a
-#'   matrix/data frame (rows are time points) for a multivariate result.
+#'   matrix/data frame (rows are time points) for a multivariate result. A
+#'   one-column matrix or data frame is read as a univariate series.
 #' @param fitted Optional length-\code{n} fitted signal, used by
 #'   \code{autoplot(show_fit = TRUE)} and \code{augment()}.
 #' @param method Method label. Defaults to \code{"custom"}.
@@ -26,21 +27,26 @@
 #'   \code{"mean"}.
 #' @param ci Optional two-column matrix or data frame of location confidence
 #'   intervals, one row per changepoint, giving lower and upper bounds as
-#'   positions.
+#'   positions in the same \code{cp_convention} as \code{cp}: with
+#'   \code{"right"} they are converted along with \code{cp}, so an
+#'   interval keeps bracketing its changepoint.
 #' @param regions Optional two-column matrix or data frame of significance
 #'   regions (\code{start}, \code{end}); see \code{\link{nsp_wrapper}()} for
-#'   the interval-valued case this exists to serve.
+#'   the interval-valued case this exists to serve. A region with a missing
+#'   bound is dropped with a warning.
 #' @param penalty Optional penalty descriptor: a number, a string, or a list
 #'   with \code{type} and \code{value}.
 #' @param cp_convention \code{"left"} (the changepoint is the last index of
-#'   the left segment — this package's convention) or \code{"right"} (the
+#'   the left segment, this package's convention) or \code{"right"} (the
 #'   first index of the right segment, which is converted on the way in).
 #' @param index Optional time index, one value per observation.
 #' @param fit Optional raw upstream object to carry along.
 #' @param extra Optional named list of per-changepoint columns, each of the
 #'   same length as \code{cp}, appended to the changepoints tibble.
 #'
-#' @return A \code{ggcpt} object.
+#' @return A \code{ggcpt} object, with the same components as any
+#'   detector in the package returns -- see \code{\link{new_ggcpt}()}
+#'   for the full list, and \code{\link{cpt_detect}()} for the summary.
 #' @seealso \code{\link{cpt_register_method}()} to make
 #'   \code{\link{cpt_detect}()} dispatch to an external detector by name.
 #' @export
@@ -74,7 +80,16 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
     data_vec <- as.numeric(X[, 1])
   } else {
     X <- NULL
-    data_vec <- as.numeric(values)
+    # A one-column data frame reaches here as a data frame (as_cpt_series()
+    # flattens a one-column MATRIX but not a frame), and as.numeric() on a
+    # frame is base R's "'list' object cannot be coerced to type 'double'".
+    # `@param x` offers a data frame, and cpt_detect() accepts the same
+    # input, so read its one column the way the wrappers do.
+    data_vec <- if (is.matrix(values) || is.data.frame(values)) {
+      as.numeric(as_mv_matrix(values, arg = "x")[, 1])
+    } else {
+      as.numeric(values)
+    }
   }
   validate_data(if (is_mv) X else data_vec)
   n <- length(data_vec)
@@ -180,8 +195,32 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
       stop("`ci` must have one row per changepoint: ", length(cp),
            " changepoint(s) but ", nrow(ci_m), " row(s).", call. = FALSE)
     }
-    extra_cols$ci_lower <- as.integer(ci_m[, 1])
-    extra_cols$ci_upper <- as.integer(ci_m[, 2])
+    # The bounds are locations in the same convention as `cp`, so they move
+    # with it. Converting `cp` alone left a "right" interval one position
+    # to the right of its own changepoint: `as_ggcpt(61, x, cp_convention =
+    # "right", ci = cbind(59, 63))` reported a changepoint at 60 with an
+    # interval of [59, 63] where [58, 62] was meant. taylor_wrapper(), the
+    # built-in engine that reports this convention, shifts both.
+    shift <- if (cp_convention == "right") 1L else 0L
+    extra_cols$ci_lower <- as.integer(ci_m[, 1]) - shift
+    extra_cols$ci_upper <- as.integer(ci_m[, 2]) - shift
+  }
+  # normalise_regions() drops a region with a missing bound, which is right
+  # for an engine's output and, here as for `cp`, worth saying out loud:
+  # the regions came from the caller.
+  if (!is.null(regions) && NCOL(regions) >= 2L) {
+    rg <- as.data.frame(regions)
+    cols <- if (all(c("start", "end") %in% names(rg))) {
+      c("start", "end")
+    } else {
+      names(rg)[1:2]
+    }
+    miss <- is.na(suppressWarnings(as.numeric(rg[[cols[1]]]))) |
+      is.na(suppressWarnings(as.numeric(rg[[cols[2]]])))
+    if (any(miss)) {
+      warning("`regions`: ", sum(miss), " of ", nrow(rg), " region(s) ",
+              "have a missing bound and are dropped.", call. = FALSE)
+    }
   }
   if (!is.null(extra)) {
     if (!is.list(extra) || is.null(names(extra)) || any(!nzchar(names(extra)))) {

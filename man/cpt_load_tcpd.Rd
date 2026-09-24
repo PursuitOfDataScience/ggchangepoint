@@ -20,14 +20,15 @@ cpt_load_tcpd(name = NULL, cache_dir = NULL, refresh = FALSE, quiet = FALSE)
 }
 \value{
 With \code{name = NULL}, a tibble catalogue (\code{name},
-  \code{n_obs}, \code{n_dim}, \code{n_annotators}, \code{cached}).
+  \code{n_annotators}, \code{cached}), read from the annotations file
+  alone, so listing it downloads no series.
   Otherwise a named list of \code{list(series, annotations, index,
   longname)} datasets, in the shape \code{\link{cpt_benchmark}()} takes.
 }
 \description{
-Fetches the benchmark of van den Burg and Williams (2020) — real series
-from many domains, each annotated independently by several human
-annotators — and caches it under \code{tools::R_user_dir()}. The
+Fetches the benchmark of van den Burg and Williams (2020), real series
+from many domains each annotated independently by several human
+annotators, and caches it under \code{tools::R_user_dir()}. The
 multi-annotator structure is the point: scoring against a single "true"
 set silently discards the disagreement, and
 \code{\link{cpt_metrics_annotated}()} is built to keep it.

@@ -553,10 +553,30 @@ cpt_scale_space <- function(x, bandwidths = NULL,
   }
   need_pkg(if (method == "mosum") "mosum" else "CptNonPar")
 
+  # Why the engine refused is kept, not discarded. Every bandwidth failing
+  # used to report "No bandwidth produced a usable fit", which reads as a
+  # statement about the bandwidths -- and it is the wrong diagnosis for the
+  # commonest cause. `...` goes straight to the engine, so a single
+  # unsupported argument makes every fit fail at once:
+  # `cpt_scale_space(x, bandwidths = c(20, 40))` works and
+  # `cpt_scale_space(x, bandwidths = c(20, 40), index = dates)` did not,
+  # because `index` is not one of `mosum::mosum()`'s arguments. Telling
+  # someone their bandwidths are unusable when the engine said "unused
+  # argument (index = ...)" sends them to re-tune the sweep.
+  why <- NULL
+  keep_why <- function(e) {
+    if (is.null(why)) {
+      # R's own "unused argument (index = c(...))" deparses the value, so a
+      # rejected 180-point index arrives as 180 numbers. Keep the first
+      # clause, which is the part that names what was wrong.
+      msg <- gsub("[[:space:]]+", " ", conditionMessage(e))
+      why <<- if (nchar(msg) > 120) paste0(substr(msg, 1, 117), "...") else msg
+    }
+    NULL
+  }
   rows <- lapply(bandwidths, function(G) {
     if (method == "mosum") {
-      fit <- tryCatch(mosum::mosum(series, G = G, ...),
-                      error = function(e) NULL)
+      fit <- tryCatch(mosum::mosum(series, G = G, ...), error = keep_why)
       if (is.null(fit)) return(NULL)
       # Exact [[ ]] for the same reason as the np.mojo branch below: mosum
       # returns both `threshold` (the rule) and `threshold.value` (the
@@ -568,7 +588,7 @@ cpt_scale_space <- function(x, bandwidths = NULL,
       cp <- as.integer(fm("cpts") %||% integer(0))
     } else {
       fit <- tryCatch(CptNonPar::np.mojo(series, G = G, ...),
-                      error = function(e) NULL)
+                      error = keep_why)
       if (is.null(fit)) return(NULL)
       # np.mojo names its per-location statistic `test.stat`, and
       # `threshold` is the *rule* ("bootstrap"), not the number -- that is
@@ -592,8 +612,19 @@ cpt_scale_space <- function(x, bandwidths = NULL,
   })
   rows <- Filter(Negate(is.null), rows)
   if (length(rows) == 0) {
-    stop("No bandwidth produced a usable fit for method `", method, "`.",
-         call. = FALSE)
+    detail <- if (is.null(why)) {
+      paste0(": the engine returned nothing usable at any of the ",
+             length(bandwidths), " bandwidth(s) tried.")
+    } else {
+      paste0(". All ", length(bandwidths), " bandwidth(s) failed, and `",
+             method, "` gave the same reason each time: ", why,
+             " Arguments in `...` go straight to the engine, so if one of ",
+             "those is unexpected, check it against ?",
+             if (method == "mosum") "mosum::mosum" else "CptNonPar::np.mojo",
+             " rather than re-tuning the sweep.")
+    }
+    stop("No bandwidth produced a usable fit for method `", method, "`",
+         detail, call. = FALSE)
   }
   out <- do.call(rbind, rows)
   attr(out, "method") <- method

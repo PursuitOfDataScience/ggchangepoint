@@ -24,19 +24,20 @@ positions.}
 \item{...}{Ignored.}
 }
 \value{
-A tibble with one row per label — \code{label_id},
+A tibble with one row per label: \code{label_id},
   \code{series} (the label set's series identifier, \code{NA} for a
   single unnamed series), \code{start}, \code{end}, \code{change},
   \code{n_changes} (how many detections fell inside), \code{status} (\code{"correct"}, \code{"false_positive"} or
-  \code{"false_negative"}) — carrying the totals in an \code{errors}
-  attribute and printing them.
+  \code{"false_negative"}), carrying the totals in an \code{errors}
+  attribute and printing them. An empty label set gives a zero-row
+  tibble with the same columns.
 }
 \description{
 Counts label errors: a positive region with no changepoint is a false
 negative, a negative region with one is a false positive, and a
 \code{"one_change"} region with two or more is a false positive as well.
 This is the accuracy measure supervised changepoint detection is built on,
-and — unlike an information criterion — it is defined by what the expert
+and, unlike an information criterion, it is defined by what the expert
 asserted rather than by a model assumption.
 }
 \examples{

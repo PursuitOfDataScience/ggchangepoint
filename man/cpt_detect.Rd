@@ -99,7 +99,18 @@ engine quietly uses its default rather than reporting the typo. Every
 other wired method rejects an unknown argument by name.}
 }
 \value{
-A \code{ggcpt} object.
+A \code{ggcpt} object: a list with \code{changepoints}
+  (\code{cp}, \code{cp_value}), \code{segments} (\code{seg_id},
+  \code{start}, \code{end}, \code{n}, \code{param_estimate}),
+  \code{data} (\code{index}, \code{value}), the \code{method},
+  \code{change_in}, \code{penalty}, \code{cp_convention} and
+  \code{runtime} that produced it, the matched \code{call}, and
+  \code{fit}, the raw upstream object. Optional slots
+  (\code{data_wide}, \code{regions}, \code{diagnostics}, ...) appear
+  only when an engine supplies them; \code{\link{new_ggcpt}()}
+  documents all of them, and \code{\link{tidy.ggcpt}()},
+  \code{\link{glance.ggcpt}()} and \code{\link{augment.ggcpt}()}
+  are the supported way to read one.
 }
 \description{
 Runs a changepoint detection method on a sequence and returns a tidy

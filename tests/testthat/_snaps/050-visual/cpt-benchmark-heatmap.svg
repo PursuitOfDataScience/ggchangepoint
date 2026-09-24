@@ -61,7 +61,7 @@
 <text x='695.69' y='316.96' style='font-size: 8.80px; font-family: sans;' textLength='12.23px' lengthAdjust='spacingAndGlyphs'>0.8</text>
 <text x='695.69' y='291.26' style='font-size: 8.80px; font-family: sans;' textLength='12.23px' lengthAdjust='spacingAndGlyphs'>0.9</text>
 <text x='695.69' y='265.55' style='font-size: 8.80px; font-family: sans;' textLength='12.23px' lengthAdjust='spacingAndGlyphs'>1.0</text>
-<text x='29.98' y='30.35' style='font-size: 11.00px; font-family: sans;' textLength='209.13px' lengthAdjust='spacingAndGlyphs'>Tolerance 5; blank cells are engine failures</text>
+<text x='29.98' y='30.35' style='font-size: 11.00px; font-family: sans;' textLength='280.05px' lengthAdjust='spacingAndGlyphs'>Tolerance 5; NA cells are failed runs or undefined metrics</text>
 <text x='29.98' y='14.56' style='font-size: 13.20px; font-family: sans;' textLength='124.02px' lengthAdjust='spacingAndGlyphs'>Benchmark: covering</text>
 </g>
 </svg>
