@@ -105,8 +105,8 @@ autoplot(object, ...)
   [`future::plan()`](https://future.futureverse.org/reference/plan.html)
   when future.apply is available? Defaults to `TRUE`. It has no effect
   unless a non-sequential plan is set, but when one is it changes where
-  the replicates' random numbers come from – see the section below,
-  which matters if the power figure is going into a paper.
+  the replicates' random numbers come from; see the section below, which
+  matters if the power figure is going into a paper.
 
 - ...:
 
@@ -149,25 +149,25 @@ Measured on
 scenario is named because the numbers depend on it and on the worker
 count; what does not depend on either is that the two disagree.
 
-So the guarantee is: same seed and same plan, same answer – every time,
+So the guarantee is: same seed and same plan, same answer, every time,
 whichever plan it is. If a power figure needs to be reproducible by
 someone else, pin the execution as well as the seed: pass
 `parallel = FALSE`, or state the plan alongside the seed. Raising
 `n_sim` narrows the gap, because it is Monte Carlo error rather than
-disagreement – both estimates are of the same quantity, and `mc_se` says
+disagreement: both estimates are of the same quantity, and `mc_se` says
 how precisely.
 
 This is specific to `cpt_power()`, which is the one function here whose
 parallel tasks consume random numbers. The other six that dispatch on
-[`future::plan()`](https://future.futureverse.org/reference/plan.html) –
-[`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),
+[`future::plan()`](https://future.futureverse.org/reference/plan.html)
+([`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md),
 [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md),
 [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md),
 [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md),
 [`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md)
 and
-[`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
-– farm out work that is deterministic given its input, and were measured
+[`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md))
+farm out work that is deterministic given its input, and were measured
 to return identical results under a sequential and a two-worker plan,
 stochastic engines included.
 

@@ -82,23 +82,24 @@ a single S3 result class, <code>ggcpt</code>, with
 <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> covering 50 detection methods across six
 algorithmic families, and native <code>ggplot2</code> <span class="citation">(Wickham 2016)</span> visualisation through
 <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and a set of composable geoms. Where a method
-quantifies its uncertainty — the simultaneous confidence intervals of
+quantifies its uncertainty (the simultaneous confidence intervals of
 SMUCE <span class="citation">(Frick et al. 2014)</span>, the break-date
-intervals of Bai–Perron <span class="citation">(Bai and Perron
-1998)</span>, the posterior distributions of Bayesian detectors <span class="citation">(Barry and Hartigan 1993; Adams and MacKay 2007)</span>
-— the result object carries that uncertainty and the plotting layer can
-draw it. The package further supplies a penalty-path diagnostic (CROPS),
-batch detection over panels of series, bootstrap stability diagnostics,
-accuracy metrics aligned with current benchmarking conventions <span class="citation">(<span class="nocase">van den Burg and Williams</span>
-2020)</span>, ground-truth simulation, and per-method citations. This
-article sets out the statistical background, the design of the package,
-and each method family in turn, with worked examples throughout.</p>
+intervals of Bai-Perron <span class="citation">(Bai and Perron
+1998)</span>, the posterior distributions of Bayesian detectors <span class="citation">(Barry and Hartigan 1993; Adams and MacKay
+2007)</span>), the result object carries that uncertainty and the
+plotting layer can draw it. The package further supplies a penalty-path
+diagnostic (CROPS), batch detection over panels of series, bootstrap
+stability diagnostics, accuracy metrics aligned with current
+benchmarking conventions <span class="citation">(<span class="nocase">van den Burg and Williams</span> 2020)</span>,
+ground-truth simulation, and per-method citations. This article sets out
+the statistical background, the design of the package, and each method
+family in turn, with worked examples throughout.</p>
 </div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>Changepoint analysis — locating the instants at which the stochastic
-behaviour of an ordered sequence changes — is one of the oldest problems
+<p>Changepoint analysis (locating the instants at which the stochastic
+behaviour of an ordered sequence changes) is one of the oldest problems
 in statistics, dating back at least to the continuous-inspection schemes
 of <span class="citation">Page (1954)</span>, and one of its most
 active: recent surveys catalogue dozens of methods <span class="citation">(Truong et al. 2020; Aminikhanghahi and Cook
@@ -120,8 +121,8 @@ packages is excellent at what it does, and each returns a different
 object, follows a different indexing convention, and draws (or does not
 draw) its own plots.</p>
 <p>An analyst who wants to <em>compare</em> a PELT segmentation with a
-Bayesian posterior and a multiscale confidence set — a routine task in
-applied work — must therefore learn several APIs, reconcile several
+Bayesian posterior and a multiscale confidence set (a routine task in
+applied work) must therefore learn several APIs, reconcile several
 conventions, and write custom plotting code for each.
 <strong>ggchangepoint</strong> removes that friction. Its design goals
 are:</p>
@@ -135,8 +136,8 @@ arguments mean the same thing for every engine.</li>
 <code>ggcpt</code> object with a stable tidy contract, whatever the
 upstream engine returned.</li>
 <li>
-<strong>One rendering path.</strong> Every result — point estimates,
-confidence intervals, fitted signals, posteriors, penalty paths — draws
+<strong>One rendering path.</strong> Every result (point estimates,
+confidence intervals, fitted signals, posteriors, penalty paths) draws
 with <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and extends with ordinary
 <code>ggplot2</code> layers.</li>
 <li>
@@ -181,9 +182,9 @@ penalised cost,
   \mathcal{C}\!\left(y_{(\tau_{i-1}+1):\tau_i}\right) \;+\; \beta m,
 </annotation></semantics></math> where
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>𝒞</mi><annotation encoding="application/x-tex">\mathcal{C}</annotation></semantics></math>
-is a segment cost — for a change in mean under Gaussian noise the
+is a segment cost (for a change in mean under Gaussian noise the
 residual sum of squares, more generally twice the negative maximised
-log-likelihood of the segment — and
+log-likelihood of the segment) and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>β</mi><mo>&gt;</mo><mn>0</mn></mrow><annotation encoding="application/x-tex">\beta &gt; 0</annotation></semantics></math>
 is the price of each additional changepoint. Writing
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
@@ -219,13 +220,17 @@ but returns 39 at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">\sigma = 3</annotation></semantics></math>
 and 141 at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">\sigma = 10</annotation></semantics></math>
-— means over 20 draws, since a single draw is not stable at these
-settings. Standardise the series, pass a penalty on the data’s own scale
-(say <code>2 * log(n) * var(diff(x)) / 2</code>), or use
+(means over 20 draws, since a single draw is not stable at these
+settings). Standardise the series, pass a penalty on the data’s own
+scale (say <code>2 * log(n) * var(diff(x)) / 2</code>), or use
 <code>change_in = "meanvar"</code>, which estimates a variance per
 segment. Methods that estimate the noise level as part of their
-procedure — SMUCE, the WBS family, CPOP, DeCAFS, and the Bayesian and
-nonparametric engines — return the same segmentation whatever the
+procedure (SMUCE, the WBS family, CPOP, bcp, BEAST and the nonparametric
+engines) return the same segmentation whatever the units. Three
+exceptions are worth knowing: <code>geomcp</code> runs PELT on its
+mapped series and inherits its sensitivity, DeCAFS floors its noise
+estimate near 0.03, and BOCPD’s default prior is on the data’s own
+scale, so the last two miss changes in a series measured in very small
 units.</p>
 </div>
 <div class="section level3">
@@ -240,7 +245,7 @@ that short segments are not masked;
 interval on which the contrast exceeds a threshold, which generalises
 cleanly to changes in slope; <strong>MOSUM</strong> <span class="citation">(Eichinger and Kirch 2018)</span> scans a moving-sum
 statistic at a fixed bandwidth, or across a range of bandwidths;
-Isolate–Detect <span class="citation">(Anastasiou and Fryzlewicz
+Isolate-Detect <span class="citation">(Anastasiou and Fryzlewicz
 2022)</span> isolates each changepoint in an expanding interval; and
 TGUH <span class="citation">(Fryzlewicz 2018)</span> performs a
 tail-greedy bottom-up merge. <strong>SMUCE</strong> <span class="citation">(Frick et al. 2014)</span> occupies a special place: it
@@ -248,7 +253,7 @@ estimates the step function with the fewest jumps that still passes a
 <em>simultaneous multiscale test</em> at level
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>,
 and in doing so delivers confidence intervals for every changepoint
-location — uncertainty statements most competitors cannot make. HSMUCE
+location, uncertainty statements most competitors cannot make. HSMUCE
 <span class="citation">(Pein et al. 2017)</span> extends this to
 heterogeneous noise.</p>
 </div>
@@ -259,7 +264,7 @@ heterogeneous noise.</p>
 accepts <code>"mean"</code>, <code>"var"</code>, <code>"meanvar"</code>,
 <code>"slope"</code>, <code>"distribution"</code>,
 <code>"covariance"</code>, <code>"network"</code>,
-<code>"regression"</code> and <code>"seasonality"</code> — the nine
+<code>"regression"</code> and <code>"seasonality"</code>, the nine
 values <code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> lists in its <code>supports</code>
 column, each routable to the methods that declare it. Nonparametric
 engines (energy statistics <span class="citation">(Matteson and James
@@ -296,7 +301,7 @@ HSMUCE, strucchange, segmented, bfast, taylor, mcp),
 (CPM), <code>strength</code> (inspect), <code>declared_at</code> (ocd),
 or <code>mapping</code> (geomcp) when they have more to say.
 <code>nsp</code> reports its uncertainty as a significance region
-instead — <code>region_start</code>, <code>region_end</code> and the
+instead: <code>region_start</code>, <code>region_end</code> and the
 <code>regions</code> slot.</li>
 <li>
 <code>segments</code>: a tibble of the induced segments
@@ -306,7 +311,7 @@ instead — <code>region_start</code>, <code>region_end</code> and the
 <code>data</code>: the analysed series as a tibble
 (<code>index</code>, <code>value</code>), plus a <code>fitted</code>
 column when the engine estimates a signal (SMUCE, HSMUCE, CPOP, bcp,
-BEAST, DeCAFS, segmented, mcp, bfast — the engines
+BEAST, DeCAFS, segmented, mcp, bfast; these are the engines
 <code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> marks in its <code>fitted</code>
 column).</li>
 <li>
@@ -370,10 +375,10 @@ expect:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     4 -<span style="color: #BB0000;">1.44</span>       1   0.139 -<span style="color: #BB0000;">1.58</span>  FALSE         </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5 -<span style="color: #BB0000;">0.331</span>      1   0.139 -<span style="color: #BB0000;">0.470</span> FALSE         </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     6 -<span style="color: #BB0000;">2.90</span>       1   0.139 -<span style="color: #BB0000;">3.04</span>  FALSE</span></span></code></pre></div>
-<p><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws the series, the changepoint rules, and
-— on request — the fitted segment means (<code>show_segments</code>),
-the engine’s fitted signal (<code>show_fit</code>), and
-changepoint-location confidence intervals (<code>show_ci</code>):</p>
+<p><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws the series, the changepoint rules and,
+on request, the fitted segment means (<code>show_segments</code>), the
+engine’s fitted signal (<code>show_fit</code>), and changepoint-location
+confidence intervals (<code>show_ci</code>):</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="introduction_files/figure-html/contract-plot-1.png" class="r-plt" alt="Series with its changepoint rules and the fitted segment levels drawn as horizontal steps" width="576"></p>
@@ -390,30 +395,30 @@ surface.</p>
 <h3 id="design-principles">Design principles<a class="anchor" aria-label="anchor" href="#design-principles"></a>
 </h3>
 <p>The four goals above are recorded in the package as principles
-<strong>P1 — wrap, don’t reinvent</strong> (bind to peer-reviewed CRAN
-engines), <strong>P2 — tidy in, tidy out</strong> (stable column names
-across all methods), <strong>P3 — ggplot2 all the way down</strong>
-(every result renders and extends), and <strong>P4 — one
+<strong>P1. Wrap, don’t reinvent</strong> (bind to peer-reviewed CRAN
+engines), <strong>P2. Tidy in, tidy out</strong> (stable column names
+across all methods), <strong>P3. ggplot2 all the way down</strong>
+(every result renders and extends), and <strong>P4. One
 vocabulary</strong> (<code>x</code>, <code>method</code>,
 <code>change_in</code>, <code>penalty</code>, <code>...</code>). Three
 further principles govern how the interface evolves:</p>
 <ul>
 <li>
-<strong>P5 — Progressive disclosure</strong>: beginners call
+<strong>P5. Progressive disclosure</strong>: beginners call
 <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> + <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>; experts reach the
 upstream fit via <code>$fit</code>.</li>
 <li>
-<strong>P6 — No surprises</strong>: the 0.1.0 functions still work
+<strong>P6. No surprises</strong>: the 0.1.0 functions still work
 unchanged.</li>
 <li>
-<strong>P7 — Document everything you ship</strong>: every export is
+<strong>P7. Document everything you ship</strong>: every export is
 introduced in the README and a vignette.</li>
 </ul>
-<p>Release 0.4.0 adds an eighth: <strong>P8 — carry the
+<p>Release 0.4.0 adds an eighth: <strong>P8. Carry the
 uncertainty</strong>. Where a method quantifies uncertainty, the
 <code>ggcpt</code> object records it and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> can
 draw it.</p>
-<p>Release 0.5.0 adds a ninth: <strong>P9 — be extensible from the
+<p>Release 0.5.0 adds a ninth: <strong>P9. Be extensible from the
 outside</strong>. A detector this package does not wrap, cannot wrap, or
 has never heard of can join the same grammar through
 <code><a href="../reference/as_ggcpt.html">as_ggcpt()</a></code> and <code><a href="../reference/cpt_register_method.html">cpt_register_method()</a></code>, and is
@@ -447,7 +452,7 @@ engine, what it can detect, and whether the engine is installed:</p>
 <span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;</span></span></span></code></pre></div>
 <p>Requests are validated against this capability matrix: asking a
 mean-only engine for a variance change is an error with the legal
-alternatives named — never a silent substitution. Univariate methods
+alternatives named, never a silent substitution. Univariate methods
 likewise refuse multi-column input rather than flattening it.</p>
 <p>Penalty semantics differ across engines, and
 <code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> documents and constructs the standard
@@ -466,7 +471,7 @@ Schwarz criterion
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>k</mi><mo stretchy="false" form="prefix">(</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><msup><mo stretchy="false" form="postfix">)</mo><mi>α</mi></msup></mrow><annotation encoding="application/x-tex">k (\log n)^{\alpha}</annotation></semantics></math>,
 with
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>α</mi><mo>=</mo><mn>1.01</mn></mrow><annotation encoding="application/x-tex">\alpha = 1.01</annotation></semantics></math>
-by default <span class="citation">(Fryzlewicz 2014)</span> — marginally
+by default <span class="citation">(Fryzlewicz 2014)</span>, marginally
 heavier than BIC, and the criterion the search-based engines apply
 internally. <code>"MBIC"</code> in <code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> returns
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>0.5</mn><mo stretchy="false" form="prefix">(</mo><mi>k</mi><mo>+</mo><mn>1</mn><mo stretchy="false" form="postfix">)</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mi>n</mi><mo>+</mo><mrow><mi mathvariant="normal">log</mi><mo>⁡</mo></mrow><mrow><mo stretchy="true" form="prefix">(</mo><mfrac linethickness="0"><mi>n</mi><mi>k</mi></mfrac><mo stretchy="true" form="postfix">)</mo></mrow></mrow><annotation encoding="application/x-tex">0.5 (k+1) \log n + \log \binom{n}{k}</annotation></semantics></math>:
@@ -502,13 +507,13 @@ BEAST, CPM, SNSeg).</p>
 can be checked by eye. <code><a href="../reference/cpt_simulate.html">cpt_simulate()</a></code> draws series with
 prescribed changepoints, and five canonical test signals ship as
 ready-made generators: <code><a href="../reference/signal_blocks.html">signal_blocks()</a></code> (the
-Donoho–Johnstone blocks signal <span class="citation">(Donoho and
+Donoho-Johnstone blocks signal <span class="citation">(Donoho and
 Johnstone 1994)</span>), <code><a href="../reference/signal_fms.html">signal_fms()</a></code>,
 <code><a href="../reference/signal_teeth.html">signal_teeth()</a></code>, <code><a href="../reference/signal_stairs.html">signal_stairs()</a></code>, and
 <code><a href="../reference/signal_mix.html">signal_mix()</a></code>. The comparison vignette puts them to work.
-The sections that follow work through six families — penalised and
+The sections that follow work through six families (penalised and
 optimal partitioning, multiscale and search, Bayesian, nonparametric and
-sequential, multivariate and high-dimensional, and regression-based —
+sequential, multivariate and high-dimensional, and regression-based)
 plus two concerns that cut across all of them: change in slope, and
 robustness to drift, autocorrelation and model ambiguity.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -551,8 +556,8 @@ Eckley 2014)</span>; FPOP <span class="citation">(Maidstone et al.
 Rather than committing to one value, <code><a href="../reference/cpt_crops.html">cpt_crops()</a></code> computes
 <em>every</em> optimal segmentation as
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
-ranges over an interval — the CROPS algorithm of Haynes, Eckley and
-Fearnhead (2017), as implemented by <strong>changepoint</strong> — and
+ranges over an interval (the CROPS algorithm of Haynes, Eckley and
+Fearnhead (2017), as implemented by <strong>changepoint</strong>) and
 turns penalty selection into a diagnostic:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">path</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_crops.html">cpt_crops</a></span><span class="op">(</span><span class="va">x_multi</span><span class="op">)</span></span>
@@ -587,8 +592,8 @@ map from penalty to model size:</p>
 <p><img src="introduction_files/figure-html/crops-segmentations-1.png" class="r-plt" alt="The series faceted by CROPS solution, each panel showing that solution's changepoints" width="576"></p>
 <p>The modern <strong>fastcpd</strong> engine <span class="citation">(Li
 and Zhang 2024)</span> brings the same penalised formulation to a wide
-family of models — mean, variance, mean-and-variance, and AR/ARMA/GARCH
-model changes — with sequential-gradient-descent speed:</p>
+family of models (mean, variance, mean-and-variance, and AR/ARMA/GARCH
+model changes) with sequential-gradient-descent speed:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/fastcpd_wrapper.html">fastcpd_wrapper</a></span><span class="op">(</span><span class="va">x_multi</span>, family <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 2</span></span></span>
@@ -700,7 +705,7 @@ to it automatically:</p>
 <div class="section level3">
 <h3 id="bayesian-detection">Bayesian detection<a class="anchor" aria-label="anchor" href="#bayesian-detection"></a>
 </h3>
-<p>The Barry–Hartigan product partition model <span class="citation">(Barry and Hartigan 1993)</span>, via the
+<p>The Barry-Hartigan product partition model <span class="citation">(Barry and Hartigan 1993)</span>, via the
 <strong>bcp</strong> package <span class="citation">(Erdman and Emerson
 2007)</span>, returns a <em>posterior probability of a changepoint at
 every location</em> along with posterior segment means. Locations
@@ -717,11 +722,11 @@ classic two-panel display:</p>
 <span><span class="fu"><a href="../reference/ggcpt_posterior.html">ggcpt_posterior</a></span><span class="op">(</span><span class="va">res_bcp</span><span class="op">)</span></span></code></pre></div>
 <p><img src="introduction_files/figure-html/bcp-1.png" class="r-plt" alt="Two-panel Bayesian display: the series with its posterior mean above, per-location posterior changepoint probability below" width="576"></p>
 <p>Bayesian <em>online</em> changepoint detection <span class="citation">(Adams and MacKay 2007)</span> instead tracks the
-posterior over the current <strong>run length</strong> — the time
-elapsed since the last change — updating it recursively as each
-observation arrives. Its signature graphic is the run-length heatmap, in
-which a change shows up as the posterior mass falling back to a run
-length of zero:</p>
+posterior over the current <strong>run length</strong> (the time elapsed
+since the last change), updating it recursively as each observation
+arrives. Its signature graphic is the run-length heatmap, in which a
+change shows up as the posterior mass falling back to a run length of
+zero:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_bocpd</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/bocpd_wrapper.html">bocpd_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_bocpd</span><span class="op">)</span></span>
@@ -761,8 +766,8 @@ distributional change:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span></code></pre></div>
 <p>The <strong>cpm</strong> package <span class="citation">(Ross
 2015)</span> recasts detection as a stream of two-sample tests
-(Mann–Whitney for location, Mood for scale, Lepage, Kolmogorov–Smirnov,
-Cramér–von Mises, and parametric variants), run here over the whole
+(Mann-Whitney for location, Mood for scale, Lepage, Kolmogorov-Smirnov,
+Cramér-von Mises, and parametric variants), run here over the whole
 series in one pass to mimic an online monitor. Its results distinguish
 where a change <em>happened</em> (<code>cp</code>) from when it was
 <em>detected</em> (<code>detection_time</code>), the lag inherent in
@@ -797,7 +802,7 @@ bivariate correlations <span class="citation">(Zhao et al.
 subtle statistical one: it is running a Gaussian-mean detector on data
 whose baseline drifts or whose noise is autocorrelated, and then
 reporting a changepoint wherever the model is wrong. DeCAFS <span class="citation">(Romano et al. 2022)</span> models exactly this regime
-— abrupt changes superimposed on random-walk drift and AR(1) noise — and
+(abrupt changes superimposed on random-walk drift and AR(1) noise) and
 separates the two:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_decafs</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/decafs_wrapper.html">decafs_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span><span class="op">)</span></span>
@@ -810,8 +815,8 @@ separates the two:</p>
 <p><img src="introduction_files/figure-html/decafs-1.png" class="r-plt" alt="Series with the DeCAFS fit overlaid, which separates gradual drift from abrupt change" width="576"></p>
 <p>EnvCpt <span class="citation">(Beaulieu and Killick 2018)</span>
 attacks the same confusion by model selection: it fits up to twelve
-competing descriptions — constant mean or linear trend, each with or
-without changepoints, and with white-noise, AR(1) or AR(2) errors — and
+competing descriptions (constant mean or linear trend, each with or
+without changepoints, and with white-noise, AR(1) or AR(2) errors) and
 reports changepoints only if a changepoint model wins on an information
 criterion:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
@@ -861,8 +866,8 @@ et al. 2020)</span>. And <code><a href="../reference/ocd_wrapper.html">ocd_wrapp
 <strong>ocd</strong>) monitors a high-dimensional stream <em>online</em>
 with worst-case detection-delay guarantees <span class="citation">(Chen
 et al. 2022)</span>. Because detection there is sequential, the
-locations it reports are <em>declaration times</em> — the change plus
-the detection delay — recorded in <code>declared_at</code>; the wrapper
+locations it reports are <em>declaration times</em> (the change plus the
+detection delay), recorded in <code>declared_at</code>; the wrapper
 estimates the pre-change baseline from an initial training window and
 resets after each declaration so that several changes can be found. Like
 the method itself, it needs at least two coordinates and refuses a
@@ -872,7 +877,7 @@ single series.</p>
 <h3 id="structural-breaks-in-regression">Structural breaks in regression<a class="anchor" aria-label="anchor" href="#structural-breaks-in-regression"></a>
 </h3>
 <p>Econometric practice dates breaks in regression coefficients. The
-Bai–Perron estimator <span class="citation">(Bai and Perron 1998,
+Bai-Perron estimator <span class="citation">(Bai and Perron 1998,
 2003)</span>, via <strong>strucchange</strong> <span class="citation">(Zeileis et al. 2002)</span>, returns break dates
 <em>with confidence intervals</em>; called on a bare series it dates
 mean shifts, and called with a formula it dates breaks in arbitrary
@@ -886,8 +891,8 @@ regressions:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369       99      101</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_bp</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="introduction_files/figure-html/strucchange-1.png" class="r-plt" alt="Series with the Bai-Perron breakpoints and their confidence intervals drawn as horizontal whiskers" width="576"></p>
-<p>Where the regression function is continuous — a kink rather than a
-jump — <strong>segmented</strong> <span class="citation">(Muggeo 2003,
+<p>Where the regression function is continuous (a kink rather than a
+jump), <strong>segmented</strong> <span class="citation">(Muggeo 2003,
 2008)</span> estimates broken-line relationships with standard errors
 for the breakpoints:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
@@ -939,7 +944,7 @@ object in list-columns. With <strong>future</strong> and
 </h3>
 <p>Most engines report a point set with no measure of its fragility.
 <code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> resamples residuals <em>within</em> the
-fitted segments — so the estimated regime structure is preserved —
+fitted segments (so the estimated regime structure is preserved),
 re-runs the detector on each replicate, and reports how often each
 location is re-detected: a cheap, model-agnostic confidence signal
 available for <em>every</em> engine, including the many that ship no
@@ -988,8 +993,8 @@ contributes a <em>surface</em>. The value of a common contract compounds
 with the number of methods behind it: the same <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>
 pipeline, the same plot, and the same evaluation code now span
 penalised, multiscale, nonparametric, Bayesian, high-dimensional, and
-regression-based detection — 50 methods in this release. Five more,
-whose engines are not currently on CRAN (graph-constrained gfpop <span class="citation">(Hocking et al. 2020)</span>, robust segmentation under
+regression-based detection: 50 methods in this release. Five more, whose
+engines are not currently on CRAN (graph-constrained gfpop <span class="citation">(Hocking et al. 2020)</span>, robust segmentation under
 outliers <span class="citation">(Fearnhead and Rigaill 2019)</span>,
 FOCuS, sparsified binary segmentation, and random-forest classification
 <span class="citation">(Londschien et al. 2023)</span>), are listed as
@@ -998,8 +1003,8 @@ same wrapper pattern once their engines return; until then they are not
 callable.</p>
 <p>Two practical notes. First, wrapped engines run with sensible
 defaults, but every wrapper forwards <code>...</code> to its engine and
-the raw fit is always in <code>$fit</code> — the package is a front
-door, not a cage. Second, detection quality belongs to the engines; the
+the raw fit is always in <code>$fit</code>; the package is a front door,
+not a cage. Second, detection quality belongs to the engines; the
 package’s own additions (metrics, stability, penalty paths) are
 deliberately engine-agnostic, so conclusions drawn with them transfer
 between methods.</p>

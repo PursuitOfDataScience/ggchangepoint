@@ -84,10 +84,10 @@ engines:
   [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
   forwards a numeric `penalty` as `beta`, and translates the three names
   the two packages share (`"MBIC"`, `"BIC"`/`"SIC"`, `"MDL"`). Any other
-  character penalty — `"AIC"`, `"Hannan-Quinn"`, `"sSIC"`, `"None"` —
-  has no fastcpd equivalent and is left to the engine's default rather
-  than being silently approximated; pass `beta` yourself to pin it.
-  Whatever is used is recorded on the result, so
+  character penalty (`"AIC"`, `"Hannan-Quinn"`, `"sSIC"`, `"None"`) has
+  no fastcpd equivalent and is left to the engine's default rather than
+  being silently approximated; pass `beta` yourself to pin it. Whatever
+  is used is recorded on the result, so
   [`print()`](https://rdrr.io/r/base/print.html) and
   [`glance()`](https://generics.r-lib.org/reference/glance.html) report
   the penalty of the fit in hand.
@@ -110,7 +110,7 @@ engines:
   segment lengths \\l_i\\ and so cannot be expressed by a function of
   `n` and `k` alone. Use the character `"MBIC"` with changepoint-based
   methods to get the engine's native MBIC, and
-  `cpt_select(criterion = "mbic")` for the Zhang–Siegmund one.
+  `cpt_select(criterion = "mbic")` for the Zhang-Siegmund one.
 
 ## Examples
 

@@ -5,7 +5,7 @@ complete. This one does not. A monitor consumes observations as they
 arrive, and the question it answers is not *where* was the change but
 **how long did you take to notice, and how often do you cry wolf**.
 Those are different quantities, they are scored differently, and
-conflating them is the commonest mistake made with online detectors —
+conflating them is the commonest mistake made with online detectors,
 including by retrospective plots that draw an alarm time as though it
 were a changepoint location.
 
@@ -16,7 +16,7 @@ So a monitor is a different object from a segmentation. Five functions:
 | [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md) | build a stateful detector from a clean baseline |
 | [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md) | push new observations through it |
 | [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md) | the alarm log: when it fired, and on what statistic |
-| [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md) | score it — detection delay and false alarms |
+| [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md) | score it: detection delay and false alarms |
 | [`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md) | run a whole series through in one call |
 
 ## 1. A monitor, one batch at a time
@@ -31,7 +31,7 @@ set.seed(2026)
 baseline <- rnorm(200)
 mon <- cpt_monitor("edetector", baseline = baseline, alpha = 0.002)
 mon
-#> ggcpt_monitor (edetector -- native implementation)
+#> ggcpt_monitor (edetector, native implementation)
 #>   Baseline observations: 200
 #>   Monitored observations: 0
 #>   Alarms: 0
@@ -39,7 +39,7 @@ mon
 ```
 
 Nothing has been monitored yet. Now feed it 120 observations from the
-same distribution — the in-control case, where the right answer is
+same distribution, the in-control case, where the right answer is
 silence:
 
 ``` r
@@ -47,7 +47,7 @@ silence:
 set.seed(5201)
 mon <- cpt_update(mon, rnorm(120))
 mon
-#> ggcpt_monitor (edetector -- native implementation)
+#> ggcpt_monitor (edetector, native implementation)
 #>   Baseline observations: 200
 #>   Monitored observations: 120
 #>   Alarms: 0
@@ -101,7 +101,7 @@ d
 Read the three numbers that matter. **Delay** is how many observations
 passed between the change and the first alarm after it. **False alarms**
 are the alarms with no change behind them. **Average run length** is
-observations per false alarm — the in-control cost of running the
+observations per false alarm: the in-control cost of running the
 monitor, and the quantity the thresholds are calibrated against.
 
 Note what happened to the *second* alarm. Only the first alarm after a
@@ -180,22 +180,22 @@ glance(cpt_delay(rep_e, truth = 200))
 
 ## 4. The three methods
 
-### `edetector` — the default, governed by `alpha`
+### `edetector`: the default, governed by `alpha`
 
-A mixture Shiryaev–Roberts e-detector for a sub-Gaussian shift (Shin et
+A mixture Shiryaev-Roberts e-detector for a sub-Gaussian shift (Shin et
 al. 2023). For each candidate shift the increment is a likelihood ratio
 with unit mean under the null; the running statistics are combined by
 **averaging**, which keeps $`M_t - t`$ a mean-zero martingale, so
-optional stopping gives $`E_\infty[\tau] \ge 1/\alpha`$ — a
-finite-sample lower bound on the in-control average run length, with no
-calibration run. It is the one detector in this package implemented here
-rather than wrapped, because no R package implements e-detectors;
+optional stopping gives $`E_\infty[\tau] \ge 1/\alpha`$, a finite-sample
+lower bound on the in-control average run length, with no calibration
+run. It is the one detector in this package implemented here rather than
+wrapped, because no R package implements e-detectors;
 [`print()`](https://rdrr.io/r/base/print.html) labels it as such.
 
 `deltas` is the set of shift sizes mixed over, in baseline standard
 deviations, each taken in both directions. The mixture is a uniform
 average, so adding a shift costs power at the ones already there rather
-than inflating the false-alarm rate — and betting on the wrong one is
+than inflating the false-alarm rate, and betting on the wrong one is
 expensive. Eight replicates, median delay:
 
 ``` r
@@ -225,7 +225,7 @@ long to notice a 0.75-sigma one, while the mixture is close to the best
 single choice at both sizes. That is the argument for mixing: it buys
 robustness to not knowing the change size, at a small cost when you do.
 
-### `cpm` — governed by `arl0`
+### `cpm`: governed by `arl0`
 
 `cpm`’s sequential change-point model (Ross 2015), with a
 distribution-free statistic (`cpm_type`, `"Mann-Whitney"` by default)
@@ -280,7 +280,7 @@ nrow(alarms(cpt_replay(ic, method = "edetector", arl0 = 5000)))
 
 Three alphas, three false-alarm counts; then `arl0 = 5000` on the same
 stream, which reproduces the default-`alpha` result exactly because the
-argument is not read – and
+argument is not read, and
 [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
 says so, because an argument that is accepted and then ignored is worth
 a warning rather than an unchanged answer. The rough translation is
@@ -288,7 +288,7 @@ $`\mathrm{ARL}_0 \approx
 1/\alpha`$, so `alpha = 0.002` and `arl0 = 500` ask for comparable
 strictness.
 
-### `ocd` — multivariate only
+### `ocd`: multivariate only
 
 `ocd`’s high-dimensional multiscale detector (Chen et al. 2022) tracks a
 projection of the whole vector, and **requires at least two
@@ -324,7 +324,7 @@ glance(cpt_delay(mon_ocd, truth = 61))
 
 Two practical notes. The statistic reported is `ocd`’s *normalised*
 statistic, already divided by its own threshold, so the comparison point
-is 1 — printing the raw thresholds alongside it would show an alarm at
+is 1; printing the raw thresholds alongside it would show an alarm at
 1.10 against a threshold of 16.4 and read as a bug. And the Monte Carlo
 threshold calibration is the expensive part of building the monitor: a
 minute or more at the default `patience = 5000`, which is why `mc_reps`
@@ -334,8 +334,8 @@ thresholds.
 ## 5. Delay is a function of shift size
 
 The whole point of an online detector is that a bigger change is noticed
-sooner. This is small enough to measure directly — ten replicates per
-cell, median over replicates:
+sooner. This is small enough to measure directly (ten replicates per
+cell, median over replicates):
 
 ``` r
 
@@ -362,22 +362,22 @@ grid
 ```
 
 Ten replicates is a noisy estimate of a median, and the table above will
-wobble with the seed. A larger run of the same design — 150 replicates
-per cell, repeated under two seeds — gives median detection delays of
+wobble with the seed. A larger run of the same design (150 replicates
+per cell, repeated under two seeds) gives median detection delays of
 **7, 3 and 2** observations for `edetector` at shifts of 1, 2 and 3
 standard deviations, and **10, 5 and 4** for `cpm`. Two things are worth
 taking from that. Delay falls steeply in the shift size, so a monitor
 tuned on a large change will feel unusably slow on a small one. And the
 gap between the two detectors is real but modest where the change is
 small: two or three observations at 1 sigma, against inter-quartile
-ranges of \[5, 12\] and \[7, 15\] that overlap almost entirely — while
+ranges of \[5, 12\] and \[7, 15\] that overlap almost entirely, while
 `edetector` is clearly and consistently quicker once the change is
 obvious.
 
 ## 6. Assumptions: the thresholds are for independent observations
 
-Both calibrations — the e-detector’s $`1/\alpha`$ bound and `cpm`’s
-`arl0` — assume the in-control observations are independent. Under the
+Both calibrations (the e-detector’s $`1/\alpha`$ bound and `cpm`’s
+`arl0`) assume the in-control observations are independent. Under the
 null on iid noise they hold up. Measured over 20 in-control streams of
 2000 observations at the defaults, `cpm` raises **3.0** false alarms on
 average against the 4 that `arl0 = 500` implies by construction, and
@@ -412,11 +412,11 @@ data.frame(
 ```
 
 Both inflate badly at $`\rho = 0.7`$, `cpm` by roughly **tenfold** in a
-larger run of the same comparison. Neither is broken — they are
-answering the question they were calibrated for — but a nominal
-`arl0 = 500` on autocorrelated data is not a 500-observation run length,
-and reporting it as one overstates the evidence behind every alarm. The
-options, in order of how much they ask of you:
+larger run of the same comparison. Neither is broken (they are answering
+the question they were calibrated for), but a nominal `arl0 = 500` on
+autocorrelated data is not a 500-observation run length, and reporting
+it as one overstates the evidence behind every alarm. The options, in
+order of how much they ask of you:
 
 1.  **Pre-whiten.** Fit an AR model to the baseline and monitor the
     residuals. Cheap, and it restores the calibration when the model is
@@ -436,7 +436,7 @@ inherited as the in-control state and the real change afterwards may be
 invisible. And `relearn` (20 observations by default) is not cosmetic. A
 real change is *persistent*, so a monitor that restarts against the
 stale pre-change baseline alarms again on the very next observation and
-keeps alarming for the rest of the stream — reporting one change as
+keeps alarming for the rest of the stream, reporting one change as
 hundreds, all but the first of which
 [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
 counts as false alarms. Set `relearn = 0` only when you want to see

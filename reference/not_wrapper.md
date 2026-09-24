@@ -1,4 +1,4 @@
-# NOT wrapper — Narrowest-Over-Threshold
+# NOT wrapper: Narrowest-Over-Threshold
 
 Wraps the `not` package for changepoint detection via the
 Narrowest-Over-Threshold method. The contrast determines what change is

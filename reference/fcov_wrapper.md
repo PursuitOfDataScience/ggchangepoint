@@ -3,8 +3,7 @@
 Wraps
 [`fChange::fchange()`](https://jrvanderdoes.github.io/fChange/reference/fchange.html)
 for changes in the covariance operator, eigenstructure or trace of a
-functional time series — the changes that leave the mean curve
-untouched.
+functional time series: the changes that leave the mean curve untouched.
 
 ## Usage
 
@@ -30,10 +29,10 @@ fcov_wrapper(
 - target:
 
   What to test: `"covariance"` (default), `"trace"`, `"eigenjoint"` or
-  `"eigensingle"`. This is also by far the biggest lever on run time —
-  see the timing section below, and note that the four answer different
-  questions, so a cheaper one is a different test rather than a faster
-  route to the same answer.
+  `"eigensingle"`. This is also by far the biggest lever on run time
+  (see the timing section below), and note that the four answer
+  different questions, so a cheaper one is a different test rather than
+  a faster route to the same answer.
 
 - statistic:
 
@@ -42,7 +41,10 @@ fcov_wrapper(
 - critical:
 
   How critical values are obtained: `"simulation"` (default),
-  `"resample"` or `"welch"`.
+  `"resample"` or `"welch"`. The first two draw random numbers and there
+  is no `seed` argument, so call
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) first when the
+  answer has to be reproducible.
 
 - type:
 
@@ -75,12 +77,12 @@ For a covariance change this matters when reading the plot: a change in
 the covariance structure need not move the cross-sectional mean at all,
 so [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 can legitimately show changepoint rules on a series with no visible
-change in it. That is the detector working, not misfiring — use
+change in it. That is the detector working, not misfiring; use
 `autoplot(type = "coordinates")` to see the columns the change is in.
 
 ## How long this takes
 
-**Minutes, not seconds, on a series of a hundred points** – by a wide
+**Minutes, not seconds, on a series of a hundred points**: by a wide
 margin the most expensive engine in the package, and slow enough that a
 first call looks like a hung session. Timed on one Linux x86-64 machine,
 against
@@ -96,8 +98,8 @@ same data:
 
 The cost is roughly linear in the number of time points and it is in the
 engine's own estimation rather than in this wrapper. It is, however,
-dominated by `target`, which the rest of this section used to deny —
-measured at \\n = 60\\, \\p = 6\\, `M = 50` on one Linux x86-64 machine:
+dominated by `target`, which the rest of this section used to deny.
+Measured at \\n = 60\\, \\p = 6\\, `M = 50` on one Linux x86-64 machine:
 
 |                          |           |                        |
 |--------------------------|-----------|------------------------|
@@ -116,7 +118,7 @@ power. If a covariance change matters and the full operator test is the
 one you want, budget for it.
 
 Two practical consequences either way: size the call before starting it,
-and do not put the default in a loop – a twelve-replicate study at \\n =
+and do not put the default in a loop: a twelve-replicate study at \\n =
 120\\ is two hours. Another machine will give different absolute
 numbers; the ratios are the part to plan around. The “Benchmarks”
 article compares the engines that do scale.

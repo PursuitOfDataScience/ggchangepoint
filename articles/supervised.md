@@ -44,12 +44,11 @@ labs
 
 Three kinds, and the distinction matters:
 
-- `"change"` — at least one changepoint lies here.
-- `"one_change"` — exactly one does. Stricter, and the only one that
+- `"change"`: at least one changepoint lies here.
+- `"one_change"`: exactly one does. Stricter, and the only one that
   makes a false positive *inside* a positive region detectable.
-- `"no_change"` — none does. Without these, a detector is never
-  penalised for a false positive, and the learned penalty collapses to
-  zero.
+- `"no_change"`: none does. Without these, a detector is never penalised
+  for a false positive, and the learned penalty collapses to zero.
 
 Because labels are just a tidy tibble, they draw directly:
 
@@ -66,9 +65,9 @@ ggplot(d, aes(t, y)) +
 ![Series with shaded label regions behind it, coloured by what each
 label asserts](supervised_files/figure-html/labels-plot-1.png)
 
-If you already have a plain ground-truth changepoint set — the kind
+If you already have a plain ground-truth changepoint set (the kind
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
-takes —
+takes),
 [`as_cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_labels.md)
 converts it, positives and negatives together, so the package has one
 notion of an annotation rather than two:
@@ -209,11 +208,11 @@ model
 ```
 
 The features are scale-free summaries on the log scale, which is why the
-fourth series — the same jump measured in units three times as wide —
-does not simply demand a different penalty from the first.
+fourth series (the same jump measured in units three times as wide) does
+not simply demand a different penalty from the first.
 
 The model has a [`predict()`](https://rdrr.io/r/stats/predict.html)
-method, and — the point of the whole exercise —
+method, and (the point of the whole exercise)
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 takes it wherever a penalty goes:
 

@@ -67,7 +67,7 @@
 <blockquote>
 <p><strong>One interface. 50 changepoint methods. Every result tidy, every result plottable.</strong></p>
 </blockquote>
-<p>R has excellent changepoint packages, but each one takes its own input, returns its own result object, and has its own idea of a plot — so switching methods means rewriting your analysis. ggchangepoint puts them behind one interface: <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> runs any of 50 detection methods, every result comes back as the same tidy <code>ggcpt</code> object, and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws it, with confidence intervals, significance regions, posteriors, detector statistics, penalty paths and accuracy metrics when you need them. When the detector you want is not one of the 50 — because it is not on CRAN, or lives in Python, or is your own — <code><a href="reference/cpt_register_method.html">cpt_register_method()</a></code> brings it into the same grammar.</p>
+<p>R has excellent changepoint packages, but each one takes its own input, returns its own result object, and has its own idea of a plot, so switching methods means rewriting your analysis. ggchangepoint puts them behind one interface: <code><a href="reference/cpt_detect.html">cpt_detect()</a></code> runs any of 50 detection methods, every result comes back as the same tidy <code>ggcpt</code> object, and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws it, with confidence intervals, significance regions, posteriors, detector statistics, penalty paths and accuracy metrics when you need them. When the detector you want is not one of the 50 (because it is not on CRAN, or lives in Python, or is your own), <code><a href="reference/cpt_register_method.html">cpt_register_method()</a></code> brings it into the same grammar.</p>
 <div class="section level2">
 <h2 id="installation">Installation<a class="anchor" aria-label="anchor" href="#installation"></a>
 </h2>
@@ -129,15 +129,15 @@
 </h2>
 <ul>
 <li>
-<strong>Detect with one call</strong> — <code>cpt_detect(x, method = "...")</code> dispatches to 50 methods, from classic PELT to Bayesian online detection, functional data and dynamic networks.</li>
+<strong>Detect with one call.</strong> <code>cpt_detect(x, method = "...")</code> dispatches to 50 methods, from classic PELT to Bayesian online detection, functional data and dynamic networks.</li>
 <li>
-<strong>Tidy everywhere</strong> — every method returns the same <code>ggcpt</code> object, with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>, and a time index that survives the round trip.</li>
+<strong>Tidy everywhere.</strong> Every method returns the same <code>ggcpt</code> object, with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, and <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>, and a time index that survives the round trip.</li>
 <li>
-<strong>Plot everything</strong> — <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws any result: changepoints, confidence intervals, significance regions, fitted signals, posteriors, multivariate facets, and (<code>type =</code>) the detector’s own statistic, solution path or scale space.</li>
+<strong>Plot everything.</strong> <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws any result: changepoints, confidence intervals, significance regions, fitted signals, posteriors, multivariate facets, and (<code>type =</code>) the detector’s own statistic, solution path or scale space.</li>
 <li>
-<strong>Trust the answer</strong> — intervals from four provenances, honest tests, criteria that actually <em>select</em> K, influence and sensitivity diagnostics, consensus across methods, and a benchmark harness.</li>
+<strong>Trust the answer.</strong> Intervals from four provenances, honest tests, criteria that actually <em>select</em> K, influence and sensitivity diagnostics, consensus across methods, and a benchmark harness.</li>
 <li>
-<strong>Extend it</strong> — <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code> and <code><a href="reference/cpt_register_method.html">cpt_register_method()</a></code> bring any external detector into the same tidy, plottable grammar.</li>
+<strong>Extend it.</strong> <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code> and <code><a href="reference/cpt_register_method.html">cpt_register_method()</a></code> bring any external detector into the same tidy, plottable grammar.</li>
 </ul>
 <table class="table">
 <colgroup>
@@ -159,7 +159,7 @@
 </tr>
 <tr>
 <td>Inference</td>
-<td>NSP — significance <em>regions</em>, each guaranteed to contain a change at a global level</td>
+<td>NSP: significance <em>regions</em>, each guaranteed to contain a change at a global level</td>
 </tr>
 <tr>
 <td>Nonparametric / kernel</td>
@@ -179,7 +179,7 @@
 </tr>
 <tr>
 <td>Regression, trend &amp; season</td>
-<td>Bai–Perron · segmented · EnvCpt · DeCAFS · BFAST (season + trend)</td>
+<td>Bai-Perron · segmented · EnvCpt · DeCAFS · BFAST (season + trend)</td>
 </tr>
 <tr>
 <td>Classical single-change tests</td>
@@ -187,7 +187,7 @@
 </tr>
 </tbody>
 </table>
-<p>Run <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> for the live table with engines, installation status and capability flags. Only three engines are required — <code>changepoint</code>, <code>changepoint.np</code> and <code>ecp</code>; every other engine lives in <code>Suggests</code> and is loaded on demand, so a plain install stays light. <code>cpt_install_engines("bayesian")</code> installs a whole family at once.</p>
+<p>Run <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> for the live table with engines, installation status and capability flags. Only three engines are required (<code>changepoint</code>, <code>changepoint.np</code> and <code>ecp</code>); every other engine lives in <code>Suggests</code> and is loaded on demand, so a plain install stays light. <code>cpt_install_engines("bayesian")</code> installs a whole family at once.</p>
 </div>
 <div class="section level2">
 <h2 id="unified-detection-across-engines">Unified detection across engines<a class="anchor" aria-label="anchor" href="#unified-detection-across-engines"></a>
@@ -259,7 +259,7 @@
 <div class="section level2">
 <h2 id="dates-not-indices">Dates, not indices<a class="anchor" aria-label="anchor" href="#dates-not-indices"></a>
 </h2>
-<p>Real series have dates, and “changepoint at index 147” is a translation step the analyst should not have to do. Pass an <code>index</code> — or a <code>ts</code>, <code>xts</code>, <code>zoo</code> or <code>tsibble</code> — and detection still runs on positions (every engine assumes an equally spaced sequence) while everything reported comes back on your scale:</p>
+<p>Real series have dates, and “changepoint at index 147” is a translation step the analyst should not have to do. Pass an <code>index</code> (or a <code>ts</code>, <code>xts</code>, <code>zoo</code> or <code>tsibble</code>) and detection still runs on positions (every engine assumes an equally spaced sequence) while everything reported comes back on your scale:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">dates</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="st">"2020-01-01"</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span> <span class="op">-</span> <span class="fl">1</span></span>
 <span><span class="va">dated</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, index <span class="op">=</span> <span class="va">dates</span><span class="op">)</span></span>
@@ -293,7 +293,7 @@
 <div class="section level2">
 <h2 id="detection-with-uncertainty-confidence-intervals-and-posteriors">Detection with uncertainty: confidence intervals and posteriors<a class="anchor" aria-label="anchor" href="#detection-with-uncertainty-confidence-intervals-and-posteriors"></a>
 </h2>
-<p>SMUCE (<code><a href="reference/smuce_wrapper.html">smuce_wrapper()</a></code>, via <code>stepR</code>) delivers a confidence interval for every changepoint location; Bai–Perron (<code><a href="reference/strucchange_wrapper.html">strucchange_wrapper()</a></code>) and broken-line regression (<code><a href="reference/segmented_wrapper.html">segmented_wrapper()</a></code>) do the same for regression breaks. The intervals live in <code>ci_lower</code>/<code>ci_upper</code> columns and render with <code>autoplot(show_ci = TRUE)</code> or the <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> layer:</p>
+<p>SMUCE (<code><a href="reference/smuce_wrapper.html">smuce_wrapper()</a></code>, via <code>stepR</code>) delivers a confidence interval for every changepoint location; Bai-Perron (<code><a href="reference/strucchange_wrapper.html">strucchange_wrapper()</a></code>) and broken-line regression (<code><a href="reference/segmented_wrapper.html">segmented_wrapper()</a></code>) do the same for regression breaks. The intervals live in <code>ci_lower</code>/<code>ci_upper</code> columns and render with <code>autoplot(show_ci = TRUE)</code> or the <code><a href="reference/geom_cpt_ci.html">geom_cpt_ci()</a></code> layer:</p>
 <div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_smuce</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/smuce_wrapper.html">smuce_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_smuce</span><span class="op">)</span></span>
@@ -304,8 +304,8 @@
 <span><span class="co">#&gt; 2   100    0.467      100      100</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_smuce</span>, show_ci <span class="op">=</span> <span class="cn">TRUE</span>, show_fit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-smuce-1.png" alt="Series with the SMUCE step fit, changepoint rules and horizontal confidence intervals for each changepoint location" width="100%"></p>
-<p>Read the intervals, not just the locations: the genuine shift is pinned to a single index, while the spurious early changepoint carries an interval nearly a hundred observations wide — exactly the distinction a bare list of locations hides.</p>
-<p>Bayesian engines return posterior probabilities instead: <code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code> (posterior probability of a change at every location), <code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code> (Bayesian model averaging), and <code><a href="reference/bocpd_wrapper.html">bocpd_wrapper()</a></code> (online run-length posterior). Two dedicated displays accompany them — <code><a href="reference/ggcpt_posterior.html">ggcpt_posterior()</a></code> and <code><a href="reference/ggcpt_runlength.html">ggcpt_runlength()</a></code>:</p>
+<p>Read the intervals, not just the locations: the genuine shift is pinned to a single index, while the spurious early changepoint carries an interval nearly a hundred observations wide, exactly the distinction a bare list of locations hides.</p>
+<p>Bayesian engines return posterior probabilities instead: <code><a href="reference/bcp_wrapper.html">bcp_wrapper()</a></code> (posterior probability of a change at every location), <code><a href="reference/beast_wrapper.html">beast_wrapper()</a></code> (Bayesian model averaging), and <code><a href="reference/bocpd_wrapper.html">bocpd_wrapper()</a></code> (online run-length posterior). Two dedicated displays accompany them, <code><a href="reference/ggcpt_posterior.html">ggcpt_posterior()</a></code> and <code><a href="reference/ggcpt_runlength.html">ggcpt_runlength()</a></code>:</p>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_bcp</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/bcp_wrapper.html">bcp_wrapper</a></span><span class="op">(</span><span class="va">x</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res_bcp</span><span class="op">)</span></span>
@@ -356,7 +356,7 @@
 <span><span class="co">#&gt; 1   100   101      2  4.66</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_nsp</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-nsp-1.png" alt="Series with a shaded vertical band marking an NSP significance region" width="100%"></p>
-<p>The <code>cp</code> column of an NSP fit is the interval midpoint, is labelled as such in <code>cp_source</code>, and is never presented as an estimate — the region is the inferential object.</p>
+<p>The <code>cp</code> column of an NSP fit is the interval midpoint, is labelled as such in <code>cp_source</code>, and is never presented as an estimate: the region is the inferential object.</p>
 <p>For every other engine, <code><a href="reference/cpt_confint.html">cpt_confint()</a></code> answers “where could this changepoint be?” behind one contract, and says which of four routes it used:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_confint.html">cpt_confint</a></span><span class="op">(</span><span class="va">res</span>, method <span class="op">=</span> <span class="st">"bootstrap"</span>, B <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
@@ -364,7 +364,7 @@
 <span><span class="co">#&gt;      cp ci_lower ci_upper level source    n_replicates</span></span>
 <span><span class="co">#&gt;   &lt;int&gt;    &lt;int&gt;    &lt;int&gt; &lt;dbl&gt; &lt;chr&gt;            &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1   100      100      100  0.95 bootstrap           50</span></span></code></pre></div>
-<p><code><a href="reference/cpt_test.html">cpt_test()</a></code> attaches a test to each changepoint, using the engine’s own where it has one and an explicitly unadjusted two-sample test where it does not — with a <code>selection_adjusted</code> column recording whether the p-value accounts for the fact that the location was <em>chosen</em> by looking at the data, which only one of the engine tests does:</p>
+<p><code><a href="reference/cpt_test.html">cpt_test()</a></code> attaches a test to each changepoint, using the engine’s own where it has one and an explicitly unadjusted two-sample test where it does not, with a <code>selection_adjusted</code> column recording whether the p-value accounts for the fact that the location was <em>chosen</em> by looking at the data, which only one of the engine tests does:</p>
 <div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="reference/cpt_test.html">cpt_test</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; # A tibble: 1 × 6</span></span>
@@ -375,7 +375,7 @@
 <div class="section level2">
 <h2 id="choosing-the-number-of-changepoints">Choosing the number of changepoints<a class="anchor" aria-label="anchor" href="#choosing-the-number-of-changepoints"></a>
 </h2>
-<p><code><a href="reference/cpt_crops.html">cpt_crops()</a></code> draws the penalty path; <code><a href="reference/cpt_select.html">cpt_select()</a></code> actually <em>chooses</em>, by BIC, the Zhang–Siegmund segment-length mBIC, AIC, an explicit knee rule on the CROPS curve, order-preserved cross-validation (the criterion with a consistency proof), or bootstrap stability:</p>
+<p><code><a href="reference/cpt_crops.html">cpt_crops()</a></code> draws the penalty path; <code><a href="reference/cpt_select.html">cpt_select()</a></code> actually <em>chooses</em>, by BIC, the Zhang-Siegmund segment-length mBIC, AIC, an explicit knee rule on the CROPS curve, order-preserved cross-validation (the criterion with a consistency proof), or bootstrap stability:</p>
 <div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2022</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
 <span><span class="va">x3</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">4</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
@@ -402,7 +402,7 @@
 <div class="section level2">
 <h2 id="seeing-the-statistic">Seeing the statistic<a class="anchor" aria-label="anchor" href="#seeing-the-statistic"></a>
 </h2>
-<p>Every detector computes something — a MOSUM statistic at each bandwidth, a set of random intervals with contrast values, a nested sequence of splits — and keeping only the argmax throws away the explanation. Three accessors give it back:</p>
+<p>Every detector computes something (a MOSUM statistic at each bandwidth, a set of random intervals with contrast values, a nested sequence of splits), and keeping only the argmax throws away the explanation. Three accessors give it back:</p>
 <div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2023</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
 <span><span class="va">res_mosum</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">3</span><span class="op">)</span><span class="op">)</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span></span>
@@ -416,7 +416,7 @@
 <div class="section level2">
 <h2 id="which-observation-is-driving-this">Which observation is driving this?<a class="anchor" aria-label="anchor" href="#which-observation-is-driving-this"></a>
 </h2>
-<p><code><a href="reference/cpt_stability.html">cpt_stability()</a></code> answers “would I find this again?”. <code><a href="reference/cpt_influence.html">cpt_influence()</a></code> answers the sharper question — perturbing one observation at a time and re-fitting, the Wilms–Killick–Matteson diagnostic family rendered in ggplot2:</p>
+<p><code><a href="reference/cpt_stability.html">cpt_stability()</a></code> answers “would I find this again?”. <code><a href="reference/cpt_influence.html">cpt_influence()</a></code> answers the sharper question, perturbing one observation at a time and re-fitting, with the Wilms-Killick-Matteson diagnostic family rendered in ggplot2:</p>
 <div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_influence.html">cpt_influence</a></span><span class="op">(</span><span class="va">res</span>, engine <span class="op">=</span> <span class="st">"recompute"</span>, subset <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">200</span>, by <span class="op">=</span> <span class="fl">5</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="reference/cpt_leverage.html">cpt_leverage</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span>, <span class="fl">3</span><span class="op">)</span></span>
@@ -436,7 +436,7 @@
 <div class="section level2">
 <h2 id="supervised-detection-learn-the-penalty-from-labels">Supervised detection: learn the penalty from labels<a class="anchor" aria-label="anchor" href="#supervised-detection-learn-the-penalty-from-labels"></a>
 </h2>
-<p>An expert marks intervals as containing a change or not, accuracy is measured in <em>label errors</em>, and the penalty is learned rather than assumed (Hocking et al., 2013). The central object is a rectangle drawn over a time series — a ggplot2-native idea:</p>
+<p>An expert marks intervals as containing a change or not, accuracy is measured in <em>label errors</em>, and the penalty is learned rather than assumed (Hocking et al., 2013). The central object is a rectangle drawn over a time series, a ggplot2-native idea:</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">labs</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_labels.html">cpt_labels</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">140</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">120</span>, <span class="fl">190</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"one_change"</span>, <span class="st">"no_change"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq_along</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, y <span class="op">=</span> <span class="va">x</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">t</span>, <span class="va">y</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
@@ -456,7 +456,7 @@
 <span><span class="co">#&gt;      &lt;int&gt; &lt;chr&gt;  &lt;int&gt; &lt;int&gt; &lt;chr&gt;          &lt;int&gt; &lt;chr&gt;  </span></span>
 <span><span class="co">#&gt; 1        1 &lt;NA&gt;      80   120 one_change         1 correct</span></span>
 <span><span class="co">#&gt; 2        2 &lt;NA&gt;     140   190 no_change          0 correct</span></span></code></pre></div>
-<p><code><a href="reference/cpt_label_error_curve.html">cpt_label_error_curve()</a></code> sweeps the penalty and reports false positives, false negatives and total label error at each value — the curve the learned penalty is chosen to minimise. <code><a href="reference/cpt_learn_penalty.html">cpt_learn_penalty()</a></code> fits the max-margin interval regression over a set of labelled series, and the model plugs straight into <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>:</p>
+<p><code><a href="reference/cpt_label_error_curve.html">cpt_label_error_curve()</a></code> sweeps the penalty and reports false positives, false negatives and total label error at each value: the curve the learned penalty is chosen to minimise. <code><a href="reference/cpt_learn_penalty.html">cpt_learn_penalty()</a></code> fits the max-margin interval regression over a set of labelled series, and the model plugs straight into <code><a href="reference/cpt_detect.html">cpt_detect()</a></code>:</p>
 <div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2024</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
 <span><span class="va">series</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>a <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span>, b <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">80</span>, <span class="fl">2</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
@@ -500,7 +500,7 @@
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Cite the method you use with cpt_cite(). Cross-check the choice with</span></span>
 <span><span class="co">#&gt; cpt_consensus() and cpt_sensitivity().</span></span></code></pre></div>
-<p><code><a href="reference/cpt_consensus.html">cpt_consensus()</a></code> runs several detectors and reports the locations they agree on — a robustness display, not a significance test:</p>
+<p><code><a href="reference/cpt_consensus.html">cpt_consensus()</a></code> runs several detectors and reports the locations they agree on, a robustness display, not a significance test:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">cons</span> <span class="op">&lt;-</span> <span class="fu"><a href="reference/cpt_consensus.html">cpt_consensus</a></span><span class="op">(</span><span class="va">x3</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"wbs"</span>, <span class="st">"amoc"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">cons</span><span class="op">)</span></span>
@@ -515,7 +515,7 @@
 <div class="section level2">
 <h2 id="from-a-changepoint-to-a-finding">From a changepoint to a finding<a class="anchor" aria-label="anchor" href="#from-a-changepoint-to-a-finding"></a>
 </h2>
-<p>“Changepoint at index 147” is not a finding. <code><a href="reference/cpt_annotate_events.html">cpt_annotate_events()</a></code> matches detections to known events and reports all three outcomes — and the unexplained changepoints are where the interesting analysis starts:</p>
+<p>“Changepoint at index 147” is not a finding. <code><a href="reference/cpt_annotate_events.html">cpt_annotate_events()</a></code> matches detections to known events and reports all three outcomes, and the unexplained changepoints are where the interesting analysis starts:</p>
 <div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">events</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>when <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/as.Date.html" class="external-link">as.Date</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"2020-04-09"</span>, <span class="st">"2020-06-01"</span><span class="op">)</span><span class="op">)</span>,</span>
 <span>                     what <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"policy change"</span>, <span class="st">"supply shock"</span><span class="op">)</span><span class="op">)</span></span>
@@ -536,7 +536,7 @@
 <span><span class="co">#&gt;   event        event_value event_position</span></span>
 <span><span class="co">#&gt;   &lt;chr&gt;        &lt;date&gt;               &lt;int&gt;</span></span>
 <span><span class="co">#&gt; 1 supply shock 2020-06-01             153</span></span></code></pre></div>
-<p><code><a href="reference/cpt_report.html">cpt_report()</a></code> assembles the whole analysis — method, citation, penalty, locations with intervals, segments, the call and <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code> — into one reproducible artifact, and <code><a href="reference/cpt_gt.html">cpt_gt()</a></code> renders a publication-ready table.</p>
+<p><code><a href="reference/cpt_report.html">cpt_report()</a></code> assembles the whole analysis (method, citation, penalty, locations with intervals, segments, the call and <code><a href="https://rdrr.io/r/utils/sessionInfo.html" class="external-link">sessionInfo()</a></code>) into one reproducible artifact, and <code><a href="reference/cpt_gt.html">cpt_gt()</a></code> renders a publication-ready table.</p>
 </div>
 <div class="section level2">
 <h2 id="benchmarking">Benchmarking<a class="anchor" aria-label="anchor" href="#benchmarking"></a>
@@ -604,7 +604,7 @@
 <span><span class="co">#&gt;   &lt;int&gt; &lt;int&gt; &lt;dbl&gt; &lt;lgl&gt;   </span></span>
 <span><span class="co">#&gt; 1   200   201     1 TRUE</span></span></code></pre></div>
 <p><code><a href="reference/cpt_replay.html">cpt_replay()</a></code> is the batch convenience; in production you build the monitor once with <code><a href="reference/cpt_monitor.html">cpt_monitor()</a></code> and push each new observation through <code><a href="reference/cpt_update.html">cpt_update()</a></code> as it arrives.</p>
-<p><code>"edetector"</code> is a native implementation of the mixture Shiryaev–Roberts e-detector (Shin, Ramdas and Rinaldo, 2023) — the one method here that is implemented rather than wrapped, because no R package implements it and it carries a finite-sample average-run-length guarantee of at least <code>1 / alpha</code> with no calibration run: the shift mixture is a uniform <em>average</em>, so <code>M_t - t</code> is a mean-zero martingale under the null and optional stopping at the alarm time bounds the in-control run length.</p>
+<p><code>"edetector"</code> is a native implementation of the mixture Shiryaev-Roberts e-detector (Shin, Ramdas and Rinaldo, 2023), the one method here that is implemented rather than wrapped, because no R package implements it and it carries a finite-sample average-run-length guarantee of at least <code>1 / alpha</code> with no calibration run: the shift mixture is a uniform <em>average</em>, so <code>M_t - t</code> is a mean-zero martingale under the null and optional stopping at the alarm time bounds the in-control run length.</p>
 </div>
 <div class="section level2">
 <h2 id="would-i-even-detect-it">Would I even detect it?<a class="anchor" aria-label="anchor" href="#would-i-even-detect-it"></a>
@@ -628,7 +628,7 @@
 <span><span class="co">#&gt; replicates is only known to about +/- 0.11.</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-power-1.png" alt="Power curve: detection probability against change size, with a Monte Carlo interval" width="100%"></p>
-<p><code><a href="reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts it and returns the smallest change reaching a target power — the number that belongs in a pre-registration. <code><a href="reference/cpt_scenarios.html">cpt_scenarios()</a></code> builds the matching grid of labelled synthetic series, so the same design can be fed straight to <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code>.</p>
+<p><code><a href="reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts it and returns the smallest change reaching a target power, the number that belongs in a pre-registration. <code><a href="reference/cpt_scenarios.html">cpt_scenarios()</a></code> builds the matching grid of labelled synthetic series, so the same design can be fed straight to <code><a href="reference/cpt_benchmark.html">cpt_benchmark()</a></code>.</p>
 </div>
 <div class="section level2">
 <h2 id="bring-your-own-detector">Bring your own detector<a class="anchor" aria-label="anchor" href="#bring-your-own-detector"></a>
@@ -666,7 +666,7 @@
 <span><span class="co">#&gt; # ℹ 8 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span>
 <span><span class="co">#&gt; #   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;</span></span>
 <span><span class="fu"><a href="reference/cpt_register_method.html">cpt_unregister_method</a></span><span class="op">(</span><span class="st">"biggest_jump"</span><span class="op">)</span></span></code></pre></div>
-<p>Registered methods are visibly user-supplied: <code><a href="reference/cpt_register_method.html">cpt_registered_methods()</a></code> lists just those, <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> marks them, <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> says so on every result, and <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> returns the citation you gave or states plainly that none was given. <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code> does the same job for a bare set of changepoints — a published paper’s reported breaks, say — without registering anything.</p>
+<p>Registered methods are visibly user-supplied: <code><a href="reference/cpt_register_method.html">cpt_registered_methods()</a></code> lists just those, <code><a href="reference/cpt_methods.html">cpt_methods()</a></code> marks them, <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> says so on every result, and <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> returns the citation you gave or states plainly that none was given. <code><a href="reference/as_ggcpt.html">as_ggcpt()</a></code> does the same job for a bare set of changepoints (a published paper’s reported breaks, say) without registering anything.</p>
 </div>
 <div class="section level2">
 <h2 id="compare-methods">Compare methods<a class="anchor" aria-label="anchor" href="#compare-methods"></a>
@@ -689,7 +689,7 @@
 <div class="section level2">
 <h2 id="batch-detection-and-stability-diagnostics">Batch detection and stability diagnostics<a class="anchor" aria-label="anchor" href="#batch-detection-and-stability-diagnostics"></a>
 </h2>
-<p><code><a href="reference/cpt_batch.html">cpt_batch()</a></code> runs one detector over many series (a matrix, data frame, or list) and returns a tidy tibble of results — honouring <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for parallel execution. <code><a href="reference/cpt_stability.html">cpt_stability()</a></code> bootstrap-resamples within fitted segments and reports how often each location is re-detected, a cheap confidence signal for engines with no native intervals:</p>
+<p><code><a href="reference/cpt_batch.html">cpt_batch()</a></code> runs one detector over many series (a matrix, data frame, or list) and returns a tidy tibble of results, honouring <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for parallel execution. <code><a href="reference/cpt_stability.html">cpt_stability()</a></code> bootstrap-resamples within fitted segments and reports how often each location is re-detected, a cheap confidence signal for engines with no native intervals:</p>
 <div class="sourceCode" id="cb36"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span>  <span class="co"># local, so this example does not depend on the chunks above</span></span>
 <span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">cbind</a></span><span class="op">(</span>shifted <span class="op">=</span> <span class="va">x</span>, noise <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span>
@@ -734,7 +734,7 @@
 <span><span class="co">#&gt; 1    80   -0.590     21.9</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_hd</span><span class="op">)</span></span></code></pre></div>
 <p><img src="reference/figures/README-inspect-1.png" alt="One facet per coordinate of a multivariate series, sharing the changepoints detected across coordinates" width="100%"></p>
-<p>Univariate methods never silently flatten a matrix: hand one to <code>pelt</code> and you get an error naming the multivariate alternatives instead. <code><a href="reference/ocd_wrapper.html">ocd_wrapper()</a></code> insists the other way — it projects across coordinates, so it needs a matrix with at least two columns.</p>
+<p>Univariate methods never silently flatten a matrix: hand one to <code>pelt</code> and you get an error naming the multivariate alternatives instead. <code><a href="reference/ocd_wrapper.html">ocd_wrapper()</a></code> insists the other way: it projects across coordinates, so it needs a matrix with at least two columns.</p>
 </div>
 <div class="section level2">
 <h2 id="evaluation">Evaluation<a class="anchor" aria-label="anchor" href="#evaluation"></a>
@@ -765,7 +765,7 @@
 <span>                    params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">10</span><span class="op">)</span>, sd <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/attributes.html" class="external-link">attributes</a></span><span class="op">(</span><span class="va">dat</span><span class="op">)</span><span class="op">$</span><span class="va">true_changepoints</span></span>
 <span><span class="co">#&gt; [1] 100</span></span></code></pre></div>
-<p><code><a href="reference/cpt_simulate.html">rcpt()</a></code> is an alias, for readers who prefer the <code>r*</code> random-generation naming. Built-in test signals include <code><a href="reference/signal_blocks.html">signal_blocks()</a></code> (the Donoho–Johnstone blocks signal), <code><a href="reference/signal_fms.html">signal_fms()</a></code>, <code><a href="reference/signal_mix.html">signal_mix()</a></code>, <code><a href="reference/signal_teeth.html">signal_teeth()</a></code> and <code><a href="reference/signal_stairs.html">signal_stairs()</a></code>, each carrying its known changepoints in a <code>true_changepoints</code> attribute.</p>
+<p><code><a href="reference/cpt_simulate.html">rcpt()</a></code> is an alias, for readers who prefer the <code>r*</code> random-generation naming. Built-in test signals include <code><a href="reference/signal_blocks.html">signal_blocks()</a></code> (the Donoho-Johnstone blocks signal), <code><a href="reference/signal_fms.html">signal_fms()</a></code>, <code><a href="reference/signal_mix.html">signal_mix()</a></code>, <code><a href="reference/signal_teeth.html">signal_teeth()</a></code> and <code><a href="reference/signal_stairs.html">signal_stairs()</a></code>, each carrying its known changepoints in a <code>true_changepoints</code> attribute.</p>
 </div>
 <div class="section level2">
 <h2 id="penalty-configuration">Penalty configuration<a class="anchor" aria-label="anchor" href="#penalty-configuration"></a>
@@ -778,7 +778,7 @@
 <span><span class="co">#&gt; [1] 2</span></span>
 <span><span class="fu"><a href="reference/cpt_penalty.html">cpt_penalty</a></span><span class="op">(</span><span class="st">"Manual"</span>, value <span class="op">=</span> <span class="fl">10</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 10</span></span></code></pre></div>
-<p><strong>One caveat worth knowing.</strong> <code>pelt</code>, <code>binseg</code>, <code>segneigh</code> and <code>fpop</code> compare the penalty against a <em>raw</em> segment cost when detecting a change in mean: <code>changepoint</code>’s Normal cost assumes noise of standard deviation 1, and <code>fpop</code>’s <code>lambda</code> penalises the residual sum of squares directly. On a series with wider noise the penalty is effectively negligible and the segmentation shatters — on 200 observations with one true changepoint and a five-sigma jump, <code>pelt</code> returns 1 changepoint at sigma = 1 but 39 at sigma = 3 and 141 at sigma = 10 (means over 20 draws; a single draw is not stable here). Standardise the series (<code>cpt_detect(scale(x)[, 1], method = "pelt")</code>), pass a penalty on the data’s own scale, or use <code>change_in = "meanvar"</code>, which estimates a variance per segment. Every other engine — SMUCE, WBS, NOT, MOSUM, CPOP, DeCAFS, the Bayesian and nonparametric families — estimates or cancels the noise scale itself and is unaffected. See <code><a href="reference/cpt_detect.html">?cpt_detect</a></code> for the full note.</p>
+<p><strong>One caveat worth knowing.</strong> <code>pelt</code>, <code>binseg</code>, <code>segneigh</code> and <code>fpop</code> compare the penalty against a <em>raw</em> segment cost when detecting a change in mean: <code>changepoint</code>’s Normal cost assumes noise of standard deviation 1, and <code>fpop</code>’s <code>lambda</code> penalises the residual sum of squares directly. On a series with wider noise the penalty is effectively negligible and the segmentation shatters: on 200 observations with one true changepoint and a five-sigma jump, <code>pelt</code> returns 1 changepoint at sigma = 1 but 39 at sigma = 3 and 141 at sigma = 10 (means over 20 draws; a single draw is not stable here). Standardise the series (<code>cpt_detect(scale(x)[, 1], method = "pelt")</code>), pass a penalty on the data’s own scale, or use <code>change_in = "meanvar"</code>, which estimates a variance per segment. The other engines estimate or cancel the noise scale themselves and are unaffected, with three exceptions: <code>geomcp</code> (it runs PELT), and <code>decafs</code> and <code>bocpd</code> on very small units. See <code><a href="reference/cpt_detect.html">?cpt_detect</a></code> for the full note.</p>
 </div>
 <div class="section level2">
 <h2 id="direct-engine-wrappers">Direct engine wrappers<a class="anchor" aria-label="anchor" href="#direct-engine-wrappers"></a>
@@ -946,7 +946,7 @@
 <div class="section level2">
 <h2 id="interactive-exploration-and-citations">Interactive exploration and citations<a class="anchor" aria-label="anchor" href="#interactive-exploration-and-citations"></a>
 </h2>
-<p>Any result — or any ggplot built from one — renders as an interactive widget with <code><a href="reference/ggcpt_interactive.html">ggcpt_interactive()</a></code> (requires <code>plotly</code>). <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> returns the methodological reference behind a result, so an analysis can cite the right paper without leaving R:</p>
+<p>Any result (or any ggplot built from one) renders as an interactive widget with <code><a href="reference/ggcpt_interactive.html">ggcpt_interactive()</a></code> (requires <code>plotly</code>). <code><a href="reference/cpt_cite.html">cpt_cite()</a></code> returns the methodological reference behind a result, so an analysis can cite the right paper without leaving R:</p>
 <div class="sourceCode" id="cb46"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="reference/cpt_cite.html">cpt_cite</a></span><span class="op">(</span><span class="st">"pelt"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [pelt] Killick, R., Fearnhead, P. and Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. Journal of the American Statistical Association, 107(500), 1590-1598.</span></span></code></pre></div>
@@ -1029,11 +1029,11 @@
 <p>The full reference index and rendered vignettes live at <a href="https://pursuitofdatascience.github.io/ggchangepoint/" class="uri">https://pursuitofdatascience.github.io/ggchangepoint/</a>. From R:</p>
 <ul>
 <li>
-<code><a href="articles/ggchangepoint.html">vignette("ggchangepoint", package = "ggchangepoint")</a></code> — feature tour</li>
+<code><a href="articles/ggchangepoint.html">vignette("ggchangepoint", package = "ggchangepoint")</a></code>: feature tour</li>
 <li>
-<code><a href="articles/introduction.html">vignette("introduction", package = "ggchangepoint")</a></code> — the framework, in research-paper form</li>
+<code><a href="articles/introduction.html">vignette("introduction", package = "ggchangepoint")</a></code>: the framework, in research-paper form</li>
 <li>
-<code><a href="articles/comparison.html">vignette("comparison", package = "ggchangepoint")</a></code> — method comparison and evaluation</li>
+<code><a href="articles/comparison.html">vignette("comparison", package = "ggchangepoint")</a></code>: method comparison and evaluation</li>
 </ul>
 </div>
 </div>

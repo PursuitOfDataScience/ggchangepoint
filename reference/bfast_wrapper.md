@@ -1,4 +1,4 @@
-# BFAST wrapper — breaks for additive season and trend
+# BFAST wrapper: breaks for additive season and trend
 
 Wraps the bfast family (Verbesselt et al.), the standard tool in remote
 sensing and land-cover monitoring. BFAST decomposes a seasonal series
@@ -24,7 +24,7 @@ bfast_wrapper(
 
 - x:
 
-  A numeric vector, or a `ts` — a `ts` is strongly preferred, because
+  A numeric vector, or a `ts`; a `ts` is strongly preferred, because
   BFAST needs the seasonal frequency and cannot guess it. A bare vector
   is turned into a `ts` with `frequency`.
 

@@ -145,8 +145,8 @@ convention.</p>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">fit</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="extending_files/figure-html/as-ggcpt-uses-1.png" class="r-plt" alt="Series with the externally supplied changepoints drawn as vertical rules" width="576"></p>
 <p><code><a href="../reference/as_ggcpt.html">as_ggcpt()</a></code> runs the same contract checks as every
-built-in wrapper — sorting, de-duplication, range checks, aligned extra
-columns, derived segments — so an external result cannot violate the
+built-in wrapper (sorting, de-duplication, range checks, aligned extra
+columns, derived segments), so an external result cannot violate the
 invariants the rest of the package relies on:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/as_ggcpt.html">as_ggcpt</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">150</span>, <span class="fl">9999</span>, <span class="cn">NA</span>, <span class="fl">50</span><span class="op">)</span>, <span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">$</span><span class="va">cp</span></span>
@@ -260,8 +260,8 @@ script had run would be worse than the problem it solved.</p>
 <h3 id="returning-a-finished-result">Returning a finished result<a class="anchor" aria-label="anchor" href="#returning-a-finished-result"></a>
 </h3>
 <p><code>fn</code> may return a bare vector of indices, as above, or a
-finished <code>ggcpt</code> built with <code><a href="../reference/as_ggcpt.html">as_ggcpt()</a></code> — which
-is how you pass along an engine’s confidence intervals, fitted signal or
+finished <code>ggcpt</code> built with <code><a href="../reference/as_ggcpt.html">as_ggcpt()</a></code>, which is
+how you pass along an engine’s confidence intervals, fitted signal or
 raw fit object:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_register_method.html">cpt_register_method</a></span><span class="op">(</span></span>
@@ -355,9 +355,9 @@ carries a time index.</li>
 <code>$method</code>, <code>$change_in</code>,
 <code>$penalty</code>, <code>$cp_convention</code> are length-one
 metadata; <code>$fit</code> is the raw upstream object.</li>
-<li>The optional slots — <code>data_wide</code>, <code>index</code>,
-<code>regions</code>, <code>diagnostics</code>, <code>registered</code>
-— are absent unless something supplies them, so
+<li>The optional slots (<code>data_wide</code>, <code>index</code>,
+<code>regions</code>, <code>diagnostics</code>, <code>registered</code>)
+are absent unless something supplies them, so
 <code>is.null(fit$regions)</code> is the test for “this engine does not
 do regions”.</li>
 </ul>

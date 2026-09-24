@@ -1,4 +1,4 @@
-# inspect wrapper — high-dimensional changepoints via sparse projection
+# inspect wrapper: high-dimensional changepoints via sparse projection
 
 Wraps
 [`InspectChangepoint::inspect()`](https://rdrr.io/pkg/InspectChangepoint/man/inspect.html)

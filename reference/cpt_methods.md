@@ -1,9 +1,9 @@
 # Introspect available changepoint detection methods
 
-Returns a tibble describing every method the package knows about — those
+Returns a tibble describing every method the package knows about (those
 that are wired, those a user has registered with
 [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md),
-and those that are planned — along with their capabilities and
+and those that are planned), along with their capabilities and
 installation status. Useful for discovering what can be run, what needs
 to be installed, and which methods expose the extras the diagnostics
 need (confidence intervals, a fitted signal, a posterior, a detector
@@ -42,7 +42,7 @@ A tibble with columns:
 - status:
 
   `"available"` (wired in this release), `"registered"` (supplied by the
-  user this session — see
+  user this session; see
   [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)),
   or `"planned"` (future).
 
@@ -78,22 +78,21 @@ A tibble with columns:
   Nothing stores a scale space on a result:
   [`cpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
   computes one on demand by sweeping a multiscale detector's bandwidth
-  over the series, so it works on *any* series and any result – a `pelt`
+  over the series, so it works on *any* series and any result, a `pelt`
   fit included. What this column marks is the two engines that sweep can
   be run *with*, i.e. the domain of that function's own `method`
   argument: `subset(cpt_methods(), scale_space)$method`.
 
-  `online` means the *algorithm* is sequential – it consumes
-  observations one at a time – and this table reports it because it
-  governs how the method behaves in batch: an online detector's
-  threshold is a rate per observation, so run over a whole series
-  through
+  `online` means the *algorithm* is sequential (it consumes observations
+  one at a time), and this table reports it because it governs how the
+  method behaves in batch: an online detector's threshold is a rate per
+  observation, so run over a whole series through
   [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
   it reports roughly \\n / \mathrm{arl0}\\ changepoints by construction.
   It does **not** mean the method can be passed to
   [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md),
   which takes its own three: `"edetector"`, `"cpm"` and `"ocd"`. The two
-  sets overlap without coinciding – `bocpd` is an online algorithm this
+  sets overlap without coinciding: `bocpd` is an online algorithm this
   table marks but the monitor does not offer, and `edetector` is native
   to this package rather than a wrapped engine, so it has no row here at
   all.

@@ -146,7 +146,7 @@ building the curves.</p></dd>
   intercept plus one weight per feature <strong>on the log-penalty
   scale</strong>, which is where the interval regression is fitted, while
   <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> exponentiates and returns a penalty on the natural
-  scale – the scale <code><a href="cpt_penalty.html">cpt_penalty()</a></code> and
+  scale, the scale <code><a href="cpt_penalty.html">cpt_penalty()</a></code> and
   <code><a href="cpt_detect.html">cpt_detect()</a></code> consume. So a coefficient of
   \(-0.04\) on <code>log_n</code> is a multiplicative effect on the
   penalty, not an additive one.</p>
@@ -158,7 +158,7 @@ building the curves.</p></dd>
 <p><strong>The signs are often not interpretable, and that is a property of
   the labels rather than of the fit.</strong> A target interval is open above
   whenever the largest penalty on the grid still achieves the minimum
-  label error – which is the common case, because a large penalty
+  label error, which is the common case, because a large penalty
   usually keeps the one changepoint the labels ask for. When every
   series' interval is open above, any sufficiently large prediction is
   optimal, the problem does not pin the slopes, and the \(L_2\) term
@@ -166,7 +166,7 @@ building the curves.</p></dd>
 <p>Two measurements on four series of very different length and noise,
   all with one-change labels, differing only in the data drawn. In one,
   every non-intercept coefficient came out slightly negative, so the
-  predicted penalty <em>decreased</em> with \(n\) – the opposite of the
+  predicted penalty <em>decreased</em> with \(n\), the opposite of the
   \(\log n\) growth a reader would expect from BIC, and not evidence
   of anything. In the other, every feature weight went to zero and the
   model became a <strong>constant</strong>: <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> returned the same

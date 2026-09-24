@@ -7,7 +7,7 @@ the reflex most users reach for first. Without a method,
 [`plot()`](https://rdrr.io/r/graphics/plot.default.html) on a
 list-shaped result falls through to
 [`plot.default`](https://rdrr.io/r/graphics/plot.default.html) and fails
-with `'x' is a list, but does not have components 'x' and 'y'` – a
+with `'x' is a list, but does not have components 'x' and 'y'`, a
 message that names neither this package nor
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
 These methods delegate to the corresponding

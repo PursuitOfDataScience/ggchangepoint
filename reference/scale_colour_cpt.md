@@ -1,7 +1,7 @@
 # Colour-vision-safe scales for changepoint methods
 
 The discrete palette used wherever this package colours by method,
-series or class. It is the Okabe–Ito qualitative palette, which stays
+series or class. It is the Okabe-Ito qualitative palette, which stays
 distinguishable under deuteranopia, protanopia and tritanopia, extended
 by recycling with a linetype change so that colour is never the only
 channel carrying the distinction.

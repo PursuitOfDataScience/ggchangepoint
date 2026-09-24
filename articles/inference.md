@@ -3,15 +3,15 @@
 Detection gives you locations. This vignette is about the four questions
 that come next, and that a bare list of locations cannot answer:
 
-1.  **How sure are we about *where*?** —
+1.  **How sure are we about *where*?**
     [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md),
     [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md).
-2.  **Is the change real at all?** —
+2.  **Is the change real at all?**
     [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md),
     and why the answer is harder than it looks.
-3.  **How many changes are there?** —
+3.  **How many changes are there?**
     [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md).
-4.  **What is driving this answer?** —
+4.  **What is driving this answer?**
     [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md),
     [`cpt_sensitivity()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_sensitivity.md),
     [`cpt_statistic()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_statistic.md).
@@ -44,8 +44,8 @@ fit
 
 Only a handful of engines ship an interval of their own.
 [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
-covers the rest, and — because the four routes mean genuinely different
-things — reports which one it used in a `source` column rather than
+covers the rest and, because the four routes mean genuinely different
+things, reports which one it used in a `source` column rather than
 presenting them as interchangeable.
 
 ``` r
@@ -77,7 +77,7 @@ cpt_confint(sm)
 #> 2   240      239      244    NA native
 ```
 
-Those are SMUCE’s *simultaneous* confidence sets — a different object
+Those are SMUCE’s *simultaneous* confidence sets, a different object
 from a bootstrap frequency band, which is exactly why the `source`
 column exists.
 
@@ -136,7 +136,7 @@ anti-conservative, often severely.
 
 [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
 never hides that. It uses the engine’s own test where one exists and an
-explicitly unadjusted two-sample test where none does — and the
+explicitly unadjusted two-sample test where none does, and the
 `selection_adjusted` column records *whether the p-value accounts for
 selection*, which is not the same question. `segmented`’s Davies test is
 built for it and reads `TRUE`; `strucchange`’s route is the Chow F
@@ -167,7 +167,7 @@ suppressWarnings(cpt_test(strucchange_wrapper(x)))
 If you need a guarantee that survives selection, the route is NSP
 (above) or `cpt_confint(method = "nsp")`, which maps each detected
 changepoint to the narrowest region covering it and returns `NA` for one
-that no region covers — because “no region supports this at level
+that no region covers, because “no region supports this at level
 $`\alpha`$” is a finding, not a missing value.
 
 ``` r
@@ -185,8 +185,8 @@ cpt_confint(fit, method = "nsp", level = 0.9, seed = 1)
 [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
 draws the penalty path.
 [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
-chooses from it, over one candidate ladder shared by every criterion —
-so “BIC says 2, cross-validation says 3” is a comparison of criteria and
+chooses from it, over one candidate ladder shared by every criterion, so
+“BIC says 2, cross-validation says 3” is a comparison of criteria and
 not of two different searches.
 
 ``` r
@@ -213,7 +213,7 @@ sel
 ```
 
 `criterion = "mbic"` is the segment-length modified BIC of Zhang and
-Siegmund (2007) — the real one, which reads the segment lengths and so
+Siegmund (2007): the real one, which reads the segment lengths and so
 cannot be expressed by
 [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)’s
 function of $`n`$ and $`k`$ alone.
@@ -258,8 +258,8 @@ instructive, not because it is a good default.
 [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
 answers “would I find this again?”.
 [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
-asks the sharper question — which single observation, if perturbed,
-changes the segmentation — following Wilms et al. (2022).
+asks the sharper question (which single observation, if perturbed,
+changes the segmentation), following Wilms et al. (2022).
 
 ``` r
 
@@ -419,7 +419,7 @@ drawn](inference_files/figure-html/path-1.png)
 [`cpt_solution_path()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_solution_path.md)
 is the same object as a tibble. The `contrast` column is the margin by
 which each candidate beat the next, and `selected` marks the ones the
-penalty kept — so the gap between the last selected row and the first
+penalty kept, so the gap between the last selected row and the first
 rejected one is how close the decision was:
 
 ``` r
@@ -459,7 +459,7 @@ cat(head(cpt_report(fit, session = FALSE), 20), sep = "\n")
     #> - Penalty: MBIC
     #> - Series length: 360
     #> - Changepoints found: 2
-    #> - Detection runtime: 0.02 s
+    #> - Detection runtime: 0.021 s
     #> 
     #> ## Changepoints
     #> 

@@ -1,12 +1,12 @@
-# Pilliat wrapper — high-dimensional detection by three complementary tests
+# Pilliat wrapper: high-dimensional detection by three complementary tests
 
 Wraps [`HDCD::Pilliat()`](https://rdrr.io/pkg/HDCD/man/Pilliat.html)
 (Pilliat, Carpentier and Verzelen, 2023): a high-dimensional mean-change
-procedure combining a dense test, a Berk–Jones test and a partial-sum
+procedure combining a dense test, a Berk-Jones test and a partial-sum
 test, so it is powerful across sparsity regimes without estimating the
 sparsity level. A useful cross-check on
-[`esac_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/esac_wrapper.md)
-— the two adapt differently and disagreeing answers are informative.
+[`esac_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/esac_wrapper.md):
+the two adapt differently and disagreeing answers are informative.
 
 ## Usage
 
@@ -32,7 +32,7 @@ pilliat_wrapper(
 
 - threshold_d_const, threshold_bj_const, threshold_partial_const:
 
-  Leading constants of the dense, Berk–Jones and partial-sum thresholds.
+  Leading constants of the dense, Berk-Jones and partial-sum thresholds.
 
 - empirical:
 
@@ -63,7 +63,7 @@ A `ggcpt` object.
 `HDCD` 1.1's `Pilliat()` builds one fewer partial-sum threshold than it
 uses whenever the number of coordinates is an exact power of two, so the
 C routine reads past the end of that vector and the engine reports a
-changepoint at *every* observation — on pure noise as readily as on a
+changepoint at *every* observation, on pure noise as readily as on a
 real change. This wrapper refuses those dimensions rather than returning
 the result, because it is wrong in a way that looks like a finding.
 [`esac_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/esac_wrapper.md)
@@ -80,7 +80,7 @@ and
 [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
 record a failure row for `pilliat` where the same output from `pelt`
 gives a result plus a warning, so a benchmark table is not scoring the
-two on equal terms in that case — read the `error` column alongside the
+two on equal terms in that case; read the `error` column alongside the
 metrics.
 
 ## References

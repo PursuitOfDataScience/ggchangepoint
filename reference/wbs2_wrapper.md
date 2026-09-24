@@ -1,4 +1,4 @@
-# WBS2 wrapper — Wild Binary Segmentation 2
+# WBS2 wrapper: Wild Binary Segmentation 2
 
 Wraps the `breakfast` package's WBS2 solution path with
 steepest-drop-to-low-levels (SDLL) model selection.
@@ -28,9 +28,9 @@ A `ggcpt` object.
 
 This engine is **not reproducible call to call within an R session**,
 and no argument here can make it so. On a 200-point series with one
-change at 100, repeated identical calls – same input,
+change at 100, repeated identical calls (same input,
 [`set.seed()`](https://rdrr.io/r/base/Random.html) re-run beforehand so
-that `.Random.seed` is byte-identical on entry – return a last
+that `.Random.seed` is byte-identical on entry) return a last
 changepoint of either 183 or 188, roughly evenly split. The variation is
 therefore not driven by R's random number stream, which is why this
 wrapper has no `seed` argument to offer: there is no stream to pin.
@@ -38,7 +38,7 @@ wrapper has no `seed` argument to offer: there is no stream to pin.
 It is upstream, not in this package. Calling
 `breakfast::breakfast(x, solution.path = "wbs2", model.selection = "sdll")`
 directly (breakfast 2.5) reproduces it exactly. A *fresh* R session is
-deterministic – five separate sessions agreed – so what varies is state
+deterministic (five separate sessions agreed), so what varies is state
 the engine carries between calls.
 
 In practice this is rare, and needs a series whose model selection sits

@@ -114,13 +114,13 @@ elsewhere.</li>
 <p>Three kinds, and the distinction matters:</p>
 <ul>
 <li>
-<code>"change"</code> — at least one changepoint lies here.</li>
+<code>"change"</code>: at least one changepoint lies here.</li>
 <li>
-<code>"one_change"</code> — exactly one does. Stricter, and the only
+<code>"one_change"</code>: exactly one does. Stricter, and the only
 one that makes a false positive <em>inside</em> a positive region
 detectable.</li>
 <li>
-<code>"no_change"</code> — none does. Without these, a detector is
+<code>"no_change"</code>: none does. Without these, a detector is
 never penalised for a false positive, and the learned penalty collapses
 to zero.</li>
 </ul>
@@ -133,8 +133,8 @@ to zero.</li>
 <span>  <span class="fu"><a href="../reference/scale_fill_cpt_label.html">scale_fill_cpt_label</a></span><span class="op">(</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>fill <span class="op">=</span> <span class="st">"Label"</span>, x <span class="op">=</span> <span class="st">"Index"</span>, y <span class="op">=</span> <span class="st">"Value"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="supervised_files/figure-html/labels-plot-1.png" class="r-plt" alt="Series with shaded label regions behind it, coloured by what each label asserts" width="576"></p>
-<p>If you already have a plain ground-truth changepoint set — the kind
-<code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> takes — <code><a href="../reference/as_cpt_labels.html">as_cpt_labels()</a></code> converts
+<p>If you already have a plain ground-truth changepoint set (the kind
+<code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> takes), <code><a href="../reference/as_cpt_labels.html">as_cpt_labels()</a></code> converts
 it, positives and negatives together, so the package has one notion of
 an annotation rather than two:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
@@ -252,10 +252,10 @@ predict a log-penalty that lands inside its interval.</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Use it directly: cpt_detect(x, method = "pelt", penalty = model)</span></span></code></pre></div>
 <p>The features are scale-free summaries on the log scale, which is why
-the fourth series — the same jump measured in units three times as wide
-— does not simply demand a different penalty from the first.</p>
-<p>The model has a <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> method, and — the point of the
-whole exercise — <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> takes it wherever a penalty
+the fourth series (the same jump measured in units three times as wide)
+does not simply demand a different penalty from the first.</p>
+<p>The model has a <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> method, and (the point of the
+whole exercise) <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> takes it wherever a penalty
 goes:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict</a></span><span class="op">(</span><span class="va">model</span>, <span class="va">series</span><span class="op">$</span><span class="va">d</span><span class="op">)</span></span>

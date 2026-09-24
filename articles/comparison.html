@@ -81,7 +81,7 @@ dataset-dependent and that default configurations are often far from
 optimal <span class="citation">(<span class="nocase">van den Burg and
 Williams</span> 2020; Truong et al. 2020)</span>. Sound practice
 therefore requires running several detectors, comparing their outputs,
-and — when ground truth is available — scoring them with well-defined
+and, when ground truth is available, scoring them with well-defined
 accuracy metrics. This article presents the comparison and evaluation
 toolkit of <strong>ggchangepoint</strong>: visual comparison across
 methods (<code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code>), a common tidy representation of
@@ -93,19 +93,19 @@ the Turing Change Point Dataset benchmark
 (<code><a href="../reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code>), and visual evaluation against
 ground truth (<code><a href="../reference/ggcpt_eval.html">ggcpt_eval()</a></code>). We further discuss three
 complementary tools for quantifying the <em>uncertainty</em> of a
-segmentation — engine-native confidence intervals, bootstrap stability
+segmentation: engine-native confidence intervals, bootstrap stability
 profiles (<code><a href="../reference/cpt_stability.html">cpt_stability()</a></code>), and the CROPS penalty path
-(<code><a href="../reference/cpt_crops.html">cpt_crops()</a></code>) — and close with a small simulation-based
+(<code><a href="../reference/cpt_crops.html">cpt_crops()</a></code>). We close with a small simulation-based
 benchmarking workflow built from the package’s ground-truth
 generators.</p>
 </div>
 <div class="section level2">
 <h2 id="introduction">Introduction<a class="anchor" aria-label="anchor" href="#introduction"></a>
 </h2>
-<p>The changepoint literature offers a wide menu of detectors —
-penalised optimal partitioning, binary segmentation and its wild and
+<p>The changepoint literature offers a wide menu of detectors (penalised
+optimal partitioning, binary segmentation and its wild and
 narrowest-over-threshold refinements, moving-sum statistics,
-nonparametric divergence measures, Bayesian posteriors — each with its
+nonparametric divergence measures, Bayesian posteriors), each with its
 own inductive bias <span class="citation">(Aminikhanghahi and Cook 2017;
 Truong et al. 2020)</span>. Benchmarks that score many algorithms on
 many series find no uniform winner: performance depends on the kind of
@@ -162,7 +162,7 @@ way in, so comparisons across methods are always like for like.</p>
 three reasons. First, the <em>number</em> of detected changes varies
 across methods, so a metric must handle unequal-length sets. Second, a
 detection a few indices away from a true change is usually acceptable,
-so metrics need a tolerance margin — and a matching rule that prevents
+so metrics need a tolerance margin, and a matching rule that prevents
 one true change from being “claimed” by several detections. Third,
 changepoint sets induce <em>partitions</em>, and two very
 different-looking point sets can induce similar partitions; good
@@ -184,8 +184,8 @@ method:</p>
 <span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">0</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">150</span>, <span class="fl">3</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="va">cmp_methods</span><span class="op">)</span></span></code></pre></div>
 <p><img src="comparison_files/figure-html/compare-facet-1.png" class="r-plt" alt="One panel per method, each showing the same series with that method's changepoints" width="576"></p>
-<p>A method that finds <em>no</em> changepoints keeps its panel — the
-series is drawn with no vertical lines on it — rather than silently
+<p>A method that finds <em>no</em> changepoints keeps its panel (the
+series is drawn with no vertical lines on it) rather than silently
 disappearing. A method that ran and found nothing is a result, not a
 missing value:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -220,10 +220,9 @@ keeping the empty panel:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span> wbs      150    1.05 </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">9</span> wbs      300    3.14</span></span></code></pre></div>
 <p>Because every row carries the same columns, this table pipes directly
-into <strong>dplyr</strong>/<strong>ggplot2</strong> summaries —
-counting detections per method, plotting location agreement, and so on
-<span class="citation">(Wickham 2016)</span>. When the detectors are
-slow, <code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code> honours <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code>
+into <strong>dplyr</strong>/<strong>ggplot2</strong> summaries: counting
+detections per method, plotting location agreement, and so on <span class="citation">(Wickham 2016)</span>. When the detectors are slow,
+<code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code> honours <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code>
 (through <strong>future.apply</strong>) and fits them in parallel.</p>
 </div>
 <div class="section level2">
@@ -289,7 +288,7 @@ chance-level agreement.</p>
 <p><strong>Annotation error and matched location errors.</strong> The
 absolute difference in counts
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">|</mo><mo stretchy="false" form="prefix">|</mo><mi>𝒫</mi><mo stretchy="false" form="prefix">|</mo><mi>−</mi><mo stretchy="false" form="prefix">|</mo><mi>𝒯</mi><mo stretchy="false" form="prefix">|</mo><mo minsize="120%" maxsize="120%" stretchy="true" form="prefix">|</mo></mrow><annotation encoding="application/x-tex">\bigl||\mathcal{P}| - |\mathcal{T}|\bigr|</annotation></semantics></math>,
-and the MAE/RMSE of the matched location pairs — the latter two
+and the MAE/RMSE of the matched location pairs, the latter two
 <code>NA</code> when nothing matched, because an average over no pairs
 is not zero error.</p>
 <div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
@@ -330,8 +329,8 @@ distance and the matched-location errors remain <code>NA</code>: there
 are no pairs to measure.)</li>
 <li>
 <strong>Empty prediction, non-empty truth.</strong> An empty
-changepoint set still induces a perfectly well-defined partition — the
-trivial one with a single segment — so covering scores it by segment
+changepoint set still induces a perfectly well-defined partition (the
+trivial one with a single segment), so covering scores it by segment
 overlap rather than awarding an automatic 0. Precision and recall are 0,
 and the adjusted Rand index is 0 because the trivial partition agrees
 with the truth only at chance level.</li>
@@ -434,9 +433,9 @@ and the numbers always agree:</p>
 <span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>One true positive out of two predictions and two truths gives
 precision, recall, and F1 all equal to
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.5</mn><annotation encoding="application/x-tex">0.5</annotation></semantics></math>
-— the single blue rule, the single orange rule, and the single dashed
-rule in the plot, counted.</p>
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mn>0.5</mn><annotation encoding="application/x-tex">0.5</annotation></semantics></math>:
+the single blue rule, the single orange rule, and the single dashed rule
+in the plot, counted.</p>
 </div>
 <div class="section level2">
 <h2 id="uncertainty-beyond-point-sets">Uncertainty beyond point sets<a class="anchor" aria-label="anchor" href="#uncertainty-beyond-point-sets"></a>
@@ -451,12 +450,12 @@ quantify how much confidence it deserves.</p>
 2014)</span> controls, at level
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>,
 the probability of overestimating the number of changepoints, and
-returns a confidence interval for every location; the Bai–Perron dynamic
+returns a confidence interval for every location; the Bai-Perron dynamic
 program <span class="citation">(Bai and Perron 2003; Zeileis et al.
 2002)</span> returns break-date intervals for regression breaks. Four
-wrapped engines report such intervals — <code>smuce</code>,
+wrapped engines report such intervals (<code>smuce</code>,
 <code>hsmuce</code>, <code>strucchange</code>, and
-<code>segmented</code> — as <code>ci_lower</code>/<code>ci_upper</code>
+<code>segmented</code>) as <code>ci_lower</code>/<code>ci_upper</code>
 columns on the <code>ggcpt</code> changepoints tibble, which
 <code>autoplot(show_ci = TRUE)</code> draws as whiskers below the
 series. <code>show_fit = TRUE</code> adds the engine’s own fitted
@@ -523,7 +522,7 @@ and the segmentation can change qualitatively as
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>β</mi><annotation encoding="application/x-tex">\beta</annotation></semantics></math>
 moves. CROPS <span class="citation">(Haynes et al. 2017)</span> computes
 <em>every</em> optimal segmentation as the penalty ranges over an
-interval, at roughly one PELT run per distinct solution — penalty
+interval, at roughly one PELT run per distinct solution: penalty
 selection as a diagnostic rather than a guess. <code><a href="../reference/cpt_crops.html">cpt_crops()</a></code>
 returns the full path:</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
@@ -573,7 +572,7 @@ specified changepoints under Gaussian,
 Student-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>t</mi><annotation encoding="application/x-tex">t</annotation></semantics></math>,
 AR(1), or random-walk noise, and the canonical test signals of the
 literature ship as ready-made generators: <code><a href="../reference/signal_blocks.html">signal_blocks()</a></code>
-<span class="citation">(the Donoho–Johnstone blocks signal, Donoho and
+<span class="citation">(the Donoho-Johnstone blocks signal, Donoho and
 Johnstone 1994)</span>, <code><a href="../reference/signal_fms.html">signal_fms()</a></code>,
 <code><a href="../reference/signal_mix.html">signal_mix()</a></code>, <code><a href="../reference/signal_teeth.html">signal_teeth()</a></code>, and
 <code><a href="../reference/signal_stairs.html">signal_stairs()</a></code>. Every generator attaches its true
@@ -590,8 +589,8 @@ expects.</p>
 <p><img src="comparison_files/figure-html/signals-1.png" class="r-plt" alt="Donoho-Johnstone blocks test signal with its eleven true changepoints marked by vertical rules" width="576"></p>
 <p>A minimal benchmark: three methods, two signal-to-noise regimes, ten
 replications each, scored by precision, recall, F1, and covering. The
-two regimes differ only in the size of the jumps — 2.5 noise standard
-deviations against 1.0 — so any difference between the panels is
+two regimes differ only in the size of the jumps (2.5 noise standard
+deviations against 1.0), so any difference between the panels is
 attributable to difficulty alone. (Everything stays sequential and small
 here; <code><a href="../reference/cpt_batch.html">cpt_batch()</a></code> runs one method over many series and
 honours <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for parallel execution in larger
@@ -719,8 +718,8 @@ engine-native intervals, bootstrap stability, and penalty paths give
 three independent views of how much a reported changepoint should be
 trusted, and all three render directly with <strong>ggplot2</strong>
 <span class="citation">(Wickham 2016)</span>.</p>
-<p>For the detection surface itself — the dispatcher, the engine wave,
-the Bayesian displays, and the multivariate tools — see
+<p>For the detection surface itself (the dispatcher, the engine wave,
+the Bayesian displays, and the multivariate tools), see
 <code><a href="../articles/introduction.html">vignette("introduction", package = "ggchangepoint")</a></code> and the
 feature tour in
 <code><a href="../articles/ggchangepoint.html">vignette("ggchangepoint", package = "ggchangepoint")</a></code>.</p>

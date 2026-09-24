@@ -5,7 +5,7 @@ Wraps
 (Wang, Yu, Rinaldo and Willett): dynamic programming with an \\\ell_0\\
 penalty for changes in the transition matrix of a vector autoregression,
 with the two tuning parameters chosen by cross-validation. The change
-here is in the *dynamics* — how the series predicts itself — not in the
+here is in the *dynamics* (how the series predicts itself), not in the
 level, so it is invisible to every mean-change engine in the package.
 
 ## Usage
@@ -39,7 +39,11 @@ var_wrapper(x, gamma_set = NULL, lambda_set = NULL, delta = NULL, ...)
 
 ## Value
 
-A `ggcpt` object with `change_in = "regression"`.
+A `ggcpt` object with `change_in = "regression"`. The engine searches
+every other observation, so a location is resolved to within two; each
+is reported as the last observation before the change, the package
+convention, rather than the engine's own index, which sits one or two
+earlier.
 
 ## References
 
@@ -120,6 +124,6 @@ var_wrapper(rbind(step(50, 0.1), step(50, 0.8)),
 #> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1    56    0.423
+#> 1    57   -0.535
 # }
 ```

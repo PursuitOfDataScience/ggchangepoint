@@ -105,7 +105,7 @@ is the right one.</p>
 
   <dt><code>"ocd"</code></dt>
 <dd><p><span class="pkg">ocd</span>'s high-dimensional online detector.
-    <strong>Multivariate only</strong> – it tracks a projection of the whole
+    <strong>Multivariate only</strong>: it tracks a projection of the whole
     vector and needs at least two coordinates, so it refuses a single
     series rather than falling back to a univariate statistic.</p></dd>
 
@@ -212,7 +212,7 @@ whichever coordinate is shown, but the line is one of several.</p></dd>
   <code><a href="cpt_update.html">cpt_update()</a></code> and re-assigned rather than read field by
   field. The parts worth reading are</p><dl><dt><code>alarms</code></dt>
 <dd><p>the tibble <code><a href="alarms.html">alarms()</a></code> and
-      <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> return – one row per
+      <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> return: one row per
       alarm, with <code>time</code>, <code>statistic</code> and
       <code>threshold</code>. Empty (zero rows) until something fires.</p></dd>
 

@@ -1,4 +1,4 @@
-# fastcpd wrapper — fast changepoint detection via sequential gradient descent
+# fastcpd wrapper: fast changepoint detection via sequential gradient descent
 
 Wraps the fastcpd package (Li and Zhang, 2024), a modern PELT-family
 engine that pairs pruning with sequential gradient descent so that exact

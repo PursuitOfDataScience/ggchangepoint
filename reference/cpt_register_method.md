@@ -6,7 +6,7 @@ about a detector this package does not (and often cannot) depend on: an
 engine that is not on CRAN, a Python detector reached through
 reticulate, a deep-learning model, a proprietary in-house method, or a
 hand-curated set of changepoints. The registered method then works with
-everything built on the `ggcpt` contract —
+everything built on the `ggcpt` contract:
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
 the geoms,
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html)/[`glance()`](https://generics.r-lib.org/reference/glance.html)/
@@ -66,10 +66,10 @@ cpt_registered_methods()
   dropped and `selected` is computed rather than trusted.
   `diagnostics$statistic` (a numeric vector, or a list with `statistic`,
   `label` and `threshold`) is padded with `NA` to the length of the
-  series when it is shorter, and the pad is **centred** — a
-  moving-window statistic is trimmed at both ends, so a left-aligned pad
-  would shift every value by the bandwidth. Supply a full-length vector
-  if that is not the alignment you want.
+  series when it is shorter, and the pad is **centred**: a moving-window
+  statistic is trimmed at both ends, so a left-aligned pad would shift
+  every value by the bandwidth. Supply a full-length vector if that is
+  not the alignment you want.
 
 - change_in:
 

@@ -1,4 +1,4 @@
-# SMUCE / HSMUCE wrapper — multiscale changepoint inference
+# SMUCE / HSMUCE wrapper: multiscale changepoint inference
 
 Wraps [`stepR::stepFit()`](https://rdrr.io/pkg/stepR/man/stepFit.html)
 for the Simultaneous MUltiscale Changepoint Estimator (SMUCE) of Frick,
@@ -38,11 +38,11 @@ smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
   [`stepR::stepFit()`](https://rdrr.io/pkg/stepR/man/stepFit.html)
   directly for those. `"hsmuce"` additionally refuses a series whose
   point-to-point variation lies more than about seven orders of
-  magnitude below its own scale — a globally flat series, or a step
-  whose segments are numerically constant, as `cpt_simulate(sd = 0)`
-  produces once any rounding is added. stepR's heterogeneous variance
-  estimator aborts the R session on such input rather than raising an
-  error, so it cannot be caught. `"gauss"` handles the whole range.
+  magnitude below its own scale: a globally flat series, or a step whose
+  segments are numerically constant, as `cpt_simulate(sd = 0)` produces
+  once any rounding is added. stepR's heterogeneous variance estimator
+  aborts the R session on such input rather than raising an error, so it
+  cannot be caught. `"gauss"` handles the whole range.
 
 - ...:
 

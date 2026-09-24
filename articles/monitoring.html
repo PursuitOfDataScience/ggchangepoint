@@ -77,7 +77,7 @@ they arrive, and the question it answers is not <em>where</em> was the
 change but <strong>how long did you take to notice, and how often do you
 cry wolf</strong>. Those are different quantities, they are scored
 differently, and conflating them is the commonest mistake made with
-online detectors — including by retrospective plots that draw an alarm
+online detectors, including by retrospective plots that draw an alarm
 time as though it were a changepoint location.</p>
 <p>So a monitor is a different object from a segmentation. Five
 functions:</p>
@@ -101,7 +101,7 @@ functions:</p>
 </tr>
 <tr class="even">
 <td><code><a href="../reference/cpt_delay.html">cpt_delay()</a></code></td>
-<td>score it — detection delay and false alarms</td>
+<td>score it: detection delay and false alarms</td>
 </tr>
 <tr class="odd">
 <td><code><a href="../reference/cpt_replay.html">cpt_replay()</a></code></td>
@@ -121,19 +121,19 @@ period and so does not need one.</p>
 <span><span class="va">baseline</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span></span>
 <span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_monitor.html">cpt_monitor</a></span><span class="op">(</span><span class="st">"edetector"</span>, baseline <span class="op">=</span> <span class="va">baseline</span>, alpha <span class="op">=</span> <span class="fl">0.002</span><span class="op">)</span></span>
 <span><span class="va">mon</span></span>
-<span><span class="co">#&gt; ggcpt_monitor (edetector -- native implementation)</span></span>
+<span><span class="co">#&gt; ggcpt_monitor (edetector, native implementation)</span></span>
 <span><span class="co">#&gt;   Baseline observations: 200</span></span>
 <span><span class="co">#&gt;   Monitored observations: 0</span></span>
 <span><span class="co">#&gt;   Alarms: 0</span></span>
 <span><span class="co">#&gt;   Restart after alarm: TRUE (re-learning 20 observations)</span></span></code></pre></div>
 <p>Nothing has been monitored yet. Now feed it 120 observations from the
-same distribution — the in-control case, where the right answer is
+same distribution, the in-control case, where the right answer is
 silence:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">5201</span><span class="op">)</span></span>
 <span><span class="va">mon</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_update.html">cpt_update</a></span><span class="op">(</span><span class="va">mon</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">120</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">mon</span></span>
-<span><span class="co">#&gt; ggcpt_monitor (edetector -- native implementation)</span></span>
+<span><span class="co">#&gt; ggcpt_monitor (edetector, native implementation)</span></span>
 <span><span class="co">#&gt;   Baseline observations: 200</span></span>
 <span><span class="co">#&gt;   Monitored observations: 120</span></span>
 <span><span class="co">#&gt;   Alarms: 0</span></span>
@@ -178,7 +178,7 @@ plausibly detected, and counts the rest as false alarms.</p>
 many observations passed between the change and the first alarm after
 it. <strong>False alarms</strong> are the alarms with no change behind
 them. <strong>Average run length</strong> is observations per false
-alarm — the in-control cost of running the monitor, and the quantity the
+alarm: the in-control cost of running the monitor, and the quantity the
 thresholds are calibrated against.</p>
 <p>Note what happened to the <em>second</em> alarm. Only the first alarm
 after a change counts as the detection, so the later one is charged as a
@@ -237,25 +237,25 @@ is on the original clock of <code>stream</code>:</p>
 </h2>
 <div class="section level3">
 <h3 id="edetector-the-default-governed-by-alpha">
-<code>edetector</code> — the default, governed by
+<code>edetector</code>: the default, governed by
 <code>alpha</code><a class="anchor" aria-label="anchor" href="#edetector-the-default-governed-by-alpha"></a>
 </h3>
-<p>A mixture Shiryaev–Roberts e-detector for a sub-Gaussian shift <span class="citation">(Shin et al. 2023)</span>. For each candidate shift the
+<p>A mixture Shiryaev-Roberts e-detector for a sub-Gaussian shift <span class="citation">(Shin et al. 2023)</span>. For each candidate shift the
 increment is a likelihood ratio with unit mean under the null; the
 running statistics are combined by <strong>averaging</strong>, which
 keeps
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>M</mi><mi>t</mi></msub><mo>−</mo><mi>t</mi></mrow><annotation encoding="application/x-tex">M_t - t</annotation></semantics></math>
 a mean-zero martingale, so optional stopping gives
-<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>E</mi><mi>∞</mi></msub><mo stretchy="false" form="prefix">[</mo><mi>τ</mi><mo stretchy="false" form="postfix">]</mo><mo>≥</mo><mn>1</mn><mi>/</mi><mi>α</mi></mrow><annotation encoding="application/x-tex">E_\infty[\tau] \ge 1/\alpha</annotation></semantics></math>
-— a finite-sample lower bound on the in-control average run length, with
+<math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><msub><mi>E</mi><mi>∞</mi></msub><mo stretchy="false" form="prefix">[</mo><mi>τ</mi><mo stretchy="false" form="postfix">]</mo><mo>≥</mo><mn>1</mn><mi>/</mi><mi>α</mi></mrow><annotation encoding="application/x-tex">E_\infty[\tau] \ge 1/\alpha</annotation></semantics></math>,
+a finite-sample lower bound on the in-control average run length, with
 no calibration run. It is the one detector in this package implemented
 here rather than wrapped, because no R package implements e-detectors;
 <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> labels it as such.</p>
 <p><code>deltas</code> is the set of shift sizes mixed over, in baseline
 standard deviations, each taken in both directions. The mixture is a
 uniform average, so adding a shift costs power at the ones already there
-rather than inflating the false-alarm rate — and betting on the wrong
-one is expensive. Eight replicates, median delay:</p>
+rather than inflating the false-alarm rate, and betting on the wrong one
+is expensive. Eight replicates, median delay:</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
 <span><span class="va">delay_at</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">deltas</span>, <span class="va">shift</span>, <span class="va">reps</span> <span class="op">=</span> <span class="fl">8</span>, <span class="va">n</span> <span class="op">=</span> <span class="fl">200</span><span class="op">)</span> <span class="op">{</span></span>
@@ -283,7 +283,7 @@ do.</p>
 </div>
 <div class="section level3">
 <h3 id="cpm-governed-by-arl0">
-<code>cpm</code> — governed by <code>arl0</code><a class="anchor" aria-label="anchor" href="#cpm-governed-by-arl0"></a>
+<code>cpm</code>: governed by <code>arl0</code><a class="anchor" aria-label="anchor" href="#cpm-governed-by-arl0"></a>
 </h3>
 <p><code>cpm</code>’s sequential change-point model <span class="citation">(Ross 2015)</span>, with a distribution-free statistic
 (<code>cpm_type</code>, <code>"Mann-Whitney"</code> by default) and a
@@ -338,7 +338,7 @@ threshold is
 <span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
 <p>Three alphas, three false-alarm counts; then <code>arl0 = 5000</code>
 on the same stream, which reproduces the default-<code>alpha</code>
-result exactly because the argument is not read – and
+result exactly because the argument is not read, and
 <code><a href="../reference/cpt_monitor.html">cpt_monitor()</a></code> says so, because an argument that is accepted
 and then ignored is worth a warning rather than an unchanged answer. The
 rough translation is
@@ -348,7 +348,7 @@ and <code>arl0 = 500</code> ask for comparable strictness.</p>
 </div>
 <div class="section level3">
 <h3 id="ocd-multivariate-only">
-<code>ocd</code> — multivariate only<a class="anchor" aria-label="anchor" href="#ocd-multivariate-only"></a>
+<code>ocd</code>: multivariate only<a class="anchor" aria-label="anchor" href="#ocd-multivariate-only"></a>
 </h3>
 <p><code>ocd</code>’s high-dimensional multiscale detector <span class="citation">(Chen et al. 2022)</span> tracks a projection of the
 whole vector, and <strong>requires at least two coordinates</strong>. On
@@ -376,7 +376,7 @@ jointly, and the alarms are shared across them:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>         1          1          5            5              0   <span style="color: #BB0000;">Inf</span>   120</span></span></code></pre></div>
 <p>Two practical notes. The statistic reported is <code>ocd</code>’s
 <em>normalised</em> statistic, already divided by its own threshold, so
-the comparison point is 1 — printing the raw thresholds alongside it
+the comparison point is 1; printing the raw thresholds alongside it
 would show an alarm at 1.10 against a threshold of 16.4 and read as a
 bug. And the Monte Carlo threshold calibration is the expensive part of
 building the monitor: a minute or more at the default
@@ -389,8 +389,8 @@ thresholds.</p>
 <h2 id="delay-is-a-function-of-shift-size">5. Delay is a function of shift size<a class="anchor" aria-label="anchor" href="#delay-is-a-function-of-shift-size"></a>
 </h2>
 <p>The whole point of an online detector is that a bigger change is
-noticed sooner. This is small enough to measure directly — ten
-replicates per cell, median over replicates:</p>
+noticed sooner. This is small enough to measure directly (ten replicates
+per cell, median over replicates):</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span>
 <span><span class="va">median_delay</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">shift</span>, <span class="va">method</span>, <span class="va">reps</span> <span class="op">=</span> <span class="fl">10</span>, <span class="va">n</span> <span class="op">=</span> <span class="fl">200</span><span class="op">)</span> <span class="op">{</span></span>
@@ -413,8 +413,8 @@ replicates per cell, median over replicates:</p>
 <span><span class="co">#&gt; 5     2       cpm          4.5</span></span>
 <span><span class="co">#&gt; 6     3       cpm          4.0</span></span></code></pre></div>
 <p>Ten replicates is a noisy estimate of a median, and the table above
-will wobble with the seed. A larger run of the same design — 150
-replicates per cell, repeated under two seeds — gives median detection
+will wobble with the seed. A larger run of the same design (150
+replicates per cell, repeated under two seeds) gives median detection
 delays of <strong>7, 3 and 2</strong> observations for
 <code>edetector</code> at shifts of 1, 2 and 3 standard deviations, and
 <strong>10, 5 and 4</strong> for <code>cpm</code>. Two things are worth
@@ -422,16 +422,16 @@ taking from that. Delay falls steeply in the shift size, so a monitor
 tuned on a large change will feel unusably slow on a small one. And the
 gap between the two detectors is real but modest where the change is
 small: two or three observations at 1 sigma, against inter-quartile
-ranges of [5, 12] and [7, 15] that overlap almost entirely — while
+ranges of [5, 12] and [7, 15] that overlap almost entirely, while
 <code>edetector</code> is clearly and consistently quicker once the
 change is obvious.</p>
 </div>
 <div class="section level2">
 <h2 id="assumptions-the-thresholds-are-for-independent-observations">6. Assumptions: the thresholds are for independent observations<a class="anchor" aria-label="anchor" href="#assumptions-the-thresholds-are-for-independent-observations"></a>
 </h2>
-<p>Both calibrations — the e-detector’s
+<p>Both calibrations (the e-detector’s
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mn>1</mn><mi>/</mi><mi>α</mi></mrow><annotation encoding="application/x-tex">1/\alpha</annotation></semantics></math>
-bound and <code>cpm</code>’s <code>arl0</code> — assume the in-control
+bound and <code>cpm</code>’s <code>arl0</code>) assume the in-control
 observations are independent. Under the null on iid noise they hold up.
 Measured over 20 in-control streams of 2000 observations at the
 defaults, <code>cpm</code> raises <strong>3.0</strong> false alarms on
@@ -466,8 +466,8 @@ it.</p>
 <p>Both inflate badly at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>ρ</mi><mo>=</mo><mn>0.7</mn></mrow><annotation encoding="application/x-tex">\rho = 0.7</annotation></semantics></math>,
 <code>cpm</code> by roughly <strong>tenfold</strong> in a larger run of
-the same comparison. Neither is broken — they are answering the question
-they were calibrated for — but a nominal <code>arl0 = 500</code> on
+the same comparison. Neither is broken (they are answering the question
+they were calibrated for), but a nominal <code>arl0 = 500</code> on
 autocorrelated data is not a 500-observation run length, and reporting
 it as one overstates the evidence behind every alarm. The options, in
 order of how much they ask of you:</p>
@@ -495,7 +495,7 @@ real change afterwards may be invisible. And <code>relearn</code> (20
 observations by default) is not cosmetic. A real change is
 <em>persistent</em>, so a monitor that restarts against the stale
 pre-change baseline alarms again on the very next observation and keeps
-alarming for the rest of the stream — reporting one change as hundreds,
+alarming for the rest of the stream, reporting one change as hundreds,
 all but the first of which <code><a href="../reference/cpt_delay.html">cpt_delay()</a></code> counts as false
 alarms. Set <code>relearn = 0</code> only when you want to see every
 threshold crossing.</p>

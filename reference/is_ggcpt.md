@@ -2,10 +2,10 @@
 
 A class check, useful when a function accepts either a detection result
 or the raw series. It tests for `ggcpt` in the class vector, so a
-genuine `ggcpt` subclass — `ggcpt_consensus` is the one — returns
-`TRUE`. The other `ggcpt_*` classes in the package (`ggcpt_batch`,
+genuine `ggcpt` subclass (`ggcpt_consensus` is the one) returns `TRUE`.
+The other `ggcpt_*` classes in the package (`ggcpt_batch`,
 `ggcpt_benchmark`, `ggcpt_monitor`, `ggcpt_selection` and the rest) are
-*not* subclasses of `ggcpt` — most are tibble subclasses — and return
+*not* subclasses of `ggcpt` (most are tibble subclasses) and return
 `FALSE`.
 
 ## Usage

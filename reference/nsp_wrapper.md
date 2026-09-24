@@ -1,4 +1,4 @@
-# NSP wrapper — Narrowest Significance Pursuit
+# NSP wrapper: Narrowest Significance Pursuit
 
 Wraps the nsp package (Fryzlewicz 2024). NSP inverts the usual framing
 of post-selection inference: rather than estimating changepoint
@@ -44,22 +44,22 @@ nsp_wrapper(
   `"poly"`
 
   :   (default)
-      [`nsp::nsp_poly()`](https://rdrr.io/pkg/nsp/man/nsp_poly.html) —
+      [`nsp::nsp_poly()`](https://rdrr.io/pkg/nsp/man/nsp_poly.html):
       piecewise polynomial signal, Gaussian noise of constant variance.
 
   `"selfnorm"`
 
-  :   [`nsp::nsp_poly_selfnorm()`](https://rdrr.io/pkg/nsp/man/nsp_poly_selfnorm.html)
-      — self-normalised, for heavy tails and heteroscedasticity. Slower.
+  :   [`nsp::nsp_poly_selfnorm()`](https://rdrr.io/pkg/nsp/man/nsp_poly_selfnorm.html):
+      self-normalised, for heavy tails and heteroscedasticity. Slower.
 
   `"ar"`
 
-  :   [`nsp::nsp_poly_ar()`](https://rdrr.io/pkg/nsp/man/nsp_poly_ar.html)
-      — autoregressive noise of order `ord`.
+  :   [`nsp::nsp_poly_ar()`](https://rdrr.io/pkg/nsp/man/nsp_poly_ar.html):
+      autoregressive noise of order `ord`.
 
   `"tvreg"`
 
-  :   [`nsp::nsp_tvreg()`](https://rdrr.io/pkg/nsp/man/nsp_tvreg.html) —
+  :   [`nsp::nsp_tvreg()`](https://rdrr.io/pkg/nsp/man/nsp_tvreg.html):
       a general linear model whose coefficients change; requires
       `covariates`.
 
@@ -106,7 +106,7 @@ A `ggcpt` object with a populated `regions` slot.
 ## What `cp` means here, and what it does not
 
 NSP produces no point estimates. This wrapper still fills the `cp`
-column — with the *midpoint* of each interval — because every downstream
+column (with the *midpoint* of each interval) because every downstream
 consumer in the package
 ([`augment()`](https://generics.r-lib.org/reference/augment.html),
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md),

@@ -90,8 +90,8 @@ still ranked.</p>
 <p><strong>Rows with <code>leverage = NA</code> come first, and they are the
   most influential of all.</strong> <code>max_shift</code> and <code>param_shift</code>
   are undefined for a perturbation that left the engine with no
-  changepoints at all – there is nothing to match against and no
-  parameters to compare – so the composite score cannot be formed for
+  changepoints at all (there is nothing to match against and no
+  parameters to compare), so the composite score cannot be formed for
   an observation whose removal destroys the segmentation entirely. The
   <code>NA</code> is kept rather than filled in with a fabricated number;
   read the <code>delta_n_cp</code> column on those rows, which says how many

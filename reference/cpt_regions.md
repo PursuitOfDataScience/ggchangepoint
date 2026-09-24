@@ -23,10 +23,10 @@ cpt_regions(x)
 
 ## Value
 
-A tibble with columns `start`, `end` (positions), `length`, and — when
-the result carries a time index — `start_index`/`end_index` on the
+A tibble with columns `start`, `end` (positions), `length`, and, when
+the result carries a time index, `start_index`/`end_index` on the
 original scale. Any further columns the engine supplied are carried
-through after those –
+through after those:
 [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
 adds `value`, the region's statistic. A zero-row tibble when the result
 carries no regions.

@@ -39,7 +39,7 @@ ggcpt_compare(
   `"overlay"` draws all changepoints in one panel, colour-coded. The
   overlay **dodges** the rules horizontally so that two methods agreeing
   on an index are both visible, which moves each rule by up to half an
-  observation — so read positions off `"facet"`, or off
+  observation, so read positions off `"facet"`, or off
   [`tidy()`](https://generics.r-lib.org/reference/tidy.html), and treat
   the overlay as a picture of agreement rather than of location.
 

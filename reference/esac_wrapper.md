@@ -1,11 +1,11 @@
-# ESAC wrapper — sparsity-adaptive high-dimensional detection
+# ESAC wrapper: sparsity-adaptive high-dimensional detection
 
 Wraps [`HDCD::ESAC()`](https://rdrr.io/pkg/HDCD/man/ESAC.html) (Moen,
 Glad and Tveten, 2023): Efficient Sparsity Adaptive Changepoint
 estimation for a change in the mean vector of a high-dimensional series.
 Where `inspect` projects onto a single estimated sparse direction, ESAC
 adapts across the whole sparsity range at once, which is a different
-regime rather than a refinement of the same one — it is competitive both
+regime rather than a refinement of the same one: it is competitive both
 when a handful of coordinates change and when all of them do.
 
 ## Usage

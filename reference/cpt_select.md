@@ -138,8 +138,8 @@ autoplot(
 
   **The three closed-form criteria assume a change in the mean whatever
   this is set to.** `"bic"`, `"aic"` and `"mbic"` all score the ladder
-  with the Gaussian profile cost \\n\log(\mathrm{RSS}/n)\\ – the
-  deviance for a change in mean with a common variance – so on a
+  with the Gaussian profile cost \\n\log(\mathrm{RSS}/n)\\ (the deviance
+  for a change in mean with a common variance), so on a
   `change_in = "var"` ladder the *candidates* come from the variance
   detector while the *score* does not, and splitting a segment whose
   mean did not move barely reduces \\\mathrm{RSS}\\: the criterion will

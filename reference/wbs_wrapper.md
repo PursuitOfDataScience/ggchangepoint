@@ -1,4 +1,4 @@
-# WBS wrapper — Wild Binary Segmentation
+# WBS wrapper: Wild Binary Segmentation
 
 Wraps the `wbs` package for randomised changepoint detection via Wild
 Binary Segmentation.

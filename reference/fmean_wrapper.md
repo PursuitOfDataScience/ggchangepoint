@@ -36,7 +36,10 @@ fmean_wrapper(
 - critical:
 
   How critical values are obtained: `"simulation"` (default),
-  `"resample"` or `"welch"`.
+  `"resample"` or `"welch"`. The first two draw random numbers and there
+  is no `seed` argument, so call
+  [`set.seed()`](https://rdrr.io/r/base/Random.html) first when the
+  answer has to be reproducible.
 
 - type:
 

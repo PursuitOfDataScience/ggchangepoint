@@ -43,19 +43,24 @@ fabisearch_wrapper(
 
 - n_reps:
 
-  Permutation replicates for the significance test. Defaults to `100`.
+  Replicates on each side of the significance test: the split is
+  refitted `n_reps` times and the rows permuted `n_reps` times. Defaults
+  to `100`; at least `2`, because the test compares two samples of this
+  size.
 
 - alpha:
 
-  Significance level applied to the permutation p-value each candidate
-  split receives. Defaults to `0.05`. Note that a permutation p-value
-  cannot fall below `1 / n_reps`, so `n_reps` must be at least
-  `1 / alpha` for any split to be significant; the wrapper warns when it
-  is not.
+  Significance level applied to the p-value each candidate split
+  receives. Defaults to `0.05`. That p-value is a two-sample test of the
+  refitted losses against the permuted ones (a t-test unless `testtype`
+  is passed through `...`), adjusted by Benjamini-Hochberg across the
+  candidate splits. It is not a permutation p-value, so it has no
+  `1 / n_reps` floor; the exact rank tests (`testtype = "wilcox"` or
+  `"ks"`) do have one, and the wrapper warns when it is above `alpha`.
 
 - rank:
 
-  NMF rank. `NULL` estimates it with
+  NMF rank, a positive whole number. `NULL` estimates it with
   [`fabisearch::opt.rank()`](https://rdrr.io/pkg/fabisearch/man/opt.rank.html),
   which is expensive; supplying a rank is much faster.
 
@@ -92,9 +97,10 @@ input. The full input is kept in `$data_wide` for
 Three practical notes. (1) NMF is undefined for negative entries, so
 this wrapper refuses them rather than letting the engine fail deep
 inside a factorisation; shift or rescale the series first if it has
-negatives. (2) It is by far the most expensive engine here — `n_runs`
-times `n_reps` factorisations — so the defaults are lowered in the
-examples and a progress note is printed. (3) fabisearch calls NMF's
+negatives. (2) It is by far the most expensive engine here (`n_runs`
+times `n_reps` factorisations per candidate split), so the defaults are
+lowered in the examples. The engine's own progress output is suppressed,
+so a long call is silent until it returns. (3) fabisearch calls NMF's
 multi-run machinery, which resolves helpers through the search path and
 fails with "none of the packages are loaded" when NMF is merely loaded;
 this wrapper therefore attaches NMF for the duration of the call and
@@ -181,9 +187,6 @@ block <- function(n, cols) {
 Y <- rbind(block(12, 1:2), block(12, 3:5))
 fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 2,
                    alpha = 0.25, rank = 2)
-#> Loading required package: foreach
-#> Loading required package: rngtools
-#> Warning: With `n_reps = 2` the smallest attainable permutation p-value is 0.5, which is above `alpha = 0.25`, so no split can be significant whatever the data. Raise `n_reps` to at least 4, or raise `alpha`.
 #> ggcpt (changepoint detection result)
 #>   Method:             fabisearch
 #>   Change in:          network

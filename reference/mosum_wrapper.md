@@ -1,4 +1,4 @@
-# MOSUM wrapper — Moving Sum
+# MOSUM wrapper: Moving Sum
 
 Wraps the `mosum` package for moving-sum-based changepoint detection,
 either at a single bandwidth or (with `multiscale = TRUE`) across a

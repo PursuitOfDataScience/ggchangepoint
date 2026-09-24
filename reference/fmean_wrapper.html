@@ -86,7 +86,9 @@ one column per grid location (the curve's resolution).</p></dd>
 
 <dt id="arg-critical">critical<a class="anchor" aria-label="anchor" href="#arg-critical"></a></dt>
 <dd><p>How critical values are obtained: <code>"simulation"</code>
-(default), <code>"resample"</code> or <code>"welch"</code>.</p></dd>
+(default), <code>"resample"</code> or <code>"welch"</code>. The first two draw
+random numbers and there is no <code>seed</code> argument, so call
+<code><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed()</a></code> first when the answer has to be reproducible.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>

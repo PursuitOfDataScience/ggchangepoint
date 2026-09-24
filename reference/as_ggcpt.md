@@ -106,11 +106,11 @@ as_ggcpt(
 ## Value
 
 A `ggcpt` object, with the same components as any detector in the
-package returns – see
+package returns (see
 [`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
 for the full list, and
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-for the summary.
+for the summary).
 
 ## See also
 

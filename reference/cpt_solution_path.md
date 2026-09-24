@@ -2,7 +2,7 @@
 
 The order in which candidate changepoints entered the model, with the
 contrast (or split criterion) at each step. Binary segmentation splits
-recursively, WBS/WBS2/NOT/TGUH rank random intervals — in every case the
+recursively, WBS/WBS2/NOT/TGUH rank random intervals; in every case the
 final answer is a prefix of a path, and seeing the path shows how
 decisively each changepoint beat the next.
 
@@ -23,14 +23,14 @@ ggcpt_solution_path(object, max_steps = 40)
 
 - max_steps:
 
-  Longest prefix of the path drawn. Defaults to `40` — a randomised
+  Longest prefix of the path drawn. Defaults to `40`: a randomised
   search proposes hundreds of candidates and only the head of the
   ranking is readable.
 
 ## Value
 
-`cpt_solution_path()` returns a tibble with `step`, `cp`, `contrast` and
-— for interval-based searches — `start`/`end` of the interval that
+`cpt_solution_path()` returns a tibble with `step`, `cp`, `contrast`
+and, for interval-based searches, `start`/`end` of the interval that
 proposed it, plus a `selected` flag marking the changepoints in the
 final model. `ggcpt_solution_path()` draws it.
 
@@ -47,7 +47,7 @@ and the plot legend names the quantity rather than calling all of them
 For `wbs2` and `tguh` the path is **recomputed** with breakfast, because
 their fit objects do not keep the candidate list. `wbs2`'s search is
 randomised, so its path is a second search of the same series rather
-than a record of the first — it can differ between calls, and `selected`
+than a record of the first: it can differ between calls, and `selected`
 can be `FALSE` throughout if the recomputed candidates miss the fit's
 own changepoints. Every other engine's path is read off the fit.
 

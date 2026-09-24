@@ -1,4 +1,4 @@
-# ocd wrapper — online high-dimensional changepoint detection
+# ocd wrapper: online high-dimensional changepoint detection
 
 Wraps the `ocd` package (Chen, Wang and Samworth, 2022): online
 multiscale detection of a mean change in a high-dimensional stream, with
@@ -45,7 +45,7 @@ ocd_wrapper(
   Threshold specification passed to
   [`ocd::ChangepointDetector()`](https://rdrr.io/pkg/ocd/man/ChangepointDetector.html);
   `"MC"` (default) calibrates by Monte Carlo, which is what makes this
-  the slowest wrapper — see the timing note below. Supplying the three
+  the slowest wrapper (see the timing note below). Supplying the three
   thresholds directly, as a named numeric vector
   `c(diag =, off_d =, off_s =)`, skips calibration altogether.
 
@@ -93,8 +93,8 @@ default costs *minutes* rather than seconds even for a handful of
 coordinates, and better than half an hour at \\p = 50\\. Another machine
 will give different absolute numbers; the linearity in `mc_reps` is the
 part to plan around. Monitoring the observations afterwards is cheap by
-comparison — 0.37 s for a thousand of them at \\p = 3\\. Lower `mc_reps`
-while exploring — the example below uses 2, which measures 3.8 s — or
+comparison: 0.37 s for a thousand of them at \\p = 3\\. Lower `mc_reps`
+while exploring (the example below uses 2, which measures 3.8 s), or
 pass `thresh` directly to skip calibration entirely, which brings the
 same fit down to a tenth of a second.
 

@@ -32,7 +32,7 @@ cpt_metrics(pred, truth, n, margin = 5)
 ## Value
 
 A tibble with one row and the columns below. “Higher” and “lower” mark
-which direction is better — the same directions
+which direction is better, the same directions
 [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
 ranks by.
 
@@ -44,9 +44,9 @@ ranks by.
 - `precision`, `recall`, `f1`:
 
   higher is better. The fraction of predictions that matched a truth,
-  the fraction of truths that were matched, and their harmonic mean —
-  all under the one-to-one matching within `margin`, so they score
-  *whether* a change was found, not how precisely it was located.
+  the fraction of truths that were matched, and their harmonic mean, all
+  under the one-to-one matching within `margin`, so they score *whether*
+  a change was found, not how precisely it was located.
 
 - `covering`:
 
@@ -58,7 +58,7 @@ ranks by.
 - `hausdorff`:
 
   lower is better, in observations. The largest distance from any
-  changepoint on either side to the nearest one on the other — a
+  changepoint on either side to the nearest one on the other: a
   worst-case location error, so one badly placed changepoint dominates
   it.
 
@@ -105,8 +105,8 @@ table:
   bug.)
 
 - **One side empty.** `precision` and `recall` are *0* rather than `NA`
-  — finding nothing where there was a change, and finding a change where
-  there was none, both score badly — and so is `f1`. `rand_index` is 0
+  (finding nothing where there was a change, and finding a change where
+  there was none, both score badly), and so is `f1`. `rand_index` is 0
   for the same reason.
 
 - **Nothing matched.** `hausdorff`, `mae_matched` and `rmse_matched` are

@@ -89,8 +89,8 @@ autoplot(fit, show_segments = TRUE)
 rules](extending_files/figure-html/as-ggcpt-uses-1.png)
 
 [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
-runs the same contract checks as every built-in wrapper — sorting,
-de-duplication, range checks, aligned extra columns, derived segments —
+runs the same contract checks as every built-in wrapper (sorting,
+de-duplication, range checks, aligned extra columns, derived segments),
 so an external result cannot violate the invariants the rest of the
 package relies on:
 
@@ -226,8 +226,8 @@ had run would be worse than the problem it solved.
 
 `fn` may return a bare vector of indices, as above, or a finished
 `ggcpt` built with
-[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
-— which is how you pass along an engine’s confidence intervals, fitted
+[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md),
+which is how you pass along an engine’s confidence intervals, fitted
 signal or raw fit object:
 
 ``` r
@@ -331,8 +331,8 @@ enforces all of it:
   a time index.
 - `$method`, `$change_in`, `$penalty`, `$cp_convention` are length-one
   metadata; `$fit` is the raw upstream object.
-- The optional slots — `data_wide`, `index`, `regions`, `diagnostics`,
-  `registered` — are absent unless something supplies them, so
+- The optional slots (`data_wide`, `index`, `regions`, `diagnostics`,
+  `registered`) are absent unless something supplies them, so
   `is.null(fit$regions)` is the test for “this engine does not do
   regions”.
 

@@ -184,8 +184,8 @@ The random-interval searches (<code>not</code>, <code>wbs</code>,
 <code>tguh</code>, <code>idetect</code>) cost seconds because they fit
 many sub-intervals by construction, which is also why they find changes
 the single-pass methods miss. <code>pettitt</code> and <code>np</code>
-are the two to watch — half a minute and a minute and a half
-respectively — and <code>np</code> is the one most likely to surprise,
+are the two to watch (half a minute and a minute and a half
+respectively), and <code>np</code> is the one most likely to surprise,
 because nonparametric cost is paid per quantile.</p>
 <div class="section level3">
 <h3 id="what-does-not-finish">What does not finish<a class="anchor" aria-label="anchor" href="#what-does-not-finish"></a>
@@ -207,7 +207,7 @@ and <code>bocpd</code> are quadratic or worse in n; <code>cpop</code>
 solves a continuous-piecewise-linear problem whose candidate set grows
 fast; <code>strucchange</code> and <code>taylor</code> were written for
 the series lengths their fields see, which are in the hundreds or low
-thousands. None of them is broken — they are simply methods for short
+thousands. None of them is broken; they are simply methods for short
 series, and choosing one for a long series is a modelling error rather
 than a performance problem to be tuned around.</p>
 <p>Memory follows the same shape and is easier to overlook. At n =
@@ -247,8 +247,8 @@ the truth.</p>
 </tr>
 <tr class="odd">
 <td><code>np</code></td>
-<td>—</td>
-<td>—</td>
+<td>not run</td>
+<td>not run</td>
 <td>10</td>
 </tr>
 </tbody>
@@ -256,7 +256,7 @@ the truth.</p>
 <p><code>cpm</code>’s count grows <em>linearly in n</em>, and this is
 not a defect. <code>cpm</code> is a sequential monitor, and its
 <code>arl0 = 500</code> default asks for a false alarm every 500
-in-control observations — so a stream of length n implies about
+in-control observations, so a stream of length n implies about
 <code>n / arl0</code> alarms by construction: 2 at n = 1,000, 20 at n =
 10,000, 200 at n = 100,000, which is the order of what we see. The count
 is the parameterisation working as specified, read as though it were a
@@ -276,9 +276,9 @@ entry is 50,000</strong>, so <code>5 * n</code> is simply unavailable at
 n = 100,000; the most that can be asked for there is 50,000, or
 <code>n / 2</code>. <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> refuses an off-grid value
 outright, because <code>cpm</code> answers one by printing an error and
-returning no changepoints – indistinguishable from a genuine “no
-changes” result.</p>
-<p><code>np</code> reports 10 at n = 100,000 — an over-count of six,
+returning no changepoints, indistinguishable from a genuine “no changes”
+result.</p>
+<p><code>np</code> reports 10 at n = 100,000, an over-count of six,
 small enough to be worth its nonparametric robustness, and much better
 behaved than <code>cpm</code>’s.</p>
 </div>
@@ -366,7 +366,7 @@ is zero.</p>
 <td><code>np</code></td>
 <td>1.17</td>
 <td>6.17</td>
-<td>—</td>
+<td>not run</td>
 </tr>
 </tbody>
 </table>
@@ -377,7 +377,7 @@ not invent changepoints in noise, and the default settings are
 conservative rather than merely conventional.</p>
 <p><code>cpm</code>’s row is the same <code>arl0</code> arithmetic as
 above, now with nothing real to find, and it lines up with the previous
-table almost exactly — 33.83 false alarms at n = 10,000 against 36 total
+table almost exactly: 33.83 false alarms at n = 10,000 against 36 total
 reported when four were real. <code>np</code>’s 1.17 and 6.17 are mild
 over-detection.</p>
 <p>Two cautions on reading this table. Zero false alarms in 6 replicates
@@ -425,9 +425,9 @@ replicates, on a 300-point series.</p>
 </tbody>
 </table>
 <p><code>native</code> and <code>bootstrap</code> both hit the nominal
-level, and the bootstrap does it at roughly half the width — attractive,
-with the caveat that it conditions on the fitted segmentation and so is
-not exact.</p>
+level, and the bootstrap does it at roughly half the width. That is
+attractive, with the caveat that it conditions on the fitted
+segmentation and so is not exact.</p>
 <p><code>nsp</code> covers 1.00 at nearly three times the native width.
 That is the price of a guarantee that holds <em>globally across all
 intervals</em> and survives selection; conservatism is the expected
@@ -435,7 +435,7 @@ behaviour, not a surprise.</p>
 <p><code>posterior</code> is the row to take seriously. A mean width of
 <strong>245.5 on a 300-point series</strong> is a vacuous interval: it
 says the changepoint is somewhere in the series. The mechanism is
-specific and worth knowing — <code>bcp</code>’s posterior probability of
+specific and worth knowing: <code>bcp</code>’s posterior probability of
 a change is sharply peaked, so its 50% highest-density interval is one
 or two observations wide, but the tails are diffuse, so pushing the
 credible level out to 0.95 sweeps in almost the whole series. This is a

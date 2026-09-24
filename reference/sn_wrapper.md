@@ -5,8 +5,8 @@ Wraps
 (Zhao, Jiang and Shao, 2022): self-normalised segmentation with nested
 local windows. Self-normalisation avoids estimating the long-run
 variance, is robust to temporal dependence, and detects changes in
-general parameters — mean, variance, quantiles, autocorrelation, or
-bivariate correlation — within one framework.
+general parameters (mean, variance, quantiles, autocorrelation, or
+bivariate correlation) within one framework.
 
 ## Usage
 

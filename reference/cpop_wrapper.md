@@ -1,4 +1,4 @@
-# CPOP wrapper — optimal change-in-slope detection
+# CPOP wrapper: optimal change-in-slope detection
 
 Wraps [`cpop::cpop()`](https://rdrr.io/pkg/cpop/man/cpop.html)
 (Fearnhead, Maidstone and Letchford, 2019; Fearnhead and Grose, 2024):

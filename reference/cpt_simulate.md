@@ -58,14 +58,13 @@ rcpt(...)
   change plus an unrequested level jump. (Equal intercepts are
   continuous only when the earlier segment is flat.) When `NULL`, every
   segment gets the same neutral parameters, so the series has no actual
-  change. `changepoints` sets the number of segments – \\k\\
-  changepoints make \\k + 1\\ of them – and a mismatch in either
-  direction warns rather than passing quietly: too few entries recycles
-  the last one, so the trailing `changepoints` would otherwise be
-  recorded as ground truth with no change behind them, and too many
-  drops the surplus, so a caller who miscounted the changepoints would
-  otherwise get an ordinary series back with a parameter silently
-  unused.
+  change. `changepoints` sets the number of segments (\\k\\ changepoints
+  make \\k + 1\\ of them), and a mismatch in either direction warns
+  rather than passing quietly: too few entries recycles the last one, so
+  the trailing `changepoints` would otherwise be recorded as ground
+  truth with no change behind them, and too many drops the surplus, so a
+  caller who miscounted the changepoints would otherwise get an ordinary
+  series back with a parameter silently unused.
 
 - noise:
 

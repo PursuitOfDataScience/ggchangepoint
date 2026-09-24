@@ -7,8 +7,8 @@ they measure it:
 
 - `"pettitt"`:
 
-  a rank-based (Mann–Whitney) statistic — distribution-free and robust
-  to outliers.
+  a rank-based (Mann-Whitney) statistic, distribution-free and robust to
+  outliers.
 
 - `"buishand"`:
 
@@ -20,9 +20,9 @@ they measure it:
   the standard normal homogeneity test of Alexandersson, the reference
   method for detecting inhomogeneities in climate records.
 
-Each reports a location *and* a p-value, and — unlike most engines here
-— that p-value is valid, because the location was not chosen from a
-larger model search.
+Each reports a location *and* a p-value, and, unlike most engines here,
+that p-value is valid, because the location was not chosen from a larger
+model search.
 
 ## Usage
 

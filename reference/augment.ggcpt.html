@@ -70,7 +70,7 @@
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with one row per observation: the data as the result
   carries it, plus four added columns. The data half depends on the
-  result – <code>index</code> and <code>value</code> for a univariate one,
+  result: <code>index</code> and <code>value</code> for a univariate one,
   <code>index</code> plus <strong>one column per coordinate</strong> (named as the
   input's columns were) for a multivariate one, and an extra
   <code>fitted</code> column for the engines that supply their own fitted
@@ -79,7 +79,7 @@
       counting from 1.</p></dd>
 
     <dt><code>.fitted</code></dt>
-<dd><p>the segment's <code>param_estimate</code> – the
+<dd><p>the segment's <code>param_estimate</code>: the
       segment <strong>mean</strong>, for every method in the package, or the
       engine's own fitted signal where there is one. See the details
       below for the multivariate case.</p></dd>
@@ -103,7 +103,7 @@
 changepoints are shared across them, so <code>seg_id</code> and
 <code>is_changepoint</code> apply to the whole row while <code>.fitted</code> and
 <code>.resid</code> describe the <strong>univariate series the result
-carries</strong> — <code>$data$value</code>, the same series
+carries</strong>: <code>$data$value</code>, the same series
 <code>$segments$param_estimate</code> summarises, so <code>.resid</code> is always
 <code>value - .fitted</code>. For most multivariate engines that series is
 the first coordinate; <code>fmean</code>, <code>fcov</code>, <code>kwc</code> and
@@ -113,7 +113,7 @@ rather than any one column. Either way the two columns agree with each
 other, which is what makes <code>.resid</code> a residual. When an engine
 supplies its own fitted signal that signal is used for <code>.fitted</code> in
 place of the segment means, and rides along in a <code>fitted</code> column of
-its own – so for those engines the two columns agree. The engines that
+its own, so for those engines the two columns agree. The engines that
 do this are exactly the ones <code><a href="cpt_methods.html">cpt_methods()</a></code> marks in its
 <code>fitted</code> column: <code>smuce</code>, <code>hsmuce</code>, <code>cpop</code>,
 <code>bcp</code>, <code>beast</code>, <code>decafs</code>, <code>segmented</code>,

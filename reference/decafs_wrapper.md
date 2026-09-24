@@ -1,9 +1,9 @@
-# DeCAFS wrapper — changes amid drift and autocorrelated noise
+# DeCAFS wrapper: changes amid drift and autocorrelated noise
 
 Wraps [`DeCAFS::DeCAFS()`](https://rdrr.io/pkg/DeCAFS/man/DeCAFS.html)
 (Romano, Rigaill, Runge and Fearnhead, 2022), which detects abrupt mean
 changes when the underlying signal also drifts (random-walk
-fluctuations) and the noise is AR(1)-autocorrelated — the two regimes in
+fluctuations) and the noise is AR(1)-autocorrelated, the two regimes in
 which plain change-in-mean methods over-detect. Model parameters are
 estimated automatically unless supplied.
 
@@ -24,9 +24,9 @@ decafs_wrapper(x, penalty = NULL, model_param = NULL, ...)
   Penalty \\\beta\\ for adding a changepoint. Defaults to
   `2 * log(length(x))`.
   [`cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-  resolves its own `"MBIC"` default to a stronger numeric value — on a
+  resolves its own `"MBIC"` default to a stronger numeric value (on a
   five-changepoint series that is 3 changepoints through the dispatcher
-  against 5 here — so pass `penalty` explicitly when the two must agree.
+  against 5 here), so pass `penalty` explicitly when the two must agree.
 
 - model_param:
 

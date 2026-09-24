@@ -30,7 +30,7 @@ cpt_metrics_annotated(pred, annotations, n, margin = 5)
 ## Value
 
 A tibble with one row: `n`, `n_annotators`, `n_pred`, and the **four**
-metrics this averages – `precision`, `recall`, `f1` and `covering`. Each
+metrics this averages: `precision`, `recall`, `f1` and `covering`. Each
 is a plain unweighted mean of the per-annotator value from
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md),
 over all `n_annotators` of them.
@@ -46,8 +46,8 @@ The three distance metrics are omitted for a reason worth stating,
 because it is not obvious: they are `NA` whenever an annotator shares no
 matched pair with the prediction, so averaging them would quietly divide
 by fewer annotators than `n_annotators` reports. Measured on three
-annotators against one prediction – `list(c(100, 200), integer(0), 150)`
-at \\n = 300\\ – `mae_matched` was available for **one** of the three
+annotators against one prediction (`list(c(100, 200), integer(0), 150)`
+at \\n = 300\\), `mae_matched` was available for **one** of the three
 and `hausdorff` for two, while `f1` and `covering` were finite for all
 three. Score those per annotator with
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)

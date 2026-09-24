@@ -3,7 +3,7 @@
 The low-level constructor for the class every detector in this package
 returns. It assembles the components into a `ggcpt` without checking
 them, which is what makes it useful inside a wrapper and unsuitable as
-the entry point for hand-built input – use
+the entry point for hand-built input; use
 [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
 for that.
 
@@ -36,7 +36,7 @@ new_ggcpt(
   A tibble with segment information: `seg_id`, `start`, `end`, `n`,
   `param_estimate`. `param_estimate` is the segment **mean** for every
   method in the package, including the variance, distribution and
-  model-change detectors — it is the segment level, not the parameter
+  model-change detectors: it is the segment level, not the parameter
   that changed. A `change_in = "var"` result therefore has a
   `param_estimate` column that may barely move; read the variance off
   the data with the segment bounds if that is the quantity you want.
@@ -82,7 +82,7 @@ new_ggcpt(
   [`ecp::e.divisive()`](https://rdrr.io/pkg/ecp/man/e.divisive.html) or
   [`ecp::e.agglo()`](https://rdrr.io/pkg/ecp/man/e.agglo.html) directly
   if you need it. A few of the engines that *are* kept are still large
-  relative to the data — measured on a 2000-point series, `strucchange`
+  relative to the data: measured on a 2000-point series, `strucchange`
   costs about 135 MB (a triangular \\O(n^2)\\ RSS matrix), `bfast` about
   53 MB and `bocpd` about 31 MB, while every other engine stays under 4
   MB. That is the engine's own object, not overhead this package adds,
@@ -110,7 +110,7 @@ new_ggcpt(
 
 An object of class `ggcpt`, holding exactly the components passed in
 (documented one by one above) plus any of the optional slots listed
-below. Nothing is validated or derived –
+below. Nothing is validated or derived:
 [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
 is the constructor that does both.
 
@@ -133,7 +133,7 @@ test for with [`is.null()`](https://rdrr.io/r/base/NULL.html):
 - `regions`:
 
   a tibble of significance regions (`start`, `end`, ...) for the
-  interval-valued methods — see
+  interval-valued methods; see
   [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
   and
   [`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md).

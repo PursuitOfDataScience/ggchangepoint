@@ -1,7 +1,7 @@
 # Robust depth-based changepoints for functional and multivariate data
 
 Wraps KWCChangepoint (Ramsay and Chenouri): the functional
-Kruskal–Wallis covariance test, which ranks observations by statistical
+Kruskal-Wallis covariance test, which ranks observations by statistical
 *depth* and segments on the ranks. Because it never touches the values
 themselves it is insensitive to heavy tails and outlying curves, which
 is exactly where the moment-based functional tests degrade.
@@ -44,7 +44,7 @@ kwc_wrapper(
 
 - seed:
 
-  Optional seed — the random-projection depths and the wild binary
+  Optional seed: the random-projection depths and the wild binary
   segmentation both randomise. The seed is scoped to this call:
   `.Random.seed` is saved and restored, so a seeded call inside a
   simulation loop does not pin the loop's own stream.

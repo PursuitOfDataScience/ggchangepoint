@@ -3,12 +3,12 @@
 Willett): dynamic programming with an \(\ell_0\) penalty for changes in
 the transition matrix of a vector autoregression, with the two tuning
 parameters chosen by cross-validation. The change here is in the
-dynamics — how the series predicts itself — not in the level, so it
+dynamics (how the series predicts itself), not in the level, so it
 is invisible to every mean-change engine in the package."><meta property="og:description" content="Wraps changepoints::CV.search.DP.VAR1() (Wang, Yu, Rinaldo and
 Willett): dynamic programming with an \(\ell_0\) penalty for changes in
 the transition matrix of a vector autoregression, with the two tuning
 parameters chosen by cross-validation. The change here is in the
-dynamics — how the series predicts itself — not in the level, so it
+dynamics (how the series predicts itself), not in the level, so it
 is invisible to every mean-change engine in the package."><meta property="og:image" content="https://pursuitofdatascience.github.io/ggchangepoint/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -56,7 +56,7 @@ is invisible to every mean-change engine in the package."><meta property="og:ima
 Willett): dynamic programming with an \(\ell_0\) penalty for changes in
 the transition matrix of a vector autoregression, with the two tuning
 parameters chosen by cross-validation. The change here is in the
-<em>dynamics</em> — how the series predicts itself — not in the level, so it
+<em>dynamics</em> (how the series predicts itself), not in the level, so it
 is invisible to every mean-change engine in the package.</p>
     </div>
 
@@ -93,7 +93,11 @@ Defaults to a small grid scaled by the series length.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggcpt</code> object with <code>change_in = "regression"</code>.</p>
+    <p>A <code>ggcpt</code> object with <code>change_in = "regression"</code>. The
+  engine searches every other observation, so a location is resolved to
+  within two; each is reported as the last observation before the
+  change, the package convention, rather than the engine's own index,
+  which sits one or two earlier.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -174,7 +178,7 @@ Defaults to a small grid scaled by the series length.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    56    0.423</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    57   -<span style="color: #BB0000;">0.535</span></span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

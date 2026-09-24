@@ -30,7 +30,7 @@ cpt_confint(
 - level:
 
   Confidence/credible level. Defaults to `0.95`. Honoured by the routes
-  that compute an interval – `"bootstrap"`, `"posterior"` and `"nsp"` –
+  that compute an interval (`"bootstrap"`, `"posterior"` and `"nsp"`)
   and **ignored by** `"native"`, which reports the interval the engine
   already computed at whatever level it was asked for. Note that
   `method = "auto"` resolves to `"native"` whenever the engine supplied

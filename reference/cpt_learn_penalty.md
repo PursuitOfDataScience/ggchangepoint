@@ -93,7 +93,7 @@ The two scales differ and it matters:
 one weight per feature **on the log-penalty scale**, which is where the
 interval regression is fitted, while
 [`predict()`](https://rdrr.io/r/stats/predict.html) exponentiates and
-returns a penalty on the natural scale – the scale
+returns a penalty on the natural scale, the scale
 [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
 and
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
@@ -105,7 +105,7 @@ effect on the penalty, not an additive one.
 **The signs are often not interpretable, and that is a property of the
 labels rather than of the fit.** A target interval is open above
 whenever the largest penalty on the grid still achieves the minimum
-label error – which is the common case, because a large penalty usually
+label error, which is the common case, because a large penalty usually
 keeps the one changepoint the labels ask for. When every series'
 interval is open above, any sufficiently large prediction is optimal,
 the problem does not pin the slopes, and the \\L_2\\ term settles them
@@ -114,7 +114,7 @@ near zero with whatever sign the optimiser reached.
 Two measurements on four series of very different length and noise, all
 with one-change labels, differing only in the data drawn. In one, every
 non-intercept coefficient came out slightly negative, so the predicted
-penalty *decreased* with \\n\\ – the opposite of the \\\log n\\ growth a
+penalty *decreased* with \\n\\, the opposite of the \\\log n\\ growth a
 reader would expect from BIC, and not evidence of anything. In the
 other, every feature weight went to zero and the model became a
 **constant**: [`predict()`](https://rdrr.io/r/stats/predict.html)

@@ -23,9 +23,10 @@ bocpd_wrapper(x, hazard = 100, ...)
 
 - hazard:
 
-  Constant hazard rate \\1/\lambda\\ of the change process; larger
-  `hazard` values mean changes are expected less often. Defaults to
-  `100` (the upstream default).
+  The \\\lambda\\ of ocp's constant hazard: the expected run length
+  between changes, so the hazard rate itself is \\1/\lambda\\ and larger
+  values mean changes are expected less often. Defaults to `100` (the
+  upstream default).
 
 - ...:
 

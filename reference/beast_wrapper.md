@@ -1,4 +1,4 @@
-# BEAST wrapper — Bayesian estimation of abrupt change, seasonality, and trend
+# BEAST wrapper: Bayesian estimation of abrupt change, seasonality, and trend
 
 Wraps [`Rbeast::beast()`](https://rdrr.io/pkg/Rbeast/man/beast.html)
 (Zhao et al., 2019), a Bayesian model-averaging ensemble that estimates

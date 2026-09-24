@@ -24,7 +24,7 @@ cpt_update(monitor, new_obs)
 
 ## Value
 
-The updated `ggcpt_monitor` – the same structure as the input (see
+The updated `ggcpt_monitor`: the same structure as the input (see
 [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)),
 with `t` advanced by the number of new observations (rows, for a matrix)
 and any new rows appended to `alarms`. Re-assign it: the monitor is a

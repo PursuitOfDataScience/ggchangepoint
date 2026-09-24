@@ -44,15 +44,15 @@ tidy, plottable grammar.
 ## Search and pruning wrappers
 
 - [`fpop_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fpop_wrapper.md)
-  : FPOP wrapper — Functional Pruning Optimal Partitioning
+  : FPOP wrapper: Functional Pruning Optimal Partitioning
 - [`wbs_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/wbs_wrapper.md)
-  : WBS wrapper — Wild Binary Segmentation
+  : WBS wrapper: Wild Binary Segmentation
 - [`wbs2_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/wbs2_wrapper.md)
-  : WBS2 wrapper — Wild Binary Segmentation 2
+  : WBS2 wrapper: Wild Binary Segmentation 2
 - [`not_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/not_wrapper.md)
-  : NOT wrapper — Narrowest-Over-Threshold
+  : NOT wrapper: Narrowest-Over-Threshold
 - [`mosum_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mosum_wrapper.md)
-  : MOSUM wrapper — Moving Sum
+  : MOSUM wrapper: Moving Sum
 - [`idetect_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/idetect_wrapper.md)
   : Isolate-Detect wrapper
 - [`tguh_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/tguh_wrapper.md)
@@ -61,16 +61,16 @@ tidy, plottable grammar.
 ## Inference and slope wrappers
 
 - [`smuce_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/smuce_wrapper.md)
-  : SMUCE / HSMUCE wrapper — multiscale changepoint inference
+  : SMUCE / HSMUCE wrapper: multiscale changepoint inference
 - [`cpop_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpop_wrapper.md)
-  : CPOP wrapper — optimal change-in-slope detection
+  : CPOP wrapper: optimal change-in-slope detection
 - [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
-  : NSP wrapper — Narrowest Significance Pursuit
+  : NSP wrapper: Narrowest Significance Pursuit
 - [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
   [`autoplot(`*`<ggcpt_path>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
   [`print(`*`<ggcpt_path>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
   [`tidy(`*`<ggcpt_path>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
-  : CROPS — the full penalty path of a penalised changepoint method
+  : CROPS: the full penalty path of a penalised changepoint method
 
 ## Inference
 
@@ -220,7 +220,7 @@ and a learned penalty.
 - [`bocpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bocpd_wrapper.md)
   : Bayesian online changepoint detection wrapper (BOCPD)
 - [`beast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/beast_wrapper.md)
-  : BEAST wrapper — Bayesian estimation of abrupt change, seasonality,
+  : BEAST wrapper: Bayesian estimation of abrupt change, seasonality,
   and trend
 
 ## Nonparametric and sequential wrappers
@@ -237,26 +237,25 @@ and a learned penalty.
 ## Robust and model-selection wrappers
 
 - [`decafs_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/decafs_wrapper.md)
-  : DeCAFS wrapper — changes amid drift and autocorrelated noise
+  : DeCAFS wrapper: changes amid drift and autocorrelated noise
 - [`envcpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/envcpt_wrapper.md)
   : EnvCpt wrapper: changepoints versus trends versus autocorrelation
 - [`fastcpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fastcpd_wrapper.md)
-  : fastcpd wrapper — fast changepoint detection via sequential gradient
+  : fastcpd wrapper: fast changepoint detection via sequential gradient
   descent
 
 ## Multivariate and high-dimensional wrappers
 
 - [`inspect_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/inspect_wrapper.md)
-  : inspect wrapper — high-dimensional changepoints via sparse
-  projection
+  : inspect wrapper: high-dimensional changepoints via sparse projection
 - [`ocd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)
-  : ocd wrapper — online high-dimensional changepoint detection
+  : ocd wrapper: online high-dimensional changepoint detection
 - [`geomcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geomcp_wrapper.md)
   : Geometrically-inspired multivariate changepoint wrapper (geomcp)
 - [`esac_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/esac_wrapper.md)
-  : ESAC wrapper — sparsity-adaptive high-dimensional detection
+  : ESAC wrapper: sparsity-adaptive high-dimensional detection
 - [`pilliat_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/pilliat_wrapper.md)
-  : Pilliat wrapper — high-dimensional detection by three complementary
+  : Pilliat wrapper: high-dimensional detection by three complementary
   tests
 - [`hdcov_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/hdcov_wrapper.md)
   : High-dimensional covariance changepoints
@@ -285,7 +284,7 @@ and a learned penalty.
 - [`segmented_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/segmented_wrapper.md)
   : Broken-line regression wrapper (segmented)
 - [`bfast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bfast_wrapper.md)
-  : BFAST wrapper — breaks for additive season and trend
+  : BFAST wrapper: breaks for additive season and trend
 
 ## Applied vocabularies and fast paths
 

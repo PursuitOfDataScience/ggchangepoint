@@ -21,7 +21,7 @@ npmojo_wrapper(x, G = NULL, lag = 0, ...)
 - G:
 
   Moving-window bandwidth. Defaults to `max(20, 0.1 * n)` observations,
-  capped at `n / 2` — the largest bandwidth the engine accepts — so the
+  capped at `n / 2` (the largest bandwidth the engine accepts), so the
   default also works on series shorter than 40.
 
 - lag:

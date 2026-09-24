@@ -76,17 +76,16 @@ questions that come next, and that a bare list of locations cannot
 answer:</p>
 <ol style="list-style-type: decimal">
 <li>
-<strong>How sure are we about <em>where</em>?</strong> —
+<strong>How sure are we about <em>where</em>?</strong>
 <code><a href="../reference/cpt_confint.html">cpt_confint()</a></code>, <code><a href="../reference/nsp_wrapper.html">nsp_wrapper()</a></code>.</li>
 <li>
-<strong>Is the change real at all?</strong> —
-<code><a href="../reference/cpt_test.html">cpt_test()</a></code>, and why the answer is harder than it
-looks.</li>
+<strong>Is the change real at all?</strong> <code><a href="../reference/cpt_test.html">cpt_test()</a></code>,
+and why the answer is harder than it looks.</li>
 <li>
-<strong>How many changes are there?</strong> —
+<strong>How many changes are there?</strong>
 <code><a href="../reference/cpt_select.html">cpt_select()</a></code>.</li>
 <li>
-<strong>What is driving this answer?</strong> —
+<strong>What is driving this answer?</strong>
 <code><a href="../reference/cpt_influence.html">cpt_influence()</a></code>, <code><a href="../reference/cpt_sensitivity.html">cpt_sensitivity()</a></code>,
 <code><a href="../reference/cpt_statistic.html">cpt_statistic()</a></code>.</li>
 </ol>
@@ -116,8 +115,8 @@ looks.</li>
 <h3 id="four-provenances-one-contract">Four provenances, one contract<a class="anchor" aria-label="anchor" href="#four-provenances-one-contract"></a>
 </h3>
 <p>Only a handful of engines ship an interval of their own.
-<code><a href="../reference/cpt_confint.html">cpt_confint()</a></code> covers the rest, and — because the four
-routes mean genuinely different things — reports which one it used in a
+<code><a href="../reference/cpt_confint.html">cpt_confint()</a></code> covers the rest and, because the four routes
+mean genuinely different things, reports which one it used in a
 <code>source</code> column rather than presenting them as
 interchangeable.</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
@@ -142,7 +141,7 @@ uses it:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   120      117      120    <span style="color: #BB0000;">NA</span> native</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   240      239      244    <span style="color: #BB0000;">NA</span> native</span></span></code></pre></div>
-<p>Those are SMUCE’s <em>simultaneous</em> confidence sets — a different
+<p>Those are SMUCE’s <em>simultaneous</em> confidence sets, a different
 object from a bootstrap frequency band, which is exactly why the
 <code>source</code> column exists.</p>
 </div>
@@ -193,7 +192,7 @@ it changed there</em> is circular, and the resulting p-values are
 anti-conservative, often severely.</p>
 <p><code><a href="../reference/cpt_test.html">cpt_test()</a></code> never hides that. It uses the engine’s own
 test where one exists and an explicitly unadjusted two-sample test where
-none does — and the <code>selection_adjusted</code> column records
+none does, and the <code>selection_adjusted</code> column records
 <em>whether the p-value accounts for selection</em>, which is not the
 same question. <code>segmented</code>’s Davies test is built for it and
 reads <code>TRUE</code>; <code>strucchange</code>’s route is the Chow F
@@ -217,7 +216,7 @@ and still assumes the date was fixed in advance, so it reads
 <p>If you need a guarantee that survives selection, the route is NSP
 (above) or <code>cpt_confint(method = "nsp")</code>, which maps each
 detected changepoint to the narrowest region covering it and returns
-<code>NA</code> for one that no region covers — because “no region
+<code>NA</code> for one that no region covers, because “no region
 supports this at level
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>”
 is a finding, not a missing value.</p>
@@ -234,8 +233,8 @@ is a finding, not a missing value.</p>
 </h2>
 <p><code><a href="../reference/cpt_crops.html">cpt_crops()</a></code> draws the penalty path.
 <code><a href="../reference/cpt_select.html">cpt_select()</a></code> chooses from it, over one candidate ladder
-shared by every criterion — so “BIC says 2, cross-validation says 3” is
-a comparison of criteria and not of two different searches.</p>
+shared by every criterion, so “BIC says 2, cross-validation says 3” is a
+comparison of criteria and not of two different searches.</p>
 <div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sel</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_select.html">cpt_select</a></span><span class="op">(</span><span class="va">x</span>, criterion <span class="op">=</span> <span class="st">"mbic"</span>, k_max <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="va">sel</span></span>
@@ -257,7 +256,7 @@ a comparison of criteria and not of two different searches.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">8</span>     7  33.9  -<span style="color: #BB0000;">63.0</span> FALSE </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">9</span>     8  43.1  -<span style="color: #BB0000;">67.5</span> FALSE</span></span></code></pre></div>
 <p><code>criterion = "mbic"</code> is the segment-length modified BIC of
-<span class="citation">Zhang and Siegmund (2007)</span> — the real one,
+<span class="citation">Zhang and Siegmund (2007)</span>: the real one,
 which reads the segment lengths and so cannot be expressed by
 <code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code>’s function of
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>n</mi><annotation encoding="application/x-tex">n</annotation></semantics></math>
@@ -291,8 +290,8 @@ is instructive, not because it is a good default.</p>
 <h3 id="which-observation">Which observation<a class="anchor" aria-label="anchor" href="#which-observation"></a>
 </h3>
 <p><code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> answers “would I find this again?”.
-<code><a href="../reference/cpt_influence.html">cpt_influence()</a></code> asks the sharper question — which single
-observation, if perturbed, changes the segmentation — following <span class="citation">Wilms et al. (2022)</span>.</p>
+<code><a href="../reference/cpt_influence.html">cpt_influence()</a></code> asks the sharper question (which single
+observation, if perturbed, changes the segmentation), following <span class="citation">Wilms et al. (2022)</span>.</p>
 <div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_influence.html">cpt_influence</a></span><span class="op">(</span><span class="va">fit</span>, engine <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">has_infl</span><span class="op">)</span> <span class="st">"auto"</span> <span class="kw">else</span> <span class="st">"recompute"</span>,</span>
 <span>                     subset <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">has_infl</span><span class="op">)</span> <span class="cn">NULL</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">360</span>, by <span class="op">=</span> <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
@@ -396,7 +395,7 @@ model, and how decisively each beat the next:</p>
 <p><img src="inference_files/figure-html/path-1.png" class="r-plt" alt="Solution path: each candidate changepoint against the step at which it entered, with the proposing interval drawn" width="576"></p>
 <p><code><a href="../reference/cpt_solution_path.html">cpt_solution_path()</a></code> is the same object as a tibble. The
 <code>contrast</code> column is the margin by which each candidate beat
-the next, and <code>selected</code> marks the ones the penalty kept — so
+the next, and <code>selected</code> marks the ones the penalty kept, so
 the gap between the last selected row and the first rejected one is how
 close the decision was:</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
@@ -429,7 +428,7 @@ do:</p>
 <span><span class="co">#&gt; - Penalty: MBIC</span></span>
 <span><span class="co">#&gt; - Series length: 360</span></span>
 <span><span class="co">#&gt; - Changepoints found: 2</span></span>
-<span><span class="co">#&gt; - Detection runtime: 0.02 s</span></span>
+<span><span class="co">#&gt; - Detection runtime: 0.021 s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ## Changepoints</span></span>
 <span><span class="co">#&gt; </span></span>

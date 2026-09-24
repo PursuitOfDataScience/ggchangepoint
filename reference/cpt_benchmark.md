@@ -132,7 +132,7 @@ with [`print()`](https://rdrr.io/r/base/print.html),
 ## Reading the critical-difference diagram
 
 Rank 1 is best. Each method's mean rank is taken over the datasets, in
-the direction the metric calls for – higher is better for `covering`,
+the direction the metric calls for: higher is better for `covering`,
 `f1`, `precision`, `recall` and `rand_index`; lower for `hausdorff`,
 `annotation_error`, `mae_matched` and `rmse_matched`. A metric that came
 back `NA` takes the *worst* rank on that dataset rather than being
@@ -142,7 +142,7 @@ quietly scoring on a smaller sample; ties share the average rank.
 The bar is the Nemenyi critical distance \$\$CD = q\_\alpha
 \sqrt{k(k + 1) / (6N)}\$\$ for \\k\\ methods over \\N\\ datasets, where
 \\q\_\alpha\\ is the Studentised range statistic at \\\alpha\\ divided
-by \\\sqrt 2\\ (Demsar, 2006 – the constants agree with that paper's
+by \\\sqrt 2\\ (Demsar, 2006; the constants agree with that paper's
 Table 5 to three decimals for \\k = 2, \ldots, 10\\). Two methods whose
 mean ranks differ by less than \\CD\\ are not distinguished at that
 level.
@@ -151,7 +151,7 @@ level.
 procedure, and the convention is to run it only after a Friedman test
 has rejected the null that all methods rank equally.
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-does not run that omnibus test – it draws the diagram it is asked for –
+does not run that omnibus test (it draws the diagram it is asked for),
 so a gap wider than \\CD\\ on a grid where Friedman would not have
 rejected is not the significant difference it looks like. With the
 handful of datasets

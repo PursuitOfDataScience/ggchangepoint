@@ -8,7 +8,7 @@ to changepoint detection in R: one dispatcher
 covering 50 methods across six methodological families, one result class
 (`ggcpt`) with a stable tidy contract, and one visualisation entry point
 ([`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html))
-that draws everything a method reports — including confidence intervals
+that draws everything a method reports, including confidence intervals
 and posterior probabilities (Wickham 2016; Robinson 2017). This vignette
 is the *feature tour*: it visits **every exported function** in the
 package at the point where it belongs in the workflow, so a reader can
@@ -189,10 +189,10 @@ autoplot()](ggchangepoint_files/figure-html/plot-fallback-1.png)
 is the recommended entry point: pick a `method`, say what the change is
 in (`change_in` = `"mean"`, `"var"`, `"meanvar"`, `"slope"`,
 `"distribution"`, `"covariance"`, `"network"`, `"regression"` or
-`"seasonality"` — the values
+`"seasonality"`, the values
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
 lists in its `supports` column), and optionally set a `penalty`.
-Incompatible `method`/`change_in` combinations error — they are never
+Incompatible `method`/`change_in` combinations error; they are never
 silently substituted.
 
 ``` r
@@ -215,7 +215,7 @@ cpt_detect(x, method = "binseg", change_in = "mean")
 
 Anything else in `...` reaches the underlying wrapper, and takes
 precedence over the value the dispatcher would otherwise derive from
-`change_in` — here the NOT contrast is set directly rather than
+`change_in`. Here the NOT contrast is set directly rather than
 inherited:
 
 ``` r
@@ -532,7 +532,7 @@ tidy(res_cpop)
 
 **Bayesian detection.**
 [`bcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bcp_wrapper.md)
-implements the Barry–Hartigan product-partition model (Barry and
+implements the Barry-Hartigan product-partition model (Barry and
 Hartigan 1993; Erdman and Emerson 2007);
 [`bocpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bocpd_wrapper.md)
 runs Bayesian online changepoint detection over the run-length posterior
@@ -718,7 +718,7 @@ tidy(cpt_detect(X, method = "ecp", seed = 1))
 
 **Regression structure.**
 [`strucchange_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md)
-dates Bai–Perron breaks, either in a bare series or in the coefficients
+dates Bai-Perron breaks, either in a bare series or in the coefficients
 of a formula (Bai and Perron 1998, 2003; Zeileis et al. 2002);
 [`segmented_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/segmented_wrapper.md)
 fits a continuous broken-line regression, so the change it reports is a
@@ -830,12 +830,12 @@ changepoints](ggchangepoint_files/figure-html/crops-seg-1.png)
 
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 renders any `ggcpt`. Options: `show_segments` (fitted segment means),
-`show_fit` (the engine’s own fitted signal, where provided — the nine
+`show_fit` (the engine’s own fitted signal, where provided; the nine
 engines
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
 marks in its `fitted` column: SMUCE, HSMUCE, CPOP, bcp, BEAST, DeCAFS,
 segmented, mcp, bfast), `show_ci` (changepoint-location confidence
-intervals, where provided — the seven marked in its `ci` column: SMUCE,
+intervals, where provided; the seven marked in its `ci` column: SMUCE,
 HSMUCE, strucchange, segmented, mcp, bfast, taylor; `nsp` is marked
 there too but reports a region, drawn by `show_regions`),
 `show_points`/`show_line`, an `index` for a date axis, and the
@@ -1005,7 +1005,7 @@ runs several detectors on the same series and renders them faceted
 for parallel execution;
 [`ggcpt_compare_table()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare_table.md)
 returns the tidy union of the same runs. A method that finds nothing
-keeps its panel and contributes an `NA` row — “no changepoints” is a
+keeps its panel and contributes an `NA` row: “no changepoints” is a
 result, not a missing one.
 
 ``` r
@@ -1072,7 +1072,7 @@ changepoints](ggchangepoint_files/figure-html/batch-1.png)
 [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
 quantifies how fragile a segmentation is: it resamples residuals within
 the fitted segments, re-runs the detector, and reports the re-detection
-frequency at every location — a model-agnostic confidence signal for
+frequency at every location, a model-agnostic confidence signal for
 engines with no native intervals:
 
 ``` r
@@ -1144,7 +1144,7 @@ travels with the data in the `true_changepoints` and `true_segments`
 attributes. Five canonical test signals from the literature ship
 ready-made:
 [`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md)
-(the Donoho–Johnstone blocks signal (Donoho and Johnstone 1994)),
+(the Donoho-Johnstone blocks signal (Donoho and Johnstone 1994)),
 [`signal_fms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_fms.md),
 [`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md),
 [`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md),
@@ -1359,7 +1359,7 @@ converts a plain ground-truth set into labels,
 [`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
 traces the errors across a penalty grid, and
 [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
-fits a penalty from several labelled series — see
+fits a penalty from several labelled series; see
 [`vignette("supervised", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/supervised.md).
 
 ### Choosing and combining methods
@@ -1436,7 +1436,7 @@ draws the events.
 [`scale_fill_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
 and
 [`scale_colour_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/scale_fill_cpt_label.md)
-are the colour-vision-safe scales — the Okabe-Ito palette, plus a
+are the colour-vision-safe scales: the Okabe-Ito palette, plus a
 linetype scale so that colour is never the only channel carrying a
 distinction. All three at once, on the fitted segmentation:
 
@@ -1534,7 +1534,7 @@ autoplot(pw)
 size](ggchangepoint_files/figure-html/power-tour-1.png)
 
 [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
-inverts the curve — it bisects for the change size that reaches a target
+inverts the curve: it bisects for the change size that reaches a target
 power, which is the number a pre-registration needs:
 
 ``` r

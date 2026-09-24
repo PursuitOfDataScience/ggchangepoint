@@ -2,8 +2,8 @@
 
 Returns the criterion the engine evaluated at each position, which is
 what explains *why* a changepoint landed where it did. Available for the
-engines that expose it — `subset(cpt_methods(), statistic)$method` lists
-them — and an error naming those engines for the ones that do not.
+engines that expose it (`subset(cpt_methods(), statistic)$method` lists
+them), and an error naming those engines for the ones that do not.
 
 ## Usage
 

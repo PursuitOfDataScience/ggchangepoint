@@ -60,8 +60,8 @@ consideration: a hundred thousand points in under a tenth of a second.
 The random-interval searches (`not`, `wbs`, `tguh`, `idetect`) cost
 seconds because they fit many sub-intervals by construction, which is
 also why they find changes the single-pass methods miss. `pettitt` and
-`np` are the two to watch — half a minute and a minute and a half
-respectively — and `np` is the one most likely to surprise, because
+`np` are the two to watch (half a minute and a minute and a half
+respectively), and `np` is the one most likely to surprise, because
 nonparametric cost is paid per quantile.
 
 ### What does not finish
@@ -79,7 +79,7 @@ This is the practical dividing line in the package. `ecp` and `bocpd`
 are quadratic or worse in n; `cpop` solves a continuous-piecewise-linear
 problem whose candidate set grows fast; `strucchange` and `taylor` were
 written for the series lengths their fields see, which are in the
-hundreds or low thousands. None of them is broken — they are simply
+hundreds or low thousands. None of them is broken; they are simply
 methods for short series, and choosing one for a long series is a
 modelling error rather than a performance problem to be tuned around.
 
@@ -99,15 +99,15 @@ the truth.
 |--------|-----------|------------|-------------|
 | truth  | 4         | 4          | 4           |
 | `cpm`  | 5         | 36         | 350         |
-| `np`   | —         | —          | 10          |
+| `np`   | not run   | not run    | 10          |
 
 `cpm`’s count grows *linearly in n*, and this is not a defect. `cpm` is
 a sequential monitor, and its `arl0 = 500` default asks for a false
-alarm every 500 in-control observations — so a stream of length n
-implies about `n / arl0` alarms by construction: 2 at n = 1,000, 20 at n
-= 10,000, 200 at n = 100,000, which is the order of what we see. The
-count is the parameterisation working as specified, read as though it
-were a segmentation.
+alarm every 500 in-control observations, so a stream of length n implies
+about `n / arl0` alarms by construction: 2 at n = 1,000, 20 at n =
+10,000, 200 at n = 100,000, which is the order of what we see. The count
+is the parameterisation working as specified, read as though it were a
+segmentation.
 
 Setting `arl0 = 5 * n` returns **exactly the 4 real changepoints** at n
 = 1,000 and n = 10,000. The lesson generalises to every online method
@@ -124,11 +124,11 @@ unavailable at n = 100,000; the most that can be asked for there is
 50,000, or `n / 2`.
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 refuses an off-grid value outright, because `cpm` answers one by
-printing an error and returning no changepoints – indistinguishable from
+printing an error and returning no changepoints, indistinguishable from
 a genuine “no changes” result.
 
-`np` reports 10 at n = 100,000 — an over-count of six, small enough to
-be worth its nonparametric robustness, and much better behaved than
+`np` reports 10 at n = 100,000, an over-count of six, small enough to be
+worth its nonparametric robustness, and much better behaved than
 `cpm`’s.
 
 ## 3. Empirical size under the global null
@@ -149,7 +149,7 @@ changepoint at all**, 6 replicates. The right answer is zero.
 | `tguh`       | 0         | 0          | 0           |
 | `idetect`    | 0         | 0          | 0           |
 | `cpm`        | 1.50      | 33.83      | 365.83      |
-| `np`         | 1.17      | 6.17       | —           |
+| `np`         | 1.17      | 6.17       | not run     |
 
 Ten methods raise **zero** false alarms at all three lengths. That is a
 strong result and worth stating plainly: with default penalties, the
@@ -158,7 +158,7 @@ changepoints in noise, and the default settings are conservative rather
 than merely conventional.
 
 `cpm`’s row is the same `arl0` arithmetic as above, now with nothing
-real to find, and it lines up with the previous table almost exactly —
+real to find, and it lines up with the previous table almost exactly:
 33.83 false alarms at n = 10,000 against 36 total reported when four
 were real. `np`’s 1.17 and 6.17 are mild over-detection.
 
@@ -185,8 +185,8 @@ series.
 | `posterior` | 1.00     | 245.5      |
 
 `native` and `bootstrap` both hit the nominal level, and the bootstrap
-does it at roughly half the width — attractive, with the caveat that it
-conditions on the fitted segmentation and so is not exact.
+does it at roughly half the width. That is attractive, with the caveat
+that it conditions on the fitted segmentation and so is not exact.
 
 `nsp` covers 1.00 at nearly three times the native width. That is the
 price of a guarantee that holds *globally across all intervals* and
@@ -195,7 +195,7 @@ surprise.
 
 `posterior` is the row to take seriously. A mean width of **245.5 on a
 300-point series** is a vacuous interval: it says the changepoint is
-somewhere in the series. The mechanism is specific and worth knowing —
+somewhere in the series. The mechanism is specific and worth knowing:
 `bcp`’s posterior probability of a change is sharply peaked, so its 50%
 highest-density interval is one or two observations wide, but the tails
 are diffuse, so pushing the credible level out to 0.95 sweeps in almost

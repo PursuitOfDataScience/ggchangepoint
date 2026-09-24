@@ -3,9 +3,9 @@
 Wraps [`wbsts::wbs.lsw()`](https://rdrr.io/pkg/wbsts/man/wbs.lsw.html)
 (Korkas and Fryzlewicz): wild binary segmentation applied to the locally
 stationary wavelet spectrum, so it detects changes in the *second-order*
-structure — variance and autocovariance — of a nonstationary series.
-Where `wbs` looks for jumps in the level, this looks for jumps in how
-the series behaves.
+structure (variance and autocovariance) of a nonstationary series. Where
+`wbs` looks for jumps in the level, this looks for jumps in how the
+series behaves.
 
 ## Usage
 
@@ -32,13 +32,22 @@ wbsts_wrapper(
   Number of random intervals (`M`). Defaults to `0`, which is the
   engine's "all dyadic intervals" setting.
 
-- cstar, lambda:
+- cstar:
 
-  Post-processing constants; the engine's defaults are `0.75` for both.
+  The unbalancedness parameter \\c\_\star\\ of the search: a candidate
+  split may leave at most this fraction of its interval on either side.
+  Between `0.5` and `1`; defaults to the engine's `0.75`.
+
+- lambda:
+
+  How many wavelet scales are used when `scales` is `NULL`:
+  `floor(3 * lambda * log(log(n)))` of them, from the finest down.
+  Defaults to the engine's `0.75`.
 
 - scales:
 
-  Wavelet scales to use. `NULL` lets the engine choose.
+  Wavelet scales to use: at least two different whole numbers from 1 to
+  `floor(log2(n)) - 1`. `NULL` lets the engine choose.
 
 - seed:
 

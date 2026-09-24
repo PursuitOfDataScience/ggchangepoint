@@ -14,13 +14,13 @@ covering 50 detection methods across six algorithmic families, and
 native `ggplot2` (Wickham 2016) visualisation through
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 and a set of composable geoms. Where a method quantifies its uncertainty
-— the simultaneous confidence intervals of SMUCE (Frick et al. 2014),
-the break-date intervals of Bai–Perron (Bai and Perron 1998), the
-posterior distributions of Bayesian detectors (Barry and Hartigan 1993;
-Adams and MacKay 2007) — the result object carries that uncertainty and
-the plotting layer can draw it. The package further supplies a
-penalty-path diagnostic (CROPS), batch detection over panels of series,
-bootstrap stability diagnostics, accuracy metrics aligned with current
+(the simultaneous confidence intervals of SMUCE (Frick et al. 2014), the
+break-date intervals of Bai-Perron (Bai and Perron 1998), the posterior
+distributions of Bayesian detectors (Barry and Hartigan 1993; Adams and
+MacKay 2007)), the result object carries that uncertainty and the
+plotting layer can draw it. The package further supplies a penalty-path
+diagnostic (CROPS), batch detection over panels of series, bootstrap
+stability diagnostics, accuracy metrics aligned with current
 benchmarking conventions (van den Burg and Williams 2020), ground-truth
 simulation, and per-method citations. This article sets out the
 statistical background, the design of the package, and each method
@@ -28,8 +28,8 @@ family in turn, with worked examples throughout.
 
 ## Introduction
 
-Changepoint analysis — locating the instants at which the stochastic
-behaviour of an ordered sequence changes — is one of the oldest problems
+Changepoint analysis (locating the instants at which the stochastic
+behaviour of an ordered sequence changes) is one of the oldest problems
 in statistics, dating back at least to the continuous-inspection schemes
 of Page (1954), and one of its most active: recent surveys catalogue
 dozens of methods (Truong et al. 2020; Aminikhanghahi and Cook 2017).
@@ -50,8 +50,8 @@ follows a different indexing convention, and draws (or does not draw)
 its own plots.
 
 An analyst who wants to *compare* a PELT segmentation with a Bayesian
-posterior and a multiscale confidence set — a routine task in applied
-work — must therefore learn several APIs, reconcile several conventions,
+posterior and a multiscale confidence set (a routine task in applied
+work) must therefore learn several APIs, reconcile several conventions,
 and write custom plotting code for each. **ggchangepoint** removes that
 friction. Its design goals are:
 
@@ -60,8 +60,8 @@ friction. Its design goals are:
     mean the same thing for every engine.
 2.  **One result type.** Every detector returns a `ggcpt` object with a
     stable tidy contract, whatever the upstream engine returned.
-3.  **One rendering path.** Every result — point estimates, confidence
-    intervals, fitted signals, posteriors, penalty paths — draws with
+3.  **One rendering path.** Every result (point estimates, confidence
+    intervals, fitted signals, posteriors, penalty paths) draws with
     [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
     and extends with ordinary `ggplot2` layers.
 4.  **Wrap, don’t reinvent.** All detection is delegated to the
@@ -91,9 +91,9 @@ penalised cost,
 \min_{m,\ \tau_{1:m}} \; \sum_{i=1}^{m+1}
   \mathcal{C}\!\left(y_{(\tau_{i-1}+1):\tau_i}\right) \;+\; \beta m,
 ```
-where $`\mathcal{C}`$ is a segment cost — for a change in mean under
+where $`\mathcal{C}`$ is a segment cost (for a change in mean under
 Gaussian noise the residual sum of squares, more generally twice the
-negative maximised log-likelihood of the segment — and $`\beta > 0`$ is
+negative maximised log-likelihood of the segment) and $`\beta > 0`$ is
 the price of each additional changepoint. Writing $`k`$ for the number
 of parameters a changepoint introduces, the familiar choices are
 $`\beta = 2k`$ (AIC) and $`\beta = k \log n`$ (BIC, or SIC in the
@@ -112,14 +112,18 @@ residual sum of squares directly, so multiplying the data by a constant
 multiplies the cost while leaving $`\beta`$ untouched. On a 200-point
 series with a single changepoint whose jump is five standard deviations,
 `pelt` recovers exactly one changepoint at $`\sigma = 1`$ but returns 39
-at $`\sigma = 3`$ and 141 at $`\sigma = 10`$ — means over 20 draws,
-since a single draw is not stable at these settings. Standardise the
-series, pass a penalty on the data’s own scale (say
+at $`\sigma = 3`$ and 141 at $`\sigma = 10`$ (means over 20 draws, since
+a single draw is not stable at these settings). Standardise the series,
+pass a penalty on the data’s own scale (say
 `2 * log(n) * var(diff(x)) / 2`), or use `change_in = "meanvar"`, which
 estimates a variance per segment. Methods that estimate the noise level
-as part of their procedure — SMUCE, the WBS family, CPOP, DeCAFS, and
-the Bayesian and nonparametric engines — return the same segmentation
-whatever the units.
+as part of their procedure (SMUCE, the WBS family, CPOP, bcp, BEAST and
+the nonparametric engines) return the same segmentation whatever the
+units. Three exceptions are worth knowing: `geomcp` runs PELT on its
+mapped series and inherits its sensitivity, DeCAFS floors its noise
+estimate near 0.03, and BOCPD’s default prior is on the data’s own
+scale, so the last two miss changes in a series measured in very small
+units.
 
 ### Search-based and multiscale methods
 
@@ -132,13 +136,13 @@ not masked; **narrowest-over-threshold** (NOT) (Baranowski et al. 2019)
 favours the narrowest interval on which the contrast exceeds a
 threshold, which generalises cleanly to changes in slope; **MOSUM**
 (Eichinger and Kirch 2018) scans a moving-sum statistic at a fixed
-bandwidth, or across a range of bandwidths; Isolate–Detect (Anastasiou
+bandwidth, or across a range of bandwidths; Isolate-Detect (Anastasiou
 and Fryzlewicz 2022) isolates each changepoint in an expanding interval;
 and TGUH (Fryzlewicz 2018) performs a tail-greedy bottom-up merge.
 **SMUCE** (Frick et al. 2014) occupies a special place: it estimates the
 step function with the fewest jumps that still passes a *simultaneous
 multiscale test* at level $`\alpha`$, and in doing so delivers
-confidence intervals for every changepoint location — uncertainty
+confidence intervals for every changepoint location, uncertainty
 statements most competitors cannot make. HSMUCE (Pein et al. 2017)
 extends this to heterogeneous noise.
 
@@ -146,7 +150,7 @@ extends this to heterogeneous noise.
 
 Changes need not be in the mean: the `change_in` argument accepts
 `"mean"`, `"var"`, `"meanvar"`, `"slope"`, `"distribution"`,
-`"covariance"`, `"network"`, `"regression"` and `"seasonality"` — the
+`"covariance"`, `"network"`, `"regression"` and `"seasonality"`, the
 nine values
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
 lists in its `supports` column, each routable to the methods that
@@ -175,13 +179,13 @@ Every detector returns an object of class `ggcpt` containing:
   strucchange, segmented, bfast, taylor, mcp), `posterior_prob` (bcp,
   BEAST), `detection_time` (CPM), `strength` (inspect), `declared_at`
   (ocd), or `mapping` (geomcp) when they have more to say. `nsp` reports
-  its uncertainty as a significance region instead — `region_start`,
+  its uncertainty as a significance region instead: `region_start`,
   `region_end` and the `regions` slot.
 - `segments`: a tibble of the induced segments (`seg_id`, `start`,
   `end`, `n`, `param_estimate`).
 - `data`: the analysed series as a tibble (`index`, `value`), plus a
   `fitted` column when the engine estimates a signal (SMUCE, HSMUCE,
-  CPOP, bcp, BEAST, DeCAFS, segmented, mcp, bfast — the engines
+  CPOP, bcp, BEAST, DeCAFS, segmented, mcp, bfast; these are the engines
   [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
   marks in its `fitted` column).
 - `method`, `change_in`, `penalty` (a `list(type, value)` descriptor),
@@ -248,7 +252,7 @@ head(augment(res))
 ```
 
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
-draws the series, the changepoint rules, and — on request — the fitted
+draws the series, the changepoint rules and, on request, the fitted
 segment means (`show_segments`), the engine’s fitted signal
 (`show_fit`), and changepoint-location confidence intervals (`show_ci`):
 
@@ -279,27 +283,27 @@ surface.
 
 ### Design principles
 
-The four goals above are recorded in the package as principles **P1 —
-wrap, don’t reinvent** (bind to peer-reviewed CRAN engines), **P2 — tidy
-in, tidy out** (stable column names across all methods), **P3 — ggplot2
-all the way down** (every result renders and extends), and **P4 — one
+The four goals above are recorded in the package as principles **P1.
+Wrap, don’t reinvent** (bind to peer-reviewed CRAN engines), **P2. Tidy
+in, tidy out** (stable column names across all methods), **P3. ggplot2
+all the way down** (every result renders and extends), and **P4. One
 vocabulary** (`x`, `method`, `change_in`, `penalty`, `...`). Three
 further principles govern how the interface evolves:
 
-- **P5 — Progressive disclosure**: beginners call
+- **P5. Progressive disclosure**: beginners call
   [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md) +
   [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html);
   experts reach the upstream fit via `$fit`.
-- **P6 — No surprises**: the 0.1.0 functions still work unchanged.
-- **P7 — Document everything you ship**: every export is introduced in
+- **P6. No surprises**: the 0.1.0 functions still work unchanged.
+- **P7. Document everything you ship**: every export is introduced in
   the README and a vignette.
 
-Release 0.4.0 adds an eighth: **P8 — carry the uncertainty**. Where a
+Release 0.4.0 adds an eighth: **P8. Carry the uncertainty**. Where a
 method quantifies uncertainty, the `ggcpt` object records it and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 can draw it.
 
-Release 0.5.0 adds a ninth: **P9 — be extensible from the outside**. A
+Release 0.5.0 adds a ninth: **P9. Be extensible from the outside**. A
 detector this package does not wrap, cannot wrap, or has never heard of
 can join the same grammar through
 [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
@@ -339,7 +343,7 @@ cpt_methods()
 
 Requests are validated against this capability matrix: asking a
 mean-only engine for a variance change is an error with the legal
-alternatives named — never a silent substitution. Univariate methods
+alternatives named, never a silent substitution. Univariate methods
 likewise refuse multi-column input rather than flattening it.
 
 Penalty semantics differ across engines, and
@@ -360,7 +364,7 @@ cpt_penalty("sSIC", n = 200)
 
 Two of these warrant a word. `"sSIC"` is the strengthened Schwarz
 criterion $`k (\log n)^{\alpha}`$, with $`\alpha = 1.01`$ by default
-(Fryzlewicz 2014) — marginally heavier than BIC, and the criterion the
+(Fryzlewicz 2014), marginally heavier than BIC, and the criterion the
 search-based engines apply internally. `"MBIC"` in
 [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
 returns $`0.5 (k+1) \log n + \log \binom{n}{k}`$: a BIC-type term plus
@@ -388,16 +392,16 @@ be checked by eye.
 draws series with prescribed changepoints, and five canonical test
 signals ship as ready-made generators:
 [`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md)
-(the Donoho–Johnstone blocks signal (Donoho and Johnstone 1994)),
+(the Donoho-Johnstone blocks signal (Donoho and Johnstone 1994)),
 [`signal_fms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_fms.md),
 [`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md),
 [`signal_stairs()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_stairs.md),
 and
 [`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md).
 The comparison vignette puts them to work. The sections that follow work
-through six families — penalised and optimal partitioning, multiscale
-and search, Bayesian, nonparametric and sequential, multivariate and
-high-dimensional, and regression-based — plus two concerns that cut
+through six families (penalised and optimal partitioning, multiscale and
+search, Bayesian, nonparametric and sequential, multivariate and
+high-dimensional, and regression-based) plus two concerns that cut
 across all of them: change in slope, and robustness to drift,
 autocorrelation and model ambiguity.
 
@@ -446,8 +450,8 @@ The Achilles heel of penalised methods is the choice of $`\beta`$.
 Rather than committing to one value,
 [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
 computes *every* optimal segmentation as $`\beta`$ ranges over an
-interval — the CROPS algorithm of Haynes, Eckley and Fearnhead (2017),
-as implemented by **changepoint** — and turns penalty selection into a
+interval (the CROPS algorithm of Haynes, Eckley and Fearnhead (2017), as
+implemented by **changepoint**) and turns penalty selection into a
 diagnostic:
 
 ``` r
@@ -493,8 +497,8 @@ solution's
 changepoints](introduction_files/figure-html/crops-segmentations-1.png)
 
 The modern **fastcpd** engine (Li and Zhang 2024) brings the same
-penalised formulation to a wide family of models — mean, variance,
-mean-and-variance, and AR/ARMA/GARCH model changes — with
+penalised formulation to a wide family of models (mean, variance,
+mean-and-variance, and AR/ARMA/GARCH model changes) with
 sequential-gradient-descent speed:
 
 ``` r
@@ -631,7 +635,7 @@ tidy(cpt_detect(x_slope, method = "not", change_in = "slope"))
 
 ### Bayesian detection
 
-The Barry–Hartigan product partition model (Barry and Hartigan 1993),
+The Barry-Hartigan product partition model (Barry and Hartigan 1993),
 via the **bcp** package (Erdman and Emerson 2007), returns a *posterior
 probability of a changepoint at every location* along with posterior
 segment means. Locations clearing `prob_threshold` populate the
@@ -655,8 +659,8 @@ per-location posterior changepoint probability
 below](introduction_files/figure-html/bcp-1.png)
 
 Bayesian *online* changepoint detection (Adams and MacKay 2007) instead
-tracks the posterior over the current **run length** — the time elapsed
-since the last change — updating it recursively as each observation
+tracks the posterior over the current **run length** (the time elapsed
+since the last change), updating it recursively as each observation
 arrives. Its signature graphic is the run-length heatmap, in which a
 change shows up as the posterior mass falling back to a run length of
 zero:
@@ -705,8 +709,8 @@ tidy(cpt_detect(x_mean, method = "ecp", seed = 1))
 ```
 
 The **cpm** package (Ross 2015) recasts detection as a stream of
-two-sample tests (Mann–Whitney for location, Mood for scale, Lepage,
-Kolmogorov–Smirnov, Cramér–von Mises, and parametric variants), run here
+two-sample tests (Mann-Whitney for location, Mood for scale, Lepage,
+Kolmogorov-Smirnov, Cramér-von Mises, and parametric variants), run here
 over the whole series in one pass to mimic an online monitor. Its
 results distinguish where a change *happened* (`cp`) from when it was
 *detected* (`detection_time`), the lag inherent in sequential
@@ -744,8 +748,8 @@ The most common failure of mean-change detection in practice is not a
 subtle statistical one: it is running a Gaussian-mean detector on data
 whose baseline drifts or whose noise is autocorrelated, and then
 reporting a changepoint wherever the model is wrong. DeCAFS (Romano et
-al. 2022) models exactly this regime — abrupt changes superimposed on
-random-walk drift and AR(1) noise — and separates the two:
+al. 2022) models exactly this regime (abrupt changes superimposed on
+random-walk drift and AR(1) noise) and separates the two:
 
 ``` r
 
@@ -762,10 +766,10 @@ autoplot(res_decafs, show_fit = TRUE)
 from abrupt change](introduction_files/figure-html/decafs-1.png)
 
 EnvCpt (Beaulieu and Killick 2018) attacks the same confusion by model
-selection: it fits up to twelve competing descriptions — constant mean
-or linear trend, each with or without changepoints, and with
-white-noise, AR(1) or AR(2) errors — and reports changepoints only if a
-changepoint model wins on an information criterion:
+selection: it fits up to twelve competing descriptions (constant mean or
+linear trend, each with or without changepoints, and with white-noise,
+AR(1) or AR(2) errors) and reports changepoints only if a changepoint
+model wins on an information criterion:
 
 ``` r
 
@@ -821,16 +825,16 @@ al. 2020). And
 (engine **ocd**) monitors a high-dimensional stream *online* with
 worst-case detection-delay guarantees (Chen et al. 2022). Because
 detection there is sequential, the locations it reports are *declaration
-times* — the change plus the detection delay — recorded in
-`declared_at`; the wrapper estimates the pre-change baseline from an
-initial training window and resets after each declaration so that
-several changes can be found. Like the method itself, it needs at least
-two coordinates and refuses a single series.
+times* (the change plus the detection delay), recorded in `declared_at`;
+the wrapper estimates the pre-change baseline from an initial training
+window and resets after each declaration so that several changes can be
+found. Like the method itself, it needs at least two coordinates and
+refuses a single series.
 
 ### Structural breaks in regression
 
 Econometric practice dates breaks in regression coefficients. The
-Bai–Perron estimator (Bai and Perron 1998, 2003), via **strucchange**
+Bai-Perron estimator (Bai and Perron 1998, 2003), via **strucchange**
 (Zeileis et al. 2002), returns break dates *with confidence intervals*;
 called on a bare series it dates mean shifts, and called with a formula
 it dates breaks in arbitrary regressions:
@@ -850,8 +854,8 @@ autoplot(res_bp, show_ci = TRUE)
 drawn as horizontal
 whiskers](introduction_files/figure-html/strucchange-1.png)
 
-Where the regression function is continuous — a kink rather than a jump
-— **segmented** (Muggeo 2003, 2008) estimates broken-line relationships
+Where the regression function is continuous (a kink rather than a jump),
+**segmented** (Muggeo 2003, 2008) estimates broken-line relationships
 with standard errors for the breakpoints:
 
 ``` r
@@ -910,8 +914,8 @@ changepoints](introduction_files/figure-html/batch-1.png)
 
 Most engines report a point set with no measure of its fragility.
 [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
-resamples residuals *within* the fitted segments — so the estimated
-regime structure is preserved — re-runs the detector on each replicate,
+resamples residuals *within* the fitted segments (so the estimated
+regime structure is preserved), re-runs the detector on each replicate,
 and reports how often each location is re-detected: a cheap,
 model-agnostic confidence signal available for *every* engine, including
 the many that ship no intervals of their own:
@@ -972,7 +976,7 @@ the number of methods behind it: the same
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) pipeline, the
 same plot, and the same evaluation code now span penalised, multiscale,
 nonparametric, Bayesian, high-dimensional, and regression-based
-detection — 50 methods in this release. Five more, whose engines are not
+detection: 50 methods in this release. Five more, whose engines are not
 currently on CRAN (graph-constrained gfpop (Hocking et al. 2020), robust
 segmentation under outliers (Fearnhead and Rigaill 2019), FOCuS,
 sparsified binary segmentation, and random-forest classification
@@ -983,7 +987,7 @@ until then they are not callable.
 
 Two practical notes. First, wrapped engines run with sensible defaults,
 but every wrapper forwards `...` to its engine and the raw fit is always
-in `$fit` — the package is a front door, not a cage. Second, detection
+in `$fit`; the package is a front door, not a cage. Second, detection
 quality belongs to the engines; the package’s own additions (metrics,
 stability, penalty paths) are deliberately engine-agnostic, so
 conclusions drawn with them transfer between methods.

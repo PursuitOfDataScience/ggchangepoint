@@ -1,4 +1,4 @@
-# FPOP wrapper — Functional Pruning Optimal Partitioning
+# FPOP wrapper: Functional Pruning Optimal Partitioning
 
 Wraps the `fpop` package for optimal changepoint detection via
 functional pruning.

@@ -6,7 +6,7 @@ the bootstrap-and-recursion procedure of Wayne Taylor that the
 quality-control and Six Sigma community uses as its default. Each
 candidate is scored by the bootstrap probability that a change occurred
 there, which gives a confidence level per changepoint and a confidence
-interval for its location — both carried onto the result.
+interval for its location, both carried onto the result.
 
 ## Usage
 
@@ -34,18 +34,18 @@ taylor_wrapper(
 
 - min_candidate_conf:
 
-  Minimum confidence for a candidate to be considered. Defaults to
-  `0.5`.
+  Minimum confidence for a candidate to be considered, between 0.3
+  and 1. Defaults to `0.5`.
 
 - min_conf:
 
-  Minimum confidence for a changepoint to be reported. Defaults to
-  `0.9`.
+  Minimum confidence for a changepoint to be reported, between 0.5
+  and 1. Defaults to `0.9`.
 
 - conf_level:
 
-  Confidence level of the reported location intervals. Defaults to
-  `0.95`.
+  Confidence level of the reported location intervals, between 0.9 and
+  0.999 (the engine's range). Defaults to `0.95`.
 
 - seed:
 
@@ -60,8 +60,8 @@ A `ggcpt` object with `ci_lower`/`ci_upper` (so
 
 ## Series length, and why you cannot interrupt it
 
-This engine is written for the series lengths quality control sees –
-hundreds to low thousands – and it does not scale. At \\n = 10{,}000\\
+This engine is written for the series lengths quality control sees
+(hundreds to low thousands), and it does not scale. At \\n = 10{,}000\\
 with the default `n_bootstraps = 1000` it runs for **minutes**, and more
 importantly it runs where R cannot look: a
 [`setTimeLimit()`](https://rdrr.io/r/base/setTimeLimit.html) of 45
@@ -71,7 +71,7 @@ elapsed-time limits and keyboard interrupts at the same points, which
 means **Ctrl-C will not stop it either**.
 
 So size the call before starting it rather than after. `n_bootstraps` is
-the knob – the cost is roughly linear in it – and the “Benchmarks”
+the knob (the cost is roughly linear in it), and the “Benchmarks”
 article lists the methods that do scale to long series. That page is
 web-only, because the sweep behind it takes over twenty minutes: it is
 published at

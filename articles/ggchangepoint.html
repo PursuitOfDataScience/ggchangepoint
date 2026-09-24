@@ -79,7 +79,7 @@ Yu<br><span style="font-size:85%;">University of Chicago</span>
 dispatcher (<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>) covering 50 methods across six
 methodological families, one result class (<code>ggcpt</code>) with a
 stable tidy contract, and one visualisation entry point
-(<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>) that draws everything a method reports —
+(<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>) that draws everything a method reports,
 including confidence intervals and posterior probabilities <span class="citation">(Wickham 2016; Robinson 2017)</span>. This vignette is
 the <em>feature tour</em>: it visits <strong>every exported
 function</strong> in the package at the point where it belongs in the
@@ -226,10 +226,10 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <code>"mean"</code>, <code>"var"</code>, <code>"meanvar"</code>,
 <code>"slope"</code>, <code>"distribution"</code>,
 <code>"covariance"</code>, <code>"network"</code>,
-<code>"regression"</code> or <code>"seasonality"</code> — the values
+<code>"regression"</code> or <code>"seasonality"</code>, the values
 <code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> lists in its <code>supports</code> column),
 and optionally set a <code>penalty</code>. Incompatible
-<code>method</code>/<code>change_in</code> combinations error — they are
+<code>method</code>/<code>change_in</code> combinations error; they are
 never silently substituted.</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"binseg"</span>, change_in <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
@@ -248,7 +248,7 @@ never silently substituted.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span></code></pre></div>
 <p>Anything else in <code>...</code> reaches the underlying wrapper, and
 takes precedence over the value the dispatcher would otherwise derive
-from <code>change_in</code> — here the NOT contrast is set directly
+from <code>change_in</code>. Here the NOT contrast is set directly
 rather than inherited:</p>
 <div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"not"</span>, contrast <span class="op">=</span> <span class="st">"pcwsLinMean"</span><span class="op">)</span><span class="op">)</span></span>
@@ -523,7 +523,7 @@ mean <span class="citation">(Fearnhead et al. 2019; Fearnhead and Grose
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    99     40.8</span></span></code></pre></div>
 <p><strong>Bayesian detection.</strong> <code><a href="../reference/bcp_wrapper.html">bcp_wrapper()</a></code>
-implements the Barry–Hartigan product-partition model <span class="citation">(Barry and Hartigan 1993; Erdman and Emerson
+implements the Barry-Hartigan product-partition model <span class="citation">(Barry and Hartigan 1993; Erdman and Emerson
 2007)</span>; <code><a href="../reference/bocpd_wrapper.html">bocpd_wrapper()</a></code> runs Bayesian online
 changepoint detection over the run-length posterior <span class="citation">(Adams and MacKay 2007)</span>;
 <code><a href="../reference/beast_wrapper.html">beast_wrapper()</a></code> wraps the BEAST Bayesian model-averaging
@@ -655,7 +655,7 @@ it.</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    80   -<span style="color: #BB0000;">0.590</span></span></span></code></pre></div>
 <p><strong>Regression structure.</strong>
-<code><a href="../reference/strucchange_wrapper.html">strucchange_wrapper()</a></code> dates Bai–Perron breaks, either in a
+<code><a href="../reference/strucchange_wrapper.html">strucchange_wrapper()</a></code> dates Bai-Perron breaks, either in a
 bare series or in the coefficients of a formula <span class="citation">(Bai and Perron 1998, 2003; Zeileis et al.
 2002)</span>; <code><a href="../reference/segmented_wrapper.html">segmented_wrapper()</a></code> fits a continuous
 broken-line regression, so the change it reports is a kink in the trend
@@ -736,14 +736,13 @@ its own <code><a href="https://rdrr.io/r/base/print.html" class="external-link">
 </h2>
 <p><code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> renders any <code>ggcpt</code>. Options:
 <code>show_segments</code> (fitted segment means), <code>show_fit</code>
-(the engine’s own fitted signal, where provided — the nine engines
+(the engine’s own fitted signal, where provided; the nine engines
 <code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> marks in its <code>fitted</code> column:
 SMUCE, HSMUCE, CPOP, bcp, BEAST, DeCAFS, segmented, mcp, bfast),
 <code>show_ci</code> (changepoint-location confidence intervals, where
-provided — the seven marked in its <code>ci</code> column: SMUCE,
-HSMUCE, strucchange, segmented, mcp, bfast, taylor; <code>nsp</code> is
-marked there too but reports a region, drawn by
-<code>show_regions</code>),
+provided; the seven marked in its <code>ci</code> column: SMUCE, HSMUCE,
+strucchange, segmented, mcp, bfast, taylor; <code>nsp</code> is marked
+there too but reports a region, drawn by <code>show_regions</code>),
 <code>show_points</code>/<code>show_line</code>, an <code>index</code>
 for a date axis, and the <code>cptline_*</code> styling arguments
 (<code>cptline_color</code>, <code>cptline_alpha</code>,
@@ -834,7 +833,7 @@ series and renders them faceted (default) or overlaid, honouring
 <code><a href="https://future.futureverse.org/reference/plan.html" class="external-link">future::plan()</a></code> for parallel execution;
 <code><a href="../reference/ggcpt_compare_table.html">ggcpt_compare_table()</a></code> returns the tidy union of the same
 runs. A method that finds nothing keeps its panel and contributes an
-<code>NA</code> row — “no changepoints” is a result, not a missing
+<code>NA</code> row: “no changepoints” is a result, not a missing
 one.</p>
 <div class="sourceCode" id="cb53"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/ggcpt_compare.html">ggcpt_compare</a></span><span class="op">(</span><span class="va">x</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
@@ -880,7 +879,7 @@ themselves:</p>
 <p><img src="ggchangepoint_files/figure-html/batch-1.png" class="r-plt" alt="Small-multiples of a panel of series, each with its own detected changepoints" width="576"></p>
 <p><code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> quantifies how fragile a segmentation
 is: it resamples residuals within the fitted segments, re-runs the
-detector, and reports the re-detection frequency at every location — a
+detector, and reports the re-detection frequency at every location, a
 model-agnostic confidence signal for engines with no native
 intervals:</p>
 <div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
@@ -934,7 +933,7 @@ Gaussian, Student-t, AR(1), or random-walk noise; the truth travels with
 the data in the <code>true_changepoints</code> and
 <code>true_segments</code> attributes. Five canonical test signals from
 the literature ship ready-made: <code><a href="../reference/signal_blocks.html">signal_blocks()</a></code> (the
-Donoho–Johnstone blocks signal <span class="citation">(Donoho and
+Donoho-Johnstone blocks signal <span class="citation">(Donoho and
 Johnstone 1994)</span>), <code><a href="../reference/signal_fms.html">signal_fms()</a></code>,
 <code><a href="../reference/signal_mix.html">signal_mix()</a></code>, <code><a href="../reference/signal_teeth.html">signal_teeth()</a></code>, and
 <code><a href="../reference/signal_stairs.html">signal_stairs()</a></code>.</p>
@@ -1098,7 +1097,7 @@ computed.</p>
 <p><code><a href="../reference/as_cpt_labels.html">as_cpt_labels()</a></code> converts a plain ground-truth set into
 labels, <code><a href="../reference/cpt_label_error_curve.html">cpt_label_error_curve()</a></code> traces the errors across a
 penalty grid, and <code><a href="../reference/cpt_learn_penalty.html">cpt_learn_penalty()</a></code> fits a penalty from
-several labelled series — see
+several labelled series; see
 <code><a href="../articles/supervised.html">vignette("supervised", package = "ggchangepoint")</a></code>.</p>
 </div>
 <div class="section level3">
@@ -1632,7 +1631,7 @@ tibble, with a note, when <code>gt</code> is not installed):</p>
 <code><a href="../reference/scale_colour_cpt.html">scale_colour_cpt()</a></code>, <code><a href="../reference/scale_colour_cpt.html">scale_fill_cpt()</a></code>,
 <code><a href="../reference/scale_colour_cpt.html">scale_linetype_cpt()</a></code>, <code><a href="../reference/scale_fill_cpt_label.html">scale_fill_cpt_label()</a></code>
 and <code><a href="../reference/scale_fill_cpt_label.html">scale_colour_cpt_label()</a></code> are the colour-vision-safe
-scales — the Okabe-Ito palette, plus a linetype scale so that colour is
+scales: the Okabe-Ito palette, plus a linetype scale so that colour is
 never the only channel carrying a distinction. All three at once, on the
 fitted segmentation:</p>
 <div class="sourceCode" id="cb74"><pre class="downlit sourceCode r">
@@ -1706,7 +1705,7 @@ data arrive.</p>
 <code class="sourceCode R"><span><span class="va">pw</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_power.html">cpt_power</a></span><span class="op">(</span>n <span class="op">=</span> <span class="fl">200</span>, jump <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">1</span>, <span class="fl">2</span><span class="op">)</span>, n_sim <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">pw</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ggchangepoint_files/figure-html/power-tour-1.png" class="r-plt" alt="Power curve: detection probability against change size" width="576"></p>
-<p><code><a href="../reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts the curve — it bisects for
+<p><code><a href="../reference/cpt_min_detectable.html">cpt_min_detectable()</a></code> inverts the curve: it bisects for
 the change size that reaches a target power, which is the number a
 pre-registration needs:</p>
 <div class="sourceCode" id="cb79"><pre class="downlit sourceCode r">

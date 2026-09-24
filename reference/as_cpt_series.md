@@ -1,7 +1,7 @@
 # Coerce a time series object to values plus a time index
 
-Detection itself runs on positions — every wrapped engine assumes an
-equally spaced sequence — but real series carry dates, and reporting a
+Detection itself runs on positions (every wrapped engine assumes an
+equally spaced sequence), but real series carry dates, and reporting a
 changepoint as "index 147" when the data are monthly rainfall is an
 unnecessary translation step for the user. `as_cpt_series()` is the one
 place that separates the two: it pulls the numeric values out of a `ts`,
@@ -41,7 +41,7 @@ as_cpt_series(x, index = NULL, check_regular = TRUE)
 A list with components `values` (a numeric vector, or a matrix for
 multivariate input), `index` (the time index, or `NULL` when there is
 none), `index_label` (a name for the x axis) and `frequency` (the
-seasonal frequency a `ts` carried, or `NULL` –
+seasonal frequency a `ts` carried, or `NULL`;
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 hands this to the engines that need one, such as
 [`bfast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bfast_wrapper.md)).

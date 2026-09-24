@@ -60,9 +60,9 @@ print(x, ...)
   three methods, never two). The boundary is worth knowing, because it
   falls exactly where a reader thinking in proportions would write
   “unanimous”: with three methods, `min_votes = 0.99` needs all three,
-  while `min_votes = 1` – and `1.0`, which is the same number – is a
-  count of one and so the *least* strict setting there is. For
-  unanimity, pass the number of methods, or a fraction just below 1.
+  while `min_votes = 1` (and `1.0`, which is the same number) is a count
+  of one and so the *least* strict setting there is. For unanimity, pass
+  the number of methods, or a fraction just below 1.
 
   A count larger than the number of methods that ran cannot be reached,
   so the consensus would be empty by construction; that warns rather

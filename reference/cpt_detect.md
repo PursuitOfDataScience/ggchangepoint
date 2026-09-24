@@ -26,7 +26,7 @@ cpt_detect(
 
   The series. A numeric vector for univariate methods, or a numeric
   matrix/data frame (rows are time points) for the multivariate methods
-  — run `subset(cpt_methods(), multivariate)$method` for the list. A
+  (run `subset(cpt_methods(), multivariate)$method` for the list). A
   `ts`, `xts`, `zoo` or (unkeyed) `tsibble` is accepted directly and its
   time index is carried through to
   [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
@@ -57,7 +57,7 @@ cpt_detect(
   the thing being asked about. That is never silent: the result's
   `change_in` records what was actually detected, so compare it with
   what you asked for. Measured across every method and every value its
-  `supports` entry lists, six pairs are routed – `not`'s `"var"` becomes
+  `supports` entry lists, six pairs are routed: `not`'s `"var"` becomes
   `"meanvar"` (its variance contrast is piecewise-constant in mean *and*
   variance), `cpm`'s `"mean"` and `"var"` both become `"distribution"`,
   `kcp`'s become `"running mean"` and `"running var"`, and `wbsts`'s
@@ -77,16 +77,16 @@ cpt_detect(
   does not implement MBIC for Segment Neighbourhood. Note also that the
   default `"MBIC"` is resolved to a *numeric* value for the
   numeric-penalty engines (`"fpop"`, `"cpop"`, `"decafs"`), and that
-  value is stronger than those wrappers' own `2 * log(n)` default — 19.9
-  against 11.8 at \\n = 360\\ — so `cpt_detect(x, method = "decafs")`
+  value is stronger than those wrappers' own `2 * log(n)` default (19.9
+  against 11.8 at \\n = 360\\), so `cpt_detect(x, method = "decafs")`
   can report fewer changepoints than `decafs_wrapper(x)` on the same
   series. Pass `penalty` explicitly to make the two entry points agree.
 
 - index:
 
   Optional time index, one value per observation (dates, say). Detection
-  still runs on observation positions — every wrapped engine assumes an
-  equally spaced sequence — but the index is stored on the result and
+  still runs on observation positions (every wrapped engine assumes an
+  equally spaced sequence), but the index is stored on the result and
   threaded through
   [`tidy()`](https://generics.r-lib.org/reference/tidy.html) (as
   `cp_index`),
@@ -145,11 +145,11 @@ the data, so on a series whose noise is much wider than 1 the penalty is
 effectively negligible and the segmentation shatters. On 200
 observations with one true changepoint in the middle and a jump of five
 standard deviations, `"pelt"` returns 1 changepoint at \\\sigma = 1\\,
-39 at \\\sigma = 3\\ and 141 at \\\sigma = 10\\ — means over 20 draws,
-because a single draw is not stable here: the same three settings gave
-21/75 at \\n = 100\\ and 57/266 at \\n = 400\\, so the effect grows with
-the series as well as with the noise. Three ways to avoid it, in order
-of convenience:
+39 at \\\sigma = 3\\ and 141 at \\\sigma = 10\\. These are means over 20
+draws, because a single draw is not stable here: the same three settings
+gave 21/75 at \\n = 100\\ and 57/266 at \\n = 400\\, so the effect grows
+with the series as well as with the noise. Three ways to avoid it, in
+order of convenience:
 
 - standardise the series first
   (`cpt_detect(scale(x)[, 1], method = "pelt")`);
@@ -160,10 +160,17 @@ of convenience:
 - use `change_in = "meanvar"`, which estimates a variance per segment
   and is unaffected.
 
-The other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
-Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
-multivariate methods all estimate or cancel the noise scale internally,
-and return the same segmentation whatever the units.
+Most other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
+Isolate-Detect, TGUH, CPOP, `"bcp"`, `"beast"` and the nonparametric and
+multivariate methods estimate or cancel the noise scale internally, and
+returned the same segmentation at a thousandth, one and a thousand times
+the units. Three did not, on the same series: `"geomcp"` runs PELT on
+its mapped distance and angle series and so inherits the sensitivity
+above; `"decafs"` floors its noise estimate at about 0.03, so it
+under-segments a series whose noise is smaller than that; and
+`"bocpd"`'s default prior is on the data's own scale. At a thousandth of
+the units the last two found nothing. Standardising first avoids all
+three.
 
 ## See also
 

@@ -35,7 +35,7 @@ the note below.
 ## Constant input
 
 [`IDetect::ID()`](https://rdrr.io/pkg/IDetect/man/ID.html) does not
-treat a flat series consistently — its statistics become \\0/0\\, and
+treat a flat series consistently: its statistics become \\0/0\\, and
 what comes back depends on the value and the length. `rep(3, 200)`
 yields *126* changepoints, at 1, 3, 4, 6, 7, ...; `rep(0, 100)` raises
 "No change-points found"; `rep(-2.5, 60)` returns the sentinel 0. A

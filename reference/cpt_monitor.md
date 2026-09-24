@@ -57,7 +57,7 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
 
   `"ocd"`
 
-  :   ocd's high-dimensional online detector. **Multivariate only** – it
+  :   ocd's high-dimensional online detector. **Multivariate only**: it
       tracks a projection of the whole vector and needs at least two
       coordinates, so it refuses a single series rather than falling
       back to a univariate statistic.
@@ -164,8 +164,8 @@ are
 
   the tibble
   [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md)
-  and [`tidy()`](https://generics.r-lib.org/reference/tidy.html) return
-  – one row per alarm, with `time`, `statistic` and `threshold`. Empty
+  and [`tidy()`](https://generics.r-lib.org/reference/tidy.html) return:
+  one row per alarm, with `time`, `statistic` and `threshold`. Empty
   (zero rows) until something fires.
 
 - `t`:

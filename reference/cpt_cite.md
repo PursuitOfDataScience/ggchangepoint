@@ -14,7 +14,7 @@ cpt_cite(x)
 
 - x:
 
-  A `ggcpt` object, a method name (e.g. `"pelt"`), or missing — in which
+  A `ggcpt` object, a method name (e.g. `"pelt"`), or missing, in which
   case references for every known method are returned. A method
   registered with
   [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)

@@ -1,4 +1,4 @@
-# CROPS — the full penalty path of a penalised changepoint method
+# CROPS: the full penalty path of a penalised changepoint method
 
 Runs PELT once per *distinct* optimal segmentation as the penalty ranges
 over `[pen_min, pen_max]`, using the CROPS algorithm of Haynes, Eckley
@@ -80,7 +80,7 @@ tidy(x, ...)
 A `ggcpt_path` object: a list with a `solutions` tibble (one row per
 distinct segmentation: `penalty`, `n_cpts`, `cost`, and a `cpts`
 list-column), the `data`, and metadata. `penalty` is the **lower end**
-of the penalty interval on which that segmentation is optimal — CROPS
+of the penalty interval on which that segmentation is optimal: CROPS
 returns the breakpoints of the penalty axis, so \\K\\ segmentations come
 with \\K + 1\\ boundaries and each row is optimal from its own `penalty`
 up to the next row's. Methods:

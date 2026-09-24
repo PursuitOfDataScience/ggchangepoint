@@ -4,7 +4,7 @@
 > result plottable.**
 
 R has excellent changepoint packages, but each one takes its own input,
-returns its own result object, and has its own idea of a plot — so
+returns its own result object, and has its own idea of a plot, so
 switching methods means rewriting your analysis. ggchangepoint puts them
 behind one interface:
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
@@ -13,8 +13,8 @@ tidy `ggcpt` object, and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 draws it, with confidence intervals, significance regions, posteriors,
 detector statistics, penalty paths and accuracy metrics when you need
-them. When the detector you want is not one of the 50 — because it is
-not on CRAN, or lives in Python, or is your own —
+them. When the detector you want is not one of the 50 (because it is not
+on CRAN, or lives in Python, or is your own),
 [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
 brings it into the same grammar.
 
@@ -109,23 +109,23 @@ changepoint](reference/figures/README-autoplot-1.png)
 
 ## Why ggchangepoint
 
-- **Detect with one call** — `cpt_detect(x, method = "...")` dispatches
+- **Detect with one call.** `cpt_detect(x, method = "...")` dispatches
   to 50 methods, from classic PELT to Bayesian online detection,
   functional data and dynamic networks.
-- **Tidy everywhere** — every method returns the same `ggcpt` object,
+- **Tidy everywhere.** Every method returns the same `ggcpt` object,
   with [`tidy()`](https://generics.r-lib.org/reference/tidy.html),
   [`glance()`](https://generics.r-lib.org/reference/glance.html), and
   [`augment()`](https://generics.r-lib.org/reference/augment.html), and
   a time index that survives the round trip.
-- **Plot everything** —
+- **Plot everything.**
   [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
   draws any result: changepoints, confidence intervals, significance
   regions, fitted signals, posteriors, multivariate facets, and
   (`type =`) the detector’s own statistic, solution path or scale space.
-- **Trust the answer** — intervals from four provenances, honest tests,
+- **Trust the answer.** Intervals from four provenances, honest tests,
   criteria that actually *select* K, influence and sensitivity
   diagnostics, consensus across methods, and a benchmark harness.
-- **Extend it** —
+- **Extend it.**
   [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
   and
   [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
@@ -135,19 +135,19 @@ changepoint](reference/figures/README-autoplot-1.png)
 |----|----|
 | Penalised / optimal partitioning | PELT · BinSeg · SegNeigh · AMOC · FPOP · binsegRcpp (fast) · CPOP (slope) · fastcpd (mean/var/AR/ARMA/GARCH) |
 | Multiscale / search | WBS · WBS2 · TGUH · NOT · MOSUM · Isolate-Detect · SMUCE · HSMUCE (the last two with CIs) · WBSTS (nonstationary) |
-| Inference | NSP — significance *regions*, each guaranteed to contain a change at a global level |
+| Inference | NSP: significance *regions*, each guaranteed to contain a change at a global level |
 | Nonparametric / kernel | ED-PELT · E-Divisive / E-Agglo · kernel running stats · NP-MOJO · sequential CPM · self-normalisation · KWC depth ranks |
 | Bayesian | bcp posteriors · online BOCPD · BEAST model averaging · mcp (formula-based, full posteriors) |
 | High-dimensional | inspect · ocd · geomcp · ESAC · Pilliat · high-dimensional covariance · VAR(1) · high-dimensional regression |
 | Functional & network | functional mean · functional covariance · KWC · fabisearch (NMF network structure) · `changepoints` networks |
-| Regression, trend & season | Bai–Perron · segmented · EnvCpt · DeCAFS · BFAST (season + trend) |
+| Regression, trend & season | Bai-Perron · segmented · EnvCpt · DeCAFS · BFAST (season + trend) |
 | Classical single-change tests | Pettitt · Buishand · SNHT · Taylor’s analyzer |
 
 Run
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
 for the live table with engines, installation status and capability
-flags. Only three engines are required — `changepoint`, `changepoint.np`
-and `ecp`; every other engine lives in `Suggests` and is loaded on
+flags. Only three engines are required (`changepoint`, `changepoint.np`
+and `ecp`); every other engine lives in `Suggests` and is loaded on
 demand, so a plain install stays light.
 `cpt_install_engines("bayesian")` installs a whole family at once.
 
@@ -231,8 +231,8 @@ cpt_methods()
 ## Dates, not indices
 
 Real series have dates, and “changepoint at index 147” is a translation
-step the analyst should not have to do. Pass an `index` — or a `ts`,
-`xts`, `zoo` or `tsibble` — and detection still runs on positions (every
+step the analyst should not have to do. Pass an `index` (or a `ts`,
+`xts`, `zoo` or `tsibble`) and detection still runs on positions (every
 engine assumes an equally spaced sequence) while everything reported
 comes back on your scale:
 
@@ -283,7 +283,7 @@ cpt_detect(df, y = value, index = day, method = "pelt")
 SMUCE
 ([`smuce_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/smuce_wrapper.md),
 via `stepR`) delivers a confidence interval for every changepoint
-location; Bai–Perron
+location; Bai-Perron
 ([`strucchange_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/strucchange_wrapper.md))
 and broken-line regression
 ([`segmented_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/segmented_wrapper.md))
@@ -311,7 +311,7 @@ location](reference/figures/README-smuce-1.png)
 
 Read the intervals, not just the locations: the genuine shift is pinned
 to a single index, while the spurious early changepoint carries an
-interval nearly a hundred observations wide — exactly the distinction a
+interval nearly a hundred observations wide, exactly the distinction a
 bare list of locations hides.
 
 Bayesian engines return posterior probabilities instead:
@@ -320,7 +320,7 @@ Bayesian engines return posterior probabilities instead:
 [`beast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/beast_wrapper.md)
 (Bayesian model averaging), and
 [`bocpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bocpd_wrapper.md)
-(online run-length posterior). Two dedicated displays accompany them —
+(online run-length posterior). Two dedicated displays accompany them,
 [`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)
 and
 [`ggcpt_runlength()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_runlength.md):
@@ -403,7 +403,7 @@ autoplot(res_nsp)
 region](reference/figures/README-nsp-1.png)
 
 The `cp` column of an NSP fit is the interval midpoint, is labelled as
-such in `cp_source`, and is never presented as an estimate — the region
+such in `cp_source`, and is never presented as an estimate: the region
 is the inferential object.
 
 For every other engine,
@@ -422,10 +422,10 @@ cpt_confint(res, method = "bootstrap", B = 50, seed = 1)
 
 [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
 attaches a test to each changepoint, using the engine’s own where it has
-one and an explicitly unadjusted two-sample test where it does not —
-with a `selection_adjusted` column recording whether the p-value
-accounts for the fact that the location was *chosen* by looking at the
-data, which only one of the engine tests does:
+one and an explicitly unadjusted two-sample test where it does not, with
+a `selection_adjusted` column recording whether the p-value accounts for
+the fact that the location was *chosen* by looking at the data, which
+only one of the engine tests does:
 
 ``` r
 
@@ -441,7 +441,7 @@ suppressWarnings(cpt_test(res))
 [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md)
 draws the penalty path;
 [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
-actually *chooses*, by BIC, the Zhang–Siegmund segment-length mBIC, AIC,
+actually *chooses*, by BIC, the Zhang-Siegmund segment-length mBIC, AIC,
 an explicit knee rule on the CROPS curve, order-preserved
 cross-validation (the criterion with a consistency proof), or bootstrap
 stability:
@@ -476,9 +476,9 @@ marked](reference/figures/README-select-1.png)
 
 ## Seeing the statistic
 
-Every detector computes something — a MOSUM statistic at each bandwidth,
+Every detector computes something (a MOSUM statistic at each bandwidth,
 a set of random intervals with contrast values, a nested sequence of
-splits — and keeping only the argmax throws away the explanation. Three
+splits), and keeping only the argmax throws away the explanation. Three
 accessors give it back:
 
 ``` r
@@ -515,9 +515,9 @@ binary-segmentation or wild-binary-segmentation model.
 [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
 answers “would I find this again?”.
 [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
-answers the sharper question — perturbing one observation at a time and
-re-fitting, the Wilms–Killick–Matteson diagnostic family rendered in
-ggplot2:
+answers the sharper question, perturbing one observation at a time and
+re-fitting, with the Wilms-Killick-Matteson diagnostic family rendered
+in ggplot2:
 
 ``` r
 
@@ -552,7 +552,7 @@ setting finds](reference/figures/README-autoplot-3-1.png)
 An expert marks intervals as containing a change or not, accuracy is
 measured in *label errors*, and the penalty is learned rather than
 assumed (Hocking et al., 2013). The central object is a rectangle drawn
-over a time series — a ggplot2-native idea:
+over a time series, a ggplot2-native idea:
 
 ``` r
 
@@ -583,8 +583,8 @@ cpt_label_error(res, labs)
 
 [`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
 sweeps the penalty and reports false positives, false negatives and
-total label error at each value — the curve the learned penalty is
-chosen to minimise.
+total label error at each value: the curve the learned penalty is chosen
+to minimise.
 [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
 fits the max-margin interval regression over a set of labelled series,
 and the model plugs straight into
@@ -641,7 +641,7 @@ cpt_recommend(noise = "autocorrelated")
 ```
 
 [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md)
-runs several detectors and reports the locations they agree on — a
+runs several detectors and reports the locations they agree on, a
 robustness display, not a significance test:
 
 ``` r
@@ -663,7 +663,7 @@ consensus changepoints](reference/figures/README-consensus-1.png)
 
 “Changepoint at index 147” is not a finding.
 [`cpt_annotate_events()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_annotate_events.md)
-matches detections to known events and reports all three outcomes — and
+matches detections to known events and reports all three outcomes, and
 the unexplained changepoints are where the interesting analysis starts:
 
 ``` r
@@ -690,9 +690,9 @@ cpt_annotate_events(dated, events)
 ```
 
 [`cpt_report()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_report.md)
-assembles the whole analysis — method, citation, penalty, locations with
+assembles the whole analysis (method, citation, penalty, locations with
 intervals, segments, the call and
-[`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html) — into one
+[`sessionInfo()`](https://rdrr.io/r/utils/sessionInfo.html)) into one
 reproducible artifact, and
 [`cpt_gt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gt.md)
 renders a publication-ready table.
@@ -790,10 +790,10 @@ and push each new observation through
 [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md)
 as it arrives.
 
-`"edetector"` is a native implementation of the mixture Shiryaev–Roberts
-e-detector (Shin, Ramdas and Rinaldo, 2023) — the one method here that
-is implemented rather than wrapped, because no R package implements it
-and it carries a finite-sample average-run-length guarantee of at least
+`"edetector"` is a native implementation of the mixture Shiryaev-Roberts
+e-detector (Shin, Ramdas and Rinaldo, 2023), the one method here that is
+implemented rather than wrapped, because no R package implements it and
+it carries a finite-sample average-run-length guarantee of at least
 `1 / alpha` with no calibration run: the shift mixture is a uniform
 *average*, so `M_t - t` is a mean-zero martingale under the null and
 optional stopping at the alarm time bounds the in-control run length.
@@ -826,7 +826,7 @@ autoplot(pw)
 Carlo interval](reference/figures/README-power-1.png)
 
 [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
-inverts it and returns the smallest change reaching a target power — the
+inverts it and returns the smallest change reaching a target power, the
 number that belongs in a pre-registration.
 [`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md)
 builds the matching grid of labelled synthetic series, so the same
@@ -886,8 +886,8 @@ every result, and
 [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
 returns the citation you gave or states plainly that none was given.
 [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
-does the same job for a bare set of changepoints — a published paper’s
-reported breaks, say — without registering anything.
+does the same job for a bare set of changepoints (a published paper’s
+reported breaks, say) without registering anything.
 
 ## Compare methods
 
@@ -922,7 +922,7 @@ ggcpt_compare_table(x, methods = c("pelt", "binseg", "fpop", "wbs"))
 
 [`cpt_batch()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_batch.md)
 runs one detector over many series (a matrix, data frame, or list) and
-returns a tidy tibble of results — honouring
+returns a tidy tibble of results, honouring
 [`future::plan()`](https://future.futureverse.org/reference/plan.html)
 for parallel execution.
 [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
@@ -995,7 +995,7 @@ coordinates](reference/figures/README-inspect-1.png)
 Univariate methods never silently flatten a matrix: hand one to `pelt`
 and you get an error naming the multivariate alternatives instead.
 [`ocd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ocd_wrapper.md)
-insists the other way — it projects across coordinates, so it needs a
+insists the other way: it projects across coordinates, so it needs a
 matrix with at least two columns.
 
 ## Evaluation
@@ -1044,7 +1044,7 @@ attributes(dat)$true_changepoints
 is an alias, for readers who prefer the `r*` random-generation naming.
 Built-in test signals include
 [`signal_blocks()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_blocks.md)
-(the Donoho–Johnstone blocks signal),
+(the Donoho-Johnstone blocks signal),
 [`signal_fms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_fms.md),
 [`signal_mix()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_mix.md),
 [`signal_teeth()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_teeth.md)
@@ -1075,15 +1075,15 @@ compare the penalty against a *raw* segment cost when detecting a change
 in mean: `changepoint`’s Normal cost assumes noise of standard deviation
 1, and `fpop`’s `lambda` penalises the residual sum of squares directly.
 On a series with wider noise the penalty is effectively negligible and
-the segmentation shatters — on 200 observations with one true
-changepoint and a five-sigma jump, `pelt` returns 1 changepoint at sigma
-= 1 but 39 at sigma = 3 and 141 at sigma = 10 (means over 20 draws; a
-single draw is not stable here). Standardise the series
+the segmentation shatters: on 200 observations with one true changepoint
+and a five-sigma jump, `pelt` returns 1 changepoint at sigma = 1 but 39
+at sigma = 3 and 141 at sigma = 10 (means over 20 draws; a single draw
+is not stable here). Standardise the series
 (`cpt_detect(scale(x)[, 1], method = "pelt")`), pass a penalty on the
 data’s own scale, or use `change_in = "meanvar"`, which estimates a
-variance per segment. Every other engine — SMUCE, WBS, NOT, MOSUM, CPOP,
-DeCAFS, the Bayesian and nonparametric families — estimates or cancels
-the noise scale itself and is unaffected. See
+variance per segment. The other engines estimate or cancel the noise
+scale themselves and are unaffected, with three exceptions: `geomcp` (it
+runs PELT), and `decafs` and `bocpd` on very small units. See
 [`?cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 for the full note.
 
@@ -1317,7 +1317,7 @@ reader without the author writing anything.
 
 ## Interactive exploration and citations
 
-Any result — or any ggplot built from one — renders as an interactive
+Any result (or any ggplot built from one) renders as an interactive
 widget with
 [`ggcpt_interactive()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_interactive.md)
 (requires `plotly`).
@@ -1435,9 +1435,9 @@ rather than autoplot()](reference/figures/README-detect-6-1.png)
 The full reference index and rendered vignettes live at
 <https://pursuitofdatascience.github.io/ggchangepoint/>. From R:
 
-- [`vignette("ggchangepoint", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/ggchangepoint.md)
-  — feature tour
-- [`vignette("introduction", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md)
-  — the framework, in research-paper form
-- [`vignette("comparison", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md)
-  — method comparison and evaluation
+- [`vignette("ggchangepoint", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/ggchangepoint.md):
+  feature tour
+- [`vignette("introduction", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.md):
+  the framework, in research-paper form
+- [`vignette("comparison", package = "ggchangepoint")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/comparison.md):
+  method comparison and evaluation

@@ -93,22 +93,27 @@ is too short for it.</p></dd>
 
 
 <dt id="arg-n-reps">n_reps<a class="anchor" aria-label="anchor" href="#arg-n-reps"></a></dt>
-<dd><p>Permutation replicates for the significance test. Defaults
-to <code>100</code>.</p></dd>
+<dd><p>Replicates on each side of the significance test: the
+split is refitted <code>n_reps</code> times and the rows permuted
+<code>n_reps</code> times. Defaults to <code>100</code>; at least <code>2</code>, because
+the test compares two samples of this size.</p></dd>
 
 
 <dt id="arg-alpha">alpha<a class="anchor" aria-label="anchor" href="#arg-alpha"></a></dt>
-<dd><p>Significance level applied to the permutation p-value each
-candidate split receives. Defaults to <code>0.05</code>. Note that a
-permutation p-value cannot fall below <code>1 / n_reps</code>, so
-<code>n_reps</code> must be at least <code>1 / alpha</code> for any split to be
-significant; the wrapper warns when it is not.</p></dd>
+<dd><p>Significance level applied to the p-value each candidate
+split receives. Defaults to <code>0.05</code>. That p-value is a two-sample
+test of the refitted losses against the permuted ones (a t-test unless
+<code>testtype</code> is passed through <code>...</code>), adjusted by
+Benjamini-Hochberg across the candidate splits. It is not a permutation
+p-value, so it has no <code>1 / n_reps</code> floor; the exact rank tests
+(<code>testtype = "wilcox"</code> or <code>"ks"</code>) do have one, and the
+wrapper warns when it is above <code>alpha</code>.</p></dd>
 
 
 <dt id="arg-rank">rank<a class="anchor" aria-label="anchor" href="#arg-rank"></a></dt>
-<dd><p>NMF rank. <code>NULL</code> estimates it with
-<code><a href="https://rdrr.io/pkg/fabisearch/man/opt.rank.html" class="external-link">fabisearch::opt.rank()</a></code>, which is expensive; supplying a rank is
-much faster.</p></dd>
+<dd><p>NMF rank, a positive whole number. <code>NULL</code> estimates it
+with <code><a href="https://rdrr.io/pkg/fabisearch/man/opt.rank.html" class="external-link">fabisearch::opt.rank()</a></code>, which is expensive; supplying a rank
+is much faster.</p></dd>
 
 
 <dt id="arg-n-core">n_core<a class="anchor" aria-label="anchor" href="#arg-n-core"></a></dt>
@@ -143,13 +148,14 @@ simulation loop does not pin the loop's own stream.</p></dd>
 <p>Three practical notes. (1) NMF is undefined for negative entries, so this
 wrapper refuses them rather than letting the engine fail deep inside a
 factorisation; shift or rescale the series first if it has negatives.
-(2) It is by far the most expensive engine here — <code>n_runs</code> times
-<code>n_reps</code> factorisations — so the defaults are lowered in the examples
-and a progress note is printed. (3) <span class="pkg">fabisearch</span> calls <span class="pkg">NMF</span>'s
-multi-run machinery, which resolves helpers through the search path and
-fails with "none of the packages are loaded" when <span class="pkg">NMF</span> is merely
-loaded; this wrapper therefore attaches <span class="pkg">NMF</span> for the duration of the
-call and detaches it again afterwards.</p>
+(2) It is by far the most expensive engine here (<code>n_runs</code> times
+<code>n_reps</code> factorisations per candidate split), so the defaults are
+lowered in the examples. The engine's own progress output is suppressed,
+so a long call is silent until it returns. (3) <span class="pkg">fabisearch</span> calls
+<span class="pkg">NMF</span>'s multi-run machinery, which resolves helpers through the
+search path and fails with "none of the packages are loaded" when
+<span class="pkg">NMF</span> is merely loaded; this wrapper therefore attaches <span class="pkg">NMF</span> for
+the duration of the call and detaches it again afterwards.</p>
     </div>
     <div class="section level2">
     <h2 id="references">References<a class="anchor" aria-label="anchor" href="#references"></a></h2>
@@ -232,9 +238,6 @@ call and detaches it again afterwards.</p>
 <span class="r-in"><span><span class="va">Y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind</a></span><span class="op">(</span><span class="fu">block</span><span class="op">(</span><span class="fl">12</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">2</span><span class="op">)</span>, <span class="fu">block</span><span class="op">(</span><span class="fl">12</span>, <span class="fl">3</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">fabisearch_wrapper</span><span class="op">(</span><span class="va">Y</span>, min_dist <span class="op">=</span> <span class="fl">10</span>, n_runs <span class="op">=</span> <span class="fl">1</span>, n_reps <span class="op">=</span> <span class="fl">2</span>,</span></span>
 <span class="r-in"><span>                   alpha <span class="op">=</span> <span class="fl">0.25</span>, rank <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: foreach</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span> Loading required package: rngtools</span>
-<span class="r-wrn co"><span class="r-pr">#&gt;</span> <span class="warning">Warning: </span>With `n_reps = 2` the smallest attainable permutation p-value is 0.5, which is above `alpha = 0.25`, so no split can be significant whatever the data. Raise `n_reps` to at least 4, or raise `alpha`.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Method:             fabisearch</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:          network</span>

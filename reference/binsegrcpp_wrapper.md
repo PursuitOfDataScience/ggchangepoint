@@ -32,7 +32,7 @@ binsegrcpp_wrapper(
 
   `"mean"` (Gaussian, the default) or `"meanvar"`, mapped to the
   engine's `mean_norm` and `meanvar_norm` distributions. binsegRcpp has
-  no variance-only cost, so `"var"` is not offered here — use
+  no variance-only cost, so `"var"` is not offered here; use
   `"meanvar"`, or
   [`cpt_detect`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)`(method = "pelt", change_in = "var")`
   for a variance-only change.

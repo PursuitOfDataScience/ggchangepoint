@@ -1,7 +1,7 @@
 # Print a ggcpt object
 
-A compact header – method, what changed, how many changepoints, the
-convention their locations follow, the penalty and the series length –
+A compact header (method, what changed, how many changepoints, the
+convention their locations follow, the penalty and the series length)
 followed by the first ten changepoints. For the segment table and the
 fitted parameters use
 [`summary()`](https://rdrr.io/r/base/summary.html); for the changepoints

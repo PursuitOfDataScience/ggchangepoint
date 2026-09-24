@@ -74,8 +74,8 @@ engines and capabilities.</p>
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>The series. A numeric vector for univariate methods, or a
 numeric matrix/data frame (rows are time points) for the multivariate
-methods — run <code>subset(cpt_methods(), multivariate)$method</code> for the
-list. A <code>ts</code>, <code>xts</code>, <code>zoo</code> or (unkeyed) <code>tsibble</code>
+methods (run <code>subset(cpt_methods(), multivariate)$method</code> for the
+list). A <code>ts</code>, <code>xts</code>, <code>zoo</code> or (unkeyed) <code>tsibble</code>
 is accepted directly and its time index is carried through to
 <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>; so is a data frame together with
 <code>y</code> (and optionally <code>index</code>).</p></dd>
@@ -103,7 +103,7 @@ not wrap.</p></dd>
   for the thing being asked about. That is never silent: the result's
   <code>change_in</code> records what was actually detected, so compare it
   with what you asked for. Measured across every method and every value
-  its <code>supports</code> entry lists, six pairs are routed –
+  its <code>supports</code> entry lists, six pairs are routed:
   <code>not</code>'s <code>"var"</code> becomes <code>"meanvar"</code> (its variance
   contrast is piecewise-constant in mean <em>and</em> variance),
   <code>cpm</code>'s <code>"mean"</code> and <code>"var"</code> both become
@@ -125,8 +125,8 @@ penalties ignore this argument, and <code>"segneigh"</code> falls back to
 Segment Neighbourhood. Note also that the default <code>"MBIC"</code> is
 resolved to a <em>numeric</em> value for the numeric-penalty engines
 (<code>"fpop"</code>, <code>"cpop"</code>, <code>"decafs"</code>), and that value is
-stronger than those wrappers' own <code>2 * log(n)</code> default — 19.9
-against 11.8 at \(n = 360\) — so <code>cpt_detect(x, method =
+stronger than those wrappers' own <code>2 * log(n)</code> default (19.9
+against 11.8 at \(n = 360\)), so <code>cpt_detect(x, method =
 "decafs")</code> can report fewer changepoints than <code>decafs_wrapper(x)</code>
 on the same series. Pass <code>penalty</code> explicitly to make the two
 entry points agree.</p></dd>
@@ -134,8 +134,8 @@ entry points agree.</p></dd>
 
 <dt id="arg-index">index<a class="anchor" aria-label="anchor" href="#arg-index"></a></dt>
 <dd><p>Optional time index, one value per observation (dates, say).
-Detection still runs on observation positions — every wrapped engine
-assumes an equally spaced sequence — but the index is stored on the
+Detection still runs on observation positions (every wrapped engine
+assumes an equally spaced sequence), but the index is stored on the
 result and threaded through <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> (as <code>cp_index</code>),
 <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>, <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and <code><a href="cpt_report.html">cpt_report()</a></code>,
 so the output speaks in the user's own units. An index that is not
@@ -195,7 +195,7 @@ data, so on a series whose noise is much wider than 1 the penalty is
 effectively negligible and the segmentation shatters. On 200 observations
 with one true changepoint in the middle and a jump of five standard
 deviations, <code>"pelt"</code> returns 1 changepoint at \(\sigma = 1\), 39
-at \(\sigma = 3\) and 141 at \(\sigma = 10\) — means over 20
+at \(\sigma = 3\) and 141 at \(\sigma = 10\). These are means over 20
 draws, because a single draw is not stable here: the same three settings
 gave 21/75 at \(n = 100\) and 57/266 at \(n = 400\), so the effect
 grows with the series as well as with the noise. Three ways to avoid it, in order of
@@ -205,10 +205,17 @@ convenience:</p><ul><li><p>standardise the series first
     <code>penalty = 2 * log(length(x)) * stats::var(diff(x)) / 2</code>;</p></li>
 <li><p>use <code>change_in = "meanvar"</code>, which estimates a variance per
     segment and is unaffected.</p></li>
-</ul><p>The other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
-Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
-multivariate methods all estimate or cancel the noise scale internally,
-and return the same segmentation whatever the units.</p>
+</ul><p>Most other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
+Isolate-Detect, TGUH, CPOP, <code>"bcp"</code>, <code>"beast"</code> and the
+nonparametric and multivariate methods estimate or cancel the noise scale
+internally, and returned the same segmentation at a thousandth, one and
+a thousand times the units. Three did not, on the same series:
+<code>"geomcp"</code> runs PELT on its mapped distance and angle series and so
+inherits the sensitivity above; <code>"decafs"</code> floors its noise
+estimate at about 0.03, so it under-segments a series whose noise is
+smaller than that; and <code>"bocpd"</code>'s default prior is on the data's
+own scale. At a thousandth of the units the last two found nothing.
+Standardising first avoids all three.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
