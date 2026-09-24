@@ -985,6 +985,10 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01,
          "penalty (it counts the changepoints being placed among `n` ",
          "observations).", call. = FALSE)
   }
+  # `k` scales every one of these, and only MBIC checked it: a negative k
+  # returned a negative "penalty" that rewards changepoints, NA returned NA,
+  # and a vector returned a vector.
+  validate_scalar(k, "k", min = 0)
   # alpha <= 1 makes sSIC weaker than BIC, i.e. no longer the *strengthened*
   # SIC the argument names; the definition (Fryzlewicz 2014) requires
   # alpha > 1.

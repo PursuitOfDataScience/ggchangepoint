@@ -798,6 +798,15 @@ cpt_replay <- function(x, method = c("edetector", "cpm", "ocd"),
 #' mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
 #' cpt_delay(mon, truth = 200)
 cpt_delay <- function(object, truth, max_delay = Inf) {
+  # Compared straight against alarm times, so `NA` or a negative value
+  # silently counted every alarm as false, a vector recycled, and a string
+  # compared as text.
+  if (!is.numeric(max_delay) || length(max_delay) != 1L || is.na(max_delay) ||
+      max_delay < 0) {
+    stop("`max_delay` must be a single non-negative number (`Inf` for no ",
+         "limit); got ", paste(format(max_delay), collapse = ", "), ".",
+         call. = FALSE)
+  }
   if (missing(truth)) {
     stop("`truth` is required: detection delay is measured from the true ",
          "changepoint(s), so there is nothing to measure without them. Pass ",

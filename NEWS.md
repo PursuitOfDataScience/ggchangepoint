@@ -2213,6 +2213,12 @@ Four findings the measurement refuted, recorded so they are not re-swept.
   scale. The notes now name them. `?bocpd_wrapper` also described
   `hazard` as the hazard rate `1/lambda`; it is `lambda`, the expected run
   length.
+- `cpt_penalty()` checks `k` for every penalty type; only MBIC did, so a
+  negative `k` returned a negative BIC, AIC, Hannan-Quinn or sSIC
+  "penalty" that rewards changepoints. `cpt_delay()` checks `max_delay`,
+  which was compared straight against alarm times, and `cpt_scenarios()`
+  refuses a missing or non-numeric `location` or `rho` instead of
+  generating a dataset with no change in it, labelled with a jump.
 - Twenty-six more engine arguments are checked by name, the ones the
   earlier measurement of wrapper arguments missed: `fcov`'s `alpha` (a bad
   value failed inside the engine and was blamed on the grid resolution, or

@@ -5573,3 +5573,24 @@ test_that("kcp gives the caller's foreach backend back", {
   suppressWarnings(kcp_wrapper(x, nperm = 20))
   expect_identical(fe("getDoParName")(), "doSEQ")
 })
+
+test_that("cpt_penalty, cpt_delay and cpt_scenarios check their numbers by name", {
+  # A negative k gave a negative "penalty" for every type but MBIC.
+  for (v in list(-1, NA, c(1, 2), "a")) {
+    expect_error(cpt_penalty("BIC", n = 100, k = v), "`k`", info = deparse(v))
+  }
+  expect_equal(cpt_penalty("BIC", n = 100, k = 2), 2 * log(100))
+  set.seed(1)
+  mon <- cpt_replay(c(stats::rnorm(50), stats::rnorm(50, 2)),
+                    baseline = stats::rnorm(50))
+  # max_delay was compared straight against alarm times.
+  for (v in list(NA, -1, c(2, 3), "a")) {
+    expect_error(cpt_delay(mon, truth = 50, max_delay = v), "`max_delay`",
+                 info = deparse(v))
+  }
+  expect_s3_class(cpt_delay(mon, truth = 50, max_delay = Inf), "ggcpt_delay")
+  # A missing location became a no-change dataset labelled with a jump.
+  expect_error(cpt_scenarios(n = 100, jump = 1, location = NA), "`location`")
+  expect_error(cpt_scenarios(n = 100, jump = 1, location = "a"), "`location`")
+  expect_error(cpt_scenarios(n = 100, jump = 1, rho = "a"), "`rho`")
+})

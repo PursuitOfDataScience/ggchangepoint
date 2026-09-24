@@ -507,6 +507,12 @@ cpt_scenarios <- function(n = 500, jump = c(0.5, 1, 2), location = 0.5,
   # "non-numeric argument to binary operator" and a length-2 seed silently
   # vectorised.
   validate_scalar(seed, "seed")
+  # `location = NA` or a string became a dataset with no change in it,
+  # labelled with the jump it does not have, and reported only through
+  # cpt_simulate()'s unrelated "params ... are unused" warning.
+  # Out-of-range fractions are moved, with a warning, below.
+  validate_grid(location, "location")
+  validate_grid(rho, "rho")
   # `rho` is crossed like everything else. It used to be assigned with
   # ifelse() after the grid was built, so a vector was RECYCLED down the
   # rows: `rho = c(0.2, 0.8)` gave jump 1 an AR coefficient of 0.2 and jump
