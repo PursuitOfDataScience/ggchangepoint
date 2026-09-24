@@ -32,7 +32,7 @@ Registered methods are visibly user-supplied: `cpt_methods()` marks them,
 `print()` says so on every result, and `cpt_cite()` returns the citation the
 registration supplied or states plainly that none was given.
 
-**Dependencies.** Fifty-six packages are suggested; thirty-five of them are
+**Dependencies.** Fifty-seven packages are suggested; thirty-five of them are
 detection engines and the rest are optional extras (time-index coercion,
 tables, interactivity, progress bars, the test toolchain). Every one is
 guarded with `requireNamespace()`, its examples use `@examplesIf`, its tests
