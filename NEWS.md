@@ -2141,6 +2141,90 @@ Four findings the measurement refuted, recorded so they are not re-swept.
   ocp's run-length matrix is the prior, before any data, and was plotted as
   observation 1. The run length now restarts at the first observation of
   the new segment.
+- `var_wrapper()` reported every change **one observation early for an
+  even-length series and two for an odd one**. `changepoints`' search fits
+  on every other observation and reports `2c` for a change after its `c`-th
+  transition, whose last observation is `2c + 1`, and for an odd length it
+  drops observation 1 before pairing the rest and never adds it back. The
+  location is now converted to the package's left convention; its
+  regression search, `hdreg`, already reported that observation.
+- `esac` and `pilliat` dropped a constant input column from the **result**
+  as well as from the engine's input: it vanished from `$data_wide` (so
+  from `augment()` and `autoplot()`), and `$data$value` moved onto the next
+  column. They now describe the input they were given, as `inspect`, `kcp`
+  and `npmojo` do.
+- `hdcov`'s minimum spacing compared each candidate with its predecessor
+  whether or not that one was kept, so 10, 14, 18 at `delta = 5` kept only
+  10 although 18 is 8 from it. It is now measured from the last changepoint
+  kept.
+- `fabisearch` warned, on its own documented example, that **no split could
+  be significant whatever the data**, and then returned one. The warning
+  took the engine's p-value for a permutation p-value with a `1 / n_reps`
+  floor; it is a t-test of the refitted losses against the permuted ones,
+  BH-adjusted across splits, and has no such floor. The warning now fires
+  only for the rank tests that do have one (`testtype = "wilcox"` or
+  `"ks"`), before the search rather than after it, and `?fabisearch_wrapper`
+  describes the test. `n_reps = 1` is refused up front instead of failing
+  inside the test after the whole search; the engine's "Loading required
+  package" messages no longer reach the console; and the page no longer
+  promises a progress note the wrapper never printed.
+- `cpt_detect()` refuses a malformed `penalty` by name. `NA` or a misspelt
+  name (`"mbic"`) silently became the `fpop`, `cpop`, `decafs` or `fastcpd`
+  default, a vector was cut to its first element or printed as two
+  penalties, and a negative number put a changepoint at every observation.
+  `fpop_wrapper()` also reported its own `2 * log(n)` default as a
+  `"Manual"` penalty, as `cpop` and `decafs` had until 0.5.0.
+- `wbsts_wrapper(cstar = 1e6)` **crashed the R session**: `cstar` is a
+  proportion inside the engine's unchecked C++ search, and above 1 it
+  failed with "subscript out of bounds" (2) or "only 0's may be mixed with
+  negative subscripts" (5) before it segfaulted. It is now held to the
+  method's own range, 0.5 to 1, and `?wbsts_wrapper` describes `cstar` and
+  `lambda` as what they are (the unbalancedness parameter and the number
+  of scales) rather than as "post-processing constants". A `lambda` that
+  asks for more wavelet scales than the series has is refused by name.
+- `taylor`'s confidences are checked against the engine's own ranges
+  (`conf_level` 0.9 to 0.999, `min_conf` 0.5 to 1, `min_candidate_conf` 0.3
+  to 1), which it then refused under its own names (`CI`, `min_tbl_conf`),
+  and `segmented_wrapper()` refuses more breakpoints than a series can hold
+  instead of running without returning at `npsi = 1e6`.
+- **A `kcp` call broke parallel code for the rest of the session.**
+  `kcpRS::kcpRS()` registers a `doParallel` backend on a cluster it then
+  stops, so every later `%dopar%` failed with "invalid connection" or
+  waited on the dead socket; `fabisearch` did so from inside the test
+  suite. `kcp_wrapper()` now gives the caller's foreach registration
+  back, and so does `fabisearch_wrapper()`, whose engine registers one of
+  its own when `n_core > 1`.
+- Degenerate input that failed inside an engine is refused by name or
+  answered: `inspect` on a coordinate whose successive differences are
+  mostly equal (a 0/1 alternation, a noiseless step), which the engine
+  divides by, failed with "missing value where TRUE/FALSE needed";
+  `hdcov` on a constant matrix and `network` on an all-zero sequence
+  reached `thresholdBS()` with a zero threshold and now report no
+  changepoints; `var` on 5 rows failed with "Not a matrix."; `hdreg` on
+  any series shorter than `4 * delta + 4` (24 at the default) failed with
+  "replacement has length zero"; and `wbsts` below 8 observations ended in
+  upstream's ".........Choose at least two scales.........".
+- The scale-sensitivity notes in `?cpt_detect`, the introduction vignette
+  and the README said that every engine outside the penalised
+  change-in-mean four returns the same segmentation whatever the units.
+  Measured at a thousandth, one and a thousand times the units, three do
+  not: `geomcp` runs PELT on its mapped series, `decafs` floors its noise
+  estimate at about 0.03, and `bocpd`'s default prior is on the data's
+  scale. The notes now name them. `?bocpd_wrapper` also described
+  `hazard` as the hazard rate `1/lambda`; it is `lambda`, the expected run
+  length.
+- Twenty-six more engine arguments are checked by name, the ones the
+  earlier measurement of wrapper arguments missed: `fcov`'s `alpha` (a bad
+  value failed inside the engine and was blamed on the grid resolution, or
+  ran and found nothing), `bcp`'s `mcmc`, `ocd`'s `beta` and `train`,
+  `strucchange`'s `h` and `breaks` (`breaks = 0` fitted one break),
+  `mcp`'s `iter`, `adapt` and `chains`, `inspect`'s `lambda` and
+  `threshold`, `mosum`'s and `npmojo`'s `G`, `sn`'s `grid_size`, `wbs`'s
+  `threshold` (a string ran and found nothing), `wbsts`'s `scales`, the
+  `gamma_set` and `lambda_set` grids of `var` and `hdreg` (an `NA` in
+  either ran and found nothing), `fastcpd`'s `order`, and `fabisearch`'s
+  `n_runs`, `n_reps`, `n_core`, `alpha` and `rank` (NMF refused a bad
+  rank itself, but only after the call had attached NMF).
 
 ## Corrections to the roadmap
 

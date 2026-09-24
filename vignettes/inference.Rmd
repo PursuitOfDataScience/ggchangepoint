@@ -36,11 +36,11 @@ has_infl  <- requireNamespace("changepoint.influence", quietly = TRUE)
 Detection gives you locations. This vignette is about the four questions
 that come next, and that a bare list of locations cannot answer:
 
-1. **How sure are we about *where*?** — `cpt_confint()`, `nsp_wrapper()`.
-2. **Is the change real at all?** — `cpt_test()`, and why the answer is
+1. **How sure are we about *where*?** `cpt_confint()`, `nsp_wrapper()`.
+2. **Is the change real at all?** `cpt_test()`, and why the answer is
    harder than it looks.
-3. **How many changes are there?** — `cpt_select()`.
-4. **What is driving this answer?** — `cpt_influence()`,
+3. **How many changes are there?** `cpt_select()`.
+4. **What is driving this answer?** `cpt_influence()`,
    `cpt_sensitivity()`, `cpt_statistic()`.
 
 ```{r data}
@@ -55,8 +55,8 @@ fit
 ## Four provenances, one contract
 
 Only a handful of engines ship an interval of their own. `cpt_confint()`
-covers the rest, and — because the four routes mean genuinely different
-things — reports which one it used in a `source` column rather than
+covers the rest and, because the four routes mean genuinely different
+things, reports which one it used in a `source` column rather than
 presenting them as interchangeable.
 
 ```{r confint-bootstrap}
@@ -76,7 +76,7 @@ sm <- smuce_wrapper(x)
 cpt_confint(sm)
 ```
 
-Those are SMUCE's *simultaneous* confidence sets — a different object from
+Those are SMUCE's *simultaneous* confidence sets, a different object from
 a bootstrap frequency band, which is exactly why the `source` column
 exists.
 
@@ -121,7 +121,7 @@ changed there* is circular, and the resulting p-values are
 anti-conservative, often severely.
 
 `cpt_test()` never hides that. It uses the engine's own test where one
-exists and an explicitly unadjusted two-sample test where none does — and
+exists and an explicitly unadjusted two-sample test where none does, and
 the `selection_adjusted` column records *whether the p-value accounts for
 selection*, which is not the same question. `segmented`'s Davies test is
 built for it and reads `TRUE`; `strucchange`'s route is the Chow F
@@ -140,7 +140,7 @@ suppressWarnings(cpt_test(strucchange_wrapper(x)))
 If you need a guarantee that survives selection, the route is NSP (above)
 or `cpt_confint(method = "nsp")`, which maps each detected changepoint to
 the narrowest region covering it and returns `NA` for one that no region
-covers — because "no region supports this at level $\alpha$" is a finding,
+covers, because "no region supports this at level $\alpha$" is a finding,
 not a missing value.
 
 ```{r confint-nsp, eval = has_nsp}
@@ -150,7 +150,7 @@ cpt_confint(fit, method = "nsp", level = 0.9, seed = 1)
 # 3. How many changepoints?
 
 `cpt_crops()` draws the penalty path. `cpt_select()` chooses from it, over
-one candidate ladder shared by every criterion — so "BIC says 2,
+one candidate ladder shared by every criterion, so "BIC says 2,
 cross-validation says 3" is a comparison of criteria and not of two
 different searches.
 
@@ -160,7 +160,7 @@ sel
 ```
 
 `criterion = "mbic"` is the segment-length modified BIC of
-@zhang2007mbic — the real one, which reads the segment lengths and so
+@zhang2007mbic: the real one, which reads the segment lengths and so
 cannot be expressed by `cpt_penalty()`'s function of $n$ and $k$ alone.
 
 ```{r select-criterion, fig.alt = "Criterion value against the number of changepoints, with the chosen model highlighted"}
@@ -191,8 +191,8 @@ because it is a good default.
 ## Which observation
 
 `cpt_stability()` answers "would I find this again?". `cpt_influence()`
-asks the sharper question — which single observation, if perturbed,
-changes the segmentation — following @wilms2022influence.
+asks the sharper question (which single observation, if perturbed,
+changes the segmentation), following @wilms2022influence.
 
 ```{r influence}
 inf <- cpt_influence(fit, engine = if (has_infl) "auto" else "recompute",
@@ -275,7 +275,7 @@ ggcpt_solution_path(cpt_detect(x, method = "wbs"), max_steps = 20)
 
 `cpt_solution_path()` is the same object as a tibble. The `contrast`
 column is the margin by which each candidate beat the next, and
-`selected` marks the ones the penalty kept — so the gap between the last
+`selected` marks the ones the penalty kept, so the gap between the last
 selected row and the first rejected one is how close the decision was:
 
 ```{r solution-path-data, eval = has_wbs}

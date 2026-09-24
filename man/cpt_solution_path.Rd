@@ -13,13 +13,13 @@ ggcpt_solution_path(object, max_steps = 40)
 \item{object}{A \code{ggcpt} object from an engine with a solution path
 (\code{subset(cpt_methods(), path)$method}).}
 
-\item{max_steps}{Longest prefix of the path drawn. Defaults to \code{40} —
+\item{max_steps}{Longest prefix of the path drawn. Defaults to \code{40}:
 a randomised search proposes hundreds of candidates and only the head of
 the ranking is readable.}
 }
 \value{
 \code{cpt_solution_path()} returns a tibble with \code{step},
-  \code{cp}, \code{contrast} and — for interval-based searches —
+  \code{cp}, \code{contrast} and, for interval-based searches,
   \code{start}/\code{end} of the interval that proposed it, plus a
   \code{selected} flag marking the changepoints in the final model.
   \code{ggcpt_solution_path()} draws it.
@@ -37,7 +37,7 @@ the ranking is readable.}
   For \code{wbs2} and \code{tguh} the path is \strong{recomputed} with
   \pkg{breakfast}, because their fit objects do not keep the candidate
   list. \code{wbs2}'s search is randomised, so its path is a second
-  search of the same series rather than a record of the first --- it can
+  search of the same series rather than a record of the first: it can
   differ between calls, and \code{selected} can be \code{FALSE}
   throughout if the recomputed candidates miss the fit's own
   changepoints. Every other engine's path is read off the fit.
@@ -45,7 +45,7 @@ the ranking is readable.}
 \description{
 The order in which candidate changepoints entered the model, with the
 contrast (or split criterion) at each step. Binary segmentation splits
-recursively, WBS/WBS2/NOT/TGUH rank random intervals — in every case the
+recursively, WBS/WBS2/NOT/TGUH rank random intervals; in every case the
 final answer is a prefix of a path, and seeing the path shows how
 decisively each changepoint beat the next.
 }

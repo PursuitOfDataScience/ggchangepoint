@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-slope.R
 \name{cpop_wrapper}
 \alias{cpop_wrapper}
-\title{CPOP wrapper — optimal change-in-slope detection}
+\title{CPOP wrapper: optimal change-in-slope detection}
 \usage{
 cpop_wrapper(x, penalty = NULL, sd = NULL, ...)
 }

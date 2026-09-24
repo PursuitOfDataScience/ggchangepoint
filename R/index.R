@@ -1,7 +1,7 @@
 #' Coerce a time series object to values plus a time index
 #'
-#' Detection itself runs on positions — every wrapped engine assumes an
-#' equally spaced sequence — but real series carry dates, and reporting a
+#' Detection itself runs on positions (every wrapped engine assumes an
+#' equally spaced sequence), but real series carry dates, and reporting a
 #' changepoint as "index 147" when the data are monthly rainfall is an
 #' unnecessary translation step for the user. \code{as_cpt_series()} is the
 #' one place that separates the two: it pulls the numeric values out of a
@@ -25,7 +25,7 @@
 #'   matrix for multivariate input), \code{index} (the time index, or
 #'   \code{NULL} when there is none), \code{index_label} (a name for the
 #'   x axis) and \code{frequency} (the seasonal frequency a \code{ts}
-#'   carried, or \code{NULL} -- \code{\link{cpt_detect}()} hands this to
+#'   carried, or \code{NULL}; \code{\link{cpt_detect}()} hands this to
 #'   the engines that need one, such as \code{\link{bfast_wrapper}()}).
 #' @export
 #' @examples

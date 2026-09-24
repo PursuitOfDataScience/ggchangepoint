@@ -10,8 +10,8 @@ npmojo_wrapper(x, G = NULL, lag = 0, ...)
 \item{x}{A numeric vector or matrix (rows are time points).}
 
 \item{G}{Moving-window bandwidth. Defaults to \code{max(20, 0.1 * n)}
-observations, capped at \code{n / 2} — the largest bandwidth the engine
-accepts — so the default also works on series shorter than 40.}
+observations, capped at \code{n / 2} (the largest bandwidth the engine
+accepts), so the default also works on series shorter than 40.}
 
 \item{lag}{Time lag at which changes in the joint distribution are
 examined; \code{0} targets the marginal distribution. Defaults to

@@ -84,13 +84,17 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
   # declaring it would add a second package that cannot install without the
   # system library.
   if (!requireNamespace("mcp", quietly = TRUE)) {
-    stop("Package 'mcp' is required, and it samples through JAGS -- a ",
+    stop("Package 'mcp' is required, and it samples through JAGS, a ",
          "separate program installed outside R. Install JAGS from ",
          "https://mcmc-jags.sourceforge.io and then ",
          "install.packages('mcp').", call. = FALSE)
   }
   change_in <- match.arg(change_in)
   validate_scalar(n_changepoints, "n_changepoints", min = 1)
+  # Positive integers in mcp's own documentation, and forwarded to JAGS.
+  validate_scalar(iter, "iter", min = 1)
+  validate_scalar(adapt, "adapt", min = 1)
+  validate_scalar(chains, "chains", min = 1)
   validate_data(x)
   data_vec <- as_uni_vector(x, "mcp")
   n <- length(data_vec)

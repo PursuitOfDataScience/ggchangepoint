@@ -19,7 +19,7 @@ binsegrcpp_wrapper(
 \item{change_in}{\code{"mean"} (Gaussian, the default) or
 \code{"meanvar"}, mapped to the engine's \code{mean_norm} and
 \code{meanvar_norm} distributions. \pkg{binsegRcpp} has no
-variance-only cost, so \code{"var"} is not offered here — use
+variance-only cost, so \code{"var"} is not offered here; use
 \code{"meanvar"}, or \code{\link{cpt_detect}(method = "pelt",
 change_in = "var")} for a variance-only change.}
 

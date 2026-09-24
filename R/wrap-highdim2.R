@@ -36,6 +36,12 @@
 # call thresholdBS().
 #' @noRd
 threshold_bs <- function(bs, threshold) {
+  # thresholdBS() refuses a threshold of 0 ("The threshold tau should be a
+  # positive value"). The wrappers refuse one from the caller; one derived
+  # from the permutations means every permuted statistic was exactly 0,
+  # which only a sequence with nothing for the statistic to see produces
+  # (an all-zero network, a constant matrix), so nothing is detected.
+  if (!(threshold > 0)) return(list(cpt_hat = NULL))
   if (length(unique(bs$Level)) < 2L) {
     keep <- which(as.numeric(bs$Dval) > threshold)
     return(list(cpt_hat = if (length(keep) > 0) {
@@ -47,14 +53,14 @@ threshold_bs <- function(bs, threshold) {
   changepoints::thresholdBS(bs, threshold)
 }
 
-#' ESAC wrapper — sparsity-adaptive high-dimensional detection
+#' ESAC wrapper: sparsity-adaptive high-dimensional detection
 #'
 #' Wraps \code{HDCD::ESAC()} (Moen, Glad and Tveten, 2023): Efficient
 #' Sparsity Adaptive Changepoint estimation for a change in the mean vector
 #' of a high-dimensional series. Where \code{inspect} projects onto a single
 #' estimated sparse direction, ESAC adapts across the whole sparsity range at
-#' once, which is a different regime rather than a refinement of the same one
-#' — it is competitive both when a handful of coordinates change and when all
+#' once, which is a different regime rather than a refinement of the same one:
+#' it is competitive both when a handful of coordinates change and when all
 #' of them do.
 #'
 #' @param x A numeric matrix or data frame with rows as time points and
@@ -94,8 +100,13 @@ esac_wrapper <- function(x, threshold_d = 1.5, threshold_s = 1,
   validate_scalar(N, "N", min = 1)
   validate_flag(empirical, "empirical")
   validate_data(x)
-  X <- as_mv_matrix(x)
-  X <- drop_constant_cols(X, "esac")
+  # The result describes the INPUT, all of it; only the engine sees the
+  # matrix with its flat columns dropped. Building `$data` and `$data_wide`
+  # from the reduced matrix made a constant input column vanish from
+  # augment() and autoplot() and moved `$data$value` onto the next column,
+  # where inspect, kcp and npmojo keep every input column.
+  X_in <- as_mv_matrix(x)
+  X <- drop_constant_cols(X_in, "esac")
   if (is.null(X)) {
     # `data_wide` too: esac is `univariate = FALSE` in the registry, so its
     # result is always meant to be multivariate. Omitting it made
@@ -110,7 +121,7 @@ esac_wrapper <- function(x, threshold_d = 1.5, threshold_s = 1,
                        call = match.call(),
                        data_wide = mv_data_wide(XX)))
   }
-  data_vec <- as.numeric(X[, 1])
+  data_vec <- as.numeric(X_in[, 1])
   local_seed(seed)
 
   # HDCD works with p x n (coordinates down, time across).
@@ -144,7 +155,7 @@ esac_wrapper <- function(x, threshold_d = 1.5, threshold_s = 1,
            depth = if (length(depth_raw) == length(cp_raw)) depth_raw[ord]
                    else rep(NA_integer_, length(cp)))
     },
-    data_wide = mv_data_wide(X)
+    data_wide = mv_data_wide(X_in)
   )
 }
 
@@ -190,25 +201,25 @@ pilliat_dimension_guard <- function(p, p_supplied) {
        "so it is not a power of two.", call. = FALSE)
 }
 
-#' Pilliat wrapper — high-dimensional detection by three complementary tests
+#' Pilliat wrapper: high-dimensional detection by three complementary tests
 #'
 #' Wraps \code{HDCD::Pilliat()} (Pilliat, Carpentier and Verzelen, 2023): a
 #' high-dimensional mean-change procedure combining a dense test, a
-#' Berk–Jones test and a partial-sum test, so it is powerful across sparsity
+#' Berk-Jones test and a partial-sum test, so it is powerful across sparsity
 #' regimes without estimating the sparsity level. A useful cross-check on
-#' \code{\link{esac_wrapper}()} — the two adapt differently and disagreeing
+#' \code{\link{esac_wrapper}()}: the two adapt differently and disagreeing
 #' answers are informative.
 #'
 #' @inheritParams esac_wrapper
 #' @param threshold_d_const,threshold_bj_const,threshold_partial_const
-#'   Leading constants of the dense, Berk–Jones and partial-sum thresholds.
+#'   Leading constants of the dense, Berk-Jones and partial-sum thresholds.
 #' @param ... Additional arguments passed to \code{HDCD::Pilliat()}.
 #' @return A \code{ggcpt} object.
 #' @section Dimension precondition:
 #' \code{HDCD} 1.1's \code{Pilliat()} builds one fewer partial-sum threshold
 #' than it uses whenever the number of coordinates is an exact power of two,
 #' so the C routine reads past the end of that vector and the engine reports
-#' a changepoint at \emph{every} observation — on pure noise as readily as on
+#' a changepoint at \emph{every} observation, on pure noise as readily as on
 #' a real change. This wrapper refuses those dimensions rather than returning
 #' the result, because it is wrong in a way that looks like a finding.
 #' \code{\link{esac_wrapper}()} is unaffected at every dimension. Note that
@@ -222,7 +233,7 @@ pilliat_dimension_guard <- function(p, p_supplied) {
 #' \code{\link{cpt_batch}()} and \code{\link{cpt_benchmark}()} record a
 #' failure row for \code{pilliat} where the same output from \code{pelt}
 #' gives a result plus a warning, so a benchmark table is not scoring the
-#' two on equal terms in that case --- read the \code{error} column
+#' two on equal terms in that case; read the \code{error} column
 #' alongside the metrics.
 #' @references
 #' \insertRef{pilliat2023optimal}{ggchangepoint}
@@ -251,8 +262,9 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
   validate_scalar(N, "N", min = 1)
   validate_flag(empirical, "empirical")
   validate_data(x)
-  X <- as_mv_matrix(x)
-  X <- drop_constant_cols(X, "pilliat")
+  # As in esac_wrapper(): the result keeps every input column.
+  X_in <- as_mv_matrix(x)
+  X <- drop_constant_cols(X_in, "pilliat")
   if (is.null(X)) {
     # See the note in esac_wrapper(): the shape has to survive an all-flat
     # input, because this method is high-dimensional only.
@@ -263,8 +275,8 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
                        call = match.call(),
                        data_wide = mv_data_wide(XX)))
   }
-  data_vec <- as.numeric(X[, 1])
-  pilliat_dimension_guard(ncol(X), ncol(as_mv_matrix(x)))
+  data_vec <- as.numeric(X_in[, 1])
+  pilliat_dimension_guard(ncol(X), ncol(X_in))
   local_seed(seed)
 
   fit <- HDCD::Pilliat(t(X), threshold_d_const = threshold_d_const,
@@ -297,7 +309,7 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
     penalty = list(type = "threshold", value = threshold_d_const),
     fit = fit,
     call = match.call(),
-    data_wide = mv_data_wide(X)
+    data_wide = mv_data_wide(X_in)
   )
 }
 
@@ -358,6 +370,9 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
   data_vec <- as.numeric(X[, 1])
   if (is.null(delta)) delta <- max(10L, floor(n / 20))
   validate_scalar(delta, "delta", min = 1)
+  if (!is.null(threshold)) {
+    validate_scalar(threshold, "threshold", min = 0, min_open = TRUE)
+  }
   local_seed(seed)
   if (is.null(threshold) && n_perm < 1 / alpha) {
     warning("The permutation threshold is the ", format(1 - alpha),
@@ -399,10 +414,20 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
   cp <- cp[keep]; cusum <- cusum[keep]
   ord <- order(cp)
 
-  # Enforce the minimum spacing the engine does not.
+  # Enforce the minimum spacing the engine does not, measured from the last
+  # changepoint KEPT. Comparing each one with its immediate predecessor
+  # over-enforced it: 10, 14, 18 at `delta = 5` kept only 10, although 18 is
+  # 8 from it, because 18 was compared with the 14 already dropped.
   cp_s <- cp[ord]; cu_s <- cusum[ord]
   if (length(cp_s) > 1) {
-    keep2 <- c(TRUE, diff(cp_s) >= delta)
+    keep2 <- rep(FALSE, length(cp_s))
+    last <- -Inf
+    for (i in seq_along(cp_s)) {
+      if (cp_s[i] - last >= delta) {
+        keep2[i] <- TRUE
+        last <- cp_s[i]
+      }
+    }
     cp_s <- cp_s[keep2]; cu_s <- cu_s[keep2]
   }
 
@@ -454,7 +479,7 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
 #' replicate, pass it as \code{copy2} and none of this applies.
 #'
 #' @return A \code{ggcpt} object with \code{change_in = "network"}. The
-#'   series it carries -- and so the one \code{autoplot()} draws -- is the
+#'   series it carries (and so the one \code{autoplot()} draws) is the
 #'   \strong{mean edge weight} at each time point, \code{rowMeans()} of the
 #'   vectorised adjacency matrices. This is the one multivariate method with
 #'   no \code{data_wide} slot: a \eqn{p \times p} network has \eqn{p^2}
@@ -513,6 +538,9 @@ network_wrapper <- function(x, copy2 = NULL, n_intervals = 100,
   if (is.null(delta)) delta <- max(5L, floor(n / 20))
   validate_scalar(delta, "delta", min = 1)
   validate_scalar(n_intervals, "n_intervals", min = 1)
+  if (!is.null(threshold)) {
+    validate_scalar(threshold, "threshold", min = 0, min_open = TRUE)
+  }
   local_seed(seed)
   if (is.null(threshold) && n_perm < 1 / alpha) {
     warning("The permutation threshold is the ", format(1 - alpha),
@@ -610,7 +638,7 @@ network_matrix <- function(x) {
 #' Willett): dynamic programming with an \eqn{\ell_0} penalty for changes in
 #' the transition matrix of a vector autoregression, with the two tuning
 #' parameters chosen by cross-validation. The change here is in the
-#' \emph{dynamics} — how the series predicts itself — not in the level, so it
+#' \emph{dynamics} (how the series predicts itself), not in the level, so it
 #' is invisible to every mean-change engine in the package.
 #'
 #' @param x A numeric matrix or data frame, rows as time points.
@@ -620,7 +648,11 @@ network_matrix <- function(x) {
 #'   \code{c(0.01, 0.1, 1)}.
 #' @param delta Minimum spacing. Defaults to \code{max(5, floor(n / 20))}.
 #' @param ... Additional arguments passed to the engine.
-#' @return A \code{ggcpt} object with \code{change_in = "regression"}.
+#' @return A \code{ggcpt} object with \code{change_in = "regression"}. The
+#'   engine searches every other observation, so a location is resolved to
+#'   within two; each is reported as the last observation before the
+#'   change, the package convention, rather than the engine's own index,
+#'   which sits one or two earlier.
 #' @references
 #' \insertRef{wang2019var}{ggchangepoint}
 #' @export
@@ -652,10 +684,23 @@ var_wrapper <- function(x, gamma_set = NULL, lambda_set = NULL,
   }
   n <- nrow(X)
   data_vec <- as.numeric(X[, 1])
+  # The search pairs the observations up (dropping the first when n is
+  # odd) and fits each half's transitions, so it needs two per half: at 5
+  # rows the engine's C++ failed with "Not a matrix."
+  if (floor((n - n %% 2L) / 2) - 1 < 2) {
+    stop("`var` needs at least 6 observations (7 when the count is odd): ",
+         "its cross-validation fits the transitions of every other ",
+         "observation, and `x` has ", n, ".", call. = FALSE)
+  }
   if (is.null(delta)) delta <- max(5L, floor(n / 20))
   if (is.null(gamma_set)) gamma_set <- c(0.1, 1, 10) * log(n)
   if (is.null(lambda_set)) lambda_set <- c(0.01, 0.1, 1)
   validate_scalar(delta, "delta", min = 1)
+  # An NA in either grid ran and reported no changepoints, a negative value
+  # ran, and a string failed with Rcpp's "Not compatible with requested
+  # type".
+  validate_grid(gamma_set, "gamma_set", min = 0)
+  validate_grid(lambda_set, "lambda_set", min = 0)
 
   # The engine wants a p x n matrix and forms the lag pair internally from
   # DATA[, -1] and DATA[, -n].
@@ -666,8 +711,15 @@ var_wrapper <- function(x, gamma_set = NULL, lambda_set = NULL,
   errs <- suppressWarnings(as.numeric(unlist(fit$test_error)))
   best <- which.min(errs)
   if (length(best) == 0 || !is.finite(errs[best])) best <- 1L
+  # The search fits on every other observation and reports 2c for a change
+  # after its c-th transition, but the last observation that transition
+  # generates is 2c + 1; and for an odd n it drops observation 1 first to
+  # pair the rest up, then reports positions in what is left. Converted
+  # here to this package's "left" location, which put it one observation
+  # early for an even n and two for an odd one. changepoints' regression
+  # search already reports the last observation of the left segment.
   cp <- as.integer(unlist(fit$cpt_hat[[best]]))
-  cp <- sort(cp[!is.na(cp)])
+  cp <- sort(cp[!is.na(cp)]) + 1L + n %% 2L
 
   ggcpt_build(
     data_vec, cp,
@@ -745,6 +797,19 @@ hdreg_wrapper <- function(x, response = NULL, gamma_set = NULL,
   if (is.null(gamma_set)) gamma_set <- c(0.1, 1, 10) * log(n)
   if (is.null(lambda_set)) lambda_set <- c(0.01, 0.1, 1)
   validate_scalar(delta, "delta", min = 1)
+  # Measured for delta = 1 to 6: the engine fails with base R's
+  # "replacement has length zero" on every series shorter than
+  # 4 * delta + 4, which at the default delta of 5 is anything under 24.
+  if (n < 4 * delta + 4) {
+    stop("`hdreg` with `delta = ", delta, "` needs at least ",
+         4 * delta + 4, " observations (4 * delta + 4): its ",
+         "cross-validation fits on every other observation with segments ",
+         "of at least `delta`, and `x` has ", n, ". Lower `delta` or use a ",
+         "longer series.", call. = FALSE)
+  }
+  # As in var_wrapper().
+  validate_grid(gamma_set, "gamma_set", min = 0)
+  validate_grid(lambda_set, "lambda_set", min = 0)
 
   fit <- changepoints::CV.search.DP.regression(y, X, gamma_set, lambda_set,
                                                as.integer(delta), ...)

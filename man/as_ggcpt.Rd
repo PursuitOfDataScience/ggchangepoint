@@ -68,8 +68,8 @@ same length as \code{cp}, appended to the changepoints tibble.}
 }
 \value{
 A \code{ggcpt} object, with the same components as any
-  detector in the package returns -- see \code{\link{new_ggcpt}()}
-  for the full list, and \code{\link{cpt_detect}()} for the summary.
+  detector in the package returns (see \code{\link{new_ggcpt}()}
+  for the full list, and \code{\link{cpt_detect}()} for the summary).
 }
 \description{
 Wraps a set of changepoint locations (from a detector this package does

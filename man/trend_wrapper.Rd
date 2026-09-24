@@ -28,15 +28,15 @@ their standard vocabulary, from the \pkg{trend} package. All three test
 \eqn{H_0}: no change against a single change in the mean, differing in how
 they measure it:
 \describe{
-  \item{\code{"pettitt"}}{a rank-based (Mann–Whitney) statistic —
+  \item{\code{"pettitt"}}{a rank-based (Mann-Whitney) statistic,
     distribution-free and robust to outliers.}
   \item{\code{"buishand"}}{the Buishand range test, based on rescaled
     adjusted partial sums; assumes normality.}
   \item{\code{"snht"}}{the standard normal homogeneity test of Alexandersson,
     the reference method for detecting inhomogeneities in climate records.}
 }
-Each reports a location \emph{and} a p-value, and — unlike most engines
-here — that p-value is valid, because the location was not chosen from a
+Each reports a location \emph{and} a p-value, and, unlike most engines
+here, that p-value is valid, because the location was not chosen from a
 larger model search.
 }
 \examples{

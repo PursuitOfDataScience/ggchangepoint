@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-search.R
 \name{wbs_wrapper}
 \alias{wbs_wrapper}
-\title{WBS wrapper — Wild Binary Segmentation}
+\title{WBS wrapper: Wild Binary Segmentation}
 \usage{
 wbs_wrapper(x, n_intervals = 5000, threshold = NULL, seed = NULL, ...)
 }

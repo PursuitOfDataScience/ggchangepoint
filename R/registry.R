@@ -196,7 +196,7 @@ derived_args_for <- function(method, change_in, pen_val) {
 #' detector reached through \pkg{reticulate}, a deep-learning model, a
 #' proprietary in-house method, or a hand-curated set of changepoints. The
 #' registered method then works with everything built on the \code{ggcpt}
-#' contract — \code{autoplot()}, the geoms, \code{tidy()}/\code{glance()}/
+#' contract: \code{autoplot()}, the geoms, \code{tidy()}/\code{glance()}/
 #' \code{augment()}, \code{cpt_metrics()}, \code{ggcpt_compare()},
 #' \code{cpt_stability()}, \code{cpt_consensus()}, \code{cpt_benchmark()}
 #' and \code{cpt_report()}.
@@ -219,7 +219,7 @@ derived_args_for <- function(method, change_in, pen_val) {
 #'   \code{diagnostics$statistic} (a numeric vector, or a list with
 #'   \code{statistic}, \code{label} and \code{threshold}) is padded with
 #'   \code{NA} to the length of the series when it is shorter, and the pad
-#'   is \strong{centred} --- a moving-window statistic is trimmed at both
+#'   is \strong{centred}: a moving-window statistic is trimmed at both
 #'   ends, so a left-aligned pad would shift every value by the bandwidth.
 #'   Supply a full-length vector if that is not the alignment you want.
 #' @param change_in Character vector of \code{change_in} values the detector
@@ -332,7 +332,7 @@ cpt_register_method <- function(name, fn, change_in = "mean",
   # be handled by 'cat'`.
   if (!is.null(citation) &&
       !(is.character(citation) && length(citation) == 1L)) {
-    stop("`citation` must be NULL or a single string -- cpt_cite() prints ",
+    stop("`citation` must be NULL or a single string; cpt_cite() prints ",
          "it verbatim. For a BibTeX entry or a citation object, pass ",
          "format(citation) or a one-line reference.", call. = FALSE)
   }

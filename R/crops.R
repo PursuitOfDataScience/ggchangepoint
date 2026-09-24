@@ -1,4 +1,4 @@
-#' CROPS — the full penalty path of a penalised changepoint method
+#' CROPS: the full penalty path of a penalised changepoint method
 #'
 #' Runs PELT once per \emph{distinct} optimal segmentation as the penalty
 #' ranges over \code{[pen_min, pen_max]}, using the CROPS algorithm of
@@ -20,7 +20,7 @@
 #'   (one row per distinct segmentation: \code{penalty}, \code{n_cpts},
 #'   \code{cost}, and a \code{cpts} list-column), the \code{data}, and
 #'   metadata. \code{penalty} is the \strong{lower end} of the penalty
-#'   interval on which that segmentation is optimal --- CROPS returns the
+#'   interval on which that segmentation is optimal: CROPS returns the
 #'   breakpoints of the penalty axis, so \eqn{K} segmentations come with
 #'   \eqn{K + 1} boundaries and each row is optimal from its own
 #'   \code{penalty} up to the next row's. Methods: \code{print()}, \code{tidy()}, and

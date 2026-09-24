@@ -584,9 +584,14 @@ test_that("wbsts reports more than one changepoint on modern R", {
   expect_equal(matched, attempted)
 
   # an unrelated error must still propagate rather than be swallowed by the
-  # fallback: one scale is upstream's own refusal
-  expect_error(wbsts_wrapper(c(rnorm(60), rnorm(60, 5)), scales = 3),
+  # fallback: one scale is upstream's own refusal. `scales = 3` used to be
+  # the way to ask for one, but the wrapper now refuses it itself, so the
+  # single scale comes from `lambda` instead (floor(3 * 0.3 * log(log(120)))
+  # is 1).
+  expect_error(wbsts_wrapper(c(rnorm(60), rnorm(60, 5)), lambda = 0.3),
                "at least two scales")
+  expect_error(wbsts_wrapper(c(rnorm(60), rnorm(60, 5)), scales = 3),
+               "at least two different whole numbers")
 })
 
 test_that("an engine argument the wrapper renames redirects to the right name", {

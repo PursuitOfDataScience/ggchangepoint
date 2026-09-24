@@ -20,7 +20,7 @@ one column per grid location (the curve's resolution).}
 
 \item{target}{What to test: \code{"covariance"} (default), \code{"trace"},
 \code{"eigenjoint"} or \code{"eigensingle"}. This is also by far the
-biggest lever on run time --- see the timing section below, and note
+biggest lever on run time (see the timing section below), and note
 that the four answer different questions, so a cheaper one is a
 different test rather than a faster route to the same answer.}
 
@@ -28,7 +28,9 @@ different test rather than a faster route to the same answer.}
 \code{"Mn"} (maximum).}
 
 \item{critical}{How critical values are obtained: \code{"simulation"}
-(default), \code{"resample"} or \code{"welch"}.}
+(default), \code{"resample"} or \code{"welch"}. The first two draw
+random numbers and there is no \code{seed} argument, so call
+\code{set.seed()} first when the answer has to be reproducible.}
 
 \item{type}{\code{"segmentation"} (default, multiple changes) or
 \code{"single"} (one change).}
@@ -51,17 +53,17 @@ A \code{ggcpt} object with \code{change_in = "covariance"}. Multivariate input i
   the covariance structure need not move the cross-sectional mean at all,
   so \code{autoplot()} can legitimately show changepoint rules on a
   series with no visible change in it. That is the detector working, not
-  misfiring --- use \code{autoplot(type = "coordinates")} to see the
+  misfiring; use \code{autoplot(type = "coordinates")} to see the
   columns the change is in.
 }
 \description{
 Wraps \code{fChange::fchange()} for changes in the covariance operator,
-eigenstructure or trace of a functional time series — the changes that
+eigenstructure or trace of a functional time series: the changes that
 leave the mean curve untouched.
 }
 \section{How long this takes}{
 
-\strong{Minutes, not seconds, on a series of a hundred points} -- by a
+\strong{Minutes, not seconds, on a series of a hundred points}: by a
 wide margin the most expensive engine in the package, and slow enough
 that a first call looks like a hung session. Timed on one Linux x86-64
 machine, against \code{\link{fmean_wrapper}()} on the identical input
@@ -75,8 +77,8 @@ so the comparison is the same package and the same data:
 
 The cost is roughly linear in the number of time points and it is in the
 engine's own estimation rather than in this wrapper. It is, however,
-dominated by \code{target}, which the rest of this section used to deny
---- measured at \eqn{n = 60}, \eqn{p = 6}, \code{M = 50} on one Linux
+dominated by \code{target}, which the rest of this section used to deny.
+Measured at \eqn{n = 60}, \eqn{p = 6}, \code{M = 50} on one Linux
 x86-64 machine:
 
 \tabular{lrl}{
@@ -96,7 +98,7 @@ power. If a covariance change matters and the full operator test is the
 one you want, budget for it.
 
 Two practical consequences either way: size the call before starting it,
-and do not put the default in a loop -- a twelve-replicate study at
+and do not put the default in a loop: a twelve-replicate study at
 \eqn{n = 120} is two hours. Another machine will give different
 absolute numbers; the ratios are the part to plan around.
 The \dQuote{Benchmarks} article compares the engines that do scale.

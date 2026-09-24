@@ -12,8 +12,8 @@
 #'
 #' Returns the criterion the engine evaluated at each position, which is what
 #' explains \emph{why} a changepoint landed where it did. Available for the
-#' engines that expose it —
-#' \code{subset(cpt_methods(), statistic)$method} lists them — and an error
+#' engines that expose it
+#' (\code{subset(cpt_methods(), statistic)$method} lists them), and an error
 #' naming those engines for the ones that do not.
 #'
 #' @param object A \code{ggcpt} object.
@@ -211,14 +211,14 @@ ggcpt_statistic <- function(object) {
 #'
 #' The order in which candidate changepoints entered the model, with the
 #' contrast (or split criterion) at each step. Binary segmentation splits
-#' recursively, WBS/WBS2/NOT/TGUH rank random intervals — in every case the
+#' recursively, WBS/WBS2/NOT/TGUH rank random intervals; in every case the
 #' final answer is a prefix of a path, and seeing the path shows how
 #' decisively each changepoint beat the next.
 #'
 #' @param object A \code{ggcpt} object from an engine with a solution path
 #'   (\code{subset(cpt_methods(), path)$method}).
 #' @return \code{cpt_solution_path()} returns a tibble with \code{step},
-#'   \code{cp}, \code{contrast} and — for interval-based searches —
+#'   \code{cp}, \code{contrast} and, for interval-based searches,
 #'   \code{start}/\code{end} of the interval that proposed it, plus a
 #'   \code{selected} flag marking the changepoints in the final model.
 #'   \code{ggcpt_solution_path()} draws it.
@@ -236,7 +236,7 @@ ggcpt_statistic <- function(object) {
 #'   For \code{wbs2} and \code{tguh} the path is \strong{recomputed} with
 #'   \pkg{breakfast}, because their fit objects do not keep the candidate
 #'   list. \code{wbs2}'s search is randomised, so its path is a second
-#'   search of the same series rather than a record of the first --- it can
+#'   search of the same series rather than a record of the first: it can
 #'   differ between calls, and \code{selected} can be \code{FALSE}
 #'   throughout if the recomputed candidates miss the fit's own
 #'   changepoints. Every other engine's path is read off the fit.
@@ -393,7 +393,7 @@ extract_solution_path <- function(object) {
 }
 
 #' @rdname cpt_solution_path
-#' @param max_steps Longest prefix of the path drawn. Defaults to \code{40} —
+#' @param max_steps Longest prefix of the path drawn. Defaults to \code{40}:
 #'   a randomised search proposes hundreds of candidates and only the head of
 #'   the ranking is readable.
 #' @export

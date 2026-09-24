@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-search.R
 \name{not_wrapper}
 \alias{not_wrapper}
-\title{NOT wrapper — Narrowest-Over-Threshold}
+\title{NOT wrapper: Narrowest-Over-Threshold}
 \usage{
 not_wrapper(x, contrast = "pcwsConstMean", seed = NULL, ...)
 }

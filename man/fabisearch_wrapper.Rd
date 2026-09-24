@@ -27,18 +27,23 @@ is too short for it.}
 
 \item{n_runs}{NMF runs per candidate split. Defaults to \code{50}.}
 
-\item{n_reps}{Permutation replicates for the significance test. Defaults
-to \code{100}.}
+\item{n_reps}{Replicates on each side of the significance test: the
+split is refitted \code{n_reps} times and the rows permuted
+\code{n_reps} times. Defaults to \code{100}; at least \code{2}, because
+the test compares two samples of this size.}
 
-\item{alpha}{Significance level applied to the permutation p-value each
-candidate split receives. Defaults to \code{0.05}. Note that a
-permutation p-value cannot fall below \code{1 / n_reps}, so
-\code{n_reps} must be at least \code{1 / alpha} for any split to be
-significant; the wrapper warns when it is not.}
+\item{alpha}{Significance level applied to the p-value each candidate
+split receives. Defaults to \code{0.05}. That p-value is a two-sample
+test of the refitted losses against the permuted ones (a t-test unless
+\code{testtype} is passed through \code{...}), adjusted by
+Benjamini-Hochberg across the candidate splits. It is not a permutation
+p-value, so it has no \code{1 / n_reps} floor; the exact rank tests
+(\code{testtype = "wilcox"} or \code{"ks"}) do have one, and the
+wrapper warns when it is above \code{alpha}.}
 
-\item{rank}{NMF rank. \code{NULL} estimates it with
-\code{fabisearch::opt.rank()}, which is expensive; supplying a rank is
-much faster.}
+\item{rank}{NMF rank, a positive whole number. \code{NULL} estimates it
+with \code{fabisearch::opt.rank()}, which is expensive; supplying a rank
+is much faster.}
 
 \item{n_core}{Cores for the permutation stage. Defaults to \code{1}.}
 
@@ -70,13 +75,14 @@ separately than together, and significance is assessed by permutation.
 Three practical notes. (1) NMF is undefined for negative entries, so this
 wrapper refuses them rather than letting the engine fail deep inside a
 factorisation; shift or rescale the series first if it has negatives.
-(2) It is by far the most expensive engine here — \code{n_runs} times
-\code{n_reps} factorisations — so the defaults are lowered in the examples
-and a progress note is printed. (3) \pkg{fabisearch} calls \pkg{NMF}'s
-multi-run machinery, which resolves helpers through the search path and
-fails with "none of the packages are loaded" when \pkg{NMF} is merely
-loaded; this wrapper therefore attaches \pkg{NMF} for the duration of the
-call and detaches it again afterwards.
+(2) It is by far the most expensive engine here (\code{n_runs} times
+\code{n_reps} factorisations per candidate split), so the defaults are
+lowered in the examples. The engine's own progress output is suppressed,
+so a long call is silent until it returns. (3) \pkg{fabisearch} calls
+\pkg{NMF}'s multi-run machinery, which resolves helpers through the
+search path and fails with "none of the packages are loaded" when
+\pkg{NMF} is merely loaded; this wrapper therefore attaches \pkg{NMF} for
+the duration of the call and detaches it again afterwards.
 }
 
 \examples{

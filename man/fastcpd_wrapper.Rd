@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-fastcpd.R
 \name{fastcpd_wrapper}
 \alias{fastcpd_wrapper}
-\title{fastcpd wrapper — fast changepoint detection via sequential gradient descent}
+\title{fastcpd wrapper: fast changepoint detection via sequential gradient descent}
 \usage{
 fastcpd_wrapper(
   x,

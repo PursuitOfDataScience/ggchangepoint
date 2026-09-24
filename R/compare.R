@@ -13,7 +13,7 @@
 #'   \code{"overlay"} draws all changepoints in one panel, colour-coded.
 #'   The overlay \strong{dodges} the rules horizontally so that two methods
 #'   agreeing on an index are both visible, which moves each rule by up to
-#'   half an observation --- so read positions off \code{"facet"}, or off
+#'   half an observation, so read positions off \code{"facet"}, or off
 #'   \code{tidy()}, and treat the overlay as a picture of agreement rather
 #'   than of location.
 #' @param change_in What to detect change in. Passed to each detector.
@@ -104,7 +104,7 @@ pad_range <- function(v) {
 }
 
 ggcpt_compare_facet <- function(data_vec, results, methods) {
-  # One panel per method, whether or not it found changepoints — a method
+  # One panel per method, whether or not it found changepoints: a method
   # that ran and found nothing is a result, not a missing panel.
   plot_data <- do.call(rbind, lapply(methods, function(m) {
     tibble::tibble(

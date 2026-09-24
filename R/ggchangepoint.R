@@ -247,6 +247,24 @@ validate_scalar <- function(value, name, min = -Inf, max = Inf,
   invisible(TRUE)
 }
 
+# Internal: check a set of candidate values (a tuning grid, a multiscale
+# bandwidth set), which validate_scalar() cannot: one or more finite
+# numbers, each in range.
+#' @noRd
+validate_grid <- function(value, name, min = -Inf, min_open = FALSE) {
+  ok <- is.numeric(value) && length(value) >= 1L && all(is.finite(value)) &&
+    all(if (min_open) value > min else value >= min)
+  if (!ok) {
+    stop("`", name, "` must be one or more finite numbers",
+         if (is.finite(min)) {
+           paste0(", each ", if (min_open) "greater than " else "at least ",
+                  min)
+         },
+         " (got ", paste(format(value), collapse = ", "), ").", call. = FALSE)
+  }
+  invisible(TRUE)
+}
+
 # Internal: check a switch documented as "Logical". `isTRUE()` treats every
 # non-TRUE value as FALSE, so `show_segments = 1` or `show_fit = "TRUE"`
 # silently drew nothing, and `show_line = 1` silently removed the line the
@@ -555,7 +573,7 @@ as_cp_locations <- function(x, arg = "cp", sort = FALSE) {
 coerce_series_values <- function(x, arg = "x") {
   if (is.factor(x)) {
     stop("`", arg, "` is a factor. Detection needs numbers, and coercing a ",
-         "factor gives its level codes -- an alphabetical ordering of the ",
+         "factor gives its level codes: an alphabetical ordering of the ",
          "labels, not the data. Convert it deliberately, e.g. ",
          "as.numeric(as.character(", arg, ")).", call. = FALSE)
   }

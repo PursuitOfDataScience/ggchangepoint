@@ -17,8 +17,8 @@ cpt_confint(
 \item{object}{A \code{ggcpt} object.}
 
 \item{level}{Confidence/credible level. Defaults to \code{0.95}. Honoured
-by the routes that compute an interval -- \code{"bootstrap"},
-\code{"posterior"} and \code{"nsp"} -- and \strong{ignored by}
+by the routes that compute an interval (\code{"bootstrap"},
+\code{"posterior"} and \code{"nsp"}) and \strong{ignored by}
 \code{"native"}, which reports the interval the engine already
 computed at whatever level it was asked for. Note that
 \code{method = "auto"} resolves to \code{"native"} whenever the engine

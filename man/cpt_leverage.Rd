@@ -21,8 +21,8 @@ A tibble ordered most influential first, with columns
   \strong{Rows with \code{leverage = NA} come first, and they are the
   most influential of all.} \code{max_shift} and \code{param_shift}
   are undefined for a perturbation that left the engine with no
-  changepoints at all -- there is nothing to match against and no
-  parameters to compare -- so the composite score cannot be formed for
+  changepoints at all (there is nothing to match against and no
+  parameters to compare), so the composite score cannot be formed for
   an observation whose removal destroys the segmentation entirely. The
   \code{NA} is kept rather than filled in with a fabricated number;
   read the \code{delta_n_cp} column on those rows, which says how many

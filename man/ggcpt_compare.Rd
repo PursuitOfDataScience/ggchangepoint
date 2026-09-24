@@ -25,7 +25,7 @@ every seam. Use \code{\link{cpt_batch}()} for a panel of series.}
 \code{"overlay"} draws all changepoints in one panel, colour-coded.
 The overlay \strong{dodges} the rules horizontally so that two methods
 agreeing on an index are both visible, which moves each rule by up to
-half an observation --- so read positions off \code{"facet"}, or off
+half an observation, so read positions off \code{"facet"}, or off
 \code{tidy()}, and treat the overlay as a picture of agreement rather
 than of location.}
 

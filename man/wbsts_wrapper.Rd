@@ -20,10 +20,18 @@ wbsts_wrapper(
 \item{n_intervals}{Number of random intervals (\code{M}). Defaults to
 \code{0}, which is the engine's "all dyadic intervals" setting.}
 
-\item{cstar, lambda}{Post-processing constants; the engine's defaults are
-\code{0.75} for both.}
+\item{cstar}{The unbalancedness parameter \eqn{c_\star} of the search:
+a candidate split may leave at most this fraction of its interval on
+either side. Between \code{0.5} and \code{1}; defaults to the engine's
+\code{0.75}.}
 
-\item{scales}{Wavelet scales to use. \code{NULL} lets the engine choose.}
+\item{lambda}{How many wavelet scales are used when \code{scales} is
+\code{NULL}: \code{floor(3 * lambda * log(log(n)))} of them, from the
+finest down. Defaults to the engine's \code{0.75}.}
+
+\item{scales}{Wavelet scales to use: at least two different whole
+numbers from 1 to \code{floor(log2(n)) - 1}. \code{NULL} lets the
+engine choose.}
 
 \item{seed}{Optional seed. The seed is scoped to this call:
 \code{.Random.seed} is saved and restored, so a seeded call inside a
@@ -37,8 +45,8 @@ A \code{ggcpt} object with \code{change_in = "var"}.
 \description{
 Wraps \code{wbsts::wbs.lsw()} (Korkas and Fryzlewicz): wild binary
 segmentation applied to the locally stationary wavelet spectrum, so it
-detects changes in the \emph{second-order} structure — variance and
-autocovariance — of a nonstationary series. Where \code{wbs} looks for
+detects changes in the \emph{second-order} structure (variance and
+autocovariance) of a nonstationary series. Where \code{wbs} looks for
 jumps in the level, this looks for jumps in how the series behaves.
 }
 \examples{

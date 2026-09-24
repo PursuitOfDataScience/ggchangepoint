@@ -22,8 +22,8 @@
 #'
 #' @param object A \code{ggcpt} object.
 #' @param level Confidence/credible level. Defaults to \code{0.95}. Honoured
-#'   by the routes that compute an interval -- \code{"bootstrap"},
-#'   \code{"posterior"} and \code{"nsp"} -- and \strong{ignored by}
+#'   by the routes that compute an interval (\code{"bootstrap"},
+#'   \code{"posterior"} and \code{"nsp"}) and \strong{ignored by}
 #'   \code{"native"}, which reports the interval the engine already
 #'   computed at whatever level it was asked for. Note that
 #'   \code{method = "auto"} resolves to \code{"native"} whenever the engine
@@ -174,7 +174,7 @@ cpt_confint <- function(object, level = 0.95,
     stop("This result reports `change_in = \"",
          scalar_chr(object$change_in), "\"`, which `",
          scalar_chr(object$method),
-         "` cannot be asked for through cpt_detect() -- so the bootstrap ",
+         "` cannot be asked for through cpt_detect(), so the bootstrap ",
          "would re-run a different model than the one that produced it and ",
          "report the spread of the wrong search as this result's interval. ",
          "A formula fit keeps neither the formula nor `data` on the object. ",

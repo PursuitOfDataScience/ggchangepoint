@@ -1,4 +1,4 @@
-#' WBS wrapper — Wild Binary Segmentation
+#' WBS wrapper: Wild Binary Segmentation
 #'
 #' Wraps the \code{wbs} package for randomised changepoint detection via
 #' Wild Binary Segmentation.
@@ -47,6 +47,9 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
                        call = match.call()))
   }
   if (!is.null(threshold)) {
+    # A string or `NA` ran and reported no changepoints, a vector used its
+    # first element, and a negative value flagged every observation.
+    validate_scalar(threshold, "threshold", min = 0)
     penalty <- list(type = "threshold", value = as.numeric(threshold))
     # A manual threshold that finds nothing errors ("no change-poinst found,
     # choose larger Kmax"); a series with no detected changepoints is a valid
@@ -83,7 +86,7 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
   )
 }
 
-#' WBS2 wrapper — Wild Binary Segmentation 2
+#' WBS2 wrapper: Wild Binary Segmentation 2
 #'
 #' Wraps the \code{breakfast} package's WBS2 solution path with
 #' steepest-drop-to-low-levels (SDLL) model selection.
@@ -94,9 +97,9 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
 #' @section Reproducibility:
 #' This engine is \strong{not reproducible call to call within an R
 #' session}, and no argument here can make it so. On a 200-point series with
-#' one change at 100, repeated identical calls -- same input,
+#' one change at 100, repeated identical calls (same input,
 #' \code{set.seed()} re-run beforehand so that \code{.Random.seed} is
-#' byte-identical on entry -- return a last changepoint of either 183 or
+#' byte-identical on entry) return a last changepoint of either 183 or
 #' 188, roughly evenly split. The variation is therefore not driven by R's
 #' random number stream, which is why this wrapper has no \code{seed}
 #' argument to offer: there is no stream to pin.
@@ -104,8 +107,8 @@ wbs_wrapper <- function(x, n_intervals = 5000, threshold = NULL, seed = NULL, ..
 #' It is upstream, not in this package. Calling
 #' \code{breakfast::breakfast(x, solution.path = "wbs2",
 #' model.selection = "sdll")} directly (\pkg{breakfast} 2.5) reproduces it
-#' exactly. A \emph{fresh} R session is deterministic -- five separate
-#' sessions agreed -- so what varies is state the engine carries between
+#' exactly. A \emph{fresh} R session is deterministic (five separate
+#' sessions agreed), so what varies is state the engine carries between
 #' calls.
 #'
 #' In practice this is rare, and needs a series whose model selection sits
@@ -131,7 +134,7 @@ wbs2_wrapper <- function(x, ...) {
   need_pkg("breakfast")
   reject_managed_args(list(...), "wbs2", c(
     solution.path = paste("it is what selects WBS2 rather than one of",
-                          "breakfast's other solution paths -- use",
+                          "breakfast's other solution paths; use",
                           "`cpt_detect(method = \"tguh\")` or another",
                           "method for a different one"),
     model.selection = paste("the wrapper pins breakfast's selector so the",
@@ -164,7 +167,7 @@ breakfast_cpts <- function(fit) {
   cpts[!is.na(cpts) & cpts > 0]
 }
 
-#' NOT wrapper — Narrowest-Over-Threshold
+#' NOT wrapper: Narrowest-Over-Threshold
 #'
 #' Wraps the \code{not} package for changepoint detection via the
 #' Narrowest-Over-Threshold method. The contrast determines what change is
@@ -239,7 +242,7 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
   )
 }
 
-#' MOSUM wrapper — Moving Sum
+#' MOSUM wrapper: Moving Sum
 #'
 #' Wraps the \code{mosum} package for moving-sum-based changepoint
 #' detection, either at a single bandwidth or (with
@@ -275,6 +278,18 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
   validate_flag(multiscale, "multiscale")
   validate_data(x)
   data_vec <- as_uni_vector(x, "mosum")
+
+  # A bandwidth is a number of observations or, below 1, a fraction of the
+  # series; multiscale mode takes a set of them. `NA` failed with "missing
+  # value where TRUE/FALSE needed", a string with "Please use bandwidth
+  # smaller than length(x)/2".
+  if (!is.null(G)) {
+    if (isTRUE(multiscale)) {
+      validate_grid(G, "G", min = 0, min_open = TRUE)
+    } else {
+      validate_scalar(G, "G", min = 0, min_open = TRUE)
+    }
+  }
 
   local_seed(seed)
 
@@ -334,7 +349,7 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
 #'   empty result; see the note below.
 #'
 #' @section Constant input:
-#' \code{IDetect::ID()} does not treat a flat series consistently — its
+#' \code{IDetect::ID()} does not treat a flat series consistently: its
 #' statistics become \eqn{0/0}, and what comes back depends on the value and
 #' the length. \code{rep(3, 200)} yields \emph{126} changepoints, at
 #' 1, 3, 4, 6, 7, ...; \code{rep(0, 100)} raises "No change-points found";
@@ -424,7 +439,7 @@ tguh_wrapper <- function(x, ...) {
   reject_managed_args(list(...), "tguh", c(
     solution.path = paste("it is what selects the tail-greedy",
                           "unbalanced-Haar path rather than one of",
-                          "breakfast's others -- a `tguh` result with a",
+                          "breakfast's others, and a `tguh` result with a",
                           "different path is not tguh"),
     model.selection = paste("the wrapper pins \"ic\", the selector the",
                             "TGUH paper pairs with this path")))

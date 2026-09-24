@@ -42,9 +42,9 @@ tidy.ggcpt <- function(x, ...) {
 #'
 #' @param x A \code{ggcpt} object.
 #' @return A tibble with columns \code{start}, \code{end} (positions),
-#'   \code{length}, and — when the result carries a time index —
+#'   \code{length}, and, when the result carries a time index,
 #'   \code{start_index}/\code{end_index} on the original scale. Any further
-#'   columns the engine supplied are carried through after those --
+#'   columns the engine supplied are carried through after those:
 #'   \code{\link{nsp_wrapper}()} adds \code{value}, the region's statistic.
 #'   A zero-row tibble when the result carries no regions.
 #' @seealso \code{\link{nsp_wrapper}()}, \code{\link{geom_cpt_region}()},
@@ -104,13 +104,13 @@ cpt_regions <- function(x) {
 #' the same thing:
 #' \itemize{
 #'   \item \code{"binseg"} and \code{"segneigh"}, whose \code{cpt.range}
-#'     fits report the raw within-segment cost instead — for one and the same
+#'     fits report the raw within-segment cost instead: for one and the same
 #'     segmentation that is 219.7 where a PELT fit reports 659.9;
 #'   \item \code{"np"}, because \pkg{changepoint.np} defines no
 #'     \code{logLik} method;
 #'   \item a change in \emph{mean} under the default \code{"MBIC"} penalty.
-#'     Loading \pkg{changepoint.np} — which this package imports, so it is
-#'     always loaded — replaces \pkg{changepoint}'s \code{logLik} method for
+#'     Loading \pkg{changepoint.np} (which this package imports, so it is
+#'     always loaded) replaces \pkg{changepoint}'s \code{logLik} method for
 #'     \code{cpt} objects with one that errors on exactly that combination.
 #'     Any other penalty (\code{"BIC"}, \code{"AIC"}, a numeric value)
 #'     reports normally, as do \code{change_in = "var"} and
@@ -213,7 +213,7 @@ glance.ggcpt <- function(x, ...) {
 #' @param ... Additional arguments (ignored).
 #' @return A tibble with one row per observation: the data as the result
 #'   carries it, plus four added columns. The data half depends on the
-#'   result -- \code{index} and \code{value} for a univariate one,
+#'   result: \code{index} and \code{value} for a univariate one,
 #'   \code{index} plus \strong{one column per coordinate} (named as the
 #'   input's columns were) for a multivariate one, and an extra
 #'   \code{fitted} column for the engines that supply their own fitted
@@ -221,7 +221,7 @@ glance.ggcpt <- function(x, ...) {
 #'   \describe{
 #'     \item{\code{seg_id}}{which segment the observation falls in,
 #'       counting from 1.}
-#'     \item{\code{.fitted}}{the segment's \code{param_estimate} -- the
+#'     \item{\code{.fitted}}{the segment's \code{param_estimate}: the
 #'       segment \strong{mean}, for every method in the package, or the
 #'       engine's own fitted signal where there is one. See the details
 #'       below for the multivariate case.}
@@ -239,7 +239,7 @@ glance.ggcpt <- function(x, ...) {
 #' changepoints are shared across them, so \code{seg_id} and
 #' \code{is_changepoint} apply to the whole row while \code{.fitted} and
 #' \code{.resid} describe the \strong{univariate series the result
-#' carries} — \code{$data$value}, the same series
+#' carries}: \code{$data$value}, the same series
 #' \code{$segments$param_estimate} summarises, so \code{.resid} is always
 #' \code{value - .fitted}. For most multivariate engines that series is
 #' the first coordinate; \code{fmean}, \code{fcov}, \code{kwc} and
@@ -249,7 +249,7 @@ glance.ggcpt <- function(x, ...) {
 #' other, which is what makes \code{.resid} a residual. When an engine
 #' supplies its own fitted signal that signal is used for \code{.fitted} in
 #' place of the segment means, and rides along in a \code{fitted} column of
-#' its own -- so for those engines the two columns agree. The engines that
+#' its own, so for those engines the two columns agree. The engines that
 #' do this are exactly the ones \code{\link{cpt_methods}()} marks in its
 #' \code{fitted} column: \code{smuce}, \code{hsmuce}, \code{cpop},
 #' \code{bcp}, \code{beast}, \code{decafs}, \code{segmented},
@@ -353,7 +353,7 @@ cpt_test_stat <- function(fit) {
 #'
 #' Provides a human-readable digest of a changepoint detection result,
 #' including the segment table with levels and lengths (the level is the
-#' segment mean whatever `change_in` says --- see \code{\link{new_ggcpt}}),
+#' segment mean whatever `change_in` says; see \code{\link{new_ggcpt}}),
 #' total cost,
 #' penalty, and runtime.
 #'

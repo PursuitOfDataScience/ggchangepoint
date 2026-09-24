@@ -56,6 +56,20 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
   # refused up front.
   validate_scalar(conf_level, "conf_level", min = 0, max = 1,
                   min_open = TRUE, max_open = TRUE)
+  # A fraction of the series below 1, a number of observations from 1 up.
+  # `h = NA` failed with "missing value where TRUE/FALSE needed" and a
+  # vector with "the condition has length > 1".
+  validate_scalar(h, "h", min = 0, min_open = TRUE)
+  # `breaks = 0` warned "number of breaks must be at least 1" and then fitted
+  # one, `2.5` failed with "compute RSS.table with enough breaks before", and
+  # `NA` or a vector failed without naming the argument.
+  if (!is.null(breaks)) {
+    validate_scalar(breaks, "breaks", min = 1)
+    if (breaks != round(breaks)) {
+      stop("`breaks` must be a whole number of breaks (got ", breaks, ").",
+           call. = FALSE)
+    }
+  }
 
   if (inherits(x, "formula")) {
     if (is.null(data)) {
@@ -166,6 +180,15 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "segmented")
+  # Every segment of a broken line needs two points for its slope. Past
+  # that the engine either refuses with "psi starting values too close each
+  # other" or, for `npsi = 1e6` on 120 observations, runs without returning.
+  max_psi <- floor(length(data_vec) / 2) - 1
+  if (npsi > max_psi) {
+    stop("`npsi = ", format(npsi), "` asks for more breakpoints than a series ",
+         "of ", length(data_vec), " can hold: each of the npsi + 1 segments ",
+         "needs two observations, so at most ", max_psi, ".", call. = FALSE)
+  }
 
   # A flat line has no kink. Left to itself the estimator returns an
   # arbitrary breakpoint from a singular fit (with Lapack warnings), i.e. a

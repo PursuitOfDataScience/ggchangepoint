@@ -68,8 +68,8 @@ The same penalty name may be interpreted differently by different engines:
     \code{cpt_detect()} forwards a numeric \code{penalty} as
     \code{beta}, and translates the three names the two packages share
     (\code{"MBIC"}, \code{"BIC"}/\code{"SIC"}, \code{"MDL"}). Any other
-    character penalty --- \code{"AIC"}, \code{"Hannan-Quinn"},
-    \code{"sSIC"}, \code{"None"} --- has no \pkg{fastcpd} equivalent and
+    character penalty (\code{"AIC"}, \code{"Hannan-Quinn"},
+    \code{"sSIC"}, \code{"None"}) has no \pkg{fastcpd} equivalent and
     is left to the engine's default rather than being silently
     approximated; pass \code{beta} yourself to pin it. Whatever is used
     is recorded on the result, so \code{print()} and \code{glance()}
@@ -92,7 +92,7 @@ The same penalty name may be interpreted differently by different engines:
     \eqn{l_i} and so cannot be expressed by a function of \code{n} and
     \code{k} alone. Use the character \code{"MBIC"} with
     \pkg{changepoint}-based methods to get the engine's native MBIC, and
-    \code{cpt_select(criterion = "mbic")} for the Zhang–Siegmund one.
+    \code{cpt_select(criterion = "mbic")} for the Zhang-Siegmund one.
 }
 }
 

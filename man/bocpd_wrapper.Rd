@@ -9,9 +9,10 @@ bocpd_wrapper(x, hazard = 100, ...)
 \arguments{
 \item{x}{A numeric vector.}
 
-\item{hazard}{Constant hazard rate \eqn{1/\lambda} of the change process;
-larger \code{hazard} values mean changes are expected less often.
-Defaults to \code{100} (the upstream default).}
+\item{hazard}{The \eqn{\lambda} of \pkg{ocp}'s constant hazard: the
+expected run length between changes, so the hazard rate itself is
+\eqn{1/\lambda} and larger values mean changes are expected less
+often. Defaults to \code{100} (the upstream default).}
 
 \item{...}{Additional arguments passed to \code{ocp::onlineCPD()}.}
 }

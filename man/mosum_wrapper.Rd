@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-search.R
 \name{mosum_wrapper}
 \alias{mosum_wrapper}
-\title{MOSUM wrapper — Moving Sum}
+\title{MOSUM wrapper: Moving Sum}
 \usage{
 mosum_wrapper(x, G = NULL, multiscale = FALSE, seed = NULL, ...)
 }

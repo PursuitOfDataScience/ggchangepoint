@@ -24,7 +24,9 @@
 #' @param statistic Test statistic: \code{"Tn"} (integrated, the default) or
 #'   \code{"Mn"} (maximum).
 #' @param critical How critical values are obtained: \code{"simulation"}
-#'   (default), \code{"resample"} or \code{"welch"}.
+#'   (default), \code{"resample"} or \code{"welch"}. The first two draw
+#'   random numbers and there is no \code{seed} argument, so call
+#'   \code{set.seed()} first when the answer has to be reproducible.
 #' @param type \code{"segmentation"} (default, multiple changes) or
 #'   \code{"single"} (one change).
 #' @param alpha Significance level. Defaults to \code{0.05}.
@@ -77,13 +79,13 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #' Functional covariance changepoints
 #'
 #' Wraps \code{fChange::fchange()} for changes in the covariance operator,
-#' eigenstructure or trace of a functional time series — the changes that
+#' eigenstructure or trace of a functional time series: the changes that
 #' leave the mean curve untouched.
 #'
 #' @inheritParams fmean_wrapper
 #' @param target What to test: \code{"covariance"} (default), \code{"trace"},
 #'   \code{"eigenjoint"} or \code{"eigensingle"}. This is also by far the
-#'   biggest lever on run time --- see the timing section below, and note
+#'   biggest lever on run time (see the timing section below), and note
 #'   that the four answer different questions, so a cheaper one is a
 #'   different test rather than a faster route to the same answer.
 #' @return A \code{ggcpt} object with \code{change_in = "covariance"}. Multivariate input is
@@ -99,10 +101,10 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #'   the covariance structure need not move the cross-sectional mean at all,
 #'   so \code{autoplot()} can legitimately show changepoint rules on a
 #'   series with no visible change in it. That is the detector working, not
-#'   misfiring --- use \code{autoplot(type = "coordinates")} to see the
+#'   misfiring; use \code{autoplot(type = "coordinates")} to see the
 #'   columns the change is in.
 #' @section How long this takes:
-#' \strong{Minutes, not seconds, on a series of a hundred points} -- by a
+#' \strong{Minutes, not seconds, on a series of a hundred points}: by a
 #' wide margin the most expensive engine in the package, and slow enough
 #' that a first call looks like a hung session. Timed on one Linux x86-64
 #' machine, against \code{\link{fmean_wrapper}()} on the identical input
@@ -116,8 +118,8 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #'
 #' The cost is roughly linear in the number of time points and it is in the
 #' engine's own estimation rather than in this wrapper. It is, however,
-#' dominated by \code{target}, which the rest of this section used to deny
-#' --- measured at \eqn{n = 60}, \eqn{p = 6}, \code{M = 50} on one Linux
+#' dominated by \code{target}, which the rest of this section used to deny.
+#' Measured at \eqn{n = 60}, \eqn{p = 6}, \code{M = 50} on one Linux
 #' x86-64 machine:
 #'
 #' \tabular{lrl}{
@@ -137,7 +139,7 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
 #' one you want, budget for it.
 #'
 #' Two practical consequences either way: size the call before starting it,
-#' and do not put the default in a loop -- a twelve-replicate study at
+#' and do not put the default in a loop: a twelve-replicate study at
 #' \eqn{n = 120} is two hours. Another machine will give different
 #' absolute numbers; the ratios are the part to plan around.
 #' The \dQuote{Benchmarks} article compares the engines that do scale.
@@ -161,6 +163,10 @@ fcov_wrapper <- function(x,
                          type = c("segmentation", "single"), alpha = 0.05,
                          ...) {
   need_pkg("fChange")
+  # fmean_wrapper() checks this and fcov did not: `alpha = 2` failed inside
+  # the engine with "NA/NaN argument", which fchange_run() then blamed on
+  # the grid resolution, and `alpha = -1` ran and reported no changepoints.
+  validate_scalar(alpha, "alpha", min = 0, max = 1, min_open = TRUE, max_open = TRUE)
   target <- match.arg(target)
   statistic <- match.arg(statistic)
   critical <- match.arg(critical)
@@ -181,7 +187,7 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
   if (ncol(X) < 2) {
     stop("`", method_name, "` needs functional observations: one row per ",
          "time point and one column per grid location. `x` has a single ",
-         "column, which is a scalar series -- see cpt_methods() for the ",
+         "column, which is a scalar series; see cpt_methods() for the ",
          "univariate engines.", call. = FALSE)
   }
   n <- nrow(X)
@@ -260,7 +266,7 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
 #' Robust depth-based changepoints for functional and multivariate data
 #'
 #' Wraps \pkg{KWCChangepoint} (Ramsay and Chenouri): the functional
-#' Kruskal–Wallis covariance test, which ranks observations by statistical
+#' Kruskal-Wallis covariance test, which ranks observations by statistical
 #' \emph{depth} and segments on the ranks. Because it never touches the
 #' values themselves it is insensitive to heavy tails and outlying curves,
 #' which is exactly where the moment-based functional tests degrade.
@@ -276,7 +282,7 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
 #' @param change_in Reported change type: \code{"covariance"} (default) or
 #'   \code{"distribution"}. The test is sensitive to both; this only labels
 #'   the result.
-#' @param seed Optional seed — the random-projection depths and the wild
+#' @param seed Optional seed: the random-projection depths and the wild
 #'   binary segmentation both randomise. The seed is scoped to this call:
 #'   \code{.Random.seed} is saved and restored, so a seeded call inside a
 #'   simulation loop does not pin the loop's own stream.
@@ -354,16 +360,21 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 #'   \code{35} (the engine's default), lowered automatically when the series
 #'   is too short for it.
 #' @param n_runs NMF runs per candidate split. Defaults to \code{50}.
-#' @param n_reps Permutation replicates for the significance test. Defaults
-#'   to \code{100}.
-#' @param alpha Significance level applied to the permutation p-value each
-#'   candidate split receives. Defaults to \code{0.05}. Note that a
-#'   permutation p-value cannot fall below \code{1 / n_reps}, so
-#'   \code{n_reps} must be at least \code{1 / alpha} for any split to be
-#'   significant; the wrapper warns when it is not.
-#' @param rank NMF rank. \code{NULL} estimates it with
-#'   \code{fabisearch::opt.rank()}, which is expensive; supplying a rank is
-#'   much faster.
+#' @param n_reps Replicates on each side of the significance test: the
+#'   split is refitted \code{n_reps} times and the rows permuted
+#'   \code{n_reps} times. Defaults to \code{100}; at least \code{2}, because
+#'   the test compares two samples of this size.
+#' @param alpha Significance level applied to the p-value each candidate
+#'   split receives. Defaults to \code{0.05}. That p-value is a two-sample
+#'   test of the refitted losses against the permuted ones (a t-test unless
+#'   \code{testtype} is passed through \code{...}), adjusted by
+#'   Benjamini-Hochberg across the candidate splits. It is not a permutation
+#'   p-value, so it has no \code{1 / n_reps} floor; the exact rank tests
+#'   (\code{testtype = "wilcox"} or \code{"ks"}) do have one, and the
+#'   wrapper warns when it is above \code{alpha}.
+#' @param rank NMF rank, a positive whole number. \code{NULL} estimates it
+#'   with \code{fabisearch::opt.rank()}, which is expensive; supplying a rank
+#'   is much faster.
 #' @param n_core Cores for the permutation stage. Defaults to \code{1}.
 #' @param seed Optional seed. The seed is scoped to this call:
 #'   \code{.Random.seed} is saved and restored, so a seeded call inside a
@@ -374,13 +385,14 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 #' Three practical notes. (1) NMF is undefined for negative entries, so this
 #' wrapper refuses them rather than letting the engine fail deep inside a
 #' factorisation; shift or rescale the series first if it has negatives.
-#' (2) It is by far the most expensive engine here — \code{n_runs} times
-#' \code{n_reps} factorisations — so the defaults are lowered in the examples
-#' and a progress note is printed. (3) \pkg{fabisearch} calls \pkg{NMF}'s
-#' multi-run machinery, which resolves helpers through the search path and
-#' fails with "none of the packages are loaded" when \pkg{NMF} is merely
-#' loaded; this wrapper therefore attaches \pkg{NMF} for the duration of the
-#' call and detaches it again afterwards.
+#' (2) It is by far the most expensive engine here (\code{n_runs} times
+#' \code{n_reps} factorisations per candidate split), so the defaults are
+#' lowered in the examples. The engine's own progress output is suppressed,
+#' so a long call is silent until it returns. (3) \pkg{fabisearch} calls
+#' \pkg{NMF}'s multi-run machinery, which resolves helpers through the
+#' search path and fails with "none of the packages are loaded" when
+#' \pkg{NMF} is merely loaded; this wrapper therefore attaches \pkg{NMF} for
+#' the duration of the call and detaches it again afterwards.
 #'
 #' @return A \code{ggcpt} object with \code{change_in = "network"}. Multivariate input is
 #'   reduced to \strong{one series per observation by taking the
@@ -460,6 +472,47 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
   data_vec <- as.numeric(rowMeans(X))
   validate_scalar(min_dist, "min_dist", min = 2)
   min_dist <- min(as.integer(min_dist), max(2L, floor(n / 3)))
+  # n_reps = 1 used to run the whole search and then fail inside the
+  # significance test with base R's "not enough 'x' observations".
+  validate_scalar(n_runs, "n_runs", min = 1)
+  validate_scalar(n_reps, "n_reps", min = 2)
+  validate_scalar(n_core, "n_core", min = 1)
+  # NMF refuses a rank below 1 itself, but only after this call has
+  # attached NMF and its Bioconductor stack; refuse it here, by this
+  # argument's name, before any of that.
+  if (!is.null(rank)) {
+    validate_scalar(rank, "rank", min = 1)
+    if (rank != round(rank)) {
+      stop("`rank` must be a whole number of NMF components (got ", rank,
+           ").", call. = FALSE)
+    }
+  }
+  if (!is.null(alpha)) {
+    validate_scalar(alpha, "alpha", min = 0, max = 1, min_open = TRUE,
+                    max_open = TRUE)
+  }
+  level <- alpha %||% 0.05
+  # The engine scores each split by a two-sample test of `n_reps` refitted
+  # losses against `n_reps` permuted ones, a t-test unless `testtype` says
+  # otherwise, then BH-adjusts across the splits. This used to be read as a
+  # permutation p-value with a 1 / n_reps floor, which the t-test does not
+  # have: the warning fired on the documented example (`n_reps = 2`,
+  # `alpha = 0.25`) and said no split could be significant, and the call
+  # then returned one. The exact rank tests do have a floor, the smallest
+  # one-sided p-value for two untied samples of n_reps, and below it no
+  # split can be significant whatever the data. Checked before the search
+  # rather than after it, since the search is the expensive part.
+  testtype <- list(...)[["testtype"]] %||% "t-test"
+  if (testtype %in% c("wilcox", "ks")) {
+    p_floor <- 1 / choose(2 * n_reps, n_reps)
+    if (p_floor > level) {
+      warning("With `testtype = \"", testtype, "\"` and `n_reps = ", n_reps,
+              "` the smallest attainable p-value is ", format(p_floor),
+              ", which is above `alpha = ", format(level), "`, so no split ",
+              "can be significant whatever the data. Raise `n_reps` or ",
+              "`alpha`, or use the default t-test.", call. = FALSE)
+    }
+  }
   local_seed(seed)
 
   # See the "attached namespace" note in the docs. The on.exit above gives
@@ -470,46 +523,41 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
     suppressPackageStartupMessages(attachNamespace("NMF"))
   }
 
-  # The engine prints its search progress and, with ncore = 1, foreach
-  # warns once per call that no parallel backend is registered. Neither is
-  # information the caller asked for; a genuine warning still gets through.
+  # The engine prints its search progress, loads foreach and rngtools with
+  # a "Loading required package" message each, and with ncore = 1 foreach
+  # warns once per call that no parallel backend is registered. None of it
+  # is information the caller asked for; a genuine warning still gets
+  # through.
+  # The engine's %dorng% runs on whatever foreach has registered, so a
+  # registration left pointing at a stopped cluster failed here with
+  # "invalid connection"; kcpRS left exactly that, and kcp_wrapper() now
+  # gives it back. With `n_core > 1` the engine registers a backend of its
+  # own, which is undone here the same way.
   utils::capture.output(
-    withCallingHandlers(
-      fit <- fabisearch::detect.cps(X, mindist = min_dist, nruns = n_runs,
-                                    nreps = n_reps, alpha = alpha,
-                                    rank = rank, ncore = n_core, ...),
+    suppressPackageStartupMessages(withCallingHandlers(
+      fit <- with_foreach_restored(
+        fabisearch::detect.cps(X, mindist = min_dist, nruns = n_runs,
+                               nreps = n_reps, alpha = alpha,
+                               rank = rank, ncore = n_core, ...)),
       warning = function(w) {
         if (grepl("no parallel backend registered", conditionMessage(w),
                   fixed = TRUE)) {
           invokeRestart("muffleWarning")
         }
       }
-    )
+    ))
   )
 
   # `change_points$stat_test` has TWO shapes, and confusing them is a silent
   # wrong answer either way:
-  #   alpha = NULL  -> the permutation p-value of each candidate split, so
+  #   alpha = NULL  -> each candidate split's (BH-adjusted) p-value, so
   #                    the wrapper thresholds it;
   #   alpha = <num> -> the engine has already thresholded, and the column is
   #                    a logical verdict.
   # Reading the logical form as a number turns FALSE into 0, which clears
   # any p-value threshold -- so every candidate the search ever proposed
   # would come back as a changepoint. Branch on the type.
-  level <- alpha %||% 0.05
   cps <- fit$change_points
-  # A permutation p-value cannot fall below 1 / n_reps, so a small n_reps
-  # with a conventional alpha makes significance unreachable and the engine
-  # returns "no changepoints" for reasons that have nothing to do with the
-  # data. Say so rather than letting it look like a finding.
-  if (n_reps < 1 / level) {
-    warning("With `n_reps = ", n_reps, "` the smallest attainable ",
-            "permutation p-value is ", format(1 / n_reps),
-            ", which is above `alpha = ", format(level),
-            "`, so no split can be significant whatever the data. Raise ",
-            "`n_reps` to at least ", ceiling(1 / level),
-            ", or raise `alpha`.", call. = FALSE)
-  }
   cp <- if (is.data.frame(cps) && nrow(cps) > 0) {
     st <- cps$stat_test
     keep <- if (is.logical(st)) {
@@ -529,7 +577,7 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
     method = "fabisearch",
     change_in = "network",
     penalty = list(
-      type = if (is.null(alpha)) "permutation p <=" else "engine alpha",
+      type = if (is.null(alpha)) "split test p <=" else "engine alpha",
       value = level
     ),
     fit = fit,

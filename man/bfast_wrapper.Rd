@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-applied.R
 \name{bfast_wrapper}
 \alias{bfast_wrapper}
-\title{BFAST wrapper — breaks for additive season and trend}
+\title{BFAST wrapper: breaks for additive season and trend}
 \usage{
 bfast_wrapper(
   x,
@@ -15,7 +15,7 @@ bfast_wrapper(
 )
 }
 \arguments{
-\item{x}{A numeric vector, or a \code{ts} — a \code{ts} is strongly
+\item{x}{A numeric vector, or a \code{ts}; a \code{ts} is strongly
 preferred, because BFAST needs the seasonal frequency and cannot guess
 it. A bare vector is turned into a \code{ts} with \code{frequency}.}
 

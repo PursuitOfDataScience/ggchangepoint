@@ -100,7 +100,7 @@ the grid continues.
 \section{Reading the critical-difference diagram}{
 
 Rank 1 is best. Each method's mean rank is taken over the datasets, in
-the direction the metric calls for -- higher is better for
+the direction the metric calls for: higher is better for
 \code{covering}, \code{f1}, \code{precision}, \code{recall} and
 \code{rand_index}; lower for \code{hausdorff},
 \code{annotation_error}, \code{mae_matched} and \code{rmse_matched}.
@@ -113,7 +113,7 @@ The bar is the Nemenyi critical distance
 \deqn{CD = q_\alpha \sqrt{k(k + 1) / (6N)}}
 for \eqn{k} methods over \eqn{N} datasets, where \eqn{q_\alpha} is
 the Studentised range statistic at \eqn{\alpha} divided by
-\eqn{\sqrt 2} (Demsar, 2006 -- the constants agree with that paper's
+\eqn{\sqrt 2} (Demsar, 2006; the constants agree with that paper's
 Table 5 to three decimals for \eqn{k = 2, \ldots, 10}). Two methods
 whose mean ranks differ by less than \eqn{CD} are not distinguished at
 that level.
@@ -121,8 +121,8 @@ that level.
 \strong{One caveat the diagram cannot show.} Nemenyi is a
 \emph{post-hoc} procedure, and the convention is to run it only after a
 Friedman test has rejected the null that all methods rank equally.
-\code{autoplot()} does not run that omnibus test -- it draws the
-diagram it is asked for -- so a gap wider than \eqn{CD} on a grid where
+\code{autoplot()} does not run that omnibus test (it draws the
+diagram it is asked for), so a gap wider than \eqn{CD} on a grid where
 Friedman would not have rejected is not the significant difference it
 looks like. With the handful of datasets \code{\link{cpt_datasets}()}
 supplies, \eqn{N} is small and \eqn{CD} correspondingly wide; read the

@@ -5,7 +5,7 @@
 #' methodological paper without leaving R.
 #'
 #' @param x A \code{ggcpt} object, a method name (e.g. \code{"pelt"}), or
-#'   missing — in which case references for every known method are returned.
+#'   missing, in which case references for every known method are returned.
 #'   A method registered with \code{\link{cpt_register_method}()} returns
 #'   the citation that registration supplied, or a plain statement that none
 #'   was given.

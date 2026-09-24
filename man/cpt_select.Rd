@@ -107,8 +107,8 @@ Defaults to \code{100}.}
   \strong{The three closed-form criteria assume a change in the mean
   whatever this is set to.} \code{"bic"}, \code{"aic"} and
   \code{"mbic"} all score the ladder with the Gaussian profile cost
-  \eqn{n\log(\mathrm{RSS}/n)} -- the deviance for a change in mean with
-  a common variance -- so on a \code{change_in = "var"} ladder the
+  \eqn{n\log(\mathrm{RSS}/n)} (the deviance for a change in mean with
+  a common variance), so on a \code{change_in = "var"} ladder the
   \emph{candidates} come from the variance detector while the
   \emph{score} does not, and splitting a segment whose mean did not move
   barely reduces \eqn{\mathrm{RSS}}: the criterion will tend to choose

@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-nsp.R
 \name{nsp_wrapper}
 \alias{nsp_wrapper}
-\title{NSP wrapper — Narrowest Significance Pursuit}
+\title{NSP wrapper: Narrowest Significance Pursuit}
 \usage{
 nsp_wrapper(
   x,
@@ -26,13 +26,13 @@ Defaults to \code{0.1}.}
 
 \item{variant}{Which NSP procedure to run:
 \describe{
-  \item{\code{"poly"}}{(default) \code{nsp::nsp_poly()} — piecewise
+  \item{\code{"poly"}}{(default) \code{nsp::nsp_poly()}: piecewise
     polynomial signal, Gaussian noise of constant variance.}
-  \item{\code{"selfnorm"}}{\code{nsp::nsp_poly_selfnorm()} —
+  \item{\code{"selfnorm"}}{\code{nsp::nsp_poly_selfnorm()}:
     self-normalised, for heavy tails and heteroscedasticity. Slower.}
-  \item{\code{"ar"}}{\code{nsp::nsp_poly_ar()} — autoregressive noise of
+  \item{\code{"ar"}}{\code{nsp::nsp_poly_ar()}: autoregressive noise of
     order \code{ord}.}
-  \item{\code{"tvreg"}}{\code{nsp::nsp_tvreg()} — a general linear model
+  \item{\code{"tvreg"}}{\code{nsp::nsp_tvreg()}: a general linear model
     whose coefficients change; requires \code{covariates}.}
 }}
 
@@ -77,7 +77,7 @@ heteroscedasticity and serial dependence.
 \section{What \code{cp} means here, and what it does not}{
 
 NSP produces no point estimates. This wrapper still fills the \code{cp}
-column — with the \emph{midpoint} of each interval — because every
+column (with the \emph{midpoint} of each interval) because every
 downstream consumer in the package (\code{augment()},
 \code{\link{cpt_metrics}()}, \code{\link{cpt_consensus}()},
 \code{autoplot()}) is built on that column, and a result with an empty

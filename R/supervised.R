@@ -536,7 +536,7 @@ autoplot.ggcpt_label_curve <- function(object, ...) {
 #'   intercept plus one weight per feature \strong{on the log-penalty
 #'   scale}, which is where the interval regression is fitted, while
 #'   \code{predict()} exponentiates and returns a penalty on the natural
-#'   scale -- the scale \code{\link{cpt_penalty}()} and
+#'   scale, the scale \code{\link{cpt_penalty}()} and
 #'   \code{\link{cpt_detect}()} consume. So a coefficient of
 #'   \eqn{-0.04} on \code{log_n} is a multiplicative effect on the
 #'   penalty, not an additive one.
@@ -544,7 +544,7 @@ autoplot.ggcpt_label_curve <- function(object, ...) {
 #' \strong{The signs are often not interpretable, and that is a property of
 #'   the labels rather than of the fit.} A target interval is open above
 #'   whenever the largest penalty on the grid still achieves the minimum
-#'   label error -- which is the common case, because a large penalty
+#'   label error, which is the common case, because a large penalty
 #'   usually keeps the one changepoint the labels ask for. When every
 #'   series' interval is open above, any sufficiently large prediction is
 #'   optimal, the problem does not pin the slopes, and the \eqn{L_2} term
@@ -553,7 +553,7 @@ autoplot.ggcpt_label_curve <- function(object, ...) {
 #'   Two measurements on four series of very different length and noise,
 #'   all with one-change labels, differing only in the data drawn. In one,
 #'   every non-intercept coefficient came out slightly negative, so the
-#'   predicted penalty \emph{decreased} with \eqn{n} -- the opposite of the
+#'   predicted penalty \emph{decreased} with \eqn{n}, the opposite of the
 #'   \eqn{\log n} growth a reader would expect from BIC, and not evidence
 #'   of anything. In the other, every feature weight went to zero and the
 #'   model became a \strong{constant}: \code{predict()} returned the same

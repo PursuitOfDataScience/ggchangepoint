@@ -1,4 +1,4 @@
-#' fastcpd wrapper — fast changepoint detection via sequential gradient descent
+#' fastcpd wrapper: fast changepoint detection via sequential gradient descent
 #'
 #' Wraps the \pkg{fastcpd} package (Li and Zhang, 2024), a modern PELT-family
 #' engine that pairs pruning with sequential gradient descent so that exact or
@@ -39,6 +39,14 @@ fastcpd_wrapper <- function(x, family = c("mean", "variance", "meanvariance",
                             order = NULL, ...) {
   need_pkg("fastcpd")
   family <- match.arg(family)
+  # fastcpd names a bad `order` itself, except `NA` ("missing value where
+  # TRUE/FALSE needed") and a string ("non-numeric argument to mathematical
+  # function").
+  if (!is.null(order) && (!is.numeric(order) || anyNA(order))) {
+    stop("`order` must be numeric: one integer for \"ar\", two for ",
+         "\"arma\" and \"garch\" (got ", paste(format(order), collapse = ", "),
+         ").", call. = FALSE)
+  }
 
   validate_data(x)
   is_mv <- is.matrix(x) || is.data.frame(x)

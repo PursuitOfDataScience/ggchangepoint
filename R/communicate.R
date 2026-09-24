@@ -130,7 +130,7 @@ cpt_annotate_events <- function(object, events, location = NULL,
     # guess -- so say which reading was used rather than leaving the caller
     # to infer it from the answer.
     warning("`", location, "` is numeric and so is the result's index, and ",
-            "the values fall inside 1..", n, " -- they are read as ROW ",
+            "the values fall inside 1..", n, ", so they are read as ROW ",
             "POSITIONS. If they are index values, look them up first, e.g. ",
             "`events$", location, " <- match(events$", location,
             ", fit$data$index_value)`.", call. = FALSE)

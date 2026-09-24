@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-highdim2.R
 \name{pilliat_wrapper}
 \alias{pilliat_wrapper}
-\title{Pilliat wrapper — high-dimensional detection by three complementary tests}
+\title{Pilliat wrapper: high-dimensional detection by three complementary tests}
 \usage{
 pilliat_wrapper(
   x,
@@ -19,7 +19,7 @@ pilliat_wrapper(
 \item{x}{A numeric matrix or data frame with rows as time points and
 columns as coordinates.}
 
-\item{threshold_d_const, threshold_bj_const, threshold_partial_const}{Leading constants of the dense, Berk–Jones and partial-sum thresholds.}
+\item{threshold_d_const, threshold_bj_const, threshold_partial_const}{Leading constants of the dense, Berk-Jones and partial-sum thresholds.}
 
 \item{empirical}{Calibrate the thresholds by Monte Carlo rather than using
 the theoretical values? Slower but sharper; defaults to \code{FALSE}.}
@@ -39,9 +39,9 @@ A \code{ggcpt} object.
 \description{
 Wraps \code{HDCD::Pilliat()} (Pilliat, Carpentier and Verzelen, 2023): a
 high-dimensional mean-change procedure combining a dense test, a
-Berk–Jones test and a partial-sum test, so it is powerful across sparsity
+Berk-Jones test and a partial-sum test, so it is powerful across sparsity
 regimes without estimating the sparsity level. A useful cross-check on
-\code{\link{esac_wrapper}()} — the two adapt differently and disagreeing
+\code{\link{esac_wrapper}()}: the two adapt differently and disagreeing
 answers are informative.
 }
 \section{Dimension precondition}{
@@ -49,7 +49,7 @@ answers are informative.
 \code{HDCD} 1.1's \code{Pilliat()} builds one fewer partial-sum threshold
 than it uses whenever the number of coordinates is an exact power of two,
 so the C routine reads past the end of that vector and the engine reports
-a changepoint at \emph{every} observation — on pure noise as readily as on
+a changepoint at \emph{every} observation, on pure noise as readily as on
 a real change. This wrapper refuses those dimensions rather than returning
 the result, because it is wrong in a way that looks like a finding.
 \code{\link{esac_wrapper}()} is unaffected at every dimension. Note that
@@ -63,7 +63,7 @@ what it found. That has a consequence for comparisons:
 \code{\link{cpt_batch}()} and \code{\link{cpt_benchmark}()} record a
 failure row for \code{pilliat} where the same output from \code{pelt}
 gives a result plus a warning, so a benchmark table is not scoring the
-two on equal terms in that case --- read the \code{error} column
+two on equal terms in that case; read the \code{error} column
 alongside the metrics.
 }
 

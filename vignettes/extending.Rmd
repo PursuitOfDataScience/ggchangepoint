@@ -69,9 +69,9 @@ cpt_metrics(tidy(fit)$cp, truth = c(100, 200), n = 300)
 autoplot(fit, show_segments = TRUE)
 ```
 
-`as_ggcpt()` runs the same contract checks as every built-in wrapper —
-sorting, de-duplication, range checks, aligned extra columns, derived
-segments — so an external result cannot violate the invariants the rest of
+`as_ggcpt()` runs the same contract checks as every built-in wrapper
+(sorting, de-duplication, range checks, aligned extra columns, derived
+segments), so an external result cannot violate the invariants the rest of
 the package relies on:
 
 ```{r as-ggcpt-contract}
@@ -142,7 +142,7 @@ run would be worse than the problem it solved.
 ## Returning a finished result
 
 `fn` may return a bare vector of indices, as above, or a finished `ggcpt`
-built with `as_ggcpt()` — which is how you pass along an engine's
+built with `as_ggcpt()`, which is how you pass along an engine's
 confidence intervals, fitted signal or raw fit object:
 
 ```{r register-full, fig.alt = "Series with the registered detector's changepoint marked and the smoothed signal it fitted overlaid"}
@@ -222,8 +222,8 @@ If you are writing a wrapper of your own, this is the whole contract, and
   time index.
 - `$method`, `$change_in`, `$penalty`, `$cp_convention` are length-one
   metadata; `$fit` is the raw upstream object.
-- The optional slots — `data_wide`, `index`, `regions`, `diagnostics`,
-  `registered` — are absent unless something supplies them, so
+- The optional slots (`data_wide`, `index`, `regions`, `diagnostics`,
+  `registered`) are absent unless something supplies them, so
   `is.null(fit$regions)` is the test for "this engine does not do
   regions".
 

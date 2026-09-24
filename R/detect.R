@@ -7,8 +7,8 @@
 #'
 #' @param x The series. A numeric vector for univariate methods, or a
 #'   numeric matrix/data frame (rows are time points) for the multivariate
-#'   methods — run \code{subset(cpt_methods(), multivariate)$method} for the
-#'   list. A \code{ts}, \code{xts}, \code{zoo} or (unkeyed) \code{tsibble}
+#'   methods (run \code{subset(cpt_methods(), multivariate)$method} for the
+#'   list). A \code{ts}, \code{xts}, \code{zoo} or (unkeyed) \code{tsibble}
 #'   is accepted directly and its time index is carried through to
 #'   \code{tidy()} and \code{autoplot()}; so is a data frame together with
 #'   \code{y} (and optionally \code{index}).
@@ -31,7 +31,7 @@
 #'   for the thing being asked about. That is never silent: the result's
 #'   \code{change_in} records what was actually detected, so compare it
 #'   with what you asked for. Measured across every method and every value
-#'   its \code{supports} entry lists, six pairs are routed --
+#'   its \code{supports} entry lists, six pairs are routed:
 #'   \code{not}'s \code{"var"} becomes \code{"meanvar"} (its variance
 #'   contrast is piecewise-constant in mean \emph{and} variance),
 #'   \code{cpm}'s \code{"mean"} and \code{"var"} both become
@@ -50,14 +50,14 @@
 #'   Segment Neighbourhood. Note also that the default \code{"MBIC"} is
 #'   resolved to a \emph{numeric} value for the numeric-penalty engines
 #'   (\code{"fpop"}, \code{"cpop"}, \code{"decafs"}), and that value is
-#'   stronger than those wrappers' own \code{2 * log(n)} default — 19.9
-#'   against 11.8 at \eqn{n = 360} — so \code{cpt_detect(x, method =
+#'   stronger than those wrappers' own \code{2 * log(n)} default (19.9
+#'   against 11.8 at \eqn{n = 360}), so \code{cpt_detect(x, method =
 #'   "decafs")} can report fewer changepoints than \code{decafs_wrapper(x)}
 #'   on the same series. Pass \code{penalty} explicitly to make the two
 #'   entry points agree.
 #' @param index Optional time index, one value per observation (dates, say).
-#'   Detection still runs on observation positions — every wrapped engine
-#'   assumes an equally spaced sequence — but the index is stored on the
+#'   Detection still runs on observation positions (every wrapped engine
+#'   assumes an equally spaced sequence), but the index is stored on the
 #'   result and threaded through \code{tidy()} (as \code{cp_index}),
 #'   \code{augment()}, \code{autoplot()} and \code{\link{cpt_report}()},
 #'   so the output speaks in the user's own units. An index that is not
@@ -92,7 +92,7 @@
 #' effectively negligible and the segmentation shatters. On 200 observations
 #' with one true changepoint in the middle and a jump of five standard
 #' deviations, \code{"pelt"} returns 1 changepoint at \eqn{\sigma = 1}, 39
-#' at \eqn{\sigma = 3} and 141 at \eqn{\sigma = 10} --- means over 20
+#' at \eqn{\sigma = 3} and 141 at \eqn{\sigma = 10}. These are means over 20
 #' draws, because a single draw is not stable here: the same three settings
 #' gave 21/75 at \eqn{n = 100} and 57/266 at \eqn{n = 400}, so the effect
 #' grows with the series as well as with the noise. Three ways to avoid it, in order of
@@ -105,10 +105,17 @@
 #'   \item use \code{change_in = "meanvar"}, which estimates a variance per
 #'     segment and is unaffected.
 #' }
-#' The other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
-#' Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
-#' multivariate methods all estimate or cancel the noise scale internally,
-#' and return the same segmentation whatever the units.
+#' Most other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
+#' Isolate-Detect, TGUH, CPOP, \code{"bcp"}, \code{"beast"} and the
+#' nonparametric and multivariate methods estimate or cancel the noise scale
+#' internally, and returned the same segmentation at a thousandth, one and
+#' a thousand times the units. Three did not, on the same series:
+#' \code{"geomcp"} runs PELT on its mapped distance and angle series and so
+#' inherits the sensitivity above; \code{"decafs"} floors its noise
+#' estimate at about 0.03, so it under-segments a series whose noise is
+#' smaller than that; and \code{"bocpd"}'s default prior is on the data's
+#' own scale. At a thousandth of the units the last two found nothing.
+#' Standardising first avoids all three.
 #'
 #' @return A \code{ggcpt} object: a list with \code{changepoints}
 #'   (\code{cp}, \code{cp_value}), \code{segments} (\code{seg_id},
@@ -231,6 +238,23 @@ cpt_detect <- function(x,
                                      }))[1]
   }
 
+  # `penalty` reaches the engines by half a dozen routes, and a malformed
+  # value fell through all of them: `NA` or a misspelt name silently became
+  # the fpop, cpop, decafs or fastcpd default, a vector was cut to its first
+  # element (or printed as two penalties), and a negative number put a
+  # changepoint at every observation. A registered method only records the
+  # penalty, so its own vocabulary is left alone.
+  if (is.null(registered) && !is.null(penalty)) {
+    if (is.numeric(penalty)) {
+      validate_scalar(penalty, "penalty", min = 0)
+    } else if (!is.character(penalty) || length(penalty) != 1L ||
+               is.na(penalty)) {
+      stop("`penalty` must be one penalty name (\"MBIC\", \"BIC\", ...) or ",
+           "one non-negative number (got ",
+           paste(format(penalty), collapse = ", "), ").", call. = FALSE)
+    }
+  }
+
   is_mv <- is.matrix(x) || is.data.frame(x)
   reg <- full_registry()
   mv_methods <- reg$method[reg$multivariate]
@@ -277,6 +301,24 @@ cpt_detect <- function(x,
   } else {
     # Convert penalty to numeric for methods that need it
     pen_val <- resolve_numeric_penalty(penalty, n = length(data_vec))
+    # A name this cannot translate used to fall back to the wrapper's own
+    # default without a word, so `penalty = "mbic"` ran at 2 * log(n) and
+    # said "Manual". fastcpd translates a different set, below.
+    if (method %in% c("fpop", "cpop", "decafs") && is.character(penalty) &&
+        is.null(pen_val)) {
+      stop("Method `", method, "` takes a numeric penalty, and \"", penalty,
+           "\" is not a name cpt_detect() can translate into one. Use ",
+           paste0("\"", numeric_penalty_names(), "\"", collapse = ", "),
+           ", or a number.", call. = FALSE)
+    }
+    if (identical(method, "fastcpd") && is.character(penalty) &&
+        !toupper(penalty) %in% toupper(c("MDL", numeric_penalty_names()))) {
+      stop("Method `fastcpd` does not recognise the penalty \"", penalty,
+           "\". Use \"MBIC\", \"BIC\", \"SIC\" or \"MDL\", which it shares, ",
+           "one of the names left to its default (\"AIC\", ",
+           "\"Hannan-Quinn\", \"sSIC\", \"None\"), or a number.",
+           call. = FALSE)
+    }
 
     dots <- list(...)
     # Call the registry's wrapper with the arguments this dispatcher derives
@@ -479,9 +521,9 @@ planned_methods <- function() {
 
 #' Introspect available changepoint detection methods
 #'
-#' Returns a tibble describing every method the package knows about — those
+#' Returns a tibble describing every method the package knows about (those
 #' that are wired, those a user has registered with
-#' \code{\link{cpt_register_method}()}, and those that are planned — along
+#' \code{\link{cpt_register_method}()}, and those that are planned), along
 #' with their capabilities and installation status. Useful for discovering
 #' what can be run, what needs to be installed, and which methods expose the
 #' extras the diagnostics need (confidence intervals, a fitted signal, a
@@ -496,7 +538,7 @@ planned_methods <- function() {
 #'   \item{change_in}{What types of change the method can detect.}
 #'   \item{engine}{The upstream R package that implements the method.}
 #'   \item{status}{\code{"available"} (wired in this release),
-#'         \code{"registered"} (supplied by the user this session — see
+#'         \code{"registered"} (supplied by the user this session; see
 #'         \code{\link{cpt_register_method}()}), or \code{"planned"}
 #'         (future).}
 #'   \item{installed}{\code{TRUE} if the engine package is installed,
@@ -521,14 +563,14 @@ planned_methods <- function() {
 #'         them. Nothing stores a scale space on a result:
 #'         \code{\link{cpt_scale_space}()} computes one on demand by
 #'         sweeping a multiscale detector's bandwidth over the series, so
-#'         it works on \emph{any} series and any result -- a \code{pelt}
+#'         it works on \emph{any} series and any result, a \code{pelt}
 #'         fit included. What this column marks is the two engines that
 #'         sweep can be run \emph{with}, i.e. the domain of that
 #'         function's own \code{method} argument:
 #'         \code{subset(cpt_methods(), scale_space)$method}.
 #'
-#'         \code{online} means the \emph{algorithm} is sequential -- it
-#'         consumes observations one at a time -- and this table reports it
+#'         \code{online} means the \emph{algorithm} is sequential (it
+#'         consumes observations one at a time), and this table reports it
 #'         because it governs how the method behaves in batch: an online
 #'         detector's threshold is a rate per observation, so run over a
 #'         whole series through \code{\link{cpt_detect}()} it reports
@@ -536,7 +578,7 @@ planned_methods <- function() {
 #'         It does \strong{not} mean the method can be passed to
 #'         \code{\link{cpt_monitor}()}, which takes its own three:
 #'         \code{"edetector"}, \code{"cpm"} and \code{"ocd"}. The two
-#'         sets overlap without coinciding -- \code{bocpd} is an online
+#'         sets overlap without coinciding: \code{bocpd} is an online
 #'         algorithm this table marks but the monitor does not offer, and
 #'         \code{edetector} is native to this package rather than a
 #'         wrapped engine, so it has no row here at all.}
@@ -717,8 +759,7 @@ resolve_numeric_penalty <- function(penalty, n) {
   }
   if (is.numeric(penalty)) return(as.numeric(penalty))
   if (is.character(penalty)) {
-    if (penalty %in% c("BIC", "SIC", "MBIC", "AIC", "Hannan-Quinn", "None",
-                       "sSIC")) {
+    if (penalty %in% numeric_penalty_names()) {
       # k = 2 matches the Gaussian change-in-mean convention the
       # numeric-penalty engines use (fpop/cpop/DeCAFS default to
       # 2 * log(n) for BIC), so "BIC" means the same thing whether it is
@@ -729,6 +770,12 @@ resolve_numeric_penalty <- function(penalty, n) {
     return(NULL)
   }
   NULL
+}
+
+# Internal: the penalty names resolve_numeric_penalty() translates.
+#' @noRd
+numeric_penalty_names <- function() {
+  c("BIC", "SIC", "MBIC", "AIC", "Hannan-Quinn", "None", "sSIC")
 }
 
 # Internal: resolve a `penalty` argument that may be a learned model.
@@ -857,8 +904,8 @@ wrap_ecp_to_ggcpt <- function(x, ...) {
 #'     \code{cpt_detect()} forwards a numeric \code{penalty} as
 #'     \code{beta}, and translates the three names the two packages share
 #'     (\code{"MBIC"}, \code{"BIC"}/\code{"SIC"}, \code{"MDL"}). Any other
-#'     character penalty --- \code{"AIC"}, \code{"Hannan-Quinn"},
-#'     \code{"sSIC"}, \code{"None"} --- has no \pkg{fastcpd} equivalent and
+#'     character penalty (\code{"AIC"}, \code{"Hannan-Quinn"},
+#'     \code{"sSIC"}, \code{"None"}) has no \pkg{fastcpd} equivalent and
 #'     is left to the engine's default rather than being silently
 #'     approximated; pass \code{beta} yourself to pin it. Whatever is used
 #'     is recorded on the result, so \code{print()} and \code{glance()}
@@ -881,7 +928,7 @@ wrap_ecp_to_ggcpt <- function(x, ...) {
 #'     \eqn{l_i} and so cannot be expressed by a function of \code{n} and
 #'     \code{k} alone. Use the character \code{"MBIC"} with
 #'     \pkg{changepoint}-based methods to get the engine's native MBIC, and
-#'     \code{cpt_select(criterion = "mbic")} for the Zhang–Siegmund one.
+#'     \code{cpt_select(criterion = "mbic")} for the Zhang-Siegmund one.
 #' }
 #'
 #' @return A numeric penalty value.

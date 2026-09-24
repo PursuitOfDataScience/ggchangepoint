@@ -18,7 +18,7 @@ data (an integer), or an explicit baseline vector. Defaults to
 \item{...}{Additional arguments passed to \code{\link{cpt_monitor}()}.}
 }
 \value{
-A \code{ggcpt_monitor} that has already consumed the series --
+A \code{ggcpt_monitor} that has already consumed the series:
   the same object \code{\link{cpt_monitor}()} returns, described
   there, with \code{alarms} filled in for whatever fired.
 }

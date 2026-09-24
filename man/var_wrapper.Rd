@@ -20,14 +20,18 @@ Defaults to a small grid scaled by the series length.}
 \item{...}{Additional arguments passed to the engine.}
 }
 \value{
-A \code{ggcpt} object with \code{change_in = "regression"}.
+A \code{ggcpt} object with \code{change_in = "regression"}. The
+  engine searches every other observation, so a location is resolved to
+  within two; each is reported as the last observation before the
+  change, the package convention, rather than the engine's own index,
+  which sits one or two earlier.
 }
 \description{
 Wraps \code{changepoints::CV.search.DP.VAR1()} (Wang, Yu, Rinaldo and
 Willett): dynamic programming with an \eqn{\ell_0} penalty for changes in
 the transition matrix of a vector autoregression, with the two tuning
 parameters chosen by cross-validation. The change here is in the
-\emph{dynamics} — how the series predicts itself — not in the level, so it
+\emph{dynamics} (how the series predicts itself), not in the level, so it
 is invisible to every mean-change engine in the package.
 }
 \examples{

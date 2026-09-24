@@ -318,7 +318,7 @@ test_that("continuous-weight networks use the noise split, not thinning", {
 
 test_that("fabisearch reads both shapes of its significance column", {
   # Supplying `alpha` makes the engine threshold internally and return a
-  # LOGICAL verdict; leaving it NULL returns the permutation p-value. Reading
+  # LOGICAL verdict; leaving it NULL returns each split's p-value. Reading
   # the logical form as a number turns FALSE into 0, which clears any
   # p-value threshold, so every candidate split the search proposed would be
   # returned as a changepoint. The filter is tested directly because running

@@ -1,4 +1,4 @@
-#' inspect wrapper — high-dimensional changepoints via sparse projection
+#' inspect wrapper: high-dimensional changepoints via sparse projection
 #'
 #' Wraps \code{InspectChangepoint::inspect()} (Wang and Samworth, 2018). For
 #' a \eqn{p}-variate series whose mean changes in an unknown sparse subset of
@@ -52,6 +52,32 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
                        call = match.call(), data_wide = mv_data_wide(X)))
   }
 
+  # The engine divides each coordinate by mad(diff(x)) / sqrt(2), which is
+  # zero whenever more than half of a coordinate's successive differences
+  # are equal: a 0/1 alternation, a noiseless step, a count series with
+  # long runs. That failed with base R's "missing value where TRUE/FALSE
+  # needed". A flat coordinate is dropped above because it carries nothing;
+  # one of these moves, and may carry the change, so it is refused by name
+  # rather than dropped.
+  no_scale <- vapply(seq_len(ncol(X_fit)), function(j) {
+    stats::mad(diff(X_fit[, j])) == 0
+  }, logical(1))
+  if (any(no_scale)) {
+    nm <- colnames(X_fit) %||% paste0("V", seq_len(ncol(X_fit)))
+    stop("`inspect` rescales each coordinate by the median absolute ",
+         "deviation of its successive differences, and that is zero for ",
+         paste(nm[no_scale], collapse = ", "), ": more than half of the ",
+         "differences are identical. Drop or jitter ",
+         if (sum(no_scale) > 1) "those coordinates" else "that coordinate",
+         ", or use a method that does not rescale this way, such as ",
+         "`ecp` or `kcp`.", call. = FALSE)
+  }
+  # Forwarded unchecked, `NA` failed with "missing value where TRUE/FALSE
+  # needed", a vector with "the condition has length > 1", a string ran
+  # (as a lambda, with the default; as a threshold, finding nothing), and a
+  # negative threshold put a changepoint at nearly every observation.
+  if (!is.null(lambda)) validate_scalar(lambda, "lambda", min = 0)
+  if (!is.null(threshold)) validate_scalar(threshold, "threshold", min = 0)
   args <- list(x = t(X_fit), ...)
   if (!is.null(lambda)) args$lambda <- lambda
   if (!is.null(threshold)) args$threshold <- threshold
@@ -97,7 +123,7 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
   )
 }
 
-#' ocd wrapper — online high-dimensional changepoint detection
+#' ocd wrapper: online high-dimensional changepoint detection
 #'
 #' Wraps the \code{ocd} package (Chen, Wang and Samworth, 2022): online
 #' multiscale detection of a mean change in a high-dimensional stream, with
@@ -118,8 +144,8 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #'   \code{max(20, floor(0.2 * n))}, capped at \code{n/2}.
 #' @param thresh Threshold specification passed to
 #'   \code{ocd::ChangepointDetector()}; \code{"MC"} (default) calibrates by
-#'   Monte Carlo, which is what makes this the slowest wrapper — see the
-#'   timing note below. Supplying the three thresholds directly, as a named
+#'   Monte Carlo, which is what makes this the slowest wrapper (see the
+#'   timing note below). Supplying the three thresholds directly, as a named
 #'   numeric vector \code{c(diag =, off_d =, off_s =)}, skips calibration
 #'   altogether.
 #' @param patience Target average run length to false alarm. Defaults to
@@ -152,9 +178,9 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #' and better than half an hour at \eqn{p = 50}. Another machine will give
 #' different absolute numbers; the linearity in \code{mc_reps} is the part
 #' to plan around. Monitoring the observations afterwards is cheap by
-#' comparison — 0.37 s for a thousand of them at \eqn{p = 3}. Lower
-#' \code{mc_reps} while exploring --- the example below uses 2, which
-#' measures 3.8 s --- or pass \code{thresh} directly to skip
+#' comparison: 0.37 s for a thousand of them at \eqn{p = 3}. Lower
+#' \code{mc_reps} while exploring (the example below uses 2, which
+#' measures 3.8 s), or pass \code{thresh} directly to skip
 #' calibration entirely, which brings the same fit down to a tenth of a
 #' second.
 #'
@@ -185,6 +211,10 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
   # argument slots; these are the ones that needed it.
   validate_scalar(patience, "patience", min = 1)
   validate_scalar(mc_reps, "mc_reps", min = 1)
+  # `beta = 0` or `NA` failed with "missing value where TRUE/FALSE needed",
+  # and a vector ran. ocd's beta is a lower bound on the size of the mean
+  # change, so it has to be positive.
+  validate_scalar(beta, "beta", min = 0, min_open = TRUE)
 
   validate_data(x)
   X <- if (is.matrix(x) || is.data.frame(x)) as_mv_matrix(x)
@@ -209,6 +239,9 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
   if (is.null(train)) {
     train <- max(20L, floor(0.2 * n))
   }
+  # `NA` and strings reached `min()` below and failed with "missing value
+  # where TRUE/FALSE needed", and `c(2, 3)` trained on two observations.
+  validate_scalar(train, "train", min = 2)
   train <- min(as.integer(train), floor(n / 2))
   if (train < 2) {
     stop("`train` must be at least 2 observations.", call. = FALSE)
@@ -245,7 +278,7 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
       # validated against.
       if (n - i < train) break
       detector <- ocd::reset(detector)
-      # Re-estimate the baseline from a window after the declaration —
+      # Re-estimate the baseline from a window after the declaration:
       # keeping the pre-change baseline would re-declare immediately on the
       # shifted regime.
       new_train <- seq(i + 1, min(i + train, n))

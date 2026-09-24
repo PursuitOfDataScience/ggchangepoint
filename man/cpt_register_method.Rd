@@ -41,7 +41,7 @@ not clash with a built-in method.}
   \code{diagnostics$statistic} (a numeric vector, or a list with
   \code{statistic}, \code{label} and \code{threshold}) is padded with
   \code{NA} to the length of the series when it is shorter, and the pad
-  is \strong{centred} --- a moving-window statistic is trimmed at both
+  is \strong{centred}: a moving-window statistic is trimmed at both
   ends, so a left-aligned pad would shift every value by the bandwidth.
   Supply a full-length vector if that is not the alignment you want.}
 
@@ -81,7 +81,7 @@ Teaches \code{\link{cpt_detect}()} about a detector this package does not
 detector reached through \pkg{reticulate}, a deep-learning model, a
 proprietary in-house method, or a hand-curated set of changepoints. The
 registered method then works with everything built on the \code{ggcpt}
-contract — \code{autoplot()}, the geoms, \code{tidy()}/\code{glance()}/
+contract: \code{autoplot()}, the geoms, \code{tidy()}/\code{glance()}/
 \code{augment()}, \code{cpt_metrics()}, \code{ggcpt_compare()},
 \code{cpt_stability()}, \code{cpt_consensus()}, \code{cpt_benchmark()}
 and \code{cpt_report()}.

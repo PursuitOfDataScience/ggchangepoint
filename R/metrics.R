@@ -29,8 +29,8 @@
 #'     \code{rand_index} are all 1 and \code{annotation_error} is 0. (A
 #'     metric that scored this 0 was a 0.4.0 bug.)
 #'   \item \strong{One side empty.} \code{precision} and \code{recall} are
-#'     \emph{0} rather than \code{NA} — finding nothing where there was a
-#'     change, and finding a change where there was none, both score badly —
+#'     \emph{0} rather than \code{NA} (finding nothing where there was a
+#'     change, and finding a change where there was none, both score badly),
 #'     and so is \code{f1}. \code{rand_index} is 0 for the same reason.
 #'   \item \strong{Nothing matched.} \code{hausdorff},
 #'     \code{mae_matched} and \code{rmse_matched} are \code{NA}, because
@@ -46,7 +46,7 @@
 #' corrupt the partition metrics rather than merely miss.
 #'
 #' @return A tibble with one row and the columns below. \dQuote{Higher} and
-#'   \dQuote{lower} mark which direction is better — the same directions
+#'   \dQuote{lower} mark which direction is better, the same directions
 #'   \code{\link{cpt_benchmark}()} ranks by.
 #'   \describe{
 #'     \item{\code{n}, \code{n_pred}, \code{n_truth}}{the series length
@@ -54,7 +54,7 @@
 #'       dropped.}
 #'     \item{\code{precision}, \code{recall}, \code{f1}}{higher is
 #'       better. The fraction of predictions that matched a truth, the
-#'       fraction of truths that were matched, and their harmonic mean —
+#'       fraction of truths that were matched, and their harmonic mean,
 #'       all under the one-to-one matching within \code{margin}, so they
 #'       score \emph{whether} a change was found, not how precisely it was
 #'       located.}
@@ -65,7 +65,7 @@
 #'       location error.}
 #'     \item{\code{hausdorff}}{lower is better, in observations. The
 #'       largest distance from any changepoint on either side to the nearest
-#'       one on the other — a worst-case location error, so one badly placed
+#'       one on the other: a worst-case location error, so one badly placed
 #'       changepoint dominates it.}
 #'     \item{\code{rand_index}}{higher is better. The \emph{adjusted}
 #'       Rand index between the two segment labellings: 1 for identical
@@ -160,7 +160,7 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
 #' @param margin Tolerance margin (default 5).
 #'
 #' @return A tibble with one row: \code{n}, \code{n_annotators},
-#'   \code{n_pred}, and the \strong{four} metrics this averages --
+#'   \code{n_pred}, and the \strong{four} metrics this averages:
 #'   \code{precision}, \code{recall}, \code{f1} and \code{covering}.
 #'   Each is a plain unweighted mean of the per-annotator value from
 #'   \code{\link{cpt_metrics}()}, over all \code{n_annotators} of them.
@@ -175,8 +175,8 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
 #'   because it is not obvious: they are \code{NA} whenever an annotator
 #'   shares no matched pair with the prediction, so averaging them would
 #'   quietly divide by fewer annotators than \code{n_annotators} reports.
-#'   Measured on three annotators against one prediction --
-#'   \code{list(c(100, 200), integer(0), 150)} at \eqn{n = 300} --
+#'   Measured on three annotators against one prediction
+#'   (\code{list(c(100, 200), integer(0), 150)} at \eqn{n = 300}),
 #'   \code{mae_matched} was available for \strong{one} of the three and
 #'   \code{hausdorff} for two, while \code{f1} and \code{covering} were
 #'   finite for all three. Score those per annotator with
@@ -209,7 +209,7 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
   # indices outside 1..(n-1)" and then produced plausible-looking numbers.
   # cpt_metrics() refuses a data frame for either argument.
   if (is.data.frame(annotations)) {
-    stop("`annotations` is a data frame, and a data frame is a list -- so ",
+    stop("`annotations` is a data frame, and a data frame is a list, so ",
          "each COLUMN would be read as one annotator's changepoints. Pass ",
          "a list of index vectors, one per annotator, e.g. ",
          "`split(df$cp, df$annotator)` or `list(df$cp)`.", call. = FALSE)
@@ -434,7 +434,7 @@ calc_adjusted_rand <- function(pred, truth, n) {
 
   # Identical partitions (including two trivial ones) have a degenerate
   # denominator; they agree perfectly. Any other case uses the ARI formula
-  # directly — index == expected is chance-level agreement (ARI 0), not 1.
+  # directly: index == expected is chance-level agreement (ARI 0), not 1.
   if (abs(max_index - expected) < 1e-15) return(1)
 
   (index - expected) / (max_index - expected)

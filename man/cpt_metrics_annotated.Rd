@@ -17,7 +17,7 @@ cpt_metrics_annotated(pred, annotations, n, margin = 5)
 }
 \value{
 A tibble with one row: \code{n}, \code{n_annotators},
-  \code{n_pred}, and the \strong{four} metrics this averages --
+  \code{n_pred}, and the \strong{four} metrics this averages:
   \code{precision}, \code{recall}, \code{f1} and \code{covering}.
   Each is a plain unweighted mean of the per-annotator value from
   \code{\link{cpt_metrics}()}, over all \code{n_annotators} of them.
@@ -32,8 +32,8 @@ A tibble with one row: \code{n}, \code{n_annotators},
   because it is not obvious: they are \code{NA} whenever an annotator
   shares no matched pair with the prediction, so averaging them would
   quietly divide by fewer annotators than \code{n_annotators} reports.
-  Measured on three annotators against one prediction --
-  \code{list(c(100, 200), integer(0), 150)} at \eqn{n = 300} --
+  Measured on three annotators against one prediction
+  (\code{list(c(100, 200), integer(0), 150)} at \eqn{n = 300}),
   \code{mae_matched} was available for \strong{one} of the three and
   \code{hausdorff} for two, while \code{f1} and \code{covering} were
   finite for all three. Score those per annotator with

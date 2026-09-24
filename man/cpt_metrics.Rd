@@ -17,7 +17,7 @@ cpt_metrics(pred, truth, n, margin = 5)
 }
 \value{
 A tibble with one row and the columns below. \dQuote{Higher} and
-  \dQuote{lower} mark which direction is better — the same directions
+  \dQuote{lower} mark which direction is better, the same directions
   \code{\link{cpt_benchmark}()} ranks by.
   \describe{
     \item{\code{n}, \code{n_pred}, \code{n_truth}}{the series length
@@ -25,7 +25,7 @@ A tibble with one row and the columns below. \dQuote{Higher} and
       dropped.}
     \item{\code{precision}, \code{recall}, \code{f1}}{higher is
       better. The fraction of predictions that matched a truth, the
-      fraction of truths that were matched, and their harmonic mean —
+      fraction of truths that were matched, and their harmonic mean,
       all under the one-to-one matching within \code{margin}, so they
       score \emph{whether} a change was found, not how precisely it was
       located.}
@@ -36,7 +36,7 @@ A tibble with one row and the columns below. \dQuote{Higher} and
       location error.}
     \item{\code{hausdorff}}{lower is better, in observations. The
       largest distance from any changepoint on either side to the nearest
-      one on the other — a worst-case location error, so one badly placed
+      one on the other: a worst-case location error, so one badly placed
       changepoint dominates it.}
     \item{\code{rand_index}}{higher is better. The \emph{adjusted}
       Rand index between the two segment labellings: 1 for identical
@@ -82,8 +82,8 @@ table:
     \code{rand_index} are all 1 and \code{annotation_error} is 0. (A
     metric that scored this 0 was a 0.4.0 bug.)
   \item \strong{One side empty.} \code{precision} and \code{recall} are
-    \emph{0} rather than \code{NA} — finding nothing where there was a
-    change, and finding a change where there was none, both score badly —
+    \emph{0} rather than \code{NA} (finding nothing where there was a
+    change, and finding a change where there was none, both score badly),
     and so is \code{f1}. \code{rand_index} is 0 for the same reason.
   \item \strong{Nothing matched.} \code{hausdorff},
     \code{mae_matched} and \code{rmse_matched} are \code{NA}, because

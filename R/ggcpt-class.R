@@ -3,13 +3,13 @@
 #' The low-level constructor for the class every detector in this package
 #' returns. It assembles the components into a \code{ggcpt} without checking
 #' them, which is what makes it useful inside a wrapper and unsuitable as the
-#' entry point for hand-built input -- use \code{\link{as_ggcpt}()} for that.
+#' entry point for hand-built input; use \code{\link{as_ggcpt}()} for that.
 #'
 #' @param changepoints A tibble with columns \code{cp} and \code{cp_value}.
 #' @param segments A tibble with segment information: \code{seg_id}, \code{start},
 #'   \code{end}, \code{n}, \code{param_estimate}. \code{param_estimate} is
 #'   the segment \strong{mean} for every method in the package, including
-#'   the variance, distribution and model-change detectors --- it is the
+#'   the variance, distribution and model-change detectors: it is the
 #'   segment level, not the parameter that changed. A \code{change_in =
 #'   "var"} result therefore has a \code{param_estimate} column that may
 #'   barely move; read the variance off the data with the segment bounds if
@@ -32,7 +32,7 @@
 #'   default would make the result object explode on a long series. Call
 #'   \code{ecp::e.divisive()} or \code{ecp::e.agglo()} directly if you
 #'   need it. A few of the engines that \emph{are} kept are still large
-#'   relative to the data — measured on a 2000-point series,
+#'   relative to the data: measured on a 2000-point series,
 #'   \code{strucchange} costs about 135 MB (a triangular \eqn{O(n^2)} RSS
 #'   matrix), \code{bfast} about 53 MB and \code{bocpd} about 31 MB, while
 #'   every other engine stays under 4 MB. That is the engine's own object,
@@ -58,7 +58,7 @@
 #'     observation) and its axis label; see the \code{index} argument of
 #'     \code{\link{cpt_detect}()}.}
 #'   \item{\code{regions}}{a tibble of significance regions
-#'     (\code{start}, \code{end}, ...) for the interval-valued methods —
+#'     (\code{start}, \code{end}, ...) for the interval-valued methods;
 #'     see \code{\link{nsp_wrapper}()} and \code{\link{geom_cpt_region}()}.}
 #'   \item{\code{diagnostics}}{a named list of engine internals rendered by
 #'     \code{\link{ggcpt_statistic}()},
@@ -72,7 +72,7 @@
 #'
 #' @return An object of class \code{ggcpt}, holding exactly the
 #'   components passed in (documented one by one above) plus any of the
-#'   optional slots listed below. Nothing is validated or derived --
+#'   optional slots listed below. Nothing is validated or derived:
 #'   \code{\link{as_ggcpt}()} is the constructor that does both.
 #' @export
 #' @family result class
@@ -132,11 +132,11 @@ format_penalty <- function(penalty) {
 #'
 #' A class check, useful when a function accepts either a detection result or
 #' the raw series. It tests for \code{ggcpt} in the class vector, so a
-#' genuine \code{ggcpt} subclass --- \code{ggcpt_consensus} is the one ---
+#' genuine \code{ggcpt} subclass (\code{ggcpt_consensus} is the one)
 #' returns \code{TRUE}. The other \code{ggcpt_*} classes in the package
 #' (\code{ggcpt_batch}, \code{ggcpt_benchmark}, \code{ggcpt_monitor},
 #' \code{ggcpt_selection} and the rest) are \emph{not} subclasses of
-#' \code{ggcpt} --- most are tibble subclasses --- and return
+#' \code{ggcpt} (most are tibble subclasses) and return
 #' \code{FALSE}.
 #'
 #' @param x An object to test.
@@ -175,8 +175,8 @@ cat_field <- function(label, value, width = 19L) {
 
 #' Print a ggcpt object
 #'
-#' A compact header -- method, what changed, how many changepoints, the
-#' convention their locations follow, the penalty and the series length --
+#' A compact header (method, what changed, how many changepoints, the
+#' convention their locations follow, the penalty and the series length)
 #' followed by the first ten changepoints. For the segment table and the
 #' fitted parameters use \code{\link[base]{summary}()}; for the changepoints
 #' as data use \code{\link{tidy}()}.

@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-search.R
 \name{wbs2_wrapper}
 \alias{wbs2_wrapper}
-\title{WBS2 wrapper — Wild Binary Segmentation 2}
+\title{WBS2 wrapper: Wild Binary Segmentation 2}
 \usage{
 wbs2_wrapper(x, ...)
 }
@@ -22,9 +22,9 @@ steepest-drop-to-low-levels (SDLL) model selection.
 
 This engine is \strong{not reproducible call to call within an R
 session}, and no argument here can make it so. On a 200-point series with
-one change at 100, repeated identical calls -- same input,
+one change at 100, repeated identical calls (same input,
 \code{set.seed()} re-run beforehand so that \code{.Random.seed} is
-byte-identical on entry -- return a last changepoint of either 183 or
+byte-identical on entry) return a last changepoint of either 183 or
 188, roughly evenly split. The variation is therefore not driven by R's
 random number stream, which is why this wrapper has no \code{seed}
 argument to offer: there is no stream to pin.
@@ -32,8 +32,8 @@ argument to offer: there is no stream to pin.
 It is upstream, not in this package. Calling
 \code{breakfast::breakfast(x, solution.path = "wbs2",
 model.selection = "sdll")} directly (\pkg{breakfast} 2.5) reproduces it
-exactly. A \emph{fresh} R session is deterministic -- five separate
-sessions agreed -- so what varies is state the engine carries between
+exactly. A \emph{fresh} R session is deterministic (five separate
+sessions agreed), so what varies is state the engine carries between
 calls.
 
 In practice this is rare, and needs a series whose model selection sits

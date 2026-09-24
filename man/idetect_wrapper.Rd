@@ -26,7 +26,7 @@ Wraps the \code{IDetect} package. Requires the \code{IDetect} package.
 }
 \section{Constant input}{
 
-\code{IDetect::ID()} does not treat a flat series consistently — its
+\code{IDetect::ID()} does not treat a flat series consistently: its
 statistics become \eqn{0/0}, and what comes back depends on the value and
 the length. \code{rep(3, 200)} yields \emph{126} changepoints, at
 1, 3, 4, 6, 7, ...; \code{rep(0, 100)} raises "No change-points found";

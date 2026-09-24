@@ -37,7 +37,7 @@ cpt_consensus(
   knowing, because it falls exactly where a reader thinking in
   proportions would write \dQuote{unanimous}: with three methods,
   \code{min_votes = 0.99} needs all three, while
-  \code{min_votes = 1} -- and \code{1.0}, which is the same number --
+  \code{min_votes = 1} (and \code{1.0}, which is the same number)
   is a count of one and so the \emph{least} strict setting there is. For
   unanimity, pass the number of methods, or a fraction just below 1.
 

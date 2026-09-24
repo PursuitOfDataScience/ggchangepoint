@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-highdim.R
 \name{inspect_wrapper}
 \alias{inspect_wrapper}
-\title{inspect wrapper — high-dimensional changepoints via sparse projection}
+\title{inspect wrapper: high-dimensional changepoints via sparse projection}
 \usage{
 inspect_wrapper(x, lambda = NULL, threshold = NULL, ...)
 }

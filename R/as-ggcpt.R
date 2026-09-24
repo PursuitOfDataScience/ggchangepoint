@@ -45,8 +45,8 @@
 #'   same length as \code{cp}, appended to the changepoints tibble.
 #'
 #' @return A \code{ggcpt} object, with the same components as any
-#'   detector in the package returns -- see \code{\link{new_ggcpt}()}
-#'   for the full list, and \code{\link{cpt_detect}()} for the summary.
+#'   detector in the package returns (see \code{\link{new_ggcpt}()}
+#'   for the full list, and \code{\link{cpt_detect}()} for the summary).
 #' @seealso \code{\link{cpt_register_method}()} to make
 #'   \code{\link{cpt_detect}()} dispatch to an external detector by name.
 #' @export

@@ -124,6 +124,8 @@ SHORT_SERIES_PATTERNS <- paste(
   "too small", "max\\.leng", "segment size", "segment legnth",
   "segment length", "not periodic", "two periods",
   "subscript out of bounds", "Invalid x argument",
+  # wbsts below 8 observations, where there are not two wavelet scales
+  "at least two scales",
   sep = "|")
 
 #' @noRd
@@ -172,10 +174,10 @@ warn_if_degenerate <- function(res, method) {
           "one point long. ",
           if (zero_penalty) {
             paste0("With a penalty of 0 that is the unpenalised optimum, ",
-                   "not a segmentation -- give `penalty` a positive value.")
+                   "not a segmentation; give `penalty` a positive value.")
           } else {
             paste0("That is a failure to segment rather than a ",
-                   "segmentation -- the series is too short for this engine.")
+                   "segmentation: the series is too short for this engine.")
           }, call. = FALSE)
   invisible(res)
 }
@@ -262,6 +264,40 @@ with_search_path_restored <- function(expr) {
     }
   }, add = TRUE)
   suppressPackageStartupMessages(force(expr))
+}
+
+# Internal: run `expr`, then give foreach's registered %dopar% backend back
+# as it was. kcpRS::kcpRS() calls registerDoParallel() on a cluster it then
+# stops, so after any `kcp` call every later %dopar% in the session failed
+# with "invalid connection" or waited on the dead socket: fabisearch's own
+# search did, from inside the test suite, and so would the caller's code.
+# foreach keeps the registration in `.foreachGlobals` (setDoPar() writes
+# `fun`, `data` and `info` there, and getDoParRegistered() asks whether
+# `fun` exists) and exports no getter for it, so it is saved and put back
+# there. Nothing is registered for the duration, so a call runs on
+# whatever the caller had.
+#' @noRd
+with_foreach_restored <- function(expr) {
+  globals <- function() {
+    if (!isNamespaceLoaded("foreach")) return(NULL)
+    ns <- asNamespace("foreach")
+    if (!exists(".foreachGlobals", envir = ns, inherits = FALSE)) return(NULL)
+    get(".foreachGlobals", envir = ns, inherits = FALSE)
+  }
+  fields <- c("fun", "data", "info")
+  g <- globals()
+  saved <- if (!is.null(g)) {
+    mget(fields[vapply(fields, exists, logical(1), envir = g,
+                       inherits = FALSE)], envir = g)
+  }
+  on.exit({
+    g <- globals()
+    if (!is.null(g)) {
+      rm(list = intersect(fields, ls(g, all.names = TRUE)), envir = g)
+      for (f in names(saved)) assign(f, saved[[f]], envir = g)
+    }
+  }, add = TRUE)
+  force(expr)
 }
 
 # Internal: check that an optional engine package is installed.

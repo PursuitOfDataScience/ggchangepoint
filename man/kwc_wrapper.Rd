@@ -29,7 +29,7 @@ depth ranks) or \code{"dwbs"} (depth-based wild binary segmentation).}
 \code{"distribution"}. The test is sensitive to both; this only labels
 the result.}
 
-\item{seed}{Optional seed — the random-projection depths and the wild
+\item{seed}{Optional seed: the random-projection depths and the wild
 binary segmentation both randomise. The seed is scoped to this call:
 \code{.Random.seed} is saved and restored, so a seeded call inside a
 simulation loop does not pin the loop's own stream.}
@@ -48,7 +48,7 @@ A \code{ggcpt} object. Multivariate input is
 }
 \description{
 Wraps \pkg{KWCChangepoint} (Ramsay and Chenouri): the functional
-Kruskal–Wallis covariance test, which ranks observations by statistical
+Kruskal-Wallis covariance test, which ranks observations by statistical
 \emph{depth} and segments on the ranks. Because it never touches the
 values themselves it is insensitive to heavy tails and outlying curves,
 which is exactly where the moment-based functional tests degrade.

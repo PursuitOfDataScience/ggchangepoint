@@ -20,15 +20,15 @@
 #' \eqn{H_0}: no change against a single change in the mean, differing in how
 #' they measure it:
 #' \describe{
-#'   \item{\code{"pettitt"}}{a rank-based (Mann–Whitney) statistic —
+#'   \item{\code{"pettitt"}}{a rank-based (Mann-Whitney) statistic,
 #'     distribution-free and robust to outliers.}
 #'   \item{\code{"buishand"}}{the Buishand range test, based on rescaled
 #'     adjusted partial sums; assumes normality.}
 #'   \item{\code{"snht"}}{the standard normal homogeneity test of Alexandersson,
 #'     the reference method for detecting inhomogeneities in climate records.}
 #' }
-#' Each reports a location \emph{and} a p-value, and — unlike most engines
-#' here — that p-value is valid, because the location was not chosen from a
+#' Each reports a location \emph{and} a p-value, and, unlike most engines
+#' here, that p-value is valid, because the location was not chosen from a
 #' larger model search.
 #'
 #' @param x A numeric vector.
@@ -72,7 +72,7 @@ trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
     sd_x <- stats::sd(data_vec)
     if (!is.finite(sd_x) || sd_x == 0) {
       stop("`", test, "` standardises by the series' standard deviation, ",
-           "which is 0 here -- every one of the ", length(data_vec),
+           "which is 0 here: every one of the ", length(data_vec),
            " observations is identical, so the test statistic is undefined ",
            "rather than merely insignificant. `test = \"pettitt\"` is ",
            "rank-based and reports no changepoint on a constant series.",
@@ -113,17 +113,17 @@ trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
 #' and Six Sigma community uses as its default. Each candidate is scored by
 #' the bootstrap probability that a change occurred there, which gives a
 #' confidence level per changepoint and a confidence interval for its
-#' location — both carried onto the result.
+#' location, both carried onto the result.
 #'
 #' @param x A numeric vector.
 #' @param n_bootstraps Bootstrap samples per candidate. Defaults to
 #'   \code{1000}; the engine accepts 100 to 1,000,000.
 #' @param min_candidate_conf Minimum confidence for a candidate to be
-#'   considered. Defaults to \code{0.5}.
-#' @param min_conf Minimum confidence for a changepoint to be reported.
-#'   Defaults to \code{0.9}.
-#' @param conf_level Confidence level of the reported location intervals.
-#'   Defaults to \code{0.95}.
+#'   considered, between 0.3 and 1. Defaults to \code{0.5}.
+#' @param min_conf Minimum confidence for a changepoint to be reported,
+#'   between 0.5 and 1. Defaults to \code{0.9}.
+#' @param conf_level Confidence level of the reported location intervals,
+#'   between 0.9 and 0.999 (the engine's range). Defaults to \code{0.95}.
 #' @param seed Optional seed (the procedure is bootstrap-based). The seed is
 #'   scoped to this call: \code{.Random.seed} is saved and restored, so a
 #'   seeded call inside a simulation loop does not pin the loop's own
@@ -131,8 +131,8 @@ trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
 #' @return A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} (so
 #'   \code{autoplot(show_ci = TRUE)} works) and a \code{confidence} column.
 #' @section Series length, and why you cannot interrupt it:
-#' This engine is written for the series lengths quality control sees --
-#' hundreds to low thousands -- and it does not scale. At \eqn{n = 10{,}000}
+#' This engine is written for the series lengths quality control sees
+#' (hundreds to low thousands), and it does not scale. At \eqn{n = 10{,}000}
 #' with the default \code{n_bootstraps = 1000} it runs for \strong{minutes}, and
 #' more importantly it runs where R cannot look: a \code{setTimeLimit()} of
 #' 45 seconds was still not honoured after 170, and one of 125 seconds after
@@ -141,7 +141,7 @@ trend_wrapper <- function(x, test = c("pettitt", "buishand", "snht"),
 #' means \strong{Ctrl-C will not stop it either}.
 #'
 #' So size the call before starting it rather than after. \code{n_bootstraps}
-#' is the knob -- the cost is roughly linear in it -- and the
+#' is the knob (the cost is roughly linear in it), and the
 #' \dQuote{Benchmarks} article lists the methods that do scale to long
 #' series. That page is web-only, because the sweep behind it takes
 #' over twenty minutes: it is published at
@@ -162,10 +162,13 @@ taylor_wrapper <- function(x, n_bootstraps = 1000, min_candidate_conf = 0.5,
   # function's argument rather than the misspelled `n_bootraps` it would
   # otherwise complain about from several frames down.
   validate_scalar(n_bootstraps, "n_bootstraps", min = 100, max = 1e6)
-  validate_scalar(min_candidate_conf, "min_candidate_conf", min = 0, max = 1)
-  validate_scalar(min_conf, "min_conf", min = 0, max = 1)
-  validate_scalar(conf_level, "conf_level", min = 0, max = 1,
-                  min_open = TRUE, max_open = TRUE)
+  # The other three were checked against [0, 1], looser than the engine,
+  # which then refused a value in between under its own names: `conf_level
+  # = 0.5` as "Invalid CI argument", `min_conf = 0.2` as "Invalid
+  # min_tbl_conf argument".
+  validate_scalar(min_candidate_conf, "min_candidate_conf", min = 0.3, max = 1)
+  validate_scalar(min_conf, "min_conf", min = 0.5, max = 1)
+  validate_scalar(conf_level, "conf_level", min = 0.9, max = 0.999)
   validate_data(x)
   data_vec <- as_uni_vector(x, "taylor")
   n <- length(data_vec)
@@ -225,7 +228,7 @@ parse_taylor_ci <- function(v) {
   list(lower = lower, upper = upper)
 }
 
-#' BFAST wrapper — breaks for additive season and trend
+#' BFAST wrapper: breaks for additive season and trend
 #'
 #' Wraps the \pkg{bfast} family (Verbesselt et al.), the standard tool in
 #' remote sensing and land-cover monitoring. BFAST decomposes a seasonal
@@ -233,7 +236,7 @@ parse_taylor_ci <- function(v) {
 #' separately, which is the right question for satellite time series where a
 #' shift in phenology and a shift in level mean different things.
 #'
-#' @param x A numeric vector, or a \code{ts} — a \code{ts} is strongly
+#' @param x A numeric vector, or a \code{ts}; a \code{ts} is strongly
 #'   preferred, because BFAST needs the seasonal frequency and cannot guess
 #'   it. A bare vector is turned into a \code{ts} with \code{frequency}.
 #' @param frequency Observations per season, used when \code{x} carries none.
@@ -410,16 +413,23 @@ wbs_lsw_replay <- function(y, n_intervals, cstar, lambda, scales) {
 #'
 #' Wraps \code{wbsts::wbs.lsw()} (Korkas and Fryzlewicz): wild binary
 #' segmentation applied to the locally stationary wavelet spectrum, so it
-#' detects changes in the \emph{second-order} structure — variance and
-#' autocovariance — of a nonstationary series. Where \code{wbs} looks for
+#' detects changes in the \emph{second-order} structure (variance and
+#' autocovariance) of a nonstationary series. Where \code{wbs} looks for
 #' jumps in the level, this looks for jumps in how the series behaves.
 #'
 #' @param x A numeric vector.
 #' @param n_intervals Number of random intervals (\code{M}). Defaults to
 #'   \code{0}, which is the engine's "all dyadic intervals" setting.
-#' @param cstar,lambda Post-processing constants; the engine's defaults are
-#'   \code{0.75} for both.
-#' @param scales Wavelet scales to use. \code{NULL} lets the engine choose.
+#' @param cstar The unbalancedness parameter \eqn{c_\star} of the search:
+#'   a candidate split may leave at most this fraction of its interval on
+#'   either side. Between \code{0.5} and \code{1}; defaults to the engine's
+#'   \code{0.75}.
+#' @param lambda How many wavelet scales are used when \code{scales} is
+#'   \code{NULL}: \code{floor(3 * lambda * log(log(n)))} of them, from the
+#'   finest down. Defaults to the engine's \code{0.75}.
+#' @param scales Wavelet scales to use: at least two different whole
+#'   numbers from 1 to \code{floor(log2(n)) - 1}. \code{NULL} lets the
+#'   engine choose.
 #' @param seed Optional seed. The seed is scoped to this call:
 #'   \code{.Random.seed} is saved and restored, so a seeded call inside a
 #'   simulation loop does not pin the loop's own stream.
@@ -445,11 +455,43 @@ wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
   # vectors are not allowed", "NAs in foreign function call" and the like,
   # none of which names the argument. Measured across all 64 wrapper
   # argument slots; these are the ones that needed it.
-  validate_scalar(cstar, "cstar", min = 0, min_open = TRUE)
+  # cstar is a proportion of the interval in the engine's C++ search, which
+  # does not check it: above 1 the call failed with "subscript out of
+  # bounds" (2) or "only 0's may be mixed with negative subscripts" (5), and
+  # `cstar = 1e6` crashed the R session. Below 0.5 no split qualifies.
+  validate_scalar(cstar, "cstar", min = 0.5, max = 1)
   validate_scalar(lambda, "lambda", min = 0, min_open = TRUE)
   validate_data(x)
   data_vec <- as_uni_vector(x, "wbsts")
   validate_scalar(n_intervals, "n_intervals", min = 0)
+  # The engine's own choice is J - 1, J - 2, ... with J = floor(log2(n)), so
+  # a scale is a whole number from 1 to J - 1, and it needs two. Outside
+  # that range the call failed with "subscript out of bounds", and `NA`
+  # with "missing value where TRUE/FALSE needed".
+  J <- floor(log(length(data_vec), 2))
+  # With `scales = NULL` the engine takes the J - 1, J - 2, ... finest
+  # scales, as many as `lambda` asks for; past the coarsest it fails with
+  # "subscript out of bounds". (Asking for fewer than two is upstream's own
+  # refusal, and is left to it.)
+  if (is.null(scales)) {
+    n_scales <- floor(3 * lambda * log(log(length(data_vec))))
+    if (n_scales > J - 1) {
+      stop("`lambda = ", format(lambda), "` asks for ", n_scales,
+           " wavelet scales, but a series of ", length(data_vec),
+           " has only ", J - 1, " (floor(log2(n)) - 1). Lower `lambda` ",
+           "(the default is 0.75) or pass `scales` directly.", call. = FALSE)
+    }
+  }
+  if (!is.null(scales)) {
+    if (!is.numeric(scales) || length(unique(scales)) < 2L ||
+        any(!is.finite(scales)) || any(scales != round(scales)) ||
+        any(scales < 1) || any(scales > J - 1)) {
+      stop("`scales` must be at least two different whole numbers from 1 ",
+           "to ", J - 1, " (floor(log2(n)) - 1 for n = ", length(data_vec),
+           "); got ", paste(format(scales), collapse = ", "), ".",
+           call. = FALSE)
+    }
+  }
   local_seed(seed)
 
   # A constant series has no wavelet spectrum to segment, and the engine
@@ -517,7 +559,10 @@ wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
       }
       if (!grepl("the condition has length", conditionMessage(e),
                  fixed = TRUE)) {
-        rethrow_short_series(e, "wbsts", length(data_vec))
+        rethrow_short_series(e, "wbsts", length(data_vec), hint = paste(
+          "`wbsts` works on at least two wavelet scales, from 1 to",
+          "floor(log2(n)) - 1; a longer series, a larger `lambda` or an",
+          "explicit `scales` gives it more."))
       }
       if (!is.null(seed_state)) {
         assign(".Random.seed", seed_state, envir = globalenv())
@@ -553,7 +598,7 @@ wbsts_wrapper <- function(x, n_intervals = 0, cstar = 0.75, lambda = 0.75,
 #' @param change_in \code{"mean"} (Gaussian, the default) or
 #'   \code{"meanvar"}, mapped to the engine's \code{mean_norm} and
 #'   \code{meanvar_norm} distributions. \pkg{binsegRcpp} has no
-#'   variance-only cost, so \code{"var"} is not offered here — use
+#'   variance-only cost, so \code{"var"} is not offered here; use
 #'   \code{"meanvar"}, or \code{\link{cpt_detect}(method = "pelt",
 #'   change_in = "var")} for a variance-only change.
 #' @param distribution Loss function, overriding the mapping from

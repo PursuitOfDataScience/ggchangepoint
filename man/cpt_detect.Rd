@@ -17,8 +17,8 @@ cpt_detect(
 \arguments{
 \item{x}{The series. A numeric vector for univariate methods, or a
 numeric matrix/data frame (rows are time points) for the multivariate
-methods — run \code{subset(cpt_methods(), multivariate)$method} for the
-list. A \code{ts}, \code{xts}, \code{zoo} or (unkeyed) \code{tsibble}
+methods (run \code{subset(cpt_methods(), multivariate)$method} for the
+list). A \code{ts}, \code{xts}, \code{zoo} or (unkeyed) \code{tsibble}
 is accepted directly and its time index is carried through to
 \code{tidy()} and \code{autoplot()}; so is a data frame together with
 \code{y} (and optionally \code{index}).}
@@ -43,7 +43,7 @@ not wrap.}
   for the thing being asked about. That is never silent: the result's
   \code{change_in} records what was actually detected, so compare it
   with what you asked for. Measured across every method and every value
-  its \code{supports} entry lists, six pairs are routed --
+  its \code{supports} entry lists, six pairs are routed:
   \code{not}'s \code{"var"} becomes \code{"meanvar"} (its variance
   contrast is piecewise-constant in mean \emph{and} variance),
   \code{cpm}'s \code{"mean"} and \code{"var"} both become
@@ -63,15 +63,15 @@ penalties ignore this argument, and \code{"segneigh"} falls back to
 Segment Neighbourhood. Note also that the default \code{"MBIC"} is
 resolved to a \emph{numeric} value for the numeric-penalty engines
 (\code{"fpop"}, \code{"cpop"}, \code{"decafs"}), and that value is
-stronger than those wrappers' own \code{2 * log(n)} default — 19.9
-against 11.8 at \eqn{n = 360} — so \code{cpt_detect(x, method =
+stronger than those wrappers' own \code{2 * log(n)} default (19.9
+against 11.8 at \eqn{n = 360}), so \code{cpt_detect(x, method =
 "decafs")} can report fewer changepoints than \code{decafs_wrapper(x)}
 on the same series. Pass \code{penalty} explicitly to make the two
 entry points agree.}
 
 \item{index}{Optional time index, one value per observation (dates, say).
-Detection still runs on observation positions — every wrapped engine
-assumes an equally spaced sequence — but the index is stored on the
+Detection still runs on observation positions (every wrapped engine
+assumes an equally spaced sequence), but the index is stored on the
 result and threaded through \code{tidy()} (as \code{cp_index}),
 \code{augment()}, \code{autoplot()} and \code{\link{cpt_report}()},
 so the output speaks in the user's own units. An index that is not
@@ -129,7 +129,7 @@ data, so on a series whose noise is much wider than 1 the penalty is
 effectively negligible and the segmentation shatters. On 200 observations
 with one true changepoint in the middle and a jump of five standard
 deviations, \code{"pelt"} returns 1 changepoint at \eqn{\sigma = 1}, 39
-at \eqn{\sigma = 3} and 141 at \eqn{\sigma = 10} --- means over 20
+at \eqn{\sigma = 3} and 141 at \eqn{\sigma = 10}. These are means over 20
 draws, because a single draw is not stable here: the same three settings
 gave 21/75 at \eqn{n = 100} and 57/266 at \eqn{n = 400}, so the effect
 grows with the series as well as with the noise. Three ways to avoid it, in order of
@@ -142,10 +142,17 @@ convenience:
   \item use \code{change_in = "meanvar"}, which estimates a variance per
     segment and is unaffected.
 }
-The other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
-Isolate-Detect, TGUH, CPOP, DeCAFS and the Bayesian, nonparametric and
-multivariate methods all estimate or cancel the noise scale internally,
-and return the same segmentation whatever the units.
+Most other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
+Isolate-Detect, TGUH, CPOP, \code{"bcp"}, \code{"beast"} and the
+nonparametric and multivariate methods estimate or cancel the noise scale
+internally, and returned the same segmentation at a thousandth, one and
+a thousand times the units. Three did not, on the same series:
+\code{"geomcp"} runs PELT on its mapped distance and angle series and so
+inherits the sensitivity above; \code{"decafs"} floors its noise
+estimate at about 0.03, so it under-segments a series whose noise is
+smaller than that; and \code{"bocpd"}'s default prior is on the data's
+own scale. At a thousandth of the units the last two found nothing.
+Standardising first avoids all three.
 }
 
 \examples{

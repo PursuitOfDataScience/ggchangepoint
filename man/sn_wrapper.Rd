@@ -37,8 +37,8 @@ A \code{ggcpt} object. About 20 observations are needed for the
 Wraps \code{SNSeg::SNSeg_Uni()} (Zhao, Jiang and Shao, 2022):
 self-normalised segmentation with nested local windows. Self-normalisation
 avoids estimating the long-run variance, is robust to temporal dependence,
-and detects changes in general parameters — mean, variance, quantiles,
-autocorrelation, or bivariate correlation — within one framework.
+and detects changes in general parameters (mean, variance, quantiles,
+autocorrelation, or bivariate correlation) within one framework.
 }
 \examples{
 \dontshow{if (requireNamespace("SNSeg", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}

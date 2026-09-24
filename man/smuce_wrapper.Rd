@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-inference.R
 \name{smuce_wrapper}
 \alias{smuce_wrapper}
-\title{SMUCE / HSMUCE wrapper — multiscale changepoint inference}
+\title{SMUCE / HSMUCE wrapper: multiscale changepoint inference}
 \usage{
 smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
 }
@@ -20,7 +20,7 @@ noise) or \code{"hsmuce"} (HSMUCE, segment-wise variance). Defaults to
 specification; call \code{stepR::stepFit()} directly for those.
 \code{"hsmuce"} additionally refuses a series whose point-to-point
 variation lies more than about seven orders of magnitude below its own
-scale — a globally flat series, or a step whose segments are numerically
+scale: a globally flat series, or a step whose segments are numerically
 constant, as \code{cpt_simulate(sd = 0)} produces once any rounding is
 added. \pkg{stepR}'s heterogeneous variance estimator aborts the \R
 session on such input rather than raising an error, so it cannot be

@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-highdim.R
 \name{ocd_wrapper}
 \alias{ocd_wrapper}
-\title{ocd wrapper — online high-dimensional changepoint detection}
+\title{ocd wrapper: online high-dimensional changepoint detection}
 \usage{
 ocd_wrapper(
   x,
@@ -27,8 +27,8 @@ mean/sd (not monitored). Defaults to
 
 \item{thresh}{Threshold specification passed to
 \code{ocd::ChangepointDetector()}; \code{"MC"} (default) calibrates by
-Monte Carlo, which is what makes this the slowest wrapper — see the
-timing note below. Supplying the three thresholds directly, as a named
+Monte Carlo, which is what makes this the slowest wrapper (see the
+timing note below). Supplying the three thresholds directly, as a named
 numeric vector \code{c(diag =, off_d =, off_s =)}, skips calibration
 altogether.}
 
@@ -79,9 +79,9 @@ about 10 s at \eqn{p = 3}, 22 s at \eqn{p = 10} and 113 s at
 and better than half an hour at \eqn{p = 50}. Another machine will give
 different absolute numbers; the linearity in \code{mc_reps} is the part
 to plan around. Monitoring the observations afterwards is cheap by
-comparison — 0.37 s for a thousand of them at \eqn{p = 3}. Lower
-\code{mc_reps} while exploring --- the example below uses 2, which
-measures 3.8 s --- or pass \code{thresh} directly to skip
+comparison: 0.37 s for a thousand of them at \eqn{p = 3}. Lower
+\code{mc_reps} while exploring (the example below uses 2, which
+measures 3.8 s), or pass \code{thresh} directly to skip
 calibration entirely, which brings the same fit down to a tenth of a
 second.
 }

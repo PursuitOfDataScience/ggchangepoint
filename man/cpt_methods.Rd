@@ -17,7 +17,7 @@ A tibble with columns:
   \item{change_in}{What types of change the method can detect.}
   \item{engine}{The upstream R package that implements the method.}
   \item{status}{\code{"available"} (wired in this release),
-        \code{"registered"} (supplied by the user this session — see
+        \code{"registered"} (supplied by the user this session; see
         \code{\link{cpt_register_method}()}), or \code{"planned"}
         (future).}
   \item{installed}{\code{TRUE} if the engine package is installed,
@@ -42,14 +42,14 @@ A tibble with columns:
         them. Nothing stores a scale space on a result:
         \code{\link{cpt_scale_space}()} computes one on demand by
         sweeping a multiscale detector's bandwidth over the series, so
-        it works on \emph{any} series and any result -- a \code{pelt}
+        it works on \emph{any} series and any result, a \code{pelt}
         fit included. What this column marks is the two engines that
         sweep can be run \emph{with}, i.e. the domain of that
         function's own \code{method} argument:
         \code{subset(cpt_methods(), scale_space)$method}.
 
-        \code{online} means the \emph{algorithm} is sequential -- it
-        consumes observations one at a time -- and this table reports it
+        \code{online} means the \emph{algorithm} is sequential (it
+        consumes observations one at a time), and this table reports it
         because it governs how the method behaves in batch: an online
         detector's threshold is a rate per observation, so run over a
         whole series through \code{\link{cpt_detect}()} it reports
@@ -57,16 +57,16 @@ A tibble with columns:
         It does \strong{not} mean the method can be passed to
         \code{\link{cpt_monitor}()}, which takes its own three:
         \code{"edetector"}, \code{"cpm"} and \code{"ocd"}. The two
-        sets overlap without coinciding -- \code{bocpd} is an online
+        sets overlap without coinciding: \code{bocpd} is an online
         algorithm this table marks but the monitor does not offer, and
         \code{edetector} is native to this package rather than a
         wrapped engine, so it has no row here at all.}
 }
 }
 \description{
-Returns a tibble describing every method the package knows about — those
+Returns a tibble describing every method the package knows about (those
 that are wired, those a user has registered with
-\code{\link{cpt_register_method}()}, and those that are planned — along
+\code{\link{cpt_register_method}()}, and those that are planned), along
 with their capabilities and installation status. Useful for discovering
 what can be run, what needs to be installed, and which methods expose the
 extras the diagnostics need (confidence intervals, a fitted signal, a

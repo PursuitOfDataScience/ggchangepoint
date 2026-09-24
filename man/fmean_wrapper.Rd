@@ -22,7 +22,9 @@ one column per grid location (the curve's resolution).}
 \code{"Mn"} (maximum).}
 
 \item{critical}{How critical values are obtained: \code{"simulation"}
-(default), \code{"resample"} or \code{"welch"}.}
+(default), \code{"resample"} or \code{"welch"}. The first two draw
+random numbers and there is no \code{seed} argument, so call
+\code{set.seed()} first when the answer has to be reproducible.}
 
 \item{type}{\code{"segmentation"} (default, multiple changes) or
 \code{"single"} (one change).}

@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-highdim2.R
 \name{esac_wrapper}
 \alias{esac_wrapper}
-\title{ESAC wrapper — sparsity-adaptive high-dimensional detection}
+\title{ESAC wrapper: sparsity-adaptive high-dimensional detection}
 \usage{
 esac_wrapper(
   x,
@@ -43,8 +43,8 @@ Wraps \code{HDCD::ESAC()} (Moen, Glad and Tveten, 2023): Efficient
 Sparsity Adaptive Changepoint estimation for a change in the mean vector
 of a high-dimensional series. Where \code{inspect} projects onto a single
 estimated sparse direction, ESAC adapts across the whole sparsity range at
-once, which is a different regime rather than a refinement of the same one
-— it is competitive both when a handful of coordinates change and when all
+once, which is a different regime rather than a refinement of the same one:
+it is competitive both when a handful of coordinates change and when all
 of them do.
 }
 \examples{

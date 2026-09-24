@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-robust.R
 \name{decafs_wrapper}
 \alias{decafs_wrapper}
-\title{DeCAFS wrapper — changes amid drift and autocorrelated noise}
+\title{DeCAFS wrapper: changes amid drift and autocorrelated noise}
 \usage{
 decafs_wrapper(x, penalty = NULL, model_param = NULL, ...)
 }
@@ -11,8 +11,8 @@ decafs_wrapper(x, penalty = NULL, model_param = NULL, ...)
 
 \item{penalty}{Penalty \eqn{\beta} for adding a changepoint. Defaults to
 \code{2 * log(length(x))}. \code{\link{cpt_detect}} resolves its own
-\code{"MBIC"} default to a stronger numeric value — on a five-changepoint
-series that is 3 changepoints through the dispatcher against 5 here — so
+\code{"MBIC"} default to a stronger numeric value (on a five-changepoint
+series that is 3 changepoints through the dispatcher against 5 here), so
 pass \code{penalty} explicitly when the two must agree.}
 
 \item{model_param}{Optional list of model parameters
@@ -29,7 +29,7 @@ A \code{ggcpt} object. The \code{data} tibble carries the
 \description{
 Wraps \code{DeCAFS::DeCAFS()} (Romano, Rigaill, Runge and Fearnhead,
 2022), which detects abrupt mean changes when the underlying signal also
-drifts (random-walk fluctuations) and the noise is AR(1)-autocorrelated —
+drifts (random-walk fluctuations) and the noise is AR(1)-autocorrelated,
 the two regimes in which plain change-in-mean methods over-detect. Model
 parameters are estimated automatically unless supplied.
 }

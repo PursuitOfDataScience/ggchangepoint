@@ -803,8 +803,9 @@ test_that("the vignettes agree on how many method families there are", {
   # "and" ("penalised and optimal partitioning", "multiscale and search",
   # "nonparametric and sequential", "multivariate and high-dimensional"),
   # so splitting on " and " too counted ten families in a list of six.
-  listed <- sub("^six families . ", "", enum)
-  listed <- sub(" . plus .*$", "", listed)
+  # The list is parenthesised: "six families (a, b, ..., f) plus ...".
+  listed <- sub("^six families [(]", "", enum)
+  listed <- sub("[)] plus .*$", "", listed)
   parts <- trimws(strsplit(listed, ",")[[1]])
   parts <- sub("^and ", "", parts)
   parts <- parts[nzchar(parts)]

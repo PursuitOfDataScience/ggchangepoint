@@ -20,13 +20,13 @@ taylor_wrapper(
 \code{1000}; the engine accepts 100 to 1,000,000.}
 
 \item{min_candidate_conf}{Minimum confidence for a candidate to be
-considered. Defaults to \code{0.5}.}
+considered, between 0.3 and 1. Defaults to \code{0.5}.}
 
-\item{min_conf}{Minimum confidence for a changepoint to be reported.
-Defaults to \code{0.9}.}
+\item{min_conf}{Minimum confidence for a changepoint to be reported,
+between 0.5 and 1. Defaults to \code{0.9}.}
 
-\item{conf_level}{Confidence level of the reported location intervals.
-Defaults to \code{0.95}.}
+\item{conf_level}{Confidence level of the reported location intervals,
+between 0.9 and 0.999 (the engine's range). Defaults to \code{0.95}.}
 
 \item{seed}{Optional seed (the procedure is bootstrap-based). The seed is
 scoped to this call: \code{.Random.seed} is saved and restored, so a
@@ -43,12 +43,12 @@ bootstrap-and-recursion procedure of Wayne Taylor that the quality-control
 and Six Sigma community uses as its default. Each candidate is scored by
 the bootstrap probability that a change occurred there, which gives a
 confidence level per changepoint and a confidence interval for its
-location — both carried onto the result.
+location, both carried onto the result.
 }
 \section{Series length, and why you cannot interrupt it}{
 
-This engine is written for the series lengths quality control sees --
-hundreds to low thousands -- and it does not scale. At \eqn{n = 10{,}000}
+This engine is written for the series lengths quality control sees
+(hundreds to low thousands), and it does not scale. At \eqn{n = 10{,}000}
 with the default \code{n_bootstraps = 1000} it runs for \strong{minutes}, and
 more importantly it runs where R cannot look: a \code{setTimeLimit()} of
 45 seconds was still not honoured after 170, and one of 125 seconds after
@@ -57,7 +57,7 @@ elapsed-time limits and keyboard interrupts at the same points, which
 means \strong{Ctrl-C will not stop it either}.
 
 So size the call before starting it rather than after. \code{n_bootstraps}
-is the knob -- the cost is roughly linear in it -- and the
+is the knob (the cost is roughly linear in it), and the
 \dQuote{Benchmarks} article lists the methods that do scale to long
 series. That page is web-only, because the sweep behind it takes
 over twenty minutes: it is published at

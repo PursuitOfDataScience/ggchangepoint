@@ -41,12 +41,12 @@ it, so the package checks cleanly with none of them installed (see below).
 Only 'changepoint', 'changepoint.np' and 'ecp' are required.
 `cpt_install_engines()` installs a family at a time for users who want more.
 
-One suggested engine, 'mcp', needs JAGS -- a system library -- so a machine
+One suggested engine, 'mcp', needs JAGS (a system library), so a machine
 without JAGS must check with `_R_CHECK_FORCE_SUGGESTS_=false`. 'mcp' is on
 CRAN and checks there; `mcp_wrapper()` names JAGS in its error when 'mcp' is
 absent, and its example is wrapped in `\dontrun{}` rather than gated with
 `@examplesIf`, deliberately: whether the engine works depends on a *system*
-library, and `requireNamespace("mcp")` does not predict that -- 'rjags' can
+library, and `requireNamespace("mcp")` does not predict that: 'rjags' can
 be installed and still fail to find JAGS at run time. The example therefore
 never runs anywhere, which is the only guard that holds.
 
@@ -67,7 +67,7 @@ redistributed, the function is not called by any example, test or vignette
 against `cpt_datasets()`, which is built from the package's own simulated
 signals.
 
-Two hundred and twenty-one defects found while building and auditing this release were fixed
+More than two hundred and fifty defects found while building and auditing this release were fixed
 in the same cycle; NEWS.md itemises them and each has a regression test. The
 most instructive: a `tibble::tribble()` list-column silently deparsed into a
 string, which made every multi-capability method lose its extra `change_in`
@@ -82,7 +82,7 @@ very average-run-length bound the method is chosen for.
 
 The one worth singling out is the `seed` argument. All thirty-six sites that
 honoured one did it with `set.seed(seed)` in the function's own frame, which
-does not merely consume the caller's random stream but resets it -- so the
+does not merely consume the caller's random stream but resets it, so the
 argument whose whole purpose is trustworthiness pinned the stream of
 whatever loop the call sat inside. A six-iteration generate-then-detect
 loop analysed **two distinct datasets**, measured with the data built
@@ -90,11 +90,11 @@ outside the call; without the seed it analysed six. Nothing warned and no
 test failed. The seed is now scoped to the call: `.Random.seed` is saved
 and restored, a session that had none is left with none, and a seeded call
 is still byte-reproducible across intervening draws. The tests for it are
-metamorphic -- they compare calls to each other rather than to a recorded
+metamorphic: they compare calls to each other rather than to a recorded
 value, which is the only kind that could have caught it.
 
 **Example timings.** Every one of the 118 Rd example blocks was timed. Four
-were over CRAN's 5-second budget and are now well under it -- `ocd_wrapper`
+were over CRAN's 5-second budget and are now well under it: `ocd_wrapper`
 10.4s to 4.2s (its Monte Carlo threshold calibration is linear in
 `mc_reps`, so the example uses 2), `fmean_wrapper` 6.7s to 2.9s and
 `fcov_wrapper` 6.1s to 2.8s (10 curves and M = 50 instead of 20 and 200),
@@ -103,7 +103,7 @@ and `cpt_min_detectable` 5.3s to 1.5s (fewer simulations per iteration).
 `fabisearch_wrapper` is the one that remains near the line: 27s down to
 5-6s across fresh sessions, and that is its floor. The engine runs `n_runs * n_reps` non-negative
 matrix factorisations per candidate split; `n_reps = 1` fails inside
-fabisearch itself ("not enough 'x' observations" -- its permutation test
+fabisearch itself ("not enough 'x' observations"; its significance test
 needs two), and shrinking the matrix further is not reliably cheaper
 because the search then evaluates more splits relative to `min_dist` (a
 2x10 matrix at `min_dist = 8` measured 6.6s). The example is already the
@@ -114,7 +114,7 @@ check budget rather than for detection.
 Three of the fixes route around a defect in an engine rather than in this
 package, and each is narrow, measured and reversible. `wbsts::wbs.lsw()`
 ends in `suppressWarnings(if (is.na(OUT)) OUT = NULL)`, which R has treated
-as an error since 4.2 whenever `OUT` holds two or more changepoints -- so
+as an error since 4.2 whenever `OUT` holds two or more changepoints, so
 the call failed exactly when the method would have reported the multiple
 changes it exists to find (19 of 20 runs on a five-changepoint series). On
 that one error message the wrapper restores `.Random.seed` and replays the
@@ -133,7 +133,7 @@ rather than routed around; it has its own note below.
 **One engine is refused at some dimensions, deliberately.** `HDCD` 1.1's
 `Pilliat()` builds one fewer partial-sum threshold than it indexes when the
 number of coordinates is an exact power of two, and reports a changepoint at
-every observation as a result -- on pure noise as readily as on a real
+every observation as a result, on pure noise as readily as on a real
 change, at p = 2, 4, 8, 16, 32, 64 and 128. `pilliat_wrapper()` therefore
 stops with an explanation at those dimensions instead of returning the
 engine's answer, points at `esac` (the other `HDCD` method, unaffected at
@@ -152,29 +152,23 @@ The 0.1.0-0.4.0 function signatures keep working unchanged.
 
 ## R CMD check results
 
-0 errors | 0 warnings | 0 notes on ubuntu-latest (devel, release and
-oldrel-1) and on windows-latest; macos-latest reports one note, which is
-the runner's and not the package's (see below).
+0 errors | 0 warnings on every environment above, and 0 notes on
+ubuntu-latest (devel, release and oldrel-1) and windows-latest; macos-latest
+reports one note, which is the runner's and not the package's (see below).
 
-**The installed-size note that 0.4.0 carried is much reduced, but the
-package still sits on the threshold.** The seven package vignettes now
+**Installed size.** The package installs at 7.3 MB on the Linux runners and
+8.5 MB on macOS, of which `doc` is 4.0 to 4.4 MB and `help` 1.8 MB. The
+GitHub Actions checks report that as an INFO line; R 4.4.1's `--as-cran`
+reports it as a NOTE, so expect one. The seven package vignettes already
 render their figures at `dpi = 72` rather than rmarkdown's default 96, which
-takes the source tarball from 5.2 MB to 4.2 MB and cuts the installed `doc`
-directory by about a quarter. `html_vignette` displays the figures at their
-natural size, so this removes pixels rather than shrinking the pictures.
-
-The installed size is nevertheless within a rounding error of the 5.0 MB
-that triggers the note, and we would rather say so than have it come as a
-surprise: repeated `--as-cran` runs on the same unchanged sources report
-`checking installed package size ... OK` and `... NOTE   installed size is
-5.1Mb` in roughly equal measure. When it does fire, the breakdown is `doc`
-3.8 MB and `help` 2.0 MB. The `doc` half is 65 vignette figures already at
-`dpi = 72`, the largest 96 KB, with no outlier and nothing unreferenced; the
-`help` half is 0.5 MB of Rd database and 1.1 MB of `man/figures`, all of it
-reachable from `README.md`. We can find nothing further to remove that is
-not documentation the package deliberately ships. The `vdiffr` snapshots are test
-fixtures, excluded from the build, and were never part of the installed
-package.
+took the source tarball from 5.2 MB to 4.2 MB; `html_vignette` displays the
+figures at their natural size, so this removed pixels rather than shrinking
+the pictures. The `doc` directory is 65 vignette figures, the largest 96 KB,
+with no outlier and nothing unreferenced; `help` is 0.5 MB of Rd database and
+1.1 MB of `man/figures`, all of it reachable from `README.md`. We can find
+nothing further to remove that is not documentation the package deliberately
+ships. The `vdiffr` snapshots are test fixtures, excluded from the build, and
+were never part of the installed package.
 
 The one macOS note is `checking dependencies in R code`, and its entire
 body is a failure to `dlopen` 'rgl':
@@ -193,8 +187,8 @@ step tries to. Every other macOS check line, including the examples,
 `--run-donttest`, the tests and the vignette rebuild, is OK. Nothing in this
 package loads 'rgl': `cpt_methods()` answers "is this engine installed?"
 with `find.package()` rather than `requireNamespace()` precisely so that no
-engine namespace is loaded to build a table, and `need_pkg()` -- the single
-point at which a wrapper does load its engine -- suppresses load-time
+engine namespace is loaded to build a table, and `need_pkg()`, the single
+point at which a wrapper does load its engine, suppresses load-time
 warnings about the machine so a headless user is not told about their
 display.
 
@@ -208,7 +202,7 @@ noted here so the difference is not a surprise:
   reports that it cannot run its PDF size-reduction check. That is the
   machine, not the package.
 * the same machine reports 'mcp' and 'rjags' as suggested-but-not-available,
-  because both need JAGS -- a system library -- and it is not installed
+  because both need JAGS (a system library) and it is not installed
   there. Both are on CRAN and check there; locally the run uses
   `_R_CHECK_FORCE_SUGGESTS_=false`. 'rjags' is suggested because
   `mcp_wrapper()` tests whether it can load: having 'mcp' installed does not

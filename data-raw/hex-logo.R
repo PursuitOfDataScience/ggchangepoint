@@ -1,5 +1,5 @@
 # Generate the ggchangepoint hex sticker (man/figures/logo.png).
-# Pure base grid — no extra dependencies. Run from the package root:
+# Pure base grid, no extra dependencies. Run from the package root:
 #   Rscript data-raw/hex-logo.R
 
 library(grid)

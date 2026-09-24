@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-optpart.R
 \name{fpop_wrapper}
 \alias{fpop_wrapper}
-\title{FPOP wrapper — Functional Pruning Optimal Partitioning}
+\title{FPOP wrapper: Functional Pruning Optimal Partitioning}
 \usage{
 fpop_wrapper(x, penalty = NULL, ...)
 }

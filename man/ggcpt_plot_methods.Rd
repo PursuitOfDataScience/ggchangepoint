@@ -58,7 +58,7 @@ Every result class in the package has an \code{autoplot()} method, but
 \code{plot()} is the reflex most users reach for first. Without a method,
 \code{plot()} on a list-shaped result falls through to
 \code{\link[graphics]{plot.default}} and fails with \code{'x' is a list, but
-does not have components 'x' and 'y'} -- a message that names neither this
+does not have components 'x' and 'y'}, a message that names neither this
 package nor \code{autoplot()}. These methods delegate to the corresponding
 \code{autoplot()} method so that \code{plot(result)} draws the intended
 figure.

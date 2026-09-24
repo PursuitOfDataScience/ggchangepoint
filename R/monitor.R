@@ -31,7 +31,7 @@
 #'     \item{\code{"cpm"}}{\pkg{cpm}'s sequential change-point model, tuned
 #'       by \code{ARL0}.}
 #'     \item{\code{"ocd"}}{\pkg{ocd}'s high-dimensional online detector.
-#'       \strong{Multivariate only} -- it tracks a projection of the whole
+#'       \strong{Multivariate only}: it tracks a projection of the whole
 #'       vector and needs at least two coordinates, so it refuses a single
 #'       series rather than falling back to a univariate statistic.}
 #'   }
@@ -107,7 +107,7 @@
 #'   field. The parts worth reading are
 #'   \describe{
 #'     \item{\code{alarms}}{the tibble \code{\link{alarms}()} and
-#'       \code{\link[=tidy.ggcpt_monitor]{tidy}()} return -- one row per
+#'       \code{\link[=tidy.ggcpt_monitor]{tidy}()} return: one row per
 #'       alarm, with \code{time}, \code{statistic} and
 #'       \code{threshold}. Empty (zero rows) until something fires.}
 #'     \item{\code{t}}{how many observations the monitor has consumed
@@ -354,7 +354,7 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
 #' @param monitor A \code{ggcpt_monitor} object.
 #' @param new_obs New observations: a numeric vector, or a matrix with rows
 #'   as time points for a multivariate monitor.
-#' @return The updated \code{ggcpt_monitor} -- the same structure as the
+#' @return The updated \code{ggcpt_monitor}: the same structure as the
 #'   input (see \code{\link{cpt_monitor}()}), with \code{t} advanced by
 #'   the number of new observations (rows, for a matrix) and any new rows
 #'   appended to \code{alarms}.
@@ -578,7 +578,7 @@ tidy.ggcpt_monitor <- function(x, ...) {
 #' @export
 print.ggcpt_monitor <- function(x, ...) {
   cat("ggcpt_monitor (", x$method,
-      if (identical(x$method, "edetector")) " -- native implementation" else "",
+      if (identical(x$method, "edetector")) ", native implementation" else "",
       ")\n", sep = "")
   cat("  Baseline observations: ", x$n_baseline, "\n", sep = "")
   cat("  Monitored observations: ", x$t, "\n", sep = "")
@@ -681,7 +681,7 @@ autoplot.ggcpt_monitor <- function(object,
 #'   data (an integer), or an explicit baseline vector. Defaults to
 #'   \code{min(100, floor(n / 4))}.
 #' @param ... Additional arguments passed to \code{\link{cpt_monitor}()}.
-#' @return A \code{ggcpt_monitor} that has already consumed the series --
+#' @return A \code{ggcpt_monitor} that has already consumed the series:
 #'   the same object \code{\link{cpt_monitor}()} returns, described
 #'   there, with \code{alarms} filled in for whatever fired.
 #' @seealso \code{\link{cpt_delay}()}, \code{\link{cpt_monitor}()}.

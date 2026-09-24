@@ -2,7 +2,7 @@
 % Please edit documentation in R/wrap-bayes.R
 \name{beast_wrapper}
 \alias{beast_wrapper}
-\title{BEAST wrapper — Bayesian estimation of abrupt change, seasonality, and trend}
+\title{BEAST wrapper: Bayesian estimation of abrupt change, seasonality, and trend}
 \usage{
 beast_wrapper(x, prob_threshold = 0.5, seed = NULL, ...)
 }

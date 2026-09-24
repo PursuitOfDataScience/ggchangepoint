@@ -36,7 +36,7 @@ cpt_monitor(
   \item{\code{"cpm"}}{\pkg{cpm}'s sequential change-point model, tuned
     by \code{ARL0}.}
   \item{\code{"ocd"}}{\pkg{ocd}'s high-dimensional online detector.
-    \strong{Multivariate only} -- it tracks a projection of the whole
+    \strong{Multivariate only}: it tracks a projection of the whole
     vector and needs at least two coordinates, so it refuses a single
     series rather than falling back to a univariate statistic.}
 }}
@@ -112,7 +112,7 @@ A \code{ggcpt_monitor} object: a list carrying the detector's
   field. The parts worth reading are
   \describe{
     \item{\code{alarms}}{the tibble \code{\link{alarms}()} and
-      \code{\link[=tidy.ggcpt_monitor]{tidy}()} return -- one row per
+      \code{\link[=tidy.ggcpt_monitor]{tidy}()} return: one row per
       alarm, with \code{time}, \code{statistic} and
       \code{threshold}. Empty (zero rows) until something fires.}
     \item{\code{t}}{how many observations the monitor has consumed

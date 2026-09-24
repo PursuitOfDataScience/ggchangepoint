@@ -22,8 +22,8 @@ ggcpt_statistic(object)
 \description{
 Returns the criterion the engine evaluated at each position, which is what
 explains \emph{why} a changepoint landed where it did. Available for the
-engines that expose it —
-\code{subset(cpt_methods(), statistic)$method} lists them — and an error
+engines that expose it
+(\code{subset(cpt_methods(), statistic)$method} lists them), and an error
 naming those engines for the ones that do not.
 }
 \examples{

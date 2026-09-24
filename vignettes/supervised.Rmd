@@ -61,10 +61,10 @@ labs
 
 Three kinds, and the distinction matters:
 
-- `"change"` — at least one changepoint lies here.
-- `"one_change"` — exactly one does. Stricter, and the only one that makes
+- `"change"`: at least one changepoint lies here.
+- `"one_change"`: exactly one does. Stricter, and the only one that makes
   a false positive *inside* a positive region detectable.
-- `"no_change"` — none does. Without these, a detector is never penalised
+- `"no_change"`: none does. Without these, a detector is never penalised
   for a false positive, and the learned penalty collapses to zero.
 
 Because labels are just a tidy tibble, they draw directly:
@@ -78,8 +78,8 @@ ggplot(d, aes(t, y)) +
   labs(fill = "Label", x = "Index", y = "Value")
 ```
 
-If you already have a plain ground-truth changepoint set — the kind
-`cpt_metrics()` takes — `as_cpt_labels()` converts it, positives and
+If you already have a plain ground-truth changepoint set (the kind
+`cpt_metrics()` takes), `as_cpt_labels()` converts it, positives and
 negatives together, so the package has one notion of an annotation rather
 than two:
 
@@ -153,11 +153,11 @@ model
 ```
 
 The features are scale-free summaries on the log scale, which is why the
-fourth series — the same jump measured in units three times as wide —
+fourth series (the same jump measured in units three times as wide)
 does not simply demand a different penalty from the first.
 
-The model has a `predict()` method, and — the point of the whole exercise
-— `cpt_detect()` takes it wherever a penalty goes:
+The model has a `predict()` method, and (the point of the whole exercise)
+`cpt_detect()` takes it wherever a penalty goes:
 
 ```{r use-model}
 predict(model, series$d)

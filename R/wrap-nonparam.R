@@ -15,13 +15,13 @@
 #'   \code{"Kolmogorov-Smirnov"}, \code{"Cramer-von-Mises"}. Parametric:
 #'   \code{"Student"}, \code{"Bartlett"}, \code{"GLR"} (Gaussian),
 #'   \code{"Exponential"} (positive data), \code{"FET"} (Fisher's exact test,
-#'   for 0/1 Bernoulli data — this one also needs a \code{lambda} value passed
+#'   for 0/1 Bernoulli data; this one also needs a \code{lambda} value passed
 #'   through \code{...}, e.g. \code{lambda = 0.3}).
 #' @param arl0 Target in-control average run length (how many observations,
 #'   on average, before a false alarm). Defaults to \code{500}. \pkg{cpm}
-#'   ships thresholds only for a fixed grid -- 100, 200, 300, 370, 400, 500,
+#'   ships thresholds only for a fixed grid (100, 200, 300, 370, 400, 500,
 #'   600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
-#'   9000, 10000, 20000, 30000, 40000 and 50000 -- and any other value is
+#'   9000, 10000, 20000, 30000, 40000 and 50000), and any other value is
 #'   refused, because the engine answers it by printing an error and
 #'   reporting no changepoints. The grid is the same for every
 #'   \code{cpm_type}, and 50000 is the ceiling: a long series cannot be
@@ -280,9 +280,10 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
   attempt <- 1L
   repeat {
     fit <- tryCatch(
-      kcpRS::kcpRS(data = as.data.frame(X_fit), RS_fun = rs_fun,
-                   RS_name = running_stat, wsize = wsize, nperm = nperm,
-                   Kmax = kmax, alpha = alpha, ...),
+      with_foreach_restored(
+        kcpRS::kcpRS(data = as.data.frame(X_fit), RS_fun = rs_fun,
+                     RS_name = running_stat, wsize = wsize, nperm = nperm,
+                     Kmax = kmax, alpha = alpha, ...)),
       error = function(e) {
         if (attempt < 3L &&
             grepl("server socket|cannot be opened|port",
@@ -318,8 +319,8 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
 #'
 #' @param x A numeric vector or matrix (rows are time points).
 #' @param G Moving-window bandwidth. Defaults to \code{max(20, 0.1 * n)}
-#'   observations, capped at \code{n / 2} — the largest bandwidth the engine
-#'   accepts — so the default also works on series shorter than 40.
+#'   observations, capped at \code{n / 2} (the largest bandwidth the engine
+#'   accepts), so the default also works on series shorter than 40.
 #' @param lag Time lag at which changes in the joint distribution are
 #'   examined; \code{0} targets the marginal distribution. Defaults to
 #'   \code{0}.
@@ -353,6 +354,8 @@ npmojo_wrapper <- function(x, G = NULL, lag = 0, ...) {
   n <- if (is_mv) nrow(X) else length(X)
   data_vec <- if (is_mv) as.numeric(X[, 1]) else X
 
+  # A vector failed with "'length = 2' in coercion to 'logical(1)'".
+  if (!is.null(G)) validate_scalar(G, "G", min = 1)
   if (is.null(G)) {
     # The engine rejects any bandwidth above n / 2 ("Bandwidth is too large
     # for the length of time series"), so an uncapped default of 20 makes

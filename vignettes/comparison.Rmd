@@ -49,7 +49,7 @@ regimes, and computational budgets: large-scale evaluations find that the
 ranking of algorithms is highly dataset-dependent and that default
 configurations are often far from optimal [@van2020evaluation;
 @truong2020selective]. Sound practice therefore requires running several
-detectors, comparing their outputs, and — when ground truth is available —
+detectors, comparing their outputs, and, when ground truth is available,
 scoring them with well-defined accuracy metrics. This article presents the
 comparison and evaluation toolkit of **ggchangepoint**: visual comparison
 across methods (`ggcpt_compare()`), a common tidy representation of competing
@@ -59,17 +59,17 @@ distance, and the adjusted Rand index (`cpt_metrics()`), multi-annotator
 scoring in the style of the Turing Change Point Dataset benchmark
 (`cpt_metrics_annotated()`), and visual evaluation against ground truth
 (`ggcpt_eval()`). We further discuss three complementary tools for
-quantifying the *uncertainty* of a segmentation — engine-native confidence
+quantifying the *uncertainty* of a segmentation: engine-native confidence
 intervals, bootstrap stability profiles (`cpt_stability()`), and the CROPS
-penalty path (`cpt_crops()`) — and close with a small simulation-based
+penalty path (`cpt_crops()`). We close with a small simulation-based
 benchmarking workflow built from the package's ground-truth generators.
 
 # Introduction
 
-The changepoint literature offers a wide menu of detectors — penalised
+The changepoint literature offers a wide menu of detectors (penalised
 optimal partitioning, binary segmentation and its wild and
 narrowest-over-threshold refinements, moving-sum statistics, nonparametric
-divergence measures, Bayesian posteriors — each with its own inductive bias
+divergence measures, Bayesian posteriors), each with its own inductive bias
 [@aminikhanghahi2017survey; @truong2020selective]. Benchmarks that score many
 algorithms on many series find no uniform winner: performance depends on the
 kind of change (mean, variance, distribution), the noise (Gaussian,
@@ -113,7 +113,7 @@ Comparing segmentations is harder than comparing point estimates for three
 reasons. First, the *number* of detected changes varies across methods, so a
 metric must handle unequal-length sets. Second, a detection a few indices
 away from a true change is usually acceptable, so metrics need a tolerance
-margin — and a matching rule that prevents one true change from being
+margin, and a matching rule that prevents one true change from being
 "claimed" by several detections. Third, changepoint sets induce
 *partitions*, and two very different-looking point sets can induce similar
 partitions; good practice therefore reports both point-based metrics
@@ -134,8 +134,8 @@ x <- c(rnorm(150, 0), rnorm(150, 3), rnorm(200, 1))
 ggcpt_compare(x, methods = cmp_methods)
 ```
 
-A method that finds *no* changepoints keeps its panel — the series is drawn
-with no vertical lines on it — rather than silently disappearing. A method
+A method that finds *no* changepoints keeps its panel (the series is drawn
+with no vertical lines on it) rather than silently disappearing. A method
 that ran and found nothing is a result, not a missing value:
 
 ```{r compare-nochange, fig.alt = "The same comparison on a series with no change: one panel per method, showing whatever each reports"}
@@ -163,7 +163,7 @@ ggcpt_compare_table(x, methods = cmp_methods)
 ```
 
 Because every row carries the same columns, this table pipes directly into
-**dplyr**/**ggplot2** summaries — counting detections per method, plotting
+**dplyr**/**ggplot2** summaries: counting detections per method, plotting
 location agreement, and so on [@wickham2016ggplot2]. When the detectors are
 slow, `ggcpt_compare()` honours `future::plan()` (through **future.apply**)
 and fits them in parallel.
@@ -211,7 +211,7 @@ agreement.
 
 **Annotation error and matched location errors.** The absolute difference in
 counts $\bigl||\mathcal{P}| - |\mathcal{T}|\bigr|$, and the MAE/RMSE of the
-matched location pairs — the latter two `NA` when nothing matched, because an
+matched location pairs, the latter two `NA` when nothing matched, because an
 average over no pairs is not zero error.
 
 ```{r metrics-basic}
@@ -233,8 +233,8 @@ silently corrupts benchmark averages:
   the Rand index all equal 1. (Hausdorff distance and the matched-location
   errors remain `NA`: there are no pairs to measure.)
 - **Empty prediction, non-empty truth.** An empty changepoint set still
-  induces a perfectly well-defined partition — the trivial one with a single
-  segment — so covering scores it by segment overlap rather than awarding an
+  induces a perfectly well-defined partition (the trivial one with a single
+  segment), so covering scores it by segment overlap rather than awarding an
   automatic 0. Precision and recall are 0, and the adjusted Rand index is 0
   because the trivial partition agrees with the truth only at chance level.
 - **Out-of-range indices.** Changepoint locations must lie in
@@ -298,7 +298,7 @@ cpt_metrics(pred, truth, n = length(x), margin = 5)
 ```
 
 One true positive out of two predictions and two truths gives precision,
-recall, and F1 all equal to $0.5$ — the single blue rule, the single orange
+recall, and F1 all equal to $0.5$: the single blue rule, the single orange
 rule, and the single dashed rule in the plot, counted.
 
 # Uncertainty beyond point sets
@@ -311,10 +311,10 @@ much confidence it deserves.
 Some engines deliver genuine confidence statements for changepoint
 *locations*. SMUCE [@frick2014smuce] controls, at level $\alpha$, the
 probability of overestimating the number of changepoints, and returns a
-confidence interval for every location; the Bai–Perron dynamic program
+confidence interval for every location; the Bai-Perron dynamic program
 [@bai2003computation; @zeileis2002strucchange] returns break-date intervals
-for regression breaks. Four wrapped engines report such intervals — `smuce`,
-`hsmuce`, `strucchange`, and `segmented` — as `ci_lower`/`ci_upper` columns on
+for regression breaks. Four wrapped engines report such intervals (`smuce`,
+`hsmuce`, `strucchange`, and `segmented`) as `ci_lower`/`ci_upper` columns on
 the `ggcpt` changepoints tibble, which `autoplot(show_ci = TRUE)` draws as
 whiskers below the series. `show_fit = TRUE` adds the engine's own fitted
 signal, available here and from `decafs`, `cpop`, `segmented`, `bcp`, and
@@ -361,7 +361,7 @@ region the detector keeps splitting somewhere without agreeing where.
 Penalised methods commit to one penalty $\beta$, and the segmentation can
 change qualitatively as $\beta$ moves. CROPS [@haynes2017computationally]
 computes *every* optimal segmentation as the penalty ranges over an interval,
-at roughly one PELT run per distinct solution — penalty selection as a
+at roughly one PELT run per distinct solution: penalty selection as a
 diagnostic rather than a guess. `cpt_crops()` returns the full path:
 
 ```{r crops}
@@ -397,7 +397,7 @@ truth feed the metrics module, so methods can be scored over replications.
 `cpt_simulate()` draws series with specified changepoints under Gaussian,
 Student-$t$, AR(1), or random-walk noise, and the canonical test signals of
 the literature ship as ready-made generators: `signal_blocks()`
-[the Donoho–Johnstone blocks signal, @donoho1994ideal], `signal_fms()`,
+[the Donoho-Johnstone blocks signal, @donoho1994ideal], `signal_fms()`,
 `signal_mix()`, `signal_teeth()`, and `signal_stairs()`. Every generator
 attaches its true changepoints as a `true_changepoints` attribute, which is
 exactly the `truth` argument `cpt_metrics()` expects.
@@ -413,8 +413,8 @@ ggplot(blocks, aes(index, value)) +
 
 A minimal benchmark: three methods, two signal-to-noise regimes, ten
 replications each, scored by precision, recall, F1, and covering. The two
-regimes differ only in the size of the jumps — 2.5 noise standard deviations
-against 1.0 — so any difference between the panels is attributable to
+regimes differ only in the size of the jumps (2.5 noise standard deviations
+against 1.0), so any difference between the panels is attributable to
 difficulty alone. (Everything stays sequential and small here; `cpt_batch()`
 runs one method over many series and honours `future::plan()` for parallel
 execution in larger studies.)
@@ -478,8 +478,8 @@ engine-native intervals, bootstrap stability, and penalty paths give three
 independent views of how much a reported changepoint should be trusted, and
 all three render directly with **ggplot2** [@wickham2016ggplot2].
 
-For the detection surface itself — the dispatcher, the engine wave, the
-Bayesian displays, and the multivariate tools — see
+For the detection surface itself (the dispatcher, the engine wave, the
+Bayesian displays, and the multivariate tools), see
 `vignette("introduction", package = "ggchangepoint")` and the feature tour in
 `vignette("ggchangepoint", package = "ggchangepoint")`.
 

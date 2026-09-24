@@ -40,6 +40,10 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
   # none of which names the argument. Measured across all 64 wrapper
   # argument slots; these are the ones that needed it.
   validate_scalar(burnin, "burnin", min = 1)
+  # Missed by that measurement: `mcmc = 0`, `-1` or a vector ran and
+  # reported no changepoints, and `mcmc = NA` failed with "negative length
+  # vectors are not allowed".
+  validate_scalar(mcmc, "mcmc", min = 1)
 
   validate_data(x)
   validate_scalar(prob_threshold, "prob_threshold", min = 0, max = 1,
@@ -87,9 +91,10 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
 #' can draw the signature run-length heatmap.
 #'
 #' @param x A numeric vector.
-#' @param hazard Constant hazard rate \eqn{1/\lambda} of the change process;
-#'   larger \code{hazard} values mean changes are expected less often.
-#'   Defaults to \code{100} (the upstream default).
+#' @param hazard The \eqn{\lambda} of \pkg{ocp}'s constant hazard: the
+#'   expected run length between changes, so the hazard rate itself is
+#'   \eqn{1/\lambda} and larger values mean changes are expected less
+#'   often. Defaults to \code{100} (the upstream default).
 #' @param ... Additional arguments passed to \code{ocp::onlineCPD()}.
 #' @return A \code{ggcpt} object with the MAP changepoint set. The full
 #'   \code{ocp} fit (including the run-length posterior) is kept in
@@ -134,7 +139,7 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
   )
 }
 
-#' BEAST wrapper — Bayesian estimation of abrupt change, seasonality, and trend
+#' BEAST wrapper: Bayesian estimation of abrupt change, seasonality, and trend
 #'
 #' Wraps \code{Rbeast::beast()} (Zhao et al., 2019), a Bayesian
 #' model-averaging ensemble that estimates the number and location of trend

@@ -13,7 +13,7 @@ cpt_update(monitor, new_obs)
 as time points for a multivariate monitor.}
 }
 \value{
-The updated \code{ggcpt_monitor} -- the same structure as the
+The updated \code{ggcpt_monitor}: the same structure as the
   input (see \code{\link{cpt_monitor}()}), with \code{t} advanced by
   the number of new observations (rows, for a matrix) and any new rows
   appended to \code{alarms}.

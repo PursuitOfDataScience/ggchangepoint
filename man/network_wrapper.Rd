@@ -40,7 +40,7 @@ simulation loop does not pin the loop's own stream.}
 }
 \value{
 A \code{ggcpt} object with \code{change_in = "network"}. The
-  series it carries -- and so the one \code{autoplot()} draws -- is the
+  series it carries (and so the one \code{autoplot()} draws) is the
   \strong{mean edge weight} at each time point, \code{rowMeans()} of the
   vectorised adjacency matrices. This is the one multivariate method with
   no \code{data_wide} slot: a \eqn{p \times p} network has \eqn{p^2}

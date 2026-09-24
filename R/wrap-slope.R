@@ -1,4 +1,4 @@
-#' CPOP wrapper — optimal change-in-slope detection
+#' CPOP wrapper: optimal change-in-slope detection
 #'
 #' Wraps \code{cpop::cpop()} (Fearnhead, Maidstone and Letchford, 2019;
 #' Fearnhead and Grose, 2024): exact penalised estimation of a
@@ -52,6 +52,9 @@ cpop_wrapper <- function(x, penalty = NULL, sd = NULL, ...) {
   if (is.null(penalty)) {
     penalty <- 2 * log(n)
   }
+  # A vector failed with "number of items to replace is not a multiple of
+  # replacement length", and a negative value segmented every observation.
+  validate_scalar(penalty, "penalty", min = 0)
 
   # Pass an explicit 1-based x grid so reported locations are indices.
   args <- list(y = data_vec, x = seq_len(n), beta = penalty, ...)

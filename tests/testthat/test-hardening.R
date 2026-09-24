@@ -4569,12 +4569,18 @@ test_that("an engine that attaches packages gives the search path back on failur
 
   skip_if_not_installed("fabisearch")
   # fabisearch fails here AFTER the attach, which is the case that matters.
+  # An argument detect.cps() does not take does that without asking NMF
+  # anything. `rank = -1` used to, but it is now refused before the attach;
+  # and an unknown NMF algorithm is no substitute inside a long test run:
+  # the failed lookup makes pkgmaker digest every closure on the call
+  # stack, testthat's reporter included, which took minutes per call.
   b2 <- search()
   set.seed(1)
   Y <- matrix(abs(stats::rnorm(24 * 5)) + 0.1, 24, 5)
   invisible(tryCatch(utils::capture.output(suppressWarnings(suppressMessages(
-    fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 2,
-                       rank = -1)))), error = function(e) NULL))
+    fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 2, rank = 2,
+                       not_an_engine_argument = 1)))),
+    error = function(e) NULL))
   expect_identical(search(), b2)
   expect_false("package:NMF" %in% search())
 })
@@ -5257,4 +5263,313 @@ test_that("the posterior, run-length and ladder plots honour a time index", {
     expect_equal(at(k), k)
     expect_equal(range(rl$time), c(1L, length(x)))
   }
+})
+
+test_that("esac and pilliat describe every input column, flat ones included", {
+  skip_if_not(engine_usable("HDCD"))
+  # The engine sees the matrix with its constant columns dropped, but the
+  # result used to be built from that reduced matrix too: the flat column
+  # vanished from `data_wide` (so from augment() and autoplot()) and
+  # `$data$value` moved onto the next column. inspect keeps every column.
+  set.seed(3)
+  X <- matrix(stats::rnorm(120 * 5), ncol = 5,
+              dimnames = list(NULL, paste0("c", 1:5)))
+  X[61:120, ] <- X[61:120, ] + 2
+  X <- cbind(flat = 1, X)
+  for (m in c("esac", "pilliat", "inspect")) {
+    r <- suppressWarnings(cpt_detect(X, method = m))
+    expect_equal(setdiff(names(r$data_wide), c("index", "index_value")),
+                 colnames(X), info = m)
+    expect_equal(r$data$value, rep(1, 120), info = m)
+    expect_true(60L %in% r$changepoints$cp, info = m)
+  }
+})
+
+test_that("hdcov measures its minimum spacing from the last kept changepoint", {
+  skip_if_not(engine_usable("changepoints"))
+  # Each candidate used to be compared with its predecessor, kept or not:
+  # 10, 14, 18 at `delta = 5` kept only 10, although 18 is 8 from it.
+  set.seed(1)
+  X <- matrix(stats::rnorm(60 * 3), ncol = 3)
+  local_mocked_bindings(threshold_bs = function(bs, threshold) {
+    list(cpt_hat = cbind(c(18, 10, 14), c(3, 1, 2)))
+  })
+  r <- hdcov_wrapper(X, threshold = 1, delta = 5)
+  expect_equal(r$changepoints$cp, c(10L, 18L))
+  expect_equal(r$changepoints$cusum, c(1, 3))
+  expect_equal(hdcov_wrapper(X, threshold = 1, delta = 9)$changepoints$cp, 10L)
+})
+
+test_that("var converts the engine's location to the last observation before it", {
+  skip_if_not(engine_usable("changepoints"))
+  # CV.search.DP.VAR1() fits on every other observation and reports 2c for
+  # a change after its c-th transition, whose last observation is 2c + 1;
+  # for an odd n it drops observation 1 first and reports positions in what
+  # is left. The engine is deterministic, so the conversion is pinned
+  # against its own answer on the same input, at both parities.
+  sim <- function(n) {
+    Y <- matrix(0, n, 3)
+    for (t in 2:n) {
+      Y[t, ] <- (if (t <= n / 2) 0.1 else 0.9) * Y[t - 1, ] + stats::rnorm(3)
+    }
+    Y
+  }
+  for (n in c(120L, 121L)) {
+    set.seed(13)
+    Y <- sim(n)
+    up <- changepoints::CV.search.DP.VAR1(t(Y), 10, 0.1, 6L)
+    raw <- sort(as.integer(unlist(up$cpt_hat)))
+    expect_gt(length(raw), 0L)
+    fit <- var_wrapper(Y, gamma_set = 10, lambda_set = 0.1, delta = 6)
+    expect_equal(fit$changepoints$cp, raw + 1L + n %% 2L, info = n)
+    # Every reported location is a real observation boundary.
+    expect_true(all(fit$changepoints$cp >= 1L & fit$changepoints$cp < n))
+  }
+})
+
+test_that("fabisearch does not claim a t-test p-value has a 1 / n_reps floor", {
+  skip_if_not(engine_usable("fabisearch"))
+  # Each split is scored by a t-test of n_reps refitted losses against
+  # n_reps permuted ones, not by a permutation p-value; the old warning fired
+  # on the documented example (n_reps = 2, alpha = 0.25) and said no split
+  # could be significant, and the call then returned the split at 12.
+  #
+  # The engine is mocked with that answer. Running NMF here is not an
+  # option: every NMF registry access makes pkgmaker digest every closure on
+  # the call stack, and deep in a devtools::test() run testthat's own frames
+  # serialise to about 25 MB each, so one search took many minutes.
+  local_mocked_bindings(
+    detect.cps = function(...) {
+      list(rank = 2, change_points = data.frame(T = 12L, stat_test = TRUE),
+           compute_time = 0)
+    },
+    .package = "fabisearch")
+  set.seed(2026)
+  Y <- matrix(abs(stats::rnorm(24 * 5)) + 0.1, 24, 5)
+  expect_no_warning(fit <- fabisearch_wrapper(Y, min_dist = 10, n_runs = 1,
+                                              n_reps = 2, alpha = 0.25,
+                                              rank = 2))
+  expect_equal(fit$changepoints$cp, 12L)
+  # The exact rank tests do have a floor, and it is checked before the
+  # search: 1 / choose(4, 2) = 1/6 is above 0.05.
+  expect_warning(
+    fabisearch_wrapper(Y, min_dist = 10, n_runs = 1, n_reps = 2, rank = 2,
+                       testtype = "wilcox"),
+    "smallest attainable p-value is 0.1666667")
+  # n_reps = 1 used to run the whole search and fail inside the test.
+  expect_error(fabisearch_wrapper(Y, n_reps = 1), "n_reps")
+  # A rank that is not a positive whole number never reaches NMF.
+  for (r in list(-1, 0, 1.5, NA)) {
+    expect_error(fabisearch_wrapper(Y, rank = r), "`rank`", info = deparse(r))
+  }
+})
+
+test_that("fcov checks alpha the way fmean does", {
+  skip_if_not(engine_usable("fChange"))
+  # A bad alpha failed inside the engine and was blamed on the grid, or ran
+  # and reported no changepoints.
+  X <- matrix(stats::rnorm(60 * 10), nrow = 60)
+  for (a in list(2, -1, NA, c(0.05, 0.1))) {
+    expect_error(fcov_wrapper(X, target = "trace", alpha = a), "alpha",
+                 info = deparse(a))
+    expect_error(fmean_wrapper(X, alpha = a), "alpha", info = deparse(a))
+  }
+})
+
+test_that("the engine arguments the first measurement missed are checked by name", {
+  set.seed(1)
+  x <- c(stats::rnorm(50), stats::rnorm(50, 3))
+  X <- cbind(x, stats::rnorm(100), stats::rnorm(100))
+  bad <- list(NA, -1, 0, c(1, 2), "a")
+  for (v in bad) {
+    if (engine_usable("bcp")) {
+      expect_error(bcp_wrapper(x, mcmc = v), "`mcmc`", info = deparse(v))
+    }
+    if (engine_usable("ocd")) {
+      expect_error(ocd_wrapper(X, beta = v), "`beta`", info = deparse(v))
+    }
+    if (engine_usable("strucchange")) {
+      expect_error(strucchange_wrapper(x, h = v), "`h`", info = deparse(v))
+    }
+    if (engine_usable("fabisearch")) {
+      expect_error(fabisearch_wrapper(abs(X), n_core = v), "`n_core`",
+                   info = deparse(v))
+    }
+  }
+  # The documented ranges still run: a fraction or a count for `h`.
+  skip_if_not(engine_usable("strucchange"))
+  expect_equal(strucchange_wrapper(x, h = 10)$changepoints$cp, 50L)
+})
+
+test_that("a malformed penalty is refused by name rather than replaced", {
+  set.seed(1)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 3))
+  for (m in c("pelt", "fpop", "cpop", "decafs", "fastcpd")) {
+    if (!identical(m, "pelt") && !engine_usable(m)) next
+    for (pen in list(NA, -5, c(2, 3), list(2))) {
+      expect_error(cpt_detect(x, method = m, penalty = pen), "`penalty`",
+                   info = paste(m, deparse(pen)))
+    }
+  }
+  # A name nothing translates used to become the wrapper default in silence.
+  if (engine_usable("fpop")) {
+    expect_error(cpt_detect(x, method = "fpop", penalty = "mbic"),
+                 "not a name cpt_detect\\(\\) can translate")
+    # The wrapper's own default is not reported as a manual penalty.
+    expect_equal(fpop_wrapper(x)$penalty$type, "2log(n) [wrapper default]")
+    expect_equal(fpop_wrapper(x, penalty = 5)$penalty$type, "Manual")
+    expect_error(fpop_wrapper(x, penalty = c(2, 3)), "`penalty`")
+  }
+  if (engine_usable("fastcpd")) {
+    expect_error(cpt_detect(x, method = "fastcpd", penalty = "nope"),
+                 "does not recognise the penalty")
+    # The documented names still run: shared ones translate, the others are
+    # left to the engine's default.
+    expect_equal(cpt_detect(x, method = "fastcpd", penalty = "AIC")$penalty$type,
+                 "MBIC")
+  }
+  # Zero is a penalty ("None" resolves to it), not a malformed one.
+  if (engine_usable("fpop")) {
+    expect_s3_class(suppressWarnings(cpt_detect(x, method = "fpop",
+                                                penalty = 0)), "ggcpt")
+  }
+})
+
+test_that("arguments that default to NULL are checked by name when supplied", {
+  set.seed(1)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 3))
+  X <- cbind(x, stats::rnorm(120), stats::rnorm(120))
+  y <- as.numeric(X %*% c(1, 0, 0)) + stats::rnorm(120)
+  cases <- list(
+    list("changepoints", "gamma_set",
+         function(v) hdreg_wrapper(X, response = y, gamma_set = v)),
+    list("changepoints", "lambda_set",
+         function(v) var_wrapper(X, lambda_set = v)),
+    list("InspectChangepoint", "lambda", function(v) inspect_wrapper(X, lambda = v)),
+    list("InspectChangepoint", "threshold",
+         function(v) inspect_wrapper(X, threshold = v)),
+    list("mosum", "G", function(v) mosum_wrapper(x, G = v)),
+    list("CptNonPar", "G", function(v) npmojo_wrapper(x, G = v)),
+    list("ocd", "train", function(v) ocd_wrapper(X, train = v)),
+    list("SNSeg", "grid_size", function(v) sn_wrapper(x, grid_size = v)),
+    list("strucchange", "breaks", function(v) strucchange_wrapper(x, breaks = v)),
+    list("wbs", "threshold", function(v) wbs_wrapper(x, threshold = v)),
+    list("wbsts", "scales", function(v) wbsts_wrapper(x, scales = v)),
+    list("fastcpd", "order", function(v) fastcpd_wrapper(x, family = "ar", order = v))
+  )
+  for (cs in cases) {
+    if (!engine_usable(cs[[1]])) next
+    # fastcpd already names a negative order itself.
+    vals <- if (identical(cs[[2]], "order")) list(NA, "a") else list(NA, -1, "a")
+    for (v in vals) {
+      expect_error(cs[[3]](v), paste0("`", cs[[2]], "`"),
+                   info = paste(cs[[2]], deparse(v)))
+    }
+  }
+  if (engine_usable("strucchange")) {
+    # Zero breaks used to warn and then fit one.
+    expect_error(strucchange_wrapper(x, breaks = 0), "`breaks`")
+    expect_error(strucchange_wrapper(x, breaks = 2.5), "whole number")
+    expect_equal(strucchange_wrapper(x, breaks = 1)$changepoints$cp, 60L)
+  }
+  if (engine_usable("wbsts")) {
+    # Negative scales died as "subscript out of bounds".
+    expect_error(wbsts_wrapper(x, scales = c(-1, -2)), "from 1 to 5")
+  }
+  if (engine_usable("mosum")) {
+    # A fraction below 1 is a relative bandwidth, and still works.
+    expect_s3_class(mosum_wrapper(x, G = 0.2), "ggcpt")
+  }
+})
+
+test_that("wbsts refuses a cstar or lambda its engine cannot survive", {
+  skip_if_not(engine_usable("wbsts"))
+  # cstar is a proportion inside the engine's unchecked C++ search: 2 failed
+  # with "subscript out of bounds", 5 with "only 0's may be mixed with
+  # negative subscripts", and 1e6 crashed the R session. Nothing is run for
+  # the crashing value here; the check fires before the engine.
+  x <- c(stats::rnorm(60), stats::rnorm(60, 5))
+  for (v in c(0.4, 2, 1e6)) {
+    expect_error(wbsts_wrapper(x, cstar = v), "`cstar`", info = v)
+  }
+  # lambda sets how many scales are taken below the finest; asking for more
+  # than the series has failed with "subscript out of bounds".
+  expect_error(wbsts_wrapper(x, lambda = 5), "asks for 23 wavelet scales")
+})
+
+test_that("taylor checks its confidences against the engine's own ranges", {
+  skip_if_not(engine_usable("ChangePointTaylor"))
+  # Checked against [0, 1], the engine then refused values in between under
+  # its own argument names ("Invalid CI argument", "min_tbl_conf").
+  x <- c(stats::rnorm(60), stats::rnorm(60, 3))
+  expect_error(taylor_wrapper(x, conf_level = 0.5), "`conf_level`")
+  expect_error(taylor_wrapper(x, min_conf = 0.2), "`min_conf`")
+  expect_error(taylor_wrapper(x, min_candidate_conf = 0.1),
+               "`min_candidate_conf`")
+})
+
+test_that("segmented refuses more breakpoints than the series can hold", {
+  skip_if_not(engine_usable("segmented"))
+  # npsi = 1e6 on 120 observations ran without returning.
+  x <- c(stats::rnorm(60), stats::rnorm(60, 3))
+  expect_error(segmented_wrapper(x, npsi = 1e6), "at most 59")
+  expect_error(segmented_wrapper(x, npsi = 60), "at most 59")
+})
+
+test_that("degenerate inputs are refused by name, or answered, not crashed into", {
+  set.seed(1)
+  if (engine_usable("InspectChangepoint")) {
+    # A 0/1 alternation has mad(diff()) = 0, and the engine divides by it.
+    X <- cbind(rep(c(0, 1), 30), stats::rnorm(60), stats::rnorm(60))
+    expect_error(inspect_wrapper(X), "median absolute deviation")
+  }
+  if (engine_usable("changepoints")) {
+    # A zero permutation threshold reached thresholdBS(), which refuses it.
+    expect_equal(nrow(suppressWarnings(
+      hdcov_wrapper(matrix(3, 60, 4), n_perm = 20))$changepoints), 0L)
+    A <- matrix(0, 40, 9)
+    expect_equal(nrow(suppressWarnings(suppressMessages(
+      network_wrapper(A, copy2 = A, n_perm = 20)))$changepoints), 0L)
+    Xr <- matrix(stats::rnorm(240), 60)
+    expect_error(hdcov_wrapper(Xr, threshold = 0), "`threshold`")
+    # Too short for the cross-validated searches, which failed with
+    # "Not a matrix." and "replacement has length zero".
+    expect_error(var_wrapper(matrix(stats::rnorm(15), 5)), "at least 6")
+    X22 <- matrix(stats::rnorm(66), 22)
+    expect_error(hdreg_wrapper(X22, response = stats::rnorm(22)),
+                 "at least 24 observations")
+    # delta = 4 needs 20, so the same series runs.
+    utils::capture.output(r <- suppressWarnings(
+      hdreg_wrapper(X22, response = stats::rnorm(22), delta = 4)))
+    expect_s3_class(r, "ggcpt")
+  }
+  if (engine_usable("wbsts")) {
+    # Upstream's ".........Choose at least two scales........." reached the
+    # caller untranslated; it now takes the package's short-series form.
+    expect_error(wbsts_wrapper(stats::rnorm(5)),
+                 "Method `wbsts` could not segment a series of 5")
+  }
+})
+
+test_that("kcp gives the caller's foreach backend back", {
+  skip_on_cran()
+  skip_if_not(engine_usable("kcpRS"))
+  # kcpRS::kcpRS() registers a doParallel backend on a cluster it then
+  # stops, so every later %dopar% in the session failed with "invalid
+  # connection" or waited on the dead socket; fabisearch's search did so
+  # from inside this very file. foreach is reached by name because this
+  # package does not declare it.
+  fe <- function(f) getExportedValue("foreach", f)
+  set.seed(1)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 3))
+  suppressWarnings(kcp_wrapper(x, nperm = 20))
+  # The %dopar% that used to fail runs (sequentially, with foreach's own
+  # warning when nothing is registered).
+  res <- suppressWarnings(fe("%dopar%")(fe("foreach")(i = 1:2), i * 10))
+  expect_equal(unlist(res), c(10, 20))
+  # And a backend the caller registered is theirs to keep.
+  fe("registerDoSEQ")()
+  on.exit(fe("registerDoSEQ")(), add = TRUE)
+  suppressWarnings(kcp_wrapper(x, nperm = 20))
+  expect_identical(fe("getDoParName")(), "doSEQ")
 })
