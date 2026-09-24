@@ -175,7 +175,7 @@ glance(cpt_delay(rep_e, truth = 200))
 #> # A tibble: 1 × 7
 #>   n_changes n_detected mean_delay median_delay n_false_alarms   arl n_obs
 #>       <int>      <int>      <dbl>        <dbl>          <int> <dbl> <int>
-#> 1         1          1          1            1              1   400   400
+#> 1         1          1          1            1              1   300   400
 ```
 
 ## 4. The three methods
@@ -467,7 +467,7 @@ glance(cpt_delay(rep_e, truth = 200))
 #> # A tibble: 1 × 7
 #>   n_changes n_detected mean_delay median_delay n_false_alarms   arl n_obs
 #>       <int>      <int>      <dbl>        <dbl>          <int> <dbl> <int>
-#> 1         1          1          1            1              1   400   400
+#> 1         1          1          1            1              1   300   400
 ```
 
 ## References

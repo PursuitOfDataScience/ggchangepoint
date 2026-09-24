@@ -46,8 +46,8 @@ A tibble includes which point(s) is/are the changepoint along with raw
 changepoint value corresponding to that changepoint. Changepoint
 locations follow the `ecp` package convention: the first index of the
 right segment. When no changepoint is found, an empty tibble is returned
-(0 rows). The upstream fit is not retained — and `$fit` is `NULL` on a
-`ggcpt` from `cpt_detect(method = "ecp")` — because
+(0 rows). The upstream fit is not retained (`$fit` is `NULL` on a
+`ggcpt` from `cpt_detect(method = "ecp")`), because
 [`ecp::e.agglo()`](https://rdrr.io/pkg/ecp/man/e.agglo.html)'s
 cluster-progression matrix is quadratic in the series length; call the
 ecp functions directly if you need their full output.

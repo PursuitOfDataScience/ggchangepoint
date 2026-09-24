@@ -108,7 +108,11 @@ new_ggcpt(
 
 ## Value
 
-An object of class `ggcpt`.
+An object of class `ggcpt`, holding exactly the components passed in
+(documented one by one above) plus any of the optional slots listed
+below. Nothing is validated or derived –
+[`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
+is the constructor that does both.
 
 ## Optional slots
 

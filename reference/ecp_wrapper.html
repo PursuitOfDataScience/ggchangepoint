@@ -103,8 +103,8 @@ not pin the loop's own stream.</p></dd>
   raw changepoint value corresponding to that changepoint. Changepoint
   locations follow the <code>ecp</code> package convention: the first index of the
   right segment. When no changepoint is found, an empty tibble is returned
-  (0 rows). The upstream fit is not retained — and <code>$fit</code> is
-  <code>NULL</code> on a <code>ggcpt</code> from <code>cpt_detect(method = "ecp")</code> —
+  (0 rows). The upstream fit is not retained (<code>$fit</code> is
+  <code>NULL</code> on a <code>ggcpt</code> from <code>cpt_detect(method = "ecp")</code>),
   because <code><a href="https://rdrr.io/pkg/ecp/man/e.agglo.html" class="external-link">ecp::e.agglo()</a></code>'s cluster-progression matrix is quadratic
   in the series length; call the <span class="pkg">ecp</span> functions directly if you need
   their full output.</p>

@@ -1508,7 +1508,7 @@ cpt_delay(mon, truth = 200)
 #>   Mean delay:         2
 #>   Median delay:       2
 #>   False alarms:       2
-#>   Average run length: 200
+#>   Average run length: 150
 #> 
 #> # A tibble: 1 × 4
 #>   truth alarm delay detected

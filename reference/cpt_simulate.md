@@ -43,20 +43,26 @@ rcpt(...)
   A list of parameters per segment. For `mean` changes, a vector of
   segment means. For `var` changes, a vector of segment sds. For
   `meanvar`, a list of lists with `mean` and `sd` per segment. For
-  `slope`, a list with `intercept` and `slope` per segment — and the
-  time origin **resets in every segment**, so segment \\i\\'s signal is
+  `slope`, a list with `intercept` and `slope` per segment, and the time
+  origin **resets in every segment**: segment \\i\\'s signal is
   \\\mathrm{intercept}\_i + \mathrm{slope}\_i \cdot (1, \ldots, l_i)\\
-  with the clock restarting at 1. A caller reasoning in absolute time —
-  `list(list(intercept = 0, slope = 1), list(intercept = 100, slope = -1))`,
-  meaning "rise to 100 then fall" — gets segment 2 starting at 99, i.e.
-  a slope change plus an unrequested level jump. For a continuous
-  piecewise-linear signal keep the intercept the same in every segment.
-  When `NULL`, every segment gets the same neutral parameters, so the
-  series has no actual change. `changepoints` sets the number of
-  segments – \\k\\ changepoints make \\k + 1\\ of them – and a mismatch
-  in either direction warns rather than passing quietly: too few entries
-  recycles the last one, so the trailing `changepoints` would otherwise
-  be recorded as ground truth with no change behind them, and too many
+  with the clock restarting at 1, so each intercept is the level its
+  segment starts from. For a continuous piecewise-linear signal, start
+  each segment where the previous one ended, \\\mathrm{intercept}\_{i+1}
+  = \mathrm{intercept}\_i + \mathrm{slope}\_i \\ l_i\\: with a change at
+  100,
+  `list(list(intercept = 0, slope = 1), list(intercept = 100, slope = -1))`
+  rises to 100 and falls from there without a jump. A caller reasoning
+  in absolute time, who writes segment 2 as the line \\200 - t\\
+  (`intercept = 200`), gets it starting at 199 instead of 99: the slope
+  change plus an unrequested level jump. (Equal intercepts are
+  continuous only when the earlier segment is flat.) When `NULL`, every
+  segment gets the same neutral parameters, so the series has no actual
+  change. `changepoints` sets the number of segments – \\k\\
+  changepoints make \\k + 1\\ of them – and a mismatch in either
+  direction warns rather than passing quietly: too few entries recycles
+  the last one, so the trailing `changepoints` would otherwise be
+  recorded as ground truth with no change behind them, and too many
   drops the surplus, so a caller who miscounted the changepoints would
   otherwise get an ordinary series back with a parameter silently
   unused.
@@ -85,7 +91,7 @@ rcpt(...)
 
   Optional seasonal component added to the signal, as a list with
   `period` and `amplitude` (and optionally `phase`, in radians, and
-  `shape`, either `"sine"` — the default — or `"sawtooth"`). A seasonal
+  `shape`, either `"sine"` (the default) or `"sawtooth"`). A seasonal
   series is where the difference between a real level shift and a phase
   artefact starts to matter, and it is what
   [`bfast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bfast_wrapper.md)
@@ -97,7 +103,7 @@ rcpt(...)
   Optional smoothly varying noise scale: a length-2 numeric giving the
   multiplier on `sd` at the first and last observation, interpolated
   log-linearly in between. Distinct from `change_in = "var"`, which is
-  piecewise constant — this is the *gradual* heteroscedasticity that
+  piecewise constant: this is the *gradual* heteroscedasticity that
   makes constant-variance detectors shatter, and the condition HSMUCE,
   NSP-self-normalised and fastcpd's variance families exist to handle.
 

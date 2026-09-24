@@ -6,7 +6,7 @@ were raised with no change behind them.
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
 is the wrong tool for an online detector: it asks whether the *location*
 was recovered, which a sequential procedure never claims. It will not
-stop you —
+stop you:
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
 takes bare integer vectors and never sees which detector produced them,
 so it cannot know. (An earlier version of this sentence said it warns.
@@ -62,7 +62,11 @@ autoplot(object, ...)
 A `ggcpt_delay` object: a list with `per_change` (one row per true
 change: `truth`, `alarm`, `delay`, `detected`), `false_alarms`, and the
 summary statistics `mean_delay`, `median_delay`, `n_false_alarms` and
-`arl` (mean observations per false alarm).
+`arl`: monitored observations per false alarm. The baseline a
+[`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md)
+monitor trained on is not counted, because no alarm can fire there;
+`n_obs` is the length of the stream in series positions, baseline
+included.
 
 ## See also
 
@@ -81,7 +85,7 @@ cpt_delay(mon, truth = 200)
 #>   Mean delay:         16
 #>   Median delay:       16
 #>   False alarms:       4
-#>   Average run length: 100
+#>   Average run length: 75
 #> 
 #> # A tibble: 1 × 4
 #>   truth alarm delay detected

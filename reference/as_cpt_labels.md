@@ -1,8 +1,8 @@
 # Coerce annotations to changepoint labels
 
-Turns a plain ground-truth changepoint set — the kind
+Turns a plain ground-truth changepoint set (the kind
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
-takes — into labelled regions, so one annotation can drive both the
+takes) into labelled regions, so one annotation can drive both the
 metric and the supervised machinery. Each true changepoint becomes a
 `"one_change"` region of width `2 * margin + 1`, and the stretches
 between them become `"no_change"` regions.

@@ -1,10 +1,10 @@
 # Turn external changepoints into a ggcpt result
 
-Wraps a set of changepoint locations — from a detector this package does
+Wraps a set of changepoint locations (from a detector this package does
 not wrap, a Python tool called through reticulate, a neural detector, a
-published paper's reported breaks, or an analyst's own annotations —
-into a first-class `ggcpt` object. Everything built on the `ggcpt`
-contract then applies:
+published paper's reported breaks, or an analyst's own annotations) into
+a first-class `ggcpt` object. Everything built on the `ggcpt` contract
+then applies:
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
 the composable geoms,
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html)/[`glance()`](https://generics.r-lib.org/reference/glance.html)/[`augment()`](https://generics.r-lib.org/reference/augment.html),
@@ -36,10 +36,10 @@ as_ggcpt(
 - cp:
 
   Integer vector of changepoint locations. Out-of-range, duplicated and
-  missing values are dropped and the result is sorted — the same
-  contract every built-in wrapper is held to — but unlike a wrapper,
-  which is normalising an engine's output, this function is given yours,
-  so **anything it drops it warns about**, with the values and the range
+  missing values are dropped and the result is sorted, the same contract
+  every built-in wrapper is held to. But unlike a wrapper, which is
+  normalising an engine's output, this function is given yours, so
+  **anything it drops it warns about**, with the values and the range
   they had to fall in. A fractional index is included in that: it is
   truncated rather than rounded, which makes `50.5` into a changepoint
   at 50.
@@ -47,7 +47,8 @@ as_ggcpt(
 - x:
 
   The series the changepoints refer to: a numeric vector, or a
-  matrix/data frame (rows are time points) for a multivariate result.
+  matrix/data frame (rows are time points) for a multivariate result. A
+  one-column matrix or data frame is read as a univariate series.
 
 - fitted:
 
@@ -66,14 +67,17 @@ as_ggcpt(
 
   Optional two-column matrix or data frame of location confidence
   intervals, one row per changepoint, giving lower and upper bounds as
-  positions.
+  positions in the same `cp_convention` as `cp`: with `"right"` they are
+  converted along with `cp`, so an interval keeps bracketing its
+  changepoint.
 
 - regions:
 
   Optional two-column matrix or data frame of significance regions
   (`start`, `end`); see
   [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
-  for the interval-valued case this exists to serve.
+  for the interval-valued case this exists to serve. A region with a
+  missing bound is dropped with a warning.
 
 - penalty:
 
@@ -82,7 +86,7 @@ as_ggcpt(
 
 - cp_convention:
 
-  `"left"` (the changepoint is the last index of the left segment — this
+  `"left"` (the changepoint is the last index of the left segment, this
   package's convention) or `"right"` (the first index of the right
   segment, which is converted on the way in).
 
@@ -101,7 +105,12 @@ as_ggcpt(
 
 ## Value
 
-A `ggcpt` object.
+A `ggcpt` object, with the same components as any detector in the
+package returns – see
+[`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
+for the full list, and
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+for the summary.
 
 ## See also
 

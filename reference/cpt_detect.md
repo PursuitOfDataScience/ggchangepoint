@@ -121,7 +121,19 @@ cpt_detect(
 
 ## Value
 
-A `ggcpt` object.
+A `ggcpt` object: a list with `changepoints` (`cp`, `cp_value`),
+`segments` (`seg_id`, `start`, `end`, `n`, `param_estimate`), `data`
+(`index`, `value`), the `method`, `change_in`, `penalty`,
+`cp_convention` and `runtime` that produced it, the matched `call`, and
+`fit`, the raw upstream object. Optional slots (`data_wide`, `regions`,
+`diagnostics`, ...) appear only when an engine supplies them;
+[`new_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/new_ggcpt.md)
+documents all of them, and
+[`tidy.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/tidy.ggcpt.md),
+[`glance.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/glance.ggcpt.md)
+and
+[`augment.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/augment.ggcpt.md)
+are the supported way to read one.
 
 ## Scale sensitivity of the penalised change-in-mean engines
 

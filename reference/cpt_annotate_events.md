@@ -40,9 +40,12 @@ autoplot(object, repel = NULL, ...)
 - events:
 
   A data frame of events with a location column and a label column. The
-  location may be on the position scale or — when the result carries a
-  time index — on the index scale (dates, say); which one is detected
-  automatically from the column's type and reported.
+  location may be on the position scale or, when the result carries a
+  time index, on the index scale (dates, say); which one is detected
+  automatically from the column's type and reported. An event whose
+  location cannot be placed on the series (a missing value, text that is
+  not a number, or a date string against a `Date` index) is left out of
+  all three outcomes, with a warning that names it.
 
 - location:
 
@@ -91,8 +94,8 @@ A `ggcpt_events` object: a list with
   events with no changepoint (`event`, `event_value`, `event_position`).
 
 `matched` and `unexplained` carry `cp_index`, the changepoint on the
-original scale, when — and only when — the result carries a time index,
-so `"cp_index" %in% names(x)` is the test for it.
+original scale, when (and only when) the result carries a time index, so
+`"cp_index" %in% names(x)` is the test for it.
 
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) flattens
 those three slots into **one** table with a `status` column, and the row
@@ -106,7 +109,7 @@ changepoint: `event` and `position` filled, `cp` and `distance` `NA`).
 **Filter on `status`, not on `is.na(cp)`.** An
 `"unexplained_changepoint"` row has a non-missing `cp`, so
 `subset(tidy(x), !is.na(cp))` returns the matched pairs *and* the
-unexplained changepoints — which is the natural mistake to make, and it
+unexplained changepoints, which is the natural mistake to make, and it
 silently overstates how many changepoints an event explains. With
 [`print()`](https://rdrr.io/r/base/print.html),
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and

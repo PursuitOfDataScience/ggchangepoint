@@ -4,8 +4,8 @@ Answers "where could this changepoint be?" for any result, and says
 which of four routes it used. `show_ci = TRUE` in
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 works only for the handful of engines that ship intervals of their own;
-this generic covers the rest, and — because the four routes mean
-genuinely different things — reports the provenance in a `source` column
+this generic covers the rest, and (because the four routes mean
+genuinely different things) reports the provenance in a `source` column
 rather than presenting them as interchangeable.
 
 ## Usage
@@ -64,11 +64,11 @@ cpt_confint(
 
   :   Narrowest Significance Pursuit regions computed on the same series
       and matched to the changepoints. These are *not* intervals around
-      an estimate — see
-      [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
-      — but they are the strongest guarantee available, so the mapping
-      is reported as `source = "nsp_region"` and a changepoint in no
-      region gets `NA`.
+      an estimate (see
+      [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)),
+      but they are the strongest guarantee available, so the mapping is
+      reported as `source = "nsp_region"` and a changepoint in no region
+      gets `NA`.
 
   `"bootstrap"`
 
@@ -96,8 +96,8 @@ cpt_confint(
       Measured on a 200-point series with one clean change:
       `level = 0.5` gives a width of 0 (the mode alone holds more than
       half), `0.8` gives 72 (bcp) and 91 (beast), and `0.95` gives 166
-      and 187 — 83% and 94% of the series. The requested level *is*
-      delivered in each case; what a wide interval says is that the
+      and 187, which is 83% and 94% of the series. The requested level
+      *is* delivered in each case; what a wide interval says is that the
       posterior did not localise the change, not that the location is
       uncertain by that much. `cpt_confint()` warns when an interval
       covers more than half its window, for exactly that reason.
@@ -136,8 +136,8 @@ at 100 and a jump of three standard deviations, at a nominal level of
 0.95: `"bootstrap"` on `pelt` covered 0.992 of the time with a mean
 width of 2.2; strucchange's native intervals covered 1.000 at width 4.4;
 stepR's (`smuce`) covered 0.992 at width 4.6; and `"posterior"` on bcp
-covered 1.000 at width 157. Every route is *conservative* — none
-under-covers — and the width is what separates them. The two native
+covered 1.000 at width 157. Every route is *conservative* (none
+under-covers), and the width is what separates them. The two native
 routes and the bootstrap are the ones to quote; see the note on
 `"posterior"` above for why its interval is so much wider.
 

@@ -33,20 +33,28 @@ cpt_test(object, type = c("jump", "segment"), correction = "none")
 ## Value
 
 A tibble with columns `cp` (or `seg_id`), `estimate`, `statistic`,
-`p_value`, `method` and `selection_adjusted`.
+`p_value`, `method` and `selection_adjusted`, plus `cp_index` on the
+original scale when the result carries a time index (as
+[`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
+does), and `p_adjusted` when `correction` is not `"none"`. `estimate` is
+the change in the segment mean (the breakpoint's slope change for
+segmented), and `NA` for a regression-mode strucchange fit, whose change
+is a vector of coefficients; its Chow test is run on the full regression
+model. A multivariate result is refused: both routes test one series.
 
-## Selection bias — read this before quoting a p-value
+## Selection bias
 
-Testing a changepoint at a location that was *chosen because the data
-looked like it changed there* is circular, and the resulting p-values
-are anti-conservative, often severely. The `selection_adjusted` column
-records, per row, whether the test accounts for that:
+read this before quoting a p-value: Testing a changepoint at a location
+that was *chosen because the data looked like it changed there* is
+circular, and the resulting p-values are anti-conservative, often
+severely. The `selection_adjusted` column records, per row, whether the
+test accounts for that:
 
 - `TRUE` for segmented's Davies test, which is built for a nuisance
   parameter present only under the alternative. It is one *global* test
   of "is there a breakpoint", not a test per breakpoint, so on a
-  multi-break fit every row carries the same statistic and p-value — the
-  method string says so.
+  multi-break fit every row carries the same statistic and p-value, and
+  the method string says so.
 
 - `FALSE` for the generic Welch two-sample fallback, which compares the
   segments either side of the changepoint as if the location had been
@@ -57,10 +65,10 @@ records, per row, whether the test accounts for that:
 - `FALSE` for strucchange's route as well, which is the Chow F evaluated
   *at* each estimated break date. The Chow statistic's reference
   distribution assumes the date was fixed in advance, so quoting it at a
-  date the Bai–Perron dynamic program chose is exactly the circularity
-  this column exists to flag — reporting it is conventional in that
+  date the Bai-Perron dynamic program chose is exactly the circularity
+  this column exists to flag. Reporting it is conventional in that
   literature, which does not make it adjusted. The selection-adjusted
-  objects there are the sup-type statistics and the Bai–Perron critical
+  objects there are the sup-type statistics and the Bai-Perron critical
   values.
 
 Two further limits worth knowing. `type = "segment"` is **always** the

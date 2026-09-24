@@ -124,6 +124,7 @@ Labelled regions as ground truth, label errors as the accuracy measure,
 and a learned penalty.
 
 - [`cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_labels.md)
+  [`tidy(`*`<cpt_labels>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_labels.md)
   : Changepoint labels
 - [`as_cpt_labels()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_cpt_labels.md)
   : Coerce annotations to changepoint labels
@@ -238,7 +239,7 @@ and a learned penalty.
 - [`decafs_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/decafs_wrapper.md)
   : DeCAFS wrapper — changes amid drift and autocorrelated noise
 - [`envcpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/envcpt_wrapper.md)
-  : EnvCpt wrapper — changepoints versus trends versus autocorrelation
+  : EnvCpt wrapper: changepoints versus trends versus autocorrelation
 - [`fastcpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/fastcpd_wrapper.md)
   : fastcpd wrapper — fast changepoint detection via sequential gradient
   descent

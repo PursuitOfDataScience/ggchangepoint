@@ -72,7 +72,7 @@ autoplot(
 
   :   the modified BIC of Zhang and Siegmund (2007), \\3K\log n + \sum_i
       \log(l_i/n)\\ on the **deviance** (\\-2\log L\\) scale, which is
-      the scale the `cost` column is on — the same criterion is
+      the scale the `cost` column is on; the same criterion is
       \\1.5K\log n + 0.5\sum_i \log(l_i/n)\\ on the log-likelihood
       scale, which is how
       [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
@@ -80,12 +80,12 @@ autoplot(
       be expressed by
       [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)'s
       function of \\n\\ and \\k\\ alone. This is the one place in the
-      package where the real Zhang–Siegmund penalty is computed.
+      package where the real Zhang-Siegmund penalty is computed.
 
   `"aic"`
 
   :   Gaussian AIC over the ladder, \\n\log(\mathrm{RSS}/n) + 2(2K +
-      1)\\ — the same cost and the same parameter count as `"bic"`, with
+      1)\\: the same cost and the same parameter count as `"bic"`, with
       \\2\\ in place of \\\log n\\. That penalty does not grow with
       \\n\\, so it over-selects changepoints, often taking every rung
       offered: on a 300-point series with changes at 100 and 200,
@@ -97,7 +97,7 @@ autoplot(
   `"crops_elbow"`
 
   :   the knee of the CROPS cost-against-\\K\\ curve, made an explicit
-      rule (maximum distance from the chord joining the endpoints — the
+      rule (maximum distance from the chord joining the endpoints, the
       standard Kneedle construction) rather than something eyeballed off
       a plot.
 
@@ -105,8 +105,11 @@ autoplot(
 
   :   order-preserved sample-splitting cross-validation (COPPS) via
       crossvalidationCP. This is the criterion with a consistency
-      guarantee. Note that `cpss`, the authors' own package, was removed
-      from CRAN; crossvalidationCP is the supportable route.
+      guarantee. It chooses \\K\\ with that package's own least-squares
+      estimator (a change in the *mean*), not by re-running `method`,
+      which then supplies the segmentation at that \\K\\. Note that
+      `cpss`, the authors' own package, was removed from CRAN;
+      crossvalidationCP is the supportable route.
 
   `"stability"`
 
@@ -140,9 +143,10 @@ autoplot(
   `change_in = "var"` ladder the *candidates* come from the variance
   detector while the *score* does not, and splitting a segment whose
   mean did not move barely reduces \\\mathrm{RSS}\\: the criterion will
-  tend to choose \\K = 0\\ on a real variance change. Use `"cv"` or
-  `"stability"` there, both of which score by re-detection with the same
-  `change_in` and so carry no such assumption.
+  tend to choose \\K = 0\\ on a real variance change. Use `"stability"`
+  there, which scores by re-detection with the same `change_in` and so
+  carries no such assumption. `"cv"` does not help: its estimator is a
+  least-squares change in the mean as well.
 
 - index:
 
@@ -175,8 +179,8 @@ autoplot(
   `"criterion"` (the criterion against \\K\\, with the choice marked),
   `"segmentation"` (the series with the chosen segmentation) or
   `"ladder"` (small multiples showing how the segmentation coarsens as
-  \\K\\ falls — the display that makes the choice inspectable rather
-  than asserted).
+  \\K\\ falls, the display that makes the choice inspectable rather than
+  asserted).
 
 - max_facets:
 

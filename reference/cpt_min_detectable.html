@@ -113,7 +113,14 @@ within this many positions of it. Defaults to <code>5</code>.</p></dd>
 
 
 <dt id="arg-change-in">change_in<a class="anchor" aria-label="anchor" href="#arg-change-in"></a></dt>
-<dd><p>What changes. Defaults to <code>"mean"</code>.</p></dd>
+<dd><p>What changes. Defaults to <code>"mean"</code>. The scenario
+<code>jump</code> describes, in units of <code>sigma</code>: <code>"mean"</code> shifts
+the mean by <code>jump</code>; <code>"var"</code> takes the noise standard
+deviation from <code>sigma</code> to <code>sigma * (1 + jump)</code>;
+<code>"meanvar"</code> does both at once, shifting the mean by <code>jump</code>
+and the standard deviation to <code>sigma * (1 + jump / 2)</code>, the same
+design <code><a href="cpt_scenarios.html">cpt_scenarios()</a></code> simulates; <code>"slope"</code> bends
+a flat line into one rising by <code>jump * sigma</code> over the series.</p></dd>
 
 
 <dt id="arg-location">location<a class="anchor" aria-label="anchor" href="#arg-location"></a></dt>

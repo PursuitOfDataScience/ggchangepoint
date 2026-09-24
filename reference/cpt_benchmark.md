@@ -44,10 +44,12 @@ autoplot(
 - datasets:
 
   A named list of datasets. Each element is either a plain numeric
-  vector (no ground truth — only descriptive columns are filled) or a
+  vector (no ground truth, so only descriptive columns are filled) or a
   list with `series` and one of `truth`, `changepoints` (an integer
   vector) or `annotations` (a list of integer vectors, one per
-  annotator). A list carrying none of those is scored `NA` and warns.
+  annotator). A list carrying none of those is scored `NA` and warns. A
+  `series` with several columns stays a matrix, so only the multivariate
+  methods can score it.
   [`cpt_datasets()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_datasets.md)
   builds a ready-made collection.
 
@@ -119,10 +121,10 @@ autoplot(
 
 ## Value
 
-A `ggcpt_benchmark` object: a tibble with one row per (dataset, method)
-— `dataset`, `method`, `n`, `n_annotators` (how many ground-truth sets
-the dataset supplied), `n_cp`, the requested metrics, `runtime`, `error`
-— with [`print()`](https://rdrr.io/r/base/print.html),
+A `ggcpt_benchmark` object: a tibble with one row per (dataset, method):
+`dataset`, `method`, `n`, `n_annotators` (how many ground-truth sets the
+dataset supplied), `n_cp`, the requested metrics, `runtime` and `error`,
+with [`print()`](https://rdrr.io/r/base/print.html),
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 (`"heatmap"`, `"ranks"`, `"critical_difference"`).

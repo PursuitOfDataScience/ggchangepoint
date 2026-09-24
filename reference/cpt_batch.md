@@ -1,8 +1,8 @@
 # Batch changepoint detection over many series
 
-Runs one detector over every series in a collection — the panel-data
-loop that methodological and applied work both need constantly. Accepts
-a matrix/data frame (one column per series) or a named list of numeric
+Runs one detector over every series in a collection: the panel-data loop
+that methodological and applied work both need constantly. Accepts a
+matrix/data frame (one column per series) or a named list of numeric
 vectors. Honours
 [`future::plan()`](https://future.futureverse.org/reference/plan.html)
 for parallel execution when the future.apply package is available, with
@@ -54,9 +54,12 @@ autoplot(object, ...)
 - index:
 
   Optional time index shared by every series in the panel (a vector of
-  dates, say), or a named list of one index per series. Carried onto
-  each result and used by
+  dates, say), or a named list of one index per series. A list has to
+  cover every series, with indices of one type, because
   [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  stack them into one table and one axis. Carried onto each result and
+  used by [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
   [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html),
   so a faceted plot of fifty series shows dates rather than positions.
 
@@ -75,9 +78,9 @@ autoplot(object, ...)
   Keep each engine's raw fit in `result[[i]]$fit`? Defaults to `TRUE`,
   which is what makes a batch result as inspectable as a single one. Set
   it to `FALSE` for a large panel: a few engines return fits far bigger
-  than the data they were given — `strucchange` keeps a triangular
+  than the data they were given. `strucchange` keeps a triangular
   \\O(n^2)\\ RSS matrix, so a single 2000-point series costs about 135
-  MB, and `bfast` and `bocpd` are in the tens of MB — and a panel
+  MB, and `bfast` and `bocpd` are in the tens of MB, and a panel
   multiplies that by the number of series. Everything else on the
   object, including
   [`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
@@ -105,7 +108,8 @@ A `ggcpt_batch` object: a tibble with one row per series and columns
 tibbles), and `result` (a list-column of `ggcpt` objects). Methods:
 [`print()`](https://rdrr.io/r/base/print.html),
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) (one row per
-changepoint across all series), and
+changepoint across all series, with columns `series`, `cp` and
+`cp_value`), and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 (faceted small-multiples with each series' changepoints).
 

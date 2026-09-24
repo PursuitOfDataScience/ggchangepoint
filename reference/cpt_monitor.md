@@ -7,8 +7,8 @@ it with
 read its alarm log with
 [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md),
 and score it with
-[`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
-— because for an online method "did you find the location?" is the wrong
+[`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md),
+because for an online method "did you find the location?" is the wrong
 question and "how long did you take, and how often do you false-alarm?"
 is the right one.
 
@@ -48,7 +48,7 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
 
   `"edetector"`
 
-  :   (default) a mixture Shiryaev–Roberts e-detector; see the section
+  :   (default) a mixture Shiryaev-Roberts e-detector; see the section
       below.
 
   `"cpm"`
@@ -109,7 +109,7 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
   to `20`. This matters more than it looks: a real change is
   *persistent*, so a detector that restarts against the stale pre-change
   baseline alarms again on the very next observation and keeps alarming
-  for the rest of the series — the monitor reports one change as
+  for the rest of the series: the monitor reports one change as
   hundreds, and
   [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
   then counts them all as false alarms. Set `relearn = 0` to switch the
@@ -120,7 +120,7 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
   Threshold rule for `"ocd"`: `"MC"` (default) calibrates by Monte Carlo
   against `patience`, or supply a numeric vector of three thresholds.
   The Monte Carlo calibration is the expensive part of building an
-  `"ocd"` monitor — a minute or more at the default `patience` — so pass
+  `"ocd"` monitor (a minute or more at the default `patience`), so pass
   thresholds directly when you already have them, or lower `mc_reps`
   while exploring.
 
@@ -145,22 +145,65 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
 - plot_type:
 
   `"timeline"` (the monitored series with the alarms marked),
-  `"statistic"` (the running detection statistic against its threshold)
+  `"statistic"` (the detection statistic at each alarm, against its
+  threshold: a monitor records its statistic only when an alarm fires)
   or `"runlength"` (the gaps between alarms, which estimate the run
   length). For a multivariate monitor the timeline draws the first
-  coordinate — the alarms are shared, so the rules are right whichever
+  coordinate: the alarms are shared, so the rules are right whichever
   coordinate is shown, but the line is one of several.
 
 ## Value
 
-A `ggcpt_monitor` object.
+A `ggcpt_monitor` object: a list carrying the detector's state between
+calls, so it is meant to be passed to
+[`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md)
+and re-assigned rather than read field by field. The parts worth reading
+are
+
+- `alarms`:
+
+  the tibble
+  [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md)
+  and [`tidy()`](https://generics.r-lib.org/reference/tidy.html) return
+  – one row per alarm, with `time`, `statistic` and `threshold`. Empty
+  (zero rows) until something fires.
+
+- `t`:
+
+  how many observations the monitor has consumed through
+  [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md),
+  **not** counting the baseline; an alarm's `time` is on this same
+  clock. A monitor built by
+  [`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md)
+  also carries `offset`, the number of leading observations it trained
+  on, so `time + offset` is a position in the replayed series
+  ([`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  applies it for you).
+
+- `data`:
+
+  every monitored observation so far, baseline excluded (the first
+  coordinate, for a multivariate monitor), which is what
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  draws.
+
+- `method`, `alpha`, `n_baseline`, `reset`, `relearn`:
+
+  the settings this call fixed, kept so a later
+  [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md)
+  cannot silently disagree with them.
+
+- `state`:
+
+  the detector's internal statistics. Engine internals: their shape
+  differs by `method` and is not part of the interface.
 
 ## The e-detector, and why it is implemented rather than wrapped
 
 Shin, Ramdas and Rinaldo (2023) give a nonparametric sequential
 framework with non-asymptotic control of the average run length, and it
 has no R implementation. The construction used here is the mixture
-Shiryaev–Roberts e-detector for a sub-Gaussian shift. For each candidate
+Shiryaev-Roberts e-detector for a sub-Gaussian shift. For each candidate
 shift \\\delta\\ the increment is the likelihood ratio \\e_t^{(\delta)}
 = \exp(\delta (X_t - \mu_0)/\sigma^2 - \delta^2/(2\sigma^2))\\, which
 has unit mean under the null; the running statistic is \\R_t^{(\delta)}

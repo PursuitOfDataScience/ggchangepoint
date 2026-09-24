@@ -90,15 +90,20 @@ or <code>"slope"</code>.</p></dd>
 vector of segment means. For <code>var</code> changes, a vector of segment sds.
 For <code>meanvar</code>, a list of lists with <code>mean</code> and <code>sd</code> per
 segment. For <code>slope</code>, a list with <code>intercept</code> and <code>slope</code>
-per segment — and the time origin <strong>resets in every segment</strong>,
-so segment \(i\)'s signal is
+per segment, and the time origin <strong>resets in every segment</strong>:
+segment \(i\)'s signal is
 \(\mathrm{intercept}_i + \mathrm{slope}_i \cdot (1, \ldots, l_i)\)
-with the clock restarting at 1. A caller reasoning in absolute time —
+with the clock restarting at 1, so each intercept is the level its
+segment starts from. For a continuous piecewise-linear signal, start
+each segment where the previous one ended,
+\(\mathrm{intercept}_{i+1} = \mathrm{intercept}_i +
+\mathrm{slope}_i \, l_i\): with a change at 100,
 <code>list(list(intercept = 0, slope = 1), list(intercept = 100,
-slope = -1))</code>, meaning "rise to 100 then fall" — gets segment 2
-starting at 99, i.e. a slope change plus an unrequested level jump. For
-a continuous piecewise-linear signal keep the intercept the same in
-every segment. When <code>NULL</code>, every segment gets the same neutral
+slope = -1))</code> rises to 100 and falls from there without a jump. A
+caller reasoning in absolute time, who writes segment 2 as the line
+\(200 - t\) (<code>intercept = 200</code>), gets it starting at 199
+instead of 99: the slope change plus an unrequested level jump. (Equal
+intercepts are continuous only when the earlier segment is flat.) When <code>NULL</code>, every segment gets the same neutral
 parameters, so the series has no actual change. <code>changepoints</code>
 sets the number of segments – \(k\) changepoints make \(k + 1\)
 of them – and a mismatch in either direction warns rather than
@@ -133,8 +138,8 @@ stationarity. Defaults to 0. Used only when <code>noise = "ar1"</code>.</p></dd>
 <dt id="arg-seasonality">seasonality<a class="anchor" aria-label="anchor" href="#arg-seasonality"></a></dt>
 <dd><p>Optional seasonal component added to the signal, as a
 list with <code>period</code> and <code>amplitude</code> (and optionally
-<code>phase</code>, in radians, and <code>shape</code>, either <code>"sine"</code> —
-the default — or <code>"sawtooth"</code>). A seasonal series is where the
+<code>phase</code>, in radians, and <code>shape</code>, either <code>"sine"</code>
+(the default) or <code>"sawtooth"</code>). A seasonal series is where the
 difference between a real level shift and a phase artefact starts to
 matter, and it is what <code><a href="bfast_wrapper.html">bfast_wrapper()</a></code> is built for; a
 detector that has never been shown one is untested against the case its
@@ -145,7 +150,7 @@ users have.</p></dd>
 <dd><p>Optional smoothly varying noise scale: a length-2 numeric
 giving the multiplier on <code>sd</code> at the first and last observation,
 interpolated log-linearly in between. Distinct from
-<code>change_in = "var"</code>, which is piecewise constant — this is the
+<code>change_in = "var"</code>, which is piecewise constant: this is the
 <em>gradual</em> heteroscedasticity that makes constant-variance
 detectors shatter, and the condition HSMUCE, NSP-self-normalised and
 <span class="pkg">fastcpd</span>'s variance families exist to handle.</p></dd>

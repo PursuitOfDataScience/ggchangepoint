@@ -71,7 +71,14 @@ autoplot(object, ...)
 
 - change_in:
 
-  What changes. Defaults to `"mean"`.
+  What changes. Defaults to `"mean"`. The scenario `jump` describes, in
+  units of `sigma`: `"mean"` shifts the mean by `jump`; `"var"` takes
+  the noise standard deviation from `sigma` to `sigma * (1 + jump)`;
+  `"meanvar"` does both at once, shifting the mean by `jump` and the
+  standard deviation to `sigma * (1 + jump / 2)`, the same design
+  [`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md)
+  simulates; `"slope"` bends a flat line into one rising by
+  `jump * sigma` over the series.
 
 - noise:
 
@@ -117,14 +124,14 @@ autoplot(object, ...)
 
 ## Value
 
-A `ggcpt_power` object: a tibble with one row per scenario — `n`,
-`jump`, `sigma`, `location`, `power` (proportion of replicates detecting
-the change within `tolerance`), `mc_se` (the Monte Carlo standard error
-of that proportion), `mean_abs_error` (location error among detections),
-`mean_abs_error` is `NaN` when no replicate detected a changepoint
-within `tolerance` of the true one — there is no distance to average —
-and `power` reads `0` in the same row. `false_positives` (mean number of
-*extra* changepoints per replicate) and `n_sim` — with
+A `ggcpt_power` object: a tibble with one row per scenario, with columns
+`n`, `jump`, `sigma`, `location`, `power` (proportion of replicates
+detecting the change within `tolerance`), `mc_se` (the Monte Carlo
+standard error of that proportion), `mean_abs_error` (location error
+among detections; `NaN` when no replicate detected a changepoint within
+`tolerance` of the true one, because there is no distance to average,
+and `power` reads `0` in the same row), `false_positives` (mean number
+of *extra* changepoints per replicate) and `n_sim`; with
 [`print()`](https://rdrr.io/r/base/print.html) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
 
@@ -140,7 +147,7 @@ Measured on
 `cpt_power(n = c(100, 200), jump = 0.5, n_sim = 8, seed = 11)`:
 `power = 0.25, 0.125` sequentially and `0, 0.375` on two workers. The
 scenario is named because the numbers depend on it and on the worker
-count — what does not depend on either is that the two disagree.
+count; what does not depend on either is that the two disagree.
 
 So the guarantee is: same seed and same plan, same answer – every time,
 whichever plan it is. If a power figure needs to be reproducible by

@@ -93,11 +93,12 @@ the grid continues.</p>
 
 <dl><dt id="arg-datasets">datasets<a class="anchor" aria-label="anchor" href="#arg-datasets"></a></dt>
 <dd><p>A named list of datasets. Each element is either a plain
-numeric vector (no ground truth — only descriptive columns are filled)
+numeric vector (no ground truth, so only descriptive columns are filled)
 or a list with <code>series</code> and one of <code>truth</code>,
 <code>changepoints</code> (an integer vector) or <code>annotations</code> (a list
 of integer vectors, one per annotator). A list carrying none of those
-is scored <code>NA</code> and warns.
+is scored <code>NA</code> and warns. A <code>series</code> with several columns
+stays a matrix, so only the multivariate methods can score it.
 <code><a href="cpt_datasets.html">cpt_datasets()</a></code> builds a ready-made collection.</p></dd>
 
 
@@ -170,9 +171,10 @@ methods to compare.</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>ggcpt_benchmark</code> object: a tibble with one row per
-  (dataset, method) — <code>dataset</code>, <code>method</code>, <code>n</code>,
+  (dataset, method): <code>dataset</code>, <code>method</code>, <code>n</code>,
   <code>n_annotators</code> (how many ground-truth sets the dataset supplied),
-  <code>n_cp</code>, the requested metrics, <code>runtime</code>, <code>error</code> — with
+  <code>n_cp</code>, the requested metrics, <code>runtime</code> and <code>error</code>,
+  with
   <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>
   (<code>"heatmap"</code>, <code>"ranks"</code>, <code>"critical_difference"</code>).</p>
     </div>

@@ -5,7 +5,7 @@ The parameter analogue of
 instead of asking which observation drives the answer, it asks which
 *setting* does. Runs the detector over a grid of tuning values and
 reports the detected locations for each, which is the direct answer to
-the commonest reviewer question about a changepoint analysis — "is this
+the commonest reviewer question about a changepoint analysis: "is this
 robust to the penalty?".
 
 ## Usage

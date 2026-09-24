@@ -169,7 +169,18 @@ other wired method rejects an unknown argument by name.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggcpt</code> object.</p>
+    <p>A <code>ggcpt</code> object: a list with <code>changepoints</code>
+  (<code>cp</code>, <code>cp_value</code>), <code>segments</code> (<code>seg_id</code>,
+  <code>start</code>, <code>end</code>, <code>n</code>, <code>param_estimate</code>),
+  <code>data</code> (<code>index</code>, <code>value</code>), the <code>method</code>,
+  <code>change_in</code>, <code>penalty</code>, <code>cp_convention</code> and
+  <code>runtime</code> that produced it, the matched <code>call</code>, and
+  <code>fit</code>, the raw upstream object. Optional slots
+  (<code>data_wide</code>, <code>regions</code>, <code>diagnostics</code>, ...) appear
+  only when an engine supplies them; <code><a href="new_ggcpt.html">new_ggcpt()</a></code>
+  documents all of them, and <code><a href="tidy.ggcpt.html">tidy.ggcpt()</a></code>,
+  <code><a href="glance.ggcpt.html">glance.ggcpt()</a></code> and <code><a href="augment.ggcpt.html">augment.ggcpt()</a></code>
+  are the supported way to read one.</p>
     </div>
     <div class="section level2">
     <h2 id="scale-sensitivity-of-the-penalised-change-in-mean-engines">Scale sensitivity of the penalised change-in-mean engines<a class="anchor" aria-label="anchor" href="#scale-sensitivity-of-the-penalised-change-in-mean-engines"></a></h2>

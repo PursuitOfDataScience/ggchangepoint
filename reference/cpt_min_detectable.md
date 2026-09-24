@@ -68,7 +68,14 @@ print(x, ...)
 
 - change_in:
 
-  What changes. Defaults to `"mean"`.
+  What changes. Defaults to `"mean"`. The scenario `jump` describes, in
+  units of `sigma`: `"mean"` shifts the mean by `jump`; `"var"` takes
+  the noise standard deviation from `sigma` to `sigma * (1 + jump)`;
+  `"meanvar"` does both at once, shifting the mean by `jump` and the
+  standard deviation to `sigma * (1 + jump / 2)`, the same design
+  [`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md)
+  simulates; `"slope"` bends a flat line into one rising by
+  `jump * sigma` over the series.
 
 - location:
 

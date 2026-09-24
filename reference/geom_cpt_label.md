@@ -1,9 +1,9 @@
 # Changepoint label geom
 
-Draws labelled regions behind a series — the central object of
-supervised changepoint detection (Hocking et al.), where an expert marks
-intervals as containing a change or not and the penalty is learned from
-those labels. Fill defaults to the label's `change` status, so a plot of
+Draws labelled regions behind a series: the central object of supervised
+changepoint detection (Hocking et al.), where an expert marks intervals
+as containing a change or not and the penalty is learned from those
+labels. Fill defaults to the label's `change` status, so a plot of
 labels reads as a picture of what the expert asserted; map `fill` to the
 `status` column of
 [`cpt_label_error()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md)

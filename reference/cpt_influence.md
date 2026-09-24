@@ -1,8 +1,8 @@
 # Influence diagnostics for a changepoint segmentation
 
-Perturbs one observation at a time — deleting it, or replacing it with
-an outlier — re-runs the detector, and reports what changed: the number
-of changepoints, where they moved to, and how the segment parameters
+Perturbs one observation at a time (deleting it, or replacing it with an
+outlier), re-runs the detector, and reports what changed: the number of
+changepoints, where they moved to, and how the segment parameters
 responded. This is the diagnostic family of Wilms, Killick and Matteson
 (2022), rendered in ggplot2 so it composes with the rest of the package.
 
@@ -48,8 +48,9 @@ tidy(x, ...)
 - engine:
 
   Which implementation to use: `"auto"` (default) uses
-  changepoint.influence when the result came from a changepoint engine
-  and that package is installed, and the generic recomputation
+  changepoint.influence for a `type = "delete"` diagnostic of a
+  change-in-mean fit from a changepoint engine when that package is
+  installed (the only models it supports), and the generic recomputation
   otherwise; `"changepoint.influence"` insists on the former;
   `"recompute"` insists on the latter, which works for every wired and
   registered method.
@@ -64,7 +65,10 @@ tidy(x, ...)
 - outlier_sd:
 
   For `type = "outlier"`, how many residual standard deviations the
-  substituted value sits above the fitted level. Defaults to `5`.
+  substituted value sits above the fitted level. Defaults to `5`. Used
+  by the recomputation engine, which is what `"auto"` picks for an
+  outlier diagnostic; `engine = "changepoint.influence"` places its
+  outliers by its own rule and does not read it.
 
 - seed:
 
@@ -98,16 +102,17 @@ A `ggcpt_influence` object: a list with
 
 - `influence`:
 
-  a tibble with one row per perturbed observation — `index`, `n_cp`,
+  a tibble with one row per perturbed observation: `index`, `n_cp`,
   `delta_n_cp` (against the unperturbed fit), `max_shift` (largest
   movement of a surviving changepoint, in positions), `param_shift`
   (largest absolute change in a segment parameter) and `cpts` (a
-  list-column of the perturbed changepoint sets);
+  list-column of the perturbed changepoint sets). A perturbation whose
+  re-fit failed has `n_cp = NA`, and is warned about;
 
 - `param`:
 
   an \\n \times n\\ matrix of per-observation segment parameters, one
-  row per perturbation — the input to the influence map;
+  row per perturbation: the input to the influence map;
 
 - `original`, `type`, `engine`, `method`:
 

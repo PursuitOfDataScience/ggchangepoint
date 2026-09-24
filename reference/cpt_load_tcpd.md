@@ -1,8 +1,8 @@
 # Download and cache the Turing Change Point Dataset
 
-Fetches the benchmark of van den Burg and Williams (2020) — real series
-from many domains, each annotated independently by several human
-annotators — and caches it under
+Fetches the benchmark of van den Burg and Williams (2020), real series
+from many domains each annotated independently by several human
+annotators, and caches it under
 [`tools::R_user_dir()`](https://rdrr.io/r/tools/userdir.html). The
 multi-annotator structure is the point: scoring against a single "true"
 set silently discards the disagreement, and
@@ -37,8 +37,9 @@ cpt_load_tcpd(name = NULL, cache_dir = NULL, refresh = FALSE, quiet = FALSE)
 
 ## Value
 
-With `name = NULL`, a tibble catalogue (`name`, `n_obs`, `n_dim`,
-`n_annotators`, `cached`). Otherwise a named list of
+With `name = NULL`, a tibble catalogue (`name`, `n_annotators`,
+`cached`), read from the annotations file alone, so listing it downloads
+no series. Otherwise a named list of
 `list(series, annotations, index, longname)` datasets, in the shape
 [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
 takes.

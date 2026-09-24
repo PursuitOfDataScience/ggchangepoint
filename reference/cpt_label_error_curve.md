@@ -1,7 +1,7 @@
 # Label error as a function of the penalty
 
 Runs one detector across a penalty grid and counts label errors at each
-setting — the curve penalty learning is fitted to, and the honest way to
+setting: the curve penalty learning is fitted to, and the honest way to
 see whether *any* penalty can satisfy the labels.
 
 ## Usage
@@ -43,7 +43,7 @@ autoplot(object, ...)
   Numeric vector of penalties to try. When `NULL` (the default) the grid
   is chosen *adaptively*: it starts below `log(n)`, where the
   segmentation shatters, and the top end is found by doubling until the
-  detector reports no changepoints at all. A fixed grid cannot do this —
+  detector reports no changepoints at all. A fixed grid cannot do this:
   on a series with a large change, a grid that stops at a few hundred
   never produces a false negative, the error curve never turns back up,
   and the target interval comes out unbounded above, which is useless to

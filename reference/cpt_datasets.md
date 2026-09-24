@@ -3,7 +3,7 @@
 Builds a ready-made collection of labelled series for
 [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md).
 By default these are the canonical simulated signals this package
-already ships — which means the benchmark runs offline,
+already ships, which means the benchmark runs offline,
 deterministically, and inside `R CMD check`. Pass `source = "tcpd"` for
 the Turing Change Point Dataset instead, which is downloaded and cached.
 

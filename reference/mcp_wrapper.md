@@ -3,10 +3,10 @@
 Wraps [`mcp::mcp()`](https://lindeloev.github.io/mcp/reference/mcp.html)
 (Lindeløv): a Bayesian multiple-changepoint regression specified as a
 *list of formulas*, one per segment. This is the most expressive
-detector in the package — each segment can have its own intercept,
-slope, variance and autocorrelation, and the changepoints themselves get
-full posterior distributions rather than point estimates, summarised
-here as `ci_lower`/`ci_upper` on the changepoints tibble.
+detector in the package: each segment can have its own intercept, slope,
+variance and autocorrelation, and the changepoints themselves get full
+posterior distributions rather than point estimates, summarised here as
+`ci_lower`/`ci_upper` on the changepoints tibble.
 ([`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)
 draws a *per-location* probability profile, which only bcp and Rbeast
 expose; it does not accept an `mcp` result.)
@@ -74,15 +74,18 @@ mcp_wrapper(
 
 A `ggcpt` object. The changepoints tibble carries the posterior mean
 location together with `ci_lower`/`ci_upper` from the posterior
-quantiles, and `$data$fitted` holds the posterior predictive mean, so
-`autoplot(show_ci = TRUE, show_fit = TRUE)` shows both.
+quantiles, each converted from mcp's continuous `cp_1`, `cp_2`, ... to
+the last observation before the change (`ceiling(cp) - 1`, because mcp
+starts a segment at `x >= cp`), and `$data$fitted` holds the posterior
+predictive mean, so `autoplot(show_ci = TRUE, show_fit = TRUE)` shows
+both.
 
 ## JAGS is a system dependency
 
 mcp samples through JAGS, a separate program installed outside R. Having
 the *package* is not the same as being able to *run* it: mcp imports
 rjags, and on some platforms rjags installs happily and only fails when
-it looks for the JAGS library at run time — in which case
+it looks for the JAGS library at run time, in which case
 [`mcp::mcp()`](https://lindeloev.github.io/mcp/reference/mcp.html)
 returns a fit carrying no posterior samples, with a warning rather than
 an error. This wrapper checks for that and says so plainly instead of

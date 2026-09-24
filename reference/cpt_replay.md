@@ -37,7 +37,9 @@ cpt_replay(x, method = c("edetector", "cpm", "ocd"), baseline = NULL, ...)
 
 ## Value
 
-A `ggcpt_monitor` that has already consumed the series.
+A `ggcpt_monitor` that has already consumed the series – the same object
+[`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+returns, described there, with `alarms` filled in for whatever fired.
 
 ## See also
 

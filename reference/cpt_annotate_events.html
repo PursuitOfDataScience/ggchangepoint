@@ -90,9 +90,12 @@ enough" throughout.</p>
 
 <dt id="arg-events">events<a class="anchor" aria-label="anchor" href="#arg-events"></a></dt>
 <dd><p>A data frame of events with a location column and a label
-column. The location may be on the position scale or — when the result
-carries a time index — on the index scale (dates, say); which one is
-detected automatically from the column's type and reported.</p></dd>
+column. The location may be on the position scale or, when the result
+carries a time index, on the index scale (dates, say); which one is
+detected automatically from the column's type and reported. An event
+whose location cannot be placed on the series (a missing value, text
+that is not a number, or a date string against a <code>Date</code> index)
+is left out of all three outcomes, with a warning that names it.</p></dd>
 
 
 <dt id="arg-location">location<a class="anchor" aria-label="anchor" href="#arg-location"></a></dt>
@@ -140,7 +143,7 @@ factor column.</p></dd>
 
 
 </dl><p><code>matched</code> and <code>unexplained</code> carry <code>cp_index</code>, the
-  changepoint on the original scale, when — and only when — the result
+  changepoint on the original scale, when (and only when) the result
   carries a time index, so <code>"cp_index" %in% names(x)</code> is the
   test for it.</p>
 <p><code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> flattens those three slots into <strong>one</strong> table with
@@ -156,7 +159,7 @@ factor column.</p></dd>
 <p><strong>Filter on <code>status</code>, not on <code>is.na(cp)</code>.</strong> An
   <code>"unexplained_changepoint"</code> row has a non-missing <code>cp</code>, so
   <code>subset(tidy(x), !is.na(cp))</code> returns the matched pairs
-  <em>and</em> the unexplained changepoints — which is the natural
+  <em>and</em> the unexplained changepoints, which is the natural
   mistake to make, and it silently overstates how many changepoints an
   event explains.
   With <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</p>

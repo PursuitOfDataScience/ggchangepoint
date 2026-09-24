@@ -43,7 +43,9 @@ cpt_scenarios(
 
 - rho:
 
-  AR(1) parameters (used by `noise = "ar1"`).
+  AR(1) parameters (used by `noise = "ar1"`). Crossed with the other
+  arguments for the `"ar1"` rows, like every other argument here;
+  ignored, and recorded as `0`, for the others.
 
 - change_in:
 

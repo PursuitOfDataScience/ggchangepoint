@@ -1,9 +1,9 @@
 # Recommend a detection method
 
 Turns the capability matrix into an answer. Given what the analyst knows
-about their problem — how many dimensions, what kind of change, what the
+about their problem (how many dimensions, what kind of change, what the
 noise looks like, how long the series is, whether they need uncertainty
-or an online alarm — this returns the shortlist of methods that actually
+or an online alarm), this returns the shortlist of methods that actually
 fit, with a reason for each and the reference to cite. It is a decision
 table, not a model: everything it knows is in
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md),

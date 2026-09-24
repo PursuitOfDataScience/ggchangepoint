@@ -67,7 +67,7 @@ autoplot(
 - show_regions:
 
   Logical. Whether to shade the significance regions an interval-valued
-  method returns (the `regions` slot — currently
+  method returns (the `regions` slot; currently
   [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)).
   Each band is an interval that contains at least one changepoint at the
   stated global level; it is not a confidence interval around a point
@@ -113,9 +113,9 @@ autoplot(
   tibble. When supplied, the labelled regions are shaded behind the
   series and coloured by the outcome
   [`cpt_label_error()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error.md)
-  gives them — correct, false positive, false negative — so scoring a
+  gives them (correct, false positive, false negative), so scoring a
   segmentation against expert labels becomes a picture rather than a
-  table.
+  table. Not drawn for a multivariate result, which warns instead.
 
 - type:
 

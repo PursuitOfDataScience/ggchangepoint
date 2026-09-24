@@ -2,7 +2,7 @@
 
 Runs a set of detectors on one series and reports the locations they
 agree on. Two detections count as the same changepoint when they fall
-within `tolerance` of each other — the same tolerance window
+within `tolerance` of each other, the same tolerance window
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
 matches on (van den Burg and Williams, 2020), so the package has one
 notion of "close enough" and not two. The *grouping* necessarily
@@ -56,13 +56,13 @@ print(x, ...)
   the consensus. Defaults to `2`.
 
   A value **strictly between 0 and 1** is read as a proportion of the
-  methods that ran; anything else is a count. The boundary is worth
-  knowing, because it falls exactly where a reader thinking in
-  proportions would write “unanimous”: with three methods,
-  `min_votes = 0.99` needs all three, while `min_votes = 1` – and `1.0`,
-  which is the same number – is a count of one and so the *least* strict
-  setting there is. For unanimity, pass the number of methods, or a
-  fraction just below 1.
+  methods that ran; anything else is a count, rounded *up* (`2.5` needs
+  three methods, never two). The boundary is worth knowing, because it
+  falls exactly where a reader thinking in proportions would write
+  “unanimous”: with three methods, `min_votes = 0.99` needs all three,
+  while `min_votes = 1` – and `1.0`, which is the same number – is a
+  count of one and so the *least* strict setting there is. For
+  unanimity, pass the number of methods, or a fraction just below 1.
 
   A count larger than the number of methods that ran cannot be reached,
   so the consensus would be empty by construction; that warns rather
@@ -105,8 +105,8 @@ print(x, ...)
 A `ggcpt` object (so it plots and tidies like any other result) whose
 changepoints tibble carries `votes` and `methods` (a comma-separated
 list of the methods that found each location), with the per-method
-detections kept in a `consensus` attribute and printed by
-`autoplot(type = "agreement")`.
+detections kept in a `consensus` attribute and drawn by
+`autoplot(plot_type = "agreement")`.
 
 ## Consensus is not inference
 
@@ -114,8 +114,8 @@ Agreement among detectors is **not** a p-value, and a location found by
 six of seven methods is not thereby significant at any level: the
 methods are run on the same data and are strongly correlated, several of
 them share an engine, and none of the votes is independent. Read the
-vote count as a robustness display — "this feature does not depend on
-which detector I picked" — and use
+vote count as a robustness display ("this feature does not depend on
+which detector I picked"), and use
 [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
 or
 [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)

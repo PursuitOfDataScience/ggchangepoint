@@ -84,20 +84,26 @@ of the <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-lin
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A tibble with columns <code>cp</code> (or <code>seg_id</code>),
   <code>estimate</code>, <code>statistic</code>, <code>p_value</code>, <code>method</code> and
-  <code>selection_adjusted</code>.</p>
+  <code>selection_adjusted</code>, plus <code>cp_index</code> on the original scale
+  when the result carries a time index (as <code><a href="cpt_confint.html">cpt_confint()</a></code>
+  does), and <code>p_adjusted</code> when <code>correction</code> is not
+  <code>"none"</code>. <code>estimate</code> is the change in the segment mean
+  (the breakpoint's slope change for <span class="pkg">segmented</span>), and <code>NA</code>
+  for a regression-mode <span class="pkg">strucchange</span> fit, whose change is a vector
+  of coefficients; its Chow test is run on the full regression model.
+  A multivariate result is refused: both routes test one series.</p>
     </div>
     <div class="section level2">
-    <h2 id="selection-bias-read-this-before-quoting-a-p-value">Selection bias — read this before quoting a p-value<a class="anchor" aria-label="anchor" href="#selection-bias-read-this-before-quoting-a-p-value"></a></h2>
-
-
-<p>Testing a changepoint at a location that was <em>chosen because the data
+    <h2 id="selection-bias">Selection bias<a class="anchor" aria-label="anchor" href="#selection-bias"></a></h2>
+    <p>read this before quoting a p-value:
+Testing a changepoint at a location that was <em>chosen because the data
 looked like it changed there</em> is circular, and the resulting p-values are
 anti-conservative, often severely. The <code>selection_adjusted</code> column
 records, per row, whether the test accounts for that:</p><ul><li><p><code>TRUE</code> for <span class="pkg">segmented</span>'s Davies test, which is built
     for a nuisance parameter present only under the alternative. It is
     one <em>global</em> test of "is there a breakpoint", not a test per
     breakpoint, so on a multi-break fit every row carries the same
-    statistic and p-value — the method string says so.</p></li>
+    statistic and p-value, and the method string says so.</p></li>
 <li><p><code>FALSE</code> for the generic Welch two-sample fallback, which
     compares the segments either side of the changepoint as if the
     location had been fixed in advance. Useful as a descriptive effect
@@ -106,11 +112,11 @@ records, per row, whether the test accounts for that:</p><ul><li><p><code>TRUE</
 <li><p><code>FALSE</code> for <span class="pkg">strucchange</span>'s route as well, which is
     the Chow F evaluated <em>at</em> each estimated break date. The Chow
     statistic's reference distribution assumes the date was fixed in
-    advance, so quoting it at a date the Bai–Perron dynamic program chose
-    is exactly the circularity this column exists to flag — reporting
+    advance, so quoting it at a date the Bai-Perron dynamic program chose
+    is exactly the circularity this column exists to flag. Reporting
     it is conventional in that literature, which does not make it
     adjusted. The selection-adjusted objects there are the sup-type
-    statistics and the Bai–Perron critical values.</p></li>
+    statistics and the Bai-Perron critical values.</p></li>
 </ul><p>Two further limits worth knowing. <code>type = "segment"</code> is
 <strong>always</strong> the unadjusted Welch test: the native routes above apply
 only to <code>type = "jump"</code>, so a <span class="pkg">segmented</span> fit tested

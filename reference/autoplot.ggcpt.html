@@ -119,7 +119,7 @@ near the bottom of the panel. Defaults to <code>FALSE</code>.</p></dd>
 
 <dt id="arg-show-regions">show_regions<a class="anchor" aria-label="anchor" href="#arg-show-regions"></a></dt>
 <dd><p>Logical. Whether to shade the significance regions an
-interval-valued method returns (the <code>regions</code> slot — currently
+interval-valued method returns (the <code>regions</code> slot; currently
 <code><a href="nsp_wrapper.html">nsp_wrapper()</a></code>). Each band is an interval that contains at
 least one changepoint at the stated global level; it is not a confidence
 interval around a point estimate. Defaults to <code>TRUE</code> when the
@@ -160,9 +160,10 @@ the observation position when there is none.</p></dd>
 <dt id="arg-labels">labels<a class="anchor" aria-label="anchor" href="#arg-labels"></a></dt>
 <dd><p>Optional <code><a href="cpt_labels.html">cpt_labels()</a></code> tibble. When supplied,
 the labelled regions are shaded behind the series and coloured by the
-outcome <code><a href="cpt_label_error.html">cpt_label_error()</a></code> gives them — correct, false
-positive, false negative — so scoring a segmentation against expert
-labels becomes a picture rather than a table.</p></dd>
+outcome <code><a href="cpt_label_error.html">cpt_label_error()</a></code> gives them (correct, false
+positive, false negative), so scoring a segmentation against expert
+labels becomes a picture rather than a table. Not drawn for a
+multivariate result, which warns instead.</p></dd>
 
 
 <dt id="arg-type">type<a class="anchor" aria-label="anchor" href="#arg-type"></a></dt>

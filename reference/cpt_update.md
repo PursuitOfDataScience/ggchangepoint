@@ -24,7 +24,12 @@ cpt_update(monitor, new_obs)
 
 ## Value
 
-The updated `ggcpt_monitor`.
+The updated `ggcpt_monitor` – the same structure as the input (see
+[`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)),
+with `t` advanced by the number of new observations (rows, for a matrix)
+and any new rows appended to `alarms`. Re-assign it: the monitor is a
+value, not a mutable object, so `cpt_update(mon, y)` without assignment
+discards the update.
 
 ## See also
 

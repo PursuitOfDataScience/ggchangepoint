@@ -8,6 +8,9 @@ of the series contains.
 
 ``` r
 cpt_labels(start, end, change = "change", series = NA_character_)
+
+# S3 method for class 'cpt_labels'
+tidy(x, ...)
 ```
 
 ## Arguments
@@ -26,7 +29,7 @@ cpt_labels(start, end, change = "change", series = NA_character_)
 
   `"one_change"`
 
-  :   exactly one does — a stricter label, and the one that makes false
+  :   exactly one does: a stricter label, and the one that makes false
       positives detectable inside a positive region.
 
   `"no_change"`
@@ -36,6 +39,16 @@ cpt_labels(start, end, change = "change", series = NA_character_)
 - series:
 
   Optional series identifier, for label sets spanning a panel.
+
+- x:
+
+  A `cpt_labels` tibble (for
+  [`tidy()`](https://generics.r-lib.org/reference/tidy.html), which
+  returns it as a plain tibble).
+
+- ...:
+
+  Ignored.
 
 ## Value
 

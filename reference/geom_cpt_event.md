@@ -52,8 +52,8 @@ geom_cpt_event(
 
 - angle:
 
-  Text angle in degrees. Defaults to `90` — event labels are usually
-  longer than the space between events.
+  Text angle in degrees. Defaults to `90`, because event labels are
+  usually longer than the space between events.
 
 - size:
 

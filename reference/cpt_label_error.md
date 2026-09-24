@@ -4,7 +4,7 @@ Counts label errors: a positive region with no changepoint is a false
 negative, a negative region with one is a false positive, and a
 `"one_change"` region with two or more is a false positive as well. This
 is the accuracy measure supervised changepoint detection is built on,
-and — unlike an information criterion — it is defined by what the expert
+and, unlike an information criterion, it is defined by what the expert
 asserted rather than by a model assumption.
 
 ## Usage
@@ -41,11 +41,12 @@ print(x, ...)
 
 ## Value
 
-A tibble with one row per label — `label_id`, `series` (the label set's
+A tibble with one row per label: `label_id`, `series` (the label set's
 series identifier, `NA` for a single unnamed series), `start`, `end`,
 `change`, `n_changes` (how many detections fell inside), `status`
-(`"correct"`, `"false_positive"` or `"false_negative"`) — carrying the
-totals in an `errors` attribute and printing them.
+(`"correct"`, `"false_positive"` or `"false_negative"`), carrying the
+totals in an `errors` attribute and printing them. An empty label set
+gives a zero-row tibble with the same columns.
 
 ## See also
 

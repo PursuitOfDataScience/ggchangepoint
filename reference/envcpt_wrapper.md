@@ -1,9 +1,9 @@
-# EnvCpt wrapper — changepoints versus trends versus autocorrelation
+# EnvCpt wrapper: changepoints versus trends versus autocorrelation
 
 Wraps [`EnvCpt::envcpt()`](https://rdrr.io/pkg/EnvCpt/man/envcpt.html)
-(Beaulieu and Killick, 2018), which fits up to twelve competing models —
-constant mean or linear trend, each with or without changepoints, and
-with white-noise, AR(1) or AR(2) errors — and lets an information
+(Beaulieu and Killick, 2018), which fits up to twelve competing models
+(constant mean or linear trend, each with or without changepoints, and
+with white-noise, AR(1) or AR(2) errors) and lets an information
 criterion decide whether the series really contains changepoints or
 merely trend/autocorrelation ("memory"). The changepoints of the winning
 model (if any) are returned, and the winning model's name is recorded,
@@ -53,11 +53,12 @@ envcpt_wrapper(
 A `ggcpt` object. `$fit` holds the full `envcpt` output; the selected
 model name is stored in the penalty descriptor and printed by
 [`glance()`](https://generics.r-lib.org/reference/glance.html) via
-`penalty_type`. Individual model fits that fail are expected — the
-criterion ignores them — so the engine's own
+`penalty_type`. Individual model fits that fail are expected (the
+criterion ignores them), so the engine's own
 [`try()`](https://rdrr.io/r/base/try.html) output is not passed on;
 genuine warnings still are, and a series on which no model fits at all
-raises an error.
+raises an error. A constant series has no changepoints and is not handed
+to the engine, so `$fit` is `NULL` there.
 
 ## References
 

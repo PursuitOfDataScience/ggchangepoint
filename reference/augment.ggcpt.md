@@ -22,7 +22,33 @@ augment(x, ...)
 
 ## Value
 
-A tibble with the original data plus augment columns.
+A tibble with one row per observation: the data as the result carries
+it, plus four added columns. The data half depends on the result –
+`index` and `value` for a univariate one, `index` plus **one column per
+coordinate** (named as the input's columns were) for a multivariate one,
+and an extra `fitted` column for the engines that supply their own
+fitted signal. The added four are always the same:
+
+- `seg_id`:
+
+  which segment the observation falls in, counting from 1.
+
+- `.fitted`:
+
+  the segment's `param_estimate` – the segment **mean**, for every
+  method in the package, or the engine's own fitted signal where there
+  is one. See the details below for the multivariate case.
+
+- `.resid`:
+
+  `value - .fitted`, against the univariate series the result carries.
+
+- `is_changepoint`:
+
+  `TRUE` at each detected location, under the result's `cp_convention`.
+
+Measured on a `pelt` fit the columns are `index`, `value`, `seg_id`,
+`.fitted`, `.resid`, `is_changepoint`.
 
 ## Details
 

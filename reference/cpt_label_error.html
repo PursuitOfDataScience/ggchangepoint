@@ -3,12 +3,12 @@
 negative, a negative region with one is a false positive, and a
 "one_change" region with two or more is a false positive as well.
 This is the accuracy measure supervised changepoint detection is built on,
-and — unlike an information criterion — it is defined by what the expert
+and, unlike an information criterion, it is defined by what the expert
 asserted rather than by a model assumption.'><meta property="og:description" content='Counts label errors: a positive region with no changepoint is a false
 negative, a negative region with one is a false positive, and a
 "one_change" region with two or more is a false positive as well.
 This is the accuracy measure supervised changepoint detection is built on,
-and — unlike an information criterion — it is defined by what the expert
+and, unlike an information criterion, it is defined by what the expert
 asserted rather than by a model assumption.'><meta property="og:image" content="https://pursuitofdatascience.github.io/ggchangepoint/logo.png"></head><body>
     <a href="#main" class="visually-hidden-focusable">Skip to contents</a>
 
@@ -56,7 +56,7 @@ asserted rather than by a model assumption.'><meta property="og:image" content="
 negative, a negative region with one is a false positive, and a
 <code>"one_change"</code> region with two or more is a false positive as well.
 This is the accuracy measure supervised changepoint detection is built on,
-and — unlike an information criterion — it is defined by what the expert
+and, unlike an information criterion, it is defined by what the expert
 asserted rather than by a model assumption.</p>
     </div>
 
@@ -95,12 +95,13 @@ positions.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A tibble with one row per label — <code>label_id</code>,
+    <p>A tibble with one row per label: <code>label_id</code>,
   <code>series</code> (the label set's series identifier, <code>NA</code> for a
   single unnamed series), <code>start</code>, <code>end</code>, <code>change</code>,
   <code>n_changes</code> (how many detections fell inside), <code>status</code> (<code>"correct"</code>, <code>"false_positive"</code> or
-  <code>"false_negative"</code>) — carrying the totals in an <code>errors</code>
-  attribute and printing them.</p>
+  <code>"false_negative"</code>), carrying the totals in an <code>errors</code>
+  attribute and printing them. An empty label set gives a zero-row
+  tibble with the same columns.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

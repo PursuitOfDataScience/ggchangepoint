@@ -4,7 +4,7 @@ Fits the supervised penalty model of Hocking et al. (2013): each series
 contributes a target *interval* of log-penalties (those achieving the
 fewest label errors), a feature vector is computed from the series, and
 a linear model is fitted by minimising the squared hinge loss on those
-intervals — max-margin interval regression. The result has a
+intervals, which is max-margin interval regression. The result has a
 [`predict()`](https://rdrr.io/r/stats/predict.html) method, and
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 accepts it directly as `penalty`, so a learned penalty is used exactly

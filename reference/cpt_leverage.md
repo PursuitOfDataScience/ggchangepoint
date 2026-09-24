@@ -4,9 +4,9 @@ Orders the observations of a
 [`cpt_influence()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_influence.md)
 result by how much perturbing them disturbs the segmentation, most
 influential first. The composite `leverage` score is the sum of three
-standardised components — the change in the number of changepoints, the
+standardised components (the change in the number of changepoints, the
 largest movement of a changepoint, and the largest change in a segment
-parameter — so an observation that shifts a location without changing
+parameter), so an observation that shifts a location without changing
 the count is still ranked.
 
 ## Usage
@@ -46,7 +46,9 @@ says how many changepoints were lost.
 An `NA` here is always that case. If the *original* fit found no
 changepoints then `max_shift` is missing for every observation, the
 standardisation returns zeros rather than `NA`s, and every `leverage` is
-finite.
+finite. A perturbation whose re-fit *failed* is not one of these: it
+carries `delta_n_cp = NA` as well and is sorted last, since nothing is
+known about it.
 
 ## Examples
 

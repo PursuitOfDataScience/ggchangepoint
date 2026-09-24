@@ -45,7 +45,7 @@ geom_cpt_region(
 
 - alpha:
 
-  Fill transparency. Defaults to `0.2` — light enough that the series
+  Fill transparency. Defaults to `0.2`: light enough that the series
   stays readable through overlapping bands.
 
 - fill:
