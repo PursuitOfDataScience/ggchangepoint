@@ -40,6 +40,13 @@ fpop_wrapper(x, penalty = NULL, ...)
 
 A `ggcpt` object.
 
+## Details
+
+fpop was archived from CRAN in 2026 at its maintainer's request and is
+still built on R-Forge, where it is developed. Install it with
+`install.packages("fpop", repos = "https://R-Forge.R-project.org")`, or
+with `cpt_install_engines("core")`.
+
 ## References
 
 Maidstone R, Hocking T, Rigaill G, Fearnhead P (2017). “On Optimal

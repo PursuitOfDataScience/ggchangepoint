@@ -80,6 +80,13 @@ cpt_install_engines(bundle = "core", dry_run = FALSE, ...)
 Invisibly, a tibble with one row per package (`package`, `bundle`,
 `installed_before`, `installed_after`).
 
+## Details
+
+Every package comes from the repositories in `getOption("repos")` except
+fpop, which was archived from CRAN in 2026 at its maintainer's request
+and is installed from R-Forge (<https://R-Forge.R-project.org>), where
+it is developed.
+
 ## See also
 
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
