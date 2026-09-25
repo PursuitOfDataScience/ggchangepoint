@@ -42,6 +42,20 @@ The highest-leverage addition, and the one everything else leans on.
   `"regression"`, `"inference"`, `"applied"`, `"time"`, `"reporting"`, or
   `"all"`), with a `dry_run`.
 
+## fpop comes from R-Forge
+
+- `fpop` was archived from CRAN on 2026-09-14 at its maintainer's request.
+  It is still built on R-Forge, where it is developed, so it stays an
+  optional engine: DESCRIPTION declares the repository in
+  `Additional_repositories`, `cpt_install_engines("core")` fetches it from
+  there, and the "Package 'fpop' is required" error now gives the
+  `install.packages()` call that works, because a bare
+  `install.packages("fpop")` no longer finds it. `fpopw`, which exports an
+  `Fpop()` with the same signature, was measured as a replacement and
+  rejected: on tied data (counts, rounded values, a noiseless step) it
+  returned a segmentation with a higher penalised cost than the optimum in
+  200 of 1,224 cases, where `fpop` was exact in all of them.
+
 ## Time indices and data structures
 
 - `cpt_detect()` gains `index`: detection still runs on positions (every
@@ -1090,6 +1104,18 @@ every argument its engine accepts.
 
 ### Testing
 
+- **The tests CRAN runs now fit its time budget.** The suite took 587s of
+  win-builder's 17-minute check of the first 0.5.0 submission, against a
+  budget of about ten minutes for the whole check. Every test that took
+  0.2s or more under CRAN conditions, 201 of them, now starts with
+  `skip_on_cran()`, and so does every test that runs `stepR`: its Monte
+  Carlo critical values are recomputed in every check, because R.cache
+  keeps out of the user's cache under `R CMD check`, and once `tcltk` is
+  loaded a fresh simulation costs 32s instead of 5s. The test step of
+  `R CMD check` went from a median of 440s to 29s here, over six paired,
+  interleaved runs (15.1 times faster, 95% CI 14.0 to 15.5, slowest pair
+  13.4). The skipped tests still run wherever `NOT_CRAN` is `"true"`: on
+  every CI runner, on every push, and under `devtools::test()`.
 - **Eleven vignette chunks generated their data without seeding it**, so
   their rendered output was a function of how much randomness every chunk
   above them happened to consume, and several of those chunks are

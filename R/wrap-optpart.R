@@ -3,6 +3,11 @@
 #' Wraps the \code{fpop} package for optimal changepoint detection via
 #' functional pruning.
 #'
+#' \pkg{fpop} was archived from CRAN in 2026 at its maintainer's request and
+#' is still built on R-Forge, where it is developed. Install it with
+#' \code{install.packages("fpop", repos = "https://R-Forge.R-project.org")},
+#' or with \code{cpt_install_engines("core")}.
+#'
 #' @param x A numeric vector.
 #' @param penalty Penalty value. Defaults to \code{2 * log(length(x))} (BIC).
 #'   This is an \emph{absolute} penalty on the residual sum of squares, so

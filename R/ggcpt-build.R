@@ -327,10 +327,33 @@ need_pkg <- function(pkg) {
   if (!suppressMessages(suppressWarnings(
         requireNamespace(pkg, quietly = TRUE)))) {
     stop("Package '", pkg, "' is required. ",
-         "Install it with install.packages('", pkg, "').",
+         "Install it with ", install_hint(pkg), ".",
          call. = FALSE)
   }
   invisible(TRUE)
+}
+
+# Internal: suggested engines that CRAN no longer serves, and the repository
+# that does. `fpop` was archived from CRAN on 2026-09-14 at its maintainer's
+# request and is still built on R-Forge, where it is developed. DESCRIPTION
+# declares the same repositories in `Additional_repositories`, which is what
+# CRAN policy asks of a suggested package outside the mainstream
+# repositories; a test keeps the two in agreement.
+#' @noRd
+engine_repos <- function() {
+  c(fpop = "https://R-Forge.R-project.org")
+}
+
+# Internal: the install.packages() call that fetches `pkg`, as text for an
+# error message. A bare install.packages('fpop') fails with "package 'fpop'
+# is not available", so the repository has to be part of the advice.
+#' @noRd
+install_hint <- function(pkg) {
+  repo <- engine_repos()[pkg]
+  if (is.na(repo)) {
+    return(paste0("install.packages('", pkg, "')"))
+  }
+  paste0("install.packages('", pkg, "', repos = '", repo, "')")
 }
 
 # Internal: coerce input for a univariate wrapper. Accepts vectors and

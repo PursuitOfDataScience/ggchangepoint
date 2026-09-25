@@ -33,6 +33,7 @@ test_that("cpt_wrapper handles no change (no changepoints)", {
 })
 
 test_that("ecp_wrapper no-change bug is fixed", {
+  skip_on_cran()
   # ecp::e.divisive always returns estimates including boundaries.
   # The wrapper should strip them unconditionally.
   set.seed(2022)
@@ -50,6 +51,7 @@ test_that("ecp_wrapper validates input", {
 })
 
 test_that("ggcptplot and ggecpplot return ggplot", {
+  skip_on_cran()
   set.seed(2022)
   x <- c(rnorm(50, 0, 1), rnorm(50, 10, 1))
   p <- ggcptplot(x, change_in = "mean")
@@ -380,6 +382,7 @@ test_that("the degenerate warning names the penalty, not the series length", {
 })
 
 test_that("cpt_methods() answers 'is it installed' without loading anything", {
+  skip_on_cran()
   # S37: the `installed` column was filled with requireNamespace(), which
   # LOADS the package. Building the table therefore loaded all 35 engine
   # namespaces, including fabisearch -> rgl, which on the macOS runner dies
@@ -426,6 +429,7 @@ test_that("cpt_methods() answers 'is it installed' without loading anything", {
 })
 
 test_that("a detection call leaves the caller's search path alone", {
+  skip_on_cran()
   # Two engines mutate it. Loading `bcp` attaches `package:bcp` and
   # `package:grid`; `fabisearch` needs NMF *attached* rather than loaded,
   # and that brings NMF's Depends (Biobase, BiocGenerics) plus the
@@ -481,6 +485,7 @@ test_that("the monitoring layer refuses a factor or character series", {
 })
 
 test_that("series arguments that are not the first argument are guarded too", {
+  skip_on_cran()
   # The type guard on `x` does not help when the series arrives through some
   # other argument. Three such paths existed, each reached by a route the
   # per-function check on `x` cannot see.
@@ -524,6 +529,7 @@ test_that("series arguments that are not the first argument are guarded too", {
 })
 
 test_that("a panel member must be one series, and bad columns are named", {
+  skip_on_cran()
   # `cpt_batch()`'s panel is documented as "a list of numeric vectors".
   # as.numeric() on a matrix unrolls it column after column, so an 80x2
   # member became a 160-point series and reported changepoints at 40, 80 and
@@ -584,6 +590,7 @@ test_that("a panel member must be one series, and bad columns are named", {
 })
 
 test_that("the original wrappers and ggcptplot refuse a multi-column series", {
+  skip_on_cran()
   # cpt_wrapper() wraps the univariate changepoint package but coerced with
   # as.numeric(), which concatenates a matrix column after column. On a
   # 120x2 matrix it reported changepoints at 58, 120 and 180: only the 58 is
@@ -614,6 +621,7 @@ test_that("the original wrappers and ggcptplot refuse a multi-column series", {
 })
 
 test_that("the ecp route refuses non-finite input like every other route", {
+  skip_on_cran()
   # ecp absorbs NA/NaN/Inf instead of refusing, and returns a WRONG answer
   # rather than no answer. On a 180-point series with one changepoint at 90:
   # twenty NAs lost the changepoint entirely, and an all-NA second half
@@ -954,6 +962,7 @@ test_that("multivariate results satisfy the contract, data_wide included", {
 })
 
 test_that("the covering metric matches the formula the vignette states", {
+  skip_on_cran()
   # `vignette("comparison")` gives the definition, following van den Burg
   # and Williams (2020):
   #
@@ -1012,6 +1021,7 @@ test_that("the covering metric matches the formula the vignette states", {
 })
 
 test_that("the other metric formulas match the vignette's definitions", {
+  skip_on_cran()
   # Hausdorff is stated as max{max_p min_t |p - t|, max_t min_p |p - t|},
   # NA when either set is empty "since there is no distance to a
   # nonexistent point"; annotation error as ||P| - |T||; MAE/RMSE of
@@ -1043,6 +1053,7 @@ test_that("the other metric formulas match the vignette's definitions", {
 })
 
 test_that("a power run that detects nothing says so instead of returning NaN", {
+  skip_on_cran()
   # cpt_power() forwards `...` to cpt_detect() inside a per-replicate
   # tryCatch, which is right -- one unlucky draw must not abort a
   # 500-replicate run. But when EVERY replicate failed, mean(all-NA) gave
@@ -1080,6 +1091,7 @@ test_that("a power run that detects nothing says so instead of returning NaN", {
 })
 
 test_that("cpt_power's mc_se is the binomial standard error", {
+  skip_on_cran()
   # A reported standard error is the kind of number nobody re-derives, so
   # it is checked at intermediate powers rather than only where it is 0.
   for (j in c(0.3, 0.5, 0.8)) {
@@ -1217,6 +1229,7 @@ test_that("as_ggcpt() converts a right-convention location on the way in", {
 })
 
 test_that("every plot() method delegates to autoplot(), as documented", {
+  skip_on_cran()
   # README.md shows the same figure twice, and that is deliberate: chunk 6
   # is autoplot(res) and chunk 50 is plot(res), captioned "base-graphics
   # fallback (delegates to autoplot)". The two PNGs are byte-identical,
@@ -1283,6 +1296,7 @@ test_that("every plot() method delegates to autoplot(), as documented", {
 })
 
 test_that("only the two pre-class wrappers return a bare tibble", {
+  skip_on_cran()
   # The feature tour states the compatibility contract exactly: "Every
   # wrapper from 0.2.0 onwards returns a `ggcpt` object; only the two
   # original wrappers below predate the class and still return a bare
@@ -1624,6 +1638,7 @@ test_that("the covering metric matches an explicit set computation", {
 # ---------------------------------------------------------------------------
 
 test_that("cpt_confint() warns when the level it reports is not the one asked", {
+  skip_on_cran()
   skip_if_not(engine_usable("nsp"))
   set.seed(17)
   x <- c(stats::rnorm(100), stats::rnorm(100, 4))
@@ -1649,6 +1664,7 @@ test_that("cpt_confint() warns when the level it reports is not the one asked", 
 })
 
 test_that("cpt_confint() honours `level` on every computing route", {
+  skip_on_cran()
   set.seed(18)
   x <- c(stats::rnorm(100), stats::rnorm(100, 4))
   r <- cpt_detect(x, method = "pelt")
@@ -1686,6 +1702,7 @@ test_that("cpt_confint() honours `level` on every computing route", {
 # ---------------------------------------------------------------------------
 
 test_that("a seeded call does not pin the caller's random stream", {
+  skip_on_cran()
   distinct_datasets <- function(run) {
     set.seed(2026)
     firsts <- numeric(6)
@@ -1727,6 +1744,7 @@ test_that("a seeded call does not pin the caller's random stream", {
 })
 
 test_that("a seeded call leaves .Random.seed exactly as it found it", {
+  skip_on_cran()
   set.seed(11)
   x <- c(stats::rnorm(120), stats::rnorm(120, 3))
   preserved <- function(run) {
@@ -1760,6 +1778,7 @@ test_that("a seeded call leaves .Random.seed exactly as it found it", {
 })
 
 test_that("scoping the seed did not cost reproducibility", {
+  skip_on_cran()
   set.seed(12)
   x <- c(stats::rnorm(150), stats::rnorm(150, 3))
 
@@ -1974,6 +1993,7 @@ test_that("as_ggcpt() stays silent when nothing is lost", {
 })
 
 test_that("a registered method's own indices are reported in its own words", {
+  skip_on_cran()
   # `cpt_detect()` routes a registered method's bare-vector return through
   # as_ggcpt(), whose report is written for a person transcribing published
   # breaks -- "check the values against the series rather than relying on
@@ -2077,6 +2097,7 @@ test_that("cpt_simulate() reports a params/segment mismatch either way", {
 })
 
 test_that("cpt_simulate() builds the series it says it built", {
+  skip_on_cran()
   # The quantities, not just the shape: everything downstream is scored
   # against these.
   jump_err <- function(jump) {
@@ -2141,6 +2162,7 @@ test_that("cpt_simulate() builds the series it says it built", {
 # ---------------------------------------------------------------------------
 
 test_that("bic, aic and mbic are the formulas the help page states", {
+  skip_on_cran()
   set.seed(24)
   x <- c(stats::rnorm(100), stats::rnorm(100, 3), stats::rnorm(100, 1))
 
@@ -2212,6 +2234,7 @@ test_that("bic, aic and mbic are the formulas the help page states", {
 # ---------------------------------------------------------------------------
 
 test_that("cpt_consensus() warns when min_votes cannot be reached", {
+  skip_on_cran()
   set.seed(25)
   x <- c(stats::rnorm(120), stats::rnorm(120, 4))
   three <- c("pelt", "binseg", "amoc")
@@ -2348,6 +2371,7 @@ test_that("benchmark ranks respect the metric's direction and penalise NA", {
 })
 
 test_that("cpt_stability() frequencies are replicate proportions", {
+  skip_on_cran()
   set.seed(26)
   x <- c(stats::rnorm(120), stats::rnorm(120, 4))
   B <- 40
@@ -2374,6 +2398,7 @@ test_that("cpt_stability() frequencies are replicate proportions", {
 # ---------------------------------------------------------------------------
 
 test_that("cpt_penalty() computes the formulas its help page gives", {
+  skip_on_cran()
   ref <- list(
     BIC = function(n, k, a) k * log(n),
     SIC = function(n, k, a) k * log(n),
@@ -2725,6 +2750,7 @@ test_that("summarise_influence() computes the shifts it documents", {
 })
 
 test_that("cpt_leverage() on a real fit is ordered and complete", {
+  skip_on_cran()
   set.seed(31)
   x <- c(stats::rnorm(60), stats::rnorm(60, 5))
   r <- cpt_leverage(cpt_detect(x, method = "pelt"),
@@ -2836,6 +2862,7 @@ test_that("cpt_metrics_annotated() reads a bare vector as one annotator", {
 # ---------------------------------------------------------------------------
 
 test_that("B14: an object-consuming path inherits the fit's change type", {
+  skip_on_cran()
   # Every raw-data entry point forwarded `change_in` to cpt_detect(); every
   # object-consuming one read `object$method` and left `change_in` at its own
   # default of "mean". So a var or meanvar fit was silently re-detected as a
@@ -2963,6 +2990,7 @@ test_that("A1/A2/A3: the declared interface matches what the code needs", {
 })
 
 test_that("B27: .resid is a residual for both data_vec conventions", {
+  skip_on_cran()
   # Two conventions exist for a multivariate result's univariate series:
   # twelve wrappers store X[, 1], while fmean/fcov/kwc/fabisearch store
   # rowMeans(X). build_segments() derives `param_estimate` from whichever
@@ -3034,6 +3062,7 @@ test_that("B18: every event is matched or undetected, never neither", {
 })
 
 test_that("B25: an nsp result's changepoints and regions agree in count", {
+  skip_on_cran()
   skip_if_not(engine_usable("nsp"))
   # `mids` went through ggcpt_build(), which dedups `cp` and range-filters;
   # `regions` went through normalise_regions(), which does neither. Nested
@@ -3068,6 +3097,7 @@ test_that("B25: an nsp result's changepoints and regions agree in count", {
 })
 
 test_that("B1: a ts's seasonal frequency reaches the engine that needs it", {
+  skip_on_cran()
   # `as_cpt_series()` reduces every accepted input to a bare numeric vector,
   # which threw away the one piece of information bfast cannot guess and
   # bfast_wrapper()'s own documentation tells the user to supply by passing a
@@ -3133,6 +3163,7 @@ test_that("B2: cpt_monitor(method = 'cpm') applies the wrapper's guards", {
 })
 
 test_that("B3: an accumulating e-detector does not go silent on overflow", {
+  skip_on_cran()
   # `R <- (1 + R) * inc` grows multiplicatively, so with reset = FALSE and
   # relearn = 0 -- the configuration the arguments explicitly offer -- it
   # passes .Machine$double.xmax a few hundred observations after a real
@@ -3217,6 +3248,7 @@ test_that("B6: cpt_metrics_annotated() refuses an empty annotation list", {
 })
 
 test_that("B7: a criterion that cannot score says so", {
+  skip_on_cran()
   # `stability` is NA at every rung with no changepoints, so on a series
   # where the method returns one empty segmentation at every penalty the
   # curve is all-NA, which.max() gives integer(0), and `if (integer(0) %in%
@@ -3309,6 +3341,7 @@ test_that("B13: the segneigh solution path keeps every candidate", {
 })
 
 test_that("B11: a registered solution path goes through the same contract", {
+  skip_on_cran()
   with_diag <- function(nm, dp) function(x, ...) {
     r <- as_ggcpt(c(50, 100), x, method = nm)
     r$diagnostics <- list(solution_path = dp)
@@ -3361,6 +3394,7 @@ test_that("B15: geom_cpt_event() lets the caller map colour and linetype", {
 })
 
 test_that("B17: every change_in a wrapper can label is one the registry lists", {
+  skip_on_cran()
   # not_wrapper() maps `contrast = "pcwsConstMeanVar"` to change_in =
   # "meanvar", but "meanvar" was not in `not`'s registry row -- so a
   # `cpt_detect(x, method = "not", change_in = "var")` result carried a
@@ -3471,6 +3505,7 @@ test_that("B29/B30: esac and pilliat keep their shape on an all-flat input", {
 })
 
 test_that("B31: fastcpd's penalty reaches the engine and is reported", {
+  skip_on_cran()
   skip_if_not(engine_usable("fastcpd"))
   # `derived_args_for("fastcpd", ...)` returned only the family, so
   # cpt_detect(x, method = "fastcpd", penalty = 5) resolved the 5 and threw
@@ -3499,6 +3534,7 @@ test_that("B31: fastcpd's penalty reaches the engine and is reported", {
 })
 
 test_that("B33: the label-error target band survives both edge cases", {
+  skip_on_cran()
   # `all(logical(0))` is TRUE, so a MISSING target attribute passed the
   # guard and annotate() got zero-length xmin/xmax. And an infinite endpoint
   # is returned deliberately for "the minimum extends past the grid" --
@@ -3637,6 +3673,7 @@ test_that("D1: cpt_monitor() validates the arguments each method uses", {
 })
 
 test_that("D6/D11/D34: three silent drops now say something", {
+  skip_on_cran()
   # attach_index() dropped a wrong-length index without a word, leaving a
   # result that plots in positions and a caller with no way to know. Every
   # public door validates the length first -- cpt_detect() refuses it in
@@ -3774,6 +3811,7 @@ test_that("D21: the CROPS penalty column is the interval's lower end", {
 })
 
 test_that("D30: a wide multivariate plot warns before it draws", {
+  skip_on_cran()
   skip_if_not(engine_usable("InspectChangepoint"))
   # Measured: no wrapper actually produces p^2 coordinates (network_wrapper()
   # deliberately carries no data_wide, and hdcov takes an n x p matrix), and
@@ -3830,6 +3868,7 @@ test_that("E9: a short engine statistic is padded at both ends", {
 })
 
 test_that("B16: the bootstrap refuses a result it cannot reproduce", {
+  skip_on_cran()
   # A `strucchange` formula fit reports change_in = "regression" and keeps
   # neither the formula nor `data` -- `$data$value` is the response alone.
   # So the bootstrap resampled the response and re-ran an INTERCEPT-ONLY
@@ -3859,6 +3898,7 @@ test_that("B16: the bootstrap refuses a result it cannot reproduce", {
 })
 
 test_that("B12: a recomputed solution path says that it is one", {
+  skip_on_cran()
   skip_if_not(engine_usable("breakfast"))
   # breakfast's fit keeps no candidate list, so this is the only branch that
   # recomputes -- and wbs2 is randomised, so the path is a second search of
@@ -3874,6 +3914,7 @@ test_that("B12: a recomputed solution path says that it is one", {
 })
 
 test_that("the posterior interval delivers its level, and says when it is wide", {
+  skip_on_cran()
   skip_if_not(engine_usable("bcp"))
   # Measured, and it is the reason this needs saying rather than fixing:
   # bcp and beast both put about two-thirds of a window's posterior
@@ -4059,6 +4100,7 @@ test_that("a constant series is no changepoints for the scale-based engines too"
 })
 
 test_that("a constant series is no breakpoints, not an optimiser failure", {
+  skip_on_cran()
   skip_if_not(engine_usable("bfast"))
   # bfast decomposes a series into trend and season, and a constant series
   # has neither -- its iteration answered with base R's "missing value
@@ -4078,6 +4120,7 @@ test_that("a constant series is no breakpoints, not an optimiser failure", {
 })
 
 test_that("the three shapes that used to reach a base-R error are named now", {
+  skip_on_cran()
   # Kept separately from the sweep above so the messages themselves are
   # pinned: a future refactor could keep the sweep green by refusing every
   # degenerate input with one generic complaint, which would lose the part
@@ -4095,6 +4138,7 @@ test_that("the three shapes that used to reach a base-R error are named now", {
 })
 
 test_that("the rank-based trend test survives what the parametric ones cannot", {
+  skip_on_cran()
   skip_if_not(engine_usable("trend"))
   flat <- rep(1, 60)
   # Both parametric tests standardise by the series' own SD, so a constant
@@ -4242,6 +4286,7 @@ test_that("the penalty learner refuses a non-finite series at both doors", {
 })
 
 test_that("every error this package raises carries no call", {
+  skip_on_cran()
   # The convention that makes the provenance check above valid: an error
   # raised with `call. = FALSE` has a NULL `conditionCall()`, so anything
   # with a call leaked from base R or from an engine. 241 `stop()` calls in
@@ -4359,6 +4404,7 @@ test_that("an engine hint the caller cannot act on does not reach them", {
 })
 
 test_that("an engine's load says nothing about the library", {
+  skip_on_cran()
   skip_if_not(engine_usable("bfast"))
   # The third condition class. Errors stop, warnings are visible, and a
   # message() goes to stderr where it is easiest to miss. Swept every
@@ -4662,6 +4708,7 @@ test_that("the S3 surface obeys R's conventions, in both directions", {
 })
 
 test_that("a registered method gets the same contract checks as a built-in", {
+  skip_on_cran()
   # ?cpt_register_method promises that a user function's return value goes
   # through "the same contract checks as every built-in wrapper". Two things
   # used to escape: a base-R error from inside the user's function arrived
@@ -4807,6 +4854,7 @@ test_that("a swallowed engine error is not re-reported as someone else's fault",
 })
 
 test_that("the two inference verbs report the same changepoints on the same scale", {
+  skip_on_cran()
   # `cpt_confint()` has reported `cp_index` since the time index was added.
   # `cpt_test()` asks the other half of the same question about the same
   # changepoints and reported positions only, so a user with dates got a
@@ -4881,6 +4929,7 @@ test_that("as_ggcpt() handles NA regions, a one-column frame and right-conventio
 })
 
 test_that("the geoms let a mapped aesthetic win over their fixed styling", {
+  skip_on_cran()
   set.seed(2026)
   d <- data.frame(t = 1:100, y = c(stats::rnorm(50), stats::rnorm(50, 4)))
   ev <- data.frame(x = c(30, 60), label = c("a", "b"), kind = c("k1", "k2"))
@@ -4943,6 +4992,7 @@ test_that("cpt_annotate_events() reports an event it cannot place", {
 })
 
 test_that("a re-run asks for what the result was, not what it records", {
+  skip_on_cran()
   set.seed(11)
   x <- c(stats::rnorm(60), stats::rnorm(60, 3))
   # The penalty travels: a `penalty = 40` fit used to be bootstrapped,
@@ -5000,6 +5050,7 @@ test_that("results whose change type is a label, not a request, can be re-run", 
 })
 
 test_that("tools that re-run one series refuse a multivariate result", {
+  skip_on_cran()
   set.seed(3)
   X <- cbind(stats::rnorm(120), stats::rnorm(120),
              c(stats::rnorm(60), stats::rnorm(60, 3)))
@@ -5040,6 +5091,7 @@ test_that("cpt_select() refuses a request that cannot run, and stability re-dete
 })
 
 test_that("cpt_influence() routes var fits and outlier diagnostics to the engine that supports them", {
+  skip_on_cran()
   skip_if_not_installed("changepoint.influence")
   set.seed(5)
   xv <- c(stats::rnorm(60, 0, 1), stats::rnorm(60, 0, 4))
@@ -5063,6 +5115,7 @@ test_that("cpt_influence() routes var fits and outlier diagnostics to the engine
 })
 
 test_that("a regression-mode strucchange fit is Chow-tested on its own model", {
+  skip_on_cran()
   skip_if_not_installed("strucchange")
   set.seed(3)
   n <- 200
@@ -5078,6 +5131,7 @@ test_that("a regression-mode strucchange fit is Chow-tested on its own model", {
 })
 
 test_that("cpt_confint() says when a native interval cannot honour `level`", {
+  skip_on_cran()
   skip_if_not_installed("stepR")
   set.seed(1)
   fit <- cpt_detect(c(stats::rnorm(100), stats::rnorm(100, 3)),
@@ -5213,6 +5267,7 @@ test_that("envcpt reports a constant series without leaking engine warnings", {
 })
 
 test_that("the multivariate autoplot warns about what it cannot draw", {
+  skip_on_cran()
   set.seed(1)
   x <- c(stats::rnorm(100), stats::rnorm(100, 3))
   fe <- cpt_detect(cbind(x, stats::rnorm(200)), method = "ecp")
@@ -5223,6 +5278,7 @@ test_that("the multivariate autoplot warns about what it cannot draw", {
 })
 
 test_that("the many-panel message names a route that actually draws one panel", {
+  skip_on_cran()
   set.seed(1)
   X <- matrix(stats::rnorm(40 * 30), 40)
   fit <- cpt_detect(X, method = "ecp")
@@ -5236,6 +5292,7 @@ test_that("the many-panel message names a route that actually draws one panel", 
 })
 
 test_that("the posterior, run-length and ladder plots honour a time index", {
+  skip_on_cran()
   set.seed(1)
   x <- c(stats::rnorm(60), stats::rnorm(60, 4))
   d <- as.Date("2020-01-01") + 0:119
@@ -5301,6 +5358,7 @@ test_that("hdcov measures its minimum spacing from the last kept changepoint", {
 })
 
 test_that("var converts the engine's location to the last observation before it", {
+  skip_on_cran()
   skip_if_not(engine_usable("changepoints"))
   # CV.search.DP.VAR1() fits on every other observation and reports 2c for
   # a change after its c-th transition, whose last observation is 2c + 1;
@@ -5377,6 +5435,7 @@ test_that("fcov checks alpha the way fmean does", {
 })
 
 test_that("the engine arguments the first measurement missed are checked by name", {
+  skip_on_cran()
   set.seed(1)
   x <- c(stats::rnorm(50), stats::rnorm(50, 3))
   X <- cbind(x, stats::rnorm(100), stats::rnorm(100))
@@ -5402,6 +5461,7 @@ test_that("the engine arguments the first measurement missed are checked by name
 })
 
 test_that("a malformed penalty is refused by name rather than replaced", {
+  skip_on_cran()
   set.seed(1)
   x <- c(stats::rnorm(60), stats::rnorm(60, 3))
   for (m in c("pelt", "fpop", "cpop", "decafs", "fastcpd")) {
@@ -5436,6 +5496,7 @@ test_that("a malformed penalty is refused by name rather than replaced", {
 })
 
 test_that("arguments that default to NULL are checked by name when supplied", {
+  skip_on_cran()
   set.seed(1)
   x <- c(stats::rnorm(60), stats::rnorm(60, 3))
   X <- cbind(x, stats::rnorm(120), stats::rnorm(120))
@@ -5517,6 +5578,7 @@ test_that("segmented refuses more breakpoints than the series can hold", {
 })
 
 test_that("degenerate inputs are refused by name, or answered, not crashed into", {
+  skip_on_cran()
   set.seed(1)
   if (engine_usable("InspectChangepoint")) {
     # A 0/1 alternation has mad(diff()) = 0, and the engine divides by it.

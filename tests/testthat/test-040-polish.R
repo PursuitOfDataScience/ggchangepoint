@@ -3,6 +3,7 @@
 # contract-violating input.
 
 test_that("R26: a wrong-length `index` names the argument at fault", {
+  skip_on_cran()
   set.seed(26)
   x <- c(rnorm(50), rnorm(50, 5))
 
@@ -90,6 +91,7 @@ test_that("R29: mosum's automatic bandwidth is never 1", {
 })
 
 test_that("R30: npmojo's default bandwidth works on short series", {
+  skip_on_cran()
   skip_if_not_installed("CptNonPar")
   set.seed(30)
   # Before: the default G = max(20, 0.1 * n) exceeded the engine's n / 2
@@ -154,6 +156,7 @@ test_that("R32: cpt_simulate defaults every change type and warns about
 })
 
 test_that("R33: cpt_detect() records its own call, not an internal helper", {
+  skip_on_cran()
   set.seed(33)
   x <- c(rnorm(60), rnorm(60, 5))
 
@@ -179,6 +182,7 @@ test_that("R33: cpt_detect() records its own call, not an internal helper", {
 })
 
 test_that("R34: duplicate multivariate coordinate names are made unique", {
+  skip_on_cran()
   set.seed(34)
   X <- cbind(c(rnorm(60), rnorm(60, 5)), c(rnorm(60), rnorm(60, -4)))
   # A matrix may legally carry duplicate colnames; add_column() then rejected
@@ -208,6 +212,7 @@ test_that("R34: duplicate multivariate coordinate names are made unique", {
 
 test_that("R35: the changepoint engines keep their upstream fit and report a
            cost where one is well defined", {
+  skip_on_cran()
   set.seed(35)
   x <- c(rnorm(120), rnorm(120, 5))
 
@@ -275,6 +280,7 @@ test_that("R35: the changepoint engines keep their upstream fit and report a
 })
 
 test_that("R36: every plot the package produces survives ggcpt_interactive()", {
+  skip_on_cran()
   skip_if_not_installed("plotly")
   set.seed(36)
   x <- c(rnorm(120), rnorm(120, 5))
@@ -314,6 +320,7 @@ test_that("R36: every plot the package produces survives ggcpt_interactive()", {
 
 test_that("R37: glance() always returns one row and cpt_cite() explains an
            unusable method name", {
+  skip_on_cran()
   set.seed(37)
   x <- c(rnorm(60), rnorm(60, 5))
 
@@ -354,6 +361,7 @@ test_that("R37: glance() always returns one row and cpt_cite() explains an
 
 test_that("R38: cpt_stability() reports the proportion of replicates, not a
            capped count of detections", {
+  skip_on_cran()
   # `freq` is documented as "the proportion of replicates detecting a
   # changepoint within `margin` of that index". The loop incremented once per
   # *changepoint*, so a replicate whose detections had overlapping +/-margin
@@ -409,6 +417,7 @@ test_that("R38: cpt_stability() reports the proportion of replicates, not a
 })
 
 test_that("R39: the scale-sensitivity note in ?cpt_detect is accurate", {
+  skip_on_cran()
   # `pelt`/`binseg`/`segneigh`/`fpop` weigh the penalty against a raw segment
   # cost for a change in mean, so widening the noise shatters the
   # segmentation. Nothing in the package documented that until now; this test
@@ -454,6 +463,7 @@ test_that("R39: the scale-sensitivity note in ?cpt_detect is accurate", {
 
 test_that("R40: the documented dispatcher-vs-wrapper penalty difference is
            real, and an explicit penalty reconciles the two", {
+  skip_on_cran()
   # `cpt_detect()` resolves its "MBIC" default to a numeric value stronger
   # than the numeric-penalty wrappers' own 2 * log(n), so the two entry
   # points can disagree on the same series. Both defaults were documented;
@@ -497,6 +507,7 @@ test_that("R40: the documented dispatcher-vs-wrapper penalty difference is
 })
 
 test_that("R41: every S3 method dispatches from NAMESPACE alone", {
+  skip_on_cran()
   # The package used to re-register print/plot/summary/tidy/glance/augment/
   # autoplot from .onLoad(), writing into base's and generics' methods tables
   # for no effect and wrapping the lot in suppressWarnings() so a real
@@ -554,6 +565,7 @@ test_that("R41: every S3 method dispatches from NAMESPACE alone", {
 })
 
 test_that("R42: the covering metric is unchanged by the linear sweep", {
+  skip_on_cran()
   # calc_covering() used to compare every truth segment against every
   # prediction segment, which is quadratic: 7.5 s for 3000 changepoints. It
   # now scans only the overlapping prediction segments, found with two
@@ -616,6 +628,7 @@ test_that("R42b: cpt_metrics stays fast with many changepoints", {
 })
 
 test_that("R43: geom_cpt_ci needs y/xmin/xmax, and x is optional", {
+  skip_on_cran()
   # The help said `x` was required alongside xmin/xmax/y, but the layer is a
   # horizontal error bar: `x` is accepted and ignored, and neither of the
   # package's own two call sites supplies it.
@@ -807,6 +820,7 @@ test_that("R44: the three citation sources agree with each other", {
 })
 
 test_that("R45: exported surface that the suite never exercised", {
+  skip_on_cran()
   # Coverage measurement found two exported functions with no test at all,
   # and a number of documented modes and arguments that nothing called. They
   # work -- but nothing was guarding them against a future refactor.
@@ -869,6 +883,7 @@ test_that("R45: exported surface that the suite never exercised", {
 })
 
 test_that("R45b: documented wrapper arguments that nothing called", {
+  skip_on_cran()
   set.seed(46)
   x <- c(rnorm(80), rnorm(80, 5))
   X2 <- cbind(a = x, b = c(rnorm(80), rnorm(80, -4)))
@@ -910,6 +925,7 @@ test_that("R45b: documented wrapper arguments that nothing called", {
 
 test_that("R46: glance() has no unreachable class branch, and every engine's
            $fit matches what the documentation promises", {
+  skip_on_cran()
   set.seed(47)
   x <- c(rnorm(120), rnorm(120, 5))
   X <- cbind(a = x, b = rev(x), c = rnorm(240))
@@ -943,6 +959,7 @@ test_that("R46: glance() has no unreachable class branch, and every engine's
 })
 
 test_that("R47: the Bayesian displays' remaining documented paths", {
+  skip_on_cran()
   # `?ggcpt_posterior` says it works with bcp_wrapper() and beast_wrapper()
   # results, but only the bcp branch of posterior_prob_profile() was ever
   # exercised. The guards on ggcpt_runlength() had no test either.
@@ -981,6 +998,7 @@ test_that("R47: the Bayesian displays' remaining documented paths", {
 })
 
 test_that("R48: the greedy one-to-one matching really is a maximum matching", {
+  skip_on_cran()
   # ?cpt_metrics claims the greedy scan "yields a maximum matching for
   # interval-structured problems". Precision and recall are derived from it,
   # so if it ever fell short they would be silently understated. Check it
@@ -1046,6 +1064,7 @@ test_that("R48: the greedy one-to-one matching really is a maximum matching", {
 })
 
 test_that("R49: cpt_batch() names the series that failed", {
+  skip_on_cran()
   # cpt_batch() exists for panels of hundreds of series; "`x` must have at
   # least 3 observations" on its own left the user to bisect the list to
   # find which one it meant.
@@ -1078,6 +1097,7 @@ test_that("R49: cpt_batch() names the series that failed", {
 })
 
 test_that("R50: idetect returns the empty result on a constant series", {
+  skip_on_cran()
   skip_if_not_installed("IDetect")
   # IDetect::ID() is erratic on flat input -- its statistics go to 0/0 and
   # what comes back depends on the value and the length. rep(3, 200) came
@@ -1115,6 +1135,7 @@ test_that("R50: idetect returns the empty result on a constant series", {
 })
 
 test_that("R51: the dispatcher's change_in translations reach the engine", {
+  skip_on_cran()
   # cpt_detect() derives an engine-specific argument from `change_in` for
   # not/cpm/kcp/sn/fastcpd. Tests covered *overriding* those through `...`,
   # but never the derivation itself -- so a wrong translation would have
@@ -1156,6 +1177,7 @@ test_that("R51: the dispatcher's change_in translations reach the engine", {
 
 test_that("R52: envcpt does not print upstream try() failures as if it had
            failed", {
+  skip_on_cran()
   skip_if_not_installed("EnvCpt")
   # EnvCpt fits up to twelve models with try(), and a non-silent try() prints
   # its error straight to stderr. On a degenerate series several AR fits fail
@@ -1192,6 +1214,7 @@ test_that("R52: envcpt does not print upstream try() failures as if it had
 })
 
 test_that("R53: hsmuce refuses input that would abort the R session", {
+  skip_on_cran()
   skip_if_not_installed("stepR")
   # stepR's heterogeneous variance estimator does not raise an R error when
   # the data carry essentially no noise at the per-segment scale -- it
@@ -1247,6 +1270,7 @@ test_that("R53: hsmuce refuses input that would abort the R session", {
 })
 
 test_that("R54: the package's own simulator never feeds hsmuce fatal input", {
+  skip_on_cran()
   skip_if_not_installed("stepR")
   # cpt_simulate() is how a user generates ground truth to benchmark against,
   # so its output must not be able to terminate the session. Two of its
@@ -1295,6 +1319,7 @@ test_that("R54: the package's own simulator never feeds hsmuce fatal input", {
 
 test_that("R55: the documented simulate-detect-evaluate-plot workflow holds
            end to end", {
+  skip_on_cran()
   # Each piece of the README/vignette workflow is tested on its own, but not
   # the chain: a result's changepoints feeding cpt_metrics() and
   # ggcpt_eval(), its segments feeding geom_cpt_segment(), the object itself
@@ -1374,6 +1399,7 @@ test_that("R56: ocd accepts an explicit threshold, skipping calibration", {
 })
 
 test_that("R57: the package's own arguments enforce their documented ranges", {
+  skip_on_cran()
   # The engines validate their own arguments -- stepR refuses an alpha
   # outside (0, 1), SNSeg an unlisted confidence -- but this package's own
   # arguments were taken on trust, and out-of-range values there returned
@@ -1416,6 +1442,7 @@ test_that("R57: the package's own arguments enforce their documented ranges", {
 
 test_that("R58: the logical switches refuse non-logical values instead of
            silently doing the opposite", {
+  skip_on_cran()
   # These are all documented as "Logical", but they were read with isTRUE(),
   # which treats every non-TRUE value as FALSE. Measured before the fix:
   # show_segments = 1, "yes", "TRUE" or NA all silently drew nothing, and --
@@ -1493,6 +1520,7 @@ test_that("R59: cpt_simulate() refuses parameters that make it emit NaN", {
 })
 
 test_that("R60: an out-of-range conf_level no longer hangs strucchange", {
+  skip_on_cran()
   set.seed(60)
   x <- c(rnorm(120), rnorm(120, 5))
 
@@ -1533,6 +1561,7 @@ test_that("R60: an out-of-range conf_level no longer hangs strucchange", {
 
 test_that("R61: cpm and kcp no longer report 'no changepoints' when the
            analysis never ran", {
+  skip_on_cran()
   set.seed(61)
   x <- c(rnorm(120), rnorm(120, 5))
 

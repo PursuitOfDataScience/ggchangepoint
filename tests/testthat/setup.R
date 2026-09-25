@@ -1,5 +1,25 @@
 # Test-suite setup.
 #
+# Which tests CRAN runs. CRAN allows a package's whole check about ten
+# minutes, and this suite alone took 587s of the 17 minutes win-builder spent
+# on the first 0.5.0 submission. So every test that took 0.2s or more in a
+# timed run under CRAN conditions starts with skip_on_cran(): 201 tests, most
+# of them engine sweeps and the audit regressions, leaving about 250 fast
+# ones for CRAN. They still run wherever NOT_CRAN is "true", which is every
+# CI runner (r-lib/actions sets it) and devtools::test() or devtools::check().
+# A plain `R CMD check` skips them, so export NOT_CRAN=true for a full local
+# run. A new test that is slow should start with skip_on_cran() too.
+#
+# "CRAN conditions" has to include a cold stepR cache, or the timing lies.
+# stepR keeps the Monte Carlo critical values behind smuce and hsmuce in
+# R.cache, which R.cache moves to a temporary directory whenever it detects
+# R CMD check, so every check simulates them afresh. Once tcltk is loaded
+# (mosum pulls it in through plot3D and misc3d) a fresh simulation is also
+# about six times slower on Linux: 32s instead of 5s for one n = 200 series.
+# A warm cache hid all of that, so every test that runs either engine is
+# skipped on CRAN whatever its measured time. Time new tests with
+# R_CMD_CHECK=true set, which is how R.cache recognises a check.
+#
 # fabisearch imports rgl, which prints two warnings ("unable to open X11
 # display", "'rgl.init' failed") the moment its namespace loads on a headless
 # machine -- which every check machine is. The option is rgl's own documented

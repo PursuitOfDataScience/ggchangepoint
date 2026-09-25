@@ -42,6 +42,7 @@ test_that("all exported functions appear in README", {
 })
 
 test_that("every registry wrapper is exported and documented", {
+  skip_on_cran()
   ns_path <- system.file("NAMESPACE", package = "ggchangepoint")
   skip_if(!nzchar(ns_path))
   exports <- gsub("^export\\(([^)]+)\\)$", "\\1",

@@ -51,6 +51,7 @@ test_that("autoplot.ggcpt works", {
 })
 
 test_that("cpt_detect dispatches methods", {
+  skip_on_cran()
   set.seed(2022)
   x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))
 

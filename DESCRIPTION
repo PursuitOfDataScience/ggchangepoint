@@ -22,10 +22,10 @@ Description: A unified, tidy, 'ggplot2'-native interface to changepoint
     seasonal-trend decomposition, the classical single-change tests, and
     robust detection under drift and autocorrelation. Adds inference
     (Narrowest Significance Pursuit regions, a unified 'cpt_confint()',
-    post-detection tests), selection of the number of changepoints,
+    post-detection tests), selection of the number of changes,
     influence and sensitivity diagnostics, supervised detection with
     learned penalties, consensus and method recommendation, event
-    annotation and reproducible reports, benchmarking against the Turing
+    annotation and reproducible reports, benchmarks against the Turing
     Change Point Dataset, sequential monitoring with detection-delay
     accounting, power and study design, and an extension mechanism
     ('as_ggcpt()', 'cpt_register_method()') that brings external and
@@ -52,7 +52,7 @@ RoxygenNote: 7.3.2
 Suggests:
     rmarkdown,
     knitr,
-    testthat (>= 3.0.0),
+    testthat (>= 3.1.7),
     withr,
     rjags,
     vdiffr,
@@ -107,6 +107,7 @@ Suggests:
     progressr,
     future,
     future.apply
+Additional_repositories: https://R-Forge.R-project.org
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://pursuitofdatascience.github.io/ggchangepoint/

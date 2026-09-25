@@ -7,6 +7,11 @@
 #' install \pkg{stepR}, but only one package at a time. This installs a whole
 #' family in one call.
 #'
+#' Every package comes from the repositories in \code{getOption("repos")}
+#' except \pkg{fpop}, which was archived from CRAN in 2026 at its
+#' maintainer's request and is installed from R-Forge
+#' (\url{https://R-Forge.R-project.org}), where it is developed.
+#'
 #' @param bundle Which family to install:
 #'   \describe{
 #'     \item{\code{"core"}}{the engines the common methods need: \pkg{fpop},
@@ -68,7 +73,18 @@ cpt_install_engines <- function(bundle = "core", dry_run = FALSE, ...) {
     want$installed_after <- want$installed_before
     return(invisible(want))
   }
-  utils::install.packages(todo, ...)
+  # A package CRAN no longer serves comes from the repository that does, with
+  # the caller's repositories kept behind it for its dependencies.
+  elsewhere <- intersect(todo, names(engine_repos()))
+  on_cran <- setdiff(todo, elsewhere)
+  if (length(on_cran) > 0) {
+    install_packages(on_cran, ...)
+  }
+  for (pkg in elsewhere) {
+    args <- list(...)
+    args$repos <- c(engine_repos()[[pkg]], args$repos %||% getOption("repos"))
+    do.call(install_packages, c(list(pkg), args))
+  }
   want$installed_after <- vapply(want$package, engine_installed,
                                  logical(1))
   failed <- want$package[!want$installed_after]
@@ -79,6 +95,13 @@ cpt_install_engines <- function(bundle = "core", dry_run = FALSE, ...) {
             call. = FALSE)
   }
   invisible(want)
+}
+
+# Internal: utils::install.packages() under a name of this package's own, so a
+# test can replace it without unlocking a binding in a base-priority namespace.
+#' @noRd
+install_packages <- function(...) {
+  utils::install.packages(...)
 }
 
 # Internal: the bundle definitions. Derived from the registry where it can

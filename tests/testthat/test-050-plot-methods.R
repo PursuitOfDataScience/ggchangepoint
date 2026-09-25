@@ -23,6 +23,7 @@ test_that("every class with an autoplot method has a plot method", {
 })
 
 test_that("plot() draws the class's own autoplot and returns it invisibly", {
+  skip_on_cran()
   ds <- cpt_datasets(n = 200, seed = 1, names = c("step", "teeth"))
   labs <- as_cpt_labels(80, n = length(x_step))
   fit <- cpt_detect(x_step, method = "pelt")

@@ -59,6 +59,7 @@ test_that("cpt_label_error scores each of the three label kinds", {
 })
 
 test_that("the label error curve finds a target interval", {
+  skip_on_cran()
   labs <- as_cpt_labels(60, n = 120)
   curve <- cpt_label_error_curve(x_step, labs,
                                  penalties = c(0.5, 2, 8, 32, 128))
@@ -77,6 +78,7 @@ test_that("the label error curve finds a target interval", {
 })
 
 test_that("cpt_learn_penalty fits, predicts and plugs into cpt_detect", {
+  skip_on_cran()
   series <- list(a = c(rnorm(60), rnorm(60, 4)),
                  b = c(rnorm(80), rnorm(80, 2)),
                  c = c(rnorm(70), rnorm(70, 6)))
@@ -111,6 +113,7 @@ test_that("cpt_learn_penalty fits, predicts and plugs into cpt_detect", {
 })
 
 test_that("cpt_learn_penalty reports an unlearnable training set", {
+  skip_on_cran()
   series <- list(a = rnorm(80), b = rnorm(80))
   labels <- list(a = cpt_labels(1, 79, "no_change"),
                  b = cpt_labels(1, 79, "no_change"))

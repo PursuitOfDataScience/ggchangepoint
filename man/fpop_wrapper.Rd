@@ -29,6 +29,12 @@ A \code{ggcpt} object.
 Wraps the \code{fpop} package for optimal changepoint detection via
 functional pruning.
 }
+\details{
+\pkg{fpop} was archived from CRAN in 2026 at its maintainer's request and
+is still built on R-Forge, where it is developed. Install it with
+\code{install.packages("fpop", repos = "https://R-Forge.R-project.org")},
+or with \code{cpt_install_engines("core")}.
+}
 \examples{
 \dontshow{if (requireNamespace("fpop", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 set.seed(2026)

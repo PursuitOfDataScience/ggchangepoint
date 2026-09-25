@@ -50,6 +50,12 @@ discovery problem: \code{cpt_detect(x, method = "smuce")} tells you to
 install \pkg{stepR}, but only one package at a time. This installs a whole
 family in one call.
 }
+\details{
+Every package comes from the repositories in \code{getOption("repos")}
+except \pkg{fpop}, which was archived from CRAN in 2026 at its
+maintainer's request and is installed from R-Forge
+(\url{https://R-Forge.R-project.org}), where it is developed.
+}
 \examples{
 cpt_install_engines("bayesian", dry_run = TRUE)
 }

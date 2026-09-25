@@ -54,6 +54,7 @@ expect_ggcpt_contract <- function(res, method = NULL, change_in = NULL) {
 }
 
 test_that("esac and pilliat find a sparse high-dimensional mean change", {
+  skip_on_cran()
   skip_if_not_installed("HDCD")
   e <- cpt_detect(X_hd, method = "esac")
   expect_ggcpt_contract(e, "esac", "mean")
@@ -70,6 +71,7 @@ test_that("esac and pilliat find a sparse high-dimensional mean change", {
 })
 
 test_that("hdcov sees a change in dependence with no change in the margins", {
+  skip_on_cran()
   skip_if_not_installed("changepoints")
   set.seed(7)
   p <- 5
@@ -86,6 +88,7 @@ test_that("hdcov sees a change in dependence with no change in the margins", {
 })
 
 test_that("network detects a change in edge probability", {
+  skip_on_cran()
   skip_if_not_installed("changepoints")
   set.seed(11)
   p <- 5
@@ -106,6 +109,7 @@ test_that("network detects a change in edge probability", {
 })
 
 test_that("var detects a change in the transition matrix", {
+  skip_on_cran()
   skip_if_not_installed("changepoints")
   set.seed(13)
   step <- function(n, a) {
@@ -118,6 +122,7 @@ test_that("var detects a change in the transition matrix", {
 })
 
 test_that("fmean and fcov segment a functional series", {
+  skip_on_cran()
   skip_if_not_installed("fChange")
   fm <- fmean_wrapper(X_func)
   expect_ggcpt_contract(fm, "fmean", "mean")
@@ -142,6 +147,7 @@ test_that("fmean and fcov segment a functional series", {
 })
 
 test_that("kwc segments on depth ranks", {
+  skip_on_cran()
   skip_if_not_installed("KWCChangepoint")
   Xv <- matrix(rnorm(100 * 20), nrow = 100)
   Xv[51:100, ] <- Xv[51:100, ] * 3
@@ -151,6 +157,7 @@ test_that("kwc segments on depth ranks", {
 })
 
 test_that("the classical single-change tests agree on a clean step", {
+  skip_on_cran()
   skip_if_not_installed("trend")
   clean <- c(rep(0, 50), rep(5, 50)) + rnorm(100, 0, 0.01)
   for (m in c("pettitt", "buishand", "snht")) {
@@ -169,6 +176,7 @@ test_that("the classical single-change tests agree on a clean step", {
 })
 
 test_that("taylor reports confidence and an interval", {
+  skip_on_cran()
   skip_if_not_installed("ChangePointTaylor")
   fit <- cpt_detect(x_step, method = "taylor", n_bootstraps = 200,
                     seed = 1)
@@ -186,6 +194,7 @@ test_that("taylor reports confidence and an interval", {
 })
 
 test_that("binsegrcpp matches binseg on a clean step and exposes a path", {
+  skip_on_cran()
   skip_if_not_installed("binsegRcpp")
   clean <- c(rep(0, 50), rep(5, 50)) + rnorm(100, 0, 0.05)
   fit <- cpt_detect(clean, method = "binsegrcpp")
@@ -196,6 +205,7 @@ test_that("binsegrcpp matches binseg on a clean step and exposes a path", {
 })
 
 test_that("wbsts finds a second-order change", {
+  skip_on_cran()
   skip_if_not_installed("wbsts")
   set.seed(17)
   y <- c(as.numeric(stats::arima.sim(list(ar = 0.1), 250)),
@@ -205,6 +215,7 @@ test_that("wbsts finds a second-order change", {
 })
 
 test_that("bfast dates a trend break in a seasonal series", {
+  skip_on_cran()
   skip_if_not_installed("bfast")
   season <- rep(sin(seq(0, 2 * pi, length.out = 12)), 10)
   y <- stats::ts(c(rnorm(60, 1), rnorm(60, 5)) + season,
@@ -218,6 +229,7 @@ test_that("bfast dates a trend break in a seasonal series", {
 })
 
 test_that("fabisearch refuses negative input before the engine does", {
+  skip_on_cran()
   skip_if_not_installed("fabisearch")
   expect_error(fabisearch_wrapper(matrix(rnorm(60), 20)),
                "non-negative matrix factorisation")
@@ -317,6 +329,7 @@ test_that("continuous-weight networks use the noise split, not thinning", {
 })
 
 test_that("fabisearch reads both shapes of its significance column", {
+  skip_on_cran()
   # Supplying `alpha` makes the engine threshold internally and return a
   # LOGICAL verdict; leaving it NULL returns each split's p-value. Reading
   # the logical form as a number turns FALSE into 0, which clears any
@@ -347,6 +360,7 @@ test_that("fabisearch reads both shapes of its significance column", {
 })
 
 test_that("hdreg dates a break in a high-dimensional regression", {
+  skip_on_cran()
   skip_if_not_installed("changepoints")
   set.seed(37)
   p <- 10
@@ -425,6 +439,7 @@ test_that("multivariate and functional wrappers work when called directly", {
 })
 
 test_that("the accessibility scales build", {
+  skip_on_cran()
   d <- data.frame(x = 1:6, y = 1:6, g = rep(letters[1:3], 2))
   base <- ggplot2::ggplot(d, ggplot2::aes(x, y, colour = g, linetype = g)) +
     ggplot2::geom_line()
@@ -461,6 +476,7 @@ test_that("fabisearch names an all-zero time point before NMF does", {
 })
 
 test_that("pilliat refuses the dimensions where HDCD's thresholds are short", {
+  skip_on_cran()
   skip_if_not_installed("HDCD")
   skip_if_not(utils::packageVersion("HDCD") <= "1.1")
   set.seed(31)

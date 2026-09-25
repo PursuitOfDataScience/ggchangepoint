@@ -5,6 +5,7 @@ x_two <- c(rnorm(80), rnorm(80, 4), rnorm(80, 1))
 x_step <- c(rnorm(100), rnorm(100, 3))
 
 test_that("cpt_select scores a ladder and picks a K from it", {
+  skip_on_cran()
   sel <- cpt_select(x_two, criterion = "bic", k_max = 6)
   expect_s3_class(sel, "ggcpt_selection")
   tab <- tidy(sel)
@@ -27,6 +28,7 @@ test_that("cpt_select scores a ladder and picks a K from it", {
 })
 
 test_that("every selection criterion runs and agrees on an easy series", {
+  skip_on_cran()
   for (cr in c("bic", "mbic", "crops_elbow")) {
     sel <- cpt_select(x_two, criterion = cr, k_max = 6)
     expect_equal(sel$k, 2, info = cr)
@@ -63,6 +65,7 @@ test_that("the knee rule is scale-free", {
 })
 
 test_that("cpt_influence works through both engines and agrees on shape", {
+  skip_on_cran()
   fit <- cpt_detect(x_step, method = "pelt")
   inf <- cpt_influence(fit, engine = "recompute",
                        subset = seq(1, 200, by = 20))
@@ -110,6 +113,7 @@ test_that("cpt_sensitivity sweeps a grid and reports every setting", {
 })
 
 test_that("cpt_statistic returns a per-location statistic where one exists", {
+  skip_on_cran()
   skip_if_not_installed("mosum")
   fit <- cpt_detect(x_step, method = "mosum")
   st <- cpt_statistic(fit)
@@ -156,6 +160,7 @@ test_that("solution paths come back ordered with the selected set flagged", {
 })
 
 test_that("scale space sweeps bandwidths and marks the detections", {
+  skip_on_cran()
   skip_if_not_installed("mosum")
   ss <- cpt_scale_space(x_step, bandwidths = c(20, 40))
   expect_true(all(c("index", "bandwidth", "statistic", "threshold",
@@ -180,6 +185,7 @@ test_that("scale space sweeps bandwidths and marks the detections", {
 })
 
 test_that("cpt_select says when the method gives it no ladder", {
+  skip_on_cran()
   skip_if_not_installed("wbs")
   # wbs tunes itself by sSIC and ignores `penalty`, so the candidate sweep
   # returns the same segmentation at every rung. Reporting a "chosen" K off
@@ -189,6 +195,7 @@ test_that("cpt_select says when the method gives it no ladder", {
 })
 
 test_that("scale space works for the multivariate multiscale engine", {
+  skip_on_cran()
   skip_if_not_installed("CptNonPar")
   set.seed(41)
   X <- cbind(c(rnorm(150), rnorm(150, 3)), c(rnorm(150), rnorm(150, -2)))

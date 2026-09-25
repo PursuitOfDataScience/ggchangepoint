@@ -136,6 +136,7 @@ test_that("C15: ggcpt_eval matching agrees with cpt_metrics", {
 })
 
 test_that("C16: ggcpt_compare facets keep methods that found nothing", {
+  skip_on_cran()
   set.seed(10)
   x_null <- rnorm(60)
   p <- ggcpt_compare(x_null, methods = c("pelt", "binseg"))
@@ -144,6 +145,7 @@ test_that("C16: ggcpt_compare facets keep methods that found nothing", {
 })
 
 test_that("C17: stat_changepoint is row-order invariant and warning-free", {
+  skip_on_cran()
   df <- data.frame(t = 1:200, y = x_step)
   df_shuffled <- df[sample(nrow(df)), ]
   get_cps <- function(d) {
@@ -200,6 +202,7 @@ test_that("meanvar requests are reported in the user vocabulary", {
 })
 
 test_that("ggecpplot handles multivariate input without crashing", {
+  skip_on_cran()
   set.seed(9)
   X <- data.frame(a = c(rnorm(50), rnorm(50, 4)), b = rnorm(100))
   expect_message(p <- ggecpplot(X), "first column")
@@ -248,6 +251,7 @@ test_that("R5: wbs and not return empty results on constant data", {
 })
 
 test_that("R6: run-length heatmap treats columns as time", {
+  skip_on_cran()
   skip_if_not_installed("ocp")
   r <- bocpd_wrapper(c(rnorm(60), rnorm(60, 4)))
   b <- ggplot2::ggplot_build(ggcpt_runlength(r))
@@ -257,6 +261,7 @@ test_that("R6: run-length heatmap treats columns as time", {
 })
 
 test_that("R7: kcp changepoints follow the left convention", {
+  skip_on_cran()
   skip_if_not_installed("kcpRS")
   set.seed(1)
   xs <- c(rep(0, 100), rep(10, 100)) + rnorm(200, sd = 0.05)
@@ -265,6 +270,7 @@ test_that("R7: kcp changepoints follow the left convention", {
 })
 
 test_that("R8: ocd survives a declaration at the final row", {
+  skip_on_cran()
   skip_if_not_installed("ocd")
   set.seed(5)
   X <- rbind(matrix(rnorm(60 * 3), 60), matrix(rnorm(3, 50), 1))
@@ -290,6 +296,7 @@ test_that("R10: bcp_wrapper guards the n < 4 segfault", {
 })
 
 test_that("R11: cpt_batch keeps user-supplied names in a partially named list", {
+  skip_on_cran()
   b <- cpt_batch(list(a = c(rnorm(30), rnorm(30, 4)),
                       c(rnorm(30), rnorm(30, 4))), method = "pelt")
   expect_equal(b$series, c("a", "series_2"))
@@ -304,6 +311,7 @@ test_that("R12: CROPS var-cost is monotone in the number of changepoints", {
 })
 
 test_that("R13: multivariate autoplot warns about unsupported overlays", {
+  skip_on_cran()
   skip_if_not_installed("InspectChangepoint")
   set.seed(1)
   X <- cbind(a = c(rnorm(80), rnorm(80, 3)), b = c(rnorm(80), rnorm(80, -2)),
@@ -314,6 +322,7 @@ test_that("R13: multivariate autoplot warns about unsupported overlays", {
 })
 
 test_that("R14: autoplot accepts a custom index and maps overlays through it", {
+  skip_on_cran()
   skip_if_not_installed("stepR")
   r <- smuce_wrapper(c(rnorm(100), rnorm(100, 4)))
   dates <- seq(as.Date("2020-01-01"), by = "day", length.out = 200)
@@ -330,6 +339,7 @@ test_that("R15: sn is dispatched as univariate only", {
 
 test_that("R16: every univariate wrapper rejects wide input, not just the
            search-based ones", {
+  skip_on_cran()
   X <- cbind(a = c(rnorm(60), rnorm(60, 4)), b = rnorm(120))
   # wrapper -> engine it needs; a missing engine still errors on the shape,
   # because the coercion happens before the engine is used
@@ -353,6 +363,7 @@ test_that("R16: every univariate wrapper rejects wide input, not just the
 })
 
 test_that("R17: SegNeigh runs on short series or says why it cannot", {
+  skip_on_cran()
   # The engine requires 3 <= Q <= (n - 2) for a mean change and
   # floor(n / 2) + 1 once a variance is estimated per segment. Below that the
   # message must be actionable, not "subscript out of bounds".
@@ -376,6 +387,7 @@ test_that("R17: SegNeigh runs on short series or says why it cannot", {
 
 test_that("R18: a coordinate named 'index' does not collide with the
            position column", {
+  skip_on_cran()
   set.seed(21)
   Xi <- data.frame(index = c(rnorm(60), rnorm(60, 4)), other = rnorm(120))
   res <- cpt_detect(Xi, method = "ecp", seed = 1)
@@ -408,6 +420,7 @@ test_that("R19: NA changepoint indices are dropped, keeping extra columns
 
 test_that("R20: a wrapper argument passed through cpt_detect() overrides the
            value the dispatcher derives from change_in", {
+  skip_on_cran()
   set.seed(31)
   xs <- cumsum(c(rep(0.4, 100), rep(-0.3, 100))) + rnorm(200)
   xx <- c(rnorm(200), rnorm(200, 4))
@@ -440,6 +453,7 @@ test_that("R20: a wrapper argument passed through cpt_detect() overrides the
 })
 
 test_that("R21: enumerated engine options that cannot work are not offered", {
+  skip_on_cran()
   # stepR dropped family = "poisson"; offering it guaranteed a runtime error
   skip_if_not_installed("stepR")
   expect_error(smuce_wrapper(rnorm(50), family = "poisson"),
@@ -496,6 +510,7 @@ test_that("R23: a constant series returns an empty result instead of an
 
 test_that("R24: one flat coordinate among real signal is dropped with a
            warning, not fatal", {
+  skip_on_cran()
   set.seed(24)
   # coordinate `b` is flat; `a` carries a genuine change at 75
   X <- cbind(a = c(rnorm(75), rnorm(75, 5)), b = rep(2, 150), c = rnorm(150))
@@ -530,6 +545,7 @@ test_that("R24: one flat coordinate among real signal is dropped with a
 
 test_that("R25: short series get an actionable message, not the engine's
            internal one", {
+  skip_on_cran()
   skip_if_not_installed("kcpRS")
   expect_error(kcp_wrapper(rnorm(15), nperm = 20), "wsize")
   # lowering wsize makes the same series usable
@@ -542,6 +558,7 @@ test_that("R25: short series get an actionable message, not the engine's
 
 test_that("R22: ocd rejects univariate input instead of surfacing the
            engine's 'subscript out of bounds'", {
+  skip_on_cran()
   skip_if_not_installed("ocd")
   set.seed(41)
   x <- c(rnorm(80), rnorm(80, 4))

@@ -6,6 +6,7 @@ x_step <- c(rnorm(100), rnorm(100, 4))
 x_multi <- c(rnorm(100), rnorm(100, 5), rnorm(100, 1))
 
 test_that("cpt_crops returns the penalty path and all three plots build", {
+  skip_on_cran()
   path <- cpt_crops(x_multi)
   expect_s3_class(path, "ggcpt_path")
   expect_true(all(c("penalty", "n_cpts", "cost", "cpts") %in%
@@ -28,6 +29,7 @@ test_that("cpt_crops validates its penalty range", {
 })
 
 test_that("cpt_batch runs over matrix columns and named lists", {
+  skip_on_cran()
   X <- cbind(s1 = x_step, s2 = rnorm(200))
   b <- cpt_batch(X, method = "pelt")
   expect_s3_class(b, "ggcpt_batch")
@@ -46,6 +48,7 @@ test_that("cpt_batch runs over matrix columns and named lists", {
 })
 
 test_that("cpt_stability reports high frequency at the true changepoint", {
+  skip_on_cran()
   st <- cpt_stability(x_step, method = "pelt", B = 20, seed = 1)
   expect_s3_class(st, "ggcpt_stability")
   expect_gte(st$frequency$freq[100], 0.9)
@@ -69,6 +72,7 @@ test_that("cpt_cite covers every wired method and dispatches on ggcpt", {
 })
 
 test_that("ggcpt_posterior draws the two-panel Bayesian display", {
+  skip_on_cran()
   skip_if_not_installed("bcp")
   res <- bcp_wrapper(x_step, seed = 1)
   p <- ggcpt_posterior(res)
@@ -79,6 +83,7 @@ test_that("ggcpt_posterior draws the two-panel Bayesian display", {
 })
 
 test_that("autoplot show_ci draws intervals and warns when absent", {
+  skip_on_cran()
   skip_if_not_installed("stepR")
   res <- smuce_wrapper(x_step)
   p <- ggplot2::autoplot(res, show_ci = TRUE)
@@ -88,6 +93,7 @@ test_that("autoplot show_ci draws intervals and warns when absent", {
 })
 
 test_that("autoplot show_fit draws the engine signal and warns when absent", {
+  skip_on_cran()
   skip_if_not_installed("DeCAFS")
   res <- decafs_wrapper(x_step)
   p <- ggplot2::autoplot(res, show_fit = TRUE)
@@ -97,6 +103,7 @@ test_that("autoplot show_fit draws the engine signal and warns when absent", {
 })
 
 test_that("autoplot renders multivariate results as facets", {
+  skip_on_cran()
   skip_if_not_installed("InspectChangepoint")
   X <- cbind(a = c(rnorm(80), rnorm(80, 3)), b = c(rnorm(80), rnorm(80, -2)))
   res <- inspect_wrapper(X)
@@ -106,6 +113,7 @@ test_that("autoplot renders multivariate results as facets", {
 })
 
 test_that("ggcpt_interactive returns a plotly widget", {
+  skip_on_cran()
   skip_if_not_installed("plotly")
   res <- cpt_detect(x_step, method = "pelt")
   w <- ggcpt_interactive(res)

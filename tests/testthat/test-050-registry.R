@@ -8,6 +8,7 @@ x_step <- c(rnorm(80), rnorm(80, 4))
 is_true_flag <- function(v) !is.na(v) & v
 
 test_that("the registry is the single source of the method tables", {
+  skip_on_cran()
   reg <- ggchangepoint:::builtin_registry()
   expect_true(all(c("method", "change_in", "engine", "supports", "wrapper",
                     "multivariate", "online", "ci", "fitted", "posterior",
@@ -194,6 +195,59 @@ test_that("engine bundles resolve to real packages", {
                     "installed_after") %in% names(dry)))
 })
 
+test_that("an engine CRAN no longer serves is declared where it comes from", {
+  # CRAN policy: a suggested package outside the mainstream repositories
+  # needs its repository in Additional_repositories. engine_repos() is where
+  # the installer and need_pkg()'s advice read it from, so the two agree.
+  repos <- ggchangepoint:::engine_repos()
+  desc <- read.dcf(system.file("DESCRIPTION", package = "ggchangepoint"),
+                   fields = c("Suggests", "Additional_repositories"))
+  declared <- trimws(strsplit(desc[, "Additional_repositories"], ",")[[1]])
+  expect_true(all(repos %in% declared))
+  suggests <- trimws(gsub("\\([^)]*\\)", "",
+                          strsplit(desc[, "Suggests"], ",")[[1]]))
+  expect_true(all(names(repos) %in% suggests))
+  expect_identical(
+    ggchangepoint:::install_hint("fpop"),
+    "install.packages('fpop', repos = 'https://R-Forge.R-project.org')"
+  )
+  expect_identical(ggchangepoint:::install_hint("wbs"),
+                   "install.packages('wbs')")
+})
+
+test_that("cpt_install_engines() fetches fpop from R-Forge, the rest as asked", {
+  calls <- list()
+  local_mocked_bindings(
+    engine_installed = function(pkg) FALSE,
+    install_packages = function(pkgs, ...) {
+      calls[[length(calls) + 1]] <<- list(pkgs = pkgs, repos = list(...)$repos)
+      invisible(NULL)
+    }
+  )
+  expect_warning(cpt_install_engines("core"), "still not installed")
+  from_forge <- Filter(function(cl) "fpop" %in% cl$pkgs, calls)
+  expect_length(from_forge, 1)
+  expect_identical(from_forge[[1]]$pkgs, "fpop")
+  # getOption("repos") is a named vector (CRAN = ...), so compare values.
+  expect_identical(unname(from_forge[[1]]$repos),
+                   unname(c("https://R-Forge.R-project.org",
+                            getOption("repos"))))
+  # Everything else goes through the caller's own repositories untouched.
+  rest <- Filter(function(cl) !"fpop" %in% cl$pkgs, calls)
+  expect_length(rest, 1)
+  expect_null(rest[[1]]$repos)
+
+  # A caller's `repos` is kept, behind R-Forge for fpop.
+  calls <- list()
+  expect_warning(cpt_install_engines("core", repos = "https://example.org"),
+                 "still not installed")
+  from_forge <- Filter(function(cl) "fpop" %in% cl$pkgs, calls)
+  expect_identical(unname(from_forge[[1]]$repos),
+                   c("https://R-Forge.R-project.org", "https://example.org"))
+  rest <- Filter(function(cl) !"fpop" %in% cl$pkgs, calls)
+  expect_identical(rest[[1]]$repos, "https://example.org")
+})
+
 test_that("cpt_methods is silent even when an engine talks on load", {
   # Asking whether an engine is installed loads its namespace, and a
   # namespace may talk: `fabisearch` pulls in `rgl`, which warns
@@ -285,6 +339,7 @@ test_that("ci and extra columns follow their changepoint through the drop", {
 })
 
 test_that("every engine that declares a fitted signal delivers a full one", {
+  skip_on_cran()
   # ggcpt_build() keeps `fitted` only when its length matches the series, so
   # a wrapper that returned a short signal would advertise the capability in
   # cpt_methods() and quietly not have it.
@@ -353,6 +408,7 @@ test_that("a registered method must detect on the series it is given", {
 })
 
 test_that("dispatch refuses every return shape that is not changepoints", {
+  skip_on_cran()
   set.seed(9)
   x <- c(stats::rnorm(80), stats::rnorm(80, 4))
   withr::defer(try(cpt_unregister_method("retprobe"), silent = TRUE))
@@ -387,6 +443,7 @@ test_that("dispatch refuses every return shape that is not changepoints", {
 })
 
 test_that("an engine argument the wrapper manages is refused by name", {
+  skip_on_cran()
   # Every wrapper forwards `...` to its engine, and eight of them also pin
   # one of that engine's own arguments. Passing one of those through `...`
   # reached R's argument matcher and stopped with "formal argument
@@ -446,6 +503,7 @@ test_that("an engine argument the wrapper manages is refused by name", {
 })
 
 test_that("hdcov survives the single-level BS tree that killed thresholdBS", {
+  skip_on_cran()
   skip_if_not_installed("changepoints")
   # changepoints::thresholdBS.BS() prunes with
   #   for (i in 2:level_length) ... 1:table(BS_object$Level)[i]
@@ -524,6 +582,7 @@ test_that("hdcov survives the single-level BS tree that killed thresholdBS", {
 })
 
 test_that("wbsts reports more than one changepoint on modern R", {
+  skip_on_cran()
   skip_if_not_installed("wbsts")
   # wbsts::wbs.lsw() ends with
   #   suppressWarnings(if (is.na(OUT)) OUT = NULL)
@@ -595,6 +654,7 @@ test_that("wbsts reports more than one changepoint on modern R", {
 })
 
 test_that("an engine argument the wrapper renames redirects to the right name", {
+  skip_on_cran()
   # Most wrappers rename their engine's arguments into this package's
   # snake_case, or derive them from `x`. But `...` is documented on every
   # wrapper as reaching the engine, so the engine's own name is the natural

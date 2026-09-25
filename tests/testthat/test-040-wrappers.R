@@ -48,6 +48,7 @@ expect_ggcpt_contract <- function(res, method = NULL, change_in = NULL) {
 }
 
 test_that("smuce_wrapper returns CIs and a fitted signal", {
+  skip_on_cran()
   skip_if_not_installed("stepR")
   res <- smuce_wrapper(x_step)
   expect_ggcpt_contract(res, "smuce")
@@ -59,12 +60,14 @@ test_that("smuce_wrapper returns CIs and a fitted signal", {
 })
 
 test_that("hsmuce family works through the dispatcher", {
+  skip_on_cran()
   skip_if_not_installed("stepR")
   res <- cpt_detect(x_step, method = "hsmuce")
   expect_identical(res$method, "hsmuce")
 })
 
 test_that("cpop_wrapper detects a slope change and reports change_in slope", {
+  skip_on_cran()
   skip_if_not_installed("cpop")
   res <- cpop_wrapper(x_slope)
   expect_ggcpt_contract(res, "cpop")
@@ -74,6 +77,7 @@ test_that("cpop_wrapper detects a slope change and reports change_in slope", {
 })
 
 test_that("bcp_wrapper reports posterior probabilities", {
+  skip_on_cran()
   skip_if_not_installed("bcp")
   res <- bcp_wrapper(x_step, seed = 1)
   expect_ggcpt_contract(res, "bcp")
@@ -83,6 +87,7 @@ test_that("bcp_wrapper reports posterior probabilities", {
 })
 
 test_that("bocpd_wrapper finds the change and supports the run-length plot", {
+  skip_on_cran()
   skip_if_not_installed("ocp")
   res <- bocpd_wrapper(x_step)
   expect_ggcpt_contract(res, "bocpd")
@@ -92,6 +97,7 @@ test_that("bocpd_wrapper finds the change and supports the run-length plot", {
 })
 
 test_that("beast_wrapper reports posterior probabilities", {
+  skip_on_cran()
   skip_if_not_installed("Rbeast")
   skip_on_os("windows")  # Rbeast <= 1.0.2 can crash the session on Windows
   # Rbeast intermittently returns an all-NaN fit, and the condition can
@@ -119,6 +125,7 @@ test_that("cpm_wrapper reports detection times", {
 })
 
 test_that("kcp_wrapper runs on running means", {
+  skip_on_cran()
   skip_if_not_installed("kcpRS")
   res <- kcp_wrapper(x_step, nperm = 100, seed = 1)
   expect_ggcpt_contract(res, "kcp")
@@ -126,6 +133,7 @@ test_that("kcp_wrapper runs on running means", {
 })
 
 test_that("npmojo_wrapper runs", {
+  skip_on_cran()
   skip_if_not_installed("CptNonPar")
   res <- npmojo_wrapper(x_step)
   expect_ggcpt_contract(res, "npmojo")
@@ -133,6 +141,7 @@ test_that("npmojo_wrapper runs", {
 })
 
 test_that("decafs_wrapper detects the change and carries the signal", {
+  skip_on_cran()
   skip_if_not_installed("DeCAFS")
   res <- decafs_wrapper(x_step)
   expect_ggcpt_contract(res, "decafs")
@@ -141,6 +150,7 @@ test_that("decafs_wrapper detects the change and carries the signal", {
 })
 
 test_that("sn_wrapper detects the change", {
+  skip_on_cran()
   skip_if_not_installed("SNSeg")
   res <- sn_wrapper(x_step)
   expect_ggcpt_contract(res, "sn")
@@ -148,6 +158,7 @@ test_that("sn_wrapper detects the change", {
 })
 
 test_that("inspect_wrapper handles multivariate input", {
+  skip_on_cran()
   skip_if_not_installed("InspectChangepoint")
   res <- inspect_wrapper(X_mv)
   expect_ggcpt_contract(res, "inspect")
@@ -157,6 +168,7 @@ test_that("inspect_wrapper handles multivariate input", {
 })
 
 test_that("ocd_wrapper declares the change shortly after it happens", {
+  skip_on_cran()
   skip_if_not_installed("ocd")
   set.seed(1)
   X_strong <- cbind(a = c(rnorm(80), rnorm(80, 5)),
@@ -173,6 +185,7 @@ test_that("ocd_wrapper declares the change shortly after it happens", {
 })
 
 test_that("geomcp_wrapper labels distance/angle mappings", {
+  skip_on_cran()
   skip_if_not_installed("changepoint.geo")
   set.seed(1)
   X_strong <- cbind(a = c(rnorm(80), rnorm(80, 5)),
@@ -186,6 +199,7 @@ test_that("geomcp_wrapper labels distance/angle mappings", {
 })
 
 test_that("strucchange_wrapper dates mean shifts with CIs", {
+  skip_on_cran()
   skip_if_not_installed("strucchange")
   res <- strucchange_wrapper(x_step)
   expect_ggcpt_contract(res, "strucchange")
@@ -202,6 +216,7 @@ test_that("strucchange_wrapper accepts a formula", {
 })
 
 test_that("segmented_wrapper fits a broken line with CIs", {
+  skip_on_cran()
   skip_if_not_installed("segmented")
   res <- segmented_wrapper(x_slope, npsi = 1, seed = 1)
   expect_ggcpt_contract(res, "segmented")
@@ -220,6 +235,7 @@ test_that("envcpt_wrapper picks a changepoint model when one exists", {
 })
 
 test_that("fastcpd_wrapper detects mean changes", {
+  skip_on_cran()
   skip_if_not_installed("fastcpd")
   res <- fastcpd_wrapper(x_step)
   expect_ggcpt_contract(res, "fastcpd")
@@ -240,6 +256,7 @@ test_that("dispatcher change_in validation errors instead of mislabelling", {
 })
 
 test_that("dispatcher routes slope requests to capable engines", {
+  skip_on_cran()
   skip_if_not_installed("not")
   res <- cpt_detect(x_slope, method = "not", change_in = "slope")
   expect_identical(res$change_in, "slope")

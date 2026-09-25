@@ -6,6 +6,7 @@ x_step <- c(rnorm(60), rnorm(60, 4))
 dates <- as.Date("2020-01-01") + seq_along(x_step) - 1
 
 test_that("a date index is carried through the whole result", {
+  skip_on_cran()
   fit <- cpt_detect(x_step, method = "pelt", index = dates)
   expect_s3_class(fit$index, "Date")
   expect_equal(fit$data$index, seq_along(x_step))       # positions unchanged
@@ -39,6 +40,7 @@ test_that("index length and ordering are validated", {
 })
 
 test_that("ts, xts, zoo and tsibble input carry their own index", {
+  skip_on_cran()
   tt <- stats::ts(x_step, frequency = 12, start = c(2000, 1))
   fit <- cpt_detect(tt, method = "pelt")
   expect_false(is.null(fit$index))
@@ -78,6 +80,7 @@ test_that("the data-frame interface selects columns three ways", {
 })
 
 test_that("a bare data frame keeps its 0.4.0 meaning", {
+  skip_on_cran()
   X <- data.frame(a = c(rnorm(60), rnorm(60, 3)), b = rnorm(120))
   # Two columns, no `y`: still a multivariate input, not a mis-parsed frame.
   expect_error(cpt_detect(X, method = "pelt"), "univariate")
@@ -87,6 +90,7 @@ test_that("a bare data frame keeps its 0.4.0 meaning", {
 })
 
 test_that("a one-coordinate result still plots as a single panel", {
+  skip_on_cran()
   X <- matrix(x_step, ncol = 1, dimnames = list(NULL, "a"))
   fit <- cpt_detect(X, method = "ecp", index = dates)
   expect_equal(ggchangepoint:::n_coordinates(fit), 1L)
@@ -108,6 +112,7 @@ test_that("as_cpt_series returns values, index and a label", {
 })
 
 test_that("a keyed tsibble is refused with an actionable message", {
+  skip_on_cran()
   skip_if_not_installed("tsibble")
   tb <- tsibble::tsibble(
     day = rep(dates[1:10], 2), g = rep(c("a", "b"), each = 10),
@@ -117,6 +122,7 @@ test_that("a keyed tsibble is refused with an actionable message", {
 })
 
 test_that("cpt_batch carries a time index onto every series", {
+  skip_on_cran()
   X <- cbind(a = x_step, b = rev(x_step))
   b <- cpt_batch(X, method = "pelt", index = dates)
   expect_true(all(vapply(b$result, function(r) !is.null(r$index),
@@ -143,6 +149,7 @@ test_that("a one-row data frame is refused as a series, not read as a column", {
 })
 
 test_that("cpt_select carries the time index onto the fit it chooses", {
+  skip_on_cran()
   set.seed(91)
   n <- 200
   x <- c(stats::rnorm(n / 2), stats::rnorm(n / 2, 5))
@@ -217,6 +224,7 @@ test_that("a factor index is read as labels, not as level codes", {
 })
 
 test_that("every plot drawn against series position honours the index", {
+  skip_on_cran()
   # autoplot(ggcpt_stability) was the one that did not: a dated series came
   # back in positions there while autoplot(fit), ggcpt_statistic(),
   # ggcpt_scale_space(), ggcpt_solution_path() and the influence and events

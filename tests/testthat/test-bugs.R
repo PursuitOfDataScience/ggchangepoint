@@ -119,6 +119,7 @@ test_that("cpt_methods returns correct structure", {
 })
 
 test_that("S3 methods work (summary, as_tibble, as.data.frame, format, plot)", {
+  skip_on_cran()
   set.seed(2022)
   x <- c(rnorm(50, 0, 1), rnorm(50, 10, 1))
   res <- cpt_detect(x, method = "pelt")

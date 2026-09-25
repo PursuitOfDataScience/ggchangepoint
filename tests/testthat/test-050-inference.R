@@ -5,6 +5,7 @@ set.seed(2026)
 x_step <- c(rnorm(100), rnorm(100, 4))
 
 test_that("nsp returns regions and flags its cp column as a midpoint", {
+  skip_on_cran()
   skip_if_not_installed("nsp")
   fit <- nsp_wrapper(x_step, M = 100, seed = 1)
   expect_s3_class(fit, "ggcpt")
@@ -38,6 +39,7 @@ test_that("cpt_regions is empty and typed for a result with no regions", {
 })
 
 test_that("nsp validates its own arguments", {
+  skip_on_cran()
   skip_if_not_installed("nsp")
   expect_error(nsp_wrapper(x_step, alpha = 0), "greater than 0")
   expect_error(nsp_wrapper(x_step, alpha = 1), "less than 1")
@@ -49,6 +51,7 @@ test_that("nsp validates its own arguments", {
 })
 
 test_that("cpt_confint reports one contract and four provenances", {
+  skip_on_cran()
   fit <- cpt_detect(x_step, method = "pelt")
   ci <- cpt_confint(fit, method = "bootstrap", B = 15, seed = 1)
   expect_true(all(c("cp", "ci_lower", "ci_upper", "level", "source") %in%
@@ -93,6 +96,7 @@ test_that("a posterior credible interval brackets its changepoint", {
 })
 
 test_that("a date index is carried onto the interval table", {
+  skip_on_cran()
   dates <- as.Date("2020-01-01") + seq_along(x_step) - 1
   fit <- cpt_detect(x_step, method = "pelt", index = dates)
   ci <- cpt_confint(fit, method = "bootstrap", B = 10, seed = 1)
@@ -157,6 +161,7 @@ test_that("the region geom builds and defaults to the panel height", {
 })
 
 test_that("cpt_confint reads NSP's own interval instead of bootstrapping", {
+  skip_on_cran()
   skip_if_not_installed("nsp")
   set.seed(51)
   x <- c(stats::rnorm(100), stats::rnorm(100, 5))

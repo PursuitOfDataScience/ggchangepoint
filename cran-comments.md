@@ -1,3 +1,43 @@
+## Resubmission
+
+This resubmits 0.5.0, which the incoming pretests of 2026-09-25 returned
+with three findings. Each is addressed.
+
+* **'fpop', suggested but not in a mainstream repository, with no
+  declaration.** 'fpop' was archived from CRAN on 2026-09-14 at its
+  maintainer's request. It is still developed and built on R-Forge, so
+  DESCRIPTION now declares
+  `Additional_repositories: https://R-Forge.R-project.org`. It stays in
+  Suggests and is used conditionally everywhere: the wrapper checks it with
+  `requireNamespace()`, its example uses `@examplesIf`, its tests use
+  `skip_if_not_installed()`, and the vignette chunks that call it are gated.
+  The install advice the package prints when 'fpop' is missing, and
+  `cpt_install_engines()`, now name that repository. The incoming check
+  will still list 'fpop' under "Suggests or Enhances not in mainstream
+  repositories", now with its availability. ('fpopw', which is on CRAN,
+  exports an `Fpop()` with the same signature and was measured as a
+  replacement. It returned a segmentation above the optimal penalised cost
+  on 200 of 1,224 series with tied values, where 'fpop' was optimal on all
+  of them, so it was not swapped in.)
+
+* **Overall check time: 17 minutes on Windows, 587s of it tests.** Every
+  test that took 0.2s or more under CRAN conditions now starts with
+  `skip_on_cran()`, 201 tests, and so does every test that runs 'stepR'
+  (its Monte Carlo critical values are recomputed in each check, and on
+  Linux a fresh simulation costs up to half a minute once 'tcltk' is
+  loaded). They still run on every CI push, where `NOT_CRAN` is set.
+  Timed the way `R CMD check` runs them, on the R 4.4.1 machine below, the
+  test step went from a median of 440s to 29s over six paired, interleaved
+  runs (15.1 times faster, 95% CI 14.0 to 15.5, slowest pair 13.4). At
+  that ratio the 587s win-builder measured becomes about 40s and the whole
+  check about 8 minutes; the rest is the examples (89s), the vignettes
+  (138s) and the fixed steps, none of which changed.
+
+* **Possibly misspelled words in DESCRIPTION.** "changepoints" and
+  "benchmarking" are spelled correctly, but the Description now says "the
+  number of changes" and "benchmarks", so the note does not recur. A local
+  replica of the incoming spell check reports no new words.
+
 ## Submission
 
 This is a minor-version update (0.4.0 -> 0.5.0) of an existing CRAN package.

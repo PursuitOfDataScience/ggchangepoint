@@ -6,6 +6,7 @@ x_step <- c(rnorm(80), rnorm(80, 4))
 dates <- as.Date("2020-01-01") + seq_along(x_step) - 1
 
 test_that("cpt_consensus resolves agreement into one segmentation", {
+  skip_on_cran()
   cons <- cpt_consensus(x_step, methods = c("pelt", "binseg", "amoc"))
   expect_s3_class(cons, "ggcpt_consensus")
   expect_s3_class(cons, "ggcpt")
@@ -21,6 +22,7 @@ test_that("cpt_consensus resolves agreement into one segmentation", {
 })
 
 test_that("consensus honours the vote threshold and the tolerance", {
+  skip_on_cran()
   strict <- cpt_consensus(x_step, methods = c("pelt", "binseg", "amoc"),
                           min_votes = 3)
   loose <- cpt_consensus(x_step, methods = c("pelt", "binseg", "amoc"),
@@ -45,6 +47,7 @@ test_that("consensus clustering matches the metric's tolerance semantics", {
 })
 
 test_that("cpt_recommend is a decision table with reasons", {
+  skip_on_cran()
   r <- cpt_recommend(noise = "autocorrelated")
   expect_s3_class(r, "ggcpt_recommendation")
   expect_true(all(c("method", "engine", "installed", "score", "why",
@@ -66,6 +69,7 @@ test_that("cpt_recommend is a decision table with reasons", {
 })
 
 test_that("cpt_annotate_events reports all three outcomes", {
+  skip_on_cran()
   fit <- cpt_detect(x_step, method = "pelt", index = dates)
   ev <- data.frame(when = as.Date(c("2020-03-20", "2020-05-01")),
                    what = c("policy change", "supply shock"))
@@ -90,6 +94,7 @@ test_that("cpt_annotate_events reports all three outcomes", {
 })
 
 test_that("cpt_report assembles a reproducible artifact", {
+  skip_on_cran()
   fit <- cpt_detect(x_step, method = "pelt", index = dates)
   rep_md <- cpt_report(fit, session = FALSE)
   expect_type(rep_md, "character")
@@ -125,6 +130,7 @@ test_that("cpt_gt builds a table with or without gt", {
 })
 
 test_that("cpt_benchmark scores a grid and survives a failing engine", {
+  skip_on_cran()
   ds <- cpt_datasets(n = 200, seed = 1, names = c("step", "teeth"))
   bm <- cpt_benchmark(ds, methods = c("pelt", "amoc"), progress = FALSE)
   expect_s3_class(bm, "ggcpt_benchmark")
@@ -225,6 +231,7 @@ test_that("an alarm before the change is a false alarm, not a detection", {
 })
 
 test_that("cpt_power reports power with a Monte Carlo error", {
+  skip_on_cran()
   pw <- cpt_power(n = 200, jump = c(0.2, 3), n_sim = 20, seed = 1,
                   parallel = FALSE)
   expect_s3_class(pw, "ggcpt_power")
@@ -239,6 +246,7 @@ test_that("cpt_power reports power with a Monte Carlo error", {
 })
 
 test_that("cpt_min_detectable brackets the target power", {
+  skip_on_cran()
   md <- cpt_min_detectable(n = 200, n_sim = 20, range = c(0.2, 4),
                            max_iter = 4, seed = 1)
   expect_s3_class(md, "ggcpt_min_detectable")
@@ -337,6 +345,7 @@ test_that("cpt_load_tcpd needs the network and is not run here", {
 })
 
 test_that("ggcpt_interactive offers both renderers", {
+  skip_on_cran()
   fit <- cpt_detect(x_step, method = "pelt")
   skip_if_not_installed("ggiraph")
   expect_s3_class(ggcpt_interactive(fit, engine = "ggiraph"), "girafe")
@@ -345,6 +354,7 @@ test_that("ggcpt_interactive offers both renderers", {
 })
 
 test_that("the progressr path works with and without a handler", {
+  skip_on_cran()
   skip_if_not_installed("progressr")
   ds <- cpt_datasets(n = 200, seed = 1, names = c("step", "teeth"))
   # progress = TRUE is the default and was otherwise never exercised:
@@ -399,6 +409,7 @@ test_that("the e-detector respects its average-run-length bound", {
 })
 
 test_that("cpt_confint reports an un-re-runnable result in its own terms", {
+  skip_on_cran()
   # A result assembled from outside cannot be bootstrapped, because the
   # bootstrap re-runs the detector by name. Saying so in terms of
   # `method = "auto"` beats complaining about a bootstrap the caller never
@@ -435,6 +446,7 @@ test_that("consensus clustering anchors on the first member", {
 })
 
 test_that("subsetting a result tibble drops the class when it must", {
+  skip_on_cran()
   set.seed(1)
   ds <- list(a = list(series = c(rnorm(60), rnorm(60, 4)),
                       annotations = list(60)),
@@ -575,6 +587,7 @@ test_that("cpt_benchmark accepts `changepoints` and warns when truth is missing"
 })
 
 test_that("cpt_batch(keep_fit = FALSE) drops the engine fits and nothing else", {
+  skip_on_cran()
   set.seed(41)
   X <- cbind(a = c(stats::rnorm(60), stats::rnorm(60, 5)),
              b = c(stats::rnorm(60), stats::rnorm(60, -5)))
@@ -645,6 +658,7 @@ test_that("the monitor API rejects the inputs that would score nonsense", {
 # ---------------------------------------------------------------------------
 
 test_that("tidy() works on every result class that offers it", {
+  skip_on_cran()
   # The name used to say "every result class the package returns", which
   # overstated it: `ggcpt_stability` has no tidy() route and its own help
   # says so ("Methods: print() and autoplot()"). It is the only result
@@ -752,6 +766,7 @@ test_that("detection leaves no global state behind", {
 })
 
 test_that("a monitor fed one at a time equals cpt_replay and a batched feed", {
+  skip_on_cran()
   set.seed(84)
   base <- stats::rnorm(150)
   stream <- c(stats::rnorm(120), stats::rnorm(180, 3.5))
@@ -875,6 +890,7 @@ test_that("knee_point finds the corner and refuses to invent one", {
 })
 
 test_that("cpt_annotate_events adds cp_index only when there is an index", {
+  skip_on_cran()
   # The column used to be created unconditionally and filled with a bare
   # `NA`, so the same column was a Date on an indexed fit and a *logical*
   # on an unindexed one, and every unindexed result carried a mystery
@@ -914,6 +930,7 @@ test_that("cpt_annotate_events adds cp_index only when there is an index", {
 })
 
 test_that("a bad argument value is reported against the argument the caller passed", {
+  skip_on_cran()
   # Sweeping every numeric/logical-defaulted argument of the exported
   # non-detector functions with NA, Inf, -1, 0, a length-2 vector and a
   # string, and asking whether the resulting error names *that* argument,
@@ -1122,6 +1139,7 @@ test_that("streaming one observation at a time equals a bulk update", {
 })
 
 test_that("the panel layer refuses what cpt_detect() refuses", {
+  skip_on_cran()
   # Sweeping cpt_batch() and cpt_benchmark() over collections with a bad
   # member found two gaps.
   set.seed(41)
