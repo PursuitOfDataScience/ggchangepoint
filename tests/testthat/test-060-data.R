@@ -87,9 +87,20 @@ test_that("na_action = \"engine\" passes gaps only to engines that model them", 
   tab <- cpt_methods()
   expect_true(all(tab$na_handling %in% c(NA, "native", "compacts",
                                          "silent_loss", "reject")))
-  skip_if_not(engine_usable("Rbeast"))
-  fit <- cpt_detect(x, method = "beast", na_action = "engine", seed = 1)
+  # segmented, not beast, the other native engine: Rbeast (<= 1.0.2) can
+  # return an all-NaN fit once an earlier call in the session used another
+  # series length (measured in fresh processes: 0 of 16 first calls, 4 of 16
+  # after a 200-point fit), and a CI run of this test hit exactly that. The
+  # routing is the same for both, and beast's own tests deal with the defect.
+  skip_if_not(engine_usable("segmented"))
+  expect_no_warning(
+    fit <- cpt_detect(x, method = "segmented", na_action = "engine"),
+    class = "ggchangepoint_dropped_input")
   expect_equal(nrow(fit$data), 120)
+  expect_true(all(is.na(fit$data$value[c(20, 80)])))
+  # The fitted signal keeps its place: NA at the gaps, finite elsewhere.
+  expect_equal(which(is.na(fit$data$fitted)), c(20L, 80L))
+  expect_true(all(is.finite(fit$data$fitted[-c(20, 80)])))
 })
 
 test_that("values that are not a series are refused rather than coerced", {

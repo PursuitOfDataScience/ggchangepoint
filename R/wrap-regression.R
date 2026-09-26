@@ -285,6 +285,17 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
     }
   }
 
+  # Under `na_action = "engine"` the series has gaps, and lm()'s default
+  # na.omit fits the observed rows only, so the fitted signal came back
+  # shorter than the series and ggcpt_build() dropped it with a warning.
+  # Put it back in place, NA at the gaps; the estimate is untouched.
+  fitted_vals <- as.numeric(stats::fitted(fit))
+  observed <- !is.na(data_vec)
+  if (!all(observed) && length(fitted_vals) == sum(observed)) {
+    fitted_vals <- replace(rep(NA_real_, length(data_vec)), observed,
+                           fitted_vals)
+  }
+
   res <- ggcpt_build(
     data_vec, cp_indices,
     method = "segmented",
@@ -295,7 +306,7 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
     extra_cp_cols = if (!is.null(ci_lower)) {
       list(ci_lower = ci_lower, ci_upper = ci_upper)
     },
-    fitted = as.numeric(stats::fitted(fit))
+    fitted = fitted_vals
   )
   if (family != "gaussian") res$family <- family
   res$coefficients <- segmented_coefficients(fit, ".t", c(.t = "time"),

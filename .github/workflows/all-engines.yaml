@@ -80,7 +80,13 @@ jobs:
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           dependencies: '"all"'
-          extra-packages: any::devtools,
+          # local::. installs this checkout too. devtools::test() runs the
+          # suite from source, but a future::multisession worker loads
+          # ggchangepoint from the library, and the restored dependency
+          # cache (pkgdown's shares the key prefix) held the previous
+          # release there: the first run's workers had 0.5.0 and failed
+          # with 'could not find function "cpt_warn"'.
+          extra-packages: any::devtools, local::.,
             url::https://cran.r-project.org/src/contrib/Archive/fpop/fpop_2019.08.26.tar.gz
           cache-version: 1
 
