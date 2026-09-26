@@ -478,6 +478,9 @@ cpt_report <- function(object, format = c("md", "text", "gt", "json"),
   if (format == "json") {
     out <- as_json(object)
     if (!is.null(file)) {
+      # The same checks as the other formats: `file = ""` or a directory
+      # reached writeLines() unexamined.
+      validate_report_path(file)
       writeLines(out, file)
       return(invisible(out))
     }

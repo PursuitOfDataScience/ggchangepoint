@@ -25,9 +25,11 @@ stat_cpt_region(
 
 \item{position}{Position adjustment.}
 
-\item{...}{Further arguments: those \code{cpt_detect()} takes (for
-example \code{alpha} for NSP's level) go to the detector, the rest to
-the geom.}
+\item{...}{Further arguments: those the detector takes (for example
+\code{alpha} for NSP's level, or \code{seed}) go to it, the rest to the
+geom. With \code{method = "nsp"} that makes \code{alpha} the level, so
+set the band's transparency through its fill instead
+(\code{fill = ggplot2::alpha("steelblue", 0.3)}).}
 
 \item{method}{Detection method: \code{"nsp"} (the default) or any method
 whose result carries regions or location intervals (see

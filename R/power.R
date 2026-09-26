@@ -376,7 +376,12 @@ autoplot.ggcpt_power <- function(object, ...) {
 #' @inheritParams cpt_power
 #' @param power Target detection probability. Defaults to \code{0.8}.
 #' @param range Search range for the change size, in standard deviations.
-#'   Defaults to \code{c(0.1, 5)}.
+#'   Defaults to \code{c(0.1, 5)}. With a non-Gaussian \code{family} passed
+#'   through \code{...} to \code{cpt_power()}, the change is in the
+#'   family's own parameter and the default follows it: \code{c(0.1, 5)}
+#'   times the square root of the baseline rate for \code{"poisson"}, up to
+#'   a probability of 0.99 for \code{"binomial"}, and \code{c(0.1, 5)}
+#'   times the baseline mean for \code{"exponential"}.
 #' @param n_sim Replicates per evaluation. Defaults to \code{100}; the answer
 #'   is only as precise as this makes it, and the returned object records the
 #'   Monte Carlo interval at the solution.
@@ -409,11 +414,34 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
   # before the search has spent a single simulation on a value it will
   # reject.
   validate_scalar(sigma, "sigma", min = 0)
+  # A non-Gaussian family (for cpt_power(), through `...`) changes its own
+  # parameter, so the sd-scale default range asked binomial data for a
+  # probability of 5.3 and failed, and the answer was printed in
+  # "standard deviations" of a rate.
+  extra <- list(...)
+  family <- "gaussian"
+  baseline <- NULL
+  if (!is.null(extra$family) && !identical(extra$family, "gaussian")) {
+    family <- cpt_match_arg(extra$family, c("gaussian", "poisson", "binomial",
+                                            "exponential"), name = "family")
+    baseline <- extra$baseline %||% switch(family, poisson = 5,
+                                           binomial = 0.3, exponential = 1)
+    if (missing(range)) {
+      range <- switch(family,
+        poisson = c(0.1, 5) * sqrt(max(baseline, 0.1)),
+        binomial = c(0.01, max(0.02, 0.99 - baseline)),
+        exponential = c(0.1, 5) * baseline)
+    }
+  }
   if (length(range) != 2 || range[1] >= range[2] || range[1] <= 0) {
     cpt_abort("`range` must be two increasing positive numbers.",
               class = "bad_argument")
   }
   local_seed(seed)
+  md_result <- function(...) {
+    structure(list(..., family = family, baseline = baseline),
+              class = "ggcpt_min_detectable")
+  }
 
   eval_at <- function(j) {
     r <- cpt_power(n = n, jump = j, sigma = sigma, method = method,
@@ -438,27 +466,25 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
   lo <- range[1]; hi <- range[2]
   trace <- list(eval_at(lo), eval_at(hi))
   if (trace[[2]]["power"] < power) {
-    out <- structure(
-      list(jump = NA_real_, achieved_power = trace[[2]][["power"]],
-           mc_se = trace[[2]][["mc_se"]], target = power,
-           trace = tibble::as_tibble(do.call(rbind, trace)),
-           note = paste0("Even the largest change tried (", hi,
-                         " sd) reached only ",
-                         format(trace[[2]][["power"]], digits = 3),
-                         " power. Widen `range`, lengthen the series, or ",
-                         "loosen `tolerance`.")),
-      class = "ggcpt_min_detectable")
+    out <- md_result(
+      jump = NA_real_, achieved_power = trace[[2]][["power"]],
+      mc_se = trace[[2]][["mc_se"]], target = power,
+      trace = tibble::as_tibble(do.call(rbind, trace)),
+      note = paste0("Even the largest change tried (", format(signif(hi, 3)),
+                    if (family == "gaussian") " sd", ") reached only ",
+                    format(trace[[2]][["power"]], digits = 3),
+                    " power. Widen `range`, lengthen the series, or ",
+                    "loosen `tolerance`."))
     return(out)
   }
   if (trace[[1]]["power"] >= power) {
-    out <- structure(
-      list(jump = lo, achieved_power = trace[[1]][["power"]],
-           mc_se = trace[[1]][["mc_se"]], target = power,
-           trace = tibble::as_tibble(do.call(rbind, trace)),
-           note = paste0("The smallest change tried (", lo,
-                         " sd) already reaches the target; the answer is ",
-                         "at or below it.")),
-      class = "ggcpt_min_detectable")
+    out <- md_result(
+      jump = lo, achieved_power = trace[[1]][["power"]],
+      mc_se = trace[[1]][["mc_se"]], target = power,
+      trace = tibble::as_tibble(do.call(rbind, trace)),
+      note = paste0("The smallest change tried (", format(signif(lo, 3)),
+                    if (family == "gaussian") " sd", ") already reaches ",
+                    "the target; the answer is at or below it."))
     return(out)
   }
 
@@ -476,12 +502,9 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
     }
   }
 
-  structure(
-    list(jump = best, achieved_power = best_row[["power"]],
-         mc_se = best_row[["mc_se"]], target = power,
-         trace = tibble::as_tibble(do.call(rbind, trace)),
-         note = NULL),
-    class = "ggcpt_min_detectable")
+  md_result(jump = best, achieved_power = best_row[["power"]],
+            mc_se = best_row[["mc_se"]], target = power,
+            trace = tibble::as_tibble(do.call(rbind, trace)), note = NULL)
 }
 
 #' @rdname cpt_min_detectable
@@ -491,9 +514,16 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
 print.ggcpt_min_detectable <- function(x, ...) {
   cat("Smallest detectable change\n")
   cat("  Target power:      ", format(x$target), "\n", sep = "")
+  fam <- x$family %||% "gaussian"
+  unit <- if (fam == "gaussian") " standard deviations" else {
+    paste0(" in the ", switch(fam, poisson = "rate",
+                              binomial = "probability",
+                              exponential = "mean waiting time"),
+           " (from a baseline of ", format(signif(x$baseline, 3)), ")")
+  }
   cat("  Change size:       ",
       if (is.na(x$jump)) "not reached" else paste0(format(x$jump, digits = 3),
-                                                   " standard deviations"),
+                                                   unit),
       "\n", sep = "")
   cat("  Achieved power:    ", format(x$achieved_power, digits = 3),
       " (Monte Carlo SE ", format(x$mc_se, digits = 2), ")\n", sep = "")

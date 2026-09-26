@@ -112,7 +112,7 @@ cpt_consensus <- function(x, methods = c("pelt", "binseg", "amoc"),
   }
   series <- as_cpt_series(x, index = index)
   data_vec <- as_uni_vector(series$values, "cpt_consensus")
-  validate_data(data_vec)
+  validate_for_detect(data_vec, list(...))
   n <- length(data_vec)
 
   local_seed(seed)
@@ -495,6 +495,12 @@ cpt_recommend <- function(dimension = c("univariate", "multivariate"),
   supports <- vapply(reg$supports, function(s) {
     identical(change_in, "mean") || change_in %in% s
   }, logical(1))
+  # A break in a regression is what the formula interface detects, and the
+  # methods that take one list "regression" under no `supports`: asked for
+  # it (or handed a formula fit), the recommender found nothing.
+  regression <- identical(change_in, "regression") &&
+    dimension == "univariate"
+  if (regression) supports <- supports | (reg$formula %in% TRUE)
   reg <- reg[supports, , drop = FALSE]
   if (dimension == "multivariate") {
     reg <- reg[reg$multivariate, , drop = FALSE]
@@ -558,7 +564,9 @@ cpt_recommend <- function(dimension = c("univariate", "multivariate"),
   regime <- switch(noise, iid = "iid", heavy = "heavy", autocorrelated = "ar1",
                    heteroscedastic = "hetero")
   bench <- measured_data("cpt_noise_benchmark")
-  if (!is.null(bench)) {
+  # The benchmark measured mean shifts in a series; it says nothing about a
+  # break in a regression, so it does not score one.
+  if (!is.null(bench) && !regression) {
     b <- bench[bench$regime == regime, , drop = FALSE]
     for (i in seq_len(k)) {
       rows <- b[b$method == reg$method[i], , drop = FALSE]
@@ -668,7 +676,8 @@ cpt_recommend <- function(dimension = c("univariate", "multivariate"),
   installed <- isTRUE_vec(reg$installed)
   score[installed] <- score[installed] + 0.1
 
-  calls <- paste0("cpt_detect(x, method = \"", reg$method, "\"", call_args,
+  calls <- paste0(if (regression) "cpt_detect(y ~ x, data = d, method = \"" else
+                    "cpt_detect(x, method = \"", reg$method, "\"", call_args,
                   ")")
   out <- tibble::tibble(
     method = reg$method, engine = reg$engine, installed = reg$installed,

@@ -55,6 +55,7 @@ cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
     method = paste("the penalty path is computed by PELT; the other search",
                    "methods do not produce one"),
     pen.value = "use `pen_min` and `pen_max` to set the interval to sweep"))
+  obs_pos <- NULL
   if (is_ggcpt(x)) {
     # The series a fit carries, as every other post-detection tool reads
     # it; the fit's own change type when the caller did not choose one.
@@ -67,6 +68,14 @@ cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
       change_in <- scalar_chr(x$change_in)
     }
     x <- x$data$value
+    # A fit made with `na_action = "omit"` keeps its gaps: the sweep runs on
+    # the observed values, and its segmentations come back in the original
+    # positions. It used to stop at "`x` must be finite".
+    if (anyNA(x)) {
+      full_series <- x
+      obs_pos <- which(!is.na(x))
+      x <- x[obs_pos]
+    }
   }
   change_in <- cpt_match_arg(change_in)
 
@@ -154,11 +163,17 @@ cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
     cpts = cpts_list
   )
   solutions <- solutions[order(solutions$n_cpts), , drop = FALSE]
+  data_tbl <- tibble::tibble(index = seq_len(n), value = data_vec)
+  if (!is.null(obs_pos)) {
+    solutions$cpts <- lapply(solutions$cpts, function(cp) obs_pos[cp])
+    data_tbl <- tibble::tibble(index = seq_along(full_series),
+                               value = full_series)
+  }
 
   structure(
     list(
       solutions = solutions,
-      data = tibble::tibble(index = seq_len(n), value = data_vec),
+      data = data_tbl,
       change_in = change_in,
       pen_range = c(pen_min, pen_max),
       fit = fit,

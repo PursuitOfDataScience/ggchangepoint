@@ -105,7 +105,14 @@ cpt_influence <- function(object, type = c("delete", "outlier"),
   mean_cpt <- inherits(object$fit, "cpt") && identical(
     tryCatch(changepoint::cpttype(object$fit), error = function(e) NA),
     "mean")
-  can_native <- mean_cpt &&
+  # changepoint.influence re-fits `object$fit`, the engine's own object.
+  # For a fit with gaps that object was fitted on the compacted series (its
+  # rows did not line up with the result's, and the arithmetic recycled),
+  # and for a `fixed`, `within` or `min_effect` fit it is not the model the
+  # result reports, so those are recomputed instead.
+  constrained <- length(setdiff(names(rerun_constraints(object)),
+                                "min_segment")) > 0L
+  can_native <- mean_cpt && !constrained &&
     requireNamespace("changepoint.influence", quietly = TRUE)
   if (engine == "changepoint.influence" && !can_native) {
     cpt_abort("`engine = \"changepoint.influence\"` needs a change-in-mean ",
@@ -210,28 +217,36 @@ influence_recompute <- function(object, type, subset, outlier_sd, seed = NULL,
   #
   # Now also its penalty, a change type cpt_detect() can be asked for, and
   # a refusal for a multivariate result: see rerun_dots().
+  refuse_unrerunnable(object, "cpt_influence()")
   dots <- rerun_dots(object, list(...), "cpt_influence()")
   orig_cp <- object$changepoints$cp
   fitted_step <- rep(object$segments$param_estimate, times = object$segments$n)
   orig_param <- fitted_step
-  resid_sd <- stats::sd(y - fitted_step)
-  if (!is.finite(resid_sd) || resid_sd == 0) resid_sd <- stats::sd(y)
+  resid_sd <- stats::sd(y - fitted_step, na.rm = TRUE)
+  if (!is.finite(resid_sd) || resid_sd == 0) resid_sd <- stats::sd(y, na.rm = TRUE)
   if (!is.finite(resid_sd) || resid_sd == 0) resid_sd <- 1
+  # A missing observation has nothing to delete or to replace with an
+  # outlier, so a fit with gaps is perturbed at its observed positions.
+  subset <- subset[!is.na(y[subset])]
 
   has_future <- requireNamespace("future", quietly = TRUE) &&
     requireNamespace("future.apply", quietly = TRUE) &&
     !inherits(future::plan(), "sequential")
 
   run_one <- function(i) {
+    dots_i <- dots
     if (type == "delete") {
       pert <- y[-i]
+      # Positions after the deleted one move down by one, and so do a
+      # fixed changepoint and a window bound.
+      dots_i <- map_rerun_positions(dots, function(p) p - (p >= i), n - 1L)
     } else {
       pert <- y
       pert[i] <- fitted_step[i] + outlier_sd * resid_sd
     }
     err <- NULL
     fit <- tryCatch(do.call(cpt_detect,
-                            c(list(pert, method = method), dots)),
+                            c(list(pert, method = method), dots_i)),
                     error = function(e) {
                       err <<- conditionMessage(e)
                       NULL
@@ -599,13 +614,21 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
   # rerun_dots().
   dots_ci <- list(...)
   if (is_ggcpt(x)) {
+    refuse_unrerunnable(x, "cpt_sensitivity()")
     method <- x$method
-    user_pen <- !is.null(dots_ci[["penalty", exact = TRUE]])
+    user_args <- names(dots_ci)
     dots_ci <- rerun_dots(x, dots_ci, "cpt_sensitivity()")
-    if (!user_pen && "penalty" %in% names(over)) dots_ci$penalty <- NULL
+    # What the grid sweeps is not also replayed from the fit (the penalty,
+    # a `min_segment`, ...): passed twice, every setting failed with
+    # "formal argument matched by multiple actual arguments".
+    if (is.list(over)) {
+      for (nm in setdiff(intersect(names(over), names(dots_ci)), user_args)) {
+        dots_ci[[nm]] <- NULL
+      }
+    }
     series <- x$data$value
   } else {
-    validate_data(x)
+    validate_for_detect(x, dots_ci)
     series <- as_uni_vector(x, method)
   }
   if (!is.list(over) || length(over) == 0 || is.null(names(over)) ||

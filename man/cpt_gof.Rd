@@ -3,11 +3,14 @@
 \name{cpt_gof}
 \alias{cpt_gof}
 \alias{print.ggcpt_gof}
+\alias{tidy.ggcpt_gof}
 \title{Goodness of fit, segment by segment}
 \usage{
 cpt_gof(fit, lag = NULL)
 
 \method{print}{ggcpt_gof}(x, ...)
+
+\method{tidy}{ggcpt_gof}(x, ...)
 }
 \arguments{
 \item{fit}{A \code{ggcpt} object.}

@@ -376,9 +376,11 @@ unique0_rows <- function(d) {
 #' @param method Detection method: \code{"nsp"} (the default) or any method
 #'   whose result carries regions or location intervals (see
 #'   \code{cpt_methods()$ci}).
-#' @param ... Further arguments: those \code{cpt_detect()} takes (for
-#'   example \code{alpha} for NSP's level) go to the detector, the rest to
-#'   the geom.
+#' @param ... Further arguments: those the detector takes (for example
+#'   \code{alpha} for NSP's level, or \code{seed}) go to it, the rest to the
+#'   geom. With \code{method = "nsp"} that makes \code{alpha} the level, so
+#'   set the band's transparency through its fill instead
+#'   (\code{fill = ggplot2::alpha("steelblue", 0.3)}).
 #' @return A ggplot layer.
 #' @export
 #' @family ggplot2 layers
@@ -391,15 +393,35 @@ stat_cpt_region <- function(mapping = NULL, data = NULL, geom = GeomCptRegion,
                             position = "identity", ..., method = "nsp",
                             na.rm = FALSE, show.legend = NA) {
   dots <- list(...)
-  geom_args <- c("alpha", "fill", "colour", "color", "linewidth",
-                 "linetype")
-  detect_args <- dots[setdiff(names(dots), geom_args)]
+  # The rule `...` documents: an argument the detector takes goes to it,
+  # and a styling argument it does not take goes to the geom. A fixed list
+  # of styling names sent NSP's `alpha` (its significance level) to the
+  # band's transparency, so the level could not be set at all.
+  visual <- c("alpha", "fill", "colour", "color", "linewidth", "linetype")
+  takes <- detector_arg_names(method)
+  to_geom <- names(dots) %in% visual & !names(dots) %in% takes
   ggplot2::layer(
     stat = StatCptRegion, data = data, mapping = mapping, geom = geom,
     position = position, show.legend = show.legend, inherit.aes = TRUE,
-    params = c(list(method = method, detect_args = detect_args,
-                    na.rm = na.rm), dots[intersect(names(dots), geom_args)])
+    params = c(list(method = method, detect_args = dots[!to_geom],
+                    na.rm = na.rm), dots[to_geom])
   )
+}
+
+# Internal: the argument names a built-in method's detection accepts
+# (cpt_detect()'s own, the wrapper's and its engine's), or none for a name
+# that is not a built-in method.
+#' @noRd
+detector_arg_names <- function(method) {
+  reg <- builtin_registry()
+  if (!is.character(method) || length(method) != 1L || is.na(method)) {
+    return(character(0))
+  }
+  i <- pmatch(method, reg$method)
+  if (is.na(i)) return(character(0))
+  tryCatch(unique(c(setdiff(names(formals(cpt_detect)), "..."),
+                    method_arg_names(reg$method[i], reg$wrapper[i]))),
+           error = function(e) character(0))
 }
 
 #' @export

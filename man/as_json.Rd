@@ -53,9 +53,10 @@ does not apply is \code{null}, so a reader never has to test for a key.
   \item{\code{cp_convention}}{\code{"left"}: a changepoint is the last
     observation of its segment.}
   \item{\code{n}}{the series length.}
-  \item{\code{index}}{\code{{"class", "label"}} of the time index, or
-    \code{null}. Dates are written as ISO 8601 strings and timestamps
-    with their offset.}
+  \item{\code{index}}{\code{{"class", "label", "tz"}} of the time
+    index, or \code{null}. Dates are written as ISO 8601 strings and
+    timestamps with their offset; \code{tz} is a timestamp index's time
+    zone (\code{null} otherwise).}
   \item{\code{changepoints}}{an array of objects, one per changepoint:
     \code{cp} (position) and \code{cp_value}, with \code{cp_index} when
     there is an index, and every engine-specific column
@@ -70,8 +71,10 @@ does not apply is \code{null}, so a reader never has to test for a key.
   \item{\code{assumptions}}{the \code{cpt_assumptions()} rows, or
     \code{null}.}
   \item{\code{call}}{the call that made the result, as text.}
-  \item{\code{data}}{\code{{"index", "value", "fitted"}} arrays, or
-    \code{null}.}
+  \item{\code{data}}{\code{{"index", "value", "fitted",
+    "coordinates"}} arrays, or \code{null}. \code{coordinates} is an
+    object with one array per coordinate of a multivariate result
+    (\code{null} for a single series), whose first is \code{value}.}
 }
 }
 

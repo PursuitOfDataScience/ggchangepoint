@@ -171,7 +171,8 @@ detect_regression <- function(spec, method, change_in, penalty, family,
   res$coefficients <- coefs
   res$data$fitted <- piecewise_fitted(y, X, res$changepoints$cp, fam$family)
   res$regression <- list(formula = spec$formula, response = spec$response,
-                         terms = colnames(X), family = fam$family, X = X)
+                         terms = colnames(X), family = fam$family, X = X,
+                         variables = formula_variables(spec, n))
   res$family <- fam$family
   res$runtime <- proc.time()[["elapsed"]] - t0
   if (!is.null(na_info)) res <- restore_missing(res, na_info)
@@ -179,6 +180,26 @@ detect_regression <- function(spec, method, change_in, penalty, family,
   warn_implausible_count(res)
   if (!keep_fit) res$fit <- NULL else warn_large_fit(res)
   res
+}
+
+# Internal: the untransformed variables the formula's right-hand side names,
+# one row per observation, so a segment model can be the formula itself.
+# The design matrix alone holds `log(z)` and the dummy columns of a factor,
+# on which `.y ~ log(z)` or `.y ~ z + f` cannot be evaluated: every segment
+# model of such a fit failed and was silently NULL.
+#' @noRd
+formula_variables <- function(spec, n) {
+  vars <- all.vars(spec$formula[[3]])
+  env <- environment(spec$formula) %||% globalenv()
+  cols <- lapply(vars, function(v) {
+    val <- tryCatch(eval(as.name(v), spec$vars_data, env),
+                    error = function(e) NULL)
+    if (is.atomic(val) && length(val) == n) val else NULL
+  })
+  names(cols) <- vars
+  cols <- Filter(Negate(is.null), cols)
+  if (!length(cols)) return(NULL)
+  as.data.frame(cols, optional = TRUE, stringsAsFactors = FALSE)
 }
 
 # Internal: the model matrix as a data frame an engine's formula can read,
@@ -331,8 +352,8 @@ tidy_coefficients <- function(x, conf_level = 0.95) {
     if (!is.null(x$na_map)) cps <- match(cps, x$na_map)
     out <- segment_coefficients(y, X, cps, x$regression$family, conf_level)
     if (!is.null(x$na_map)) {
-      out$start <- x$na_map[out$start]
-      out$end <- x$na_map[out$end]
+      out$start <- map_segment_start(out$start, x$na_map)
+      out$end <- map_segment_end(out$end, x$na_map, nrow(x$data))
     }
     return(out)
   }
@@ -448,6 +469,11 @@ segment_model_frame <- function(fit, data = NULL) {
       names(covs) <- colnames(X)
       keep <- setdiff(names(covs), "(Intercept)")
       frame <- cbind(frame, covs[, keep, drop = FALSE])
+      vars <- fit$regression$variables
+      if (is.data.frame(vars) && nrow(vars) == n) {
+        add <- setdiff(names(vars), names(frame))
+        if (length(add)) frame <- cbind(frame, vars[, add, drop = FALSE])
+      }
     } else if (!is.null(fit$fit$model)) {
       mf <- fit$fit$model
       keep <- setdiff(names(mf), c(".y", names(frame)))
@@ -575,6 +601,20 @@ predict.ggcpt <- function(object, newdata = NULL, h = 1, segment = "last",
   by_horizon <- is.null(newdata)
   if (by_horizon) {
     validate_scalar(h, "h", min = 1)
+    # A horizon supplies future positions only. A model on covariates needs
+    # their future values, and asking for a horizon without them reached
+    # the model's own predict() as "object 'z' not found".
+    uses <- tryCatch(all.vars(stats::delete.response(stats::terms(m))),
+                     error = function(e) character(0))
+    missing_vars <- setdiff(uses, "time")
+    if (length(missing_vars)) {
+      cpt_abort("The model for segment ", s, " uses ",
+                paste0("`", missing_vars, "`", collapse = ", "), ", so a ",
+                "forecast needs ", if (length(missing_vars) == 1L) "its" else
+                  "their", " future values: pass them as `newdata` (one row ",
+                "per step) instead of `h`.", class = "bad_argument",
+                data = list(variables = missing_vars))
+    }
     newdata <- data.frame(time = n + seq_len(as.integer(h)))
   }
   pred <- tryCatch(
@@ -586,7 +626,12 @@ predict.ggcpt <- function(object, newdata = NULL, h = 1, segment = "last",
                    .lower = unname(pred[, "lwr"]),
                    .upper = unname(pred[, "upr"]))
   } else {
-    p <- stats::predict(m, newdata = newdata, type = "response", ...)
+    p <- tryCatch(
+      stats::predict(m, newdata = newdata, type = "response", ...),
+      error = function(e) {
+        cpt_abort("Could not forecast from the model for segment ", s, ": ",
+                  conditionMessage(e), class = "bad_argument", parent = e)
+      })
     tibble::tibble(.pred = unname(as.numeric(p)))
   }
   if (by_horizon) out <- tibble::add_column(out, time = newdata$time,

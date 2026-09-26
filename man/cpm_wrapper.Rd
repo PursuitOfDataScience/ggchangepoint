@@ -15,8 +15,8 @@ default), \code{"Mood"} (scale), \code{"Lepage"},
 \code{"Kolmogorov-Smirnov"}, \code{"Cramer-von-Mises"}. Parametric:
 \code{"Student"}, \code{"Bartlett"}, \code{"GLR"} (Gaussian),
 \code{"Exponential"} (positive data), \code{"FET"} (Fisher's exact test,
-for 0/1 Bernoulli data; this one also needs a \code{lambda} value passed
-through \code{...}, e.g. \code{lambda = 0.3}).}
+for 0/1 Bernoulli data, with a smoothing \code{lambda} passed through
+\code{...}: \code{0.1}, cpm's default, or \code{0.3}).}
 
 \item{arl0}{Target in-control average run length (how many observations,
   on average, before a false alarm). \pkg{cpm}

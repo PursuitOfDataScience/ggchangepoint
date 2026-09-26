@@ -36,7 +36,12 @@ cpt_min_detectable(
 \item{power}{Target detection probability. Defaults to \code{0.8}.}
 
 \item{range}{Search range for the change size, in standard deviations.
-Defaults to \code{c(0.1, 5)}.}
+Defaults to \code{c(0.1, 5)}. With a non-Gaussian \code{family} passed
+through \code{...} to \code{cpt_power()}, the change is in the
+family's own parameter and the default follows it: \code{c(0.1, 5)}
+times the square root of the baseline rate for \code{"poisson"}, up to
+a probability of 0.99 for \code{"binomial"}, and \code{c(0.1, 5)}
+times the baseline mean for \code{"exponential"}.}
 
 \item{n_sim}{Replicates per evaluation. Defaults to \code{100}; the answer
 is only as precise as this makes it, and the returned object records the

@@ -15,8 +15,8 @@
 #'   \code{"Kolmogorov-Smirnov"}, \code{"Cramer-von-Mises"}. Parametric:
 #'   \code{"Student"}, \code{"Bartlett"}, \code{"GLR"} (Gaussian),
 #'   \code{"Exponential"} (positive data), \code{"FET"} (Fisher's exact test,
-#'   for 0/1 Bernoulli data; this one also needs a \code{lambda} value passed
-#'   through \code{...}, e.g. \code{lambda = 0.3}).
+#'   for 0/1 Bernoulli data, with a smoothing \code{lambda} passed through
+#'   \code{...}: \code{0.1}, cpm's default, or \code{0.3}).
 #' @param arl0 Target in-control average run length (how many observations,
 #'   on average, before a false alarm). \pkg{cpm}
 #'   ships thresholds only for a fixed grid (100, 200, 300, 370, 400, 500,
@@ -80,11 +80,13 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = NULL,
   # 0.4.0 audit found for cpm_type = "GLRAdjusted", on a different argument.
   # Matching the printed text keeps this working if the supported set
   # changes upstream.
+  engine_dots <- cpm_engine_dots(cpm_type, list(...))
   cpm_out <- utils::capture.output(
-    fit <- cpm::processStream(data_vec, cpmType = cpm_type, ARL0 = arl0,
-                              startup = startup, ...)
+    fit <- do.call(cpm::processStream,
+                   c(list(data_vec, cpmType = cpm_type, ARL0 = arl0,
+                          startup = startup), engine_dots))
   )
-  cpm_check_printed_error(cpm_out, arl0, list(...))
+  cpm_check_printed_error(cpm_out, arl0, engine_dots)
   # anything else the engine printed is still the user's to see
   if (length(cpm_out)) cat(cpm_out, sep = "\n")
 
@@ -161,15 +163,21 @@ cpm_types <- function() {
 # other value takes the printed-error path in cpm_check_printed_error().
 #' @noRd
 cpm_check_type <- function(cpm_type, dots) {
-  cpm_type <- cpt_match_arg(cpm_type, cpm_types())
-  if (identical(cpm_type, "FET") && !"lambda" %in% names(dots)) {
-    cpt_abort("`cpm_type = \"FET\"` needs a `lambda` value passed through ",
-               "`...`; ", "cpm has no default for it and fails with an ",
-               "unrelated subscript ", "error when it is missing. Supported ",
-               "values are `lambda = 0.1` and ", "`lambda = 0.3`.",
-              class = "bad_argument")
+  cpt_match_arg(cpm_type, cpm_types())
+}
+
+# Internal: the arguments for cpm's engine calls, with FET's `lambda` set to
+# 0.1 when the caller gave none. That is cpm's own documented default ("If
+# no value is specified, the default value will be 0.1"), which cpm 2.3 does
+# not apply: a missing lambda dies with an unrelated subscript error. It
+# used to be refused here instead, so `cpt_detect(method = "cpm", family =
+# "binomial")`, the call cpt_recommend() suggests for binary data, failed.
+#' @noRd
+cpm_engine_dots <- function(cpm_type, dots) {
+  if (identical(cpm_type, "FET") && is.null(dots[["lambda"]])) {
+    dots$lambda <- 0.1
   }
-  cpm_type
+  dots
 }
 
 # Internal: turn cpm's *printed* threshold complaint into a real error. The

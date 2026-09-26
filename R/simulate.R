@@ -619,6 +619,13 @@ simulate_family <- function(n, changepoints, change_in, params, family,
     cpt_warn("`params` has ", length(params), " value(s) for ", k,
              " segments; the last value is reused, so the extra segments ",
              "carry no actual change.", class = "recycled")
+  } else if (length(params) > k) {
+    # As the Gaussian path says: `changepoints` sets the segments.
+    cpt_warn("`params` has ", length(params), " value(s) but ",
+             length(changepoints), " changepoint(s) make only ", k,
+             " segment(s), so the last ", length(params) - k, " are unused. ",
+             "`changepoints` sets the number of segments, not `params`.",
+             class = "argument_ignored")
   }
   bad <- switch(family,
     poisson = params < 0,
@@ -633,6 +640,7 @@ simulate_family <- function(n, changepoints, change_in, params, family,
   }
   value <- numeric(n)
   seg_id <- integer(n)
+  signal <- numeric(n)
   for (i in seq_len(k)) {
     idx <- starts[i]:ends[i]
     p <- params[min(i, length(params))]
@@ -641,11 +649,15 @@ simulate_family <- function(n, changepoints, change_in, params, family,
       binomial = stats::rbinom(length(idx), 1, p),
       exponential = stats::rexp(length(idx), rate = 1 / p))
     seg_id[idx] <- i
+    signal[idx] <- p
   }
   res <- tibble::tibble(index = seq_len(n), value = value, seg_id = seg_id)
   attr(res, "true_changepoints") <- as.integer(changepoints)
   attr(res, "family") <- family
-  attr(res, "segments") <- tibble::tibble(
+  # The attributes the Gaussian path sets, under the same names: the
+  # segments and the true per-observation parameter.
+  attr(res, "signal") <- signal
+  attr(res, "true_segments") <- tibble::tibble(
     seg_id = seq_len(k), start = starts, end = ends,
     param_estimate = vapply(seq_len(k), function(i) {
       mean(value[starts[i]:ends[i]])

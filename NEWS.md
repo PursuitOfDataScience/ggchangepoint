@@ -215,6 +215,88 @@ Read these first: each changes what an existing call returns.
 - `?ggcpt_compare` and the comparison vignette say plainly what choosing a
   method by its answer does to a p-value.
 
+## Fixes from the pre-release audit
+
+- The tools that re-run a fit (`cpt_confint(method = "bootstrap")`,
+  `cpt_stability()`, `cpt_select()`, `cpt_influence()`,
+  `cpt_sensitivity()`, `cpt_robustness()`, `cpt_effect(method = "split")`
+  and `cpt_verify()`) replay its missing-value handling and constraints
+  (`na_action`, `fixed`, `within`, `min_segment`, `min_effect`). On a fit
+  made with `na_action = "omit"` they failed replicate by replicate, and a
+  fixed changepoint was re-estimated like any other; its bootstrap interval
+  is now the point itself. The bootstraps keep the gaps where they are, and
+  `cpt_test_at()` and `cpt_test_null()` take such a fit.
+- With `na_action = "omit"`, `$constraints` and a regression fit's
+  `$coefficients` are in original positions, like everything else.
+- A `within` window may reach either end of the series; a location that
+  cannot be placed says whether it was missing, not in the index, or
+  before the start. `print()` names the `within`, `min_segment` and
+  `min_effect` of a fit, with how many changepoints each dropped, as it
+  already named `fixed`.
+- `cpt_segment_models()` and `predict()` work for formulas with
+  transformed or factor terms, and `predict()` by horizon on a model with
+  covariates says it needs `newdata`.
+- `cpt_import()` reads back a result with gaps, a timestamp index's time
+  zone and every coordinate of a multivariate result (the JSON gains
+  `index$tz` and `data$coordinates`, the CSV one `value_<name>` column per
+  coordinate).
+- `cpt_test_null()` gives p = 1 on a constant series (CUSUM returned no row
+  and sup-F p = 1e-05), and sup-F refuses fewer than 14 observations.
+- `cpt_test_at(window = )` finds the best split by its likelihood ratio.
+  Its statistic was infinite for any p below 1e-16, so every strong
+  candidate tied and the window's first one won.
+- `cpt_null_power()` simulates a count, binary or waiting-time fit in its
+  own family, and `cpt_min_detectable()` with such a family adapts its
+  search range and reports the change in the family's parameter.
+- `family =` with the default `change_in` goes to the method's native
+  change type (`segmented` fits Poisson slopes), as it does without one.
+- `cpm`'s FET statistic takes cpm's documented default `lambda = 0.1` when
+  none is given, which cpm itself fails to apply, so `cpt_detect(method =
+  "cpm", family = "binomial")`, the call `cpt_recommend()` suggests for
+  binary data, runs.
+- `fcov` and `fmean` rescale the curves before `fChange` sees them:
+  measured on pure noise, `fcov` found 109 changepoints in 120 curves at a
+  thousandth of the units and none at unit scale.
+- `binsegrcpp` takes a `min_segment` longer than its default search had
+  room for; a `min_segment` that leaves no room for a change at all is
+  refused by name, and a `fixed` stretch shorter than two of them is left
+  unsearched instead of failing the fit.
+- The monitors' refusal of a missing value says what a monitor can do
+  with one, not to use `cpt_detect(na_action = "omit")`.
+- `cpt_recommend(change_in = "regression")` (or a formula fit) recommends
+  the formula methods instead of none.
+- `stat_cpt_region()` hands the detector the arguments it takes, so NSP's
+  `alpha` sets its level rather than the band's transparency.
+- A scale-sensitive engine's warning suggests `change_in = "meanvar"` only
+  where the method offers it, and `?cpt_detect` lists `envcpt` and `var`
+  among the scale-sensitive engines, as `cpt_invariances` measured.
+- The irregular-index warning's advice works wherever it fires; it named
+  an argument only `as_cpt_series()` has.
+- Rows of a long data frame with a missing group are left out with a
+  warning instead of becoming a series called "NA".
+- `cpt_consensus()`, `ggcpt_compare()`, `cpt_stability()` and
+  `cpt_sensitivity()` accept a series with gaps when `na_action` is passed
+  through `...`; `cpt_influence()` and `cpt_sensitivity()` refuse a result
+  they cannot re-run before trying.
+- `segmented` keeps its fitted signal under `na_action = "engine"`.
+- `cpt_crops()` and `cpt_scale_space()` take a fit with gaps. The scale
+  space handed them to mosum, which is measured to lose changepoints on a
+  missing value without saying so.
+- For a fit with gaps, what is read from the engine's own object (the
+  detector statistic, the solution path, the posterior profile and the
+  run-length heatmap) is put back in original positions: the engine saw
+  the observed values only, and its positions were read as the series'.
+  A bcp changepoint with posterior probability 0.996 showed as 0.4% of its
+  window's mass.
+- Refused by name: a negative, missing or non-numeric
+  `cpt_penalty("Manual", value = )`, `NA` for a choice argument
+  (`method`, `family`, ...), `method = ""`, and a JSON report's bad `file`.
+- `cpt_simulate(family = )` records `signal` and `true_segments` as the
+  Gaussian path does, and warns when `params` has unused values.
+- The new result classes have `tidy()` methods, as every other result
+  class does: `cpt_effect()`, `cpt_test_at()`, `cpt_assumptions()`,
+  `cpt_gof()`, `cpt_robustness()`, `cpt_verify()` and `cpt_null_power()`.
+
 ## Documentation
 
 - The README is rewritten: one real example (the Nile), the next questions

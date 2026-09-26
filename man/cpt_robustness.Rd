@@ -3,6 +3,7 @@
 \name{cpt_robustness}
 \alias{cpt_robustness}
 \alias{print.ggcpt_robustness}
+\alias{tidy.ggcpt_robustness}
 \alias{autoplot.ggcpt_robustness}
 \title{Does a changepoint survive a change of noise model?}
 \usage{
@@ -17,6 +18,8 @@ cpt_robustness(
 )
 
 \method{print}{ggcpt_robustness}(x, ...)
+
+\method{tidy}{ggcpt_robustness}(x, ...)
 
 \method{autoplot}{ggcpt_robustness}(object, ...)
 }

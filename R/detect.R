@@ -141,7 +141,8 @@
 #'   an index value and one inside as a position).
 #' @param within Windows the changepoints must fall in ("the policy took
 #'   effect sometime in Q2"): a pair \code{c(start, end)}, a list of pairs,
-#'   or a two-column table, in positions or index values. The engine
+#'   or a two-column table, in positions or index values; a bound beyond
+#'   either end of the series is read as that end. The engine
 #'   searches the whole series and changepoints outside every window are
 #'   dropped (recorded in \code{$constraints}); it restricts what is
 #'   reported rather than re-optimising.
@@ -197,13 +198,17 @@
 #' Isolate-Detect, TGUH, CPOP, \code{"bcp"}, \code{"beast"} and the
 #' nonparametric and multivariate methods estimate or cancel the noise scale
 #' internally, and returned the same segmentation at a thousandth, one and
-#' a thousand times the units. Three did not, on the same series:
+#' a thousand times the units. Five did not, on the same series:
 #' \code{"geomcp"} runs PELT on its mapped distance and angle series and so
 #' inherits the sensitivity above; \code{"decafs"} floors its noise
 #' estimate at about 0.03, so it under-segments a series whose noise is
-#' smaller than that; and \code{"bocpd"}'s default prior is on the data's
-#' own scale. At a thousandth of the units the last two found nothing.
-#' Standardising first avoids all three.
+#' smaller than that; \code{"bocpd"}'s default prior is on the data's
+#' own scale; and \code{"envcpt"} and \code{"var"} changed their answer
+#' with the units too (\code{var}'s \code{gamma_set} and \code{lambda_set}
+#' penalise a squared-error loss on an absolute scale). At a
+#' thousandth of the units \code{"decafs"}, \code{"bocpd"} and
+#' \code{"var"} found nothing. Standardising first avoids all five, and
+#' \code{\link{cpt_invariances}} holds the measurement.
 #'
 #' @return A \code{ggcpt} object: a list with \code{changepoints}
 #'   (\code{cp}, \code{cp_value}), \code{segments} (\code{seg_id},
@@ -504,6 +509,15 @@ cpt_detect <- function(x,
         cpt_abort("`min_segment` and `", ms_spec$arg, "` both set the ",
                   "minimum segment length; pass one.", class = "bad_argument")
       }
+      # A change needs a minimum segment on each side. Past that the engine
+      # refused in its own words ("Minimum segment legnth is too large to
+      # include a change in this data") or returned nothing.
+      if (2 * min_segment > n) {
+        cpt_abort("`min_segment = ", format(min_segment), "` leaves no room ",
+                  "for a change in ", n, " observations: a changepoint needs ",
+                  format(min_segment), " on each side.",
+                  class = "short_series", data = list(n = n))
+      }
       derived_extra <- min_segment_translate(method, min_segment, n)
     }
   } else if (!is.null(min_segment)) {
@@ -551,7 +565,8 @@ cpt_detect <- function(x,
 
   t0 <- proc.time()[["elapsed"]]
   if (!is.null(fixed_pos)) {
-    parts <- detect_fixed(x, fixed_pos, run_one)
+    parts <- detect_fixed(x, fixed_pos, run_one,
+                          min_len = max(3, 2 * (min_segment %||% 1)))
     template <- run_template(parts$pieces, method, change_in)
     data_vec <- if (is_mv) as.numeric(as.matrix(x)[, 1]) else as.numeric(x)
     res <- ggcpt_build(
@@ -567,6 +582,9 @@ cpt_detect <- function(x,
   } else {
     res <- run_one(x)
   }
+  # Recorded like the other constraints, so a tool that re-runs this fit
+  # can ask for the same minimum segment (see rerun_constraints()).
+  if (!is.null(min_segment)) res$constraints$min_segment <- min_segment
   if (!is.null(windows)) {
     res$constraints$within <- windows
     res <- apply_within(res, windows)
@@ -1386,7 +1404,10 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01,
   if (type == "Manual") {
     if (is.null(value)) cpt_abort("`value` must be supplied for Manual type.",
                                   class = "bad_argument")
-    return(value)
+    # Returned unchecked, a negative value came back as a "penalty" that
+    # rewards changepoints, and a string or a vector came back as itself.
+    validate_scalar(value, "value", min = 0)
+    return(as.numeric(value))
   }
 
   if (is.null(n)) cpt_abort("`n` must be supplied for ", type, " penalty.",

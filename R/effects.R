@@ -273,11 +273,25 @@ split_effect <- function(fit, level, seed, ...) {
               class = "short_series", data = list(n = n))
   }
   local_seed(seed)
-  refit <- do.call(cpt_detect, c(list(v[odd], method = mname), dots))
+  # The fit's constraints move onto the odd half: a changepoint after
+  # position p is one after odd observation floor((p + 1) / 2), and a
+  # minimum segment halves with the data.
+  half <- map_rerun_positions(dots, function(p) floor((p + 1) / 2),
+                              length(odd))
+  if (!is.null(half$min_segment)) {
+    half$min_segment <- max(1, round(half$min_segment / 2))
+  }
+  refit <- do.call(cpt_detect, c(list(v[odd], method = mname), half))
   # A changepoint after odd observation k (position 2k - 1) falls between
   # full-series positions 2k - 1 and 2k + 1: the even observation 2k is the
   # ambiguous one, and it belongs to neither side's measurement.
-  cps <- 2L * refit$changepoints$cp - 1L
+  rc <- refit$changepoints
+  located <- if ("fixed" %in% names(rc)) rc$cp[!(rc$fixed %in% TRUE)] else
+    rc$cp
+  cps <- 2L * located - 1L
+  # A fixed changepoint was never located, so it is measured where it was
+  # fixed, not where the halving would put it.
+  cps <- sort(unique(c(cps, dots$fixed)))
   cps <- cps[cps >= 1L & cps < n]
   keep <- rep(FALSE, n)
   keep[seq(2L, n, by = 2L)] <- TRUE
@@ -312,6 +326,14 @@ print.ggcpt_effect <- function(x, ...) {
   }
   print(tibble::as_tibble(x), ...)
   invisible(x)
+}
+
+# Every result class has a tidy() method (the 0.5.0 audit's rule); a table
+# result's is the table itself, without the class that prints the caveat.
+#' @rdname cpt_effect
+#' @export
+tidy.ggcpt_effect <- function(x, ...) {
+  tibble::as_tibble(x)
 }
 
 #' @rdname cpt_effect
@@ -423,8 +445,18 @@ cpt_test_at <- function(x, when, window = 0,
     return(test_at_formula(x, data, when, window, span, level, B, seed))
   }
   if (is_ggcpt(x)) {
+    if (n_coordinates(x) > 1L) {
+      cpt_abort("`cpt_test_at()` tests one series, and this fit has ",
+                n_coordinates(x), " coordinates; `$data$value` is only the ",
+                "first. Test a coordinate's column directly.",
+                class = "wrong_dimension")
+    }
     idx <- x$index
     v <- x$data$value
+    # A fit made with `na_action = "omit"` keeps its gaps in `$data`, and
+    # the two-sample tests use the observed values on each side; refusing
+    # them here made every such fit untestable.
+    with_na_allowed(validate_data(v))
   } else {
     series <- as_cpt_series(x, index = index)
     if (is.matrix(series$values) || is.data.frame(series$values)) {
@@ -433,8 +465,8 @@ cpt_test_at <- function(x, when, window = 0,
     }
     v <- as.numeric(series$values)
     idx <- series$index
+    validate_data(v)
   }
-  validate_data(v)
   n <- length(v)
   pos <- effective_position(when, idx, n)
   if (family != "gaussian" && change_in != "mean") {
@@ -456,7 +488,10 @@ cpt_test_at <- function(x, when, window = 0,
     stat_of <- function(vv) {
       s <- vapply(cand, function(p) abs(test_one(p, vv)$statistic_z),
                   numeric(1))
-      s[!is.finite(s)] <- 0
+      # An untestable split (NA) scores nothing; an infinite statistic, a
+      # p-value that underflowed on a strong change, is the strongest
+      # evidence there is and used to be zeroed along with it.
+      s[is.na(s)] <- 0
       s
     }
     obs <- stat_of(v)
@@ -538,8 +573,7 @@ two_sample_test <- function(v, p, change_in, family, span, level) {
     rr <- unname(pt$estimate)
     return(c(out, list(estimate = rr, conf_low = pt$conf.int[1],
                        conf_high = pt$conf.int[2], statistic = sum(b),
-                       statistic_z = abs(log(max(rr, 1e-12))) /
-                         sqrt(1 / max(sum(a), 0.5) + 1 / max(sum(b), 0.5)),
+                       statistic_z = sqrt(split_lr(a, b, "poisson")),
                        p_value = pt$p.value,
                        method = "Exact test of two Poisson rates (rate ratio)")))
   }
@@ -549,7 +583,7 @@ two_sample_test <- function(v, p, change_in, family, span, level) {
     or <- unname(ft$estimate)
     return(c(out, list(estimate = or, conf_low = ft$conf.int[1],
                        conf_high = ft$conf.int[2], statistic = or,
-                       statistic_z = stats::qnorm(1 - ft$p.value / 2),
+                       statistic_z = sqrt(split_lr(a, b, "binomial")),
                        p_value = ft$p.value,
                        method = "Fisher's exact test (odds ratio)")))
   }
@@ -564,17 +598,21 @@ two_sample_test <- function(v, p, change_in, family, span, level) {
             ratio / stats::qf(alpha / 2, 2 * na, 2 * nb))
     return(c(out, list(estimate = ratio, conf_low = ci[1], conf_high = ci[2],
                        statistic = f,
-                       statistic_z = stats::qnorm(1 - min(1, pval) / 2),
+                       statistic_z = sqrt(split_lr(a, b, "exponential")),
                        p_value = min(1, pval),
                        method = "Exact F test of two exponential rates (hazard ratio)")))
   }
   if (change_in == "mean" && family == "l1") {
     wt <- stats::wilcox.test(b, a, conf.int = TRUE, conf.level = level,
                              exact = FALSE)
+    # The rank-sum statistic standardised (normal approximation, no tie
+    # correction): finite at every split, where qnorm(1 - p / 2) was not.
+    w_z <- (unname(wt$statistic) - na * nb / 2) /
+      sqrt(na * nb * (na + nb + 1) / 12)
     return(c(out, list(estimate = unname(wt$estimate),
                        conf_low = wt$conf.int[1], conf_high = wt$conf.int[2],
                        statistic = unname(wt$statistic),
-                       statistic_z = stats::qnorm(1 - wt$p.value / 2),
+                       statistic_z = w_z,
                        p_value = wt$p.value,
                        method = "Wilcoxon rank-sum (location shift)")))
   }
@@ -584,7 +622,7 @@ two_sample_test <- function(v, p, change_in, family, span, level) {
     return(c(out, list(estimate = unname(vt$estimate),
                        conf_low = vt$conf.int[1], conf_high = vt$conf.int[2],
                        statistic = unname(vt$statistic),
-                       statistic_z = stats::qnorm(1 - vt$p.value / 2),
+                       statistic_z = sqrt(split_lr(a, b, "var")),
                        p_value = vt$p.value,
                        method = "F test of two variances (variance ratio)")))
   }
@@ -601,16 +639,52 @@ two_sample_test <- function(v, p, change_in, family, span, level) {
     pval <- stats::pchisq(lr, df = 2, lower.tail = FALSE)
     return(c(out, list(estimate = mean(b) - mean(a), conf_low = NA_real_,
                        conf_high = NA_real_, statistic = lr,
-                       statistic_z = stats::qnorm(1 - pval / 2),
+                       statistic_z = sqrt(max(lr, 0)),
                        p_value = pval,
                        method = "Likelihood ratio, normal mean and variance (chi-squared, 2 df)")))
   }
   ks <- suppressWarnings(stats::ks.test(b, a))
   c(out, list(estimate = unname(ks$statistic), conf_low = NA_real_,
               conf_high = NA_real_, statistic = unname(ks$statistic),
-              statistic_z = stats::qnorm(1 - ks$p.value / 2),
+              statistic_z = unname(ks$statistic) * sqrt(na * nb / (na + nb)),
               p_value = ks$p.value,
               method = "Two-sample Kolmogorov-Smirnov (distribution)"))
+}
+
+# Internal: the likelihood-ratio statistic (-2 log lambda) of a split
+# into `a` and `b` against no split, for the window search's
+# `statistic_z` (its square root). The search takes the candidate where
+# it peaks, which is the maximum-likelihood split. It used
+# qnorm(1 - p / 2), infinite for any p below 1e-16, so every strong
+# candidate tied and the first one won; a Wald z on the rate ratio is
+# finite but peaks past a stretch of zero counts, where one large count
+# joining the "before" side collapses its standard error.
+#' @noRd
+split_lr <- function(a, b, family) {
+  xlogy <- function(x, y) ifelse(x > 0, x * log(y), 0)
+  na <- length(a)
+  nb <- length(b)
+  n <- na + nb
+  lr <- switch(family,
+    poisson = {
+      sa <- sum(a)
+      sb <- sum(b)
+      2 * (xlogy(sa, sa / na) + xlogy(sb, sb / nb) -
+             xlogy(sa + sb, (sa + sb) / n))
+    },
+    binomial = {
+      ll <- function(k, m) xlogy(k, k / m) + xlogy(m - k, (m - k) / m)
+      2 * (ll(sum(a), na) + ll(sum(b), nb) - ll(sum(a) + sum(b), n))
+    },
+    exponential = 2 * (n * log(mean(c(a, b))) - na * log(mean(a)) -
+                         nb * log(mean(b))),
+    var = {
+      va <- mean((a - mean(a))^2)
+      vb <- mean((b - mean(b))^2)
+      if (va <= 0 || vb <= 0) return(NA_real_)
+      n * log((na * va + nb * vb) / n) - na * log(va) - nb * log(vb)
+    })
+  max(lr, 0)
 }
 
 # Internal: a Chow test of a regression at a pre-specified break.
@@ -681,6 +755,12 @@ print.ggcpt_test_at <- function(x, ...) {
       "is needed)\n\n", sep = "")
   print(tibble::as_tibble(x))
   invisible(x)
+}
+
+#' @rdname cpt_test_at
+#' @export
+tidy.ggcpt_test_at <- function(x, ...) {
+  tibble::as_tibble(x)
 }
 
 #' Was a detected change the event you have in mind?

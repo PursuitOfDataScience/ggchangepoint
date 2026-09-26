@@ -172,7 +172,8 @@ an index value and one inside as a position).}
 
 \item{within}{Windows the changepoints must fall in ("the policy took
 effect sometime in Q2"): a pair \code{c(start, end)}, a list of pairs,
-or a two-column table, in positions or index values. The engine
+or a two-column table, in positions or index values; a bound beyond
+either end of the series is read as that end. The engine
 searches the whole series and changepoints outside every window are
 dropped (recorded in \code{$constraints}); it restricts what is
 reported rather than re-optimising.}
@@ -252,13 +253,17 @@ Most other engines are unaffected: SMUCE, WBS, WBS2, NOT, MOSUM,
 Isolate-Detect, TGUH, CPOP, \code{"bcp"}, \code{"beast"} and the
 nonparametric and multivariate methods estimate or cancel the noise scale
 internally, and returned the same segmentation at a thousandth, one and
-a thousand times the units. Three did not, on the same series:
+a thousand times the units. Five did not, on the same series:
 \code{"geomcp"} runs PELT on its mapped distance and angle series and so
 inherits the sensitivity above; \code{"decafs"} floors its noise
 estimate at about 0.03, so it under-segments a series whose noise is
-smaller than that; and \code{"bocpd"}'s default prior is on the data's
-own scale. At a thousandth of the units the last two found nothing.
-Standardising first avoids all three.
+smaller than that; \code{"bocpd"}'s default prior is on the data's
+own scale; and \code{"envcpt"} and \code{"var"} changed their answer
+with the units too (\code{var}'s \code{gamma_set} and \code{lambda_set}
+penalise a squared-error loss on an absolute scale). At a
+thousandth of the units \code{"decafs"}, \code{"bocpd"} and
+\code{"var"} found nothing. Standardising first avoids all five, and
+\code{\link{cpt_invariances}} holds the measurement.
 }
 
 \examples{

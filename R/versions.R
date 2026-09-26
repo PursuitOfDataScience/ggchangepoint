@@ -89,8 +89,10 @@ version_drift <- function(object) {
 #'
 #' @details
 #' The re-run uses the series stored on the result, its method, the change
-#' type it can be asked for, its penalty, and every engine argument of the
-#' original call that was written as a literal (\code{seed = 42},
+#' type it can be asked for, its penalty and family, the missing-value
+#' handling and constraints it recorded (\code{na_action}, \code{fixed},
+#' \code{within}, \code{min_segment}, \code{min_effect}), and every engine
+#' argument of the original call that was written as a literal (\code{seed = 42},
 #' \code{n_intervals = 500}). An argument written as a variable cannot be
 #' recovered from the object, and is listed in \code{not_recovered}; pass
 #' it again through \code{...} if it mattered.
@@ -136,6 +138,17 @@ cpt_verify <- function(object, ..., tolerance = 0) {
   dots <- list(...)
   replay <- replayable_call_args(object$call)
   args <- utils::modifyList(replay$args, dots)
+  # The constraints the result recorded, in positions. They win over the
+  # call's literals for `fixed` and `within`, which may be index values
+  # (`fixed = 1898` on a ts) that mean nothing to a refit given the bare
+  # series, and they recover what the call wrote as a variable.
+  cons <- rerun_constraints(object)
+  for (nm in setdiff(names(cons), names(dots))) {
+    if (nm %in% c("fixed", "within") || is.null(args[[nm]])) {
+      args[[nm]] <- cons[[nm]]
+    }
+  }
+  replay$not_recovered <- setdiff(replay$not_recovered, names(cons))
   if (is.null(args[["change_in", exact = TRUE]])) {
     ci <- rerun_change_in(object)
     if (!is.null(ci)) args$change_in <- ci
@@ -143,6 +156,11 @@ cpt_verify <- function(object, ..., tolerance = 0) {
   if (is.null(args[["penalty", exact = TRUE]])) {
     pen <- rerun_penalty(object)
     if (!is.null(pen)) args$penalty <- pen
+  }
+  if (is.null(args[["family", exact = TRUE]]) && !is.null(object$family) &&
+      is.null(registry_get(method))) {
+    args$family <- object$family
+    replay$not_recovered <- setdiff(replay$not_recovered, "family")
   }
   series <- if (n_coordinates(object) > 1L) {
     wide <- object$data_wide
@@ -242,4 +260,16 @@ print.ggcpt_verification <- function(x, ...) {
         ".\nPass them through `...` if they affect the answer.\n", sep = "")
   }
   invisible(x)
+}
+
+# Internal note: one row per location in either run, and what became of it.
+#' @rdname cpt_verify
+#' @export
+tidy.ggcpt_verification <- function(x, ...) {
+  kept <- setdiff(x$then, x$removed)
+  out <- tibble::tibble(
+    cp = c(kept, x$removed, x$added),
+    status = rep(c("reproduced", "removed", "added"),
+                 c(length(kept), length(x$removed), length(x$added))))
+  out[order(out$cp), , drop = FALSE]
 }

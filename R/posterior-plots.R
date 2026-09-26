@@ -87,14 +87,23 @@ ggcpt_posterior <- function(x, prob_threshold = NULL) {
 # Bayesian wrapper fit, or NULL when the engine did not provide one.
 #' @noRd
 posterior_prob_profile <- function(x) {
-  n <- nrow(x$data)
+  n_full <- nrow(x$data)
+  # A fit made with `na_action = "omit"` has an engine that saw only the
+  # observed values: its profile is on that series, and is put back at the
+  # observed positions (zero at the gaps). Read unmapped, the probability
+  # of a changepoint at 0.996 showed as 0.4% of its window's mass.
+  na_map <- x$na_map
+  n <- if (!is.null(na_map)) length(na_map) else n_full
+  back <- function(prob) {
+    if (is.null(na_map)) prob else replace(rep(0, n_full), na_map, prob)
+  }
   fit <- x$fit
   if (is.null(fit)) return(NULL)
 
   if (inherits(fit, "bcp")) {
     prob <- as.numeric(fit$posterior.prob)
     prob[is.na(prob)] <- 0
-    return(prob[seq_len(n)])
+    return(back(prob[seq_len(n)]))
   }
 
   if (inherits(fit, "beast")) {
@@ -104,7 +113,7 @@ posterior_prob_profile <- function(x) {
     keep <- !is.na(cp) & !is.na(pr)
     idx <- pmin(pmax(as.integer(round(cp[keep])) - 1L, 1L), n)
     prob[idx] <- pr[keep]
-    return(prob)
+    return(back(prob))
   }
 
   NULL
@@ -147,7 +156,12 @@ ggcpt_runlength <- function(x, prob_floor = 1e-3) {
   # length fell to 1 at x = 62 rather than at 61, the first observation of
   # the new segment. The prior column is dropped, since it describes no
   # observation.
-  n <- nrow(x$data)
+  # With gaps (`na_action = "omit"`) the engine saw the observed values
+  # only, so its columns are counted on that series and mapped back; the
+  # prior-column offset was computed against the full length, which put
+  # the prior at the first observation and shifted everything after it.
+  na_map <- x$na_map
+  n <- if (!is.null(na_map)) length(na_map) else nrow(x$data)
   shift <- max(0L, ncol(R) - n)
   df <- do.call(rbind, lapply(seq_len(ncol(R)), function(t) {
     obs <- t - shift
@@ -157,6 +171,15 @@ ggcpt_runlength <- function(x, prob_floor = 1e-3) {
     if (length(keep) == 0) return(NULL)
     data.frame(time = obs, run_length = keep - 1L, prob = probs[keep])
   }))
+  if (!is.null(na_map) && !is.null(df)) {
+    df$time <- na_map[df$time]
+    # An empty column at each gap keeps the raster's grid regular.
+    gaps <- setdiff(seq_len(nrow(x$data)), na_map)
+    if (length(gaps)) {
+      df <- rbind(df, data.frame(time = gaps, run_length = 0L,
+                                 prob = NA_real_))
+    }
+  }
 
   if (is.null(df)) {
     cpt_abort("No run-length posterior mass exceeds `prob_floor` = ",

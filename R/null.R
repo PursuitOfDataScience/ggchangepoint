@@ -51,6 +51,7 @@
 cpt_test_null <- function(x, method = c("cusum", "pettitt", "supF"),
                           index = NULL) {
   method <- cpt_match_arg(method)
+  observed <- NULL
   if (is_ggcpt(x)) {
     if (n_coordinates(x) > 1L) {
       cpt_abort("`cpt_test_null()` tests one series; this fit has ",
@@ -59,6 +60,13 @@ cpt_test_null <- function(x, method = c("cusum", "pettitt", "supF"),
     }
     v <- x$data$value
     idx <- x$index
+    # A fit made with `na_action = "omit"` keeps its gaps; the tests run on
+    # the observed values and the peak is reported in original positions.
+    if (anyNA(v)) {
+      observed <- which(!is.na(v))
+      v <- v[observed]
+      idx <- if (!is.null(idx)) idx[observed] else NULL
+    }
   } else {
     s <- as_cpt_series(x, index = index)
     if (is.matrix(s$values) || is.data.frame(s$values)) {
@@ -70,13 +78,26 @@ cpt_test_null <- function(x, method = c("cusum", "pettitt", "supF"),
   }
   validate_data(v)
   n <- length(v)
-  res <- switch(method,
-    cusum = cusum_test(v),
-    pettitt = pettitt_test(v),
-    supF = supf_test(v)
-  )
+  res <- if (is_constant(v)) {
+    # No variation, so nothing to test: CUSUM divided 0 by 0 and returned no
+    # row at all, and sup-F reported p = 1e-05 for a flat line.
+    list(method = switch(method, cusum = "CUSUM (Kolmogorov limit)",
+                         pettitt = "Pettitt rank test",
+                         supF = "sup-F (Andrews, 15% trimming)"),
+         statistic = 0, p_value = 1, location = NA_integer_)
+  } else {
+    switch(method,
+      cusum = cusum_test(v),
+      pettitt = pettitt_test(v),
+      supF = supf_test(v)
+    )
+  }
+  location <- as.integer(res$location)
+  if (!is.null(observed) && !is.na(location)) {
+    location <- observed[location]
+  }
   out <- tibble::tibble(method = res$method, statistic = res$statistic,
-                        p_value = res$p_value, location = res$location,
+                        p_value = res$p_value, location = location,
                         n = n, selection_adjusted = TRUE)
   if (!is.null(idx) && is.finite(res$location)) {
     out$location_index <- idx[res$location]
@@ -123,6 +144,14 @@ pettitt_test <- function(v) {
 #' @noRd
 supf_test <- function(v) {
   need_pkg("strucchange")
+  # 15% trimming leaves no candidate break below 14 observations, and
+  # strucchange then widens its own window with two unclassed warnings.
+  if (length(v) < 14L) {
+    cpt_abort("The sup-F test trims 15% at each end, so it needs at least ",
+              "14 observations; `x` has ", length(v), ". Use `method = ",
+              "\"cusum\"` or `\"pettitt\"`.", class = "short_series",
+              data = list(n = length(v)))
+  }
   d <- data.frame(.y = v)
   fs <- strucchange::Fstats(.y ~ 1, data = d, from = 0.15)
   tst <- strucchange::sctest(fs, type = "supF")
@@ -179,18 +208,44 @@ cpt_null_power <- function(fit, power = 0.8, n_sim = 50, seed = NULL, ...) {
               "` is not a method cpt_detect() knows.",
               class = "capability_absent")
   }
-  sigma <- noise_sd(v)
   dots <- list(...)
   if (is.null(dots$penalty)) dots$penalty <- rerun_penalty(fit)
   ci <- rerun_change_in(fit) %||% "mean"
   if (!ci %in% c("mean", "var", "meanvar", "slope")) ci <- "mean"
-  md <- do.call(cpt_min_detectable,
-                c(list(n = n, sigma = sigma, method = method, power = power,
-                       n_sim = n_sim, change_in = ci, seed = seed), dots))
-  # cpt_min_detectable() works in units of `sigma`.
-  out$sigma <- sigma
-  out$jump_sd <- md$jump
-  out$jump <- md$jump * sigma
+  family <- fit$family %||% "gaussian"
+  out$family <- family
+  if (family %in% c("poisson", "binomial", "exponential")) {
+    # A count, binary or waiting-time fit is simulated in its own family,
+    # from its own level: in Gaussian units the answer was a "shift of 1.1
+    # sd" in a series of counts, for a detector the fit did not use.
+    base <- mean(v, na.rm = TRUE)
+    rng <- switch(family,
+      poisson = c(0.1, 5) * sqrt(max(base, 0.1)),
+      binomial = c(0.01, max(0.02, 0.99 - base)),
+      exponential = c(0.1, 5) * base)
+    args <- utils::modifyList(
+      list(n = n, method = method, power = power, n_sim = n_sim,
+           change_in = "mean", seed = seed, range = rng, family = family,
+           baseline = base), dots)
+    md <- do.call(cpt_min_detectable, args)
+    out$baseline <- base
+    out$jump <- md$jump
+  } else {
+    sigma <- noise_sd(v)
+    args <- utils::modifyList(
+      list(n = n, sigma = sigma, method = method, power = power,
+           n_sim = n_sim, change_in = ci, seed = seed), dots)
+    md <- do.call(cpt_min_detectable, args)
+    # cpt_min_detectable() works in units of `sigma`.
+    out$sigma <- sigma
+    out$jump_sd <- md$jump
+    out$jump <- md$jump * sigma
+    if (!family %in% "gaussian") {
+      md$note <- paste0("The fit's family (", family, ") is not one ",
+                        "cpt_power() simulates, so this is the answer for ",
+                        "Gaussian noise. ", md$note %||% "")
+    }
+  }
   out$note <- md$note
   structure(out, class = "ggcpt_null_power")
 }
@@ -210,9 +265,30 @@ print.ggcpt_null_power <- function(x, ...) {
         x$note %||% "", "\n", sep = "")
     return(invisible(x))
   }
+  if (!is.null(x$baseline)) {
+    what <- switch(x$family, poisson = "rate", binomial = "probability",
+                   exponential = "mean waiting time")
+    cat("At this length, a single change in the ", what, " from ",
+        format(signif(x$baseline, 3)), " to ",
+        format(signif(x$baseline + x$jump, 3)), " is detected with power ",
+        x$power, ".\nA smaller change could be present and missed.\n",
+        sep = "")
+    return(invisible(x))
+  }
   cat("At this length and noise level (sd ", format(signif(x$sigma, 3)),
       "), a single shift of about ", format(signif(x$jump, 3)), " (",
       format(signif(x$jump_sd, 3)), " sd) is\ndetected with power ",
       x$power, ". A smaller change could be present and missed.\n", sep = "")
+  if (!is.null(x$note) && nzchar(x$note)) cat(x$note, "\n")
   invisible(x)
+}
+
+#' @rdname cpt_null_power
+#' @export
+tidy.ggcpt_null_power <- function(x, ...) {
+  tibble::tibble(method = x$method, n = x$n,
+                 family = x$family %||% "gaussian",
+                 baseline = x$baseline %||% NA_real_,
+                 sigma = x$sigma, jump = x$jump, jump_sd = x$jump_sd,
+                 power = x$power, constant = isTRUE(x$constant))
 }

@@ -3,12 +3,15 @@
 \name{cpt_effect}
 \alias{cpt_effect}
 \alias{print.ggcpt_effect}
+\alias{tidy.ggcpt_effect}
 \alias{autoplot.ggcpt_effect}
 \title{Effect size at each changepoint}
 \usage{
 cpt_effect(fit, level = 0.95, method = c("naive", "split"), seed = NULL, ...)
 
 \method{print}{ggcpt_effect}(x, ...)
+
+\method{tidy}{ggcpt_effect}(x, ...)
 
 \method{autoplot}{ggcpt_effect}(object, ...)
 }

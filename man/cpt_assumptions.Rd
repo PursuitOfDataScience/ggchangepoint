@@ -3,11 +3,14 @@
 \name{cpt_assumptions}
 \alias{cpt_assumptions}
 \alias{print.ggcpt_assumptions}
+\alias{tidy.ggcpt_assumptions}
 \title{Check the assumptions behind a segmentation}
 \usage{
 cpt_assumptions(fit, lag = NULL)
 
 \method{print}{ggcpt_assumptions}(x, ...)
+
+\method{tidy}{ggcpt_assumptions}(x, ...)
 }
 \arguments{
 \item{fit}{A \code{ggcpt} object.}

@@ -158,11 +158,16 @@ check_index_usable <- function(idx, check_regular = TRUE) {
     gaps <- diff(num)
     span <- max(num) - min(num)
     if (span > 0 && stats::sd(gaps) / mean(gaps) > 1e-6) {
+      # The advice used to be "pass `check_regular = FALSE`", an argument
+      # of as_cpt_series() alone: through cpt_detect() it reached the
+      # engine as "unused argument". Muffling by class works from every
+      # function that raises this.
       cpt_warn("`index` is not equally spaced. Every engine in this package ",
                "assumes equal spacing, so detection runs on observation ",
-               "positions and the index only labels them. Pass ",
-               "`check_regular = FALSE` (or use a regular index) to silence ",
-               "this.", class = "irregular_index")
+               "positions and the index only labels them. To silence this, ",
+               "wrap the call in `suppressWarnings(..., classes = ",
+               "\"ggchangepoint_irregular_index\")`.",
+               class = "irregular_index")
     }
   }
   invisible(TRUE)

@@ -37,6 +37,8 @@ quoted_or <- function(x, conj = "or") {
 # Internal: the did-you-mean sentence for an unmatched value, or "".
 #' @noRd
 did_you_mean <- function(value, choices, max_dist = 2) {
+  # Every short choice is within two edits of an empty string.
+  if (!nzchar(value)) return("")
   near <- nearest_choices(value, choices, n = length(choices))
   if (!length(near$values) || min(near$dist) > max_dist) return("")
   best <- near$values[near$dist == min(near$dist)]
@@ -76,6 +78,16 @@ cpt_match_arg <- function(arg, choices, several.ok = FALSE, name = NULL,
   if (!is.character(arg)) {
     cpt_abort("`", name, "` must be a character string, not ",
               class(arg)[1], ".", class = "bad_argument",
+              data = list(argument = name, choices = choices))
+  }
+  # startsWith(choices, NA) is NA for every choice, so a missing value was
+  # reported as matching all of them: "`method = \"NA\"` matches more than
+  # one value: \"NA\", \"NA\", ...".
+  if (anyNA(arg)) {
+    cpt_abort("`", name, "` must not be NA.",
+              if (length(choices) <= max_show) {
+                paste0(" It should be one of ", quoted_or(choices), ".")
+              }, class = "bad_argument",
               data = list(argument = name, choices = choices))
   }
   if (!several.ok) {

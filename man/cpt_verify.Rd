@@ -3,11 +3,14 @@
 \name{cpt_verify}
 \alias{cpt_verify}
 \alias{print.ggcpt_verification}
+\alias{tidy.ggcpt_verification}
 \title{Re-run a result against the engines installed now}
 \usage{
 cpt_verify(object, ..., tolerance = 0)
 
 \method{print}{ggcpt_verification}(x, ...)
+
+\method{tidy}{ggcpt_verification}(x, ...)
 }
 \arguments{
 \item{object}{A \code{ggcpt} object from \code{\link{cpt_detect}()}.}
@@ -48,8 +51,10 @@ quoting an old result as current.
 
 
 The re-run uses the series stored on the result, its method, the change
-type it can be asked for, its penalty, and every engine argument of the
-original call that was written as a literal (\code{seed = 42},
+type it can be asked for, its penalty and family, the missing-value
+handling and constraints it recorded (\code{na_action}, \code{fixed},
+\code{within}, \code{min_segment}, \code{min_effect}), and every engine
+argument of the original call that was written as a literal (\code{seed = 42},
 \code{n_intervals = 500}). An argument written as a variable cannot be
 recovered from the object, and is listed in \code{not_recovered}; pass
 it again through \code{...} if it mattered.

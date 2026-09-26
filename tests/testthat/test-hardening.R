@@ -3159,8 +3159,10 @@ test_that("B2: cpt_monitor(method = 'cpm') applies the wrapper's guards", {
   b <- stats::rnorm(60)
   expect_error(cpt_monitor("cpm", cpm_type = "GLRAdjusted", baseline = b),
                class = "ggchangepoint_bad_argument")
-  expect_error(cpt_monitor("cpm", cpm_type = "FET", baseline = b),
-               "needs a `lambda` value")
+  # A FET monitor without `lambda` takes cpm's documented default, 0.1.
+  expect_s3_class(cpt_monitor("cpm", cpm_type = "FET",
+                              baseline = stats::rbinom(60, 1, 0.2)),
+                  "ggcpt_monitor")
   expect_error(cpt_monitor("cpm", arl0 = 123, baseline = b),
                "not an average run length")
   expect_error(cpt_monitor("cpm", arl0 = NA, baseline = b),

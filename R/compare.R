@@ -69,7 +69,7 @@ ggcpt_compare <- function(x,
   # De-duplicate methods so repeated names do not crash factor construction
   # (duplicated factor levels) downstream.
   methods <- unique(methods)
-  data_vec <- compare_input(x, "ggcpt_compare")
+  data_vec <- compare_input(x, "ggcpt_compare", list(...))
 
   # Attempt parallel execution if future is set up
   has_future <- requireNamespace("future", quietly = TRUE) &&
@@ -221,8 +221,8 @@ ggcpt_compare_overlay <- function(data_vec, results, methods) {
 # as_uni_vector(); these two did not, and non-numeric input reached
 # as.numeric() to fail with "cannot coerce type 'object'".
 #' @noRd
-compare_input <- function(x, fn) {
-  validate_data(x)
+compare_input <- function(x, fn, dots = list()) {
+  validate_for_detect(x, dots)
   if (is.matrix(x) || is.data.frame(x)) {
     nc <- ncol(as.matrix(x))
     if (nc > 1) {
@@ -258,7 +258,7 @@ ggcpt_compare_table <- function(x,
                                 methods = c("pelt", "binseg", "amoc"),
                                 change_in = "mean",
                                 ...) {
-  data_vec <- compare_input(x, "ggcpt_compare_table")
+  data_vec <- compare_input(x, "ggcpt_compare_table", list(...))
 
   do.call(rbind, lapply(methods, function(m) {
     res <- cpt_detect(data_vec, method = m, change_in = change_in, ...)

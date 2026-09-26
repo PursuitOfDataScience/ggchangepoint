@@ -49,7 +49,13 @@ cpt_statistic <- function(object) {
 # message in one place.
 #' @noRd
 extract_statistic <- function(object) {
-  n <- nrow(object$data)
+  n_full <- nrow(object$data)
+  # A fit made with `na_action = "omit"` ran its engine on the observed
+  # values only, so the engine's statistic is on that shorter series; it
+  # is put back at the observed positions (NA at the gaps), where it used
+  # to be padded as though a window had trimmed it, and read shifted.
+  na_map <- object$na_map
+  n <- if (!is.null(na_map)) length(na_map) else n_full
   fit <- object$fit
   method <- object$method
 
@@ -70,7 +76,10 @@ extract_statistic <- function(object) {
       full[off + seq_len(m)] <- stat[seq_len(m)]
       stat <- full
     }
-    tibble::tibble(index = seq_len(n), statistic = stat,
+    if (!is.null(na_map)) {
+      stat <- replace(rep(NA_real_, n_full), na_map, stat)
+    }
+    tibble::tibble(index = seq_len(n_full), statistic = stat,
                    threshold = as.numeric(threshold)[1], label = label)
   }
 
@@ -275,7 +284,10 @@ cpt_solution_path <- function(object) {
 extract_solution_path <- function(object) {
   fit <- object$fit
   method <- object$method
-  n <- nrow(object$data)
+  # The engine's locations are on the series it saw: the observed values
+  # of a fit made with gaps, mapped back here (see extract_statistic()).
+  na_map <- object$na_map
+  n <- if (!is.null(na_map)) length(na_map) else nrow(object$data)
   selected <- object$changepoints$cp
   # Exact extraction, for the same reason as in extract_statistic().
   pfld <- function(nm) if (is.list(fit)) fit[[nm, exact = TRUE]] else NULL
@@ -287,6 +299,17 @@ extract_solution_path <- function(object) {
     if (length(start) > 1) start <- start[keep]
     if (length(end) > 1) end <- end[keep]
     if (length(cp) == 0) return(NULL)
+    if (!is.null(na_map)) {
+      back <- function(v) {
+        out <- rep(NA_integer_, length(v))
+        ok <- !is.na(v) & v >= 1 & v <= length(na_map)
+        out[ok] <- na_map[v[ok]]
+        out
+      }
+      cp <- back(cp)
+      start <- back(start)
+      end <- back(end)
+    }
     tibble::tibble(step = seq_along(cp), cp = as.integer(cp),
                    contrast = as.numeric(contrast),
                    start = as.integer(start), end = as.integer(end),
@@ -535,6 +558,7 @@ scales_int_breaks <- function(v) {
 #' head(ss)
 cpt_scale_space <- function(x, bandwidths = NULL,
                             method = c("mosum", "npmojo"), ...) {
+  obs_pos <- NULL
   if (is_ggcpt(x)) {
     if (missing(method) && x$method %in% c("mosum", "npmojo")) {
       method <- x$method
@@ -548,6 +572,17 @@ cpt_scale_space <- function(x, bandwidths = NULL,
                             drop = FALSE])
     } else {
       x$data$value
+    }
+    # A fit made with `na_action = "omit"` keeps its gaps, and the sweep
+    # handed them to the engine: mosum is measured to lose changepoints on
+    # a missing value without saying so. The sweep runs on the observed
+    # rows and reports their original positions.
+    observed <- if (is.matrix(series)) stats::complete.cases(series) else
+      !is.na(series)
+    if (!all(observed)) {
+      obs_pos <- which(observed)
+      series <- if (is.matrix(series)) series[obs_pos, , drop = FALSE] else
+        series[obs_pos]
     }
   } else {
     validate_data(x)
@@ -663,6 +698,22 @@ cpt_scale_space <- function(x, bandwidths = NULL,
               detail, class = "engine_error")
   }
   out <- do.call(rbind, rows)
+  if (!is.null(obs_pos)) {
+    # Back to original positions, with the gaps as empty cells so the
+    # heatmap's grid stays regular.
+    out$index <- obs_pos[out$index]
+    full <- expand.grid(index = seq_len(length(observed)),
+                        bandwidth = unique(out$bandwidth))
+    key <- paste(full$index, full$bandwidth)
+    m <- match(key, paste(out$index, out$bandwidth))
+    filled <- out[m, , drop = FALSE]
+    filled$index <- full$index
+    filled$bandwidth <- full$bandwidth
+    filled$threshold <- out$threshold[match(full$bandwidth, out$bandwidth)]
+    filled$significant[is.na(m)] <- FALSE
+    filled$detected[is.na(m)] <- FALSE
+    out <- filled[order(filled$bandwidth, filled$index), , drop = FALSE]
+  }
   attr(out, "method") <- method
   out
 }

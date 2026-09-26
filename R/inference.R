@@ -297,6 +297,23 @@ bootstrap_possible <- function(object) {
   method %in% builtin_registry()$method || !is.null(registry_get(method))
 }
 
+# Internal: refuse, before any work, a result whose detector cannot be
+# re-run. cpt_influence() and cpt_sensitivity() used to find out one
+# perturbation at a time: every re-run failed, and the caller got an
+# engine error or a grid of failed rows about "Unknown method = custom".
+#' @noRd
+refuse_unrerunnable <- function(object, what) {
+  if (!bootstrap_possible(object)) {
+    cpt_abort("`", what, "` re-runs the detector, and `",
+              scalar_chr(object$method), "` is not a method cpt_detect() ",
+              "knows: a result built with as_ggcpt() records someone else's ",
+              "changepoints. Register the detector with cpt_register_method() ",
+              "to make it re-runnable.", class = "capability_absent",
+              data = list(method = scalar_chr(object$method)))
+  }
+  invisible(TRUE)
+}
+
 # Internal: can the detector be re-run to reproduce THIS result? Being in the
 # registry is not enough. `strucchange_wrapper(y ~ x1 + x2, data = d)` returns
 # `change_in = "regression"`, and neither the formula nor `data` is
@@ -394,6 +411,58 @@ rerun_penalty <- function(object) {
   NULL
 }
 
+# Internal: how a fit handled missing values and what constrained it, as the
+# cpt_detect() arguments that reproduce that. The re-running tools replayed
+# the method, change type, penalty and family and none of these, so on a fit
+# made with `na_action = "omit"` every bootstrap replicate failed on the
+# gaps (and cpt_select() stopped in base R), and a `fixed` changepoint was
+# re-estimated like any other. Positions are the fit's own; a tool that
+# re-runs on a reversed, shortened or halved series maps them with
+# map_rerun_positions().
+#' @noRd
+rerun_constraints <- function(object) {
+  out <- list()
+  if (!is.null(object$diagnostics$na_omitted)) {
+    out$na_action <- "omit"
+  } else if (anyNA(object$data$value)) {
+    out$na_action <- "engine"
+  }
+  cons <- object$constraints
+  if (length(cons$fixed)) out$fixed <- as.integer(cons$fixed)
+  if (!is.null(cons$within) && length(cons$within)) {
+    out$within <- unname(as.matrix(cons$within))
+  }
+  if (!is.null(cons$min_segment)) out$min_segment <- cons$min_segment
+  if (!is.null(cons$min_effect)) out$min_effect <- cons$min_effect
+  out
+}
+
+# Internal: move the positional constraints of a re-run request (`fixed`,
+# `within`) onto a transformed series of `n_new` observations. `map` takes
+# a changepoint position on the fit's series to one on the new series;
+# `NA` drops it. A fixed changepoint that no longer fits is dropped, and a
+# window is clamped to the new series (dropped if nothing of it is left).
+#' @noRd
+map_rerun_positions <- function(dots, map, n_new) {
+  if (length(dots$fixed)) {
+    f <- map(dots$fixed)
+    f <- sort(unique(f[!is.na(f) & f >= 1 & f <= n_new - 1]))
+    dots$fixed <- if (length(f)) as.integer(f) else NULL
+  }
+  if (!is.null(dots$within)) {
+    w <- as.matrix(dots$within)
+    rows <- lapply(seq_len(nrow(w)), function(i) {
+      b <- sort(map(w[i, ]))
+      if (length(b) != 2L || anyNA(b)) return(NULL)
+      b <- c(max(b[1], 1), min(b[2], n_new - 1))
+      if (b[1] > b[2]) NULL else b
+    })
+    rows <- Filter(Negate(is.null), rows)
+    dots$within <- if (length(rows)) do.call(rbind, rows) else NULL
+  }
+  dots
+}
+
 # Internal: the request a re-run makes, with the caller's `...` winning over
 # anything derived from the result (the precedence cpt_detect() gives `...`
 # over its own derived arguments). `what` names the calling function in the
@@ -433,6 +502,9 @@ rerun_dots <- function(object, dots, what) {
       is.null(registry_get(scalar_chr(object$method)))) {
     dots$family <- object$family
   }
+  # ...and its missing-value handling and constraints.
+  cons <- rerun_constraints(object)
+  for (nm in setdiff(names(cons), names(dots))) dots[[nm]] <- cons[[nm]]
   dots
 }
 
@@ -636,7 +708,9 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
   for (b in seq_len(B)) {
     resampled <- resid
     for (s in seq_len(nrow(seg))) {
-      idx <- which(seg_id == s)
+      # Observed positions only: a gap stays where it is, rather than
+      # being resampled into the replicate as a missing residual.
+      idx <- which(seg_id == s & !is.na(resid))
       # `sample.int()` on the index, not `sample()` on the values: R's
       # classic pitfall is that `sample(x, n)` means `sample.int(x, n)` when
       # `x` is a single number >= 1, so a one-observation segment resamples

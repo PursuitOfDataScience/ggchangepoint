@@ -142,6 +142,12 @@ print.ggcpt_gof <- function(x, ...) {
   invisible(x)
 }
 
+#' @rdname cpt_gof
+#' @export
+tidy.ggcpt_gof <- function(x, ...) {
+  tibble::as_tibble(x)
+}
+
 # Internal: the four-panel diagnostics display.
 #' @noRd
 autoplot_diagnostics <- function(object, max_lag = 10) {

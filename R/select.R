@@ -166,6 +166,18 @@ cpt_select <- function(x, method = "pelt",
     # when the input was plotted in dates.
     if (is.null(index)) index <- x$index
     index_label <- x$index_label %||% "Index"
+    # The ladder calls the engines directly, one exactly-K segmentation per
+    # rung, so a fit's constraints cannot reach it. Say so rather than
+    # comparing segmentations the fit would not have allowed in silence.
+    held <- intersect(names(rerun_constraints(x)),
+                      c("fixed", "within", "min_segment", "min_effect"))
+    if (length(held)) {
+      cpt_warn("`cpt_select()` compares unconstrained segmentations, so this ",
+               "fit's ", paste0("`", held, "`", collapse = ", "), " ",
+               if (length(held) == 1L) "is" else "are", " not applied to ",
+               "the candidates.", class = "constraint",
+               data = list(constraints = held))
+    }
   } else {
     # Up front, because every rung of the ladder calls cpt_detect() inside
     # tryCatch(): a typo'd method or an unsupported change type used to
@@ -184,6 +196,14 @@ cpt_select <- function(x, method = "pelt",
               " supplied for a series of ", length(series), ".",
               class = "bad_argument")
   }
+  # A fit with gaps (`na_action = "omit"`): the ladder and every criterion
+  # see the observed values, and the answer is put back in the original
+  # positions at the end. The raw series used to reach them, and the
+  # selection stopped in base R with "missing value where TRUE/FALSE
+  # needed".
+  full_series <- series
+  na_keep <- if (anyNA(series)) !is.na(series) else NULL
+  if (!is.null(na_keep)) series <- series[na_keep]
   n <- length(series)
   validate_scalar(k_max, "k_max", min = 0)
   validate_scalar(folds, "folds", min = 2)
@@ -300,11 +320,19 @@ cpt_select <- function(x, method = "pelt",
                   change_in = change_in,
                   penalty = list(type = paste0("selected by ", criterion),
                                  value = NA_real_))
+  if (!is.null(na_keep)) {
+    pos <- which(na_keep)
+    fit <- restore_missing(fit, list(keep = na_keep, pos = pos,
+                                     n = length(na_keep), full = full_series))
+    tab$cpts <- lapply(tab$cpts, function(cp) {
+      if (length(cp) && !anyNA(cp)) pos[cp] else cp
+    })
+  }
   fit <- attach_index(fit, index, index_label)
 
   structure(
     list(criterion_table = tab, k = chosen_k, fit = fit,
-         criterion = criterion, method = method, data = series,
+         criterion = criterion, method = method, data = full_series,
          index = index, index_label = index_label),
     class = "ggcpt_selection"
   )
@@ -460,7 +488,9 @@ stability_curve <- function(series, ladder, method, B, change_in = "mean",
     for (b in seq_len(B)) {
       resampled <- resid
       for (s in unique(seg_id)) {
-        idx <- which(seg_id == s)
+        # Observed positions only: a gap stays where it is, rather than
+        # being resampled into the replicate as a missing residual.
+        idx <- which(seg_id == s & !is.na(resid))
         # `sample.int()` on the index, not `sample()` on the values: R's
       # classic pitfall is that `sample(x, n)` means `sample.int(x, n)` when
       # `x` is a single number >= 1, so a one-observation segment resamples

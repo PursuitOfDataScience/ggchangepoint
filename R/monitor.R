@@ -264,7 +264,7 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
       # so the variability test below would blame a flat baseline for what is
       # really a missing value.
       if (anyNA(b) || any(!is.finite(b))) {
-        stop_nonfinite(b, "baseline")
+        stop_nonfinite(b, "baseline", stream_na_hint(b))
       }
       sd0 <- stats::sd(b)
       if (!is.finite(sd0) || sd0 <= 0) {
@@ -287,10 +287,12 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
       # returns NULL). See cpm_check_type() for what each one looks like.
       validate_scalar(arl0, "arl0")
       cpm_type <- cpm_check_type(cpm_type, list(...))
+      engine_dots <- cpm_engine_dots(cpm_type, list(...))
       cpm_out <- utils::capture.output(
-        m <- cpm::makeChangePointModel(cpmType = cpm_type, ARL0 = arl0, ...)
+        m <- do.call(cpm::makeChangePointModel,
+                     c(list(cpmType = cpm_type, ARL0 = arl0), engine_dots))
       )
-      cpm_check_printed_error(cpm_out, arl0, list(...))
+      cpm_check_printed_error(cpm_out, arl0, engine_dots)
       if (length(cpm_out)) cat(cpm_out, sep = "\n")
       # A change cpm detects INSIDE the baseline left the model tripped:
       # changeDetected() was already TRUE when the loop ended, so the first
@@ -405,7 +407,7 @@ cpt_update <- function(monitor, new_obs) {
   }
   if (nrow(X) == 0) return(monitor)
   if (anyNA(X) || any(!is.finite(X))) {
-    stop_nonfinite(X, "new_obs")
+    stop_nonfinite(X, "new_obs", stream_na_hint(X))
   }
   # A monitor is stateful and dimensioned by its baseline. Feeding it a
   # different width is a mistake, not a coercion: `ocd` would consume the
@@ -737,7 +739,7 @@ cpt_replay <- function(x, method = c("edetector", "cpm", "ocd"),
   # caller never passed, and counted "1 of 45 values" against the baseline
   # slice rather than the series. Checked here, the message describes `x`.
   if (anyNA(X) || any(!is.finite(X))) {
-    stop_nonfinite(X)
+    stop_nonfinite(X, hint = stream_na_hint(X))
   }
   if (is.null(baseline)) baseline <- min(100L, floor(n / 4))
   # `baseline` is documented two ways -- a count of leading observations, or

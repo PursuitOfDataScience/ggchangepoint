@@ -99,6 +99,12 @@ cpt_robustness <- function(x, method = "pelt", over = "noise_model",
     }
     method <- scalar_chr(x$method)
     if (is.null(dots$penalty)) dots$penalty <- rerun_penalty(x)
+    # The fit's gaps and constraints hold under every noise model. Not
+    # `min_effect`, a filter on mean shifts that the settings changing the
+    # cost to mean-and-variance would refuse.
+    cons <- rerun_constraints(x)
+    cons$min_effect <- NULL
+    for (nm in setdiff(names(cons), names(dots))) dots[[nm]] <- cons[[nm]]
     series <- if (n_coordinates(x) > 1L) {
       w <- x$data_wide
       as.matrix(w[, setdiff(names(w), c("index", "index_value")),
@@ -199,6 +205,14 @@ print.ggcpt_robustness <- function(x, ...) {
         sep = "")
   }
   invisible(x)
+}
+
+# Internal note: the reference setting's changepoints and whether each
+# survives, which is what print() leads with.
+#' @rdname cpt_robustness
+#' @export
+tidy.ggcpt_robustness <- function(x, ...) {
+  x$changepoints
 }
 
 #' @rdname cpt_robustness

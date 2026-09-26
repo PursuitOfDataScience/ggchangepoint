@@ -644,14 +644,14 @@ binsegrcpp_wrapper <- function(x, change_in = c("mean", "meanvar"),
     distribution <- switch(change_in, mean = "mean_norm",
                            meanvar = "meanvar_norm")
   }
-  if (is.null(max_segments)) {
+  user_max <- !is.null(max_segments)
+  if (!user_max) {
     max_segments <- max(2L, min(20L, floor(n / 5)))
   }
   validate_scalar(max_segments, "max_segments", min = 2)
   max_segments <- min(as.integer(max_segments), n)
 
-  args <- list(distribution.str = distribution, data.vec = data_vec,
-               max.segments = max_segments)
+  args <- list(distribution.str = distribution, data.vec = data_vec)
   # The single-parameter costs allow one-observation segments by default;
   # a floor of two, as cpt_wrapper() applies for a change in mean.
   if (is.null(min_segment_length) &&
@@ -659,8 +659,25 @@ binsegrcpp_wrapper <- function(x, change_in = c("mean", "meanvar"),
     min_segment_length <- 2L
   }
   if (!is.null(min_segment_length)) {
+    validate_scalar(min_segment_length, "min_segment_length", min = 1)
     args$min.segment.length <- as.integer(min_segment_length)
+    # The engine needs room for every segment it may try: max_segments of
+    # at least min_segment_length each. The default of 20 does not fit a
+    # longer minimum, and `cpt_detect(min_segment = 15)` on 188
+    # observations failed with "too many segments ... would require at
+    # least 300 data", so the default now shrinks to what fits.
+    fits <- max(1L, as.integer(floor(n / args$min.segment.length)))
+    if (!user_max) {
+      max_segments <- min(max_segments, fits)
+    } else if (max_segments > fits) {
+      cpt_abort("`max_segments = ", max_segments, "` segments of at least ",
+                args$min.segment.length, " observations need ",
+                max_segments * args$min.segment.length, ", and the series ",
+                "has ", n, ". Lower `max_segments` to at most ", fits,
+                " or shorten `min_segment_length`.", class = "bad_argument")
+    }
   }
+  args$max.segments <- max_segments
   # binsegRcpp warns "some consecutive data values are identical in
   # set=subtrain, so you could get speedups by converting your data to use a
   # run-length encoding" whenever the series has any ties -- a constant

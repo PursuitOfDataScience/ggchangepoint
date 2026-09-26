@@ -3,11 +3,14 @@
 \name{cpt_null_power}
 \alias{cpt_null_power}
 \alias{print.ggcpt_null_power}
+\alias{tidy.ggcpt_null_power}
 \title{What an empty answer could have detected}
 \usage{
 cpt_null_power(fit, power = 0.8, n_sim = 50, seed = NULL, ...)
 
 \method{print}{ggcpt_null_power}(x, ...)
+
+\method{tidy}{ggcpt_null_power}(x, ...)
 }
 \arguments{
 \item{fit}{A \code{ggcpt} object (usually one with no changepoints; it

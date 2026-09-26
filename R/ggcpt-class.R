@@ -213,6 +213,29 @@ print.ggcpt <- function(x, ...) {
   if (!is.null(x$constraints$fixed)) {
     cat_field("Fixed", paste(x$constraints$fixed, collapse = ", "))
   }
+  # The other constraints change what is reported too, and said nothing:
+  # a fit made with `within` printed its one changepoint without a word
+  # about the ones it dropped.
+  cons <- x$constraints
+  if (!is.null(cons$within) && length(cons$within)) {
+    w <- as.matrix(cons$within)
+    out <- length(cons$dropped_outside_within)
+    cat_field("Within", paste0(paste(w[, 1], w[, 2], sep = "-",
+                                     collapse = ", "),
+                               if (out) paste0(" (", out, " found outside, ",
+                                               "dropped)")))
+  }
+  if (!is.null(cons$min_segment)) {
+    cat_field("Minimum segment", format(cons$min_segment))
+  }
+  if (!is.null(cons$min_effect)) {
+    small <- length(cons$dropped_below_min_effect)
+    cat_field("Minimum effect", paste0(format(cons$min_effect),
+                                       " noise sd", if (small) {
+                                         paste0(" (", small, " smaller ",
+                                                "dropped)")
+                                       }))
+  }
   drift <- version_drift(x)
   if (!is.null(drift)) {
     cat_field("Engine version", drift)

@@ -1622,7 +1622,10 @@ test_that("R61: cpm and kcp no longer report 'no changepoints' when the
   # died inside cpm with base R's "only 0's may be mixed with negative
   # subscripts", naming neither the argument nor the method.
   b <- c(stats::rbinom(150, 1, 0.2), stats::rbinom(150, 1, 0.8))
-  expect_error(cpm_wrapper(b, cpm_type = "FET"), "needs a `lambda`")
+  # Without `lambda`, FET now runs at cpm's documented default of 0.1,
+  # which cpm itself fails to apply.
+  expect_equal(cpm_wrapper(b, cpm_type = "FET")$changepoints,
+               cpm_wrapper(b, cpm_type = "FET", lambda = 0.1)$changepoints)
   expect_error(cpm_wrapper(b, cpm_type = "FET", lambda = 0.5),
                "lambda = 0.5.*FET thresholds")
   # ... and the arl0 message is still reached for a genuine arl0 problem

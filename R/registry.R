@@ -437,7 +437,12 @@ cpt_registered_methods <- function() {
 # Internal: fetch a registered method, or NULL.
 #' @noRd
 registry_get <- function(name) {
-  if (!is.character(name) || length(name) != 1L) return(NULL)
+  # exists() refuses "" and NA with "invalid first argument", which reached
+  # the caller unclassed from cpt_detect(x, method = "").
+  if (!is.character(name) || length(name) != 1L || is.na(name) ||
+      !nzchar(name)) {
+    return(NULL)
+  }
   if (!exists(name, envir = .cpt_registry, inherits = FALSE)) return(NULL)
   get(name, envir = .cpt_registry)
 }

@@ -16,7 +16,8 @@ cpt_import(file, format = NULL, method = "imported", change_in = "mean")
 (\code{cpt_import()}).}
 
 \item{format}{\code{"json"} (the full result, see \code{\link{as_json}()})
-or \code{"csv"} (one row per observation: \code{index}, \code{value},
+or \code{"csv"} (one row per observation: \code{index}, \code{value}
+(for a multivariate result, one \code{value_<name>} per coordinate),
 the time index as \code{index_value} when there is one,
 \code{seg_id}, \code{fitted} and \code{is_changepoint}, which is
 everything needed to rebuild the segmentation but not its metadata).

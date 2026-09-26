@@ -205,10 +205,19 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
   # without refusing grids that fmean handles. The upstream message is
   # passed through verbatim rather than replaced -- the grid is the usual
   # cause, not the only one.
+  # A change in the mean function or the covariance operator is unchanged by
+  # rescaling every grid value by one constant, but fChange's estimates are
+  # not numerically: measured on pure noise, `fcov` found 104 changepoints
+  # in 120 curves at a millionth of the units and none at unit scale, and
+  # `fmean`'s answer moved with the units too. The curves are divided by
+  # their overall spread before the engine sees them; the result keeps the
+  # data as given.
+  spread <- stats::sd(as.numeric(X))
+  Xs <- if (is.finite(spread) && spread > 0) X / spread else X
   fit <- tryCatch(
     {
       utils::capture.output(
-        f <- fChange::fchange(t(X), method = method, statistic = statistic,
+        f <- fChange::fchange(t(Xs), method = method, statistic = statistic,
                               critical = critical, type = type,
                               alpha = alpha, ...)
       )

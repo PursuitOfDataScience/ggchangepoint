@@ -51,9 +51,10 @@ cpt_json_schema_version <- function() "1.0.0"
 #'   \item{\code{cp_convention}}{\code{"left"}: a changepoint is the last
 #'     observation of its segment.}
 #'   \item{\code{n}}{the series length.}
-#'   \item{\code{index}}{\code{{"class", "label"}} of the time index, or
-#'     \code{null}. Dates are written as ISO 8601 strings and timestamps
-#'     with their offset.}
+#'   \item{\code{index}}{\code{{"class", "label", "tz"}} of the time
+#'     index, or \code{null}. Dates are written as ISO 8601 strings and
+#'     timestamps with their offset; \code{tz} is a timestamp index's time
+#'     zone (\code{null} otherwise).}
 #'   \item{\code{changepoints}}{an array of objects, one per changepoint:
 #'     \code{cp} (position) and \code{cp_value}, with \code{cp_index} when
 #'     there is an index, and every engine-specific column
@@ -68,8 +69,10 @@ cpt_json_schema_version <- function() "1.0.0"
 #'   \item{\code{assumptions}}{the \code{cpt_assumptions()} rows, or
 #'     \code{null}.}
 #'   \item{\code{call}}{the call that made the result, as text.}
-#'   \item{\code{data}}{\code{{"index", "value", "fitted"}} arrays, or
-#'     \code{null}.}
+#'   \item{\code{data}}{\code{{"index", "value", "fitted",
+#'     "coordinates"}} arrays, or \code{null}. \code{coordinates} is an
+#'     object with one array per coordinate of a multivariate result
+#'     (\code{null} for a single series), whose first is \code{value}.}
 #' }
 #' @seealso \code{\link{cpt_export}()} to write a file,
 #'   \code{\link{cpt_import}()} to read one back,
@@ -153,7 +156,8 @@ json_payload <- function(x, data = TRUE, assumptions = TRUE) {
     cp_convention = x$cp_convention %||% "left",
     n = nrow(x$data),
     index = if (!is.null(idx)) {
-      list(class = class(idx)[1], label = x$index_label %||% "Index")
+      list(class = class(idx)[1], label = x$index_label %||% "Index",
+           tz = if (inherits(idx, "POSIXt")) attr(idx, "tzone")[1] %||% "")
     },
     changepoints = table_rows(x$changepoints) %||% list(),
     segments = table_rows(x$segments) %||% list(),
@@ -167,16 +171,26 @@ json_payload <- function(x, data = TRUE, assumptions = TRUE) {
     },
     call = if (!is.null(x$call)) paste(deparse(x$call), collapse = " "),
     data = if (data) {
-      d <- list(value = x$data$value)
-      d$index <- if (!is.null(idx)) {
-        if (inherits(idx, "Date")) format(idx, "%Y-%m-%d") else
-          if (inherits(idx, "POSIXt")) format(idx, "%Y-%m-%dT%H:%M:%S%z") else
-            idx
-      } else {
-        x$data$index
+      # Every coordinate of a multivariate result: `value` alone is the
+      # first, and a result read back from it was a univariate one.
+      coords <- if (n_coordinates(x) > 1L) {
+        w <- x$data_wide
+        as.list(w[, setdiff(names(w), c("index", "index_value")),
+                  drop = FALSE])
       }
-      if (!is.null(x$data[["fitted"]])) d$fitted <- x$data$fitted
-      d
+      # Built in one list() so a field that does not apply stays present as
+      # null, as the schema promises, rather than being left out.
+      list(
+        value = x$data$value,
+        index = if (!is.null(idx)) {
+          if (inherits(idx, "Date")) format(idx, "%Y-%m-%d") else
+            if (inherits(idx, "POSIXt")) format(idx, "%Y-%m-%dT%H:%M:%S%z") else
+              idx
+        } else {
+          x$data$index
+        },
+        fitted = x$data[["fitted"]],
+        coordinates = coords)
     }
   )
 }
@@ -193,7 +207,8 @@ json_payload <- function(x, data = TRUE, assumptions = TRUE) {
 #' @param file Path to write (\code{cpt_export()}) or read
 #'   (\code{cpt_import()}).
 #' @param format \code{"json"} (the full result, see \code{\link{as_json}()})
-#'   or \code{"csv"} (one row per observation: \code{index}, \code{value},
+#'   or \code{"csv"} (one row per observation: \code{index}, \code{value}
+#'   (for a multivariate result, one \code{value_<name>} per coordinate),
 #'   the time index as \code{index_value} when there is one,
 #'   \code{seg_id}, \code{fitted} and \code{is_changepoint}, which is
 #'   everything needed to rebuild the segmentation but not its metadata).
@@ -223,10 +238,25 @@ cpt_export <- function(fit, file, format = NULL, ...) {
     writeLines(as_json(fit, ...), file)
   } else {
     d <- augment.ggcpt(fit)
-    keep <- intersect(c("index", "index_value", "value", "seg_id", ".fitted",
-                        "is_changepoint"), names(d))
-    out <- as.data.frame(d[, keep, drop = FALSE])
-    names(out)[names(out) == ".fitted"] <- "fitted"
+    if (n_coordinates(fit) > 1L) {
+      # A multivariate result has no single `value`: each coordinate is
+      # written as `value_<name>`, which cpt_import() reads back as the
+      # matrix. Without them the file held no data at all and could not be
+      # read back.
+      w <- fit$data_wide
+      out <- data.frame(index = d$index)
+      if ("index_value" %in% names(d)) out$index_value <- d$index_value
+      for (cl in setdiff(names(w), c("index", "index_value"))) {
+        out[[paste0("value_", cl)]] <- w[[cl]]
+      }
+      out$seg_id <- d$seg_id
+      out$is_changepoint <- d$is_changepoint
+    } else {
+      keep <- intersect(c("index", "index_value", "value", "seg_id",
+                          ".fitted", "is_changepoint"), names(d))
+      out <- as.data.frame(d[, keep, drop = FALSE])
+      names(out)[names(out) == ".fitted"] <- "fitted"
+    }
     utils::write.csv(out, file, row.names = FALSE)
   }
   invisible(file)
@@ -245,17 +275,28 @@ cpt_import <- function(file, format = NULL, method = "imported",
   }
   format <- export_format(file, format)
   if (format == "csv") {
-    d <- utils::read.csv(file, stringsAsFactors = FALSE)
-    if (!all(c("value", "is_changepoint") %in% names(d))) {
-      cpt_abort("A CSV from cpt_export() has `value` and `is_changepoint` ",
-                "columns; this one has ", paste(names(d), collapse = ", "),
-                ".", class = "bad_argument")
+    d <- utils::read.csv(file, stringsAsFactors = FALSE,
+                         check.names = FALSE)
+    coords <- grep("^value_", names(d), value = TRUE)
+    if (!"is_changepoint" %in% names(d) ||
+        (!"value" %in% names(d) && !length(coords))) {
+      cpt_abort("A CSV from cpt_export() has `value` (or one `value_<name>` ",
+                "per coordinate) and `is_changepoint` columns; this one has ",
+                paste(names(d), collapse = ", "), ".",
+                class = "bad_argument")
     }
+    series <- if ("value" %in% names(d)) d$value else {
+      m <- as.matrix(d[, coords, drop = FALSE])
+      colnames(m) <- sub("^value_", "", coords)
+      m
+    }
+    first <- if (is.matrix(series)) series[, 1] else series
     cp <- which(as.logical(d$is_changepoint))
     idx <- if ("index_value" %in% names(d)) restore_index(d$index_value) else
       NULL
-    return(as_ggcpt(cp, d$value, method = method, change_in = change_in,
-                    index = idx))
+    res <- with_na_allowed(as_ggcpt(cp, series, method = method,
+                                    change_in = change_in, index = idx))
+    return(restore_imported_gaps(res, first, which(is.na(first))))
   }
   need_pkg("jsonlite")
   j <- jsonlite::fromJSON(file, simplifyVector = TRUE)
@@ -277,9 +318,13 @@ cpt_import <- function(file, format = NULL, method = "imported",
               class = "capability_absent")
   }
   value <- as.numeric(j$data$value)
+  series <- value
+  if (length(j$data$coordinates)) {
+    series <- do.call(cbind, lapply(j$data$coordinates, as.numeric))
+  }
   idx <- NULL
   if (!is.null(j$index)) {
-    idx <- restore_index(j$data$index, j$index$class)
+    idx <- restore_index(j$data$index, j$index$class, j$index$tz)
   }
   cps <- if (length(j$changepoints) && NROW(j$changepoints)) {
     as.data.frame(j$changepoints)
@@ -287,15 +332,32 @@ cpt_import <- function(file, format = NULL, method = "imported",
     data.frame(cp = integer(0))
   }
   extra <- setdiff(names(cps), c("cp", "cp_value", "cp_index"))
-  res <- as_ggcpt(as.integer(cps$cp), value, method = j$method,
-                  change_in = j$change_in,
-                  penalty = list(type = j$penalty$type %||% NA_character_,
-                                 value = j$penalty$value %||% NA_real_),
-                  index = idx,
-                  fitted = if (!is.null(j$data$fitted)) {
-                    as.numeric(j$data$fitted)
-                  })
+  # A result with gaps (`na_action = "omit"`) wrote them as nulls; reading
+  # it back used to stop at "`x` must be finite".
+  res <- with_na_allowed(as_ggcpt(
+    as.integer(cps$cp), series, method = j$method, change_in = j$change_in,
+    penalty = list(type = j$penalty$type %||% NA_character_,
+                   value = j$penalty$value %||% NA_real_),
+    index = idx,
+    fitted = if (!is.null(j$data$fitted)) as.numeric(j$data$fitted)))
   for (col in extra) res$changepoints[[col]] <- cps[[col]]
+  gaps <- j$diagnostics$na_omitted$positions
+  if (!is.null(gaps) || anyNA(value)) {
+    res <- restore_imported_gaps(res, value, as.integer(gaps %||%
+                                                          which(is.na(value))))
+  }
+  # The constraints, so a tool that re-runs the imported result replays
+  # them (see rerun_constraints()).
+  cons <- j$constraints
+  if (length(cons)) {
+    if (!is.null(cons$within)) {
+      w <- as.matrix(as.data.frame(cons$within))
+      storage.mode(w) <- "integer"
+      colnames(w) <- c("lo", "hi")
+      cons$within <- w
+    }
+    res$constraints <- cons
+  }
   if (!is.null(j$family)) res$family <- j$family
   if (!is.null(j$coefficients) && NROW(j$coefficients)) {
     res$coefficients <- tibble::as_tibble(as.data.frame(j$coefficients))
@@ -303,6 +365,21 @@ cpt_import <- function(file, format = NULL, method = "imported",
   res$versions <- list(engine = j$engine, engine_version = j$engine_version,
                        ggchangepoint = j$ggchangepoint_version,
                        r = j$r_version, created = j$created)
+  res
+}
+
+# Internal: an imported result's gaps, recorded the way cpt_detect(na_action
+# = "omit") records them, so it prints, re-runs and exports like the
+# original.
+#' @noRd
+restore_imported_gaps <- function(res, value, gaps) {
+  if (!length(gaps)) return(res)
+  observed <- which(!is.na(value))
+  res$diagnostics <- res$diagnostics %||% list()
+  res$diagnostics$na_omitted <- list(positions = gaps,
+                                     n_observed = length(observed),
+                                     observed_positions = observed)
+  res$na_map <- observed
   res
 }
 
@@ -322,7 +399,7 @@ export_format <- function(file, format) {
 
 # Internal: turn an index written as text back into its class.
 #' @noRd
-restore_index <- function(v, cls = NULL) {
+restore_index <- function(v, cls = NULL, tz = NULL) {
   if (is.null(v)) return(NULL)
   if (identical(cls, "Date") || (is.null(cls) && is.character(v) &&
                                  all(grepl("^\\d{4}-\\d{2}-\\d{2}$", v)))) {
@@ -330,7 +407,13 @@ restore_index <- function(v, cls = NULL) {
   }
   if (identical(cls, "POSIXct") || (is.null(cls) && is.character(v) &&
                                     all(grepl("^\\d{4}-\\d{2}-\\d{2}T", v)))) {
-    return(as.POSIXct(v, format = "%Y-%m-%dT%H:%M:%S%z", tz = "UTC"))
+    out <- as.POSIXct(v, format = "%Y-%m-%dT%H:%M:%S%z", tz = "UTC")
+    # The offset gives the instant; the zone is how it was displayed, and
+    # a round trip used to hand back every timestamp in UTC.
+    if (is.character(tz) && length(tz) == 1L && !is.na(tz)) {
+      attr(out, "tzone") <- tz
+    }
+    return(out)
   }
   v
 }

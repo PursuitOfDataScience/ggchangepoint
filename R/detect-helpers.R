@@ -167,6 +167,19 @@ detect_grouped <- function(x, groups, y_expr, index_expr, caller, args) {
               class = "bad_type")
   }
   keys <- df[, groups, drop = FALSE]
+  # A row whose group is missing belongs to no series. Pasted into a key it
+  # became a series called "NA", made of whichever rows happened to lack a
+  # group, and was detected like the others.
+  unkeyed <- !stats::complete.cases(keys)
+  if (any(unkeyed)) {
+    cpt_warn(sum(unkeyed), " row(s) have a missing ",
+             paste0("`", groups, "`", collapse = " or "), ", so they belong ",
+             "to no series and are left out.", class = "dropped_input",
+             data = list(n_dropped = sum(unkeyed)))
+    keys <- keys[!unkeyed, , drop = FALSE]
+    yv <- yv[!unkeyed]
+    if (!is.null(index_col)) index_col <- index_col[!unkeyed]
+  }
   key_str <- do.call(paste, c(lapply(keys, as.character), sep = "/"))
   ukeys <- unique(keys)
   ukeys <- ukeys[do.call(order, unname(as.list(ukeys))), , drop = FALSE]
@@ -300,11 +313,45 @@ restore_missing <- function(res, info) {
     for (col in intersect(c("start", "end"), names(sp))) sp[[col]] <- map(sp[[col]])
     res$diagnostics$solution_path <- sp
   }
+  # Coefficients per segment were fitted on the compacted rows; their
+  # segments now span the original positions, like `res$segments`.
+  if (is.data.frame(res$coefficients) &&
+      all(c("start", "end") %in% names(res$coefficients))) {
+    res$coefficients$start <- map_segment_start(res$coefficients$start, pos)
+    res$coefficients$end <- map_segment_end(res$coefficients$end, pos, n)
+  }
+  # The constraints were applied on the compacted series too, and were left
+  # there: `$constraints$fixed` said 98 for a fixed changepoint the table
+  # reported at 100.
+  if (!is.null(res$constraints)) {
+    cons <- res$constraints
+    for (nm in intersect(c("fixed", "dropped_outside_within",
+                           "dropped_below_min_effect"), names(cons))) {
+      cons[[nm]] <- map(cons[[nm]])
+    }
+    if (!is.null(cons$within)) cons$within[] <- map(cons$within)
+    res$constraints <- cons
+  }
   res$diagnostics$na_omitted <- list(positions = which(!info$keep),
                                      n_observed = length(pos),
                                      observed_positions = pos)
   res$na_map <- pos
   res
+}
+
+# Internal: a segment boundary on the compacted series, in original
+# positions. A segment starts just after the previous changepoint (which
+# is the last observed point of its left segment) and ends at its own
+# changepoint, or at the end of the series, so the gaps at a boundary
+# belong to the segment they follow, as in `build_segments()`.
+#' @noRd
+map_segment_start <- function(start, pos) {
+  ifelse(start <= 1L, 1L, pos[pmax(start - 1L, 1L)] + 1L)
+}
+
+#' @noRd
+map_segment_end <- function(end, pos, n) {
+  ifelse(end >= length(pos), n, pos[pmin(end, length(pos))])
 }
 
 # Internal: segments recomputed on the original positions, keeping any
@@ -404,11 +451,7 @@ locate_on_series <- function(v, idx, n, arg, side = c("before", "after")) {
 constraint_positions <- function(v, idx, n, arg) {
   if (is.null(v)) return(NULL)
   p <- locate_on_series(v, idx, n, arg, side = "before")
-  if (anyNA(p)) {
-    cpt_abort("`", arg, "` has a value before the start of the series",
-              if (!is.null(idx)) paste0(" (", format_index_range(idx), ")"),
-              ".", class = "bad_argument")
-  }
+  if (anyNA(p)) refuse_unlocated(v, idx, arg)
   p <- as.integer(round(p))
   bad <- p < 1L | p >= n
   if (any(bad)) {
@@ -447,11 +490,64 @@ within_windows <- function(within, idx, n) {
       cpt_abort("Each `within` window is a start and an end: two values, ",
                 "not ", length(w), ".", class = "bad_argument")
     }
-    p <- constraint_positions(w, idx, n, "within")
-    sort(p)
+    window_positions(w, idx, n)
   }))
   colnames(out) <- c("lo", "hi")
   out
+}
+
+# Internal: one `within` window as positions. A window is a range, not a
+# changepoint, so a bound beyond either end of the series is read as that
+# end. Checked as if it were a changepoint, `c(150, 200)` on 200
+# observations, `c(0, 120)`, or a date window running past the last date
+# were refused because "the last observation of the series cannot be" a
+# changepoint.
+#' @noRd
+window_positions <- function(w, idx, n) {
+  if (anyNA(w)) refuse_unlocated(w, idx, "within")
+  p <- locate_on_series(w, idx, n, "within", side = "before")
+  if (anyNA(p)) {
+    # Only an index value before the first observation is left unplaced
+    # by a numeric or date index; a label that is not in the index is an
+    # error.
+    if (!is.null(idx) && !is_numeric_like_index(idx)) {
+      refuse_unlocated(w, idx, "within")
+    }
+    p[is.na(p)] <- 0
+  }
+  p <- sort(round(as.numeric(p)))
+  if (p[2] < 1) {
+    cpt_abort("A `within` window ends before the start of the series",
+              if (!is.null(idx)) paste0(" (", format_index_range(idx), ")"),
+              ".", class = "bad_argument")
+  }
+  if (p[1] > n - 1) {
+    cpt_abort("A `within` window starts at or after the last observation, ",
+              "where no changepoint can be (a changepoint is the last ",
+              "observation of a segment).", class = "bad_argument")
+  }
+  as.integer(c(max(p[1], 1), min(p[2], n - 1)))
+}
+
+# Internal: the error for a location that could not be placed on the
+# series. A missing value, a label the index does not hold and a value
+# before the first observation are three different mistakes, and all three
+# used to be reported as "before the start of the series".
+#' @noRd
+refuse_unlocated <- function(v, idx, arg) {
+  if (anyNA(v)) {
+    cpt_abort("`", arg, "` cannot contain missing values.",
+              class = "bad_argument")
+  }
+  if (!is.null(idx) && !is_numeric_like_index(idx)) {
+    cpt_abort("`", arg, "` has a value that is not in the series' index: ",
+              paste0("\"", as.character(v)[!as.character(v) %in%
+                                              as.character(idx)], "\"",
+                     collapse = ", "), ".", class = "bad_argument")
+  }
+  cpt_abort("`", arg, "` has a value before the start of the series",
+            if (!is.null(idx)) paste0(" (", format_index_range(idx), ")"),
+            ".", class = "bad_argument")
 }
 
 # Internal: run the detector on each stretch between fixed changepoints and
@@ -460,7 +556,7 @@ within_windows <- function(within, idx, n) {
 # with no change it has been told about, and its penalty is on the length
 # of the stretch it is given.
 #' @noRd
-detect_fixed <- function(x, fixed, run_piece) {
+detect_fixed <- function(x, fixed, run_piece, min_len = 3) {
   is_mv <- is.matrix(x) || is.data.frame(x)
   n <- if (is_mv) nrow(x) else length(x)
   bounds <- c(0L, sort(unique(fixed)), n)
@@ -469,7 +565,10 @@ detect_fixed <- function(x, fixed, run_piece) {
   for (i in seq_len(length(bounds) - 1L)) {
     rows <- (bounds[i] + 1L):bounds[i + 1L]
     xi <- if (is_mv) x[rows, , drop = FALSE] else x[rows]
-    fit_i <- if (length(rows) < 3L) NULL else tryCatch(
+    # A stretch too short to hold a change (fewer than three observations,
+    # or than two minimum segments) is left unsearched rather than handed
+    # to an engine that refuses it and takes the whole fit down with it.
+    fit_i <- if (length(rows) < min_len) NULL else tryCatch(
       run_piece(xi),
       ggchangepoint_short_series = function(e) NULL)
     pieces[[i]] <- fit_i

@@ -133,10 +133,23 @@ warn_scale_sensitive <- function(x, method, change_in) {
            "is about ", format(signif(s, 2)), ". On data ten times larger ",
            "it over-segments badly; on data ten times smaller it finds ",
            "nothing. Standardise the series first (e.g. `x / ",
-           format(signif(s, 2)), "`), or use `change_in = \"meanvar\"`, which ",
-           "estimates the noise per segment.", class = "scale_sensitive",
+           format(signif(s, 2)), "`)", meanvar_remedy(method), ".",
+           class = "scale_sensitive",
            data = list(method = method, noise_sd = s))
   invisible(TRUE)
+}
+
+# Internal: the second remedy for a scale-sensitive fit, where it exists.
+# `change_in = "meanvar"` estimates the noise per segment, but only the
+# changepoint engines offer it: for fpop, envcpt, geomcp and var the advice
+# was a call that is refused.
+#' @noRd
+meanvar_remedy <- function(method) {
+  if ("meanvar" %in% method_change_in_support()[[method]]) {
+    ", or use `change_in = \"meanvar\"`, which estimates the noise per segment"
+  } else {
+    ""
+  }
 }
 
 # Internal: the dependence-aware alternatives, with what they cost, from the
@@ -246,7 +259,8 @@ cpt_assumptions <- function(fit, lag = NULL) {
              if (is.na(inv)) "scale behaviour of this engine not measured"
              else if (sens) "this engine's cost assumes unit noise"
              else "this engine's answer does not depend on the units"),
-      if (sens && far) "Standardise the series, or use change_in = \"meanvar\".")
+      if (sens && far) paste0("Standardise the series", meanvar_remedy(method),
+                              "."))
 
   efp <- expected_false_positives(fit)
   add("expected_false_positives", efp$value, isTRUE(efp$value > 1),
@@ -338,6 +352,12 @@ print.ggcpt_assumptions <- function(x, ...) {
     cat("\nNo assumption check raised a concern.\n")
   }
   invisible(x)
+}
+
+#' @rdname cpt_assumptions
+#' @export
+tidy.ggcpt_assumptions <- function(x, ...) {
+  tibble::as_tibble(x)
 }
 
 # Internal: the registry columns that come from measurement rather than

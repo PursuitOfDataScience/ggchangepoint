@@ -97,7 +97,7 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
     original <- x
     data_vec <- x$data$value
   } else {
-    validate_data(x)
+    validate_for_detect(x, dots)
     data_vec <- as_uni_vector(x, method)
     original <- NULL
   }
@@ -113,7 +113,8 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
   resid <- data_vec - fitted_step
   seg_id <- rep(seq_len(nrow(seg)), times = seg$n)
   if (bootstrap == "block" && is.null(block_length)) {
-    r1 <- tryCatch(stats::acf(resid, lag.max = 1, plot = FALSE)$acf[2],
+    r1 <- tryCatch(stats::acf(resid, lag.max = 1, plot = FALSE,
+                              na.action = stats::na.pass)$acf[2],
                    error = function(e) 0)
     if (!is.finite(r1)) r1 <- 0
     r1 <- min(abs(r1), 0.95)
@@ -129,7 +130,9 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
   for (b in seq_len(B)) {
     resampled <- resid
     for (s in seq_len(nrow(seg))) {
-      idx <- which(seg_id == s)
+      # Observed positions only: a gap stays where it is, rather than
+      # being resampled into the replicate as a missing residual.
+      idx <- which(seg_id == s & !is.na(resid))
       # `sample.int()` on the index, not `sample()` on the values: R's
       # classic pitfall is that `sample(x, n)` means `sample.int(x, n)` when
       # `x` is a single number >= 1, so a one-observation segment resamples
@@ -193,8 +196,13 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
     survives <- if (sequential) {
       rep(NA, length(cps))
     } else {
-      rev_cp <- tryCatch(detect(rev(data_vec))$changepoints$cp,
-                         error = function(e) NULL)
+      # Reversed, a changepoint after position p is one after n - p, and
+      # so is a fixed one or a window bound the fit was made with.
+      rev_dots <- map_rerun_positions(dots, function(p) n - p, n)
+      rev_cp <- tryCatch(
+        do.call(cpt_detect, c(list(rev(data_vec), method = method),
+                              rev_dots))$changepoints$cp,
+        error = function(e) NULL)
       if (is.null(rev_cp)) rep(NA, length(cps)) else {
         mapped <- n - rev_cp
         vapply(cps, function(cp) any(abs(mapped - cp) <= margin), logical(1))

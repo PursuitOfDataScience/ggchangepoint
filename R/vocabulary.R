@@ -132,7 +132,7 @@ family_rows_explicit <- function() {
            "cpm::processStream(cpmType = \"Exponential\")",
            list(cpm_type = "Exponential")),
     tr_row("cpm", "mean", "binomial",
-           "cpm::processStream(cpmType = \"FET\", lambda = <lambda>)",
+           "cpm::processStream(cpmType = \"FET\", lambda = 0.1)",
            list(cpm_type = "FET")),
     tr_row("bocpd", "mean", "poisson",
            "ocp::onlineCPD(probModel = list(\"p\"))",
@@ -344,13 +344,26 @@ resolve_family <- function(method, change_in, family, registered = FALSE) {
   }
   hit <- tab[tab$method == method & tab$family %in% family &
                tab$change_in == change_in, , drop = FALSE]
+  # The default `change_in = "mean"` goes to the method's native change
+  # type, as it does without a family (validate_method_change_in()):
+  # `cpt_detect(counts, method = "segmented", family = "poisson")` was
+  # refused although segmented fits Poisson counts, as slopes.
+  if (nrow(hit) == 0L && identical(change_in, "mean")) {
+    core <- builtin_registry_core()
+    native <- core$supports[[match(method, core$method)]]
+    hit <- tab[tab$method == method & tab$family %in% family &
+                 tab$change_in %in% native, , drop = FALSE][1L, , drop = FALSE]
+    if (anyNA(hit$method)) hit <- hit[0L, , drop = FALSE]
+  }
   if (nrow(hit) == 0L) {
     legal <- tab$change_in[tab$method == method & tab$family %in% family]
     cpt_abort("`change_in = \"", change_in, "\"` with `family = \"", family,
               "\"` is not offered by `", method, "`. With that family it ",
               "detects: ", paste0("\"", unique(legal), "\"", collapse = ", "),
+              # Only where it is the fix: for segmented, whose Poisson
+              # route is a slope, it advised the very request refused.
               if (family %in% c("poisson", "binomial", "exponential",
-                                "gamma")) {
+                                "gamma") && "mean" %in% legal) {
                 paste0(" (a ", family, " model has one parameter, so its ",
                        "change is `change_in = \"mean\"`)")
               } else "", ".", class = "unsupported",

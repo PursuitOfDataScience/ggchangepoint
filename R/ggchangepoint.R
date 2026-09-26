@@ -510,9 +510,9 @@ reject_multicolumn <- function(x, arg = "x", hint = "") {
 # one stray NA slipped into a 10,000-point series or half of it is missing.
 # Those are different problems with different fixes, so the count travels
 # with the message, from one definition rather than seven copies.
-stop_nonfinite <- function(x, arg = "x") {
+stop_nonfinite <- function(x, arg = "x", hint = na_action_hint(x)) {
   cpt_abort("`", arg, "` must be finite (no NA/NaN/Inf); ", sum(!is.finite(x)),
-            " of ", length(x), " values are not.", na_action_hint(x),
+            " of ", length(x), " values are not.", hint,
             class = "non_finite",
             data = list(n_missing = sum(is.na(x)),
                         n_infinite = sum(is.infinite(x))))
@@ -525,8 +525,18 @@ stop_nonfinite <- function(x, arg = "x") {
 na_action_hint <- function(x) {
   if (!anyNA(x) || any(is.infinite(x))) return("")
   paste0(" To detect around the gaps, pass `na_action = \"omit\"` to ",
-         "cpt_detect(): it drops them, detects, and reports locations in ",
-         "the original positions.")
+         "cpt_detect() (or through the `...` of a tool that calls it): it ",
+         "drops them, detects, and reports locations in the original ",
+         "positions.")
+}
+
+# Internal: the same fix for a stream. The monitors cannot place a gap, and
+# the general hint sent them to cpt_detect(na_action = "omit").
+#' @noRd
+stream_na_hint <- function(x) {
+  if (!anyNA(x) || any(is.infinite(x))) return("")
+  paste0(" A monitor reads the stream in order and cannot hold a gap: leave ",
+         "a missing observation out rather than passing it.")
 }
 
 # Internal: the finite check, relaxed to "no infinities and enough observed
@@ -581,6 +591,19 @@ validate_data <- function(x) {
               class = "bad_type")
   }
   invisible(TRUE)
+}
+
+# Internal: validate a series that a tool hands to cpt_detect() along with
+# the caller's `...`. When those ask for `na_action = "omit"` or
+# `"engine"`, the gaps are cpt_detect()'s to handle, and refusing them up
+# front made the argument unreachable through cpt_consensus(),
+# ggcpt_compare() and the other tools that run several fits.
+#' @noRd
+validate_for_detect <- function(x, dots) {
+  na <- dots[["na_action", exact = TRUE]]
+  gaps_ok <- is.character(na) && length(na) == 1L && !is.na(na) &&
+    !is.na(pmatch(na, c("omit", "engine")))
+  if (gaps_ok) with_na_allowed(validate_data(x)) else validate_data(x)
 }
 
 # Internal: user-supplied changepoint LOCATIONS, wherever they arrive --

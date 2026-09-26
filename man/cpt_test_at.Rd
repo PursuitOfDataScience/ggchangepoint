@@ -3,6 +3,7 @@
 \name{cpt_test_at}
 \alias{cpt_test_at}
 \alias{print.ggcpt_test_at}
+\alias{tidy.ggcpt_test_at}
 \title{Test for a change at a date fixed in advance}
 \usage{
 cpt_test_at(
@@ -20,6 +21,8 @@ cpt_test_at(
 )
 
 \method{print}{ggcpt_test_at}(x, ...)
+
+\method{tidy}{ggcpt_test_at}(x, ...)
 }
 \arguments{
 \item{x}{A numeric series (a vector, \code{ts}, \code{zoo} and so on), a
