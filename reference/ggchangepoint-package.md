@@ -74,6 +74,28 @@ object with a stable `tibble(cp, cp_value)` contract, optionally
 carrying a time index, engine confidence intervals, a fitted signal,
 significance regions and diagnostics. Around that:
 
+- **What to fit:**
+  [`cpt_families()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_families.md)
+  (Poisson, binomial, exponential and other costs), a formula for a
+  regression break (`cpt_detect(y ~ x, data)`), and
+  [`cpt_segment_models()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_segment_models.md)
+  and [`predict()`](https://rdrr.io/r/stats/predict.html) for a model
+  per regime.
+
+- **How big, when, and whether at all:**
+  [`cpt_effect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md),
+  [`cpt_test_at()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_at.md)
+  (a date fixed in advance),
+  [`cpt_attribute_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute_event.md),
+  [`cpt_test_null()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_null.md),
+  [`cpt_null_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_null_power.md).
+
+- **Should I believe it:**
+  [`cpt_assumptions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_assumptions.md),
+  [`cpt_gof()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md),
+  [`cpt_robustness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md),
+  [`cpt_verify()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_verify.md).
+
 - **Inference:**
   [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
   (four provenances, one contract),
@@ -141,6 +163,18 @@ significance regions and diagnostics. Around that:
   bring detectors this package does not and cannot depend on into the
   same grammar.
 
+- **Leaving R:**
+  [`as_json()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_json.md),
+  [`cpt_export()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_export.md),
+  [`cpt_import()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_export.md).
+
+- **Measurements:** `cpt_runtimes`, `cpt_invariances`,
+  `cpt_noise_benchmark`, `cpt_data_types`, `cpt_null_sizes`,
+  `cpt_calibration`.
+
+Every condition the package raises is classed; see
+[ggchangepoint-conditions](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-conditions.md).
+
 ## See also
 
 The entry points, by group:
@@ -148,7 +182,14 @@ The entry points, by group:
 - **Detect:**
   [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md),
   [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md),
+  [`cpt_families()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_families.md),
   [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md).
+
+- **After detection:**
+  [`cpt_effect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md),
+  [`cpt_test_at()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_at.md),
+  [`cpt_assumptions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_assumptions.md),
+  [`cpt_robustness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md).
 
 - **Visualise:**
   [`autoplot.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/autoplot.ggcpt.md),

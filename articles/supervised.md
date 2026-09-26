@@ -141,16 +141,16 @@ curve
 #> # A tibble: 30 × 5
 #>    penalty  n_cp errors false_positive false_negative
 #>      <dbl> <int>  <int>          <int>          <int>
-#>  1   0.274   147      5              5              0
-#>  2   0.353   142      5              5              0
-#>  3   0.456   129      5              5              0
-#>  4   0.588   115      5              5              0
-#>  5   0.758    99      5              5              0
-#>  6   0.978    84      5              5              0
-#>  7   1.26     66      5              5              0
-#>  8   1.63     55      5              5              0
-#>  9   2.10     40      5              5              0
-#> 10   2.71     26      5              5              0
+#>  1   0.274    83      5              5              0
+#>  2   0.353    79      5              5              0
+#>  3   0.456    77      5              5              0
+#>  4   0.588    72      5              5              0
+#>  5   0.758    64      5              5              0
+#>  6   0.978    53      5              5              0
+#>  7   1.26     44      5              5              0
+#>  8   1.63     31      5              5              0
+#>  9   2.10     21      5              5              0
+#> 10   2.71     15      5              5              0
 #> # ℹ 20 more rows
 ```
 
@@ -252,7 +252,7 @@ reads its penalty against a raw cost calibrated for unit noise:
 ``` r
 
 nrow(cpt_detect(series$d, method = "pelt")$changepoints)
-#> [1] 42
+#> [1] 32
 nrow(cpt_detect(series$d, method = "pelt", penalty = model)$changepoints)
 #> [1] 1
 ```

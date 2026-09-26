@@ -79,15 +79,16 @@ set.seed(2026)
 x <- c(rnorm(60), rnorm(60, 3))
 s <- cpt_sensitivity(x, method = "pelt",
                      over = list(penalty = c(2, 10, 40)))
+#> Warning: `pelt` reported 13 changepoints in 120 observations: segments of 8.6 observations on average. That is more often the signature of a penalty on the wrong scale or of autocorrelated noise than of a series that changes this often; see cpt_assumptions() for this fit.
 s
 #> ggcpt_sensitivity (method: pelt, 3 settings)
 #>   Swept: penalty
-#>   Changepoints found: 1 to 24
+#>   Changepoints found: 1 to 13
 #> 
 #> # A tibble: 3 × 2
 #>   penalty  n_cp
 #>     <dbl> <int>
-#> 1       2    24
+#> 1       2    13
 #> 2      10     1
 #> 3      40     1
 ggplot2::autoplot(s)

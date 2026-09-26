@@ -13,7 +13,7 @@ engines and capabilities."><meta property="og:image" content="https://pursuitofd
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,15 @@ engines and capabilities."><meta property="og:image" content="https://pursuitofd
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -63,7 +71,16 @@ engines and capabilities.</p>
 <span>  penalty <span class="op">=</span> <span class="st">"MBIC"</span>,</span>
 <span>  index <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  y <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  <span class="va">...</span></span>
+<span>  <span class="va">...</span>,</span>
+<span>  data <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  family <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  group <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  na_action <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"error"</span>, <span class="st">"omit"</span>, <span class="st">"engine"</span><span class="op">)</span>,</span>
+<span>  fixed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  within <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  min_segment <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  min_effect <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  keep_fit <span class="op">=</span> <span class="cn">TRUE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -73,12 +90,25 @@ engines and capabilities.</p>
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
 <dd><p>The series. A numeric vector for univariate methods, or a
-numeric matrix/data frame (rows are time points) for the multivariate
-methods (run <code>subset(cpt_methods(), multivariate)$method</code> for the
-list). A <code>ts</code>, <code>xts</code>, <code>zoo</code> or (unkeyed) <code>tsibble</code>
-is accepted directly and its time index is carried through to
-<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>; so is a data frame together with
-<code>y</code> (and optionally <code>index</code>).</p></dd>
+  numeric matrix/data frame (rows are time points) for the multivariate
+  methods (run <code>subset(cpt_methods(), multivariate)$method</code> for the
+  list). A <code>ts</code>, <code>xts</code>, <code>zoo</code> or <code>tsibble</code>
+  is accepted directly and its time index is carried through to
+  <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>; so is a data frame together with
+  <code>y</code> (and optionally <code>index</code>).</p>
+<p>Also a <strong>formula</strong> with <code>data</code>: <code>y ~ x1 + x2</code> fits
+  breakpoints in a regression (methods <code>"strucchange"</code>,
+  <code>"segmented"</code> and <code>"fastcpd"</code>; see <code><a href="cpt_methods.html">cpt_methods()</a></code>'s
+  <code>formula</code> column), and <code>y ~ 1</code> is the response alone, which
+  every univariate method takes.</p>
+<p>Several series at once: a <span class="pkg">dplyr</span>-grouped data frame, a keyed
+  <code>tsibble</code>, or a long data frame with <code>group</code> naming the
+  column(s) that identify each series. Each group is detected separately
+  and the answer is a <code><a href="cpt_batch.html">cpt_batch()</a></code> result carrying the
+  grouping columns.</p>
+<p>Refused rather than coerced: a factor (its level codes are not data),
+  a survival object, and dates or timestamps as values (they convert to
+  an increasing count; pass them as <code>index</code>).</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
@@ -164,7 +194,102 @@ help page: several engines end their own signature in <code>...</code>
 <span class="pkg">segmented</span>, <span class="pkg">fastcpd</span>, <span class="pkg">fChange</span>, <span class="pkg">bfast</span>), so for
 those a misspelt argument name is silently discarded upstream and the
 engine quietly uses its default rather than reporting the typo. Every
-other wired method rejects an unknown argument by name.</p></dd>
+other wired method rejects an unknown argument by name. A name that
+is a near miss of a real argument of <code>cpt_detect()</code>, the wrapper
+or its engine (<code>n_interval</code> for <code>n_intervals</code>) is refused
+with the suggestion, and a modelling-choice value outside the method's
+vocabulary (<code>cpt_methods()$choices</code>, e.g. <code>test.stat =
+"Poison"</code>) is refused with the nearest valid value. <code>seed</code> is
+honoured by every method: passed to a wrapper that has one, and
+otherwise used to scope the random stream around the fit (restored
+afterwards); <code>seed = NULL</code> means unset.</p></dd>
+
+
+<dt id="arg-data">data<a class="anchor" aria-label="anchor" href="#arg-data"></a></dt>
+<dd><p>A data frame for the formula interface.</p></dd>
+
+
+<dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
+<dd><p>The distribution a segment is modelled with:
+<code>"gaussian"</code>, <code>"poisson"</code>, <code>"binomial"</code>,
+<code>"exponential"</code>, <code>"gamma"</code>, <code>"laplace"</code> or
+<code>"l1"</code>. <code>NULL</code> (the default) runs each method's own
+default, which for every parametric method is Gaussian. A
+single-parameter family changes in its rate or probability, so it is
+used with <code>change_in = "mean"</code>. Which methods fit which
+families, and the engine call each combination becomes, is in
+<code><a href="cpt_families.html">cpt_families()</a></code>; a combination not listed there is
+refused. The data are checked against the family (counts must be
+whole and non-negative, binary data 0/1, waiting times positive).
+<span class="pkg">fastcpd</span>'s and <span class="pkg">stepR</span>'s own <code>family</code> values
+(<code>"ar"</code>, <code>"hsmuce"</code>, ...) still reach those engines.</p></dd>
+
+
+<dt id="arg-group">group<a class="anchor" aria-label="anchor" href="#arg-group"></a></dt>
+<dd><p>For a long data frame holding several series, the column(s)
+identifying each one: a bare name, a string, or <code>c(a, b)</code>.</p></dd>
+
+
+<dt id="arg-na-action">na_action<a class="anchor" aria-label="anchor" href="#arg-na-action"></a></dt>
+<dd><p>What to do with missing values: <code>"error"</code> (the
+default) refuses them; <code>"omit"</code> drops them, detects on what is
+observed, and reports every location in the <strong>original</strong>
+positions (a changepoint lands on the last observed point of its left
+segment), keeping the gaps in <code>$data</code> so plots show them and the
+translation in <code>$diagnostics$na_omitted</code>; <code>"engine"</code>
+passes them to an engine that handles them in place, which measured
+for <code>beast</code> and <code>segmented</code> only (see
+<code>cpt_methods()$na_handling</code>), and is refused for the rest.
+There is no <code>"impute"</code>: imputing and then detecting pulls the
+estimated location towards the imputed stretch, by more the longer the
+gap.</p></dd>
+
+
+<dt id="arg-fixed">fixed<a class="anchor" aria-label="anchor" href="#arg-fixed"></a></dt>
+<dd><p>Changepoints known in advance, which are kept and the rest
+estimated around them: the detector runs separately on each stretch
+between them. Positions, or values of the series' index (a date is
+placed at the last observation on or before it; for a numeric index
+such as a <code>ts</code>'s years, a number outside <code>1..n</code> is read as
+an index value and one inside as a position).</p></dd>
+
+
+<dt id="arg-within">within<a class="anchor" aria-label="anchor" href="#arg-within"></a></dt>
+<dd><p>Windows the changepoints must fall in ("the policy took
+effect sometime in Q2"): a pair <code>c(start, end)</code>, a list of pairs,
+or a two-column table, in positions or index values. The engine
+searches the whole series and changepoints outside every window are
+dropped (recorded in <code>$constraints</code>); it restricts what is
+reported rather than re-optimising.</p></dd>
+
+
+<dt id="arg-min-segment">min_segment<a class="anchor" aria-label="anchor" href="#arg-min-segment"></a></dt>
+<dd><p>Minimum segment length in observations, translated
+into each engine's own argument (<code>minseglen</code>, <code>min_size</code>,
+<code>h</code>, <code>delta</code>, ...: <code>cpt_methods()$min_segment</code> names
+it). A method without one refuses it. When <code>min_segment</code> is not
+given, the engines whose own default allows one-observation segments
+(the change-in-mean <span class="pkg">changepoint</span> methods other than SegNeigh,
+<code>np</code> and <code>binsegrcpp</code>) get a floor of two, so a short or
+monotone series is not split after every point.</p></dd>
+
+
+<dt id="arg-min-effect">min_effect<a class="anchor" aria-label="anchor" href="#arg-min-effect"></a></dt>
+<dd><p>Drop changepoints whose mean shift is smaller than this
+many noise standard deviations (estimated from the series' first
+differences, which a changepoint barely moves), removing the smallest
+first and re-measuring its neighbours after each removal. For a change
+in mean only. The size is measured on the same data that located the
+change, so it is biased upward; see <code><a href="cpt_effect.html">cpt_effect()</a></code>.</p></dd>
+
+
+<dt id="arg-keep-fit">keep_fit<a class="anchor" aria-label="anchor" href="#arg-keep-fit"></a></dt>
+<dd><p>Keep the engine's own object in <code>$fit</code>? Defaults to
+<code>TRUE</code>. A few engines return objects far larger than the answer
+(a warning says so above 10 MB, once per method per session);
+<code>FALSE</code> drops it, which only the engine-specific accessors notice.
+Everything else in the result is plain data, so a saved result reads
+back in any R session, with no packages installed.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -194,12 +319,16 @@ absolute penalty on the residual sum of squares. Neither rescales the
 data, so on a series whose noise is much wider than 1 the penalty is
 effectively negligible and the segmentation shatters. On 200 observations
 with one true changepoint in the middle and a jump of five standard
-deviations, <code>"pelt"</code> returns 1 changepoint at \(\sigma = 1\), 39
-at \(\sigma = 3\) and 141 at \(\sigma = 10\). These are means over 20
-draws, because a single draw is not stable here: the same three settings
-gave 21/75 at \(n = 100\) and 57/266 at \(n = 400\), so the effect
-grows with the series as well as with the noise. Three ways to avoid it, in order of
-convenience:</p><ul><li><p>standardise the series first
+deviations, <code>"pelt"</code> returns 1 changepoint at \(\sigma = 1\), 27
+at \(\sigma = 3\) and 76 at \(\sigma = 10\). These are means over 20
+draws, because a single draw is not stable here: the same settings gave
+15/38 at \(n = 100\) and 47/152 at \(n = 400\), so the effect grows
+with the series as well as with the noise. (0.5.0, before the two-point
+minimum segment, reported 39 and 141 at \(n = 200\): the floor halves
+the damage and does not remove it.) A measured scale-sensitive engine
+given noise far from unit scale warns (class
+<code>ggchangepoint_scale_sensitive</code>). Three ways to avoid it, in order
+of convenience:</p><ul><li><p>standardise the series first
     (<code>cpt_detect(scale(x)[, 1], method = "pelt")</code>);</p></li>
 <li><p>pass a penalty on the data's own scale, for example
     <code>penalty = 2 * log(length(x)) * stats::var(diff(x)) / 2</code>;</p></li>
@@ -275,6 +404,56 @@ Standardising first avoids all three.</p>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_index   cp_value</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;date&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100 2000-04-09    0.467</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Counts, with a cost written for them.</span></span></span>
+<span class="r-in"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">2</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Poisson.html" class="external-link">rpois</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="fu">cpt_detect</span><span class="op">(</span><span class="va">counts</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, family <span class="op">=</span> <span class="st">"poisson"</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt (changepoint detection result)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Method:             pelt</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Change in:          mean</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Changepoints found: 1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   CP convention:      left</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Penalty:            MBIC</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Series length:      200</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   Family:             poisson</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> Changepoints:</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100        1</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Missing values, located in the original positions.</span></span></span>
+<span class="r-in"><span><span class="va">gappy</span> <span class="op">&lt;-</span> <span class="va">x</span></span></span>
+<span class="r-in"><span><span class="va">gappy</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">20</span>, <span class="fl">21</span>, <span class="fl">150</span><span class="op">)</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="cn">NA</span></span></span>
+<span class="r-in"><span><span class="fu">cpt_detect</span><span class="op">(</span><span class="va">gappy</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, na_action <span class="op">=</span> <span class="st">"omit"</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100    0.467</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># A changepoint known in advance, and a window for another.</span></span></span>
+<span class="r-in"><span><span class="fu">cpt_detect</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, fixed <span class="op">=</span> <span class="fl">50</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 2 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value fixed</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    50    0.368 TRUE </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>   100    0.467 FALSE</span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># Breakpoints in a regression.</span></span></span>
+<span class="r-in"><span><span class="kw">if</span> <span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/ns-load.html" class="external-link">requireNamespace</a></span><span class="op">(</span><span class="st">"strucchange"</span>, quietly <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span><span class="op">)</span> <span class="op">{</span></span></span>
+<span class="r-in"><span>  <span class="va">d</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/data.frame.html" class="external-link">data.frame</a></span><span class="op">(</span>t <span class="op">=</span> <span class="fl">1</span><span class="op">:</span><span class="fl">200</span>, z <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span><span class="op">)</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">d</span><span class="op">$</span><span class="va">y</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/ifelse.html" class="external-link">ifelse</a></span><span class="op">(</span><span class="va">d</span><span class="op">$</span><span class="va">t</span> <span class="op">&lt;=</span> <span class="fl">120</span>, <span class="fl">1</span> <span class="op">+</span> <span class="va">d</span><span class="op">$</span><span class="va">z</span>, <span class="fl">3</span> <span class="op">-</span> <span class="va">d</span><span class="op">$</span><span class="va">z</span><span class="op">)</span> <span class="op">+</span> <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">200</span>, <span class="fl">0</span>, <span class="fl">0.5</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu">cpt_detect</span><span class="op">(</span><span class="va">y</span> <span class="op">~</span> <span class="va">z</span>, data <span class="op">=</span> <span class="va">d</span>, method <span class="op">=</span> <span class="st">"strucchange"</span><span class="op">)</span></span></span>
+<span class="r-in"><span>  <span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span>, <span class="st">"coefficients"</span><span class="op">)</span></span></span>
+<span class="r-in"><span><span class="op">}</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 4 × 8</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   segment start   end term        estimate std_error conf_low conf_high</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>       1     1   120 (Intercept)    1.01     0.038<span style="text-decoration: underline;">6</span>    0.929     1.08 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>       1     1   120 z              0.960    0.041<span style="text-decoration: underline;">5</span>    0.878     1.04 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">3</span>       2   121   200 (Intercept)    2.95     0.054<span style="text-decoration: underline;">2</span>    2.84      3.05 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">4</span>       2   121   200 z             -<span style="color: #BB0000;">1.06</span>     0.046<span style="text-decoration: underline;">0</span>   -<span style="color: #BB0000;">1.15</span>     -<span style="color: #BB0000;">0.971</span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

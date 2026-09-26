@@ -36,7 +36,8 @@ tidy(x, ...)
 
 - x:
 
-  For `cpt_crops()`, a numeric vector; for the
+  For `cpt_crops()`, a numeric vector, or a `ggcpt` fit whose series is
+  used (with its change type, when it is one CROPS sweeps); for the
   [`print()`](https://rdrr.io/r/base/print.html) and
   [`tidy()`](https://generics.r-lib.org/reference/tidy.html) methods, a
   `ggcpt_path` object.

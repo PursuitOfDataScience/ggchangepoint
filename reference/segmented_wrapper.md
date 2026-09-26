@@ -12,15 +12,24 @@ so `change_in` is `"slope"` and the fitted broken line is stored in the
 ## Usage
 
 ``` r
-segmented_wrapper(x, npsi = 1, conf_level = 0.95, seed = NULL, ...)
+segmented_wrapper(
+  x,
+  npsi = 1,
+  conf_level = 0.95,
+  seed = NULL,
+  data = NULL,
+  seg_z = NULL,
+  family = c("gaussian", "poisson", "binomial"),
+  ...
+)
 ```
 
 ## Arguments
 
 - x:
 
-  A numeric vector; a linear model of `x` on time `1:length(x)` is
-  segmented.
+  A numeric vector (a line in time is segmented), or a model formula
+  (supply `data`).
 
 - npsi:
 
@@ -36,10 +45,27 @@ segmented_wrapper(x, npsi = 1, conf_level = 0.95, seed = NULL, ...)
   scoped to this call: `.Random.seed` is saved and restored, so a seeded
   call inside a simulation loop does not pin the loop's own stream.
 
+- data:
+
+  A data frame, for formula input.
+
+- seg_z:
+
+  For formula input, the covariate whose relationship with the response
+  breaks: its name, or a one-sided formula (`~ t`) as segmented's own
+  `seg.Z` takes it. Defaults to the formula's only numeric covariate,
+  and must be named when there are several.
+
+- family:
+
+  `"gaussian"` (a linear model, the default), `"poisson"` or
+  `"binomial"` (a generalised linear model on the log or logit scale).
+
 - ...:
 
   Additional arguments passed to
-  [`segmented::segmented()`](https://rdrr.io/pkg/segmented/man/segmented.html).
+  [`segmented::segmented()`](https://rdrr.io/pkg/segmented/man/segmented.html),
+  for example `psi` (starting values) or `fixed.psi`.
 
 ## Value
 
@@ -47,7 +73,20 @@ A `ggcpt` object with `ci_lower`/`ci_upper` columns and the fitted
 broken line in `$data$fitted`. Breakpoints are rounded to the nearest
 index; for a continuous fit the reported location is the kink itself. A
 constant series has no kink and returns an empty result, rather than the
-arbitrary breakpoint a singular fit would give.
+arbitrary breakpoint a singular fit would give. Formula input adds
+`psi`, `psi_lower` and `psi_upper` (the breakpoints on the covariate's
+scale) and a `$coefficients` table with the slope of `seg_z` in each
+segment.
+
+## Details
+
+Called with a numeric vector it segments a line in time. Called with a
+formula and `data` it does what the engine exists for: breakpoints in
+the relationship between the response and a covariate, `seg_z`. The
+result is then ordered by that covariate, which becomes its index, so
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html)'s `cp_index`
+and the plot speak in the covariate's units, and `psi`, `psi_lower` and
+`psi_upper` give the breakpoints on that scale exactly.
 
 ## References
 
@@ -115,4 +154,15 @@ res$changepoints
 #>   <int>    <dbl>    <int>    <int>
 #> 1   100     50.4       99      101
 ggplot2::autoplot(res, show_fit = TRUE, show_ci = TRUE)
+
+
+# A breakpoint in a dose-response relationship
+d <- data.frame(dose = runif(150, 0, 10))
+d$response <- 2 + 0.8 * pmin(d$dose, 6) + rnorm(150, 0, 0.4)
+fit <- segmented_wrapper(response ~ dose, data = d)
+fit$changepoints[, c("cp", "psi", "psi_lower", "psi_upper")]
+#> # A tibble: 1 × 4
+#>      cp   psi psi_lower psi_upper
+#>   <int> <dbl>     <dbl>     <dbl>
+#> 1    94  6.01      5.69      6.33
 ```

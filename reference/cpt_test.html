@@ -13,7 +13,7 @@ where it does not."><meta property="og:image" content="https://pursuitofdatascie
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -31,7 +31,15 @@ where it does not."><meta property="og:image" content="https://pursuitofdatascie
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -56,7 +64,12 @@ where it does not.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_test</span><span class="op">(</span><span class="va">object</span>, type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"jump"</span>, <span class="st">"segment"</span><span class="op">)</span>, correction <span class="op">=</span> <span class="st">"none"</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_test</span><span class="op">(</span></span>
+<span>  <span class="va">object</span>,</span>
+<span>  type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"jump"</span>, <span class="st">"segment"</span><span class="op">)</span>,</span>
+<span>  correction <span class="op">=</span> <span class="st">"none"</span>,</span>
+<span>  relevance <span class="op">=</span> <span class="cn">NULL</span></span>
+<span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -78,6 +91,16 @@ segment differ from the one before it?).</p></dd>
 of the <code><a href="https://rdrr.io/r/stats/p.adjust.html" class="external-link">p.adjust</a></code> methods (<code>"none"</code>,
 <code>"bonferroni"</code>, <code>"holm"</code>, <code>"BH"</code>, ...). Defaults to
 <code>"none"</code>; a <code>p_adjusted</code> column is added when it is not.</p></dd>
+
+
+<dt id="arg-relevance">relevance<a class="anchor" aria-label="anchor" href="#arg-relevance"></a></dt>
+<dd><p>Optional smallest change worth acting on, in noise
+standard deviations. The null hypothesis becomes "the change is no
+larger than <code>relevance</code>" rather than "there is no change", so a
+statistically detectable but practically negligible shift is not
+significant. Applies to the Welch route (the changepoints of a series
+fit); the <code>p_value</code> column is then the relevance test's, and a
+<code>relevance</code> column records the threshold in the data's units.</p></dd>
 
 </dl></div>
     <div class="section level2">

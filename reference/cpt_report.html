@@ -15,7 +15,7 @@ information. Reproducibility and correct attribution in one call."><meta propert
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,15 @@ information. Reproducibility and correct attribution in one call."><meta propert
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -61,7 +69,7 @@ information. Reproducibility and correct attribution in one call.</p>
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_report</span><span class="op">(</span></span>
 <span>  <span class="va">object</span>,</span>
-<span>  format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"md"</span>, <span class="st">"text"</span>, <span class="st">"gt"</span><span class="op">)</span>,</span>
+<span>  format <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"md"</span>, <span class="st">"text"</span>, <span class="st">"gt"</span>, <span class="st">"json"</span><span class="op">)</span>,</span>
 <span>  file <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  stability <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  events <span class="op">=</span> <span class="cn">NULL</span>,</span>
@@ -80,8 +88,10 @@ information. Reproducibility and correct attribution in one call.</p>
 
 <dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
 <dd><p><code>"md"</code> (default, GitHub-flavoured markdown as a
-character vector), <code>"text"</code> (plain text) or <code>"gt"</code> (a
-<span class="pkg">gt</span> table of the changepoints, for a publication).</p></dd>
+character vector), <code>"text"</code> (plain text), <code>"gt"</code> (a
+<span class="pkg">gt</span> table of the changepoints, for a publication) or
+<code>"json"</code> (the whole result under <code><a href="as_json.html">as_json()</a></code>'s
+versioned schema, for a pipeline rather than a reader).</p></dd>
 
 
 <dt id="arg-file">file<a class="anchor" aria-label="anchor" href="#arg-file"></a></dt>
@@ -132,7 +142,7 @@ would be slow and unexpected inside a report).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Penalty: MBIC</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Series length: 120</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> - Changepoints found: 1</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> - Detection runtime: 0.008 s</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> - Detection runtime: 0.004 s</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## Changepoints</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
@@ -153,6 +163,19 @@ would be slow and unexpected inside a report).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">2</span>      2    61   120    60          3.90 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ```</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ## Assumptions</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ```</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt_assumptions (method: pelt)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    residual_dependence       Ljung-Box at lag 10; lag-1 autocorrelation -0.13</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    scale_sensitivity         noise sd 1.29; this engine's cost assumes unit noise</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    expected_false_positives  measured on pure noise at n = 1,000 (50 replicates)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    count_plausibility        1 changepoints in 120 observations (0.83 per hundred)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>    data_type                 looks continuous; family gaussian</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> No assumption check raised a concern.</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ```</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ## Citation</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> [pelt] Killick, R., Fearnhead, P. and Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. Journal of the American Statistical Association, 107(500), 1590-1598.</span>
@@ -164,6 +187,8 @@ would be slow and unexpected inside a report).</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Call:</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> cpt_detect(x = c(rnorm(60), rnorm(60, 4)), method = "pelt")</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> ```</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> The changepoints, the series and the metadata are plain data: a saved result reads back in any R session with no packages installed, and cpt_export() writes JSON or CSV for other languages. Only `$fit`, the engine's own object (0 MB), needs the engine; drop it before saving with `fit$fit &lt;- NULL`, or refit with `keep_fit = FALSE`.</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 </code></pre></div>
     </div>

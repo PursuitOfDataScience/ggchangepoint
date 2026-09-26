@@ -76,7 +76,9 @@ Other ggplot2 layers:
 [`geom_cpt_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_event.md),
 [`geom_cpt_label()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_label.md),
 [`geom_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_region.md),
-[`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md)
+[`geom_cpt_segment()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_cpt_segment.md),
+[`ggchangepoint-ggproto`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md),
+[`stat_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_cpt_region.md)
 
 ## Examples
 

@@ -224,30 +224,30 @@ nothing matched, because an average over no pairs is not zero error.
 
 # perfect detection
 cpt_metrics(pred = c(150, 300), truth = c(150, 300), n = 500)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   500      2       2         1      1     1        1         0          1
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   500      2       2         1      1     1        1           0.34
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 
 # near misses within the margin still match one-to-one
 cpt_metrics(pred = c(148, 305), truth = c(150, 300), n = 500, margin = 5)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   500      2       2         1      1     1    0.973         5      0.958
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   500      2       2         1      1     1    0.973           0.34
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 
 # three predictions around one truth: one TP, precision 1/3
 cpt_metrics(pred = c(148, 150, 152), truth = c(150), n = 500, margin = 5)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   500      3       1     0.333      1   0.5    0.992         2      0.984
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   500      3       1     0.333      1   0.5    0.992           0.58
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 ```
 
 Three edge-case conventions deserve emphasis, because getting them wrong
@@ -272,22 +272,22 @@ silently corrupts benchmark averages:
 
 # a correct "no change" answer is rewarded
 cpt_metrics(pred = integer(0), truth = integer(0), n = 300)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   300      0       0         1      1     1        1        NA          1
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   300      0       0         1      1     1        1              1
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 
 # empty prediction against one true change at the midpoint: the trivial
 # one-segment partition still overlaps half the series, so covering is 0.5
 cpt_metrics(pred = integer(0), truth = c(150), n = 300)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   300      0       1         0      0     0      0.5        NA          0
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   300      0       1         0      0     0      0.5            0.5
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 ```
 
 ``` r
@@ -295,12 +295,12 @@ cpt_metrics(pred = integer(0), truth = c(150), n = 300)
 # index 700 cannot be a changepoint of a length-500 series
 cpt_metrics(pred = c(100, 700), truth = c(100, 300), n = 500)
 #> Warning: Dropping changepoint indices outside 1..(n-1): 700
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   500      1       2         1    0.5 0.667      0.6       200      0.418
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   500      1       2         1    0.5 0.667      0.6           0.36
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 ```
 
 ## Multi-annotator evaluation
@@ -323,7 +323,7 @@ annotations <- list(
 cpt_metrics_annotated(pred = c(150, 300), annotations, n = 500, margin = 5)
 #> # A tibble: 1 × 7
 #>       n n_annotators n_pred precision recall    f1 covering
-#>   <dbl>        <int>  <int>     <dbl>  <dbl> <dbl>    <dbl>
+#>   <int>        <int>  <int>     <dbl>  <dbl> <dbl>    <dbl>
 #> 1   500            3      2     0.833      1 0.889    0.895
 ```
 
@@ -360,12 +360,12 @@ rules](comparison_files/figure-html/eval-plot-1.png)
 ``` r
 
 cpt_metrics(pred, truth, n = length(x), margin = 5)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   500      2       2       0.5    0.5   0.5    0.784        60      0.696
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   500      2       2       0.5    0.5   0.5    0.784           0.34
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 ```
 
 One true positive out of two predictions and two truths gives precision,
@@ -438,14 +438,16 @@ fragile.
 
 st <- cpt_stability(x, method = "pelt", B = 30, seed = 1)
 st
-#> ggcpt_stability (30 bootstrap replicates, method: pelt)
+#> ggcpt_stability (30 iid bootstrap replicates, method: pelt)
 #> 
 #> Original changepoints and their re-detection frequency:
-#> # A tibble: 2 × 2
-#>      cp stability
-#>   <int>     <dbl>
-#> 1   150         1
-#> 2   300         1
+#> # A tibble: 2 × 3
+#>      cp stability survives_reversal
+#>   <int>     <dbl> <lgl>            
+#> 1   150         1 TRUE             
+#> 2   300         1 TRUE             
+#> 
+#> A high score means reproducible under resampling, not real; see ?cpt_stability.
 autoplot(st)
 ```
 
@@ -643,6 +645,17 @@ positive. Third, *uncertainty deserves first-class treatment*:
 engine-native intervals, bootstrap stability, and penalty paths give
 three independent views of how much a reported changepoint should be
 trusted, and all three render directly with **ggplot2** (Wickham 2016).
+
+One warning belongs next to all of this. Running several methods and
+reporting the one that found a change, as if it were the only one run,
+is a garden of forking paths, and fifty methods behind one call make it
+easier here than anywhere else. A method chosen for its answer carries
+no valid p-value, and neither does a test at its changepoints: choose
+the method before looking at the series
+([`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
+answers from what you know about the problem), or report every method
+you ran. Agreement across methods is a robustness display, not a
+correction, because the methods share engines, costs and assumptions.
 
 For the detection surface itself (the dispatcher, the engine wave, the
 Bayesian displays, and the multivariate tools), see

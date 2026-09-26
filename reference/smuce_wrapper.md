@@ -14,7 +14,12 @@ populate the `ci_lower`/`ci_upper` columns of the result and render via
 ## Usage
 
 ``` r
-smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
+smuce_wrapper(
+  x,
+  alpha = 0.5,
+  family = c("gauss", "hsmuce", "poisson", "binomial"),
+  ...
+)
 ```
 
 ## Arguments
@@ -31,8 +36,19 @@ smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
 
 - family:
 
-  Noise model: `"gauss"` (SMUCE, homogeneous Gaussian noise) or
-  `"hsmuce"` (HSMUCE, segment-wise variance). Defaults to `"gauss"`. The
+  Noise model: `"gauss"` (SMUCE, homogeneous Gaussian noise), `"hsmuce"`
+  (HSMUCE, segment-wise variance), `"poisson"` (counts: a change in the
+  rate) or `"binomial"` (0/1 outcomes: a change in the probability).
+  Defaults to `"gauss"`. The two count families run
+  [`stepR::smuceR()`](https://rdrr.io/pkg/stepR/man/smuceR.html), the
+  multiscale estimator for exponential families, with the same level and
+  the same jump intervals;
+  `cpt_detect(x, method = "smuce", family = "poisson")` reaches them.
+  stepR documents `smuceR()` as deprecated but working, and as the only
+  route to these families until `stepFit()` gains them; should it be
+  removed, the error says so and names the methods that fit the same
+  family. With `alpha` given, `smuceR()` takes its threshold from the
+  asymptotic null distribution rather than a simulated one. The
   remaining `stepR` families (`"jsmurf"`, `"mDependentPS"`, ...) all
   require a filter or covariance specification; call
   [`stepR::stepFit()`](https://rdrr.io/pkg/stepR/man/stepFit.html)
@@ -47,7 +63,9 @@ smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
 - ...:
 
   Additional arguments passed to
-  [`stepR::stepFit()`](https://rdrr.io/pkg/stepR/man/stepFit.html).
+  [`stepR::stepFit()`](https://rdrr.io/pkg/stepR/man/stepFit.html)
+  ([`stepR::smuceR()`](https://rdrr.io/pkg/stepR/man/smuceR.html) for
+  the count families).
 
 ## Value
 

@@ -20,10 +20,21 @@ deeper on a single theme.
 - [Streaming and Online
   Monitoring](https://pursuitofdatascience.github.io/ggchangepoint/articles/monitoring.md):
 
-### Web only
+### Articles
 
-Too slow to run at build time, so it ships on the site rather than in
-the package tarball.
+On the website only. Vignettes teach the API; these teach the domain:
+how analyses go wrong, how to choose, what the engines were measured to
+do, and what the package promises.
 
-- [Benchmarks: Runtime, Size and
+- [Ten Ways to Get a Changepoint
+  Wrong](https://pursuitofdatascience.github.io/ggchangepoint/articles/pitfalls.md):
+- [Choosing a Method: a Decision Tree and a
+  Cheatsheet](https://pursuitofdatascience.github.io/ggchangepoint/articles/choosing.md):
+- [Five Packages, One Series: the
+  Nile](https://pursuitofdatascience.github.io/ggchangepoint/articles/nile.md):
+- [Calibration: What the Package Promises, and What It
+  Delivers](https://pursuitofdatascience.github.io/ggchangepoint/articles/calibration.md):
+- [Benchmarks: Runtime, False Alarms and
   Coverage](https://pursuitofdatascience.github.io/ggchangepoint/articles/benchmarks.md):
+- [Stability, Deprecation and the
+  Contract](https://pursuitofdatascience.github.io/ggchangepoint/articles/stability.md):

@@ -40,7 +40,10 @@ cpt_wrapper(data, change_in = "mean_var", cp_method = "PELT", ...)
 - ...:
 
   Extra arguments for each `cpt` function mentioned in the `change_in`
-  section.
+  section. For a change in mean (and for `np`) `minseglen` defaults to
+  `2` rather than the engine's `1`, so no segment is a single
+  observation; pass it to choose another value. SegNeigh keeps the
+  engine's default, which is the only one it implements.
 
 ## Value
 

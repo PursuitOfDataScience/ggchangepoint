@@ -38,6 +38,7 @@ Other test signals:
 ``` r
 x <- signal_fms(seed = 2026)
 cp <- cpt_detect(x$value, method = "pelt")$changepoints$cp
+#> Warning: `pelt` is scale-sensitive for a change in mean (its cost assumes unit noise), and this series' noise standard deviation is about 0.48. On data ten times larger it over-segments badly; on data ten times smaller it finds nothing. Standardise the series first (e.g. `x / 0.48`), or use `change_in = "meanvar"`, which estimates the noise per segment.
 # the smallest jumps (0.5, against noise sd 0.5) are the ones missed
 cpt_metrics(cp, attr(x, "true_changepoints"), n = nrow(x))$covering
 #> [1] 0.8674641

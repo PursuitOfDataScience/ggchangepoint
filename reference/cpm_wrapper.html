@@ -19,7 +19,7 @@ run length arl0."><meta property="og:image" content="https://pursuitofdatascienc
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -37,7 +37,15 @@ run length arl0."><meta property="og:image" content="https://pursuitofdatascienc
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -65,7 +73,7 @@ run length <code>arl0</code>.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpm_wrapper</span><span class="op">(</span><span class="va">x</span>, cpm_type <span class="op">=</span> <span class="st">"Mann-Whitney"</span>, arl0 <span class="op">=</span> <span class="fl">500</span>, startup <span class="op">=</span> <span class="fl">20</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpm_wrapper</span><span class="op">(</span><span class="va">x</span>, cpm_type <span class="op">=</span> <span class="st">"Mann-Whitney"</span>, arl0 <span class="op">=</span> <span class="cn">NULL</span>, startup <span class="op">=</span> <span class="fl">20</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -89,14 +97,24 @@ through <code>...</code>, e.g. <code>lambda = 0.3</code>).</p></dd>
 
 <dt id="arg-arl-">arl0<a class="anchor" aria-label="anchor" href="#arg-arl-"></a></dt>
 <dd><p>Target in-control average run length (how many observations,
-on average, before a false alarm). Defaults to <code>500</code>. <span class="pkg">cpm</span>
-ships thresholds only for a fixed grid (100, 200, 300, 370, 400, 500,
-600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
-9000, 10000, 20000, 30000, 40000 and 50000), and any other value is
-refused, because the engine answers it by printing an error and
-reporting no changepoints. The grid is the same for every
-<code>cpm_type</code>, and 50000 is the ceiling: a long series cannot be
-given an <code>arl0</code> proportional to its length indefinitely.</p></dd>
+  on average, before a false alarm). <span class="pkg">cpm</span>
+  ships thresholds only for a fixed grid (100, 200, 300, 370, 400, 500,
+  600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
+  9000, 10000, 20000, 30000, 40000 and 50000), and any other value is
+  refused, because the engine answers it by printing an error and
+  reporting no changepoints. The grid is the same for every
+  <code>cpm_type</code>, and 50000 is the ceiling: a long series cannot be
+  given an <code>arl0</code> proportional to its length indefinitely.</p>
+<p>When <code>NULL</code> (the default) it <strong>scales with the series</strong>: the
+  smallest grid value of at least \(5n\), capped at 50000. A
+  sequential test run over a whole series raises about
+  \(n / \mathrm{arl0}\) false alarms, so the streaming default of 500
+  meant 36 changepoints on 10,000 observations with 4 real ones, and 350
+  on 100,000; \(5n\) turned the 36 into exactly the 4. The expected
+  count is recorded as <code>$diagnostics$expected_false_positives</code>. Pass
+  <code>arl0 = 500</code> for the 0.5.0 behaviour, and use
+  <code><a href="cpt_monitor.html">cpt_monitor()</a></code> for genuine streaming, whose default is
+  unchanged.</p></dd>
 
 
 <dt id="arg-startup">startup<a class="anchor" aria-label="anchor" href="#arg-startup"></a></dt>
@@ -174,7 +192,7 @@ begins. Defaults to <code>20</code>.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value detection_time</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.125</span>            104</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>   100   -<span style="color: #BB0000;">0.125</span>            105</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

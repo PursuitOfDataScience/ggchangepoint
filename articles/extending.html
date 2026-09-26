@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,17 @@
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -130,18 +140,19 @@ convention.</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   198    2.41</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 11</span></span></span>
 <span><span class="co">#&gt;       n n_changepoints method change_in penalty_type penalty_value cp_convention</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   300              2 ruptu… mean      user                    <span style="color: #BB0000;">NA</span> left         </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;, engine_version &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   family &lt;chr&gt;</span></span></span>
 <span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">$</span><span class="va">cp</span>, truth <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">200</span><span class="op">)</span>, n <span class="op">=</span> <span class="fl">300</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 12</span></span></span>
-<span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering hausdorff rand_index</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   300      2       2         1      1     1    0.987         2      0.980</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 14</span></span></span>
+<span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering covering_floor</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   300      2       2         1      1     1    0.987          0.333</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: covering_scaled &lt;dbl&gt;, hausdorff &lt;dbl&gt;, rand_index &lt;dbl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;, rmse_matched &lt;dbl&gt;</span></span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">fit</span>, show_segments <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></code></pre></div>
 <p><img src="extending_files/figure-html/as-ggcpt-uses-1.png" class="r-plt" alt="Series with the externally supplied changepoints drawn as vertical rules" width="576"></p>
 <p><code><a href="../reference/as_ggcpt.html">as_ggcpt()</a></code> runs the same contract checks as every
@@ -205,12 +216,16 @@ off a method name.</p>
 <strong>visibly</strong> user-supplied everywhere it appears:</p>
 <div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_methods.html">cpt_methods</a></span><span class="op">(</span><span class="op">)</span>, <span class="va">status</span> <span class="op">==</span> <span class="st">"registered"</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 15</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 29</span></span></span>
 <span><span class="co">#&gt;   method       change_in engine  status    installed target_release multivariate</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> biggest_jump mean      example register… <span style="color: #BB0000;">NA</span>        <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 8 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 22 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   families &lt;chr&gt;, choices &lt;chr&gt;, formula &lt;lgl&gt;, min_segment &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   na_handling &lt;chr&gt;, cp_convention_upstream &lt;chr&gt;, scale_invariant &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   sequential &lt;lgl&gt;, max_cp &lt;int&gt;, tier &lt;chr&gt;, noise_model_arg &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   rate_arg &lt;chr&gt;, cost &lt;chr&gt;, max_n &lt;dbl&gt;</span></span></span>
 <span><span class="fu"><a href="../reference/cpt_cite.html">cpt_cite</a></span><span class="op">(</span><span class="st">"biggest_jump"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [biggest_jump] No citation supplied (illustration only).</span></span></code></pre></div>
 <p>The package validates the <em>shape</em> of what your function
@@ -224,6 +239,8 @@ name:</p>
 <span>              min_votes <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span>
 <span><span class="co">#&gt; ggcpt_consensus (3 methods, tolerance 5, threshold 2 vote(s))</span></span>
 <span><span class="co">#&gt;   Methods: pelt, binseg, biggest_jump</span></span>
+<span><span class="co">#&gt;   Found by each: pelt 2, binseg 2, biggest_jump 1</span></span>
+<span><span class="co">#&gt;   Disagreement: 0.5 (share of locations not found by every method)</span></span>
 <span><span class="co">#&gt;   Consensus changepoints: 2</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>

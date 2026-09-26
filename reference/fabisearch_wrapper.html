@@ -15,7 +15,7 @@ separately than together, and significance is assessed by permutation."><meta pr
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -33,7 +33,15 @@ separately than together, and significance is assessed by permutation."><meta pr
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -217,17 +225,17 @@ the duration of the call and detaches it again afterwards.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="co"># \donttest{</span></span></span>
 <span class="r-in"><span><span class="co"># A change in *structure*, not in scale: two latent factors drive</span></span></span>
 <span class="r-in"><span><span class="co"># different halves of the node set before and after the change.</span></span></span>
-<span class="r-in"><span><span class="co"># Deliberately tiny -- this is by far the most expensive engine in the</span></span></span>
+<span class="r-in"><span><span class="co"># Deliberately tiny: this is by far the most expensive engine in the</span></span></span>
 <span class="r-in"><span><span class="co"># package (n_runs x n_reps factorisations per candidate split). Measured</span></span></span>
 <span class="r-in"><span><span class="co"># at 5-6 s across fresh sessions, against 27 s for the 2 x 25 /</span></span></span>
 <span class="r-in"><span><span class="co"># n_reps = 4</span></span></span>
-<span class="r-in"><span><span class="co"># version this replaced -- and this is the floor: `n_reps = 1` fails</span></span></span>
+<span class="r-in"><span><span class="co"># version this replaced, and this is the floor: `n_reps = 1` fails</span></span></span>
 <span class="r-in"><span><span class="co"># inside fabisearch with "not enough 'x' observations" (the permutation</span></span></span>
 <span class="r-in"><span><span class="co"># test needs two), and smaller matrices are not reliably cheaper because</span></span></span>
 <span class="r-in"><span><span class="co"># the search then evaluates more splits relative to `min_dist` (2 x 10 at</span></span></span>
 <span class="r-in"><span><span class="co"># min_dist = 8 measured 6.6 s). So this one example stays near CRAN's 5 s</span></span></span>
 <span class="r-in"><span><span class="co"># budget by necessity; `cran-comments.md` says so. Use the defaults on</span></span></span>
-<span class="r-in"><span><span class="co"># real data -- the settings here are for the budget, not for detection.</span></span></span>
+<span class="r-in"><span><span class="co"># real data; the settings here are for the budget, not for detection.</span></span></span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">2026</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">block</span> <span class="op">&lt;-</span> <span class="kw">function</span><span class="op">(</span><span class="va">n</span>, <span class="va">cols</span><span class="op">)</span> <span class="op">{</span></span></span>
 <span class="r-in"><span>  <span class="va">f</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/MathFun.html" class="external-link">abs</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="va">n</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span> <span class="fl">0.5</span></span></span>

@@ -153,6 +153,7 @@ labels <- list(a = as_cpt_labels(60, n = 120),
                b = as_cpt_labels(80, n = 160))
 model <- cpt_learn_penalty(series, labels,
                            penalties = c(2, 8, 32, 128))
+#> Warning: `pelt` reported 13 changepoints in 120 observations: segments of 8.6 observations on average. That is more often the signature of a penalty on the wrong scale or of autocorrelated noise than of a series that changes this often; see cpt_assumptions() for this fit.
 model
 #> ggcpt_penalty_model (native interval regression)
 #>   Trained on 2 series with method `pelt`

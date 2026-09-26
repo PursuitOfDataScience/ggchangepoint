@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,15 @@
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -41,7 +49,129 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="0.5.0" id="ggchangepoint-050">ggchangepoint 0.5.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-050"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.6.0" id="ggchangepoint-060">ggchangepoint 0.6.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-060"></a></h2>
+<p>The stabilisation release. It settles the contract before 1.0 freezes it (classed conditions, versioned results, a JSON schema, real <code>ggproto</code> layers, a changepoint convention verified across every engine), connects what already existed (families the engines could fit but nobody could ask for, a formula interface the regression engines had and <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> could not reach), and replaces the package’s hand-written claims about its engines with measurements that ship as data.</p>
+<div class="section level3">
+<h3 id="changes-to-results-0-6-0">Changes to results<a class="anchor" aria-label="anchor" href="#changes-to-results-0-6-0"></a></h3>
+<p>Read these first: each changes what an existing call returns.</p>
+<ul><li>The <code>changepoint</code> engines (<code>pelt</code>, <code>binseg</code>, <code>amoc</code>, <code>np</code>) and <code>binsegrcpp</code> now use a minimum segment of two observations for a change in mean. The engines’ own default of one let a single observation be a segment, so an outlier became two changepoints and a monotone series was split after every point. <code>segneigh</code>, which refuses <code>minseglen &gt; 1</code>, and series shorter than four observations keep the old behaviour; pass <code>minseglen = 1</code> (or <code>min_segment = 1</code>) to restore it. On wide noise the documented shattering of a raw-scale penalty drops from 39 and 141 changepoints to 27 and 76 (<code><a href="../reference/cpt_detect.html">?cpt_detect</a></code>).</li>
+<li>
+<code>cpm</code>’s <code>arl0</code> now defaults to the smallest average run length it ships that is at least five times the series length, instead of 500 whatever the length. On a series of 1,000 the old default expected two false alarms; the expected count is now recorded on the result (<code>$diagnostics$expected_false_positives</code>).</li>
+<li>
+<code><a href="../reference/cpt_consensus.html">cpt_consensus()</a></code>’s <code>min_votes</code> defaults to <code>"majority"</code> (more than half the methods that ran). For the default three methods that is the old default of 2; for larger panels it is stricter. <code>"all"</code> asks for every method.</li>
+<li>
+<code>envcpt</code>: the autoregressive models reported rows of a lagged design, one or two positions early, and the design’s last row as a changepoint. Both fixed; found by the new convention test.</li>
+<li>
+<code>ocd</code>: <code>cp</code> was the declaration time, one after the last observation consistent with the change; it is now the declaration time minus one, with the declaration itself in <code>declared_at</code>. Found by the same test.</li>
+<li>
+<code>binsegrcpp</code> with a non-normal <code>distribution</code> used a BIC on the wrong scale and chose no change; it now uses the distribution’s own likelihood.</li>
+<li>
+<code>beast</code> detects on the centred series (its answer depended on the series’ level) and returns the fitted trend and seasonal signal.</li>
+<li>
+<code>cpt_monitor("cpm")</code> given a baseline containing a change no longer alarms on the first monitored observation: the model restarts after each change inside the baseline, and a warning says the baseline was not in control.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="distribution-families-0-6-0">Distribution families<a class="anchor" aria-label="anchor" href="#distribution-families-0-6-0"></a></h3>
+<ul><li>
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> gains <code>family</code>: <code>"gaussian"</code>, <code>"poisson"</code>, <code>"binomial"</code>, <code>"exponential"</code>, <code>"gamma"</code>, <code>"laplace"</code> or <code>"l1"</code>. Counts, 0/1 outcomes and waiting times get a cost written for them, through the engines that already had one: <code>changepoint</code>’s test statistics, <code>binsegRcpp</code>’s distributions, <code>fastcpd</code>’s families, <code><a href="https://rdrr.io/pkg/stepR/man/smuceR.html" class="external-link">stepR::smuceR()</a></code>, <code>cpm</code>’s parametric statistics, <code>ocp</code> and <code>segmented</code>’s GLMs.</li>
+<li>New <code><a href="../reference/cpt_families.html">cpt_families()</a></code> is the translation table: every legal combination of method, change type and family, and the engine call it becomes. A combination not in it is refused by name, with the methods that can fit the family.</li>
+<li>The data are checked against the family before the engine sees them (whole non-negative counts, 0/1 outcomes, positive waiting times).</li>
+<li>
+<code><a href="../reference/cpt_simulate.html">cpt_simulate()</a></code> and <code><a href="../reference/cpt_power.html">cpt_power()</a></code> gain <code>family</code>, so a power curve can be drawn for the data a study will actually collect.</li>
+<li>
+<code><a href="../reference/smuce_wrapper.html">smuce_wrapper()</a></code> accepts <code>family = "poisson"</code> and <code>"binomial"</code>, and <code><a href="../reference/fastcpd_wrapper.html">fastcpd_wrapper()</a></code> accepts thirteen of <code>fastcpd</code>’s families (among them <code>lm</code>, <code>binomial</code>, <code>poisson</code>, <code>exponential</code>, <code>lasso</code>, <code>arima</code> and <code>var</code>); 0.5.0 exposed six. <code>glm</code>, <code>mvtnorm</code> and a custom cost are not wired.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="regression-breaks-and-segment-models-0-6-0">Regression breaks and segment models<a class="anchor" aria-label="anchor" href="#regression-breaks-and-segment-models-0-6-0"></a></h3>
+<ul><li>
+<code>cpt_detect(y ~ x1 + x2, data = d, method = )</code> reaches <code>strucchange</code>, <code>segmented</code> and <code>fastcpd</code> with covariates, and <code>y ~ 1</code> any univariate method. The result carries per-segment coefficients with standard errors (<code>tidy(fit, what = "coefficients")</code>), fitted values, and the design.</li>
+<li>New <code><a href="../reference/cpt_segment_models.html">cpt_segment_models()</a></code> fits your own model to every segment and returns them as a table with <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> and <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>; new <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> for a result forecasts from the last segment (or any other).</li>
+<li>
+<code><a href="../reference/segmented_wrapper.html">segmented_wrapper()</a></code> takes a formula with <code>data</code>, the covariate that breaks as <code>seg_z</code> (a name or <code>~ t</code>), and <code>family</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="the-data-you-hand-it-0-6-0">The data you hand it<a class="anchor" aria-label="anchor" href="#the-data-you-hand-it-0-6-0"></a></h3>
+<ul><li>Grouped data frames, keyed <code>tsibble</code>s and long data frames with <code>group =</code> are detected one series per group and returned as a <code>ggcpt_batch</code> with the grouping columns.</li>
+<li>New <code>na_action</code>: <code>"error"</code> (the default) refuses missing values and says how to proceed; <code>"omit"</code> detects on what was observed and reports every location in the original positions, gaps kept in <code>$data</code>; <code>"engine"</code> passes them to the engines measured to handle them. <code>cpt_methods()$na_handling</code> records what each engine does with a missing value, measured (<code>"native"</code>, <code>"compacts"</code>, <code>"silent_loss"</code>, <code>"reject"</code>).</li>
+<li>Timestamps, dates and survival objects are refused rather than coerced to numbers that mean nothing.</li>
+<li>Warnings, each classed, for what the data look like: fewer than ten observations; counts or 0/1 data under a Gaussian cost; noise far from unit scale for the engines measured to depend on it; and an implausible number of changepoints in the answer.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="constraints-0-6-0">Constraints<a class="anchor" aria-label="anchor" href="#constraints-0-6-0"></a></h3>
+<ul><li>
+<code>fixed</code>: changepoints known in advance, kept, with the rest estimated around them. <code>within</code>: windows the changepoints must fall in. <code>min_segment</code>: a minimum segment length translated into each engine’s own argument (<code>cpt_methods()$min_segment</code> names it). <code>min_effect</code>: drop changes smaller than a given number of noise standard deviations. Locations are positions or values of the index; on a numeric index such as a <code>ts</code>’s years, a number outside <code>1..n</code> is read as a year, as <code><a href="../reference/cpt_annotate_events.html">cpt_annotate_events()</a></code> already did.</li>
+<li>
+<code>keep_fit = FALSE</code> drops the engine’s own object, which for <code>strucchange</code> is most of a result’s size; a fit over 10 MB warns once per method per session.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="how-big-when-and-whether-at-all-0-6-0">How big, when, and whether at all<a class="anchor" aria-label="anchor" href="#how-big-when-and-whether-at-all-0-6-0"></a></h3>
+<ul><li>New <code><a href="../reference/cpt_effect.html">cpt_effect()</a></code>: the size of each change in the data’s units and in noise standard deviations, with an interval, the percentage change, the change in spread, and the rate, odds or hazard ratio for the families. <code>method = "split"</code> locates on half the observations and measures on the other half, removing the winner’s curse.</li>
+<li>New <code><a href="../reference/cpt_test_at.html">cpt_test_at()</a></code>: a test for a change at a date fixed in advance, the statistically easy case and the commonest applied question, with an exact test per family, a permutation test over a window, and a Chow test for a formula.</li>
+<li>New <code><a href="../reference/cpt_attribute_event.html">cpt_attribute_event()</a></code>: is a known event inside a detected change’s interval?</li>
+<li>New <code><a href="../reference/cpt_test_null.html">cpt_test_null()</a></code>: a test for a change anywhere (CUSUM, Pettitt, sup-F), which locates nothing and so selects nothing.</li>
+<li>New <code><a href="../reference/cpt_null_power.html">cpt_null_power()</a></code>, and an empty result now says which kind of empty it is: a constant series, or a series where the smallest detectable shift is reported.</li>
+<li>
+<code><a href="../reference/cpt_test.html">cpt_test()</a></code> gains <code>relevance</code>, a test for a change larger than a given number of noise standard deviations.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="should-i-believe-it-0-6-0">Should I believe it?<a class="anchor" aria-label="anchor" href="#should-i-believe-it-0-6-0"></a></h3>
+<ul><li>New <code><a href="../reference/cpt_assumptions.html">cpt_assumptions()</a></code>: residual dependence, scale sensitivity, the expected number of false positives, count plausibility and data type, each flagged with the measured alternative. <code><a href="../reference/cpt_report.html">cpt_report()</a></code> prints it.</li>
+<li>New <code><a href="../reference/cpt_gof.html">cpt_gof()</a></code> and <code>autoplot(fit, type = "diagnostics")</code>: residuals, their autocorrelation, and per-segment checks.</li>
+<li>New <code><a href="../reference/cpt_robustness.html">cpt_robustness()</a></code>: re-runs a detector under each setting of its noise-model argument and reports which changepoints survive, the check that touches the commonest cause of a false positive.</li>
+<li>
+<code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> gains a block bootstrap and a reversal check, takes a fit, and counts failed replicates instead of treating them as “found nothing”.</li>
+<li>Every result records the residual dependence of its segmentation (<code>$diagnostics$residual_dependence</code>).</li>
+</ul></div>
+<div class="section level3">
+<h3 id="measured-not-asserted-0-6-0">Measured, not asserted<a class="anchor" aria-label="anchor" href="#measured-not-asserted-0-6-0"></a></h3>
+<ul><li>New data sets, each regenerated by a script in <code>data-raw/</code>: <code>cpt_runtimes</code> (every engine up to a million observations), <code>cpt_invariances</code> (scale, shift and reversal), <code>cpt_noise_benchmark</code> (false positives and power under four noise regimes), <code>cpt_data_types</code> (Gaussian, Bernoulli, Poisson and proportion data), <code>cpt_null_sizes</code> (false alarms on pure noise at scale) and <code>cpt_calibration</code> (the package’s own intervals, tests and monitors against their promises).</li>
+<li>
+<code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> gains the vocabulary columns (<code>families</code>, <code>choices</code>, <code>formula</code>, <code>min_segment</code>, <code>na_handling</code>, <code>cp_convention_upstream</code>) and the measured ones (<code>scale_invariant</code>, <code>sequential</code>, <code>max_cp</code>, <code>tier</code>, <code>noise_model_arg</code>, <code>rate_arg</code>, <code>cost</code>, <code>max_n</code>).</li>
+<li>
+<code><a href="../reference/cpt_recommend.html">cpt_recommend()</a></code> is rebuilt on the measurements: it scores every method on its measured errors in the stated noise regime and data type, returns the call to run (with the noise-model or family argument the score depends on), the measured hits and false positives, ties, reasons and caveats; it takes <code>n_expected</code>, <code>data_type</code>, <code>family</code>, <code>jump</code> (simulated power) and a <code>fit</code> to read the rest from; and it has an <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="the-contract-0-6-0">The contract<a class="anchor" aria-label="anchor" href="#the-contract-0-6-0"></a></h3>
+<ul><li>Every error, warning and message is a classed condition (<code>?ggchangepoint-conditions</code>): refusals carry their data (<code>method</code>, <code>requested</code>, <code>supported</code>, …) and no call; an engine’s own failure is re-signalled as <code>ggchangepoint_engine_error</code> keeping the engine’s call. Fan-outs (<code><a href="../reference/cpt_consensus.html">cpt_consensus()</a></code>, <code><a href="../reference/cpt_benchmark.html">cpt_benchmark()</a></code>, …) record a method that fails and raise anything else.</li>
+<li>A mistyped choice suggests the fix (“Did you mean "Poisson"?”), and a <code>...</code> name that is a near miss of a real argument is refused instead of being swallowed by an engine.</li>
+<li>A missing engine’s error names the installed methods that detect the same change.</li>
+<li>
+<code>seed</code> means the same for every method: taken by the wrappers that have one, scoped around the fit for the rest.</li>
+<li>Results record the engine and package versions that made them (<code>fit$versions</code>, <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>’s <code>engine_version</code>); <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> notes when the installed engine has moved on, and new <code><a href="../reference/cpt_verify.html">cpt_verify()</a></code> re-runs a result and reports what changed.</li>
+<li>New <code><a href="../reference/as_json.html">as_json()</a></code> writes a result under a documented, versioned schema; new <code><a href="../reference/cpt_export.html">cpt_export()</a></code> and <code><a href="../reference/cpt_export.html">cpt_import()</a></code> write and read JSON or CSV; <code>cpt_report(format = "json")</code>.</li>
+<li>The layers are real <code>ggplot2</code> extensions (<code>GeomChangepoint</code>, <code>GeomCptSegment</code>, <code>GeomCptCi</code>, <code>GeomCptRegion</code>, <code>GeomCptLabel</code>, <code>GeomCptEvent</code>, <code>StatChangepoint</code>, <code>StatCptRegion</code>), each with its own legend glyph. New <code><a href="../reference/stat_cpt_region.html">stat_cpt_region()</a></code> draws significance regions or location intervals computed in the layer.</li>
+<li>Every exported argument of 0.5.0 keeps its name and position; a test holds the package to it.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="smaller-changes-0-6-0">Smaller changes<a class="anchor" aria-label="anchor" href="#smaller-changes-0-6-0"></a></h3>
+<ul><li>
+<code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code>, <code><a href="../reference/cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code> and <code><a href="../reference/ggcpt_eval.html">ggcpt_eval()</a></code> take a fit (and <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> a monitor); <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> adds <code>covering_floor</code> (what the trivial answer scores) and <code>covering_scaled</code>.</li>
+<li>
+<code><a href="../reference/cpt_crops.html">cpt_crops()</a></code> and <code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> take a fit.</li>
+<li>
+<code><a href="../reference/cpt_select.html">cpt_select()</a></code> warns when AIC sits at the top of the ladder and when a criterion picks the smallest candidate.</li>
+<li>
+<code><a href="../reference/cpt_consensus.html">cpt_consensus()</a></code> reports its panel’s disagreement and each method’s count.</li>
+<li>
+<code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code> gives per-coordinate fitted values and residuals for a multivariate fit; <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> gains <code>engine_version</code> and <code>family</code>.</li>
+<li>Capability flags corrected: <code>bocpd</code> and <code>envcpt</code> return a fitted signal, <code>npmojo</code> a detector statistic and <code>strucchange</code> a solution path.</li>
+<li>
+<code><a href="../reference/ggcpt_compare.html">?ggcpt_compare</a></code> and the comparison vignette say plainly what choosing a method by its answer does to a p-value.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="documentation-0-6-0">Documentation<a class="anchor" aria-label="anchor" href="#documentation-0-6-0"></a></h3>
+<ul><li>The README is rewritten: one real example (the Nile), the next questions as a table, three setup steps and the traps.</li>
+<li>New articles on the website: <em>Ten ways to get a changepoint wrong</em>, <em>Choosing a method</em> (a decision tree and a cheatsheet computed from the registry), <em>Five packages, one series</em> (the Nile through <code>changepoint</code>, <code>strucchange</code>, <code>segmented</code>, <code>bcp</code> and <code>ecp</code>), <em>Calibration</em> and <em>Stability, deprecation and the contract</em>.</li>
+<li>A contributor guide, issue templates, a wrapper scaffold (<code>data-raw/use_cpt_wrapper.R</code>) and a weekly workflow that installs every engine, runs the whole suite and checks every dependency against CRAN.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="testing-0-6-0">Testing<a class="anchor" aria-label="anchor" href="#testing-0-6-0"></a></h3>
+<ul><li>A convention test runs every engine on an unmistakable step and checks it reports the same index; property and metamorphic tests check the measured invariances; a boundary-input matrix checks that no engine returns a changepoint per observation unannounced; and a static check asserts every export is called somewhere in the suite.</li>
+<li>The two tests that read the package’s own source to assert behaviour now assert the behaviour.</li>
+</ul></div>
+</div>
+    <div class="section level2">
+<h2 class="pkg-version" data-toc-text="0.5.0" id="ggchangepoint-050">ggchangepoint 0.5.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-050"></a></h2><p class="text-muted">CRAN release: 2026-09-25</p>
 <p>The release that fills in what 0.4.0’s engine wave left open: inference, selection, diagnostics, supervised detection, time indices, streaming, benchmarking, and an extension mechanism that makes the CRAN-availability question stop being a blocker. <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> goes from 31 to 50 wired methods, and the surface around the detectors roughly doubles.</p>
 <div class="section level3">
 <h3 id="the-extension-mechanism-0-5-0">The extension mechanism<a class="anchor" aria-label="anchor" href="#the-extension-mechanism-0-5-0"></a></h3>

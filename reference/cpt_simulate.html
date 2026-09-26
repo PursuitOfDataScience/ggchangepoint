@@ -9,7 +9,7 @@ benchmarking."><meta property="og:image" content="https://pursuitofdatascience.g
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -27,7 +27,15 @@ benchmarking."><meta property="og:image" content="https://pursuitofdatascience.g
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -61,7 +69,8 @@ benchmarking.</p>
 <span>  rho <span class="op">=</span> <span class="fl">0</span>,</span>
 <span>  seasonality <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  sd_trend <span class="op">=</span> <span class="cn">NULL</span>,</span>
-<span>  seed <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  family <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"gaussian"</span>, <span class="st">"poisson"</span>, <span class="st">"binomial"</span>, <span class="st">"exponential"</span><span class="op">)</span></span>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu">rcpt</span><span class="op">(</span><span class="va">...</span><span class="op">)</span></span></code></pre></div>
@@ -162,6 +171,20 @@ call: <code>.Random.seed</code> is saved and restored, so a seeded call
 inside a simulation loop does not pin the loop's own stream.</p></dd>
 
 
+<dt id="arg-family">family<a class="anchor" aria-label="anchor" href="#arg-family"></a></dt>
+<dd><p>The distribution of the observations: <code>"gaussian"</code>
+(the default, signal plus <code>noise</code>), <code>"poisson"</code> (counts
+whose rate is the segment's parameter), <code>"binomial"</code> (0/1
+outcomes whose probability is the segment's parameter) or
+<code>"exponential"</code> (waiting times whose mean is the segment's
+parameter). The last three generate a change in that one parameter, so
+they take <code>change_in = "mean"</code>, one number per segment in
+<code>params</code> (defaults: rate 5, probability 0.5, mean 1), and no
+<code>noise</code>, <code>sd</code>, <code>seasonality</code> or <code>sd_trend</code>. A
+rate change in counts is a different detection problem from a Gaussian
+mean shift, which is why the power curves are not interchangeable.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Passed to <code>cpt_simulate</code>.</p></dd>
 
@@ -194,6 +217,10 @@ inside a simulation loop does not pin the loop's own stream.</p></dd>
 <span class="r-in"><span>                         seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">drifting</span> <span class="op">&lt;-</span> <span class="fu">cpt_simulate</span><span class="op">(</span><span class="fl">240</span>, changepoints <span class="op">=</span> <span class="fl">120</span>, params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span><span class="op">)</span>,</span></span>
 <span class="r-in"><span>                         sd_trend <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0.5</span>, <span class="fl">3</span><span class="op">)</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
+<span class="r-in"><span></span></span>
+<span class="r-in"><span><span class="co"># counts whose rate doubles</span></span></span>
+<span class="r-in"><span><span class="va">counts</span> <span class="op">&lt;-</span> <span class="fu">cpt_simulate</span><span class="op">(</span><span class="fl">200</span>, changepoints <span class="op">=</span> <span class="fl">100</span>, params <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">4</span>, <span class="fl">8</span><span class="op">)</span>,</span></span>
+<span class="r-in"><span>                       family <span class="op">=</span> <span class="st">"poisson"</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span></span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

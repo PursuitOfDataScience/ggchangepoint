@@ -56,7 +56,9 @@ binsegrcpp_wrapper(
 
 - min_segment_length:
 
-  Minimum segment length. Passed through when supplied.
+  Minimum segment length. Defaults to `2` for the single-parameter costs
+  (`mean_norm`, `poisson`, `l1`), whose engine default allows
+  one-observation segments, and to the engine's own default otherwise.
 
 ## Value
 

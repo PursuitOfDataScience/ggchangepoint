@@ -8,7 +8,12 @@ does not.
 ## Usage
 
 ``` r
-cpt_test(object, type = c("jump", "segment"), correction = "none")
+cpt_test(
+  object,
+  type = c("jump", "segment"),
+  correction = "none",
+  relevance = NULL
+)
 ```
 
 ## Arguments
@@ -29,6 +34,16 @@ cpt_test(object, type = c("jump", "segment"), correction = "none")
   [`p.adjust`](https://rdrr.io/r/stats/p.adjust.html) methods (`"none"`,
   `"bonferroni"`, `"holm"`, `"BH"`, ...). Defaults to `"none"`; a
   `p_adjusted` column is added when it is not.
+
+- relevance:
+
+  Optional smallest change worth acting on, in noise standard
+  deviations. The null hypothesis becomes "the change is no larger than
+  `relevance`" rather than "there is no change", so a statistically
+  detectable but practically negligible shift is not significant.
+  Applies to the Welch route (the changepoints of a series fit); the
+  `p_value` column is then the relevance test's, and a `relevance`
+  column records the threshold in the data's units.
 
 ## Value
 

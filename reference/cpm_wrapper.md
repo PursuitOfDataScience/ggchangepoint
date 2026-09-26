@@ -12,7 +12,7 @@ mimicking online monitoring with average run length `arl0`.
 ## Usage
 
 ``` r
-cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)
+cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = NULL, startup = 20, ...)
 ```
 
 ## Arguments
@@ -35,14 +35,24 @@ cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)
 - arl0:
 
   Target in-control average run length (how many observations, on
-  average, before a false alarm). Defaults to `500`. cpm ships
-  thresholds only for a fixed grid (100, 200, 300, 370, 400, 500, 600,
-  700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000,
-  10000, 20000, 30000, 40000 and 50000), and any other value is refused,
-  because the engine answers it by printing an error and reporting no
-  changepoints. The grid is the same for every `cpm_type`, and 50000 is
-  the ceiling: a long series cannot be given an `arl0` proportional to
-  its length indefinitely.
+  average, before a false alarm). cpm ships thresholds only for a fixed
+  grid (100, 200, 300, 370, 400, 500, 600, 700, 800, 900, 1000, 2000,
+  3000, 4000, 5000, 6000, 7000, 8000, 9000, 10000, 20000, 30000, 40000
+  and 50000), and any other value is refused, because the engine answers
+  it by printing an error and reporting no changepoints. The grid is the
+  same for every `cpm_type`, and 50000 is the ceiling: a long series
+  cannot be given an `arl0` proportional to its length indefinitely.
+
+  When `NULL` (the default) it **scales with the series**: the smallest
+  grid value of at least \\5n\\, capped at 50000. A sequential test run
+  over a whole series raises about \\n / \mathrm{arl0}\\ false alarms,
+  so the streaming default of 500 meant 36 changepoints on 10,000
+  observations with 4 real ones, and 350 on 100,000; \\5n\\ turned the
+  36 into exactly the 4. The expected count is recorded as
+  `$diagnostics$expected_false_positives`. Pass `arl0 = 500` for the
+  0.5.0 behaviour, and use
+  [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  for genuine streaming, whose default is unchanged.
 
 - startup:
 
@@ -120,5 +130,5 @@ res$changepoints
 #> # A tibble: 1 × 3
 #>      cp cp_value detection_time
 #>   <int>    <dbl>          <int>
-#> 1   100   -0.125            104
+#> 1   100   -0.125            105
 ```

@@ -70,18 +70,19 @@ tidy(fit)
 #> 1   100    0.369
 #> 2   198    2.41
 glance(fit)
-#> # A tibble: 1 × 9
+#> # A tibble: 1 × 11
 #>       n n_changepoints method change_in penalty_type penalty_value cp_convention
 #>   <int>          <int> <chr>  <chr>     <chr>                <dbl> <chr>        
 #> 1   300              2 ruptu… mean      user                    NA left         
-#> # ℹ 2 more variables: total_cost <dbl>, runtime <dbl>
+#> # ℹ 4 more variables: total_cost <dbl>, runtime <dbl>, engine_version <chr>,
+#> #   family <chr>
 cpt_metrics(tidy(fit)$cp, truth = c(100, 200), n = 300)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   300      2       2         1      1     1    0.987         2      0.980
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   300      2       2         1      1     1    0.987          0.333
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 autoplot(fit, show_segments = TRUE)
 ```
 
@@ -160,12 +161,16 @@ user-supplied everywhere it appears:
 ``` r
 
 subset(cpt_methods(), status == "registered")
-#> # A tibble: 1 × 15
+#> # A tibble: 1 × 29
 #>   method       change_in engine  status    installed target_release multivariate
 #>   <chr>        <chr>     <chr>   <chr>     <lgl>     <chr>          <lgl>       
 #> 1 biggest_jump mean      example register… NA        NA             FALSE       
-#> # ℹ 8 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
-#> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>
+#> # ℹ 22 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
+#> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>,
+#> #   families <chr>, choices <chr>, formula <lgl>, min_segment <chr>,
+#> #   na_handling <chr>, cp_convention_upstream <chr>, scale_invariant <lgl>,
+#> #   sequential <lgl>, max_cp <int>, tier <chr>, noise_model_arg <chr>,
+#> #   rate_arg <chr>, cost <chr>, max_n <dbl>
 cpt_cite("biggest_jump")
 #> [biggest_jump] No citation supplied (illustration only).
 ```
@@ -184,6 +189,8 @@ cpt_consensus(x, methods = c("pelt", "binseg", "biggest_jump"),
               min_votes = 2)
 #> ggcpt_consensus (3 methods, tolerance 5, threshold 2 vote(s))
 #>   Methods: pelt, binseg, biggest_jump
+#>   Found by each: pelt 2, binseg 2, biggest_jump 1
+#>   Disagreement: 0.5 (share of locations not found by every method)
 #>   Consensus changepoints: 2
 #> 
 #> # A tibble: 2 × 5

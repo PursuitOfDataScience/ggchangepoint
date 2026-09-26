@@ -120,5 +120,5 @@ res$changepoints
 #> # A tibble: 1 × 2
 #>      cp cp_value
 #>   <int>    <dbl>
-#> 1    98   -0.490
+#> 1   100    0.369
 ```

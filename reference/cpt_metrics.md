@@ -8,14 +8,21 @@ MAE/RMSE of matched locations.
 ## Usage
 
 ``` r
-cpt_metrics(pred, truth, n, margin = 5)
+cpt_metrics(pred, truth, n = NULL, margin = 5)
 ```
 
 ## Arguments
 
 - pred:
 
-  Predicted changepoint indices (integer vector).
+  Predicted changepoint indices (integer vector), or a `ggcpt` fit,
+  whose changepoints and length are used. A
+  [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  object is accepted with a warning: its alarm times are *detection*
+  times, which lag each change by the detection delay, so the location
+  metrics score the delay as an error;
+  [`cpt_delay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_delay.md)
+  is the evaluation built for a monitor.
 
 - truth:
 
@@ -23,7 +30,7 @@ cpt_metrics(pred, truth, n, margin = 5)
 
 - n:
 
-  Length of the series.
+  Length of the series. Taken from `pred` when it is a fit or a monitor.
 
 - margin:
 
@@ -53,7 +60,21 @@ ranks by.
   higher is better, in \\\[0, 1\]\\. The segmentation covering metric:
   each true segment's best Jaccard overlap with a predicted segment,
   averaged weighted by segment length. Unlike F1 it needs no margin and
-  degrades smoothly with location error.
+  degrades smoothly with location error. It has a **floor**: an empty
+  prediction scores about \\1/(K+1)\\ for \\K\\ true changepoints (0.5
+  for one change in the middle), so covering is not comparable across
+  problems with different \\K\\ and should not be averaged over them.
+  [`cpt_benchmark()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_benchmark.md)
+  ranks within each dataset instead for exactly that reason.
+
+- `covering_floor`, `covering_scaled`:
+
+  the covering an empty prediction scores on this truth (the sum of the
+  squared true segment shares, \\1/(K+1)\\ when the segments are equal),
+  and covering rescaled so that the floor is 0 and a perfect
+  segmentation 1, \\(covering - floor)/(1 - floor)\\: comparable across
+  problems with different \\K\\. `NA` when \\K = 0\\, where the floor is
+  already 1.
 
 - `hausdorff`:
 
@@ -81,6 +102,12 @@ ranks by.
   location error over the matched pairs only, so they describe how well
   the changepoints that were found are placed and ignore the ones that
   were missed. `NA` when nothing matched.
+
+`precision`, `recall` and `f1` are **thresholded** at `margin`: a
+changepoint off by `margin` counts as found and one off by `margin + 1`
+as missed, so they can move from 1 to 0 on a one-observation change.
+`covering`, `hausdorff`, `rand_index` and the matched errors are
+continuous in the location.
 
 ## Details
 
@@ -132,17 +159,17 @@ to run a method-by-dataset grid on these metrics.
 
 ``` r
 cpt_metrics(c(100, 200), c(100, 200), n = 300)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   300      2       2         1      1     1        1         0          1
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   300      2       2         1      1     1        1          0.333
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 cpt_metrics(c(101, 205), c(100, 200), n = 300, margin = 5)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   300      2       2         1      1     1    0.961         5      0.941
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   300      2       2         1      1     1    0.961          0.333
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 ```

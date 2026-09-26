@@ -42,5 +42,6 @@ attr(x, "true_changepoints")
 # the linear ramps are not level shifts, so a mean-change detector puts
 # changepoints inside them rather than at the segment joins
 cpt_detect(x$value, method = "pelt")$changepoints$cp
+#> Warning: `pelt` is scale-sensitive for a change in mean (its cost assumes unit noise), and this series' noise standard deviation is about 0.48. On data ten times larger it over-segments badly; on data ten times smaller it finds nothing. Standardise the series first (e.g. `x / 0.48`), or use `change_in = "meanvar"`, which estimates the noise per segment.
 #> [1]  406  569 1012 1138 1257 1705 1893
 ```

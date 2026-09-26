@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,15 @@
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -62,6 +70,13 @@
 
         </dt>
         <dd>Introspect available changepoint detection methods</dd>
+
+        <dt>
+
+          <code><a href="cpt_families.html">cpt_families()</a></code>
+
+        </dt>
+        <dd>Distribution families, and what each request runs</dd>
 
         <dt>
 
@@ -104,10 +119,47 @@
 
         </dt>
         <dd>Print a ggcpt object</dd>
+
+        <dt>
+
+          <code><a href="cpt_verify.html">cpt_verify()</a></code> <code><a href="cpt_verify.html">print(<i>&lt;ggcpt_verification&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Re-run a result against the engines installed now</dd>
+      </dl></div><div class="section level2">
+      <h2 id="the-contract">The contract<a class="anchor" aria-label="anchor" href="#the-contract"></a></h2>
+
+      <div class="section-desc"><p>What code that calls the package can rely on: the classed conditions it raises, and the versioned JSON schema a result is written in.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="ggchangepoint-conditions.html">ggchangepoint-conditions</a></code> <code><a href="ggchangepoint-conditions.html">ggchangepoint_error</a></code> <code><a href="ggchangepoint-conditions.html">ggchangepoint_warning</a></code>
+
+        </dt>
+        <dd>Conditions raised by ggchangepoint</dd>
+
+        <dt>
+
+          <code><a href="as_json.html">as_json()</a></code>
+
+        </dt>
+        <dd>Convert a result to JSON</dd>
+
+        <dt>
+
+          <code><a href="cpt_export.html">cpt_export()</a></code> <code><a href="cpt_export.html">cpt_import()</a></code>
+
+        </dt>
+        <dd>Write a result to a file, and read it back</dd>
       </dl></div><div class="section level2">
       <h2 id="extending-the-package">Extending the package<a class="anchor" aria-label="anchor" href="#extending-the-package"></a></h2>
 
-      <div class="section-desc"><p>Bring a detector this package does not wrap – a non-CRAN engine, a Python tool, a neural detector, or your own changepoints – into the same tidy, plottable grammar.</p></div>
+      <div class="section-desc"><p>Bring a detector this package does not wrap (a non-CRAN engine, a Python tool, a neural detector, or your own changepoints) into the same tidy, plottable grammar.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -283,6 +335,73 @@
         </dt>
         <dd>Tidy the significance regions of a ggcpt object</dd>
       </dl></div><div class="section level2">
+      <h2 id="effects-dates-and-empty-answers">Effects, dates and empty answers<a class="anchor" aria-label="anchor" href="#effects-dates-and-empty-answers"></a></h2>
+
+      <div class="section-desc"><p>How big was the change, did anything change at a date fixed in advance, was the change the event you know about, and what does “no changepoints” mean.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_effect.html">cpt_effect()</a></code> <code><a href="cpt_effect.html">print(<i>&lt;ggcpt_effect&gt;</i>)</a></code> <code><a href="cpt_effect.html">autoplot(<i>&lt;ggcpt_effect&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Effect size at each changepoint</dd>
+
+        <dt>
+
+          <code><a href="cpt_test_at.html">cpt_test_at()</a></code> <code><a href="cpt_test_at.html">print(<i>&lt;ggcpt_test_at&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Test for a change at a date fixed in advance</dd>
+
+        <dt>
+
+          <code><a href="cpt_attribute_event.html">cpt_attribute_event()</a></code>
+
+        </dt>
+        <dd>Was a detected change the event you have in mind?</dd>
+
+        <dt>
+
+          <code><a href="cpt_test_null.html">cpt_test_null()</a></code>
+
+        </dt>
+        <dd>Test for a change anywhere in a series</dd>
+
+        <dt>
+
+          <code><a href="cpt_null_power.html">cpt_null_power()</a></code> <code><a href="cpt_null_power.html">print(<i>&lt;ggcpt_null_power&gt;</i>)</a></code>
+
+        </dt>
+        <dd>What an empty answer could have detected</dd>
+      </dl></div><div class="section level2">
+      <h2 id="segment-models">Segment models<a class="anchor" aria-label="anchor" href="#segment-models"></a></h2>
+
+      <div class="section-desc"><p>A model per regime, and a forecast from the last one.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_segment_models.html">cpt_segment_models()</a></code> <code><a href="cpt_segment_models.html">tidy(<i>&lt;ggcpt_segment_models&gt;</i>)</a></code> <code><a href="cpt_segment_models.html">glance(<i>&lt;ggcpt_segment_models&gt;</i>)</a></code> <code><a href="cpt_segment_models.html">print(<i>&lt;ggcpt_segment_models&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Fit a model to every segment of a segmentation</dd>
+
+        <dt>
+
+          <code><a href="predict.ggcpt.html">predict(<i>&lt;ggcpt&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Forecast from a segment of a segmentation</dd>
+      </dl></div><div class="section level2">
       <h2 id="choosing-the-number-of-changepoints">Choosing the number of changepoints<a class="anchor" aria-label="anchor" href="#choosing-the-number-of-changepoints"></a></h2>
 
 
@@ -350,6 +469,36 @@
         </dt>
         <dd>Scale space: the statistic across bandwidths</dd>
       </dl></div><div class="section level2">
+      <h2 id="assumptions-and-robustness">Assumptions and robustness<a class="anchor" aria-label="anchor" href="#assumptions-and-robustness"></a></h2>
+
+      <div class="section-desc"><p>Do the result’s assumptions hold for this series, and does the answer survive a change of noise model?</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_assumptions.html">cpt_assumptions()</a></code> <code><a href="cpt_assumptions.html">print(<i>&lt;ggcpt_assumptions&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Check the assumptions behind a segmentation</dd>
+
+        <dt>
+
+          <code><a href="cpt_gof.html">cpt_gof()</a></code> <code><a href="cpt_gof.html">print(<i>&lt;ggcpt_gof&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Goodness of fit, segment by segment</dd>
+
+        <dt>
+
+          <code><a href="cpt_robustness.html">cpt_robustness()</a></code> <code><a href="cpt_robustness.html">print(<i>&lt;ggcpt_robustness&gt;</i>)</a></code> <code><a href="cpt_robustness.html">autoplot(<i>&lt;ggcpt_robustness&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Does a changepoint survive a change of noise model?</dd>
+      </dl></div><div class="section level2">
       <h2 id="supervised-detection">Supervised detection<a class="anchor" aria-label="anchor" href="#supervised-detection"></a></h2>
 
       <div class="section-desc"><p>Labelled regions as ground truth, label errors as the accuracy measure, and a learned penalty.</p></div>
@@ -405,7 +554,7 @@
 
       <dl><dt>
 
-          <code><a href="cpt_recommend.html">cpt_recommend()</a></code> <code><a href="cpt_recommend.html">tidy(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code> <code><a href="cpt_recommend.html">print(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code>
+          <code><a href="cpt_recommend.html">cpt_recommend()</a></code> <code><a href="cpt_recommend.html">tidy(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code> <code><a href="cpt_recommend.html">print(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code> <code><a href="cpt_recommend.html">autoplot(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code>
 
         </dt>
         <dd>Recommend a detection method</dd>
@@ -902,7 +1051,7 @@
 
         <dt>
 
-          <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_selection&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_stability&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_sensitivity&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_influence&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_batch&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_benchmark&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_consensus&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_monitor&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_delay&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_path&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_power&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_events&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_label_curve&gt;</i>)</a></code>
+          <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_selection&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_stability&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_sensitivity&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_influence&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_batch&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_benchmark&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_consensus&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_monitor&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_delay&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_path&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_power&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_effect&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_robustness&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_events&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_label_curve&gt;</i>)</a></code>
 
         </dt>
         <dd>Base plot() methods for ggchangepoint result objects</dd>
@@ -1022,6 +1171,20 @@
 
         </dt>
         <dd>Changepoint detection stat</dd>
+
+        <dt>
+
+          <code><a href="stat_cpt_region.html">stat_cpt_region()</a></code>
+
+        </dt>
+        <dd>Significance regions computed in the layer</dd>
+
+        <dt>
+
+          <code><a href="ggchangepoint-ggproto.html">ggchangepoint-ggproto</a></code> <code><a href="ggchangepoint-ggproto.html">GeomChangepoint</a></code> <code><a href="ggchangepoint-ggproto.html">GeomCptSegment</a></code> <code><a href="ggchangepoint-ggproto.html">GeomCptCi</a></code> <code><a href="ggchangepoint-ggproto.html">GeomCptRegion</a></code> <code><a href="ggchangepoint-ggproto.html">GeomCptLabel</a></code> <code><a href="ggchangepoint-ggproto.html">GeomCptEvent</a></code> <code><a href="ggchangepoint-ggproto.html">StatChangepoint</a></code> <code><a href="ggchangepoint-ggproto.html">StatCptRegion</a></code>
+
+        </dt>
+        <dd>ggproto objects for the changepoint layers</dd>
 
         <dt>
 
@@ -1161,6 +1324,57 @@
 
         </dt>
         <dd>Stairs test signal</dd>
+      </dl></div><div class="section level2">
+      <h2 id="measurements">Measurements<a class="anchor" aria-label="anchor" href="#measurements"></a></h2>
+
+      <div class="section-desc"><p>What the engines were measured to do at this release: runtimes, invariances, false positives under four noise regimes and four data types, and false alarms on pure noise. cpt_methods() and cpt_recommend() read them.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="cpt_runtimes.html">cpt_runtimes</a></code>
+
+        </dt>
+        <dd>Engine runtimes by series length</dd>
+
+        <dt>
+
+          <code><a href="cpt_invariances.html">cpt_invariances</a></code>
+
+        </dt>
+        <dd>Invariances of every engine's answer</dd>
+
+        <dt>
+
+          <code><a href="cpt_noise_benchmark.html">cpt_noise_benchmark</a></code>
+
+        </dt>
+        <dd>False positives and power under four noise regimes</dd>
+
+        <dt>
+
+          <code><a href="cpt_data_types.html">cpt_data_types</a></code>
+
+        </dt>
+        <dd>False positives and power by data type</dd>
+
+        <dt>
+
+          <code><a href="cpt_null_sizes.html">cpt_null_sizes</a></code>
+
+        </dt>
+        <dd>False alarms on pure noise at scale</dd>
+
+        <dt>
+
+          <code><a href="cpt_calibration.html">cpt_calibration</a></code>
+
+        </dt>
+        <dd>What the package promises, against what it delivers</dd>
       </dl></div><div class="section level2">
       <h2 id="re-exports">Re-exports<a class="anchor" aria-label="anchor" href="#re-exports"></a></h2>
 

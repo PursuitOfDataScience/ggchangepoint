@@ -12,7 +12,7 @@ call.
 ``` r
 cpt_report(
   object,
-  format = c("md", "text", "gt"),
+  format = c("md", "text", "gt", "json"),
   file = NULL,
   stability = NULL,
   events = NULL,
@@ -30,8 +30,10 @@ cpt_report(
 - format:
 
   `"md"` (default, GitHub-flavoured markdown as a character vector),
-  `"text"` (plain text) or `"gt"` (a gt table of the changepoints, for a
-  publication).
+  `"text"` (plain text), `"gt"` (a gt table of the changepoints, for a
+  publication) or `"json"` (the whole result under
+  [`as_json()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_json.md)'s
+  versioned schema, for a pipeline rather than a reader).
 
 - file:
 
@@ -86,7 +88,7 @@ cat(cpt_report(fit, session = FALSE), sep = "\n")
 #> - Penalty: MBIC
 #> - Series length: 120
 #> - Changepoints found: 1
-#> - Detection runtime: 0.008 s
+#> - Detection runtime: 0.004 s
 #> 
 #> ## Changepoints
 #> 
@@ -107,6 +109,19 @@ cat(cpt_report(fit, session = FALSE), sep = "\n")
 #> 2      2    61   120    60          3.90 
 #> ```
 #> 
+#> ## Assumptions
+#> 
+#> ```
+#> ggcpt_assumptions (method: pelt)
+#>    residual_dependence       Ljung-Box at lag 10; lag-1 autocorrelation -0.13
+#>    scale_sensitivity         noise sd 1.29; this engine's cost assumes unit noise
+#>    expected_false_positives  measured on pure noise at n = 1,000 (50 replicates)
+#>    count_plausibility        1 changepoints in 120 observations (0.83 per hundred)
+#>    data_type                 looks continuous; family gaussian
+#> 
+#> No assumption check raised a concern.
+#> ```
+#> 
 #> ## Citation
 #> 
 #> [pelt] Killick, R., Fearnhead, P. and Eckley, I. A. (2012). Optimal detection of changepoints with a linear computational cost. Journal of the American Statistical Association, 107(500), 1590-1598.
@@ -118,5 +133,7 @@ cat(cpt_report(fit, session = FALSE), sep = "\n")
 #> Call:
 #> cpt_detect(x = c(rnorm(60), rnorm(60, 4)), method = "pelt")
 #> ```
+#> 
+#> The changepoints, the series and the metadata are plain data: a saved result reads back in any R session with no packages installed, and cpt_export() writes JSON or CSV for other languages. Only `$fit`, the engine's own object (0 MB), needs the engine; drop it before saving with `fit$fit <- NULL`, or refit with `keep_fit = FALSE`.
 #> 
 ```

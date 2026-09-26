@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,17 @@
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -337,12 +347,12 @@ observation, if perturbed, changes the segmentation), following <span class="cit
 <span><span class="va">sens</span></span>
 <span><span class="co">#&gt; ggcpt_sensitivity (method: pelt, 4 settings)</span></span>
 <span><span class="co">#&gt;   Swept: penalty</span></span>
-<span><span class="co">#&gt;   Changepoints found: 2 to 46</span></span>
+<span><span class="co">#&gt;   Changepoints found: 2 to 33</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 2</span></span></span>
 <span><span class="co">#&gt;   penalty  n_cp</span></span>
 <span><span class="co">#&gt;     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>       2    46</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>       2    33</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>       8     2</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>      20     2</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>      60     2</span></span>
@@ -413,7 +423,7 @@ do:</p>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_statistic.html">cpt_statistic</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Engine `pelt` does not expose a per-location statistic. These do: amoc, wbs, not, mosum, bcp, beast, nsp, pettitt, buishand, snht.</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Engine `pelt` does not expose a per-location statistic. These do: amoc, wbs, not, mosum, bcp, beast, npmojo, nsp, pettitt, buishand, snht.</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
@@ -428,7 +438,7 @@ do:</p>
 <span><span class="co">#&gt; - Penalty: MBIC</span></span>
 <span><span class="co">#&gt; - Series length: 360</span></span>
 <span><span class="co">#&gt; - Changepoints found: 2</span></span>
-<span><span class="co">#&gt; - Detection runtime: 0.022 s</span></span>
+<span><span class="co">#&gt; - Detection runtime: 0.021 s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ## Changepoints</span></span>
 <span><span class="co">#&gt; </span></span>

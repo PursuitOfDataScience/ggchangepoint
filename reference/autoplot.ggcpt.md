@@ -25,7 +25,7 @@ autoplot(
   show_line = TRUE,
   index = NULL,
   labels = NULL,
-  type = c("series", "statistic", "path", "scale_space"),
+  type = c("series", "statistic", "path", "scale_space", "diagnostics"),
   ...
 )
 ```
@@ -61,7 +61,8 @@ autoplot(
   column of `$data`, provided by the engines
   [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
   marks in its `fitted` column: `smuce`, `hsmuce`, `cpop`, `bcp`,
-  `beast`, `decafs`, `segmented`, `mcp` and `bfast`). Defaults to
+  `bocpd` (a causal running mean), `beast`, `decafs`, `segmented`,
+  `envcpt`, `mcp` and `bfast`, plus every formula fit). Defaults to
   `FALSE`.
 
 - show_regions:
@@ -128,7 +129,14 @@ autoplot(
   expose the internals. `"scale_space"` delegates to
   [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md),
   which needs nothing from the engine: it sweeps a multiscale detector
-  over the same series, so it draws for any result.
+  over the same series, so it draws for any result. `"diagnostics"` is
+  the residual check of the fit in four panels: the residuals with the
+  segment boundaries (structure left behind), their autocorrelation per
+  segment (the independence most engines assume), a normal Q-Q plot per
+  segment (the Gaussian cost) and the spread of each segment (a constant
+  variance);
+  [`cpt_gof()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
+  gives the same checks as numbers.
 
 - ...:
 
@@ -148,3 +156,18 @@ methods that delegate here, and
 and
 [`geom_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/geom_changepoint.md)
 for restyling and re-assembling the layers by hand.
+
+## Examples
+
+``` r
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(60), rnorm(60, 3), rnorm(60)), method = "pelt")
+ggplot2::autoplot(fit)
+
+ggplot2::autoplot(fit, type = "diagnostics")
+
+
+# a dated series draws its dates
+dated <- cpt_detect(Nile, method = "pelt", change_in = "meanvar")
+ggplot2::autoplot(dated)
+```

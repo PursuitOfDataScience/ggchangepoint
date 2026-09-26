@@ -50,6 +50,15 @@ plot(x, ...)
 # S3 method for class 'ggcpt_power'
 plot(x, ...)
 
+# S3 method for class 'ggcpt_effect'
+plot(x, ...)
+
+# S3 method for class 'ggcpt_robustness'
+plot(x, ...)
+
+# S3 method for class 'ggcpt_recommendation'
+plot(x, ...)
+
 # S3 method for class 'ggcpt_events'
 plot(x, ...)
 

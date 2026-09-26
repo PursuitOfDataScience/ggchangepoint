@@ -3,17 +3,23 @@
 Wraps the fastcpd package (Li and Zhang, 2024), a modern PELT-family
 engine that pairs pruning with sequential gradient descent so that exact
 or near-exact segmentations of many model families run in near-linear
-time. This wrapper exposes the time-series families most useful
-alongside the other engines: mean, variance, mean-and-variance, and
-AR/ARMA/GARCH model changepoints.
+time. Every family the engine documents is reachable except its
+user-supplied `custom` cost: Gaussian mean, variance and both; the count
+and binary families (`"poisson"`, `"binomial"`) and waiting times
+(`"exponential"`); linear and penalised regression (`"lm"`, `"lasso"`)
+and generalised linear models (`"poisson"`, `"binomial"` with
+`covariates`); and the time-series models `"ar"`, `"arma"`, `"arima"`,
+`"garch"` and, for a multivariate series, `"var"`.
 
 ## Usage
 
 ``` r
 fastcpd_wrapper(
   x,
-  family = c("mean", "variance", "meanvariance", "ar", "arma", "garch"),
+  family = c("mean", "variance", "meanvariance", "ar", "arma", "arima", "garch", "var",
+    "lm", "lasso", "poisson", "binomial", "exponential"),
   order = NULL,
+  covariates = NULL,
   ...
 )
 ```
@@ -23,18 +29,31 @@ fastcpd_wrapper(
 - x:
 
   A numeric vector, or (for `family` `"mean"`, `"variance"`,
-  `"meanvariance"`) a matrix with one row per time point for
+  `"meanvariance"` and `"var"`) a matrix with one row per time point for
   multivariate detection.
 
 - family:
 
-  Model family: `"mean"`, `"variance"`, `"meanvariance"`, `"ar"`,
-  `"arma"`, or `"garch"`. Defaults to `"mean"`.
+  Model family. `"mean"` (the default), `"variance"`, `"meanvariance"`;
+  `"poisson"`, `"binomial"`, `"exponential"` (a change in the rate or
+  probability of a count, binary or waiting-time series, or in a
+  regression on `covariates`); `"lm"`, `"lasso"` (regression, which
+  needs `covariates`); `"ar"`, `"arma"`, `"arima"`, `"garch"`, `"var"`.
 
 - order:
 
-  Model order for `"ar"` (a single integer), `"arma"` (length-2), or
-  `"garch"` (length-2). Defaults to `1` for AR, `c(1, 1)` otherwise.
+  Model order for `"ar"` and `"var"` (a single integer), `"arma"` and
+  `"garch"` (length 2) or `"arima"` (length 3). Defaults to `1` for AR
+  and VAR, `c(1, 1)` for ARMA and GARCH and `c(1, 0, 0)` for ARIMA.
+
+- covariates:
+
+  Optional numeric matrix of regressors, one row per observation, for
+  `"lm"`, `"lasso"`, `"poisson"` and `"binomial"`. Include a column of
+  ones for an intercept. Without it the count and binary families fit an
+  intercept only: a change in the rate or probability.
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  builds it from a formula.
 
 - ...:
 
@@ -52,7 +71,10 @@ fastcpd_wrapper(
 
 ## Value
 
-A `ggcpt` object.
+A `ggcpt` object. The engine's per-segment parameter estimates
+(`thetas`) are kept as `$coefficients`, one row per segment and
+parameter, for the families where they are coefficients (the regressions
+and the intercept-only count, binary and waiting-time models).
 
 ## References
 
@@ -115,4 +137,13 @@ res$changepoints
 #>      cp cp_value
 #>   <int>    <dbl>
 #> 1   100    0.369
+
+# A change in a Poisson rate
+counts <- fastcpd_wrapper(c(rpois(100, 3), rpois(100, 9)),
+                          family = "poisson")
+counts$changepoints
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1   100        5
 ```

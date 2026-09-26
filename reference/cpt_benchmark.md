@@ -5,8 +5,14 @@ every cell with
 [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)
 (or
 [`cpt_metrics_annotated()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics_annotated.md)
-when a dataset carries several annotators). An engine that errors on one
-dataset records the message and the grid continues.
+when a dataset carries several annotators). A method that fails on one
+dataset (its engine errors, is not installed, or cannot take that
+series: see
+[ggchangepoint-conditions](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-conditions.md))
+records the message and the grid continues. Invalid data or arguments,
+which every method would reject, stop the benchmark instead, naming the
+dataset and method, so a mistake in the call is not reported as a
+finding about an engine.
 
 ## Usage
 
@@ -183,9 +189,12 @@ data sets.” *Journal of Machine Learning Research*, **7**, 1–30.
 bm <- cpt_benchmark(cpt_datasets(n = 200, seed = 1),
                     methods = c("pelt", "binseg", "amoc"),
                     progress = FALSE)
+#> Warning: `pelt` is scale-sensitive for a change in mean (its cost assumes unit noise), and this series' noise standard deviation is about 0.5. On data ten times larger it over-segments badly; on data ten times smaller it finds nothing. Standardise the series first (e.g. `x / 0.5`), or use `change_in = "meanvar"`, which estimates the noise per segment.
+#> Warning: The number of changepoints identified is Q, it is advised to increase Q to make sure changepoints have not been missed.
+#> Warning: `binseg` is scale-sensitive for a change in mean (its cost assumes unit noise), and this series' noise standard deviation is about 0.5. On data ten times larger it over-segments badly; on data ten times smaller it finds nothing. Standardise the series first (e.g. `x / 0.5`), or use `change_in = "meanvar"`, which estimates the noise per segment.
 #> Warning: The number of changepoints identified is Q, it is advised to increase Q to make sure changepoints have not been missed.
 #> Warning: The number of changepoints identified is Q, it is advised to increase Q to make sure changepoints have not been missed.
-#> Warning: The number of changepoints identified is Q, it is advised to increase Q to make sure changepoints have not been missed.
+#> Warning: `amoc` is scale-sensitive for a change in mean (its cost assumes unit noise), and this series' noise standard deviation is about 0.5. On data ten times larger it over-segments badly; on data ten times smaller it finds nothing. Standardise the series first (e.g. `x / 0.5`), or use `change_in = "meanvar"`, which estimates the noise per segment.
 bm
 #> ggcpt_benchmark (9 dataset(s) x 3 method(s), tolerance 5)
 #> 
@@ -207,8 +216,8 @@ bm
 #>  5 stairs   pelt      0.980 1    
 #>  6 step     pelt      0.952 1    
 #>  7 ar1      pelt      1     1    
-#>  8 heavy    pelt      0.77  0.5  
-#>  9 varshift pelt      0.577 0    
+#>  8 heavy    pelt      0.765 0.5  
+#>  9 varshift pelt      0.592 0    
 #> 10 blocks   binseg    0.739 0.625
 #> 11 fms      binseg    0.135 0    
 #> 12 mix      binseg    0.413 0    

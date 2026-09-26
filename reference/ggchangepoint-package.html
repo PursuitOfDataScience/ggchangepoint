@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -25,7 +25,15 @@
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -94,7 +102,17 @@ dispatcher <code><a href="cpt_detect.html">cpt_detect()</a></code> that reaches 
 </ul><p><strong>What surrounds the detectors.</strong> Every detector returns a <code>ggcpt</code>
 object with a stable <code>tibble(cp, cp_value)</code> contract, optionally
 carrying a time index, engine confidence intervals, a fitted signal,
-significance regions and diagnostics. Around that:</p><ul><li><p><strong>Inference:</strong> <code><a href="cpt_confint.html">cpt_confint()</a></code> (four provenances, one
+significance regions and diagnostics. Around that:</p><ul><li><p><strong>What to fit:</strong> <code><a href="cpt_families.html">cpt_families()</a></code> (Poisson, binomial,
+    exponential and other costs), a formula for a regression break
+    (<code>cpt_detect(y ~ x, data)</code>), and <code><a href="cpt_segment_models.html">cpt_segment_models()</a></code> and
+    <code><a href="https://rdrr.io/r/stats/predict.html" class="external-link">predict()</a></code> for a model per regime.</p></li>
+<li><p><strong>How big, when, and whether at all:</strong> <code><a href="cpt_effect.html">cpt_effect()</a></code>,
+    <code><a href="cpt_test_at.html">cpt_test_at()</a></code> (a date fixed in advance),
+    <code><a href="cpt_attribute_event.html">cpt_attribute_event()</a></code>, <code><a href="cpt_test_null.html">cpt_test_null()</a></code>,
+    <code><a href="cpt_null_power.html">cpt_null_power()</a></code>.</p></li>
+<li><p><strong>Should I believe it:</strong> <code><a href="cpt_assumptions.html">cpt_assumptions()</a></code>,
+    <code><a href="cpt_gof.html">cpt_gof()</a></code>, <code><a href="cpt_robustness.html">cpt_robustness()</a></code>, <code><a href="cpt_verify.html">cpt_verify()</a></code>.</p></li>
+<li><p><strong>Inference:</strong> <code><a href="cpt_confint.html">cpt_confint()</a></code> (four provenances, one
     contract), <code><a href="cpt_test.html">cpt_test()</a></code>, <code><a href="cpt_regions.html">cpt_regions()</a></code>.</p></li>
 <li><p><strong>Choosing K:</strong> <code><a href="cpt_select.html">cpt_select()</a></code> (BIC, Zhang-Siegmund
     mBIC, AIC, CROPS elbow, cross-validation, stability),
@@ -121,11 +139,23 @@ significance regions and diagnostics. Around that:</p><ul><li><p><strong>Inferen
 <li><p><strong>Extension:</strong> <code><a href="as_ggcpt.html">as_ggcpt()</a></code> and
     <code><a href="cpt_register_method.html">cpt_register_method()</a></code> bring detectors this package does not and
     cannot depend on into the same grammar.</p></li>
-</ul></div>
+<li><p><strong>Leaving R:</strong> <code><a href="as_json.html">as_json()</a></code>, <code><a href="cpt_export.html">cpt_export()</a></code>,
+    <code><a href="cpt_export.html">cpt_import()</a></code>.</p></li>
+<li><p><strong>Measurements:</strong> <code>cpt_runtimes</code>,
+    <code>cpt_invariances</code>, <code>cpt_noise_benchmark</code>,
+    <code>cpt_data_types</code>, <code>cpt_null_sizes</code>,
+    <code>cpt_calibration</code>.</p></li>
+</ul><p>Every condition the package raises is classed; see
+<a href="ggchangepoint-conditions.html">ggchangepoint-conditions</a>.</p>
+    </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>
     <div class="dont-index"><p>The entry points, by group:</p><ul><li><p><strong>Detect:</strong> <code><a href="cpt_detect.html">cpt_detect()</a></code>,
-      <code><a href="cpt_methods.html">cpt_methods()</a></code>, <code><a href="cpt_register_method.html">cpt_register_method()</a></code>.</p></li>
+      <code><a href="cpt_methods.html">cpt_methods()</a></code>, <code><a href="cpt_families.html">cpt_families()</a></code>,
+      <code><a href="cpt_register_method.html">cpt_register_method()</a></code>.</p></li>
+<li><p><strong>After detection:</strong> <code><a href="cpt_effect.html">cpt_effect()</a></code>,
+      <code><a href="cpt_test_at.html">cpt_test_at()</a></code>, <code><a href="cpt_assumptions.html">cpt_assumptions()</a></code>,
+      <code><a href="cpt_robustness.html">cpt_robustness()</a></code>.</p></li>
 <li><p><strong>Visualise:</strong> <code><a href="autoplot.ggcpt.html">autoplot.ggcpt()</a></code>,
       <code><a href="ggcptplot.html">ggcptplot()</a></code>, <code><a href="ggcpt_compare.html">ggcpt_compare()</a></code>.</p></li>
 <li><p><strong>Inference and selection:</strong> <code><a href="cpt_confint.html">cpt_confint()</a></code>,

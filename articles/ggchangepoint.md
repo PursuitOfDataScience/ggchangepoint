@@ -115,11 +115,12 @@ tidy(res)
 #>   <int>    <dbl>
 #> 1   100    0.369
 glance(res)
-#> # A tibble: 1 × 9
+#> # A tibble: 1 × 11
 #>       n n_changepoints method change_in penalty_type penalty_value cp_convention
 #>   <int>          <int> <chr>  <chr>     <chr>                <dbl> <chr>        
 #> 1   200              1 pelt   mean      MBIC                    NA left         
-#> # ℹ 2 more variables: total_cost <dbl>, runtime <dbl>
+#> # ℹ 4 more variables: total_cost <dbl>, runtime <dbl>, engine_version <chr>,
+#> #   family <chr>
 head(augment(res))
 #> # A tibble: 6 × 6
 #>   index   value seg_id .fitted  .resid is_changepoint
@@ -148,7 +149,7 @@ summary(res)
 #>   CP convention:      left
 #>   Series length:      200
 #>   Penalty:            MBIC
-#>   Runtime (seconds):  0.013
+#>   Runtime (seconds):  0.015
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -238,7 +239,7 @@ CRAN, so they are documented as future work and are *not* wired to
 ``` r
 
 print(cpt_methods(), n = Inf)
-#> # A tibble: 55 × 15
+#> # A tibble: 55 × 29
 #>    method       change_in    engine status installed target_release multivariate
 #>    <chr>        <chr>        <chr>  <chr>  <lgl>     <chr>          <lgl>       
 #>  1 pelt         mean, var, … chang… avail… TRUE      NA             FALSE       
@@ -296,8 +297,12 @@ print(cpt_methods(), n = Inf)
 #> 53 focus        mean (onlin… FOCuS  plann… NA        when on CRAN   NA          
 #> 54 sbs          mean (high-… hdbin… plann… NA        when on CRAN   NA          
 #> 55 changeforest distributio… chang… plann… NA        when on CRAN   NA          
-#> # ℹ 8 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
-#> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>
+#> # ℹ 22 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
+#> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>,
+#> #   families <chr>, choices <chr>, formula <lgl>, min_segment <chr>,
+#> #   na_handling <chr>, cp_convention_upstream <chr>, scale_invariant <lgl>,
+#> #   sequential <lgl>, max_cp <int>, tier <chr>, noise_model_arg <chr>,
+#> #   rate_arg <chr>, cost <chr>, max_n <dbl>
 ```
 
 [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
@@ -589,12 +594,10 @@ Cho 2025):
 ``` r
 
 tidy(cpm_wrapper(x, cpm_type = "Mann-Whitney"))
-#> # A tibble: 3 × 3
+#> # A tibble: 1 × 3
 #>      cp cp_value detection_time
 #>   <int>    <dbl>          <int>
-#> 1    23   -1.39              30
-#> 2    50    0.426             67
-#> 3   100    0.369            104
+#> 1   100    0.369            105
 ```
 
 ``` r
@@ -1079,13 +1082,15 @@ engines with no native intervals:
 
 st <- cpt_stability(x, method = "pelt", B = 30, seed = 1)
 st
-#> ggcpt_stability (30 bootstrap replicates, method: pelt)
+#> ggcpt_stability (30 iid bootstrap replicates, method: pelt)
 #> 
 #> Original changepoints and their re-detection frequency:
-#> # A tibble: 1 × 2
-#>      cp stability
-#>   <int>     <dbl>
-#> 1   100         1
+#> # A tibble: 1 × 3
+#>      cp stability survives_reversal
+#>   <int>     <dbl> <lgl>            
+#> 1   100         1 TRUE             
+#> 
+#> A high score means reproducible under resampling, not real; see ?cpt_stability.
 autoplot(st)
 ```
 
@@ -1110,12 +1115,12 @@ draws the agreement (true positives, false positives, and misses):
 truth <- 100
 pred <- tidy(res)$cp
 cpt_metrics(pred, truth, n = length(x), margin = 5)
-#> # A tibble: 1 × 12
-#>       n n_pred n_truth precision recall    f1 covering hausdorff rand_index
-#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>     <dbl>      <dbl>
-#> 1   200      1       1         1      1     1        1         0          1
-#> # ℹ 3 more variables: annotation_error <int>, mae_matched <dbl>,
-#> #   rmse_matched <dbl>
+#> # A tibble: 1 × 14
+#>       n n_pred n_truth precision recall    f1 covering covering_floor
+#>   <int>  <int>   <int>     <dbl>  <dbl> <dbl>    <dbl>          <dbl>
+#> 1   200      1       1         1      1     1        1            0.5
+#> # ℹ 6 more variables: covering_scaled <dbl>, hausdorff <dbl>, rand_index <dbl>,
+#> #   annotation_error <int>, mae_matched <dbl>, rmse_matched <dbl>
 cpt_metrics_annotated(pred, list(100, 101, 99), n = length(x))
 #> # A tibble: 1 × 7
 #>       n n_annotators n_pred precision recall    f1 covering
@@ -1369,21 +1374,28 @@ fits a penalty from several labelled series; see
 cpt_recommend(noise = "heavy")
 #> Recommended methods for: univariate series, change in mean, heavy noise
 #> 
-#> 1. cpm (cpm)
-#>    why: handles change_in = "mean"; built for heavy noise
-#> 2. ecp (ecp)
-#>    why: handles change_in = "mean"; built for heavy noise
-#> 3. kcp (kcpRS)
-#>    why: handles change_in = "mean"; built for heavy noise
-#> 4. np (changepoint.np)
-#>    why: handles change_in = "mean"; built for heavy noise
-#> 5. nsp (nsp)
-#>    why: handles change_in = "mean"; built for heavy noise
+#> 1. cpt_detect(x, method = "binseg")
+#>    measured: 2 of 2 changes found, 0 spurious per series
+#>    why: handles change_in = "mean"; measured under heavy noise
+#> 2. cpt_detect(x, method = "mosum")
+#>    measured: 2 of 2 changes found, 0 spurious per series
+#>    why: handles change_in = "mean"; measured under heavy noise
+#> 3. cpt_detect(x, method = "not")
+#>    measured: 2 of 2 changes found, 0 spurious per series
+#>    why: handles change_in = "mean"; measured under heavy noise
+#> 4. cpt_detect(x, method = "bfast")
+#>    measured: 2 of 2 changes found, 0 spurious per series
+#>    why: handles change_in = "mean"; measured under heavy noise
+#> 5. cpt_detect(x, method = "ecp")
+#>    measured: 2 of 2 changes found, 0 spurious per series
+#>    why: handles change_in = "mean"; measured under heavy noise
+#> 
+#> 3 candidates tie for first on the information supplied: binseg, mosum, not. What would separate them: `n_expected`, `n`, `data_type`, `need_uncertainty`, or a `fit` to read the residuals of.
 #> 
 #> (31 further candidate(s); the full table is the return value.)
 #> 
 #> Cite the method you use with cpt_cite(). Cross-check the choice with
-#> cpt_consensus() and cpt_sensitivity().
+#> cpt_robustness() and cpt_assumptions().
 tidy(cpt_consensus(x3, methods = c("pelt", "binseg", "amoc")))
 #> # A tibble: 2 × 5
 #>      cp cp_value votes methods            spread

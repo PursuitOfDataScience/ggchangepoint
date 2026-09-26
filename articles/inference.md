@@ -324,12 +324,12 @@ sens <- cpt_sensitivity(x, method = "pelt",
 sens
 #> ggcpt_sensitivity (method: pelt, 4 settings)
 #>   Swept: penalty
-#>   Changepoints found: 2 to 46
+#>   Changepoints found: 2 to 33
 #> 
 #> # A tibble: 4 × 2
 #>   penalty  n_cp
 #>     <dbl> <int>
-#> 1       2    46
+#> 1       2    33
 #> 2       8     2
 #> 3      20     2
 #> 4      60     2
@@ -442,7 +442,7 @@ do:
 
 cpt_statistic(fit)
 #> Error:
-#> ! Engine `pelt` does not expose a per-location statistic. These do: amoc, wbs, not, mosum, bcp, beast, nsp, pettitt, buishand, snht.
+#> ! Engine `pelt` does not expose a per-location statistic. These do: amoc, wbs, not, mosum, bcp, beast, npmojo, nsp, pettitt, buishand, snht.
 ```
 
 ## Putting it together
@@ -459,7 +459,7 @@ cat(head(cpt_report(fit, session = FALSE), 20), sep = "\n")
     #> - Penalty: MBIC
     #> - Series length: 360
     #> - Changepoints found: 2
-    #> - Detection runtime: 0.022 s
+    #> - Detection runtime: 0.021 s
     #> 
     #> ## Changepoints
     #> 

@@ -111,19 +111,19 @@ the noise standard deviation fixed at 1, and **fpop** penalises the
 residual sum of squares directly, so multiplying the data by a constant
 multiplies the cost while leaving $`\beta`$ untouched. On a 200-point
 series with a single changepoint whose jump is five standard deviations,
-`pelt` recovers exactly one changepoint at $`\sigma = 1`$ but returns 39
-at $`\sigma = 3`$ and 141 at $`\sigma = 10`$ (means over 20 draws, since
-a single draw is not stable at these settings). Standardise the series,
-pass a penalty on the data’s own scale (say
-`2 * log(n) * var(diff(x)) / 2`), or use `change_in = "meanvar"`, which
-estimates a variance per segment. Methods that estimate the noise level
-as part of their procedure (SMUCE, the WBS family, CPOP, bcp, BEAST and
-the nonparametric engines) return the same segmentation whatever the
-units. Three exceptions are worth knowing: `geomcp` runs PELT on its
-mapped series and inherits its sensitivity, DeCAFS floors its noise
-estimate near 0.03, and BOCPD’s default prior is on the data’s own
-scale, so the last two miss changes in a series measured in very small
-units.
+`pelt` recovers exactly one changepoint at $`\sigma = 1`$ but returns 27
+at $`\sigma = 3`$ and 76 at $`\sigma = 10`$ (means over 20 draws, since
+a single draw is not stable at these settings), and warns that its cost
+assumes unit noise. Standardise the series, pass a penalty on the data’s
+own scale (say `2 * log(n) * var(diff(x)) / 2`), or use
+`change_in = "meanvar"`, which estimates a variance per segment. Methods
+that estimate the noise level as part of their procedure (SMUCE, the WBS
+family, CPOP, bcp, BEAST and the nonparametric engines) return the same
+segmentation whatever the units. Three exceptions are worth knowing:
+`geomcp` runs PELT on its mapped series and inherits its sensitivity,
+DeCAFS floors its noise estimate near 0.03, and BOCPD’s default prior is
+on the data’s own scale, so the last two miss changes in a series
+measured in very small units.
 
 ### Search-based and multiscale methods
 
@@ -234,11 +234,12 @@ tidy(res)
 #>   <int>    <dbl>
 #> 1   100    0.467
 glance(res)
-#> # A tibble: 1 × 9
+#> # A tibble: 1 × 11
 #>       n n_changepoints method change_in penalty_type penalty_value cp_convention
 #>   <int>          <int> <chr>  <chr>     <chr>                <dbl> <chr>        
 #> 1   200              1 pelt   mean      MBIC                    NA left         
-#> # ℹ 2 more variables: total_cost <dbl>, runtime <dbl>
+#> # ℹ 4 more variables: total_cost <dbl>, runtime <dbl>, engine_version <chr>,
+#> #   family <chr>
 head(augment(res))
 #> # A tibble: 6 × 6
 #>   index  value seg_id .fitted .resid is_changepoint
@@ -323,7 +324,7 @@ and whether the engine is installed:
 ``` r
 
 cpt_methods()
-#> # A tibble: 55 × 15
+#> # A tibble: 55 × 29
 #>    method   change_in        engine status installed target_release multivariate
 #>    <chr>    <chr>            <chr>  <chr>  <lgl>     <chr>          <lgl>       
 #>  1 pelt     mean, var, mean… chang… avail… TRUE      NA             FALSE       
@@ -337,8 +338,12 @@ cpt_methods()
 #>  9 wbs2     mean             break… avail… TRUE      NA             FALSE       
 #> 10 not      mean, var, mean… not    avail… TRUE      NA             FALSE       
 #> # ℹ 45 more rows
-#> # ℹ 8 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
-#> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>
+#> # ℹ 22 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
+#> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>,
+#> #   families <chr>, choices <chr>, formula <lgl>, min_segment <chr>,
+#> #   na_handling <chr>, cp_convention_upstream <chr>, scale_invariant <lgl>,
+#> #   sequential <lgl>, max_cp <int>, tier <chr>, noise_model_arg <chr>,
+#> #   rate_arg <chr>, cost <chr>, max_n <dbl>
 ```
 
 Requests are validated against this capability matrix: asking a
@@ -719,12 +724,10 @@ monitoring:
 ``` r
 
 tidy(cpm_wrapper(x_mean, cpm_type = "Mann-Whitney"))
-#> # A tibble: 3 × 3
+#> # A tibble: 1 × 3
 #>      cp cp_value detection_time
 #>   <int>    <dbl>          <int>
-#> 1    23   -1.39              30
-#> 2    50    0.426             67
-#> 3   100    0.369            104
+#> 1   100    0.369            105
 ```
 
 Three further nonparametric engines are wired and worth knowing: kernel
@@ -775,11 +778,12 @@ model wins on an information criterion:
 
 res_env <- envcpt_wrapper(x_mean, models = c("mean", "meancpt", "trendcpt"))
 glance(res_env)
-#> # A tibble: 1 × 9
+#> # A tibble: 1 × 11
 #>       n n_changepoints method change_in penalty_type penalty_value cp_convention
 #>   <int>          <int> <chr>  <chr>     <chr>                <dbl> <chr>        
 #> 1   200              1 envcpt mean      AIC: meancpt          568. left         
-#> # ℹ 2 more variables: total_cost <dbl>, runtime <dbl>
+#> # ℹ 4 more variables: total_cost <dbl>, runtime <dbl>, engine_version <chr>,
+#> #   family <chr>
 ```
 
 The winning model’s name is recorded in the penalty descriptor
@@ -924,13 +928,15 @@ the many that ship no intervals of their own:
 
 st <- cpt_stability(x_mean, method = "pelt", B = 50, seed = 1)
 st
-#> ggcpt_stability (50 bootstrap replicates, method: pelt)
+#> ggcpt_stability (50 iid bootstrap replicates, method: pelt)
 #> 
 #> Original changepoints and their re-detection frequency:
-#> # A tibble: 1 × 2
-#>      cp stability
-#>   <int>     <dbl>
-#> 1   100         1
+#> # A tibble: 1 × 3
+#>      cp stability survives_reversal
+#>   <int>     <dbl> <lgl>            
+#> 1   100         1 TRUE             
+#> 
+#> A high score means reproducible under resampling, not real; see ?cpt_stability.
 autoplot(st)
 ```
 

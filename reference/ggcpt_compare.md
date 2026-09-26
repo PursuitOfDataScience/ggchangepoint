@@ -82,6 +82,24 @@ and read [`tidy()`](https://generics.r-lib.org/reference/tidy.html)'s
 `cp_index`, or plot the results with
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
 
+## Choosing the method by its answer
+
+Running several methods and reporting the one that found a change, as if
+it were the only one run, is a garden of forking paths with a plot
+attached, and fifty methods behind one call make it easier here than
+anywhere else. A method chosen because of its answer carries no valid
+p-value, and neither does any test at its changepoints: the selection
+across methods is a second selection on top of the one each method
+already makes (see
+[`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)'s
+`selection_adjusted`). Choose the method before seeing the data
+([`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
+answers from what you know about the problem, not from the series), or
+report every method you ran. Agreement across methods, as
+[`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md)
+counts it, is a robustness display, not a correction: the methods share
+engines, costs and assumptions.
+
 ## Examples
 
 ``` r

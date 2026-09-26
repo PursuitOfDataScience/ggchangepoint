@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,17 @@
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -196,16 +206,16 @@ penalty satisfy these labels?</p>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 30 × 5</span></span></span>
 <span><span class="co">#&gt;    penalty  n_cp errors false_positive false_negative</span></span>
 <span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>   0.274   147      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>   0.353   142      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>   0.456   129      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>   0.588   115      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>   0.758    99      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>   0.978    84      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>   1.26     66      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>   1.63     55      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>   2.10     40      5              5              0</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>   2.71     26      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span>   0.274    83      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span>   0.353    79      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span>   0.456    77      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span>   0.588    72      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span>   0.758    64      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span>   0.978    53      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span>   1.26     44      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span>   1.63     31      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span>   2.10     21      5              5              0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span>   2.71     15      5              5              0</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 20 more rows</span></span></span></code></pre></div>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">curve</span><span class="op">)</span></span></code></pre></div>
@@ -283,7 +293,7 @@ accept a numeric penalty:</p>
 reads its penalty against a raw cost calibrated for unit noise:</p>
 <div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">series</span><span class="op">$</span><span class="va">d</span>, method <span class="op">=</span> <span class="st">"pelt"</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span><span class="op">)</span></span>
-<span><span class="co">#&gt; [1] 42</span></span>
+<span><span class="co">#&gt; [1] 32</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/nrow.html" class="external-link">nrow</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">series</span><span class="op">$</span><span class="va">d</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, penalty <span class="op">=</span> <span class="va">model</span><span class="op">)</span><span class="op">$</span><span class="va">changepoints</span><span class="op">)</span></span>
 <span><span class="co">#&gt; [1] 1</span></span></code></pre></div>
 <p>When <strong>penaltyLearning</strong> is installed,

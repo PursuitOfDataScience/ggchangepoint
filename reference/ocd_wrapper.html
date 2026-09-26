@@ -21,7 +21,7 @@ found."><meta property="og:image" content="https://pursuitofdatascience.github.i
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,15 @@ found."><meta property="og:image" content="https://pursuitofdatascience.github.i
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -129,14 +137,17 @@ number of coordinates; see the timing note below.</p></dd>
 </dl></div>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
-    <p>A <code>ggcpt</code> object. Because the detector is online, reported
-  locations are <em>declaration times</em> (the changepoint plus the
-  detection delay). The <code>declared_at</code> column holds the same values
-  as <code>cp</code>, and deliberately: <span class="pkg">ocd</span> declares a change without
-  also estimating where it began, so there is no separate location for
-  the second column to carry. Compare <code><a href="cpm_wrapper.html">cpm_wrapper()</a></code>,
-  whose engine supplies both, and whose <code>cp</code> is an estimated
-  location with <code>detection_time</code> strictly later.</p>
+    <p>A <code>ggcpt</code> object. Because the detector is online, it
+  declares a change without estimating where it began. <code>cp</code> is the
+  declaration time <em>minus one</em>: the latest changepoint consistent
+  with the alarm in this package's convention (the last observation
+  before the change), and exact when the change is declared on the first
+  observation after it; a later declaration makes <code>cp</code> late by the
+  detection delay. The <code>declared_at</code> column holds the declaration
+  time itself. (Before 0.6.0 <code>cp</code> was the declaration time, one
+  position late even at zero delay, which the convention test found.)
+  Compare <code><a href="cpm_wrapper.html">cpm_wrapper()</a></code>, whose engine estimates the
+  location separately from its <code>detection_time</code>.</p>
     </div>
     <div class="section level2">
     <h2 id="how-long-this-takes">How long this takes<a class="anchor" aria-label="anchor" href="#how-long-this-takes"></a></h2>
@@ -222,13 +233,13 @@ second.</p>
 <span class="r-in"><span><span class="co"># pass: the calibration is linear in `mc_reps` and is nearly all of the</span></span></span>
 <span class="r-in"><span><span class="co"># cost, so 5 measured 9.7 s here against CRAN's 5 s budget and 2</span></span></span>
 <span class="r-in"><span><span class="co"># measures 3.8 s for the same answer. Neither is a calibration you</span></span></span>
-<span class="r-in"><span><span class="co"># would trust -- see the timing section above.</span></span></span>
+<span class="r-in"><span><span class="co"># would trust (see the timing section above).</span></span></span>
 <span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu">ocd_wrapper</span><span class="op">(</span><span class="va">X</span>, mc_reps <span class="op">=</span> <span class="fl">2</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">res</span><span class="op">$</span><span class="va">changepoints</span></span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>      cp cp_value declared_at</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    62     4.31          62</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    61     2.22          62</span>
 <span class="r-in"><span><span class="co"># }</span></span></span>
 </code></pre></div>
     </div>

@@ -34,3 +34,31 @@ print(x, ...)
 ## Value
 
 A list with class `summary.ggcpt` containing the summary.
+
+## Examples
+
+``` r
+set.seed(2026)
+summary(cpt_detect(c(rnorm(60), rnorm(60, 3)), method = "pelt"))
+#> ggcpt Summary
+#>   Method:             pelt
+#>   Change in:          mean
+#>   Changepoints found: 1
+#>   CP convention:      left
+#>   Series length:      120
+#>   Penalty:            MBIC
+#>   Runtime (seconds):  0.01
+#> 
+#> Segments:
+#> # A tibble: 2 × 5
+#>   seg_id start   end     n param_estimate
+#>    <int> <int> <int> <int>          <dbl>
+#> 1      1     1    60    60         -0.110
+#> 2      2    61   120    60          2.90 
+#> 
+#> Changepoints:
+#> # A tibble: 1 × 2
+#>      cp cp_value
+#>   <int>    <dbl>
+#> 1    60   -0.999
+```

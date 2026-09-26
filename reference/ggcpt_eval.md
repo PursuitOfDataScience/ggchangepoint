@@ -9,14 +9,15 @@ so the plot and the metrics agree.
 ## Usage
 
 ``` r
-ggcpt_eval(pred, truth, data_vec, margin = 5)
+ggcpt_eval(pred, truth, data_vec = NULL, margin = 5)
 ```
 
 ## Arguments
 
 - pred:
 
-  Predicted changepoint indices.
+  Predicted changepoint indices, or a `ggcpt` fit (whose changepoints
+  and series are used).
 
 - truth:
 
@@ -24,7 +25,8 @@ ggcpt_eval(pred, truth, data_vec, margin = 5)
 
 - data_vec:
 
-  The original data vector (for context).
+  The original data vector (for context). Taken from `pred` when it is a
+  fit.
 
 - margin:
 

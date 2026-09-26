@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,17 @@
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -163,11 +173,12 @@ changepoint flag (<code><a href="https://generics.r-lib.org/reference/augment.ht
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 11</span></span></span>
 <span><span class="co">#&gt;       n n_changepoints method change_in penalty_type penalty_value cp_convention</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200              1 pelt   mean      MBIC                    <span style="color: #BB0000;">NA</span> left         </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;, engine_version &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   family &lt;chr&gt;</span></span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">#&gt;   index   value seg_id .fitted  .resid is_changepoint</span></span>
@@ -190,7 +201,7 @@ that delegates to <code><a href="https://ggplot2.tidyverse.org/reference/autoplo
 <span><span class="co">#&gt;   CP convention:      left</span></span>
 <span><span class="co">#&gt;   Series length:      200</span></span>
 <span><span class="co">#&gt;   Penalty:            MBIC</span></span>
-<span><span class="co">#&gt;   Runtime (seconds):  0.013</span></span>
+<span><span class="co">#&gt;   Runtime (seconds):  0.015</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Segments:</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
@@ -265,7 +276,7 @@ rather than <code>"available"</code>: their engines (<code>gfpop</code>,
 future work and are <em>not</em> wired to <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code>.</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_methods.html">cpt_methods</a></span><span class="op">(</span><span class="op">)</span>, n <span class="op">=</span> <span class="cn">Inf</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 55 × 15</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 55 × 29</span></span></span>
 <span><span class="co">#&gt;    method       change_in    engine status installed target_release multivariate</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> pelt         mean, var, … chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
@@ -323,8 +334,12 @@ future work and are <em>not</em> wired to <code><a href="../reference/cpt_detect
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">53</span> focus        mean (onlin… FOCuS  plann… <span style="color: #BB0000;">NA</span>        when on CRAN   <span style="color: #BB0000;">NA</span>          </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">54</span> sbs          mean (high-… hdbin… plann… <span style="color: #BB0000;">NA</span>        when on CRAN   <span style="color: #BB0000;">NA</span>          </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">55</span> changeforest distributio… chang… plann… <span style="color: #BB0000;">NA</span>        when on CRAN   <span style="color: #BB0000;">NA</span>          </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 8 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 22 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   families &lt;chr&gt;, choices &lt;chr&gt;, formula &lt;lgl&gt;, min_segment &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   na_handling &lt;chr&gt;, cp_convention_upstream &lt;chr&gt;, scale_invariant &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   sequential &lt;lgl&gt;, max_cp &lt;int&gt;, tier &lt;chr&gt;, noise_model_arg &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   rate_arg &lt;chr&gt;, cost &lt;chr&gt;, max_n &lt;dbl&gt;</span></span></span></code></pre></div>
 <p><code><a href="../reference/cpt_penalty.html">cpt_penalty()</a></code> constructs standard penalty values for the
 engines that take numeric penalties; see its help for the per-engine
 penalty semantics.</p>
@@ -564,12 +579,10 @@ al. 2019; Cabrieto et al. 2018)</span>; <code><a href="../reference/npmojo_wrapp
 detects distributional changes under serial dependence <span class="citation">(McGonigle and Cho 2025)</span>:</p>
 <div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpm_wrapper.html">cpm_wrapper</a></span><span class="op">(</span><span class="va">x</span>, cpm_type <span class="op">=</span> <span class="st">"Mann-Whitney"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
 <span><span class="co">#&gt;      cp cp_value detection_time</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    23   -<span style="color: #BB0000;">1.39</span>              30</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>    50    0.426             67</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   100    0.369            104</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369            105</span></span></code></pre></div>
 <div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/kcp_wrapper.html">kcp_wrapper</a></span><span class="op">(</span><span class="va">x</span>, running_stat <span class="op">=</span> <span class="st">"mean"</span>, nperm <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
@@ -885,13 +898,15 @@ intervals:</p>
 <div class="sourceCode" id="cb57"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_stability.html">cpt_stability</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, B <span class="op">=</span> <span class="fl">30</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">st</span></span>
-<span><span class="co">#&gt; ggcpt_stability (30 bootstrap replicates, method: pelt)</span></span>
+<span><span class="co">#&gt; ggcpt_stability (30 iid bootstrap replicates, method: pelt)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Original changepoints and their re-detection frequency:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;      cp stability</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100         1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
+<span><span class="co">#&gt;      cp stability survives_reversal</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100         1 TRUE             </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; A high score means reproducible under resampling, not real; see ?cpt_stability.</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
 <p><img src="ggchangepoint_files/figure-html/stability-1.png" class="r-plt" alt="Bootstrap detection-frequency profile along the series, with the original changepoints marked as dashed rules" width="576"></p>
 </div>
@@ -909,12 +924,12 @@ positives, false positives, and misses):</p>
 <code class="sourceCode R"><span><span class="va">truth</span> <span class="op">&lt;-</span> <span class="fl">100</span></span>
 <span><span class="va">pred</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">$</span><span class="va">cp</span></span>
 <span><span class="fu"><a href="../reference/cpt_metrics.html">cpt_metrics</a></span><span class="op">(</span><span class="va">pred</span>, <span class="va">truth</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span>, margin <span class="op">=</span> <span class="fl">5</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 12</span></span></span>
-<span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering hausdorff rand_index</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200      1       1         1      1     1        1         0          1</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 3 more variables: annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   rmse_matched &lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 14</span></span></span>
+<span><span class="co">#&gt;       n n_pred n_truth precision recall    f1 covering covering_floor</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200      1       1         1      1     1        1            0.5</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 6 more variables: covering_scaled &lt;dbl&gt;, hausdorff &lt;dbl&gt;, rand_index &lt;dbl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   annotation_error &lt;int&gt;, mae_matched &lt;dbl&gt;, rmse_matched &lt;dbl&gt;</span></span></span>
 <span><span class="fu"><a href="../reference/cpt_metrics_annotated.html">cpt_metrics_annotated</a></span><span class="op">(</span><span class="va">pred</span>, <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="fl">100</span>, <span class="fl">101</span>, <span class="fl">99</span><span class="op">)</span>, n <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/length.html" class="external-link">length</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
 <span><span class="co">#&gt;       n n_annotators n_pred precision recall    f1 covering</span></span>
@@ -1107,21 +1122,28 @@ several labelled series; see
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_recommend.html">cpt_recommend</a></span><span class="op">(</span>noise <span class="op">=</span> <span class="st">"heavy"</span><span class="op">)</span></span>
 <span><span class="co">#&gt; Recommended methods for: univariate series, change in mean, heavy noise</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; 1. cpm (cpm)</span></span>
-<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
-<span><span class="co">#&gt; 2. ecp (ecp)</span></span>
-<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
-<span><span class="co">#&gt; 3. kcp (kcpRS)</span></span>
-<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
-<span><span class="co">#&gt; 4. np (changepoint.np)</span></span>
-<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
-<span><span class="co">#&gt; 5. nsp (nsp)</span></span>
-<span><span class="co">#&gt;    why: handles change_in = "mean"; built for heavy noise</span></span>
+<span><span class="co">#&gt; 1. cpt_detect(x, method = "binseg")</span></span>
+<span><span class="co">#&gt;    measured: 2 of 2 changes found, 0 spurious per series</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; measured under heavy noise</span></span>
+<span><span class="co">#&gt; 2. cpt_detect(x, method = "mosum")</span></span>
+<span><span class="co">#&gt;    measured: 2 of 2 changes found, 0 spurious per series</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; measured under heavy noise</span></span>
+<span><span class="co">#&gt; 3. cpt_detect(x, method = "not")</span></span>
+<span><span class="co">#&gt;    measured: 2 of 2 changes found, 0 spurious per series</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; measured under heavy noise</span></span>
+<span><span class="co">#&gt; 4. cpt_detect(x, method = "bfast")</span></span>
+<span><span class="co">#&gt;    measured: 2 of 2 changes found, 0 spurious per series</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; measured under heavy noise</span></span>
+<span><span class="co">#&gt; 5. cpt_detect(x, method = "ecp")</span></span>
+<span><span class="co">#&gt;    measured: 2 of 2 changes found, 0 spurious per series</span></span>
+<span><span class="co">#&gt;    why: handles change_in = "mean"; measured under heavy noise</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; 3 candidates tie for first on the information supplied: binseg, mosum, not. What would separate them: `n_expected`, `n`, `data_type`, `need_uncertainty`, or a `fit` to read the residuals of.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; (31 further candidate(s); the full table is the return value.)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Cite the method you use with cpt_cite(). Cross-check the choice with</span></span>
-<span><span class="co">#&gt; cpt_consensus() and cpt_sensitivity().</span></span>
+<span><span class="co">#&gt; cpt_robustness() and cpt_assumptions().</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_consensus.html">cpt_consensus</a></span><span class="op">(</span><span class="va">x3</span>, methods <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"pelt"</span>, <span class="st">"binseg"</span>, <span class="st">"amoc"</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;      cp cp_value votes methods            spread</span></span>

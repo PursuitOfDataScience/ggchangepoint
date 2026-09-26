@@ -6,6 +6,8 @@
   : Unified changepoint detection dispatcher
 - [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
   : Introspect available changepoint detection methods
+- [`cpt_families()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_families.md)
+  : Distribution families, and what each request runs
 - [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md)
   : Construct changepoint penalties
 - [`cpt_cite()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_cite.md)
@@ -18,12 +20,30 @@
   : Test if an object is a ggcpt object
 - [`print(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/print.ggcpt.md)
   : Print a ggcpt object
+- [`cpt_verify()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_verify.md)
+  [`print(`*`<ggcpt_verification>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_verify.md)
+  : Re-run a result against the engines installed now
+
+## The contract
+
+What code that calls the package can rely on: the classed conditions it
+raises, and the versioned JSON schema a result is written in.
+
+- [`ggchangepoint-conditions`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-conditions.md)
+  [`ggchangepoint_error`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-conditions.md)
+  [`ggchangepoint_warning`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-conditions.md)
+  : Conditions raised by ggchangepoint
+- [`as_json()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_json.md)
+  : Convert a result to JSON
+- [`cpt_export()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_export.md)
+  [`cpt_import()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_export.md)
+  : Write a result to a file, and read it back
 
 ## Extending the package
 
-Bring a detector this package does not wrap – a non-CRAN engine, a
-Python tool, a neural detector, or your own changepoints – into the same
-tidy, plottable grammar.
+Bring a detector this package does not wrap (a non-CRAN engine, a Python
+tool, a neural detector, or your own changepoints) into the same tidy,
+plottable grammar.
 
 - [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md)
   : Turn external changepoints into a ggcpt result
@@ -83,6 +103,39 @@ Where could this changepoint be, and is it real?
 - [`cpt_regions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_regions.md)
   : Tidy the significance regions of a ggcpt object
 
+## Effects, dates and empty answers
+
+How big was the change, did anything change at a date fixed in advance,
+was the change the event you know about, and what does “no changepoints”
+mean.
+
+- [`cpt_effect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md)
+  [`print(`*`<ggcpt_effect>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md)
+  [`autoplot(`*`<ggcpt_effect>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md)
+  : Effect size at each changepoint
+- [`cpt_test_at()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_at.md)
+  [`print(`*`<ggcpt_test_at>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_at.md)
+  : Test for a change at a date fixed in advance
+- [`cpt_attribute_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute_event.md)
+  : Was a detected change the event you have in mind?
+- [`cpt_test_null()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_null.md)
+  : Test for a change anywhere in a series
+- [`cpt_null_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_null_power.md)
+  [`print(`*`<ggcpt_null_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_null_power.md)
+  : What an empty answer could have detected
+
+## Segment models
+
+A model per regime, and a forecast from the last one.
+
+- [`cpt_segment_models()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_segment_models.md)
+  [`tidy(`*`<ggcpt_segment_models>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_segment_models.md)
+  [`glance(`*`<ggcpt_segment_models>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_segment_models.md)
+  [`print(`*`<ggcpt_segment_models>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_segment_models.md)
+  : Fit a model to every segment of a segmentation
+- [`predict(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/predict.ggcpt.md)
+  : Forecast from a segment of a segmentation
+
 ## Choosing the number of changepoints
 
 - [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
@@ -118,6 +171,22 @@ detector actually compute?
   [`ggcpt_scale_space()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scale_space.md)
   : Scale space: the statistic across bandwidths
 
+## Assumptions and robustness
+
+Do the result’s assumptions hold for this series, and does the answer
+survive a change of noise model?
+
+- [`cpt_assumptions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_assumptions.md)
+  [`print(`*`<ggcpt_assumptions>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_assumptions.md)
+  : Check the assumptions behind a segmentation
+- [`cpt_gof()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
+  [`print(`*`<ggcpt_gof>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
+  : Goodness of fit, segment by segment
+- [`cpt_robustness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
+  [`print(`*`<ggcpt_robustness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
+  [`autoplot(`*`<ggcpt_robustness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
+  : Does a changepoint survive a change of noise model?
+
 ## Supervised detection
 
 Labelled regions as ground truth, label errors as the accuracy measure,
@@ -147,6 +216,7 @@ and a learned penalty.
 - [`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
   [`tidy(`*`<ggcpt_recommendation>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
   [`print(`*`<ggcpt_recommendation>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
+  [`autoplot(`*`<ggcpt_recommendation>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md)
   : Recommend a detection method
 - [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md)
   [`autoplot(`*`<ggcpt_consensus>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md)
@@ -332,6 +402,9 @@ and a learned penalty.
   [`plot(`*`<ggcpt_delay>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
   [`plot(`*`<ggcpt_path>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
   [`plot(`*`<ggcpt_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_effect>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_robustness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_recommendation>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
   [`plot(`*`<ggcpt_events>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
   [`plot(`*`<ggcpt_label_curve>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
   : Base plot() methods for ggchangepoint result objects
@@ -373,6 +446,18 @@ and a learned penalty.
   : Event annotation geom
 - [`stat_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.md)
   : Changepoint detection stat
+- [`stat_cpt_region()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_cpt_region.md)
+  : Significance regions computed in the layer
+- [`ggchangepoint-ggproto`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  [`GeomChangepoint`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  [`GeomCptSegment`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  [`GeomCptCi`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  [`GeomCptRegion`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  [`GeomCptLabel`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  [`GeomCptEvent`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  [`StatChangepoint`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  [`StatCptRegion`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggchangepoint-ggproto.md)
+  : ggproto objects for the changepoint layers
 - [`ggcpt_posterior()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_posterior.md)
   : Posterior probability plot for Bayesian results
 - [`ggcpt_runlength()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_runlength.md)
@@ -420,6 +505,26 @@ and a learned penalty.
   : Teeth test signal
 - [`signal_stairs()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/signal_stairs.md)
   : Stairs test signal
+
+## Measurements
+
+What the engines were measured to do at this release: runtimes,
+invariances, false positives under four noise regimes and four data
+types, and false alarms on pure noise. cpt_methods() and cpt_recommend()
+read them.
+
+- [`cpt_runtimes`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_runtimes.md)
+  : Engine runtimes by series length
+- [`cpt_invariances`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_invariances.md)
+  : Invariances of every engine's answer
+- [`cpt_noise_benchmark`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_noise_benchmark.md)
+  : False positives and power under four noise regimes
+- [`cpt_data_types`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_data_types.md)
+  : False positives and power by data type
+- [`cpt_null_sizes`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_null_sizes.md)
+  : False alarms on pure noise at scale
+- [`cpt_calibration`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_calibration.md)
+  : What the package promises, against what it delivers
 
 ## Re-exports
 

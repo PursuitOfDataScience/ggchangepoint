@@ -408,7 +408,7 @@ data.frame(
 )
 #>      method iid ar1_rho_0.7
 #> 1 edetector 1.8         7.4
-#> 2       cpm 0.6         6.2
+#> 2       cpm 0.4         5.6
 ```
 
 Both inflate badly at $`\rho = 0.7`$, `cpm` by roughly **tenfold** in a

@@ -88,6 +88,7 @@ set.seed(2026)
 x <- c(rnorm(60), rnorm(60, 4))
 labs <- as_cpt_labels(60, n = 120)
 curve <- cpt_label_error_curve(x, labs, penalties = c(2, 8, 32, 128))
+#> Warning: `pelt` reported 13 changepoints in 120 observations: segments of 8.6 observations on average. That is more often the signature of a penalty on the wrong scale or of autocorrelated noise than of a series that changes this often; see cpt_assumptions() for this fit.
 curve
 #> ggcpt_label_curve (method: pelt, 4 penalties)
 #>   Minimum label errors: 0
@@ -96,7 +97,7 @@ curve
 #> # A tibble: 4 × 5
 #>   penalty  n_cp errors false_positive false_negative
 #>     <dbl> <int>  <int>          <int>          <int>
-#> 1       2    24      3              3              0
+#> 1       2    13      3              3              0
 #> 2       8     1      0              0              0
 #> 3      32     1      0              0              0
 #> 4     128     1      0              0              0

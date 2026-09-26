@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -40,7 +40,17 @@
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul>
+</li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles">
+<li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -216,13 +226,14 @@ untouched. On a 200-point series with a single changepoint whose jump is
 five standard deviations, <code>pelt</code> recovers exactly one
 changepoint at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>1</mn></mrow><annotation encoding="application/x-tex">\sigma = 1</annotation></semantics></math>
-but returns 39 at
+but returns 27 at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>3</mn></mrow><annotation encoding="application/x-tex">\sigma = 3</annotation></semantics></math>
-and 141 at
+and 76 at
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mrow><mi>σ</mi><mo>=</mo><mn>10</mn></mrow><annotation encoding="application/x-tex">\sigma = 10</annotation></semantics></math>
 (means over 20 draws, since a single draw is not stable at these
-settings). Standardise the series, pass a penalty on the data’s own
-scale (say <code>2 * log(n) * var(diff(x)) / 2</code>), or use
+settings), and warns that its cost assumes unit noise. Standardise the
+series, pass a penalty on the data’s own scale (say
+<code>2 * log(n) * var(diff(x)) / 2</code>), or use
 <code>change_in = "meanvar"</code>, which estimates a variance per
 segment. Methods that estimate the noise level as part of their
 procedure (SMUCE, the WBS family, CPOP, bcp, BEAST and the nonparametric
@@ -360,11 +371,12 @@ expect:</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.467</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 11</span></span></span>
 <span><span class="co">#&gt;       n n_changepoints method change_in penalty_type penalty_value cp_convention</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200              1 pelt   mean      MBIC                    <span style="color: #BB0000;">NA</span> left         </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;, engine_version &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   family &lt;chr&gt;</span></span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment</a></span><span class="op">(</span><span class="va">res</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 6 × 6</span></span></span>
 <span><span class="co">#&gt;   index  value seg_id .fitted .resid is_changepoint</span></span>
@@ -434,7 +446,7 @@ labelled as user-supplied wherever it appears. See
 engine, what it can detect, and whether the engine is installed:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_methods.html">cpt_methods</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 55 × 15</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 55 × 29</span></span></span>
 <span><span class="co">#&gt;    method   change_in        engine status installed target_release multivariate</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> pelt     mean, var, mean… chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
@@ -448,8 +460,12 @@ engine, what it can detect, and whether the engine is installed:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> wbs2     mean             break… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> not      mean, var, mean… not    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 45 more rows</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 8 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span></span>
-<span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 22 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   families &lt;chr&gt;, choices &lt;chr&gt;, formula &lt;lgl&gt;, min_segment &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   na_handling &lt;chr&gt;, cp_convention_upstream &lt;chr&gt;, scale_invariant &lt;lgl&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   sequential &lt;lgl&gt;, max_cp &lt;int&gt;, tier &lt;chr&gt;, noise_model_arg &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   rate_arg &lt;chr&gt;, cost &lt;chr&gt;, max_n &lt;dbl&gt;</span></span></span></code></pre></div>
 <p>Requests are validated against this capability matrix: asking a
 mean-only engine for a variance change is an error with the legal
 alternatives named, never a silent substitution. Univariate methods
@@ -774,12 +790,10 @@ where a change <em>happened</em> (<code>cp</code>) from when it was
 sequential monitoring:</p>
 <div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpm_wrapper.html">cpm_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span>, cpm_type <span class="op">=</span> <span class="st">"Mann-Whitney"</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 3</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
 <span><span class="co">#&gt;      cp cp_value detection_time</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    23   -<span style="color: #BB0000;">1.39</span>              30</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>    50    0.426             67</span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   100    0.369            104</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100    0.369            105</span></span></code></pre></div>
 <p>Three further nonparametric engines are wired and worth knowing:
 kernel change-point analysis on running statistics
 (<code><a href="../reference/kcp_wrapper.html">kcp_wrapper()</a></code>, engine <strong>kcpRS</strong>), which
@@ -822,11 +836,12 @@ criterion:</p>
 <div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_env</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/envcpt_wrapper.html">envcpt_wrapper</a></span><span class="op">(</span><span class="va">x_mean</span>, models <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"mean"</span>, <span class="st">"meancpt"</span>, <span class="st">"trendcpt"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">res_env</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 9</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 11</span></span></span>
 <span><span class="co">#&gt;       n n_changepoints method change_in penalty_type penalty_value cp_convention</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   200              1 envcpt mean      AIC: meancpt          568. left         </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 4 more variables: total_cost &lt;dbl&gt;, runtime &lt;dbl&gt;, engine_version &lt;chr&gt;,</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;">#   family &lt;chr&gt;</span></span></span></code></pre></div>
 <p>The winning model’s name is recorded in the penalty descriptor
 (<code>penalty_type</code> above, here <code>AIC: meancpt</code>), so
 “no changepoints, it’s just autocorrelation” is a first-class
@@ -952,13 +967,15 @@ intervals of their own:</p>
 <div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_stability.html">cpt_stability</a></span><span class="op">(</span><span class="va">x_mean</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, B <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="va">st</span></span>
-<span><span class="co">#&gt; ggcpt_stability (50 bootstrap replicates, method: pelt)</span></span>
+<span><span class="co">#&gt; ggcpt_stability (50 iid bootstrap replicates, method: pelt)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Original changepoints and their re-detection frequency:</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 2</span></span></span>
-<span><span class="co">#&gt;      cp stability</span></span>
-<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100         1</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 3</span></span></span>
+<span><span class="co">#&gt;      cp stability survives_reversal</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>            </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   100         1 TRUE             </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; A high score means reproducible under resampling, not real; see ?cpt_stability.</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></code></pre></div>
 <p><img src="introduction_files/figure-html/stability-1.png" class="r-plt" alt="Bootstrap detection-frequency profile across the series, with the original changepoints marked" width="576"></p>
 </div>

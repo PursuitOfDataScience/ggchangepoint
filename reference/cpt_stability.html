@@ -21,7 +21,7 @@ confidence intervals."><meta property="og:image" content="https://pursuitofdatas
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.5.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -39,7 +39,15 @@ confidence intervals."><meta property="og:image" content="https://pursuitofdatas
     <li><a class="dropdown-item" href="../articles/supervised.html">Supervised changepoint detection</a></li>
     <li><a class="dropdown-item" href="../articles/extending.html">Extending ggchangepoint</a></li>
     <li><a class="dropdown-item" href="../articles/monitoring.html">Streaming and online monitoring</a></li>
-    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, size and coverage</a></li>
+  </ul></li>
+<li class="nav-item dropdown">
+  <button class="nav-link dropdown-toggle" type="button" id="dropdown-articles" data-bs-toggle="dropdown" aria-expanded="false" aria-haspopup="true">Articles</button>
+  <ul class="dropdown-menu" aria-labelledby="dropdown-articles"><li><a class="dropdown-item" href="../articles/pitfalls.html">Ten ways to get a changepoint wrong</a></li>
+    <li><a class="dropdown-item" href="../articles/choosing.html">Choosing a method</a></li>
+    <li><a class="dropdown-item" href="../articles/nile.html">Five packages, one series: the Nile</a></li>
+    <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
+    <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
+    <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -68,7 +76,17 @@ confidence intervals.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_stability</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, B <span class="op">=</span> <span class="fl">100</span>, margin <span class="op">=</span> <span class="fl">5</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_stability</span><span class="op">(</span></span>
+<span>  <span class="va">x</span>,</span>
+<span>  method <span class="op">=</span> <span class="st">"pelt"</span>,</span>
+<span>  B <span class="op">=</span> <span class="fl">100</span>,</span>
+<span>  margin <span class="op">=</span> <span class="fl">5</span>,</span>
+<span>  seed <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  bootstrap <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"iid"</span>, <span class="st">"block"</span><span class="op">)</span>,</span>
+<span>  block_length <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  reversal <span class="op">=</span> <span class="cn">TRUE</span>,</span>
+<span>  <span class="va">...</span></span>
+<span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ggcpt_stability'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
@@ -82,12 +100,15 @@ confidence intervals.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>For <code>cpt_stability()</code>, a numeric vector; for the
-<code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> method, a <code>ggcpt_stability</code> object.</p></dd>
+<dd><p>A numeric vector, or a <code>ggcpt</code> fit (its series, method,
+change type and penalty are used, and it is the original the
+replicates are compared with); for the <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> method, a
+<code>ggcpt_stability</code> object.</p></dd>
 
 
 <dt id="arg-method">method<a class="anchor" aria-label="anchor" href="#arg-method"></a></dt>
-<dd><p>Detection method, passed to <code><a href="cpt_detect.html">cpt_detect()</a></code>.</p></dd>
+<dd><p>Detection method, passed to <code><a href="cpt_detect.html">cpt_detect()</a></code>.
+Ignored when <code>x</code> is a fit.</p></dd>
 
 
 <dt id="arg-b">B<a class="anchor" aria-label="anchor" href="#arg-b"></a></dt>
@@ -105,6 +126,31 @@ call: <code>.Random.seed</code> is saved and restored, so a seeded call
 inside a simulation loop does not pin the loop's own stream.</p></dd>
 
 
+<dt id="arg-bootstrap">bootstrap<a class="anchor" aria-label="anchor" href="#arg-bootstrap"></a></dt>
+<dd><p><code>"iid"</code> (the default) resamples residuals one at a
+time within each segment; <code>"block"</code> resamples contiguous blocks
+of them, which keeps the residuals' short-range dependence, so an
+artifact of autocorrelated noise can move between replicates instead
+of being rebuilt in the same place every time.</p></dd>
+
+
+<dt id="arg-block-length">block_length<a class="anchor" aria-label="anchor" href="#arg-block-length"></a></dt>
+<dd><p>Block length for <code>bootstrap = "block"</code>. Defaults
+to \(n^{1/3}\) lengthened by the residuals' lag-1 autocorrelation
+\(r\) by the factor \((1 + |r|)/(1 - |r|)\), and capped at a
+quarter of the series.</p></dd>
+
+
+<dt id="arg-reversal">reversal<a class="anchor" aria-label="anchor" href="#arg-reversal"></a></dt>
+<dd><p>Also run the detector once on the reversed series, and
+flag each changepoint that the reversed series does not find within
+<code>margin</code>? Defaults to <code>TRUE</code>. An offline detector looks at the
+whole series, so a changepoint that does not survive reversal is a
+borderline one: measured, it is the same instability the bootstrap
+finds, for one extra fit. Sequential (online) detectors genuinely
+depend on direction and get <code>NA</code>.</p></dd>
+
+
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
 <dd><p>Additional arguments passed to every <code><a href="cpt_detect.html">cpt_detect()</a></code> call.</p></dd>
 
@@ -118,9 +164,28 @@ inside a simulation loop does not pin the loop's own stream.</p></dd>
     <p>A <code>ggcpt_stability</code> object: a list with <code>frequency</code>
   (a tibble of <code>index</code> and <code>freq</code>, the proportion of replicates
   detecting a changepoint within <code>margin</code> of that index),
-  <code>original</code> (the point-estimate <code>ggcpt</code>), and <code>B</code>.
+  <code>original</code> (the point-estimate <code>ggcpt</code>), <code>B</code>,
+  <code>n_failed</code> (replicates on which the detector failed, which are
+  left out of the proportion rather than counted as "found nothing"),
+  <code>bootstrap</code>, <code>block_length</code> and <code>reversal</code> (one row per
+  original changepoint: <code>cp</code> and <code>survives</code>).
   Methods: <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> (frequency profile with
   the original detections marked).</p>
+    </div>
+    <div class="section level2">
+    <h2 id="what-a-high-score-means">What a high score means<a class="anchor" aria-label="anchor" href="#what-a-high-score-means"></a></h2>
+
+
+<p><em>Reproducible under resampling</em>, which is not the same as
+<em>real</em>, and under dependent noise the two diverge: measured under
+AR(1) noise, a spurious changepoint reached a stability of 1.00 and the
+score separated real from spurious changepoints in only 4 of 10
+replicates. The artifact is a feature of the realised noise path, and an
+i.i.d. resample of the residuals rebuilds it every time.
+<code>bootstrap = "block"</code> lets it vary; <code><a href="cpt_robustness.html">cpt_robustness()</a></code>,
+which changes the noise model rather than the sample, is the check that
+touches the cause; and <code><a href="cpt_assumptions.html">cpt_assumptions()</a></code> tests the
+residuals directly.</p>
     </div>
 
     <div class="section level2">
@@ -129,13 +194,15 @@ inside a simulation loop does not pin the loop's own stream.</p></dd>
 <span class="r-in"><span><span class="va">x</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">60</span>, <span class="fl">4</span><span class="op">)</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">st</span> <span class="op">&lt;-</span> <span class="fu">cpt_stability</span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>, B <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="va">st</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt_stability (20 bootstrap replicates, method: pelt)</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> ggcpt_stability (20 iid bootstrap replicates, method: pelt)</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Original changepoints and their re-detection frequency:</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 2</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>      cp stability</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    60         1</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #949494;"># A tibble: 1 × 3</span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>      cp stability survives_reversal</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> <span style="color: #BCBCBC;">1</span>    60         1 TRUE             </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> A high score means reproducible under resampling, not real; see ?cpt_stability.</span>
 <span class="r-in"><span><span class="fu">ggplot2</span><span class="fu">::</span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">st</span><span class="op">)</span></span></span>
 <span class="r-plt img"><img src="cpt_stability-1.png" alt="" width="700" height="433"></span>
 </code></pre></div>

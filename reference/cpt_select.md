@@ -99,7 +99,8 @@ autoplot(
   :   the knee of the CROPS cost-against-\\K\\ curve, made an explicit
       rule (maximum distance from the chord joining the endpoints, the
       standard Kneedle construction) rather than something eyeballed off
-      a plot.
+      a plot. An elbow needs \\K \ge 1\\, so this criterion **cannot
+      return** \\K = 0\\.
 
   `"cv"`
 
@@ -115,7 +116,15 @@ autoplot(
 
   :   the \\K\\ whose changepoints are re-detected most often under
       within-segment bootstrap resampling. A robustness criterion, not a
-      model-selection one; use it to cross-check the others.
+      model-selection one; use it to cross-check the others. It **cannot
+      return** \\K = 0\\.
+
+  `"bic"`, `"mbic"` and `"cv"` can return \\K = 0\\; `"aic"` in
+  principle can and in practice (measured at \\n = 400\\) picked `k_max`
+  or next to it at every true \\K\\. `cpt_select()` warns (class
+  `ggchangepoint_selection_unadjusted`) when `"aic"` lands at the top of
+  the ladder, and when `"crops_elbow"` or `"stability"` returns its
+  smallest candidate.
 
 - k_max:
 

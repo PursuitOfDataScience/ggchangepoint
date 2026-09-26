@@ -23,6 +23,8 @@ cpt_power(
   df = 3,
   seed = NULL,
   parallel = TRUE,
+  family = "gaussian",
+  baseline = NULL,
   ...
 )
 
@@ -45,7 +47,10 @@ autoplot(object, ...)
 - jump:
 
   Size of the change, in units of `sigma`. A vector runs one scenario
-  per value.
+  per value. For a non-Gaussian `family` it is the change in the
+  family's own parameter, added to `baseline`: a rate for `"poisson"`, a
+  probability for `"binomial"` and a mean waiting time for
+  `"exponential"`.
 
 - sigma:
 
@@ -107,6 +112,21 @@ autoplot(object, ...)
   unless a non-sequential plan is set, but when one is it changes where
   the replicates' random numbers come from; see the section below, which
   matters if the power figure is going into a paper.
+
+- family:
+
+  `"gaussian"` (the default), or `"poisson"`, `"binomial"` or
+  `"exponential"`: the replicates are drawn from that family (see
+  [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md))
+  and detected with that family's cost (`cpt_detect(family = )`), so the
+  method must fit it
+  ([`cpt_families()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_families.md)).
+  `sigma`, `noise`, `rho` and `df` do not apply.
+
+- baseline:
+
+  The family's parameter before the change, for a non-Gaussian `family`:
+  a rate (default 5), a probability (0.3) or a mean waiting time (1).
 
 - ...:
 

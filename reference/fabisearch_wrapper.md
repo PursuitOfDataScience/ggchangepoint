@@ -166,17 +166,17 @@ Other changepoint engines:
 # \donttest{
 # A change in *structure*, not in scale: two latent factors drive
 # different halves of the node set before and after the change.
-# Deliberately tiny -- this is by far the most expensive engine in the
+# Deliberately tiny: this is by far the most expensive engine in the
 # package (n_runs x n_reps factorisations per candidate split). Measured
 # at 5-6 s across fresh sessions, against 27 s for the 2 x 25 /
 # n_reps = 4
-# version this replaced -- and this is the floor: `n_reps = 1` fails
+# version this replaced, and this is the floor: `n_reps = 1` fails
 # inside fabisearch with "not enough 'x' observations" (the permutation
 # test needs two), and smaller matrices are not reliably cheaper because
 # the search then evaluates more splits relative to `min_dist` (2 x 10 at
 # min_dist = 8 measured 6.6 s). So this one example stays near CRAN's 5 s
 # budget by necessity; `cran-comments.md` says so. Use the defaults on
-# real data -- the settings here are for the budget, not for detection.
+# real data; the settings here are for the budget, not for detection.
 set.seed(2026)
 block <- function(n, cols) {
   f <- abs(stats::rnorm(n)) + 0.5

@@ -21,7 +21,7 @@ cpt_consensus(
   x,
   methods = c("pelt", "binseg", "amoc"),
   tolerance = 5,
-  min_votes = 2,
+  min_votes = "majority",
   change_in = "mean",
   index = NULL,
   seed = NULL,
@@ -44,7 +44,10 @@ print(x, ...)
 
 - methods:
 
-  Character vector of method names.
+  Character vector of method names. A method that fails on this series
+  (its engine errors or is not installed, or it does not offer
+  `change_in`) is left out of the vote with a warning; invalid data or
+  arguments stop the call.
 
 - tolerance:
 
@@ -53,7 +56,11 @@ print(x, ...)
 - min_votes:
 
   Minimum number of methods that must find a location for it to enter
-  the consensus. Defaults to `2`.
+  the consensus. Defaults to `"majority"`: more than half of the methods
+  that ran (two of three, three of four or five), so the rule does not
+  silently change with the size of the panel, as a fixed count of two
+  did (a bare majority of three, a fifth of ten). `"all"` asks for
+  unanimity.
 
   A value **strictly between 0 and 1** is read as a proportion of the
   methods that ran; anything else is a count, rounded *up* (`2.5` needs
@@ -107,6 +114,22 @@ changepoints tibble carries `votes` and `methods` (a comma-separated
 list of the methods that found each location), with the per-method
 detections kept in a `consensus` attribute and drawn by
 `autoplot(plot_type = "agreement")`.
+
+## Consensus does not remove shared false positives
+
+Voting removes the idiosyncrasies of individual algorithms. It does not
+remove a false positive that every algorithm makes for the same reason,
+and a violated assumption is exactly such a reason: measured under AR(1)
+noise, every one of `pelt`'s spurious changepoints was reproduced by
+`wbs` within five observations, and the 2-of-3 consensus of `pelt`,
+`binseg` and `wbs` had more false positives (1.40) than two of its own
+members. The useful signal in a panel is its **disagreement**: the
+`disagreement` value in the `consensus` attribute is the share of the
+locations any member found that not every member found, and a high value
+says the members' shared assumption may be what is wrong (see
+[`cpt_assumptions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_assumptions.md)
+and
+[`cpt_robustness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)).
 
 ## Consensus is not inference
 

@@ -68,7 +68,7 @@ cpt_solution_path(fit)
 #>   <int> <int>    <dbl> <int> <int> <lgl>   
 #> 1     1   150   730.      NA    NA TRUE    
 #> 2     2    15     4.21    NA    NA FALSE   
-#> 3     3    14     3.87    NA    NA FALSE   
-#> 4     4   149     2.61    NA    NA FALSE   
-#> 5     5   117     1.78    NA    NA FALSE   
+#> 3     3    30     1.13    NA    NA FALSE   
+#> 4     4    23     1.13    NA    NA FALSE   
+#> 5     5   117     1.13    NA    NA FALSE   
 ```

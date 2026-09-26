@@ -6,14 +6,15 @@ sets, as used in the Turing Change Point Dataset benchmark.
 ## Usage
 
 ``` r
-cpt_metrics_annotated(pred, annotations, n, margin = 5)
+cpt_metrics_annotated(pred, annotations, n = NULL, margin = 5)
 ```
 
 ## Arguments
 
 - pred:
 
-  Predicted changepoint indices.
+  Predicted changepoint indices, or a `ggcpt` fit (see
+  [`cpt_metrics()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_metrics.md)).
 
 - annotations:
 
@@ -21,7 +22,7 @@ cpt_metrics_annotated(pred, annotations, n, margin = 5)
 
 - n:
 
-  Length of the series.
+  Length of the series; taken from `pred` when it is a fit.
 
 - margin:
 
@@ -72,6 +73,6 @@ cpt_metrics_annotated(c(100, 200),
                       n = 300, margin = 5)
 #> # A tibble: 1 × 7
 #>       n n_annotators n_pred precision recall    f1 covering
-#>   <dbl>        <int>  <int>     <dbl>  <dbl> <dbl>    <dbl>
+#>   <int>        <int>  <int>     <dbl>  <dbl> <dbl>    <dbl>
 #> 1   300            2      2         1      1     1    0.984
 ```
