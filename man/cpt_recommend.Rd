@@ -4,6 +4,7 @@
 \alias{cpt_recommend}
 \alias{tidy.ggcpt_recommendation}
 \alias{print.ggcpt_recommendation}
+\alias{autoplot.ggcpt_recommendation}
 \title{Recommend a detection method}
 \usage{
 cpt_recommend(
@@ -13,12 +14,19 @@ cpt_recommend(
   n = NULL,
   need_uncertainty = FALSE,
   online = FALSE,
-  installed_only = FALSE
+  installed_only = FALSE,
+  n_expected = NULL,
+  data_type = c("continuous", "counts", "binary", "proportion"),
+  family = NULL,
+  fit = NULL,
+  jump = NULL
 )
 
 \method{tidy}{ggcpt_recommendation}(x, ...)
 
 \method{print}{ggcpt_recommendation}(x, top = 5, ...)
+
+\method{autoplot}{ggcpt_recommendation}(object, top = 15, ...)
 }
 \arguments{
 \item{dimension}{\code{"univariate"} (default) or \code{"multivariate"}.}
@@ -29,8 +37,9 @@ cpt_recommend(
 \item{noise}{Noise structure: \code{"iid"} (default), \code{"heavy"}
 (heavy-tailed), \code{"autocorrelated"}, or \code{"heteroscedastic"}.}
 
-\item{n}{Series length, used to flag methods that are impractical at that
-size. Optional.}
+\item{n}{Series length. Methods the runtime table saw fail to finish at
+that length are left out (and listed), and the slow ones carry a
+caveat. Optional.}
 
 \item{need_uncertainty}{Does the answer have to come with a confidence
 interval or significance region? Defaults to \code{FALSE}.}
@@ -42,28 +51,87 @@ retrospective? Defaults to \code{FALSE}.}
 \code{FALSE}, so the recommendation names the right method even when it
 needs an install.}
 
+\item{n_expected}{How many changes you expect, if you know. The
+single-change designs (\code{amoc}, \code{pettitt}, \code{buishand},
+\code{snht}) cannot find a second one, so they are ranked down unless
+this is \code{1}.}
+
+\item{data_type}{What the values are: \code{"continuous"} (default),
+\code{"counts"}, \code{"binary"} or \code{"proportion"}. Measured, a
+Gaussian cost raises about 165 times the false positives on binary data
+that it raises on Gaussian data, so engines are scored on their
+measured false positives for this data type, and those that can fit a
+cost for it (\code{family = "poisson"} or \code{"binomial"}) are
+preferred and recommended with that argument.}
+
+\item{family}{Optional distribution family the method must fit (see
+\code{\link{cpt_families}()}).}
+
+\item{fit}{Optional \code{ggcpt} fit already made. Its dimension, length
+and change type fill in the arguments not given; its values set the
+data type; and when its residuals are autocorrelated (see
+\code{\link{cpt_assumptions}()}) the noise is taken as
+\code{"autocorrelated"} unless \code{noise} was given.}
+
+\item{jump}{Optional expected change size, in noise standard deviations.
+With \code{n}, the top three candidates' power to find it is simulated
+(\code{\link{cpt_power}()} with 50 replicates), and the printout says
+so when no method is likely to.}
+
 \item{x}{A \code{ggcpt_recommendation} object (for \code{print()}).}
 
 \item{...}{Ignored.}
 
 \item{top}{How many candidates to print. Defaults to \code{5}.}
+
+\item{object}{A \code{ggcpt_recommendation} object (for
+\code{autoplot()}).}
 }
 \value{
-A tibble of candidate methods ordered by suitability, with columns
-  \code{method}, \code{engine}, \code{installed}, \code{score},
-  \code{why} and \code{caveat}, and a \code{print()} that reads as advice.
+A \code{ggcpt_recommendation} tibble ordered by suitability, with
+  columns \code{method}, \code{engine}, \code{installed}, \code{score},
+  \code{tie} (candidates with the same score share a number: the
+  recommender cannot tell them apart on what was supplied), \code{call}
+  (the \code{cpt_detect()} call to run, including the noise-model or
+  family argument the recommendation depends on), \code{hits} and
+  \code{false_positives} (measured in the stated regime: mean real
+  changes found out of two, and mean spurious ones), \code{power} (when
+  \code{jump} is given), \code{why} and \code{caveat}. \code{print()}
+  reads as advice and \code{autoplot()} shows the scores and the ties.
 }
 \description{
-Turns the capability matrix into an answer. Given what the analyst knows
-about their problem (how many dimensions, what kind of change, what the
-noise looks like, how long the series is, whether they need uncertainty or
-an online alarm), this returns the shortlist of methods that actually fit,
-with a reason for each and the reference to cite. It is a decision table,
-not a model: everything it knows is in \code{\link{cpt_methods}()}, and
-making that explicit and printable is the point.
+Turns the capability matrix and the package's measurements into an
+answer. Given what the analyst knows about their problem (how many
+dimensions, what kind of change, what the noise and the data look like,
+how long the series is, how many changes they expect, whether they need
+uncertainty or an online alarm), this returns the methods that fit, as
+calls, with the power and false-alarm rate measured for each in that
+situation, a reason and the caveats. It is a decision table, not a
+model: everything it knows is in \code{\link{cpt_methods}()} and the
+measurement tables (\code{\link{cpt_noise_benchmark}},
+\code{\link{cpt_data_types}}, \code{\link{cpt_runtimes}}), and making that
+explicit and printable is the point.
 }
+\section{How the score is built}{
+
+Where the method was measured in the stated noise regime, the score
+starts from \eqn{3 - E}, where \eqn{E} is the expected number of errors
+per series in that benchmark (real changes missed plus false alarms),
+taking the method's best setting of its noise-model argument (which is
+then the one in \code{call}). A method not measured there starts at 1.
+Then: minus 3 for a single-change design unless \code{n_expected = 1};
+minus the log of one plus its measured false positives on the stated
+data type, and plus 1.5 if it fits that data type's family; plus 1 for a
+location interval and 0.5 for a posterior when uncertainty is needed;
+at \eqn{n \ge 5000}, plus 0.5 for a fast engine and minus 1 for a slow
+one; and small tie-breakers for the general-purpose methods (0.25) and
+for an installed engine (0.1). Sort by \code{false_positives} instead if
+a false alarm costs you more than a miss.
+}
+
 \examples{
 cpt_recommend(noise = "autocorrelated")
+cpt_recommend(data_type = "counts", n_expected = 2)
 cpt_recommend(dimension = "multivariate", change_in = "covariance")
 }
 \seealso{

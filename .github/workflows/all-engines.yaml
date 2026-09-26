@@ -1,0 +1,111 @@
+# The weekly all-engines run (roadmap §0.9 item 3, §100.2, §106.1).
+#
+# R-CMD-check.yaml runs the suite with whatever Suggests will install, and
+# drops the ones that will not load, because a CRAN-like check must pass
+# without them. This job asks the opposite question: with EVERY suggested
+# engine installed, does every test pass? And it checks each declared
+# dependency against the live CRAN index, so an archival is found here,
+# on a schedule, rather than by a user or a broken release.
+#
+# A failure is reported the way any failed scheduled run is: GitHub emails
+# the maintainer. It opens no issues and posts nothing.
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays, 06:17 UTC
+  workflow_dispatch:
+
+name: all-engines
+
+permissions: read-all
+
+jobs:
+  cran-availability:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+      - name: Every declared dependency is on CRAN
+        shell: Rscript {0}
+        run: |
+          desc <- read.dcf("DESCRIPTION")
+          fields <- intersect(c("Imports", "Suggests"), colnames(desc))
+          deps <- trimws(unlist(strsplit(gsub("\\([^)]*\\)", "",
+                                              desc[, fields]), ",")))
+          deps <- setdiff(deps[nzchar(deps)],
+                          rownames(installed.packages(priority = "base")))
+          # Engines CRAN no longer serves but another repository does,
+          # declared in DESCRIPTION's Additional_repositories (fpop, since
+          # 2026-09-14, on R-Forge).
+          known <- "fpop"
+          cran <- rownames(available.packages(
+            repos = "https://cloud.r-project.org"))
+          gone <- setdiff(deps, c(cran, known))
+          if (length(gone)) {
+            stop("Declared dependencies not on CRAN: ",
+                 paste(gone, collapse = ", "),
+                 ". See the archival policy in the stability article.")
+          }
+          back <- intersect(known, cran)
+          if (length(back)) {
+            message("Back on CRAN, drop from `known` and engine_repos(): ",
+                    paste(back, collapse = ", "))
+          }
+          cat(length(deps), "dependencies, all on CRAN or a declared",
+              "repository\n")
+
+  all-engines:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_PAT: ${{ secrets.GITHUB_TOKEN }}
+      NOT_CRAN: true
+      R_PARALLELLY_MAKENODEPSOCK_SETUP_STRATEGY: sequential
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install JAGS
+        run: |
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list \
+                     /etc/apt/sources.list.d/microsoft-prod.list || true
+          sudo apt-get update -o Acquire::Retries=3 || true
+          sudo apt-get install -y jags
+
+      - uses: r-lib/actions/setup-pandoc@v2
+
+      - uses: r-lib/actions/setup-r@v2
+        with:
+          use-public-rspm: true
+
+      - uses: r-lib/actions/setup-r-dependencies@v2
+        with:
+          dependencies: '"all"'
+          extra-packages: any::devtools,
+            url::https://cran.r-project.org/src/contrib/Archive/fpop/fpop_2019.08.26.tar.gz
+          cache-version: 1
+
+      - name: Every suggested engine loads
+        shell: Rscript {0}
+        # Unlike the CRAN-like check, a Suggests package that will not load
+        # is the failure this job exists to report.
+        run: |
+          desc <- read.dcf("DESCRIPTION")
+          sug <- trimws(strsplit(gsub("\\([^)]*\\)", "", desc[, "Suggests"]),
+                                 ",")[[1]])
+          sug <- sug[nzchar(sug)]
+          options(rgl.useNULL = TRUE)
+          bad <- sug[!vapply(sug, function(p) {
+            isTRUE(suppressWarnings(suppressMessages(
+              requireNamespace(p, quietly = TRUE))))
+          }, logical(1))]
+          if (length(bad)) {
+            stop("Suggests that do not load: ", paste(bad, collapse = ", "))
+          }
+          cat(length(sug), "suggested packages, all loading\n")
+
+      - name: The whole suite, every engine present
+        shell: Rscript {0}
+        run: |
+          options(rgl.useNULL = TRUE)
+          res <- devtools::test(reporter = testthat::ProgressReporter$new(
+            show_praise = FALSE), stop_on_failure = TRUE)

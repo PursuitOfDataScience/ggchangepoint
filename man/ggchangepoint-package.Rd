@@ -62,6 +62,16 @@ object with a stable \code{tibble(cp, cp_value)} contract, optionally
 carrying a time index, engine confidence intervals, a fitted signal,
 significance regions and diagnostics. Around that:
 \itemize{
+  \item \strong{What to fit:} \code{cpt_families()} (Poisson, binomial,
+    exponential and other costs), a formula for a regression break
+    (\code{cpt_detect(y ~ x, data)}), and \code{cpt_segment_models()} and
+    \code{predict()} for a model per regime.
+  \item \strong{How big, when, and whether at all:} \code{cpt_effect()},
+    \code{cpt_test_at()} (a date fixed in advance),
+    \code{cpt_attribute_event()}, \code{cpt_test_null()},
+    \code{cpt_null_power()}.
+  \item \strong{Should I believe it:} \code{cpt_assumptions()},
+    \code{cpt_gof()}, \code{cpt_robustness()}, \code{cpt_verify()}.
   \item \strong{Inference:} \code{cpt_confint()} (four provenances, one
     contract), \code{cpt_test()}, \code{cpt_regions()}.
   \item \strong{Choosing K:} \code{cpt_select()} (BIC, Zhang-Siegmund
@@ -89,13 +99,26 @@ significance regions and diagnostics. Around that:
   \item \strong{Extension:} \code{as_ggcpt()} and
     \code{cpt_register_method()} bring detectors this package does not and
     cannot depend on into the same grammar.
+  \item \strong{Leaving R:} \code{as_json()}, \code{cpt_export()},
+    \code{cpt_import()}.
+  \item \strong{Measurements:} \code{cpt_runtimes},
+    \code{cpt_invariances}, \code{cpt_noise_benchmark},
+    \code{cpt_data_types}, \code{cpt_null_sizes},
+    \code{cpt_calibration}.
 }
+
+Every condition the package raises is classed; see
+\link{ggchangepoint-conditions}.
 }
 \seealso{
 The entry points, by group:
   \itemize{
     \item \strong{Detect:} \code{\link{cpt_detect}()},
-      \code{\link{cpt_methods}()}, \code{\link{cpt_register_method}()}.
+      \code{\link{cpt_methods}()}, \code{\link{cpt_families}()},
+      \code{\link{cpt_register_method}()}.
+    \item \strong{After detection:} \code{\link{cpt_effect}()},
+      \code{\link{cpt_test_at}()}, \code{\link{cpt_assumptions}()},
+      \code{\link{cpt_robustness}()}.
     \item \strong{Visualise:} \code{\link{autoplot.ggcpt}()},
       \code{\link{ggcptplot}()}, \code{\link{ggcpt_compare}()}.
     \item \strong{Inference and selection:} \code{\link{cpt_confint}()},

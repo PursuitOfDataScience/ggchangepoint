@@ -8,10 +8,26 @@
 #' @param x The series. A numeric vector for univariate methods, or a
 #'   numeric matrix/data frame (rows are time points) for the multivariate
 #'   methods (run \code{subset(cpt_methods(), multivariate)$method} for the
-#'   list). A \code{ts}, \code{xts}, \code{zoo} or (unkeyed) \code{tsibble}
+#'   list). A \code{ts}, \code{xts}, \code{zoo} or \code{tsibble}
 #'   is accepted directly and its time index is carried through to
 #'   \code{tidy()} and \code{autoplot()}; so is a data frame together with
 #'   \code{y} (and optionally \code{index}).
+#'
+#'   Also a \strong{formula} with \code{data}: \code{y ~ x1 + x2} fits
+#'   breakpoints in a regression (methods \code{"strucchange"},
+#'   \code{"segmented"} and \code{"fastcpd"}; see \code{cpt_methods()}'s
+#'   \code{formula} column), and \code{y ~ 1} is the response alone, which
+#'   every univariate method takes.
+#'
+#'   Several series at once: a \pkg{dplyr}-grouped data frame, a keyed
+#'   \code{tsibble}, or a long data frame with \code{group} naming the
+#'   column(s) that identify each series. Each group is detected separately
+#'   and the answer is a \code{\link{cpt_batch}()} result carrying the
+#'   grouping columns.
+#'
+#'   Refused rather than coerced: a factor (its level codes are not data),
+#'   a survival object, and dates or timestamps as values (they convert to
+#'   an increasing count; pass them as \code{index}).
 #' @param method Detection method: any \code{method} in
 #'   \code{cpt_methods()} whose \code{status} is \code{"available"} or
 #'   \code{"registered"}. Methods whose engines live in \code{Suggests}
@@ -80,7 +96,75 @@
 #'   \pkg{segmented}, \pkg{fastcpd}, \pkg{fChange}, \pkg{bfast}), so for
 #'   those a misspelt argument name is silently discarded upstream and the
 #'   engine quietly uses its default rather than reporting the typo. Every
-#'   other wired method rejects an unknown argument by name.
+#'   other wired method rejects an unknown argument by name. A name that
+#'   is a near miss of a real argument of \code{cpt_detect()}, the wrapper
+#'   or its engine (\code{n_interval} for \code{n_intervals}) is refused
+#'   with the suggestion, and a modelling-choice value outside the method's
+#'   vocabulary (\code{cpt_methods()$choices}, e.g. \code{test.stat =
+#'   "Poison"}) is refused with the nearest valid value. \code{seed} is
+#'   honoured by every method: passed to a wrapper that has one, and
+#'   otherwise used to scope the random stream around the fit (restored
+#'   afterwards); \code{seed = NULL} means unset.
+#' @param data A data frame for the formula interface.
+#' @param family The distribution a segment is modelled with:
+#'   \code{"gaussian"}, \code{"poisson"}, \code{"binomial"},
+#'   \code{"exponential"}, \code{"gamma"}, \code{"laplace"} or
+#'   \code{"l1"}. \code{NULL} (the default) runs each method's own
+#'   default, which for every parametric method is Gaussian. A
+#'   single-parameter family changes in its rate or probability, so it is
+#'   used with \code{change_in = "mean"}. Which methods fit which
+#'   families, and the engine call each combination becomes, is in
+#'   \code{\link{cpt_families}()}; a combination not listed there is
+#'   refused. The data are checked against the family (counts must be
+#'   whole and non-negative, binary data 0/1, waiting times positive).
+#'   \pkg{fastcpd}'s and \pkg{stepR}'s own \code{family} values
+#'   (\code{"ar"}, \code{"hsmuce"}, ...) still reach those engines.
+#' @param group For a long data frame holding several series, the column(s)
+#'   identifying each one: a bare name, a string, or \code{c(a, b)}.
+#' @param na_action What to do with missing values: \code{"error"} (the
+#'   default) refuses them; \code{"omit"} drops them, detects on what is
+#'   observed, and reports every location in the \strong{original}
+#'   positions (a changepoint lands on the last observed point of its left
+#'   segment), keeping the gaps in \code{$data} so plots show them and the
+#'   translation in \code{$diagnostics$na_omitted}; \code{"engine"}
+#'   passes them to an engine that handles them in place, which measured
+#'   for \code{beast} and \code{segmented} only (see
+#'   \code{cpt_methods()$na_handling}), and is refused for the rest.
+#'   There is no \code{"impute"}: imputing and then detecting pulls the
+#'   estimated location towards the imputed stretch, by more the longer the
+#'   gap.
+#' @param fixed Changepoints known in advance, which are kept and the rest
+#'   estimated around them: the detector runs separately on each stretch
+#'   between them. Positions, or values of the series' index (a date is
+#'   placed at the last observation on or before it; for a numeric index
+#'   such as a \code{ts}'s years, a number outside \code{1..n} is read as
+#'   an index value and one inside as a position).
+#' @param within Windows the changepoints must fall in ("the policy took
+#'   effect sometime in Q2"): a pair \code{c(start, end)}, a list of pairs,
+#'   or a two-column table, in positions or index values. The engine
+#'   searches the whole series and changepoints outside every window are
+#'   dropped (recorded in \code{$constraints}); it restricts what is
+#'   reported rather than re-optimising.
+#' @param min_segment Minimum segment length in observations, translated
+#'   into each engine's own argument (\code{minseglen}, \code{min_size},
+#'   \code{h}, \code{delta}, ...: \code{cpt_methods()$min_segment} names
+#'   it). A method without one refuses it. When \code{min_segment} is not
+#'   given, the engines whose own default allows one-observation segments
+#'   (the change-in-mean \pkg{changepoint} methods other than SegNeigh,
+#'   \code{np} and \code{binsegrcpp}) get a floor of two, so a short or
+#'   monotone series is not split after every point.
+#' @param min_effect Drop changepoints whose mean shift is smaller than this
+#'   many noise standard deviations (estimated from the series' first
+#'   differences, which a changepoint barely moves), removing the smallest
+#'   first and re-measuring its neighbours after each removal. For a change
+#'   in mean only. The size is measured on the same data that located the
+#'   change, so it is biased upward; see \code{\link{cpt_effect}()}.
+#' @param keep_fit Keep the engine's own object in \code{$fit}? Defaults to
+#'   \code{TRUE}. A few engines return objects far larger than the answer
+#'   (a warning says so above 10 MB, once per method per session);
+#'   \code{FALSE} drops it, which only the engine-specific accessors notice.
+#'   Everything else in the result is plain data, so a saved result reads
+#'   back in any R session, with no packages installed.
 #'
 #' @section Scale sensitivity of the penalised change-in-mean engines:
 #' \code{"pelt"}, \code{"binseg"}, \code{"segneigh"} and \code{"fpop"}
@@ -91,12 +175,16 @@
 #' data, so on a series whose noise is much wider than 1 the penalty is
 #' effectively negligible and the segmentation shatters. On 200 observations
 #' with one true changepoint in the middle and a jump of five standard
-#' deviations, \code{"pelt"} returns 1 changepoint at \eqn{\sigma = 1}, 39
-#' at \eqn{\sigma = 3} and 141 at \eqn{\sigma = 10}. These are means over 20
-#' draws, because a single draw is not stable here: the same three settings
-#' gave 21/75 at \eqn{n = 100} and 57/266 at \eqn{n = 400}, so the effect
-#' grows with the series as well as with the noise. Three ways to avoid it, in order of
-#' convenience:
+#' deviations, \code{"pelt"} returns 1 changepoint at \eqn{\sigma = 1}, 27
+#' at \eqn{\sigma = 3} and 76 at \eqn{\sigma = 10}. These are means over 20
+#' draws, because a single draw is not stable here: the same settings gave
+#' 15/38 at \eqn{n = 100} and 47/152 at \eqn{n = 400}, so the effect grows
+#' with the series as well as with the noise. (0.5.0, before the two-point
+#' minimum segment, reported 39 and 141 at \eqn{n = 200}: the floor halves
+#' the damage and does not remove it.) A measured scale-sensitive engine
+#' given noise far from unit scale warns (class
+#' \code{ggchangepoint_scale_sensitive}). Three ways to avoid it, in order
+#' of convenience:
 #' \itemize{
 #'   \item standardise the series first
 #'     (\code{cpt_detect(scale(x)[, 1], method = "pelt")});
@@ -152,18 +240,104 @@
 #' # The data-frame interface.
 #' df <- data.frame(day = dates, value = x)
 #' cpt_detect(df, y = value, index = day, method = "pelt")
+#'
+#' # Counts, with a cost written for them.
+#' counts <- c(rpois(100, 2), rpois(100, 6))
+#' cpt_detect(counts, method = "pelt", family = "poisson")
+#'
+#' # Missing values, located in the original positions.
+#' gappy <- x
+#' gappy[c(20, 21, 150)] <- NA
+#' cpt_detect(gappy, method = "pelt", na_action = "omit")$changepoints
+#'
+#' # A changepoint known in advance, and a window for another.
+#' cpt_detect(x, method = "pelt", fixed = 50)$changepoints
+#'
+#' # Breakpoints in a regression.
+#' if (requireNamespace("strucchange", quietly = TRUE)) {
+#'   d <- data.frame(t = 1:200, z = rnorm(200))
+#'   d$y <- ifelse(d$t <= 120, 1 + d$z, 3 - d$z) + rnorm(200, 0, 0.5)
+#'   fit <- cpt_detect(y ~ z, data = d, method = "strucchange")
+#'   tidy(fit, "coefficients")
+#' }
 cpt_detect <- function(x,
                        method = "pelt",
                        change_in = "mean",
                        penalty = "MBIC",
                        index = NULL,
                        y = NULL,
-                       ...) {
+                       ...,
+                       data = NULL,
+                       family = NULL,
+                       group = NULL,
+                       na_action = c("error", "omit", "engine"),
+                       fixed = NULL,
+                       within = NULL,
+                       min_segment = NULL,
+                       min_effect = NULL,
+                       keep_fit = TRUE) {
 
   user_call <- match.call()
   y_expr <- substitute(y)
   index_expr <- substitute(index)
+  group_expr <- substitute(group)
   caller <- parent.frame()
+  na_action <- cpt_match_arg(na_action)
+  validate_flag(keep_fit, "keep_fit")
+  if (!is.null(min_segment)) {
+    validate_scalar(min_segment, "min_segment", min = 1)
+  }
+  if (!is.null(min_effect)) validate_scalar(min_effect, "min_effect", min = 0)
+  index_label <- NULL
+
+  # ---- formula interface ---------------------------------------------------
+  # `cpt_detect(y ~ x1 + x2, data = d, method = "strucchange")`. The formula
+  # interface existed inside strucchange_wrapper() and the dispatcher could
+  # not reach it: the formula went to as.numeric() and came back as "'language'
+  # object cannot be coerced to type 'double'". An intercept-only formula is
+  # the response as a series, so every univariate method takes it.
+  if (inherits(x, "formula")) {
+    spec <- formula_series(x, data, index_expr, caller)
+    if (!spec$intercept_only) {
+      return(detect_regression(
+        spec, method = method, change_in = change_in, penalty = penalty,
+        family = family, na_action = na_action, fixed = fixed,
+        within = within, min_segment = min_segment, min_effect = min_effect,
+        keep_fit = keep_fit, user_call = user_call, ...))
+    }
+    x <- spec$y
+    if (!is.null(spec$index)) {
+      index <- spec$index
+      index_label <- spec$index_label
+    }
+    y_expr <- NULL
+    index_expr <- NULL
+  } else if (!is.null(data)) {
+    cpt_abort("`data` is only used with a formula: `cpt_detect(y ~ x, data ",
+              "= d)`. For a data frame of series, pass it as `x` (with `y =` ",
+              "to pick the column).", class = "bad_argument")
+  }
+
+  # ---- grouped and long data frames ------------------------------------------
+  # A dplyr-grouped frame, a keyed tsibble, or a long frame with `group =`
+  # holds several series; each group becomes one, and the answer is a
+  # `ggcpt_batch` like cpt_batch()'s.
+  groups <- if (is.data.frame(x)) detect_groups(x, group_expr, caller) else {
+    if (!is.null(group_expr)) {
+      cpt_abort("`group` selects a column of a data frame, and `x` is a ",
+                class(x)[1], ".", class = "bad_argument")
+    }
+    NULL
+  }
+  if (!is.null(groups)) {
+    args <- c(list(method = method, change_in = change_in,
+                   penalty = penalty, family = family,
+                   na_action = na_action, fixed = fixed, within = within,
+                   min_segment = min_segment, min_effect = min_effect,
+                   keep_fit = keep_fit), list(...))
+    args <- args[!vapply(args, is.null, logical(1))]
+    return(detect_grouped(x, groups, y_expr, index_expr, caller, args))
+  }
 
   # ---- data-frame interface -----------------------------------------------
   # `cpt_detect(df, y = value, index = date)`. `y` and `index` are column
@@ -174,8 +348,8 @@ cpt_detect <- function(x,
     df <- as.data.frame(x)
     yv <- df_column(df, y_expr, "y", caller)
     if (!is.numeric(yv)) {
-      stop("`y` must select a numeric column; got ", class(yv)[1], ".",
-           call. = FALSE)
+      cpt_abort("`y` must select a numeric column; got ", class(yv)[1], ".",
+                class = "bad_argument")
     }
     index <- if (!is.null(index_expr)) {
       df_column(df, index_expr, "index", caller)
@@ -184,8 +358,8 @@ cpt_detect <- function(x,
     }
     x <- as.numeric(yv)
   } else if (!is.null(y_expr)) {
-    stop("`y` selects a column and is only meaningful when `x` is a data ",
-         "frame. Pass the series itself as `x`.", call. = FALSE)
+    cpt_abort("`y` selects a column and is only meaningful when `x` is a data ",
+              "frame. Pass the series itself as `x`.", class = "bad_argument")
   }
 
   # ---- planned and registered methods --------------------------------------
@@ -197,14 +371,14 @@ cpt_detect <- function(x,
       method %in% planned_methods()$method) {
     pl <- planned_methods()
     row <- pl[pl$method == method, ]
-    stop("`", method, "` is planned but not wired in this release: see the ",
-         "\"planned\" rows of `cpt_methods()`. It will be built on the ",
-         row$engine, " package, and is waiting on ",
-         if (identical(row$target_release, "when on CRAN")) {
-           paste0(row$engine, " being available from CRAN")
-         } else {
-           paste0("the ", row$target_release)
-         }, ".", call. = FALSE)
+    cpt_abort("`", method, "` is planned but not wired in this release: see the ",
+              "\"planned\" rows of `cpt_methods()`. It will be built on the ",
+              row$engine, " package, and is waiting on ",
+              if (identical(row$target_release, "when on CRAN")) {
+                paste0(row$engine, " being available from CRAN")
+              } else {
+                paste0("the ", row$target_release)
+              }, ".", class = "planned_method")
   }
 
   registered <- if (is.character(method) && length(method) == 1L) {
@@ -213,17 +387,50 @@ cpt_detect <- function(x,
     NULL
   }
   if (is.null(registered)) {
-    method <- match.arg(method, builtin_registry()$method)
+    builtin <- builtin_registry()$method
+    method <- cpt_match_arg(
+      method, builtin, class = "unknown_method",
+      suggest_from = unique(c(builtin, full_registry()$method)),
+      hint = paste0("Run `cpt_methods()` for all ", length(builtin),
+                    " methods and what each supports."))
   }
-  change_in <- match.arg(change_in, cpt_change_in_levels())
+  change_in <- cpt_match_arg(change_in, cpt_change_in_levels())
+
+  # ---- family ------------------------------------------------------------------
+  # `family` names the distribution a segment is modelled with (see
+  # cpt_families()). Two engines already had an argument of that name for
+  # their own vocabulary (fastcpd's "ar"/"garch", stepR's "hsmuce"), and a
+  # value from it still reaches the engine unchanged.
+  dots <- list(...)
+  if (is.null(registered) && is.character(family) && length(family) == 1L &&
+      !family %in% family_levels()) {
+    engine_fams <- method_choices()[[method]]$family
+    if (!is.null(engine_fams) && !is.na(pmatch(family, engine_fams))) {
+      dots$family <- family
+      family <- NULL
+    }
+  }
+  fam <- resolve_family(method, change_in, family,
+                        registered = !is.null(registered))
 
   # ---- coerce the series, keeping any time index it carries ---------------
   series <- as_cpt_series(x, index = index)
   x <- series$values
   idx <- series$index
+  if (!is.null(index_label)) series$index_label <- index_label
 
-  validate_data(x)
+  # ---- missing values ------------------------------------------------------
+  na_info <- NULL
+  if (na_action == "omit") {
+    na_info <- omit_missing(x)
+    if (!is.null(na_info)) x <- na_info$x
+  } else if (na_action == "engine") {
+    check_engine_na(method, registered)
+  }
+  if (na_action == "engine") with_na_allowed(validate_data(x)) else
+    validate_data(x)
   validate_method_change_in(method, change_in)
+  if (!is.null(fam)) check_family_data(x, fam$family, method)
 
   # A learned penalty (see cpt_learn_penalty()) is resolved to a number for
   # this series before anything else looks at `penalty`, so every engine --
@@ -249,9 +456,10 @@ cpt_detect <- function(x,
       validate_scalar(penalty, "penalty", min = 0)
     } else if (!is.character(penalty) || length(penalty) != 1L ||
                is.na(penalty)) {
-      stop("`penalty` must be one penalty name (\"MBIC\", \"BIC\", ...) or ",
-           "one non-negative number (got ",
-           paste(format(penalty), collapse = ", "), ").", call. = FALSE)
+      cpt_abort("`penalty` must be one penalty name (\"MBIC\", \"BIC\", ...) ",
+                 "or ", "one non-negative number (got ",
+                paste(format(penalty), collapse = ", "), ").",
+                class = "bad_argument")
     }
   }
 
@@ -259,115 +467,111 @@ cpt_detect <- function(x,
   reg <- full_registry()
   mv_methods <- reg$method[reg$multivariate]
   if (is_mv && ncol(as.matrix(x)) > 1 && !method %in% mv_methods) {
-    stop("Method `", method, "` is univariate, but `x` has ",
-         ncol(as.matrix(x)), " columns. Multivariate methods: ",
-         paste(mv_methods, collapse = ", "), ".", call. = FALSE)
+    cpt_abort("Method `", method, "` is univariate, but `x` has ",
+              ncol(as.matrix(x)), " columns. Multivariate methods: ",
+              paste(mv_methods, collapse = ", "), ".",
+              class = "wrong_dimension")
   }
-  data_vec <- if (is_mv) as.numeric(as.matrix(x)[, 1]) else as.numeric(x)
+  n <- if (is_mv) nrow(as.matrix(x)) else length(x)
 
-  t0 <- proc.time()[["elapsed"]]
+  # ---- what the data look like ---------------------------------------------
+  warn_short_series(n)
+  warn_data_type(x, family, method)
+  if (is.null(fam) || identical(fam$family, "gaussian")) {
+    warn_scale_sensitive(x, method, change_in)
+  }
 
-  if (!is.null(registered)) {
-    res <- run_registered_method(registered, x, change_in = change_in,
-                                 penalty = penalty, ...)
-  } else if (method %in% c("pelt", "binseg", "segneigh", "amoc", "np")) {
-    ci <- change_in_mapping(change_in)
-    cp_method <- switch(method,
-      pelt    = "PELT",
-      binseg  = "BinSeg",
-      segneigh = "SegNeigh",
-      amoc    = "AMOC",
-      np      = "PELT"
-    )
-    user_change_in <- change_in
-    if (method == "np") {
-      ci <- "np"
-      # changepoint.np is a distribution-change detector; report that rather
-      # than the (accepted) default request.
-      user_change_in <- "distribution"
-    }
-    # The changepoint package does not implement the MBIC penalty for the
-    # Segment Neighbourhood method; fall back to SIC (which it does support)
-    # when the user keeps the default penalty.
-    if (method == "segneigh" && identical(penalty, "MBIC")) {
-      penalty <- "SIC"
-    }
-    res <- wrap_cpt_to_ggcpt(data_vec, ci, cp_method, method,
-                             penalty = penalty,
-                             user_change_in = user_change_in, ...)
-  } else if (method == "ecp") {
-    # Pass the original object (not flattened) for multivariate support
-    res <- wrap_ecp_to_ggcpt(x, ...)
-  } else {
-    # Convert penalty to numeric for methods that need it
-    pen_val <- resolve_numeric_penalty(penalty, n = length(data_vec))
-    # A name this cannot translate used to fall back to the wrapper's own
-    # default without a word, so `penalty = "mbic"` ran at 2 * log(n) and
-    # said "Manual". fastcpd translates a different set, below.
-    if (method %in% c("fpop", "cpop", "decafs") && is.character(penalty) &&
-        is.null(pen_val)) {
-      stop("Method `", method, "` takes a numeric penalty, and \"", penalty,
-           "\" is not a name cpt_detect() can translate into one. Use ",
-           paste0("\"", numeric_penalty_names(), "\"", collapse = ", "),
-           ", or a number.", call. = FALSE)
-    }
-    if (identical(method, "fastcpd") && is.character(penalty) &&
-        !toupper(penalty) %in% toupper(c("MDL", numeric_penalty_names()))) {
-      stop("Method `fastcpd` does not recognise the penalty \"", penalty,
-           "\". Use \"MBIC\", \"BIC\", \"SIC\" or \"MDL\", which it shares, ",
-           "one of the names left to its default (\"AIC\", ",
-           "\"Hannan-Quinn\", \"sSIC\", \"None\"), or a number.",
-           call. = FALSE)
-    }
-
-    dots <- list(...)
-    # Call the registry's wrapper with the arguments this dispatcher derives
-    # (from `change_in`, `penalty`, or the method name). A value the caller
-    # passed through `...` wins over the derived one, so
-    # `cpt_detect(x, method = "not", contrast = "pcwsLinMean")` overrides the
-    # contrast instead of erroring with "matched by multiple actual
-    # arguments". `x` is passed as a symbol so the wrapper's `match.call()`
-    # stays compact rather than inlining the whole series.
+  # ---- engine arguments ------------------------------------------------------
+  derived_extra <- list()
+  if (is.null(registered)) {
     wrapper <- reg$wrapper[match(method, reg$method)]
-    if (is.na(wrapper)) {
-      stop("Method '", method, "' is not wired to a wrapper. ",
-           "This is an internal error; please report it.", call. = FALSE)
+    # `seed` means the same thing for every method: reproduce this call.
+    # A wrapper with its own `seed` takes it; for the rest it scopes the
+    # random stream around the fit, so it is honoured (and harmless for a
+    # deterministic engine) instead of reaching an engine that does not
+    # know the name. NULL is "not set", as everywhere in the package.
+    if ("seed" %in% names(dots) &&
+        !"seed" %in% names(formals(get(wrapper, asNamespace("ggchangepoint"))))) {
+      seed_arg <- dots$seed
+      dots$seed <- NULL
+      local_seed(seed_arg)
     }
-    derived <- derived_args_for(method, change_in, pen_val)
-    # A seasonal frequency the input carried (see as_cpt_series()) is one of
-    # the derived arguments: the series has been reduced to a bare vector by
-    # now, so an engine that needs a frequency would otherwise fall back to
-    # its own default -- bfast's is 12, which silently re-seasoned a
-    # quarterly `ts` as monthly. Only engines that take a `frequency` get
-    # it, and only when the caller did not name one.
-    if (!is.null(series$frequency) &&
-        "frequency" %in% names(formals(match.fun(wrapper)))) {
-      derived$frequency <- series$frequency
+    dots <- validate_choice_args(method, dots)
+    check_dots_names(names(dots), method, wrapper)
+    ms_spec <- min_segment_args()[[method]]
+    if (!is.null(min_segment)) {
+      if (!is.null(ms_spec) && ms_spec$arg %in% names(dots)) {
+        cpt_abort("`min_segment` and `", ms_spec$arg, "` both set the ",
+                  "minimum segment length; pass one.", class = "bad_argument")
+      }
+      derived_extra <- min_segment_translate(method, min_segment, n)
     }
-    # fastcpd takes its penalty as `beta`, on its own scale -- so the
-    # resolved `pen_val`, computed on the Gaussian change-in-mean scale the
-    # changepoint-family engines use, is not it, and `derived_args_for()`
-    # returned only the family. `cpt_detect(x, method = "fastcpd", penalty =
-    # 5)` therefore resolved the 5 and threw it away. A number is
-    # unambiguous, and three of the names are shared with fastcpd verbatim;
-    # anything else is left to the engine's own default, which the
-    # penalty-semantics section of ?cpt_penalty now states.
-    if (identical(method, "fastcpd")) {
-      if (is.numeric(penalty)) {
-        derived$beta <- as.numeric(penalty)[1]
-      } else if (is.character(penalty) && length(penalty) == 1L &&
-                 toupper(penalty) %in% c("MBIC", "BIC", "SIC", "MDL")) {
-        derived$beta <- if (identical(toupper(penalty), "SIC")) {
-          "BIC"
-        } else {
-          toupper(penalty)
-        }
+  } else if (!is.null(min_segment)) {
+    cpt_abort("`min_segment` is translated into an engine's own argument, ",
+              "and a registered method declares none. Pass the argument ",
+              "your detector takes through `...`.", class = "unsupported")
+  }
+  if (!is.null(fam)) {
+    fam_args <- fam$args[setdiff(names(fam$args), ".cpt_ci")]
+    for (nm in intersect(names(fam_args), names(dots))) {
+      if (!identical(dots[[nm]], fam_args[[nm]])) {
+        cpt_abort("`family = \"", fam$family, "\"` sets `", nm, " = ",
+                  format(fam_args[[nm]]), "` for `", method, "`, and `", nm,
+                  " = ", format(dots[[nm]]), "` was passed too. Pass one.",
+                  class = "bad_argument")
       }
     }
-    derived <- derived[setdiff(names(derived), names(dots))]
-    res <- do.call(wrapper, c(list(x = quote(x)), derived, dots),
-                   envir = environment())
   }
+
+  # ---- constraints -----------------------------------------------------------
+  keep_mask <- if (!is.null(na_info)) na_info$keep else NULL
+  n_orig <- if (!is.null(na_info)) na_info$n else n
+  to_fit_positions <- function(p) {
+    if (is.null(p) || is.null(keep_mask)) return(p)
+    as.integer(pmax(1, pmin(to_compact_positions(p, keep_mask), n - 1L)))
+  }
+  fixed_pos <- to_fit_positions(constraint_positions(fixed, idx, n_orig,
+                                                     "fixed"))
+  windows <- within_windows(within, idx, n_orig)
+  if (!is.null(windows) && !is.null(keep_mask)) {
+    windows[] <- to_fit_positions(windows)
+  }
+
+  run_one <- function(xx) {
+    tryCatch(
+      dispatch_method(method, registered, xx, change_in = change_in,
+                      penalty = penalty, frequency = series$frequency,
+                      dots = dots, fam = fam, derived_extra = derived_extra,
+                      na_engine = identical(na_action, "engine")),
+      ggchangepoint_engine_missing = function(e) {
+        if (!is.null(registered)) stop(e)
+        abort_with_alternatives(e, method, change_in)
+      })
+  }
+
+  t0 <- proc.time()[["elapsed"]]
+  if (!is.null(fixed_pos)) {
+    parts <- detect_fixed(x, fixed_pos, run_one)
+    template <- run_template(parts$pieces, method, change_in)
+    data_vec <- if (is_mv) as.numeric(as.matrix(x)[, 1]) else as.numeric(x)
+    res <- ggcpt_build(
+      data_vec, parts$changepoints$cp, method = method,
+      change_in = template$change_in, penalty = template$penalty,
+      call = user_call,
+      extra_cp_cols = as.list(parts$changepoints[, setdiff(
+        names(parts$changepoints), c("cp", "cp_value")), drop = FALSE]),
+      data_wide = if (is_mv) mv_data_wide(as_mv_matrix(x)))
+    res$pieces <- parts$pieces
+    res$constraints <- list(fixed = fixed_pos)
+    if (!is.null(registered)) res$registered <- TRUE
+  } else {
+    res <- run_one(x)
+  }
+  if (!is.null(windows)) {
+    res$constraints$within <- windows
+    res <- apply_within(res, windows)
+  }
+  if (!is.null(min_effect)) res <- apply_min_effect(res, min_effect)
 
   runtime <- proc.time()[["elapsed"]] - t0
   res$runtime <- runtime
@@ -376,7 +580,172 @@ cpt_detect <- function(x,
   # (`wrap_cpt_to_ggcpt(x = data_vec, change_in = ci, ...)`) that the reader
   # can neither recognise nor re-run.
   res$call <- user_call
-  attach_index(res, idx, series$index_label)
+  if (!is.null(fam)) {
+    res$family <- fam$family
+    if (!is.null(fam$reported) && identical(scalar_chr(res$change_in),
+                                            "meanvar") &&
+        identical(fam$args$.cpt_ci, "mean_var")) {
+      res$change_in <- fam$reported
+    }
+  }
+  if (!is.null(na_info)) res <- restore_missing(res, na_info)
+  res <- attach_index(res, idx, series$index_label)
+  # Recorded, not warned: autocorrelated residuals are most real series,
+  # and a warning on every one would be tuned out within a week (§201.2).
+  # cpt_assumptions() and cpt_report() read it.
+  dep <- residual_dependence(res$data$value, res$changepoints$cp,
+                             fitted = res$data[["fitted"]])
+  if (!is.null(dep)) {
+    res$diagnostics <- c(res$diagnostics %||% list(),
+                         list(residual_dependence = dep))
+  }
+  warn_implausible_count(res)
+  if (!keep_fit) {
+    res$fit <- NULL
+  } else {
+    warn_large_fit(res)
+  }
+  res
+}
+
+# Internal: one dispatch, the part of cpt_detect() that calls an engine.
+# Kept separate so the fixed-changepoint route can run it on each stretch.
+#' @noRd
+dispatch_method <- function(method, registered, x, change_in, penalty,
+                            frequency, dots, fam, derived_extra,
+                            na_engine = FALSE) {
+  is_mv <- is.matrix(x) || is.data.frame(x)
+  data_vec <- if (is_mv) as.numeric(as.matrix(x)[, 1]) else as.numeric(x)
+  reg <- full_registry()
+  fam_args <- if (!is.null(fam)) fam$args else list()
+  run <- function() {
+    # Anything that escapes the engine unclassed is re-signalled as a
+    # `ggchangepoint_engine_error`; see with_engine_errors().
+    with_engine_errors(if (!is.null(registered)) {
+      do.call(run_registered_method,
+              c(list(registered, x, change_in = change_in,
+                     penalty = penalty), fam_args, dots))
+    } else if (method %in% c("pelt", "binseg", "segneigh", "amoc", "np")) {
+      ci <- fam_args$.cpt_ci %||% change_in_mapping(change_in)
+      cp_method <- switch(method,
+        pelt    = "PELT",
+        binseg  = "BinSeg",
+        segneigh = "SegNeigh",
+        amoc    = "AMOC",
+        np      = "PELT"
+      )
+      user_change_in <- change_in
+      if (method == "np") {
+        ci <- "np"
+        # changepoint.np is a distribution-change detector; report that
+        # rather than the (accepted) default request.
+        user_change_in <- "distribution"
+      }
+      # The changepoint package does not implement the MBIC penalty for the
+      # Segment Neighbourhood method; fall back to SIC (which it does
+      # support) when the user keeps the default penalty.
+      if (method == "segneigh" && identical(penalty, "MBIC")) {
+        penalty <- "SIC"
+      }
+      extra <- c(fam_args[setdiff(names(fam_args), ".cpt_ci")],
+                 derived_extra)
+      extra <- extra[setdiff(names(extra), names(dots))]
+      do.call(wrap_cpt_to_ggcpt,
+              c(list(data_vec, ci, cp_method, method, penalty = penalty,
+                     user_change_in = user_change_in), extra, dots))
+    } else if (method == "ecp") {
+      # Pass the original object (not flattened) for multivariate support
+      extra <- derived_extra[setdiff(names(derived_extra), names(dots))]
+      do.call(wrap_ecp_to_ggcpt, c(list(x), extra, dots))
+    } else {
+      # Convert penalty to numeric for methods that need it
+      pen_val <- resolve_numeric_penalty(penalty, n = length(data_vec))
+      # A name this cannot translate used to fall back to the wrapper's own
+      # default without a word, so `penalty = "mbic"` ran at 2 * log(n) and
+      # said "Manual". fastcpd translates a different set, below.
+      if (method %in% c("fpop", "cpop", "decafs") && is.character(penalty) &&
+          is.null(pen_val)) {
+        cpt_abort("Method `", method, "` takes a numeric penalty, and \"",
+                  penalty, "\" is not a name cpt_detect() can translate into ",
+                   "one. Use ",
+                  paste0("\"", numeric_penalty_names(), "\"", collapse = ", "),
+                  ", or a number.", class = "bad_argument")
+      }
+      if (identical(method, "fastcpd") && is.character(penalty) &&
+          !toupper(penalty) %in% toupper(c("MDL", numeric_penalty_names()))) {
+        cpt_abort("Method `fastcpd` does not recognise the penalty \"",
+                  penalty, "\". Use \"MBIC\", \"BIC\", \"SIC\" or \"MDL\", ",
+                  "which it shares, one of the names left to its default ",
+                  "(\"AIC\", \"Hannan-Quinn\", \"sSIC\", \"None\"), or a ",
+                  "number.", class = "bad_argument")
+      }
+
+      # Call the registry's wrapper with the arguments this dispatcher
+      # derives (from `change_in`, `family`, `penalty`, or the method
+      # name). A value the caller passed through `...` wins over the
+      # derived one, so `cpt_detect(x, method = "not", contrast =
+      # "pcwsLinMean")` overrides the contrast instead of erroring with
+      # "matched by multiple actual arguments". `x` is passed as a symbol
+      # so the wrapper's `match.call()` stays compact rather than inlining
+      # the whole series.
+      wrapper <- reg$wrapper[match(method, reg$method)]
+      if (is.na(wrapper)) {
+        cpt_abort("Method '", method, "' is not wired to a wrapper. ",
+                  "This is an internal error; please report it.",
+                  class = "internal")
+      }
+      derived <- derived_args_for(method, change_in, pen_val)
+      derived <- utils::modifyList(derived, fam_args, keep.null = TRUE)
+      derived <- utils::modifyList(derived, derived_extra, keep.null = TRUE)
+      # A seasonal frequency the input carried (see as_cpt_series()) is one
+      # of the derived arguments: the series has been reduced to a bare
+      # vector by now, so an engine that needs a frequency would otherwise
+      # fall back to its own default -- bfast's is 12, which silently
+      # re-seasoned a quarterly `ts` as monthly. Only engines that take a
+      # `frequency` get it, and only when the caller did not name one.
+      if (!is.null(frequency) &&
+          "frequency" %in% names(formals(match.fun(wrapper)))) {
+        derived$frequency <- frequency
+      }
+      # fastcpd takes its penalty as `beta`, on its own scale -- so the
+      # resolved `pen_val`, computed on the Gaussian change-in-mean scale
+      # the changepoint-family engines use, is not it, and
+      # `derived_args_for()` returned only the family. `cpt_detect(x,
+      # method = "fastcpd", penalty = 5)` therefore resolved the 5 and threw
+      # it away. A number is unambiguous, and three of the names are shared
+      # with fastcpd verbatim; anything else is left to the engine's own
+      # default, which the penalty-semantics section of ?cpt_penalty now
+      # states.
+      if (identical(method, "fastcpd")) {
+        if (is.numeric(penalty)) {
+          derived$beta <- as.numeric(penalty)[1]
+        } else if (is.character(penalty) && length(penalty) == 1L &&
+                   toupper(penalty) %in% c("MBIC", "BIC", "SIC", "MDL")) {
+          derived$beta <- if (identical(toupper(penalty), "SIC")) {
+            "BIC"
+          } else {
+            toupper(penalty)
+          }
+        }
+      }
+      derived <- derived[setdiff(names(derived), names(dots))]
+      do.call(wrapper, c(list(x = quote(x)), derived, dots),
+              envir = environment())
+    }, method)
+  }
+  if (na_engine) with_na_allowed(run()) else run()
+}
+
+# Internal: the change type and penalty a fixed-changepoint fit reports,
+# read off the first stretch that ran (every stretch ran the same request).
+#' @noRd
+run_template <- function(pieces, method, change_in) {
+  first <- Filter(Negate(is.null), pieces)
+  if (!length(first)) {
+    return(list(change_in = change_in,
+                penalty = list(type = NA_character_, value = NA_real_)))
+  }
+  list(change_in = first[[1]]$change_in, penalty = first[[1]]$penalty)
 }
 
 # Internal: run a user-registered detector and normalise whatever it returns
@@ -388,14 +757,18 @@ cpt_detect <- function(x,
 #' @noRd
 run_registered_method <- function(entry, x, change_in, penalty, ...) {
   if (!change_in %in% entry$change_in) {
-    stop("`change_in = \"", change_in, "\"` is not supported by the ",
-         "registered method `", entry$method, "`. Supported: ",
-         paste(entry$change_in, collapse = ", "), ".", call. = FALSE)
+    cpt_abort("`change_in = \"", change_in, "\"` is not supported by the ",
+              "registered method `", entry$method, "`. Supported: ",
+              paste(entry$change_in, collapse = ", "), ".",
+              class = "unsupported",
+              data = list(method = entry$method, requested = change_in,
+                          supported = entry$change_in))
   }
   # A registration is arbitrary user code, so it can fail in two different
   # ways and they want different treatment. An error it raises deliberately
-  # -- `stop(..., call. = FALSE)`, as this package does throughout -- is the
-  # author's own message and passes through untouched. An error that LEAKS
+  # (`stop(..., call. = FALSE)`, which leaves no call) is the author's own
+  # message and passes through with its text untouched; cpt_detect() then
+  # classes it as an engine error. An error that LEAKS
   # from base R or from a package the detector called carries the call that
   # raised it (see the provenance note in the sweep tests), and arrived here
   # as e.g. "non-numeric argument to mathematical function" with nothing to
@@ -405,8 +778,10 @@ run_registered_method <- function(entry, x, change_in, penalty, ...) {
     entry$fn(x, ...),
     error = function(e) {
       if (!is.null(conditionCall(e))) {
-        stop("The function registered for `", entry$method, "` failed: ",
-             conditionMessage(e), call. = FALSE)
+        cpt_abort("The function registered for `", entry$method, "` failed: ",
+                  conditionMessage(e), class = "engine_error",
+                  data = list(method = entry$method, engine = entry$engine),
+                  parent = e)
       }
     })
   if (is_ggcpt(out)) {
@@ -423,21 +798,22 @@ run_registered_method <- function(entry, x, change_in, penalty, ...) {
     }
     n_out <- nrow(out$data)
     if (!identical(as.integer(n_out), as.integer(n_in))) {
-      stop("The function registered for `", entry$method, "` returned a ",
-           "result for a different series: `x` has ", n_in,
-           " observation(s), the ggcpt it returned has ", n_out,
-           ". A registered method must detect on the series it is given.",
-           call. = FALSE)
+      cpt_abort("The function registered for `", entry$method, "` returned a ",
+                "result for a different series: `x` has ", n_in,
+                " observation(s), the ggcpt it returned has ", n_out,
+                ". A registered method must detect on the series it is given.",
+                class = "engine_error")
     }
     out$method <- entry$method
     out$registered <- TRUE
+    out$versions <- version_stamp(entry$method, engine = entry$engine)
     return(out)
   }
   if (!is.numeric(out) && !is.integer(out)) {
-    stop("The function registered for `", entry$method,
-         "` must return a ggcpt object or a numeric vector of changepoint ",
-         "indices; it returned an object of class ", class(out)[1], ".",
-         call. = FALSE)
+    cpt_abort("The function registered for `", entry$method, "` must return a ",
+               "ggcpt object or a numeric vector of changepoint ",
+              "indices; it returned an object of class ", class(out)[1], ".",
+              class = "engine_error")
   }
   # `as_ggcpt()` reports what it drops from `cp`, and its advice -- "check
   # the values against the series rather than relying on this
@@ -469,26 +845,28 @@ run_registered_method <- function(entry, x, change_in, penalty, ...) {
   num <- suppressWarnings(as.numeric(out))
   truncated <- sum(is.finite(num) & num != trunc(num))
   if (n_kept < n_supplied || truncated > 0L) {
-    warning("The function registered for `", entry$method, "` returned ",
-            n_supplied, " changepoint(s); ",
-            if (n_kept < n_supplied) {
-              paste0(n_supplied - n_kept, " could not be used and ",
-                     if (n_kept == 1L) "1 was" else paste0(n_kept, " were"),
-                     " kept")
-            } else {
-              "all were kept"
-            },
-            if (truncated > 0L) {
-              paste0(", and ", truncated,
-                     " fractional value(s) were truncated to whole numbers")
-            } else {
-              ""
-            },
-            ". A location must be a whole number in 1..",
-            nrow(res$data) - 1L, ", and duplicates collapse. Check what ",
-            "the detector returns against that range.", call. = FALSE)
+    cpt_warn("The function registered for `", entry$method, "` returned ",
+             n_supplied, " changepoint(s); ",
+             if (n_kept < n_supplied) {
+               paste0(n_supplied - n_kept, " could not be used and ",
+                      if (n_kept == 1L) "1 was" else paste0(n_kept, " were"),
+                      " kept")
+             } else {
+               "all were kept"
+             },
+             if (truncated > 0L) {
+               paste0(", and ", truncated,
+                      " fractional value(s) were truncated to whole numbers")
+             } else {
+               ""
+             },
+             ". A location must be a whole number in 1..",
+             nrow(res$data) - 1L, ", and duplicates collapse. Check what ",
+             "the detector returns against that range.",
+             class = "dropped_input")
   }
   res$registered <- TRUE
+  res$versions <- version_stamp(entry$method, engine = entry$engine)
   res
 }
 
@@ -582,6 +960,37 @@ planned_methods <- function() {
 #'         algorithm this table marks but the monitor does not offer, and
 #'         \code{edetector} is native to this package rather than a
 #'         wrapped engine, so it has no row here at all.}
+#'   \item{families, choices, formula, min_segment, na_handling,
+#'         cp_convention_upstream}{The modelling vocabulary (omitted when
+#'         \code{capabilities = FALSE}): the distribution families
+#'         \code{cpt_detect(family = )} accepts (see
+#'         \code{\link{cpt_families}()}; \code{NA} for a distribution-free
+#'         method); the engine's modelling-choice arguments and their legal
+#'         values, which \code{cpt_detect()} validates; whether it takes a
+#'         formula with covariates; the engine argument
+#'         \code{min_segment} is translated into; what the engine does with
+#'         a missing value, \emph{measured} rather than read from its
+#'         documentation (\code{"native"}, \code{"compacts"},
+#'         \code{"silent_loss"} or \code{"reject"}; see
+#'         \code{cpt_detect(na_action = )}); and the engine's own
+#'         changepoint convention, which the wrapper translates to
+#'         \code{"left"} (\code{"right"}: it reports the first observation
+#'         after the change; \code{"continuous"}: a location it estimates
+#'         on a continuous scale; \code{"design"}: rows of a lagged design).}
+#'   \item{scale_invariant, sequential, max_cp, tier, noise_model_arg,
+#'         rate_arg, cost, max_n}{Measured and recorded properties (omitted
+#'         when \code{capabilities = FALSE}): whether the answer is the same
+#'         at \code{x}, \code{10 * x} and \code{0.1 * x}; whether it
+#'         depends on the direction of time; how many changepoints the
+#'         method can return where that is fixed; \code{"general"} for the
+#'         general-purpose workhorses; the argument that selects the noise
+#'         model and the one that sets the false-alarm rate; the runtime
+#'         class at \eqn{n = 10{,}000} (\code{"fast"} under a second,
+#'         \code{"moderate"} under ten, \code{"slow"}); and the longest
+#'         series it finished within the measurement's time cap (\code{0}
+#'         when it did not finish 1,000 observations). The
+#'         measurements behind them are the \code{\link{cpt_runtimes}} and
+#'         \code{\link{cpt_invariances}} data sets.}
 #' }
 #' @seealso \code{\link{cpt_install_engines}()} to install a whole family of
 #'   the engines this table reports on; \code{\link{cpt_detect}()} to run
@@ -597,14 +1006,27 @@ cpt_methods <- function(capabilities = TRUE) {
   reg <- full_registry()
   cap_cols <- c("multivariate", "univariate", "online", "ci", "fitted",
                 "posterior", "statistic", "path", "scale_space")
+  # 0.6.0's vocabulary, rendered as text so the table stays printable: the
+  # families `family =` accepts, the modelling choices and their values,
+  # whether a formula with covariates is taken, the argument `min_segment`
+  # becomes, what the engine does with a missing value, and the engine's
+  # own changepoint convention.
+  reg$families <- vapply(reg$families, function(f) {
+    if (length(f)) paste(f, collapse = ", ") else NA_character_
+  }, character(1))
+  reg$choices <- vapply(reg$choices, format_choices, character(1))
+  vocab_cols <- c("families", "choices", "formula", "min_segment",
+                  "na_handling", "cp_convention_upstream")
+  measured <- measured_registry_columns(reg$method)
+  for (cl in names(measured)) reg[[cl]] <- measured[[cl]]
   keep <- c("method", "change_in", "engine", "status", "target_release",
-            if (capabilities) cap_cols)
+            if (capabilities) c(cap_cols, vocab_cols, names(measured)))
   wired <- reg[, keep, drop = FALSE]
 
   planned <- planned_methods()[, c("method", "change_in", "engine", "status",
                                    "target_release"), drop = FALSE]
   if (capabilities) {
-    for (cl in cap_cols) planned[[cl]] <- NA
+    for (cl in setdiff(keep, names(planned))) planned[[cl]] <- NA
     planned <- planned[, keep, drop = FALSE]
   }
 
@@ -736,10 +1158,12 @@ validate_method_change_in <- function(method, change_in) {
   if (change_in == "mean") return(invisible(TRUE))
 
   if (!change_in %in% support) {
-    stop("`change_in = \"", change_in, "\"` is not supported for method `",
-         method, "`. Supported: ",
-         paste(support, collapse = ", "), ". ",
-         "See cpt_methods() for the full capability table.", call. = FALSE)
+    cpt_abort("`change_in = \"", change_in, "\"` is not supported for method `",
+              method, "`. Supported: ", paste(support, collapse = ", "), ". ",
+              "See cpt_methods() for the full capability table.",
+              class = "unsupported",
+              data = list(method = method, requested = change_in,
+                          supported = support))
   }
   invisible(TRUE)
 }
@@ -753,9 +1177,9 @@ resolve_numeric_penalty <- function(penalty, n) {
     # cpt_detect() resolves a learned penalty up front; reaching here means a
     # wrapper was called directly with one, and it has no series to predict
     # from at this point.
-    stop("A learned penalty must be resolved against the series. Call ",
-         "cpt_detect(x, penalty = model), or predict(model, x) and pass the ",
-         "number.", call. = FALSE)
+    cpt_abort("A learned penalty must be resolved against the series. Call ",
+              "cpt_detect(x, penalty = model), or predict(model, x) and pass the ",
+              "number.", class = "bad_argument")
   }
   if (is.numeric(penalty)) return(as.numeric(penalty))
   if (is.character(penalty)) {
@@ -945,8 +1369,9 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01,
   # turned into a value whatever its provenance.
   if (inherits(type, "ggcpt_penalty_model")) {
     if (is.null(series)) {
-      stop("A learned penalty depends on the series' features, so `series` ",
-           "must be supplied: cpt_penalty(model, series = x).", call. = FALSE)
+      cpt_abort("A learned penalty depends on the series' features, so ",
+                 "`series` ", "must be supplied: cpt_penalty(model, series = ",
+                 "x).", class = "bad_argument")
     }
     # coerce_series_values(), not as.numeric(): the model predicts from
     # features of this series, so a factor would have it predict a penalty
@@ -954,18 +1379,20 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01,
     return(unname(stats::predict(
       type, coerce_series_values(series, arg = "series")))[1])
   }
-  type <- match.arg(type, c("None", "BIC", "SIC", "MBIC", "AIC",
+  type <- cpt_match_arg(type, c("None", "BIC", "SIC", "MBIC", "AIC",
                             "Hannan-Quinn", "sSIC", "Manual"))
 
   if (type == "None") return(0)
   if (type == "Manual") {
-    if (is.null(value)) stop("`value` must be supplied for Manual type.", call. = FALSE)
+    if (is.null(value)) cpt_abort("`value` must be supplied for Manual type.",
+                                  class = "bad_argument")
     return(value)
   }
 
-  if (is.null(n)) stop("`n` must be supplied for ", type, " penalty.", call. = FALSE)
+  if (is.null(n)) cpt_abort("`n` must be supplied for ", type, " penalty.",
+                            class = "bad_argument")
   if (!is.numeric(n) || length(n) != 1L || !is.finite(n)) {
-    stop("`n` must be a single finite number.", call. = FALSE)
+    cpt_abort("`n` must be a single finite number.", class = "bad_argument")
   }
   # Below n = 3 the log-based penalties stop being penalties: log(n) is 0 at
   # n = 1, and log(log(n)) is -Inf there and negative at n = 2, so the
@@ -973,17 +1400,17 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01,
   # (AIC = 2k does not involve n, so it is exempt.) Series that short are
   # rejected upstream by validate_data() anyway.
   if (type != "AIC" && n < 3) {
-    stop("`n` must be at least 3 for the ", type,
-         " penalty; log(n) and log(log(n)) stop being penalties below that.",
-         call. = FALSE)
+    cpt_abort("`n` must be at least 3 for the ", type, " penalty; log(n) and ",
+               "log(log(n)) stop being penalties below that.",
+              class = "bad_argument")
   }
   # MBIC's log C(n, k) term is -Inf once k exceeds n, which would silently
   # turn the penalty into -Inf rather than erroring.
   if (type == "MBIC" &&
       (!is.numeric(k) || length(k) != 1L || !is.finite(k) || k < 0 || k > n)) {
-    stop("`k` must be a single number between 0 and `n` for the MBIC ",
-         "penalty (it counts the changepoints being placed among `n` ",
-         "observations).", call. = FALSE)
+    cpt_abort("`k` must be a single number between 0 and `n` for the MBIC ",
+              "penalty (it counts the changepoints being placed among `n` ",
+              "observations).", class = "bad_argument")
   }
   # `k` scales every one of these, and only MBIC checked it: a negative k
   # returned a negative "penalty" that rewards changepoints, NA returned NA,
@@ -995,9 +1422,9 @@ cpt_penalty <- function(type, n = NULL, k = 1, value = NULL, alpha = 1.01,
   if (type == "sSIC" &&
       (!is.numeric(alpha) || length(alpha) != 1L || !is.finite(alpha) ||
        alpha <= 1)) {
-    stop("`alpha` must be a single number greater than 1 for the sSIC ",
-         "penalty (got ", paste(format(alpha), collapse = ", "), ").",
-         call. = FALSE)
+    cpt_abort("`alpha` must be a single number greater than 1 for the sSIC ",
+              "penalty (got ", paste(format(alpha), collapse = ", "), ").",
+              class = "bad_argument")
   }
 
   switch(type,

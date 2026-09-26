@@ -62,6 +62,22 @@ positions with an "Index" axis. To compare detectors on dated data, run
 \code{autoplot()}.
 }
 
+\section{Choosing the method by its answer}{
+
+Running several methods and reporting the one that found a change, as
+if it were the only one run, is a garden of forking paths with a plot
+attached, and fifty methods behind one call make it easier here than
+anywhere else. A method chosen because of its answer carries no valid
+p-value, and neither does any test at its changepoints: the selection
+across methods is a second selection on top of the one each method
+already makes (see \code{\link{cpt_test}()}'s \code{selection_adjusted}).
+Choose the method before seeing the data (\code{\link{cpt_recommend}()}
+answers from what you know about the problem, not from the series), or
+report every method you ran. Agreement across methods, as
+\code{\link{cpt_consensus}()} counts it, is a robustness display, not a
+correction: the methods share engines, costs and assumptions.
+}
+
 \examples{
 set.seed(2022)
 x <- c(rnorm(100, 0, 1), rnorm(100, 10, 1))

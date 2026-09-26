@@ -61,6 +61,37 @@ A tibble with columns:
         algorithm this table marks but the monitor does not offer, and
         \code{edetector} is native to this package rather than a
         wrapped engine, so it has no row here at all.}
+  \item{families, choices, formula, min_segment, na_handling,
+        cp_convention_upstream}{The modelling vocabulary (omitted when
+        \code{capabilities = FALSE}): the distribution families
+        \code{cpt_detect(family = )} accepts (see
+        \code{\link{cpt_families}()}; \code{NA} for a distribution-free
+        method); the engine's modelling-choice arguments and their legal
+        values, which \code{cpt_detect()} validates; whether it takes a
+        formula with covariates; the engine argument
+        \code{min_segment} is translated into; what the engine does with
+        a missing value, \emph{measured} rather than read from its
+        documentation (\code{"native"}, \code{"compacts"},
+        \code{"silent_loss"} or \code{"reject"}; see
+        \code{cpt_detect(na_action = )}); and the engine's own
+        changepoint convention, which the wrapper translates to
+        \code{"left"} (\code{"right"}: it reports the first observation
+        after the change; \code{"continuous"}: a location it estimates
+        on a continuous scale; \code{"design"}: rows of a lagged design).}
+  \item{scale_invariant, sequential, max_cp, tier, noise_model_arg,
+        rate_arg, cost, max_n}{Measured and recorded properties (omitted
+        when \code{capabilities = FALSE}): whether the answer is the same
+        at \code{x}, \code{10 * x} and \code{0.1 * x}; whether it
+        depends on the direction of time; how many changepoints the
+        method can return where that is fixed; \code{"general"} for the
+        general-purpose workhorses; the argument that selects the noise
+        model and the one that sets the false-alarm rate; the runtime
+        class at \eqn{n = 10{,}000} (\code{"fast"} under a second,
+        \code{"moderate"} under ten, \code{"slow"}); and the longest
+        series it finished within the measurement's time cap (\code{0}
+        when it did not finish 1,000 observations). The
+        measurements behind them are the \code{\link{cpt_runtimes}} and
+        \code{\link{cpt_invariances}} data sets.}
 }
 }
 \description{

@@ -4,14 +4,15 @@
 \alias{cpt_metrics_annotated}
 \title{Multi-annotator evaluation}
 \usage{
-cpt_metrics_annotated(pred, annotations, n, margin = 5)
+cpt_metrics_annotated(pred, annotations, n = NULL, margin = 5)
 }
 \arguments{
-\item{pred}{Predicted changepoint indices.}
+\item{pred}{Predicted changepoint indices, or a \code{ggcpt} fit (see
+\code{\link{cpt_metrics}()}).}
 
 \item{annotations}{A list of ground-truth annotation vectors.}
 
-\item{n}{Length of the series.}
+\item{n}{Length of the series; taken from \code{pred} when it is a fit.}
 
 \item{margin}{Tolerance margin (default 5).}
 }

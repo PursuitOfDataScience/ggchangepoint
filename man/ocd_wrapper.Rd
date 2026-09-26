@@ -46,14 +46,17 @@ number of coordinates; see the timing note below.}
 \code{ocd::ChangepointDetector()}.}
 }
 \value{
-A \code{ggcpt} object. Because the detector is online, reported
-  locations are \emph{declaration times} (the changepoint plus the
-  detection delay). The \code{declared_at} column holds the same values
-  as \code{cp}, and deliberately: \pkg{ocd} declares a change without
-  also estimating where it began, so there is no separate location for
-  the second column to carry. Compare \code{\link{cpm_wrapper}()},
-  whose engine supplies both, and whose \code{cp} is an estimated
-  location with \code{detection_time} strictly later.
+A \code{ggcpt} object. Because the detector is online, it
+  declares a change without estimating where it began. \code{cp} is the
+  declaration time \emph{minus one}: the latest changepoint consistent
+  with the alarm in this package's convention (the last observation
+  before the change), and exact when the change is declared on the first
+  observation after it; a later declaration makes \code{cp} late by the
+  detection delay. The \code{declared_at} column holds the declaration
+  time itself. (Before 0.6.0 \code{cp} was the declaration time, one
+  position late even at zero delay, which the convention test found.)
+  Compare \code{\link{cpm_wrapper}()}, whose engine estimates the
+  location separately from its \code{detection_time}.
 }
 \description{
 Wraps the \code{ocd} package (Chen, Wang and Samworth, 2022): online
@@ -95,7 +98,7 @@ X <- rbind(matrix(rnorm(60 * 3), 60), matrix(rnorm(40 * 3, 3), 40))
 # pass: the calibration is linear in `mc_reps` and is nearly all of the
 # cost, so 5 measured 9.7 s here against CRAN's 5 s budget and 2
 # measures 3.8 s for the same answer. Neither is a calibration you
-# would trust -- see the timing section above.
+# would trust (see the timing section above).
 res <- ocd_wrapper(X, mc_reps = 2)
 res$changepoints
 }

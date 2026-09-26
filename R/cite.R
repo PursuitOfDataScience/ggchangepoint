@@ -28,9 +28,9 @@ cpt_cite <- function(x) {
     # surfaces as tibble's "Can't subset rows with ..." rather than saying
     # what is wrong.
     if (length(method) != 1L || is.na(method) || !nzchar(method)) {
-      stop("`x` must be a method name, or a ggcpt object whose `method` is ",
-           "set. Call cpt_cite() with no argument for the full table.",
-           call. = FALSE)
+      cpt_abort("`x` must be a method name, or a ggcpt object whose `method` ",
+                 "is ", "set. Call cpt_cite() with no argument for the full ",
+                 "table.", class = "bad_argument")
     }
     # The registry is an environment, so its lookup is CASE-SENSITIVE, and
     # cpt_register_method() stores the name verbatim. Lowercasing first
@@ -58,12 +58,12 @@ cpt_cite <- function(x) {
           )
         )
       } else {
-        stop("No reference recorded for method '", method, "'. ",
-             "Call cpt_cite() with no argument for the full table. If this ",
-             "result came from as_ggcpt() or an external detector, the ",
-             "citation is yours to supply: register the detector with ",
-             "cpt_register_method(citation = ...), or cite it directly.",
-             call. = FALSE)
+        cpt_abort("No reference recorded for method '", method, "'. ",
+                  "Call cpt_cite() with no argument for the full table. If this ",
+                  "result came from as_ggcpt() or an external detector, the ",
+                  "citation is yours to supply: register the detector with ",
+                  "cpt_register_method(citation = ...), or cite it directly.",
+                  class = "capability_absent")
       }
     }
   }

@@ -61,10 +61,11 @@ ecp_wrapper <- function(data,
   # about the argument either way.
   validate_scalar(min_size, "min_size", min = 2)
 
-  algorithm <- match.arg(algorithm, c("divisive", "agglo"))
+  algorithm <- cpt_match_arg(algorithm, c("divisive", "agglo"))
 
   if (!is.numeric(data) && !is.data.frame(data) && !is.matrix(data)) {
-    stop("`data` must be a numeric vector, matrix, or data.frame.", call. = FALSE)
+    cpt_abort("`data` must be a numeric vector, matrix, or data.frame.",
+              class = "bad_type")
   }
   # ecp absorbs non-finite values rather than refusing them, and what it
   # returns is wrong rather than merely missing: on a 180-point series with
@@ -169,9 +170,9 @@ ggecpplot <- function(data,
   # column (and say so) rather than crashing or silently mis-plotting.
   plot_vec <- if (is.matrix(data) || is.data.frame(data)) {
     if (ncol(as.matrix(data)) > 1) {
-      message("Multivariate input: plotting the first column. ",
-              "Use autoplot(cpt_detect(data, method = \"ecp\")) for a ",
-              "faceted multivariate plot.")
+      cpt_inform("Multivariate input: plotting the first column. ",
+                 "Use autoplot(cpt_detect(data, method = \"ecp\")) for a ",
+                 "faceted multivariate plot.")
     }
     as.numeric(as.matrix(data)[, 1])
   } else {

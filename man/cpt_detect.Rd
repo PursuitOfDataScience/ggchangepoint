@@ -11,17 +11,42 @@ cpt_detect(
   penalty = "MBIC",
   index = NULL,
   y = NULL,
-  ...
+  ...,
+  data = NULL,
+  family = NULL,
+  group = NULL,
+  na_action = c("error", "omit", "engine"),
+  fixed = NULL,
+  within = NULL,
+  min_segment = NULL,
+  min_effect = NULL,
+  keep_fit = TRUE
 )
 }
 \arguments{
 \item{x}{The series. A numeric vector for univariate methods, or a
-numeric matrix/data frame (rows are time points) for the multivariate
-methods (run \code{subset(cpt_methods(), multivariate)$method} for the
-list). A \code{ts}, \code{xts}, \code{zoo} or (unkeyed) \code{tsibble}
-is accepted directly and its time index is carried through to
-\code{tidy()} and \code{autoplot()}; so is a data frame together with
-\code{y} (and optionally \code{index}).}
+  numeric matrix/data frame (rows are time points) for the multivariate
+  methods (run \code{subset(cpt_methods(), multivariate)$method} for the
+  list). A \code{ts}, \code{xts}, \code{zoo} or \code{tsibble}
+  is accepted directly and its time index is carried through to
+  \code{tidy()} and \code{autoplot()}; so is a data frame together with
+  \code{y} (and optionally \code{index}).
+
+  Also a \strong{formula} with \code{data}: \code{y ~ x1 + x2} fits
+  breakpoints in a regression (methods \code{"strucchange"},
+  \code{"segmented"} and \code{"fastcpd"}; see \code{cpt_methods()}'s
+  \code{formula} column), and \code{y ~ 1} is the response alone, which
+  every univariate method takes.
+
+  Several series at once: a \pkg{dplyr}-grouped data frame, a keyed
+  \code{tsibble}, or a long data frame with \code{group} naming the
+  column(s) that identify each series. Each group is detected separately
+  and the answer is a \code{\link{cpt_batch}()} result carrying the
+  grouping columns.
+
+  Refused rather than coerced: a factor (its level codes are not data),
+  a survival object, and dates or timestamps as values (they convert to
+  an increasing count; pass them as \code{index}).}
 
 \item{method}{Detection method: any \code{method} in
 \code{cpt_methods()} whose \code{status} is \code{"available"} or
@@ -96,7 +121,84 @@ help page: several engines end their own signature in \code{...}
 \pkg{segmented}, \pkg{fastcpd}, \pkg{fChange}, \pkg{bfast}), so for
 those a misspelt argument name is silently discarded upstream and the
 engine quietly uses its default rather than reporting the typo. Every
-other wired method rejects an unknown argument by name.}
+other wired method rejects an unknown argument by name. A name that
+is a near miss of a real argument of \code{cpt_detect()}, the wrapper
+or its engine (\code{n_interval} for \code{n_intervals}) is refused
+with the suggestion, and a modelling-choice value outside the method's
+vocabulary (\code{cpt_methods()$choices}, e.g. \code{test.stat =
+"Poison"}) is refused with the nearest valid value. \code{seed} is
+honoured by every method: passed to a wrapper that has one, and
+otherwise used to scope the random stream around the fit (restored
+afterwards); \code{seed = NULL} means unset.}
+
+\item{data}{A data frame for the formula interface.}
+
+\item{family}{The distribution a segment is modelled with:
+\code{"gaussian"}, \code{"poisson"}, \code{"binomial"},
+\code{"exponential"}, \code{"gamma"}, \code{"laplace"} or
+\code{"l1"}. \code{NULL} (the default) runs each method's own
+default, which for every parametric method is Gaussian. A
+single-parameter family changes in its rate or probability, so it is
+used with \code{change_in = "mean"}. Which methods fit which
+families, and the engine call each combination becomes, is in
+\code{\link{cpt_families}()}; a combination not listed there is
+refused. The data are checked against the family (counts must be
+whole and non-negative, binary data 0/1, waiting times positive).
+\pkg{fastcpd}'s and \pkg{stepR}'s own \code{family} values
+(\code{"ar"}, \code{"hsmuce"}, ...) still reach those engines.}
+
+\item{group}{For a long data frame holding several series, the column(s)
+identifying each one: a bare name, a string, or \code{c(a, b)}.}
+
+\item{na_action}{What to do with missing values: \code{"error"} (the
+default) refuses them; \code{"omit"} drops them, detects on what is
+observed, and reports every location in the \strong{original}
+positions (a changepoint lands on the last observed point of its left
+segment), keeping the gaps in \code{$data} so plots show them and the
+translation in \code{$diagnostics$na_omitted}; \code{"engine"}
+passes them to an engine that handles them in place, which measured
+for \code{beast} and \code{segmented} only (see
+\code{cpt_methods()$na_handling}), and is refused for the rest.
+There is no \code{"impute"}: imputing and then detecting pulls the
+estimated location towards the imputed stretch, by more the longer the
+gap.}
+
+\item{fixed}{Changepoints known in advance, which are kept and the rest
+estimated around them: the detector runs separately on each stretch
+between them. Positions, or values of the series' index (a date is
+placed at the last observation on or before it; for a numeric index
+such as a \code{ts}'s years, a number outside \code{1..n} is read as
+an index value and one inside as a position).}
+
+\item{within}{Windows the changepoints must fall in ("the policy took
+effect sometime in Q2"): a pair \code{c(start, end)}, a list of pairs,
+or a two-column table, in positions or index values. The engine
+searches the whole series and changepoints outside every window are
+dropped (recorded in \code{$constraints}); it restricts what is
+reported rather than re-optimising.}
+
+\item{min_segment}{Minimum segment length in observations, translated
+into each engine's own argument (\code{minseglen}, \code{min_size},
+\code{h}, \code{delta}, ...: \code{cpt_methods()$min_segment} names
+it). A method without one refuses it. When \code{min_segment} is not
+given, the engines whose own default allows one-observation segments
+(the change-in-mean \pkg{changepoint} methods other than SegNeigh,
+\code{np} and \code{binsegrcpp}) get a floor of two, so a short or
+monotone series is not split after every point.}
+
+\item{min_effect}{Drop changepoints whose mean shift is smaller than this
+many noise standard deviations (estimated from the series' first
+differences, which a changepoint barely moves), removing the smallest
+first and re-measuring its neighbours after each removal. For a change
+in mean only. The size is measured on the same data that located the
+change, so it is biased upward; see \code{\link{cpt_effect}()}.}
+
+\item{keep_fit}{Keep the engine's own object in \code{$fit}? Defaults to
+\code{TRUE}. A few engines return objects far larger than the answer
+(a warning says so above 10 MB, once per method per session);
+\code{FALSE} drops it, which only the engine-specific accessors notice.
+Everything else in the result is plain data, so a saved result reads
+back in any R session, with no packages installed.}
 }
 \value{
 A \code{ggcpt} object: a list with \code{changepoints}
@@ -128,12 +230,16 @@ absolute penalty on the residual sum of squares. Neither rescales the
 data, so on a series whose noise is much wider than 1 the penalty is
 effectively negligible and the segmentation shatters. On 200 observations
 with one true changepoint in the middle and a jump of five standard
-deviations, \code{"pelt"} returns 1 changepoint at \eqn{\sigma = 1}, 39
-at \eqn{\sigma = 3} and 141 at \eqn{\sigma = 10}. These are means over 20
-draws, because a single draw is not stable here: the same three settings
-gave 21/75 at \eqn{n = 100} and 57/266 at \eqn{n = 400}, so the effect
-grows with the series as well as with the noise. Three ways to avoid it, in order of
-convenience:
+deviations, \code{"pelt"} returns 1 changepoint at \eqn{\sigma = 1}, 27
+at \eqn{\sigma = 3} and 76 at \eqn{\sigma = 10}. These are means over 20
+draws, because a single draw is not stable here: the same settings gave
+15/38 at \eqn{n = 100} and 47/152 at \eqn{n = 400}, so the effect grows
+with the series as well as with the noise. (0.5.0, before the two-point
+minimum segment, reported 39 and 141 at \eqn{n = 200}: the floor halves
+the damage and does not remove it.) A measured scale-sensitive engine
+given noise far from unit scale warns (class
+\code{ggchangepoint_scale_sensitive}). Three ways to avoid it, in order
+of convenience:
 \itemize{
   \item standardise the series first
     (\code{cpt_detect(scale(x)[, 1], method = "pelt")});
@@ -170,6 +276,26 @@ tidy(dated)
 # The data-frame interface.
 df <- data.frame(day = dates, value = x)
 cpt_detect(df, y = value, index = day, method = "pelt")
+
+# Counts, with a cost written for them.
+counts <- c(rpois(100, 2), rpois(100, 6))
+cpt_detect(counts, method = "pelt", family = "poisson")
+
+# Missing values, located in the original positions.
+gappy <- x
+gappy[c(20, 21, 150)] <- NA
+cpt_detect(gappy, method = "pelt", na_action = "omit")$changepoints
+
+# A changepoint known in advance, and a window for another.
+cpt_detect(x, method = "pelt", fixed = 50)$changepoints
+
+# Breakpoints in a regression.
+if (requireNamespace("strucchange", quietly = TRUE)) {
+  d <- data.frame(t = 1:200, z = rnorm(200))
+  d$y <- ifelse(d$t <= 120, 1 + d$z, 3 - d$z) + rnorm(200, 0, 0.5)
+  fit <- cpt_detect(y ~ z, data = d, method = "strucchange")
+  tidy(fit, "coefficients")
+}
 }
 \seealso{
 \code{\link{cpt_methods}()} for what is available and what each

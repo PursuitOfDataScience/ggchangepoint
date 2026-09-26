@@ -113,7 +113,7 @@ sn_wrapper <- function(x, parameter = c("mean", "variance", "acf", "bivcor"),
     plot_SN = paste("SNSeg would draw to the active device; this wrapper",
                     "returns a ggcpt and leaves plotting to",
                     "`autoplot()`")))
-  parameter <- match.arg(parameter)
+  parameter <- cpt_match_arg(parameter)
   # `NA`, a vector or a string failed inside the engine without naming it.
   if (!is.null(grid_size)) {
     validate_scalar(grid_size, "grid_size", min = 0, min_open = TRUE)
@@ -123,16 +123,17 @@ sn_wrapper <- function(x, parameter = c("mean", "variance", "acf", "bivcor"),
   is_mv <- is.matrix(x) || is.data.frame(x)
   if (parameter == "bivcor") {
     if (!is_mv || ncol(as.matrix(x)) != 2) {
-      stop("`parameter = \"bivcor\"` requires a two-column matrix.",
-           call. = FALSE)
+      cpt_abort("`parameter = \"bivcor\"` requires a two-column matrix.",
+                class = "wrong_dimension")
     }
     X <- as_mv_matrix(x)
     input <- X
     data_vec <- as.numeric(X[, 1])
   } else {
     if (is_mv) {
-      stop("`parameter = \"", parameter, "\"` requires a numeric vector; ",
-           "use `parameter = \"bivcor\"` for bivariate input.", call. = FALSE)
+      cpt_abort("`parameter = \"", parameter, "\"` requires a numeric vector; ",
+                "use `parameter = \"bivcor\"` for bivariate input.",
+                class = "wrong_dimension")
     }
     input <- as.numeric(x)
     data_vec <- input
@@ -165,10 +166,10 @@ sn_wrapper <- function(x, parameter = c("mean", "variance", "acf", "bivcor"),
     error = function(e) {
       if (grepl("only 0's may be mixed with negative subscripts",
                 conditionMessage(e), fixed = TRUE)) {
-        stop("`sn` needs a longer series: ", length(data_vec),
-             " observations leave no room for the self-normalisation ",
-             "windows (about 20 are needed at the default `grid_size`).",
-             call. = FALSE)
+        cpt_abort("`sn` needs a longer series: ", length(data_vec),
+                  " observations leave no room for the self-normalisation ",
+                  "windows (about 20 are needed at the default `grid_size`).",
+                  class = "short_series")
       }
       # A constant RUN, not a constant series: the guard above catches a
       # column that never moves, but a series with a long enough flat
@@ -184,13 +185,15 @@ sn_wrapper <- function(x, parameter = c("mean", "variance", "acf", "bivcor"),
                 conditionMessage(e), fixed = TRUE)) {
         runs <- rle(as.numeric(data_vec))$lengths
         if (max(runs) >= 2L) {
-          stop("`sn` could not self-normalise this series. Its longest run ",
-               "of identical values is ", max(runs), " of ",
-               length(data_vec), " observations, which leaves a window with ",
-               "zero variance; roughly a tenth of the series is enough to ",
-               "do it. Use `parameter = \"variance\"` on a series that does ",
-               "vary, jitter the ties, or pick a method that tolerates flat ",
-               "stretches (`pelt`, `binseg`, `pettitt`).", call. = FALSE)
+          cpt_abort("`sn` could not self-normalise this series. Its longest ",
+                     "run ", "of identical values is ", max(runs), " of ",
+                    length(data_vec), " observations, which leaves a window ",
+                     "with ", "zero variance; roughly a tenth of the series ",
+                     "is enough to ", "do it. Use `parameter = \"variance\"` ",
+                     "on a series that does ", "vary, jitter the ties, or ",
+                     "pick a method that tolerates flat ",
+                    "stretches (`pelt`, `binseg`, `pettitt`).",
+                    class = "input_error")
         }
       }
       stop(e)

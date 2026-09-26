@@ -1,264 +1,81 @@
-## Resubmission
-
-This resubmits 0.5.0, which the incoming pretests of 2026-09-25 returned
-with three findings. Each is addressed.
-
-* **'fpop', suggested but not in a mainstream repository, with no
-  declaration.** 'fpop' was archived from CRAN on 2026-09-14 at its
-  maintainer's request. It is still developed and built on R-Forge, so
-  DESCRIPTION now declares
-  `Additional_repositories: https://R-Forge.R-project.org`. It stays in
-  Suggests and is used conditionally everywhere: the wrapper checks it with
-  `requireNamespace()`, its example uses `@examplesIf`, its tests use
-  `skip_if_not_installed()`, and the vignette chunks that call it are gated.
-  The install advice the package prints when 'fpop' is missing, and
-  `cpt_install_engines()`, now name that repository. The incoming check
-  will still list 'fpop' under "Suggests or Enhances not in mainstream
-  repositories", now with its availability. ('fpopw', which is on CRAN,
-  exports an `Fpop()` with the same signature and was measured as a
-  replacement. It returned a segmentation above the optimal penalised cost
-  on 200 of 1,224 series with tied values, where 'fpop' was optimal on all
-  of them, so it was not swapped in.)
-
-* **Overall check time: 17 minutes on Windows, 587s of it tests.** Every
-  test that took 0.2s or more under CRAN conditions now starts with
-  `skip_on_cran()`, 201 tests, and so does every test that runs 'stepR'
-  (its Monte Carlo critical values are recomputed in each check, and on
-  Linux a fresh simulation costs up to half a minute once 'tcltk' is
-  loaded). They still run on every CI push, where `NOT_CRAN` is set.
-  Timed the way `R CMD check` runs them, on the R 4.4.1 machine below, the
-  test step went from a median of 440s to 29s over six paired, interleaved
-  runs (15.1 times faster, 95% CI 14.0 to 15.5, slowest pair 13.4). At
-  that ratio the 587s win-builder measured becomes about 40s and the whole
-  check about 8 minutes; the rest is the examples (89s), the vignettes
-  (138s) and the fixed steps, none of which changed.
-
-* **Possibly misspelled words in DESCRIPTION.** "changepoints" and
-  "benchmarking" are spelled correctly, but the Description now says "the
-  number of changes" and "benchmarks", so the note does not recur. A local
-  replica of the incoming spell check reports no new words.
-
 ## Submission
 
-This is a minor-version update (0.4.0 -> 0.5.0) of an existing CRAN package.
+This is a minor-version update (0.5.0 -> 0.6.0) of an existing CRAN package.
 
-Where 0.4.0 was an engine wave, 0.5.0 is mostly a surface release: nineteen
-further detection engines are wired behind `cpt_detect()` (taking it from 31
-to 50 methods), but the larger part of the work is the machinery around
-them.
+0.6.0 is a stabilisation release. It adds no detection engine. It settles
+the interface before a 1.0 freeze (classed conditions for every error and
+warning, the engine versions recorded on each result, a documented JSON
+export, and `ggproto` objects for the plotting layers), reaches capability
+the wrapped engines already had (distribution families for counts, binary
+outcomes and waiting times; a formula interface for the regression-break
+engines; missing-value handling; grouped data; constraints on locations and
+segment lengths), and adds the questions that follow a detection (effect
+sizes, a test at a date fixed in advance, a test for a change anywhere,
+assumption checks and goodness of fit).
 
-**New capabilities.** Narrowest Significance Pursuit ('nsp') returns
-significance *regions* rather than point estimates, which needed a new
-optional `regions` slot on the result class, a new `geom_cpt_region()`
-layer, and a `cpt_confint()` generic that unifies four provenances (the
-engine's own interval, a posterior credible interval, a within-segment
-bootstrap, and NSP regions) behind one contract with a `source` column.
-`cpt_test()` reports a `selection_adjusted` flag so an unadjusted
-two-sample p-value can never be mistaken for a selection-adjusted one.
-`cpt_select()` chooses the number of changepoints by any of six criteria,
-including the Zhang-Siegmund segment-length mBIC and order-preserved
-cross-validation. `cpt_influence()`, `cpt_sensitivity()`, `cpt_statistic()`,
-`cpt_solution_path()` and `cpt_scale_space()` expose what a detector
-computed rather than only its argmax. Supervised detection arrives with
-`cpt_labels()`, `cpt_label_error()` and `cpt_learn_penalty()`. Series may
-now carry a time index ('ts'/'xts'/'zoo'/'tsibble' input and a data-frame
-interface), and there are new facilities for consensus, method
-recommendation, event annotation, reproducible reports, benchmarking,
-sequential monitoring with detection-delay accounting, and power analysis.
+**Measurements shipped as data.** Six small data sets (under 8 KB
+together) record what the engines were measured to do (runtime, invariance
+to rescaling and reversal, false positives by noise regime and by data
+type, false alarms on pure noise) and how the package's own intervals and
+tests are calibrated. They are generated by the scripts in `data-raw/`
+(excluded from the build), and the method recommender reads them.
 
-**Extension mechanism.** `as_ggcpt()` and `cpt_register_method()` let a
-detector this package does not wrap join the same tidy, plottable grammar.
-Registered methods are visibly user-supplied: `cpt_methods()` marks them,
-`print()` says so on every result, and `cpt_cite()` returns the citation the
-registration supplied or states plainly that none was given.
+**Changes to results** are listed first in NEWS.md: a two-observation
+minimum segment for the 'changepoint' engines, a false-alarm budget for
+'cpm' that scales with the series length, and two location fixes (the
+'EnvCpt' autoregressive models and 'ocd') found by a new test that runs
+every engine on an unmistakable step. Every argument of 0.5.0 keeps its
+name and position, which a test checks against a fixture.
 
-**Dependencies.** Fifty-seven packages are suggested; thirty-five of them are
-detection engines and the rest are optional extras (time-index coercion,
-tables, interactivity, progress bars, the test toolchain). Every one is
-guarded with `requireNamespace()`, its examples use `@examplesIf`, its tests
-use `skip_if_not_installed()`, and the vignettes gate the chunks that need
-it, so the package checks cleanly with none of them installed (see below).
-Only 'changepoint', 'changepoint.np' and 'ecp' are required.
-`cpt_install_engines()` installs a family at a time for users who want more.
-
-One suggested engine, 'mcp', needs JAGS (a system library), so a machine
-without JAGS must check with `_R_CHECK_FORCE_SUGGESTS_=false`. 'mcp' is on
-CRAN and checks there; `mcp_wrapper()` names JAGS in its error when 'mcp' is
-absent, and its example is wrapped in `\dontrun{}` rather than gated with
-`@examplesIf`, deliberately: whether the engine works depends on a *system*
-library, and `requireNamespace("mcp")` does not predict that: 'rjags' can
-be installed and still fail to find JAGS at run time. The example therefore
-never runs anywhere, which is the only guard that holds.
-
-**One original implementation, labelled as such.** Every detector in this
-package wraps a separately maintained one, with a single deliberate
-exception: `cpt_monitor(method = "edetector")` implements the mixture
-Shiryaev-Roberts e-detector of Shin, Ramdas and Rinaldo (2023), which has no
-R implementation. It is a dozen lines, optional stopping on the martingale
-`M_t - t` gives it a finite-sample lower bound of `1 / alpha` on the
-in-control average run length, a test measures the realised in-control alarm
-rate against that bound, and it is identified as native in `print()`, in
-`?cpt_monitor`, in `cpt_cite("edetector")` and in NEWS.md.
-
-**Network access.** `cpt_load_tcpd()` downloads the Turing Change Point
-Dataset and caches it under `tools::R_user_dir()`. Nothing is bundled or
-redistributed, the function is not called by any example, test or vignette
-(its examples are `\dontrun{}`), and every benchmark example runs offline
-against `cpt_datasets()`, which is built from the package's own simulated
-signals.
-
-More than two hundred and fifty defects found while building and auditing this release were fixed
-in the same cycle; NEWS.md itemises them and each has a regression test. The
-most instructive: a `tibble::tribble()` list-column silently deparsed into a
-string, which made every multi-capability method lose its extra `change_in`
-values; `$` on a ggplot2 mapping partially matching `xintercept` when asked
-for `x`, which left one new layer with no x aesthetic; an upstream column
-that is a p-value or a logical depending on an argument, which made one
-wrapper return every candidate split it had considered; `as.numeric()` on a
-matrix panel member in `cpt_batch()`, which concatenated the columns and
-reported a changepoint at the seam; and the native e-detector combining its
-per-shift statistics with a maximum rather than an average, which broke the
-very average-run-length bound the method is chosen for.
-
-The one worth singling out is the `seed` argument. All thirty-six sites that
-honoured one did it with `set.seed(seed)` in the function's own frame, which
-does not merely consume the caller's random stream but resets it, so the
-argument whose whole purpose is trustworthiness pinned the stream of
-whatever loop the call sat inside. A six-iteration generate-then-detect
-loop analysed **two distinct datasets**, measured with the data built
-outside the call; without the seed it analysed six. Nothing warned and no
-test failed. The seed is now scoped to the call: `.Random.seed` is saved
-and restored, a session that had none is left with none, and a seeded call
-is still byte-reproducible across intervening draws. The tests for it are
-metamorphic: they compare calls to each other rather than to a recorded
-value, which is the only kind that could have caught it.
-
-**Example timings.** Every one of the 118 Rd example blocks was timed. Four
-were over CRAN's 5-second budget and are now well under it: `ocd_wrapper`
-10.4s to 4.2s (its Monte Carlo threshold calibration is linear in
-`mc_reps`, so the example uses 2), `fmean_wrapper` 6.7s to 2.9s and
-`fcov_wrapper` 6.1s to 2.8s (10 curves and M = 50 instead of 20 and 200),
-and `cpt_min_detectable` 5.3s to 1.5s (fewer simulations per iteration).
-
-`fabisearch_wrapper` is the one that remains near the line: 27s down to
-5-6s across fresh sessions, and that is its floor. The engine runs `n_runs * n_reps` non-negative
-matrix factorisations per candidate split; `n_reps = 1` fails inside
-fabisearch itself ("not enough 'x' observations"; its significance test
-needs two), and shrinking the matrix further is not reliably cheaper
-because the search then evaluates more splits relative to `min_dist` (a
-2x10 matrix at `min_dist = 8` measured 6.6s). The example is already the
-smallest input that exercises the method, it is inside `\donttest{}`, and
-the help page says in as many words that these settings are chosen for the
-check budget rather than for detection.
-
-Three of the fixes route around a defect in an engine rather than in this
-package, and each is narrow, measured and reversible. `wbsts::wbs.lsw()`
-ends in `suppressWarnings(if (is.na(OUT)) OUT = NULL)`, which R has treated
-as an error since 4.2 whenever `OUT` holds two or more changepoints, so
-the call failed exactly when the method would have reported the multiple
-changes it exists to find (19 of 20 runs on a five-changepoint series). On
-that one error message the wrapper restores `.Random.seed` and replays the
-engine's own body with the `all(is.na(OUT))` its `suppressWarnings()` shows
-was intended, so what comes back is upstream's answer retrieved rather than
-a different one. `changepoints::thresholdBS()` prunes with
-`for (i in 2:level_length)`, so a single-level binary-segmentation tree
-reaches `1:NA` and stops; that made 'hdcov' fail on 23 of 25 runs and
-'network' on 10 of 12, at random, because the tree depth depends on a
-permutation draw. A single level has one candidate split and no ancestors to
-prune against, so the wrapper applies the rule that reproduces
-`thresholdBS()`'s own output on a multi-level tree. Both are conditioned on
-the installed version. The third is `HDCD`'s `Pilliat()`, which is refused
-rather than routed around; it has its own note below.
-
-**One engine is refused at some dimensions, deliberately.** `HDCD` 1.1's
-`Pilliat()` builds one fewer partial-sum threshold than it indexes when the
-number of coordinates is an exact power of two, and reports a changepoint at
-every observation as a result, on pure noise as readily as on a real
-change, at p = 2, 4, 8, 16, 32, 64 and 128. `pilliat_wrapper()` therefore
-stops with an explanation at those dimensions instead of returning the
-engine's answer, points at `esac` (the other `HDCD` method, unaffected at
-every dimension), and lifts the restriction automatically for any `HDCD`
-newer than 1.1. This will be reported upstream.
-
-The 0.1.0-0.4.0 function signatures keep working unchanged.
+One engine route uses a function its package documents as deprecated:
+'stepR' fits Poisson and binomial SMUCE only through `smuceR()`, which
+'stepR' describes as deprecated but working, with those families to be
+added to `stepFit()` later. The wrapper checks for the function and, if it
+is ever removed, refuses with a classed error that names the other methods
+fitting the same family.
 
 ## Test environments
 
-* local: R 4.4.1 on Rocky/RHEL 8 (x86_64), R CMD check --as-cran
-* local: R 4.6.0 on Rocky/RHEL 8 (x86_64), against a library holding the
-  Imports and none of the Suggests
-* GitHub Actions: ubuntu-latest (devel, release, oldrel-1),
-  macos-latest (release), windows-latest (release)
+* local: R 4.4.1 on Rocky/RHEL 8 (x86_64), `R CMD check --as-cran`, with
+  every suggested engine installed except 'mcp' and 'rjags' (JAGS is not
+  available there)
+* local: R 4.6.0 on Rocky/RHEL 8 (x86_64), `R CMD check --as-cran`, against
+  a library holding the Imports and none of the Suggests
 
 ## R CMD check results
 
-0 errors | 0 warnings on every environment above, and 0 notes on
-ubuntu-latest (devel, release and oldrel-1) and windows-latest; macos-latest
-reports one note, which is the runner's and not the package's (see below).
+* R 4.6.0, no Suggests: Status OK (0 errors, 0 warnings, 0 notes).
+* R 4.4.1: 0 errors, 1 warning, 2 notes, all three about the local
+  machine or already familiar:
+  * WARNING: `qpdf` is not installed on this machine, so the PDF
+    size-reduction check cannot run.
+  * NOTE: 'mcp' and 'rjags' are suggested but not available here, because
+    both need JAGS. Both are on CRAN; every use is guarded with
+    `requireNamespace()`, and the local run uses
+    `_R_CHECK_FORCE_SUGGESTS_=false`.
+  * NOTE: installed size 5.2 MB, of which `doc` is 3.8 MB: the seven
+    vignettes, whose figures are already rendered at `dpi = 72`. The size
+    fell from 0.5.0's: the README now has one figure instead of
+    twenty-three. The new material for this release is on the package
+    website only, as pkgdown articles excluded from the build.
 
-**Installed size.** The package installs at 7.3 MB on the Linux runners and
-8.5 MB on macOS, of which `doc` is 4.0 to 4.4 MB and `help` 1.8 MB. The
-GitHub Actions checks report that as an INFO line; R 4.4.1's `--as-cran`
-reports it as a NOTE, so expect one. The seven package vignettes already
-render their figures at `dpi = 72` rather than rmarkdown's default 96, which
-took the source tarball from 5.2 MB to 4.2 MB; `html_vignette` displays the
-figures at their natural size, so this removed pixels rather than shrinking
-the pictures. The `doc` directory is 65 vignette figures, the largest 96 KB,
-with no outlier and nothing unreferenced; `help` is 0.5 MB of Rd database and
-1.1 MB of `man/figures`, all of it reachable from `README.md`. We can find
-nothing further to remove that is not documentation the package deliberately
-ships. The `vdiffr` snapshots are test fixtures, excluded from the build, and
-were never part of the installed package.
+Depending on when this is submitted, the incoming-feasibility check may
+add a "days since last update" note: 0.5.0 was published in September
+2026.
 
-The one macOS note is `checking dependencies in R code`, and its entire
-body is a failure to `dlopen` 'rgl':
-
-```
-unable to load shared object '.../rgl/libs/rgl.so':
-  Library not loaded: /opt/X11/lib/libGLU.1.dylib
-```
-
-'rgl' is not a dependency of this package. It arrives three levels down from
-the suggested engine 'fabisearch', which imports 'NMF' and 'plot3D';
-'plot3D' reaches 'misc3d', and 'misc3d' imports 'rgl' for interactive 3-D
-rendering that neither of the other two needs. The macOS runner has no
-XQuartz, so `libGLU` is absent and the namespace cannot load when the check
-step tries to. Every other macOS check line, including the examples,
-`--run-donttest`, the tests and the vignette rebuild, is OK. Nothing in this
-package loads 'rgl': `cpt_methods()` answers "is this engine installed?"
-with `find.package()` rather than `requireNamespace()` precisely so that no
-engine namespace is loaded to build a table, and `need_pkg()`, the single
-point at which a wrapper does load its engine, suppresses load-time
-warnings about the machine so a headless user is not told about their
-display.
-
-Depending on when this is submitted, the incoming-feasibility check may add
-a "days since last update" note; 0.4.0 was published on 2026-08-24.
-
-Two further items appear on the local machines and will not appear on yours,
-noted here so the difference is not a surprise:
-
-* `qpdf` is not installed on the R 4.4.1 machine, so `R CMD check --as-cran`
-  reports that it cannot run its PDF size-reduction check. That is the
-  machine, not the package.
-* the same machine reports 'mcp' and 'rjags' as suggested-but-not-available,
-  because both need JAGS (a system library) and it is not installed
-  there. Both are on CRAN and check there; locally the run uses
-  `_R_CHECK_FORCE_SUGGESTS_=false`. 'rjags' is suggested because
-  `mcp_wrapper()` tests whether it can load: having 'mcp' installed does not
-  imply JAGS can be reached, and the wrapper reports that rather than
-  failing inside the engine.
-
-The no-Suggests run is a real one: the R 4.6.0 library above holds the
-Imports and not one of the suggested engines. It reports 0 errors,
-0 warnings and only the incoming-feasibility note, with the test suite
-reporting 0 failures and skipping what it cannot run.
+The test suite runs in 33 seconds under CRAN conditions (22 on R 4.6.0);
+tests that take longer, and every test that runs 'stepR', skip on CRAN and
+run on every CI push. The whole suite with every engine installed and
+`NOT_CRAN=true` reports 8,350 passing expectations and no failures.
 
 ## Suggested methods and their references
 
-The methods themselves are not implemented here (apart from the one
-exception noted above); each comes from the package named beside it, and
-this package supplies the interface. Every reference is on the help page of
+The detection methods themselves are not implemented here, apart from the
+e-detector monitor in `cpt_monitor()`, which the package implements and
+labels as its own; each comes from the package named beside it, and this
+package supplies the interface. The tests added in 0.6.0
+(`cpt_test_at()`, `cpt_test_null()`) are standard tests computed with base
+R's 'stats' and, for the sup-F test, 'strucchange'. Every reference is on the help page of
 the wrapper that calls it, via Rdpack and inst/REFERENCES.bib, and
 `cpt_cite()` returns the citation for any result. A test asserts that every
 method `cpt_methods()` reports as available has a `cpt_cite()` entry, and

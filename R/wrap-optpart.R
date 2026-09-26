@@ -74,8 +74,10 @@ build_segments <- function(data_vec, cp_indices) {
     start = starts,
     end = ends,
     n = ends - starts + 1L,
+    # `na.rm`: under `na_action = "engine"` the series reaches here with
+    # its gaps, and a segment's level is the mean of what was observed.
     param_estimate = vapply(seq_len(n_seg), function(i) {
-      mean(data_vec[starts[i]:ends[i]])
+      mean(data_vec[starts[i]:ends[i]], na.rm = TRUE)
     }, numeric(1))
   )
 }

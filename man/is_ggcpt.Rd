@@ -33,7 +33,11 @@ Other result class:
 \code{\link{annotate_segments}()},
 \code{\link{as_cpt_series}()},
 \code{\link{as_ggcpt}()},
+\code{\link{as_json}()},
 \code{\link{cpt_annotations}()},
+\code{\link{cpt_export}()},
+\code{\link{cpt_verify}()},
+\code{\link{ggchangepoint-conditions}},
 \code{\link{new_ggcpt}()},
 \code{\link{print.ggcpt}()}
 }

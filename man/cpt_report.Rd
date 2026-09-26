@@ -6,7 +6,7 @@
 \usage{
 cpt_report(
   object,
-  format = c("md", "text", "gt"),
+  format = c("md", "text", "gt", "json"),
   file = NULL,
   stability = NULL,
   events = NULL,
@@ -18,8 +18,10 @@ cpt_report(
 \item{object}{A \code{ggcpt} object.}
 
 \item{format}{\code{"md"} (default, GitHub-flavoured markdown as a
-character vector), \code{"text"} (plain text) or \code{"gt"} (a
-\pkg{gt} table of the changepoints, for a publication).}
+character vector), \code{"text"} (plain text), \code{"gt"} (a
+\pkg{gt} table of the changepoints, for a publication) or
+\code{"json"} (the whole result under \code{\link{as_json}()}'s
+versioned schema, for a pipeline rather than a reader).}
 
 \item{file}{Optional path to write to. The report is returned invisibly
 when a file is written. Ignored for \code{format = "gt"}, which returns

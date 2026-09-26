@@ -94,8 +94,12 @@ A \code{ggcpt_benchmark} object: a tibble with one row per
 Runs a grid of methods over a collection of labelled series and scores
 every cell with \code{\link{cpt_metrics}()} (or
 \code{\link{cpt_metrics_annotated}()} when a dataset carries several
-annotators). An engine that errors on one dataset records the message and
-the grid continues.
+annotators). A method that fails on one dataset (its engine errors, is
+not installed, or cannot take that series: see
+\link{ggchangepoint-conditions}) records the message and the grid
+continues. Invalid data or arguments, which every method would reject,
+stop the benchmark instead, naming the dataset and method, so a mistake
+in the call is not reported as a finding about an engine.
 }
 \section{Reading the critical-difference diagram}{
 

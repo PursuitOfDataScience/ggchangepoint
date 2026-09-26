@@ -13,6 +13,9 @@
 \alias{plot.ggcpt_delay}
 \alias{plot.ggcpt_path}
 \alias{plot.ggcpt_power}
+\alias{plot.ggcpt_effect}
+\alias{plot.ggcpt_robustness}
+\alias{plot.ggcpt_recommendation}
 \alias{plot.ggcpt_events}
 \alias{plot.ggcpt_label_curve}
 \title{Base plot() methods for ggchangepoint result objects}
@@ -38,6 +41,12 @@
 \method{plot}{ggcpt_path}(x, ...)
 
 \method{plot}{ggcpt_power}(x, ...)
+
+\method{plot}{ggcpt_effect}(x, ...)
+
+\method{plot}{ggcpt_robustness}(x, ...)
+
+\method{plot}{ggcpt_recommendation}(x, ...)
 
 \method{plot}{ggcpt_events}(x, ...)
 

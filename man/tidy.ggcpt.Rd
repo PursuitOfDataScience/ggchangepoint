@@ -4,17 +4,38 @@
 \alias{tidy.ggcpt}
 \title{Tidy a ggcpt object}
 \usage{
-\method{tidy}{ggcpt}(x, ...)
+\method{tidy}{ggcpt}(x, what = c("changepoints", "coefficients"), conf_level = 0.95, ...)
 }
 \arguments{
 \item{x}{A \code{ggcpt} object.}
 
+\item{what}{\code{"changepoints"} (the default) or
+\code{"coefficients"}: one row per segment and model term, with
+\code{estimate}, \code{std_error} and a Wald interval. For a formula
+fit the terms are the regression's; for a series they are the segment
+level (and its slope in time, for a change in slope), so a mean-shift
+result reports each segment's mean with its standard error. Engines
+that estimate the coefficients themselves (\pkg{segmented}'s slopes,
+\pkg{fastcpd}'s per-segment parameters) report their own estimates.}
+
+\item{conf_level}{Confidence level for the coefficient intervals.}
+
 \item{...}{Additional arguments (ignored).}
 }
 \value{
-A tibble with columns \code{cp}, \code{cp_value}, and any
-  method-specific columns.
+A tibble. For \code{"changepoints"}: columns \code{cp},
+  \code{cp_value}, and any method-specific columns. For
+  \code{"coefficients"}: \code{segment}, \code{start}, \code{end},
+  \code{term}, \code{estimate}, \code{std_error}, \code{conf_low},
+  \code{conf_high} (plus \code{coordinate} for a multivariate result).
 }
 \description{
-Returns the changepoints tibble (one row per changepoint).
+Returns the changepoints tibble (one row per changepoint), or the
+coefficients of every segment.
+}
+\examples{
+set.seed(1)
+fit <- cpt_detect(c(rnorm(80), rnorm(80, 3)), method = "pelt")
+tidy(fit)
+tidy(fit, "coefficients")
 }

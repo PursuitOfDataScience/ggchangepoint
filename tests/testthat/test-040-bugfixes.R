@@ -454,17 +454,24 @@ test_that("R20: a wrapper argument passed through cpt_detect() overrides the
 
 test_that("R21: enumerated engine options that cannot work are not offered", {
   skip_on_cran()
-  # stepR dropped family = "poisson"; offering it guaranteed a runtime error
+  # stepR's stepFit() dropped family = "poisson", and offering it through
+  # stepFit() guaranteed a runtime error. 0.6.0 offers it again through
+  # smuceR(), which still fits it: on counts it runs, on anything else the
+  # data check refuses it before the engine sees it.
   skip_if_not_installed("stepR")
   expect_error(smuce_wrapper(rnorm(50), family = "poisson"),
-               "should be one of")
+               class = "ggchangepoint_bad_type")
+  expect_s3_class(smuce_wrapper(stats::rpois(80, 3), family = "poisson"),
+                  "ggcpt")
+  expect_error(smuce_wrapper(rnorm(50), family = "gaussvar"),
+               class = "ggchangepoint_bad_argument")
   expect_s3_class(smuce_wrapper(c(rnorm(60), rnorm(60, 4))), "ggcpt")
 
   # cpm documents "GLRAdjusted" but processStream() rejects it by *printing*
   # an error and returning nothing, so it silently found zero changepoints
   skip_if_not_installed("cpm")
   expect_error(cpm_wrapper(rnorm(50), cpm_type = "GLRAdjusted"),
-               "should be one of")
+               class = "ggchangepoint_bad_argument")
   # FET still works for the Bernoulli data it is meant for
   set.seed(1)
   xb <- c(rbinom(300, 1, 0.1), rbinom(300, 1, 0.4), rbinom(300, 1, 0.7))

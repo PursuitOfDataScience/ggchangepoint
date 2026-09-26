@@ -4,14 +4,16 @@
 \alias{ggcpt_eval}
 \title{Evaluation visualization}
 \usage{
-ggcpt_eval(pred, truth, data_vec, margin = 5)
+ggcpt_eval(pred, truth, data_vec = NULL, margin = 5)
 }
 \arguments{
-\item{pred}{Predicted changepoint indices.}
+\item{pred}{Predicted changepoint indices, or a \code{ggcpt} fit (whose
+changepoints and series are used).}
 
 \item{truth}{Ground truth changepoint indices.}
 
-\item{data_vec}{The original data vector (for context).}
+\item{data_vec}{The original data vector (for context). Taken from
+\code{pred} when it is a fit.}
 
 \item{margin}{Tolerance margin (default 5).}
 }

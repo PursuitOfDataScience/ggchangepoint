@@ -21,6 +21,8 @@ cpt_power(
   df = 3,
   seed = NULL,
   parallel = TRUE,
+  family = "gaussian",
+  baseline = NULL,
   ...
 )
 
@@ -34,7 +36,10 @@ cpt_power(
 \item{n}{Series length.}
 
 \item{jump}{Size of the change, in units of \code{sigma}. A vector runs
-one scenario per value.}
+one scenario per value. For a non-Gaussian \code{family} it is the
+change in the family's own parameter, added to \code{baseline}: a rate
+for \code{"poisson"}, a probability for \code{"binomial"} and a mean
+waiting time for \code{"exponential"}.}
 
 \item{sigma}{Noise standard deviation. Defaults to \code{1}.}
 
@@ -73,6 +78,17 @@ available? Defaults to \code{TRUE}. It has no effect unless a
 non-sequential plan is set, but when one is it changes where the
 replicates' random numbers come from; see the section below, which
 matters if the power figure is going into a paper.}
+
+\item{family}{\code{"gaussian"} (the default), or \code{"poisson"},
+\code{"binomial"} or \code{"exponential"}: the replicates are drawn
+from that family (see \code{\link{cpt_simulate}()}) and detected with
+that family's cost (\code{cpt_detect(family = )}), so the method must
+fit it (\code{\link{cpt_families}()}). \code{sigma}, \code{noise},
+\code{rho} and \code{df} do not apply.}
+
+\item{baseline}{The family's parameter before the change, for a
+non-Gaussian \code{family}: a rate (default 5), a probability (0.3) or
+a mean waiting time (1).}
 
 \item{...}{Additional arguments passed to \code{\link{cpt_detect}()}.}
 

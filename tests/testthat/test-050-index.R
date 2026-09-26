@@ -111,14 +111,21 @@ test_that("as_cpt_series returns values, index and a label", {
   expect_type(s2$index_label, "character")
 })
 
-test_that("a keyed tsibble is refused with an actionable message", {
+test_that("a keyed tsibble is one series per key", {
   skip_on_cran()
   skip_if_not_installed("tsibble")
   tb <- tsibble::tsibble(
     day = rep(dates[1:10], 2), g = rep(c("a", "b"), each = 10),
     y = rnorm(20), index = day, key = g
   )
-  expect_error(cpt_detect(tb, method = "pelt"), "keyed tsibble")
+  # 0.6.0 routes the key to one fit per series instead of refusing it
+  b <- cpt_detect(tb, method = "pelt")
+  expect_s3_class(b, "ggcpt_batch")
+  expect_identical(b$series, c("a", "b"))
+  expect_identical(b$g, c("a", "b"))
+  expect_s3_class(b$result[[1]]$index, "Date")
+  # ...and as_cpt_series(), which returns one series, still refuses it
+  expect_error(as_cpt_series(tb), "keyed tsibble")
 })
 
 test_that("cpt_batch carries a time index onto every series", {

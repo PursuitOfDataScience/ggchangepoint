@@ -15,10 +15,21 @@
 #'   smaller values yield more conservative (fewer-changepoint) fits.
 #'   Defaults to \code{0.5}, the upstream recommendation for estimation.
 #' @param family Noise model: \code{"gauss"} (SMUCE, homogeneous Gaussian
-#'   noise) or \code{"hsmuce"} (HSMUCE, segment-wise variance). Defaults to
-#'   \code{"gauss"}. The remaining \code{stepR} families (\code{"jsmurf"},
-#'   \code{"mDependentPS"}, ...) all require a filter or covariance
-#'   specification; call \code{stepR::stepFit()} directly for those.
+#'   noise), \code{"hsmuce"} (HSMUCE, segment-wise variance),
+#'   \code{"poisson"} (counts: a change in the rate) or \code{"binomial"}
+#'   (0/1 outcomes: a change in the probability). Defaults to
+#'   \code{"gauss"}. The two count families run \code{stepR::smuceR()},
+#'   the multiscale estimator for exponential families, with the same
+#'   level and the same jump intervals; \code{cpt_detect(x, method =
+#'   "smuce", family = "poisson")} reaches them. \pkg{stepR} documents
+#'   \code{smuceR()} as deprecated but working, and as the only route to
+#'   these families until \code{stepFit()} gains them; should it be
+#'   removed, the error says so and names the methods that fit the same
+#'   family. With \code{alpha} given, \code{smuceR()} takes its threshold
+#'   from the asymptotic null distribution rather than a simulated one. The remaining \code{stepR}
+#'   families (\code{"jsmurf"}, \code{"mDependentPS"}, ...) all require a
+#'   filter or covariance specification; call \code{stepR::stepFit()}
+#'   directly for those.
 #'   \code{"hsmuce"} additionally refuses a series whose point-to-point
 #'   variation lies more than about seven orders of magnitude below its own
 #'   scale: a globally flat series, or a step whose segments are numerically
@@ -26,7 +37,8 @@
 #'   added. \pkg{stepR}'s heterogeneous variance estimator aborts the \R
 #'   session on such input rather than raising an error, so it cannot be
 #'   caught. \code{"gauss"} handles the whole range.
-#' @param ... Additional arguments passed to \code{stepR::stepFit()}.
+#' @param ... Additional arguments passed to \code{stepR::stepFit()}
+#'   (\code{stepR::smuceR()} for the count families).
 #' @return A \code{ggcpt} object. The \code{changepoints} tibble carries
 #'   \code{ci_lower}/\code{ci_upper} (confidence interval for each
 #'   changepoint location) and the \code{data} tibble carries the SMUCE step
@@ -46,13 +58,14 @@
 #' }
 #' @family changepoint engines
 smuce_wrapper <- function(x, alpha = 0.5,
-                          family = c("gauss", "hsmuce"), ...) {
+                          family = c("gauss", "hsmuce", "poisson",
+                                     "binomial"), ...) {
   need_pkg("stepR")
   reject_managed_args(list(...), if (identical(family, "hsmuce")) "hsmuce" else "smuce",
     c(jumpint = paste("the wrapper needs stepR's jump intervals to fill the",
                       "`ci_lower`/`ci_upper` columns, which is the reason",
                       "to use SMUCE in the first place")))
-  family <- match.arg(family)
+  family <- cpt_match_arg(family)
 
   validate_data(x)
   data_vec <- as_uni_vector(x, if (family == "hsmuce") "hsmuce" else "smuce")
@@ -75,18 +88,26 @@ smuce_wrapper <- function(x, alpha = 0.5,
     local_scale <- stats::mad(diff(data_vec))
     magnitude <- max(abs(data_vec))
     if (local_scale > 0 && magnitude > 0 && local_scale < 1e-7 * magnitude) {
-      stop("`hsmuce` cannot be used on this series: its point-to-point ",
-           "variation (", format(local_scale, digits = 3), ") is more than ",
-           "seven orders of magnitude below the data's own scale (",
-           format(magnitude, digits = 3), "), and stepR's heterogeneous ",
-           "variance estimator aborts the R session on such input rather ",
-           "than returning. Use `family = \"gauss\"` (SMUCE), which handles ",
-           "it.", call. = FALSE)
+      cpt_abort("`hsmuce` cannot be used on this series: its point-to-point ",
+                "variation (", format(local_scale, digits = 3),
+                ") is more than ", "seven orders of magnitude below the ",
+                 "data's own scale (", format(magnitude, digits = 3),
+                "), and stepR's heterogeneous ", "variance estimator aborts ",
+                 "the R session on such input rather ", "than returning. Use ",
+                 "`family = \"gauss\"` (SMUCE), which handles ", "it.",
+                class = "input_error")
     }
   }
 
-  fit <- stepR::stepFit(data_vec, alpha = alpha, family = family,
-                        jumpint = TRUE, ...)
+  fit <- if (family %in% c("poisson", "binomial")) {
+    # stepR accepts fractional "counts" without a word and fits them, so
+    # the data are checked here as cpt_detect(family = ) checks them.
+    check_family_data(data_vec, family, "smuce")
+    smuce_count_fit(data_vec, alpha, family, ...)
+  } else {
+    stepR::stepFit(data_vec, alpha = alpha, family = family,
+                   jumpint = TRUE, ...)
+  }
 
   # stepFit returns one row per segment; the changepoint before segment i
   # (i > 1) is at rightIndex[i - 1] (last index of the left segment), with a
@@ -118,4 +139,27 @@ smuce_wrapper <- function(x, alpha = 0.5,
     },
     fitted = fitted
   )
+}
+
+# Internal: the Poisson and binomial SMUCE fits. stepR's current interface,
+# stepFit(), dropped these families in 2.0 (which is why 0.4.0 stopped
+# offering them); the older smuceR() still fits them and stepR documents it
+# as "deprecated, but still working", with the families to be added to
+# stepFit() later. So the route goes through smuceR() while it exists, and
+# says so by class, with the alternatives, the day it does not.
+#' @noRd
+smuce_count_fit <- function(data_vec, alpha, family, ...) {
+  gone <- function() {
+    cpt_abort("stepR no longer provides smuceR(), its only route to a ",
+              family, " SMUCE fit. Methods that fit a ", family, " cost: ",
+              paste(setdiff(methods_with_family(family), "smuce"),
+                    collapse = ", "), ".", class = "unsupported",
+              data = list(method = "smuce", requested = family,
+                          supported = c("gauss", "hsmuce")))
+  }
+  fun <- get0("smuceR", envir = asNamespace("stepR"), inherits = FALSE)
+  if (!is.function(fun)) gone()
+  args <- list(data_vec, alpha = alpha, family = family, jumpint = TRUE)
+  if (family == "binomial") args$param <- 1L
+  tryCatch(do.call(fun, c(args, list(...))), defunctError = function(e) gone())
 }

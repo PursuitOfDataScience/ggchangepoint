@@ -32,14 +32,14 @@
 #' ggcpt_statistic(fit)
 cpt_statistic <- function(object) {
   if (!is_ggcpt(object)) {
-    stop("`object` must be a ggcpt object.", call. = FALSE)
+    cpt_abort("`object` must be a ggcpt object.", class = "bad_argument")
   }
   out <- extract_statistic(object)
   if (is.null(out)) {
-    stop("Engine `", object$method, "` does not expose a per-location ",
-         "statistic. These do: ",
-         paste(subset(cpt_methods(), statistic %in% TRUE)$method,
-               collapse = ", "), ".", call. = FALSE)
+    cpt_abort("Engine `", object$method, "` does not expose a per-location ",
+              "statistic. These do: ",
+              paste(subset(cpt_methods(), statistic %in% TRUE)$method,
+                    collapse = ", "), ".", class = "capability_absent")
   }
   out
 }
@@ -115,6 +115,14 @@ extract_statistic <- function(object) {
   if (method == "amoc") {
     return(mk(amoc_lr_profile(object$data$value),
               "AMOC standardised CUSUM profile"))
+  }
+  # np.mojo computes a per-location statistic and keeps it as `test.stat`
+  # (and its cutoff as `threshold.val`); the registry did not claim it, so
+  # nothing read it.
+  if (method == "npmojo" && is.numeric(fld("test.stat"))) {
+    thr <- suppressWarnings(as.numeric(fld("threshold.val") %||%
+                                         NA_real_))[1]
+    return(mk(fld("test.stat"), "NP-MOJO statistic", thr))
   }
   if (method == "nsp" && !is.null(object$regions)) {
     stat <- rep(0, n)
@@ -249,16 +257,16 @@ ggcpt_statistic <- function(object) {
 #' cpt_solution_path(fit)
 cpt_solution_path <- function(object) {
   if (!is_ggcpt(object)) {
-    stop("`object` must be a ggcpt object.", call. = FALSE)
+    cpt_abort("`object` must be a ggcpt object.", class = "bad_argument")
   }
   out <- extract_solution_path(object)
   if (is.null(out)) {
-    stop("Engine `", object$method, "` does not expose a solution path. ",
-         "These do: ",
-         paste(subset(cpt_methods(), path %in% TRUE)$method,
-               collapse = ", "),
-         ". For the penalty path of an optimal-partitioning method see ",
-         "cpt_crops().", call. = FALSE)
+    cpt_abort("Engine `", object$method, "` does not expose a solution path. ",
+              "These do: ",
+              paste(subset(cpt_methods(), path %in% TRUE)$method,
+                    collapse = ", "),
+              ". For the penalty path of an optimal-partitioning method see ",
+              "cpt_crops().", class = "capability_absent")
   }
   out
 }
@@ -313,6 +321,33 @@ extract_solution_path <- function(object) {
     }
     return(finish(order_cp, contrast))
   }
+  # strucchange computes the optimal segmentation for every number of
+  # breaks (the Bai-Perron table) and the result kept only the chosen one.
+  # Like SegNeigh's, the solutions are not nested, so each row contributes
+  # the breaks it adds; the contrast is that solution's residual sum of
+  # squares.
+  if (method == "strucchange" && inherits(fit, "breakpoints") &&
+      requireNamespace("strucchange", quietly = TRUE)) {
+    sm <- tryCatch(summary(fit), error = function(e) NULL)
+    bpm <- if (!is.null(sm)) sm$breakpoints
+    if (is.matrix(bpm) && nrow(bpm) > 0) {
+      rss <- as.numeric(sm$RSS["RSS", ])
+      order_cp <- integer(0)
+      contrast <- numeric(0)
+      prev <- integer(0)
+      for (i in seq_len(nrow(bpm))) {
+        row <- as.integer(bpm[i, ][!is.na(bpm[i, ])])
+        new <- setdiff(row, prev)
+        if (length(new) > 0) {
+          order_cp <- c(order_cp, new)
+          contrast <- c(contrast, rep(if (i + 1L <= length(rss)) rss[i + 1L]
+                                      else NA_real_, length(new)))
+        }
+        prev <- row
+      }
+      return(finish(order_cp, contrast))
+    }
+  }
   if (method == "wbs" && !is.null(pfld("res"))) {
     res <- pfld("res")
     ord <- order(-abs(res[, "CUSUM"]))
@@ -344,13 +379,13 @@ extract_solution_path <- function(object) {
     # is not in scope here. Say so rather than presenting a second search
     # as the first one's path.
     if (identical(method, "wbs2")) {
-      warning("`wbs2`'s solution path is recomputed here: breakfast's fit ",
-              "does not keep its candidate list, and the search is ",
-              "randomised, so this path is a second search of the same ",
-              "series and need not contain every changepoint in the ",
-              "result. Read it as which splits the method considers ",
-              "strong, not as the exact path behind this fit.",
-              call. = FALSE)
+      cpt_warn("`wbs2`'s solution path is recomputed here: breakfast's fit ",
+               "does not keep its candidate list, and the search is ",
+               "randomised, so this path is a second search of the same ",
+               "series and need not contain every changepoint in the ",
+               "result. Read it as which splits the method considers ",
+               "strong, not as the exact path behind this fit.",
+               class = "warning")
     }
     sol <- tryCatch(
       if (method == "wbs2") {
@@ -375,12 +410,12 @@ extract_solution_path <- function(object) {
     # already defaults its three fields the same way.
     diag_path <- tibble::as_tibble(diag_path)
     if (!"cp" %in% names(diag_path)) {
-      stop("A registered method's `solution_path` needs a `cp` column ",
-           "holding the candidate locations; this one has ",
-           if (ncol(diag_path) == 0) "no columns" else
-             paste0("(", paste(names(diag_path), collapse = ", "), ")"),
-           ". The columns are described in the `@return` of ",
-           "?cpt_solution_path.", call. = FALSE)
+      cpt_abort("A registered method's `solution_path` needs a `cp` column ",
+                "holding the candidate locations; this one has ",
+                if (ncol(diag_path) == 0) "no columns" else
+                  paste0("(", paste(names(diag_path), collapse = ", "), ")"),
+                ". The columns are described in the `@return` of ",
+                "?cpt_solution_path.", class = "engine_error")
     }
     fill <- function(nm, default) {
       v <- if (nm %in% names(diag_path)) diag_path[[nm]] else default
@@ -518,7 +553,7 @@ cpt_scale_space <- function(x, bandwidths = NULL,
     validate_data(x)
     series <- x
   }
-  method <- match.arg(method)
+  method <- cpt_match_arg(method)
 
   # Shape first, engine second: telling someone to install `mosum` for input
   # `mosum` cannot accept anyway is the wrong complaint, and it makes the
@@ -548,8 +583,9 @@ cpt_scale_space <- function(x, bandwidths = NULL,
   bandwidths <- sort(unique(as.integer(bandwidths)))
   bandwidths <- bandwidths[bandwidths >= 2 & 2 * bandwidths < n]
   if (length(bandwidths) == 0) {
-    stop("No usable bandwidth: a moving window needs `2 * G < n`, and the ",
-         "series has ", n, " observations.", call. = FALSE)
+    cpt_abort("No usable bandwidth: a moving window needs `2 * G < n`, and ",
+               "the ", "series has ", n, " observations.",
+              class = "short_series")
   }
   need_pkg(if (method == "mosum") "mosum" else "CptNonPar")
 
@@ -623,8 +659,8 @@ cpt_scale_space <- function(x, bandwidths = NULL,
              if (method == "mosum") "mosum::mosum" else "CptNonPar::np.mojo",
              " rather than re-tuning the sweep.")
     }
-    stop("No bandwidth produced a usable fit for method `", method, "`",
-         detail, call. = FALSE)
+    cpt_abort("No bandwidth produced a usable fit for method `", method, "`",
+              detail, class = "engine_error")
   }
   out <- do.call(rbind, rows)
   attr(out, "method") <- method

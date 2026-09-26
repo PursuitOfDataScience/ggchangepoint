@@ -60,11 +60,11 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
     if (length(fitted) == n) {
       data_tbl$fitted <- as.numeric(fitted)
     } else {
-      warning("`", method, "` returned a fitted signal of length ",
-              length(fitted), " for a series of length ", n,
-              ", so it is dropped: `autoplot(show_fit = TRUE)` and ",
-              "`augment()` will report no fitted signal for this result.",
-              call. = FALSE)
+      cpt_warn("`", method, "` returned a fitted signal of length ",
+               length(fitted), " for a series of length ", n,
+               ", so it is dropped: `autoplot(show_fit = TRUE)` and ",
+               "`augment()` will report no fitted signal for this result.",
+               class = "dropped_input")
     }
   }
 
@@ -78,6 +78,7 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
     res$data_wide <- data_wide
     res$regions <- normalise_regions(regions, n)
     res$diagnostics <- diagnostics
+    res$versions <- version_stamp(method)
     return(res)
   }
 
@@ -95,6 +96,7 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
   res$data_wide <- data_wide
   res$regions <- normalise_regions(regions, n)
   res$diagnostics <- diagnostics
+  res$versions <- version_stamp(method)
   warn_if_degenerate(res, method)
   res
 }
@@ -136,9 +138,11 @@ rethrow_short_series <- function(e, method, n, hint = NULL) {
   # sentence -- otherwise the hint runs straight on from the engine's last
   # word ("... less than two periods `bfast` needs at least ...").
   msg <- sub("[.;:, ]+$", "", msg)
-  stop("Method `", method, "` could not segment a series of ", n,
-       " observation(s). The engine reported: \"", msg, "\".",
-       if (!is.null(hint)) paste0(" ", hint) else "", call. = FALSE)
+  cpt_abort("Method `", method, "` could not segment a series of ", n,
+            " observation(s). The engine reported: \"", msg, "\".",
+            if (!is.null(hint)) paste0(" ", hint) else "",
+            class = "short_series",
+            data = list(method = method, n = n), parent = e)
 }
 
 #' @noRd
@@ -169,16 +173,16 @@ warn_if_degenerate <- function(res, method) {
   pen <- res$penalty$value
   zero_penalty <- is.numeric(pen) && length(pen) == 1L &&
     is.finite(pen) && pen == 0
-  warning("`", method, "` put a changepoint after every observation: ", k,
-          " changepoint(s) on ", n, " observation(s), so every segment is ",
-          "one point long. ",
-          if (zero_penalty) {
-            paste0("With a penalty of 0 that is the unpenalised optimum, ",
-                   "not a segmentation; give `penalty` a positive value.")
-          } else {
-            paste0("That is a failure to segment rather than a ",
-                   "segmentation: the series is too short for this engine.")
-          }, call. = FALSE)
+  cpt_warn("`", method, "` put a changepoint after every observation: ", k,
+           " changepoint(s) on ", n, " observation(s), so every segment is ",
+           "one point long. ",
+           if (zero_penalty) {
+             paste0("With a penalty of 0 that is the unpenalised optimum, ",
+                    "not a segmentation; give `penalty` a positive value.")
+           } else {
+             paste0("That is a failure to segment rather than a ",
+                    "segmentation: the series is too short for this engine.")
+           }, class = "degenerate")
   invisible(res)
 }
 
@@ -191,8 +195,8 @@ normalise_regions <- function(regions, n) {
   if (is.null(regions)) return(NULL)
   if (is.matrix(regions)) {
     if (ncol(regions) < 2L) {
-      stop("`regions` must have at least two columns (start, end).",
-           call. = FALSE)
+      cpt_abort("`regions` must have at least two columns (start, end).",
+                class = "bad_argument")
     }
     cn <- colnames(regions)
     regions <- tibble::as_tibble(as.data.frame(regions),
@@ -202,7 +206,8 @@ normalise_regions <- function(regions, n) {
   regions <- tibble::as_tibble(regions)
   if (!all(c("start", "end") %in% names(regions))) {
     if (ncol(regions) < 2L) {
-      stop("`regions` must have `start` and `end` columns.", call. = FALSE)
+      cpt_abort("`regions` must have `start` and `end` columns.",
+                class = "bad_argument")
     }
     names(regions)[1:2] <- c("start", "end")
   }
@@ -326,9 +331,9 @@ need_pkg <- function(pkg) {
   # nothing an engine says about the data can be hidden by it.
   if (!suppressMessages(suppressWarnings(
         requireNamespace(pkg, quietly = TRUE)))) {
-    stop("Package '", pkg, "' is required. ",
-         "Install it with ", install_hint(pkg), ".",
-         call. = FALSE)
+    cpt_abort("Package '", pkg, "' is required. ", "Install it with ",
+              install_hint(pkg), ".", class = "engine_missing",
+              data = list(package = pkg, install = install_hint(pkg)))
   }
   invisible(TRUE)
 }
@@ -372,20 +377,22 @@ as_uni_vector <- function(x, method) {
       reg <- full_registry()
       mv <- isTRUE(reg$multivariate[match(method, reg$method)])
       if (mv) {
-        stop("`x` has ", ncol(X), " columns, but this function works on a ",
-             "single series, even with `method = \"", method, "\"`, which ",
-             "is multivariate. Pass one column, or run the multivariate ",
-             "fit with cpt_detect() directly.", call. = FALSE)
+        cpt_abort("`x` has ", ncol(X), " columns, but this function works on ",
+                   "a ", "single series, even with `method = \"", method,
+                  "\"`, which ", "is multivariate. Pass one column, or run ",
+                   "the multivariate ", "fit with cpt_detect() directly.",
+                  class = "wrong_dimension")
       }
-      stop("Method `", method, "` is univariate, but `x` has ", ncol(X),
-           " columns. See cpt_methods() for multivariate methods.",
-           call. = FALSE)
+      cpt_abort("Method `", method, "` is univariate, but `x` has ", ncol(X),
+                " columns. See cpt_methods() for multivariate methods.",
+                class = "wrong_dimension")
     }
     # A zero-column frame reaches `X[, 1]` and stops with base R's
     # "subscript out of bounds", which names neither the argument nor this
     # package.
     if (ncol(X) == 0L) {
-      stop("`x` is empty: it has no columns to detect on.", call. = FALSE)
+      cpt_abort("`x` is empty: it has no columns to detect on.",
+                class = "wrong_dimension")
     }
     return(as.numeric(X[, 1]))
   }
@@ -420,12 +427,11 @@ drop_constant_cols <- function(X, method) {
   flat <- constant_cols(X)
   if (!any(flat)) return(X)
   if (all(flat)) return(NULL)
-  warning("Dropping constant coordinate(s) ",
-          paste(colnames(X)[flat], collapse = ", "),
-          " before running `", method,
-          "`: a flat coordinate carries no changepoint information and ",
-          "makes the engine's standardised statistics undefined.",
-          call. = FALSE)
+  cpt_warn("Dropping constant coordinate(s) ",
+           paste(colnames(X)[flat], collapse = ", "), " before running `",
+           method, "`: a flat coordinate carries no changepoint information ",
+            "and ", "makes the engine's standardised statistics undefined.",
+           class = "dropped_input")
   X[, !flat, drop = FALSE]
 }
 
@@ -439,13 +445,13 @@ as_mv_matrix <- function(x, arg = "x") {
   # `new_obs` or `series` rather than `x`, and naming `x` sends the reader
   # looking for an argument the function they called does not have.
   if (is.null(x) || length(x) == 0L) {
-    stop("`", arg, "` is empty: a multivariate series needs at least one ",
-         "column with at least 3 observations.", call. = FALSE)
+    cpt_abort("`", arg, "` is empty: a multivariate series needs at least one ",
+              "column with at least 3 observations.", class = "short_series")
   }
   X <- as.matrix(x)
   if (!is.numeric(X)) {
-    stop("`", arg, "` must be numeric.", nonnumeric_columns_note(x),
-         call. = FALSE)
+    cpt_abort("`", arg, "` must be numeric.", nonnumeric_columns_note(x),
+              class = "bad_type")
   }
   if (is.null(colnames(X))) {
     colnames(X) <- paste0("V", seq_len(ncol(X)))

@@ -16,7 +16,7 @@
 #' ggcpt_posterior(res)
 ggcpt_posterior <- function(x, prob_threshold = NULL) {
   if (!is_ggcpt(x)) {
-    stop("`x` must be a ggcpt object.", call. = FALSE)
+    cpt_abort("`x` must be a ggcpt object.", class = "bad_argument")
   }
 
   prob <- posterior_prob_profile(x)
@@ -34,9 +34,9 @@ ggcpt_posterior <- function(x, prob_threshold = NULL) {
                    " `ci_lower`/`ci_upper` on the changepoints tibble and",
                    " `fitted` on $data, not as a per-location profile."),
       "")
-    stop("No posterior probability profile found on this object. ",
-         "ggcpt_posterior() supports results from bcp_wrapper() and ",
-         "beast_wrapper().", extra, call. = FALSE)
+    cpt_abort("No posterior probability profile found on this object. ",
+              "ggcpt_posterior() supports results from bcp_wrapper() and ",
+              "beast_wrapper().", extra, class = "capability_absent")
   }
 
   if (is.null(prob_threshold)) {
@@ -127,14 +127,14 @@ posterior_prob_profile <- function(x) {
 #' ggcpt_runlength(res)
 ggcpt_runlength <- function(x, prob_floor = 1e-3) {
   if (!is_ggcpt(x) || !inherits(x$fit, "ocp")) {
-    stop("`x` must be a ggcpt object produced by bocpd_wrapper().",
-         call. = FALSE)
+    cpt_abort("`x` must be a ggcpt object produced by bocpd_wrapper().",
+              class = "capability_absent")
   }
 
   R <- x$fit$R
   if (is.null(R)) {
-    stop("The ocp fit does not carry the run-length matrix; call ",
-         "bocpd_wrapper() with getR = TRUE.", call. = FALSE)
+    cpt_abort("The ocp fit does not carry the run-length matrix; call ",
+              "bocpd_wrapper() with getR = TRUE.", class = "capability_absent")
   }
 
   R <- as.matrix(R)
@@ -159,8 +159,9 @@ ggcpt_runlength <- function(x, prob_floor = 1e-3) {
   }))
 
   if (is.null(df)) {
-    stop("No run-length posterior mass exceeds `prob_floor` = ", prob_floor,
-         "; lower it (probabilities are at most 1).", call. = FALSE)
+    cpt_abort("No run-length posterior mass exceeds `prob_floor` = ",
+              prob_floor, "; lower it (probabilities are at most 1).",
+              class = "bad_argument")
   }
 
   # The time axis on the result's own index, as for ggcpt_posterior().
@@ -201,11 +202,11 @@ ggcpt_runlength <- function(x, prob_floor = 1e-3) {
 #' @family plotting
 ggcpt_interactive <- function(x, engine = c("plotly", "ggiraph"),
                               width_svg = 8, height_svg = 5, ...) {
-  engine <- match.arg(engine)
+  engine <- cpt_match_arg(engine)
   if (!requireNamespace(engine, quietly = TRUE)) {
-    stop("Package '", engine, "' is required for ",
-         "`engine = \"", engine, "\"`. Install it with ",
-         "install.packages('", engine, "').", call. = FALSE)
+    cpt_abort("Package '", engine, "' is required for ", "`engine = \"", engine,
+              "\"`. Install it with ", "install.packages('", engine, "').",
+              class = "engine_missing")
   }
   # Dispatch, don't hard-code: `ggcpt_consensus` inherits `ggcpt` (so
   # is_ggcpt() is TRUE) and registers its own autoplot method, so calling
@@ -214,7 +215,7 @@ ggcpt_interactive <- function(x, engine = c("plotly", "ggiraph"),
   # argument.
   p <- if (is_ggcpt(x)) ggplot2::autoplot(x, ...) else x
   if (!inherits(p, "ggplot")) {
-    stop("`x` must be a ggcpt object or a ggplot.", call. = FALSE)
+    cpt_abort("`x` must be a ggcpt object or a ggplot.", class = "bad_argument")
   }
   if (engine == "plotly") {
     return(plotly::ggplotly(p))

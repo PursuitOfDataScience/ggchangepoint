@@ -4,14 +4,20 @@
 \alias{cpt_metrics}
 \title{Changepoint accuracy metrics}
 \usage{
-cpt_metrics(pred, truth, n, margin = 5)
+cpt_metrics(pred, truth, n = NULL, margin = 5)
 }
 \arguments{
-\item{pred}{Predicted changepoint indices (integer vector).}
+\item{pred}{Predicted changepoint indices (integer vector), or a
+\code{ggcpt} fit, whose changepoints and length are used. A
+\code{\link{cpt_monitor}()} object is accepted with a warning: its
+alarm times are \emph{detection} times, which lag each change by the
+detection delay, so the location metrics score the delay as an error;
+\code{\link{cpt_delay}()} is the evaluation built for a monitor.}
 
 \item{truth}{Ground truth changepoint indices (integer vector).}
 
-\item{n}{Length of the series.}
+\item{n}{Length of the series. Taken from \code{pred} when it is a fit or
+a monitor.}
 
 \item{margin}{Tolerance margin for matching (default 5).}
 }
@@ -33,7 +39,20 @@ A tibble with one row and the columns below. \dQuote{Higher} and
       segmentation covering metric: each true segment's best Jaccard
       overlap with a predicted segment, averaged weighted by segment
       length. Unlike F1 it needs no margin and degrades smoothly with
-      location error.}
+      location error. It has a \strong{floor}: an empty prediction
+      scores about \eqn{1/(K+1)} for \eqn{K} true changepoints (0.5
+      for one change in the middle), so covering is not comparable across
+      problems with different \eqn{K} and should not be averaged over
+      them.
+      \code{\link{cpt_benchmark}()} ranks within each dataset instead
+      for exactly that reason.}
+    \item{\code{covering_floor}, \code{covering_scaled}}{the covering
+      an empty prediction scores on this truth (the sum of the squared
+      true segment shares, \eqn{1/(K+1)} when the segments are equal),
+      and covering rescaled so that the floor is 0 and a perfect
+      segmentation 1, \eqn{(covering - floor)/(1 - floor)}: comparable
+      across problems with different \eqn{K}. \code{NA} when
+      \eqn{K = 0}, where the floor is already 1.}
     \item{\code{hausdorff}}{lower is better, in observations. The
       largest distance from any changepoint on either side to the nearest
       one on the other: a worst-case location error, so one badly placed
@@ -54,6 +73,12 @@ A tibble with one row and the columns below. \dQuote{Higher} and
       that were found are placed and ignore the ones that were missed.
       \code{NA} when nothing matched.}
   }
+  \code{precision}, \code{recall} and \code{f1} are
+  \strong{thresholded} at \code{margin}: a changepoint off by
+  \code{margin} counts as found and one off by \code{margin + 1} as
+  missed, so they can move from 1 to 0 on a one-observation change.
+  \code{covering}, \code{hausdorff}, \code{rand_index} and the matched
+  errors are continuous in the location.
 }
 \description{
 Computes standard accuracy metrics comparing predicted changepoints to

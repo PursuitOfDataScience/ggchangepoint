@@ -48,7 +48,11 @@ s$index
 Other result class: 
 \code{\link{annotate_segments}()},
 \code{\link{as_ggcpt}()},
+\code{\link{as_json}()},
 \code{\link{cpt_annotations}()},
+\code{\link{cpt_export}()},
+\code{\link{cpt_verify}()},
+\code{\link{ggchangepoint-conditions}},
 \code{\link{is_ggcpt}()},
 \code{\link{new_ggcpt}()},
 \code{\link{print.ggcpt}()}

@@ -47,6 +47,8 @@ Other ggplot2 layers:
 \code{\link{geom_cpt_event}()},
 \code{\link{geom_cpt_label}()},
 \code{\link{geom_cpt_region}()},
-\code{\link{stat_changepoint}()}
+\code{\link{ggchangepoint-ggproto}},
+\code{\link{stat_changepoint}()},
+\code{\link{stat_cpt_region}()}
 }
 \concept{ggplot2 layers}

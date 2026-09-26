@@ -13,10 +13,10 @@
 validate_location <- function(location, n) {
   if (!is.numeric(location) || length(location) == 0L ||
       anyNA(location) || any(!is.finite(location))) {
-    stop("`location` must be finite numbers: a fraction of `n` in (0, 1), ",
-         "or an integer position. Got ",
-         paste(format(utils::head(location, 4)), collapse = ", "), ".",
-         call. = FALSE)
+    cpt_abort("`location` must be finite numbers: a fraction of `n` in (0, ",
+               "1), ", "or an integer position. Got ",
+              paste(format(utils::head(location, 4)), collapse = ", "), ".",
+              class = "bad_argument")
   }
   # The SMALLEST n, not the largest: an integer position is checked against
   # every scenario it will be used in, and `n = c(50, 500)` with
@@ -29,13 +29,14 @@ validate_location <- function(location, n) {
     location >= 1 & location <= nmin - 1
   bad <- !(frac | pos)
   if (any(bad)) {
-    stop("`location` must be a fraction of `n` in (0, 1) or an integer ",
-         "position in [1, ", format(nmin - 1),
-         if (length(n) > 1) paste0("] (the shortest of the ", length(n),
-                                   " series lengths is ", format(nmin))
-         else "", "]; ",
-         paste(format(location[bad]), collapse = ", "),
-         if (sum(bad) > 1) " are not." else " is not.", call. = FALSE)
+    cpt_abort("`location` must be a fraction of `n` in (0, 1) or an integer ",
+              "position in [1, ", format(nmin - 1),
+              if (length(n) > 1) paste0("] (the shortest of the ", length(n),
+                                        " series lengths is ", format(nmin))
+              else "", "]; ",
+              paste(format(location[bad]), collapse = ", "),
+              if (sum(bad) > 1) " are not." else " is not.",
+              class = "bad_argument")
   }
   invisible(TRUE)
 }
@@ -50,7 +51,10 @@ validate_location <- function(location, n) {
 #'
 #' @param n Series length.
 #' @param jump Size of the change, in units of \code{sigma}. A vector runs
-#'   one scenario per value.
+#'   one scenario per value. For a non-Gaussian \code{family} it is the
+#'   change in the family's own parameter, added to \code{baseline}: a rate
+#'   for \code{"poisson"}, a probability for \code{"binomial"} and a mean
+#'   waiting time for \code{"exponential"}.
 #' @param sigma Noise standard deviation. Defaults to \code{1}.
 #' @param method Detection method. Defaults to \code{"pelt"}.
 #' @param location Changepoint position, as a fraction of \code{n} in
@@ -78,6 +82,15 @@ validate_location <- function(location, n) {
 #'   non-sequential plan is set, but when one is it changes where the
 #'   replicates' random numbers come from; see the section below, which
 #'   matters if the power figure is going into a paper.
+#' @param family \code{"gaussian"} (the default), or \code{"poisson"},
+#'   \code{"binomial"} or \code{"exponential"}: the replicates are drawn
+#'   from that family (see \code{\link{cpt_simulate}()}) and detected with
+#'   that family's cost (\code{cpt_detect(family = )}), so the method must
+#'   fit it (\code{\link{cpt_families}()}). \code{sigma}, \code{noise},
+#'   \code{rho} and \code{df} do not apply.
+#' @param baseline The family's parameter before the change, for a
+#'   non-Gaussian \code{family}: a rate (default 5), a probability (0.3) or
+#'   a mean waiting time (1).
 #' @param ... Additional arguments passed to \code{\link{cpt_detect}()}.
 #'
 #' @section Reproducibility under a parallel plan:
@@ -132,7 +145,15 @@ validate_location <- function(location, n) {
 cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
                       n_sim = 200, tolerance = 5, change_in = "mean",
                       noise = "gauss", rho = 0, df = 3, seed = NULL,
-                      parallel = TRUE, ...) {
+                      parallel = TRUE, family = "gaussian",
+                      baseline = NULL, ...) {
+  family <- cpt_match_arg(family, c("gaussian", "poisson", "binomial",
+                                    "exponential"), name = "family")
+  if (family != "gaussian") {
+    baseline <- baseline %||% switch(family, poisson = 5, binomial = 0.3,
+                                     exponential = 1)
+    validate_scalar(baseline, "baseline", min = 0)
+  }
   validate_scalar(n_sim, "n_sim", min = 1)
   validate_scalar(tolerance, "tolerance", min = 0)
   # `sigma` reaches cpt_simulate() as its `sd`, so without a check here a bad
@@ -150,7 +171,7 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
   # missing is refusing positions that are not positions.
   validate_location(location, n)
   validate_flag(parallel, "parallel")
-  change_in <- match.arg(change_in, c("mean", "var", "meanvar", "slope"))
+  change_in <- cpt_match_arg(change_in, c("mean", "var", "meanvar", "slope"))
   # Fail here rather than in every replicate. An unsupported combination
   # (pelt with change_in = "slope", say) makes each detection error, each
   # error is caught, and the run reports a power of NaN -- which reads like
@@ -175,7 +196,10 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
       as.integer(scen$location[i])
     }
     cp <- max(2L, min(cp, ni - 2L))
-    params <- switch(change_in,
+    fam_params <- if (family != "gaussian") {
+      c(baseline, baseline + scen$jump[i])
+    }
+    params <- if (!is.null(fam_params)) fam_params else switch(change_in,
       mean = c(0, scen$jump[i] * scen$sigma[i]),
       var = c(scen$sigma[i], scen$sigma[i] * (1 + scen$jump[i])),
       # Both parameters move. The second segment's sd used to be `sigma`
@@ -199,11 +223,16 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
     # argument" the engine already raised. So the first error is kept.
     first_err <- NULL
     reps <- lapply(seq_len(as.integer(n_sim)), function(b) {
-      d <- cpt_simulate(ni, changepoints = cp, change_in = change_in,
-                        params = params, noise = noise,
-                        sd = scen$sigma[i], rho = rho, df = df)
+      d <- if (family == "gaussian") {
+        cpt_simulate(ni, changepoints = cp, change_in = change_in,
+                     params = params, noise = noise,
+                     sd = scen$sigma[i], rho = rho, df = df)
+      } else {
+        cpt_simulate(ni, changepoints = cp, params = params, family = family)
+      }
       det <- tryCatch(
         cpt_detect(d$value, method = method, change_in = change_in,
+                   family = if (family != "gaussian") family,
                    ...)$changepoints$cp,
         error = function(e) {
           if (is.null(first_err)) first_err <<- conditionMessage(e)
@@ -220,12 +249,12 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
     hits <- m[, "hit"]
     ok <- sum(!is.na(hits))
     if (ok == 0L) {
-      warning("No replicate completed for n = ", ni, ", jump = ",
-              format(scen$jump[i]), ": all ", as.integer(n_sim),
-              " detection calls failed, so `power` is NaN rather than a ",
-              "rate. The first error was: ",
-              if (is.null(first_err)) "unavailable" else first_err,
-              call. = FALSE)
+      cpt_warn("No replicate completed for n = ", ni, ", jump = ",
+               format(scen$jump[i]), ": all ", as.integer(n_sim),
+               " detection calls failed, so `power` is NaN rather than a ",
+               "rate. The first error was: ",
+               if (is.null(first_err)) "unavailable" else first_err,
+               class = "replicates_failed")
     }
     power <- mean(hits, na.rm = TRUE)
     tibble::tibble(
@@ -261,6 +290,8 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
   attr(out, "change_in") <- change_in
   attr(out, "tolerance") <- tolerance
   attr(out, "noise") <- noise
+  attr(out, "family") <- family
+  attr(out, "baseline") <- baseline
   class(out) <- c("ggcpt_power", class(out))
   out
 }
@@ -277,9 +308,12 @@ tidy.ggcpt_power <- function(x, ...) {
 #' @param x A \code{ggcpt_power} object.
 #' @export
 print.ggcpt_power <- function(x, ...) {
+  fam <- attr(x, "family") %||% "gaussian"
   cat("ggcpt_power (method: ", attr(x, "method"), ", change in ",
-      attr(x, "change_in"), ", ", attr(x, "noise"), " noise, tolerance ",
-      attr(x, "tolerance"), ")\n", sep = "")
+      attr(x, "change_in"), ", ",
+      if (identical(fam, "gaussian")) paste0(attr(x, "noise"), " noise") else
+        paste0(fam, " data from a baseline of ", attr(x, "baseline")),
+      ", tolerance ", attr(x, "tolerance"), ")\n", sep = "")
   cat("  ", nrow(x), " scenario(s), ", max(x$n_sim),
       " replicates each\n\n", sep = "")
   print(tibble::as_tibble(x), n = 15)
@@ -376,7 +410,8 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
   # reject.
   validate_scalar(sigma, "sigma", min = 0)
   if (length(range) != 2 || range[1] >= range[2] || range[1] <= 0) {
-    stop("`range` must be two increasing positive numbers.", call. = FALSE)
+    cpt_abort("`range` must be two increasing positive numbers.",
+              class = "bad_argument")
   }
   local_seed(seed)
 
@@ -390,11 +425,12 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
     # `if (trace[[2]]["power"] < power)` and R reports "missing value where
     # TRUE/FALSE needed", which says nothing about the argument at fault.
     if (!is.finite(p)) {
-      stop("`cpt_power()` returned a non-finite power at jump = ", format(j),
-           ", so the search has nothing to bracket. That happens when every ",
-           "replicate fails, most often because an argument passed through ",
-           "`...` is not one `cpt_detect()` accepts. See the warning above ",
-           "for the error the detector raised.", call. = FALSE)
+      cpt_abort("`cpt_power()` returned a non-finite power at jump = ",
+                format(j), ", so the search has nothing to bracket. That ",
+                 "happens when every ", "replicate fails, most often because ",
+                 "an argument passed through ", "`...` is not one ",
+                 "`cpt_detect()` accepts. See the warning above ",
+                "for the error the detector raised.", class = "non_finite")
     }
     c(jump = j, power = p, mc_se = r$mc_se[1])
   }
@@ -569,11 +605,11 @@ cpt_scenarios <- function(n = 500, jump = c(0.5, 1, 2), location = 0.5,
     }
   }
   if (length(clamped) > 0) {
-    warning("`location` is a fraction of `n`; ", length(clamped),
-            " scenario(s) asked for a position outside 2..(n - 2) and were ",
-            "moved: ", paste(unique(clamped), collapse = "; "),
-            ". The scenario table still reports the requested fraction.",
-            call. = FALSE)
+    cpt_warn("`location` is a fraction of `n`; ", length(clamped),
+             " scenario(s) asked for a position outside 2..(n - 2) and were ",
+             "moved: ", paste(unique(clamped), collapse = "; "),
+             ". The scenario table still reports the requested fraction.",
+             class = "warning")
   }
   out
 }

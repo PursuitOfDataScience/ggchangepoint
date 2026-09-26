@@ -1,0 +1,19 @@
+name: Question
+description: How do I, which method should I, what does this mean?
+labels: ["question"]
+body:
+  - type: markdown
+    attributes:
+      value: >
+        "Which method should I use?" has an answer in code:
+        `cpt_recommend()` scores every method on what you know about the
+        problem, from measurements, and returns the call to run. The
+        [choosing article](https://pursuitofdatascience.github.io/ggchangepoint/articles/choosing.html)
+        walks the same decision as a tree.
+  - type: textarea
+    id: question
+    attributes:
+      label: Your question
+      description: What you are trying to do, and what you tried.
+    validations:
+      required: true

@@ -1,0 +1,114 @@
+---
+title: "Five Packages, One Series: the Nile"
+author: "Youzhi Yu<br><span style='font-size:85%;'>University of Chicago</span>"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", fig.height = 3,
+                      fig.width = 7, dpi = 72, message = FALSE)
+library(ggchangepoint)
+has <- function(pkg) requireNamespace(pkg, quietly = TRUE)
+all_there <- all(vapply(c("strucchange", "segmented", "bcp"), has,
+                        logical(1)))
+```
+
+"Which changepoint package should I use?" is asked again and again, and
+usually answered in prose. This page answers it in code: five widely used
+changepoint packages on CRAN, run on one real series, each through its own
+interface and then through one.
+
+The series is `datasets::Nile`, the annual flow of the Nile at Aswan from
+1871 to 1970, which ships with R. Its flow drops around the turn of the
+century, and every textbook on structural change uses it.
+
+```{r nile-plot, fig.alt = "Annual Nile flow, 1871 to 1970"}
+autoplot(cpt_detect(Nile, method = "strucchange"), show_ci = TRUE)
+```
+
+## Each package in its own words
+
+Five interfaces, five return types, three conventions for what "the
+changepoint" means:
+
+```{r native, eval = all_there}
+y <- as.numeric(Nile)
+
+# changepoint: an S4 object; cpts() is the last index of each segment
+changepoint::cpts(changepoint::cpt.meanvar(y, method = "PELT"))
+
+# strucchange: a formula, and breakpoints() with a confint() method
+bp <- strucchange::breakpoints(Nile ~ 1)
+bp$breakpoints
+confint(bp)$confint
+
+# segmented: a fitted lm, and a breakpoint on the covariate's own scale
+d <- data.frame(flow = y, year = as.numeric(time(Nile)))
+segmented::segmented(lm(flow ~ year, data = d), seg.Z = ~ year)$psi
+
+# bcp: a posterior probability of a change at each time
+set.seed(1)
+which.max(bcp::bcp(y)$posterior.prob)
+
+# ecp: a matrix in, and estimates that are the FIRST index of each segment
+set.seed(1)
+ecp::e.divisive(matrix(y), min.size = 2)$estimates
+```
+
+`changepoint` and `strucchange` report the last year of the old regime,
+`ecp` the first year of the new one, `bcp` a probability per year and
+`segmented` a point on the covariate, estimated on a continuous scale. The
+same answer, observation 28 (1898), is written four ways.
+
+## The same five through one interface
+
+```{r unified, eval = all_there}
+calls <- c(pelt = "meanvar", strucchange = "mean", segmented = "slope",
+           bcp = "mean", ecp = "distribution")
+fits <- Map(function(m, ci) {
+  suppressWarnings(cpt_detect(Nile, method = m, change_in = ci, seed = 1))
+}, names(calls), calls)
+do.call(rbind, lapply(names(fits), function(m) {
+  cp <- fits[[m]]$changepoints
+  data.frame(method = m, engine = fits[[m]]$versions$engine,
+             change_in = calls[[m]],
+             years = paste(cp$cp_index, collapse = ", "),
+             interval = if ("ci_lower" %in% names(cp)) {
+               paste(time(Nile)[cp$ci_lower], time(Nile)[cp$ci_upper],
+                     sep = " to ", collapse = "; ")
+             } else "")
+}))
+```
+
+Every result is the same `ggcpt` object in the same convention (the last
+observation before the change), with the years attached, so the table is
+one `rbind()` rather than five extraction recipes.
+
+## What the table says
+
+- **Four of five find 1898.** `strucchange` adds a 95% interval, 1895 to
+  1902, and `bcp`'s posterior probability of a change peaks there too.
+- **`pelt` with a change in mean and variance finds two more**, in 1874 and
+  1876: short segments of a few years each, which a variance model can fit
+  closely. A change in mean alone, on the raw flows, is worse (the
+  [pitfalls article](pitfalls.html) shows 42 changepoints), because the
+  Normal cost assumes the noise has standard deviation 1.
+- **`segmented` answers a different question.** It fits a broken line, a
+  change in slope with the level continuous, so a step appears as a kink,
+  here near 1913. It is the right tool for dose-response and trend breaks,
+  and the wrong one for a level shift.
+
+## The next questions, in the same grammar
+
+```{r next}
+fit <- cpt_detect(Nile, method = "strucchange")
+cpt_effect(fit)[, c("cp_index", "before", "after", "delta", "delta_lower",
+                    "delta_upper", "pct_change")]
+cpt_test_at(Nile, when = 1899)[, c("cp_index", "estimate", "p_value",
+                                   "method")]
+cpt_assumptions(fit)
+```
+
+The flow fell by about a fifth. Had the date been fixed in advance (the
+first Aswan dam was built between 1898 and 1902), `cpt_test_at()` is an
+exact test with no selection to adjust for; a test at the detected date,
+chosen by the same data, is not.

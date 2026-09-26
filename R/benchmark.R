@@ -18,8 +18,12 @@
 #' Runs a grid of methods over a collection of labelled series and scores
 #' every cell with \code{\link{cpt_metrics}()} (or
 #' \code{\link{cpt_metrics_annotated}()} when a dataset carries several
-#' annotators). An engine that errors on one dataset records the message and
-#' the grid continues.
+#' annotators). A method that fails on one dataset (its engine errors, is
+#' not installed, or cannot take that series: see
+#' \link{ggchangepoint-conditions}) records the message and the grid
+#' continues. Invalid data or arguments, which every method would reject,
+#' stop the benchmark instead, naming the dataset and method, so a mistake
+#' in the call is not reported as a finding about an engine.
 #'
 #' @param datasets A named list of datasets. Each element is either a plain
 #'   numeric vector (no ground truth, so only descriptive columns are filled)
@@ -70,8 +74,8 @@ cpt_benchmark <- function(datasets, methods = c("pelt", "binseg", "wbs"),
                           change_in = "mean", parallel = TRUE,
                           progress = TRUE, seed = NULL, ...) {
   if (!is.list(datasets) || length(datasets) == 0) {
-    stop("`datasets` must be a non-empty named list; see cpt_datasets().",
-         call. = FALSE)
+    cpt_abort("`datasets` must be a non-empty named list; see cpt_datasets().",
+              class = "bad_argument")
   }
   methods <- unique(as.character(methods))
   # An empty method set builds a zero-row grid, and the attribute the result
@@ -79,13 +83,14 @@ cpt_benchmark <- function(datasets, methods = c("pelt", "binseg", "wbs"),
   # attribute on NULL", which says nothing about the argument. `datasets`
   # above is checked the same way, for the same reason.
   if (length(methods) == 0L) {
-    stop("`methods` is empty: `cpt_benchmark()` needs at least one method ",
-         "to score. See cpt_methods() for what is available.", call. = FALSE)
+    cpt_abort("`methods` is empty: `cpt_benchmark()` needs at least one ",
+               "method ", "to score. See cpt_methods() for what is available.",
+              class = "bad_argument")
   }
   metric_choices <- c("covering", "f1", "precision", "recall", "hausdorff",
                       "rand_index", "annotation_error", "mae_matched",
                       "rmse_matched")
-  metrics <- match.arg(metrics, metric_choices, several.ok = TRUE)
+  metrics <- cpt_match_arg(metrics, metric_choices, several.ok = TRUE)
   validate_scalar(tolerance, "tolerance", min = 0)
   validate_flag(parallel, "parallel")
   validate_flag(progress, "progress")
@@ -110,10 +115,16 @@ cpt_benchmark <- function(datasets, methods = c("pelt", "binseg", "wbs"),
     if (!is.null(p)) p()
     d <- datasets[[grid$dataset[i]]]
     t0 <- proc.time()[["elapsed"]]
+    # A method that fails on a dataset is a result, recorded in `error`;
+    # bad input or a bug in this package is raised instead (see
+    # fanout_failure()).
     fit <- tryCatch(
       cpt_detect(d$series, method = grid$method[i], change_in = change_in,
                  ...),
-      error = function(e) structure(conditionMessage(e), class = "cpt_failed")
+      error = function(e) {
+        fanout_failure(e, "Dataset `", grid$dataset[i], "`, method `",
+                       grid$method[i], "`: ")
+      }
     )
     rt <- proc.time()[["elapsed"]] - t0
     if (inherits(fit, "cpt_failed")) {
@@ -196,8 +207,9 @@ normalise_dataset <- function(d, name = NULL) {
   }
   el <- function(nm) if (is.list(d)) d[[nm, exact = TRUE]] else NULL
   if (!is.list(d) || is.null(el("series"))) {
-    stop("Each dataset must be a numeric vector, a cpt_simulate() tibble, or ",
-         "a list with a `series` element.", call. = FALSE)
+    cpt_abort("Each dataset must be a numeric vector, a cpt_simulate() ",
+               "tibble, or ", "a list with a `series` element.",
+              class = "bad_type")
   }
   # `changepoints` is accepted alongside `truth` because that is what
   # cpt_simulate() calls the same thing; without it a hand-built dataset
@@ -211,11 +223,11 @@ normalise_dataset <- function(d, name = NULL) {
     list(as_cp_locations(raw, "annotations"))
   }
   if (length(ann) == 0 && length(setdiff(names(d), "series")) > 0) {
-    warning("Dataset ", if (is.null(name)) "" else paste0("`", name, "` "),
-            "has no ground truth: none of `annotations`, `truth` or ",
-            "`changepoints` is present, so its metrics will be NA. Found: ",
-            paste(setdiff(names(d), "series"), collapse = ", "), ".",
-            call. = FALSE)
+    cpt_warn("Dataset ", if (is.null(name)) "" else paste0("`", name, "` "),
+             "has no ground truth: none of `annotations`, `truth` or ",
+             "`changepoints` is present, so its metrics will be NA. Found: ",
+             paste(setdiff(names(d), "series"), collapse = ", "), ".",
+             class = "warning")
   }
   # A matrix stays a matrix. as.numeric() on one concatenates its columns,
   # so a 200 x 2 series (TCPD ships several) was scored as a 400-point one
@@ -354,13 +366,13 @@ autoplot.ggcpt_benchmark <- function(object,
                                      plot_type = c("heatmap", "ranks",
                                                    "critical_difference"),
                                      metric = NULL, alpha = 0.05, ...) {
-  plot_type <- match.arg(plot_type)
+  plot_type <- cpt_match_arg(plot_type)
   metrics <- attr(object, "metrics") %||%
     intersect(names(object), cpt_metric_names())
   metric <- metric %||% metrics[1]
   if (!metric %in% names(object)) {
-    stop("`metric = \"", metric, "\"` was not scored. Available: ",
-         paste(metrics, collapse = ", "), ".", call. = FALSE)
+    cpt_abort("`metric = \"", metric, "\"` was not scored. Available: ",
+              paste(metrics, collapse = ", "), ".", class = "bad_argument")
   }
 
   if (plot_type == "heatmap") {
@@ -393,24 +405,24 @@ autoplot.ggcpt_benchmark <- function(object,
     # user to fix `annotations` points away from the `error` column that
     # holds the diagnosis.
     if (!metric %in% names(object)) {
-      stop("No dataset carries ground truth, so there is nothing to rank. ",
-           "Supply `truth` or `annotations` with each dataset.",
-           call. = FALSE)
+      cpt_abort("No dataset carries ground truth, so there is nothing to ",
+                 "rank. ", "Supply `truth` or `annotations` with each dataset.",
+                class = "input_error")
     }
     failed <- if ("error" %in% names(object)) sum(!is.na(object$error)) else 0L
     if (failed == nrow(object)) {
-      stop("Every method failed on every dataset, so there is nothing to ",
-           "rank. The `error` column of the benchmark table holds the ",
-           "message from each run: `subset(bm, !is.na(error))$error`.",
-           call. = FALSE)
+      cpt_abort("Every method failed on every dataset, so there is nothing to ",
+                "rank. The `error` column of the benchmark table holds the ",
+                "message from each run: `subset(bm, !is.na(error))$error`.",
+                class = "engine_error")
     }
-    stop("`", metric, "` is NA for every row, so there is nothing to rank. ",
-         if (failed > 0) paste0(failed, " of ", nrow(object),
-                                " runs failed (see the `error` column); ")
-         else "",
-         "a metric is NA when the dataset carries no ground truth or the ",
-         "metric is undefined for the result; `cpt_metrics()` on one row ",
-         "shows which.", call. = FALSE)
+    cpt_abort("`", metric, "` is NA for every row, so there is nothing to rank. ",
+              if (failed > 0) paste0(failed, " of ", nrow(object),
+                                     " runs failed (see the `error` column); ")
+              else "",
+              "a metric is NA when the dataset carries no ground truth or the ",
+              "metric is undefined for the result; `cpt_metrics()` on one row ",
+              "shows which.", class = "bad_argument")
   }
   rk$method <- factor(rk$method, levels = rev(rk$method))
 
@@ -476,15 +488,16 @@ nemenyi_cd <- function(k, N, alpha = 0.05) {
   validate_scalar(alpha, "alpha", min = 0, max = 1,
                   min_open = TRUE, max_open = TRUE)
   if (!is.numeric(k) || length(k) != 1L || is.na(k) || k < 2) {
-    stop("A critical-difference diagram compares methods to each other, so ",
-         "it needs at least two; got ", if (is.numeric(k)) k else "none",
-         ". Use `plot_type = \"heatmap\"` or `\"ranks\"` for a single ",
-         "method.", call. = FALSE)
+    cpt_abort("A critical-difference diagram compares methods to each other, ",
+               "so ", "it needs at least two; got ",
+              if (is.numeric(k)) k else "none", ". Use `plot_type = ",
+               "\"heatmap\"` or `\"ranks\"` for a single ", "method.",
+              class = "bad_argument")
   }
   if (!is.numeric(N) || length(N) != 1L || is.na(N) || N < 1) {
-    stop("The Nemenyi critical distance is computed over datasets, so it ",
-         "needs at least one; got ", if (is.numeric(N)) N else "none", ".",
-         call. = FALSE)
+    cpt_abort("The Nemenyi critical distance is computed over datasets, so it ",
+              "needs at least one; got ", if (is.numeric(N)) N else "none", ".",
+              class = "bad_argument")
   }
   q <- stats::qtukey(1 - alpha, nmeans = k, df = Inf) / sqrt(2)
   q * sqrt(k * (k + 1) / (6 * N))
@@ -516,7 +529,7 @@ nemenyi_cd <- function(k, N, alpha = 0.05) {
 #' names(cpt_datasets(n = 200))
 cpt_datasets <- function(source = c("simulated", "tcpd"), n = 500, seed = 1,
                          names = NULL, ...) {
-  source <- match.arg(source)
+  source <- cpt_match_arg(source)
   if (source == "tcpd") {
     return(cpt_load_tcpd(name = names, ...))
   }
@@ -552,9 +565,9 @@ cpt_datasets <- function(source = c("simulated", "tcpd"), n = 500, seed = 1,
   if (!is.null(names)) {
     unknown <- setdiff(names, base::names(builders))
     if (length(unknown) > 0) {
-      stop("Unknown dataset(s): ", paste(unknown, collapse = ", "),
-           ". Available: ", paste(base::names(builders), collapse = ", "),
-           ".", call. = FALSE)
+      cpt_abort("Unknown dataset(s): ", paste(unknown, collapse = ", "),
+                ". Available: ", paste(base::names(builders), collapse = ", "),
+                ".", class = "bad_argument")
     }
     builders <- builders[names]
   }
@@ -608,9 +621,9 @@ cpt_datasets <- function(source = c("simulated", "tcpd"), n = 500, seed = 1,
 cpt_load_tcpd <- function(name = NULL, cache_dir = NULL, refresh = FALSE,
                           quiet = FALSE) {
   if (!requireNamespace("jsonlite", quietly = TRUE)) {
-    stop("Package 'jsonlite' is required to read the Turing Change Point ",
-         "Dataset. Install it with install.packages('jsonlite').",
-         call. = FALSE)
+    cpt_abort("Package 'jsonlite' is required to read the Turing Change Point ",
+              "Dataset. Install it with install.packages('jsonlite').",
+              class = "engine_missing")
   }
   validate_flag(refresh, "refresh")
   validate_flag(quiet, "quiet")
@@ -622,12 +635,12 @@ cpt_load_tcpd <- function(name = NULL, cache_dir = NULL, refresh = FALSE,
                      "alan-turing-institute/TCPD/master")
   ann_file <- file.path(tcpd_dir, "annotations.json")
   if (isTRUE(refresh) || !file.exists(ann_file)) {
-    if (!quiet) message("Downloading TCPD annotations ...")
+    if (!quiet) cpt_inform("Downloading TCPD annotations ...")
     ok <- tcpd_download(paste0(base_url, "/annotations.json"), ann_file)
     if (!ok) {
-      stop("Could not download the TCPD annotations. Check the network ",
-           "connection, or point `cache_dir` at a copy you already have.",
-           call. = FALSE)
+      cpt_abort("Could not download the TCPD annotations. Check the network ",
+                "connection, or point `cache_dir` at a copy you already have.",
+                class = "engine_error")
     }
   }
   annotations <- jsonlite::fromJSON(ann_file, simplifyVector = FALSE)
@@ -644,23 +657,23 @@ cpt_load_tcpd <- function(name = NULL, cache_dir = NULL, refresh = FALSE,
   name <- as.character(name)
   unknown <- setdiff(name, base::names(annotations))
   if (length(unknown) > 0) {
-    stop("Unknown TCPD dataset(s): ", paste(unknown, collapse = ", "),
-         ". Call cpt_load_tcpd() with no arguments for the catalogue.",
-         call. = FALSE)
+    cpt_abort("Unknown TCPD dataset(s): ", paste(unknown, collapse = ", "),
+              ". Call cpt_load_tcpd() with no arguments for the catalogue.",
+              class = "bad_argument")
   }
 
   out <- list()
   for (nm in name) {
     dst <- file.path(tcpd_dir, paste0(nm, ".json"))
     if (isTRUE(refresh) || !file.exists(dst)) {
-      if (!quiet) message("Downloading TCPD dataset '", nm, "' ...")
+      if (!quiet) cpt_inform("Downloading TCPD dataset '", nm, "' ...")
       ok <- tcpd_download(paste0(base_url, "/datasets/", nm, "/", nm,
                                  ".json"), dst)
       if (!ok) {
-        warning("TCPD dataset '", nm, "' could not be downloaded from ",
-                base_url, ": either it is not in the repository (several ",
-                "series' sources do not permit redistribution) or the ",
-                "network call failed. Skipping it.", call. = FALSE)
+        cpt_warn("TCPD dataset '", nm, "' could not be downloaded from ",
+                 base_url, ": either it is not in the repository (several ",
+                 "series' sources do not permit redistribution) or the ",
+                 "network call failed. Skipping it.", class = "engine_failed")
         next
       }
     }

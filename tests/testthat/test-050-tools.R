@@ -48,14 +48,22 @@ test_that("consensus clustering matches the metric's tolerance semantics", {
 
 test_that("cpt_recommend is a decision table with reasons", {
   skip_on_cran()
-  r <- cpt_recommend(noise = "autocorrelated")
+  r <- cpt_recommend(noise = "autocorrelated", n_expected = 2)
   expect_s3_class(r, "ggcpt_recommendation")
-  expect_true(all(c("method", "engine", "installed", "score", "why",
+  expect_true(all(c("method", "engine", "installed", "score", "tie", "call",
+                    "hits", "false_positives", "why",
                     "caveat") %in% names(r)))
   expect_true(all(diff(r$score) <= 1e-8))
-  expect_true(all(c("decafs", "envcpt") %in% utils::head(r$method, 5)))
-  # The engines that assume iid noise must be flagged, not silently ranked.
-  expect_true(!is.na(r$caveat[r$method == "pelt"]))
+  # Since 0.6.0 the ranking comes from the measured noise benchmark, not
+  # from a hand-written list: the top candidate makes the fewest expected
+  # errors (misses plus false alarms) among the measured ones...
+  err <- (2 - r$hits) + r$false_positives
+  expect_equal(err[1], min(err, na.rm = TRUE))
+  # ...and an engine measured to report many spurious changepoints under
+  # this noise is flagged, whatever the literature says about it.
+  bad <- r$false_positives > 5 & !is.na(r$false_positives)
+  expect_true(any(bad))
+  expect_true(all(!is.na(r$caveat[bad])))
   expect_output(print(r), "Recommended methods")
 
   expect_true(all(cpt_recommend(dimension = "multivariate")$method %in%
@@ -314,11 +322,22 @@ test_that("geom_cpt_event maps x from xintercept and does not inherit", {
   # mapping, so the alias was silently skipped and the text layer went out
   # with no x; and inheriting the series' aesthetics looks for columns the
   # event frame does not have.
+  # Since 0.6.0 one GeomCptEvent layer draws the rule and its label.
   built <- ggplot2::ggplot_build(p)
-  txt <- built$data[[3]]
-  expect_equal(txt$x, 80)
-  expect_equal(txt$label, "policy change")
+  evd <- built$data[[2]]
+  expect_equal(evd$xintercept, 80)
+  expect_equal(evd$label, "policy change")
+  expect_s3_class(ggplot2::ggplotGrob(p), "gtable")
   expect_error(geom_cpt_event(data = ev), "needs a mapping")
+  # With ggrepel the label is its own layer, whose x comes from xintercept.
+  if (requireNamespace("ggrepel", quietly = TRUE)) {
+    pr <- ggplot2::ggplot(d, ggplot2::aes(t, y)) + ggplot2::geom_line() +
+      geom_cpt_event(ggplot2::aes(xintercept = x, label = label, y = 0),
+                     data = ev, repel = TRUE)
+    txt <- ggplot2::ggplot_build(pr)$data[[3]]
+    expect_equal(txt$x, 80)
+    expect_equal(txt$label, "policy change")
+  }
   # `repel = TRUE` is only buildable where ggrepel is installed; assert the
   # right behaviour in both worlds rather than skipping one of them.
   repel_layer <- function() {
@@ -376,7 +395,7 @@ test_that("cpt_power refuses an unsupported method/change combination", {
                          change_in = "slope", n_sim = 2),
                "not supported for method")
   expect_error(cpt_power(n = 100, jump = 1, change_in = "distribution",
-                         n_sim = 2), "should be one of")
+                         n_sim = 2), class = "ggchangepoint_bad_argument")
 })
 
 test_that("the e-detector respects its average-run-length bound", {

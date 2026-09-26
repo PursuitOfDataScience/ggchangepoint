@@ -35,8 +35,20 @@ navbar:
       href: articles/extending.html
     - text: Streaming and online monitoring
       href: articles/monitoring.html
-    - text: 'Benchmarks: runtime, size and coverage'
+  - text: Articles
+    menu:
+    - text: Ten ways to get a changepoint wrong
+      href: articles/pitfalls.html
+    - text: Choosing a method
+      href: articles/choosing.html
+    - text: 'Five packages, one series: the Nile'
+      href: articles/nile.html
+    - text: Calibration
+      href: articles/calibration.html
+    - text: 'Benchmarks: runtime, false alarms and coverage'
       href: articles/benchmarks.html
+    - text: Stability, deprecation and the contract
+      href: articles/stability.html
   - text: News
     href: news/index.html
   right:
@@ -57,28 +69,44 @@ articles:
   - supervised
   - extending
   - monitoring
-- title: Web only
+- title: Articles
   desc: >
-    Too slow to run at build time, so it ships on the site rather than in
-    the package tarball.
+    On the website only. Vignettes teach the API; these teach the domain:
+    how analyses go wrong, how to choose, what the engines were measured to
+    do, and what the package promises.
   contents:
+  - articles/pitfalls
+  - articles/choosing
+  - articles/nile
+  - articles/calibration
   - articles/benchmarks
+  - articles/stability
 
 reference:
 - title: Core API
   contents:
   - cpt_detect
   - cpt_methods
+  - cpt_families
   - cpt_penalty
   - cpt_cite
   - as_cpt_series
   - new_ggcpt
   - is_ggcpt
   - print.ggcpt
+  - cpt_verify
+- title: The contract
+  desc: >
+    What code that calls the package can rely on: the classed conditions it
+    raises, and the versioned JSON schema a result is written in.
+  contents:
+  - ggchangepoint-conditions
+  - as_json
+  - cpt_export
 - title: Extending the package
   desc: >
-    Bring a detector this package does not wrap -- a non-CRAN engine, a
-    Python tool, a neural detector, or your own changepoints -- into the
+    Bring a detector this package does not wrap (a non-CRAN engine, a
+    Python tool, a neural detector, or your own changepoints) into the
     same tidy, plottable grammar.
   contents:
   - as_ggcpt
@@ -110,6 +138,23 @@ reference:
   - cpt_confint
   - cpt_test
   - cpt_regions
+- title: Effects, dates and empty answers
+  desc: >
+    How big was the change, did anything change at a date fixed in advance,
+    was the change the event you know about, and what does "no changepoints"
+    mean.
+  contents:
+  - cpt_effect
+  - cpt_test_at
+  - cpt_attribute_event
+  - cpt_test_null
+  - cpt_null_power
+- title: Segment models
+  desc: >
+    A model per regime, and a forecast from the last one.
+  contents:
+  - cpt_segment_models
+  - predict.ggcpt
 - title: Choosing the number of changepoints
   contents:
   - cpt_select
@@ -124,6 +169,14 @@ reference:
   - cpt_statistic
   - cpt_solution_path
   - cpt_scale_space
+- title: Assumptions and robustness
+  desc: >
+    Do the result's assumptions hold for this series, and does the answer
+    survive a change of noise model?
+  contents:
+  - cpt_assumptions
+  - cpt_gof
+  - cpt_robustness
 - title: Supervised detection
   desc: >
     Labelled regions as ground truth, label errors as the accuracy
@@ -236,6 +289,8 @@ reference:
   - geom_cpt_label
   - geom_cpt_event
   - stat_changepoint
+  - stat_cpt_region
+  - ggchangepoint-ggproto
   - ggcpt_posterior
   - ggcpt_runlength
   - ggcpt_interactive
@@ -259,6 +314,19 @@ reference:
   - signal_mix
   - signal_teeth
   - signal_stairs
+- title: Measurements
+  desc: >
+    What the engines were measured to do at this release: runtimes,
+    invariances, false positives under four noise regimes and four data
+    types, and false alarms on pure noise. cpt_methods() and
+    cpt_recommend() read them.
+  contents:
+  - cpt_runtimes
+  - cpt_invariances
+  - cpt_noise_benchmark
+  - cpt_data_types
+  - cpt_null_sizes
+  - cpt_calibration
 - title: Re-exports
   contents:
   - reexports

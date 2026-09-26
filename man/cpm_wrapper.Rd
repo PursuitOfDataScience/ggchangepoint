@@ -4,7 +4,7 @@
 \alias{cpm_wrapper}
 \title{Sequential change point model wrapper (CPM)}
 \usage{
-cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = 500, startup = 20, ...)
+cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = NULL, startup = 20, ...)
 }
 \arguments{
 \item{x}{A numeric vector.}
@@ -19,14 +19,25 @@ for 0/1 Bernoulli data; this one also needs a \code{lambda} value passed
 through \code{...}, e.g. \code{lambda = 0.3}).}
 
 \item{arl0}{Target in-control average run length (how many observations,
-on average, before a false alarm). Defaults to \code{500}. \pkg{cpm}
-ships thresholds only for a fixed grid (100, 200, 300, 370, 400, 500,
-600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
-9000, 10000, 20000, 30000, 40000 and 50000), and any other value is
-refused, because the engine answers it by printing an error and
-reporting no changepoints. The grid is the same for every
-\code{cpm_type}, and 50000 is the ceiling: a long series cannot be
-given an \code{arl0} proportional to its length indefinitely.}
+  on average, before a false alarm). \pkg{cpm}
+  ships thresholds only for a fixed grid (100, 200, 300, 370, 400, 500,
+  600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
+  9000, 10000, 20000, 30000, 40000 and 50000), and any other value is
+  refused, because the engine answers it by printing an error and
+  reporting no changepoints. The grid is the same for every
+  \code{cpm_type}, and 50000 is the ceiling: a long series cannot be
+  given an \code{arl0} proportional to its length indefinitely.
+
+  When \code{NULL} (the default) it \strong{scales with the series}: the
+  smallest grid value of at least \eqn{5n}, capped at 50000. A
+  sequential test run over a whole series raises about
+  \eqn{n / \mathrm{arl0}} false alarms, so the streaming default of 500
+  meant 36 changepoints on 10,000 observations with 4 real ones, and 350
+  on 100,000; \eqn{5n} turned the 36 into exactly the 4. The expected
+  count is recorded as \code{$diagnostics$expected_false_positives}. Pass
+  \code{arl0 = 500} for the 0.5.0 behaviour, and use
+  \code{\link{cpt_monitor}()} for genuine streaming, whose default is
+  unchanged.}
 
 \item{startup}{Number of observations after each restart before monitoring
 begins. Defaults to \code{20}.}

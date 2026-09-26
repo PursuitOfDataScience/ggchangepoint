@@ -51,8 +51,8 @@ bcp_wrapper <- function(x, prob_threshold = 0.5, burnin = 50, mcmc = 500,
   data_vec <- as_uni_vector(x, "bcp")
   # bcp::bcp() crashes the R session (segfault in its C++ code) on n = 3.
   if (length(data_vec) < 4) {
-    stop("`x` must have at least 4 observations for the bcp engine.",
-         call. = FALSE)
+    cpt_abort("`x` must have at least 4 observations for the bcp engine.",
+              class = "short_series")
   }
   local_seed(seed)
 
@@ -129,13 +129,18 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
   cp_raw <- as.integer(unlist(fit$changepoint_lists$maxCPs))
   cp_indices <- cp_raw[cp_raw > 1] - 1L
 
+  # `currmu` is the engine's running estimate of the mean, computed from the
+  # data up to each time alone: the one causal fitted signal any engine
+  # here offers, and one the result used to discard.
+  currmu <- tryCatch(as.numeric(unlist(fit$currmu)), error = function(e) NULL)
   ggcpt_build(
     data_vec, cp_indices,
     method = "bocpd",
     change_in = "mean",
     penalty = list(type = "hazard", value = hazard),
     fit = fit,
-    call = match.call()
+    call = match.call(),
+    fitted = if (length(currmu) == length(data_vec)) currmu
   )
 }
 
@@ -164,7 +169,7 @@ bocpd_wrapper <- function(x, hazard = 100, ...) {
 #' @export
 #' @examplesIf requireNamespace("Rbeast", quietly = TRUE) && .Platform$OS.type != "windows"
 #' # try(): Rbeast intermittently returns an all-NaN fit and the condition
-#' # can persist for a session, so a check must not fail on it -- the
+#' # can persist for a session, so a check must not fail on it; the
 #' # wrapper reports it by name when it happens.
 #' res <- try(beast_wrapper(c(rnorm(60), rnorm(60, 4)), seed = 2026),
 #'            silent = TRUE)
@@ -183,7 +188,14 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
                   min_open = TRUE)
   data_vec <- as_uni_vector(x, "beast")
 
-  args <- list(y = data_vec, season = "none", quiet = TRUE,
+  # Centred before the engine sees it. Rbeast's priors are on the trend's
+  # level, so where zero sits changes the posterior: measured, `x + 100`
+  # manufactured a third changepoint at 159 on a series with two. Centring
+  # cannot move a mean changepoint for a correct detector, so it removes the
+  # dependence without changing the question; the fitted trend gets the
+  # centre back.
+  centre <- mean(data_vec, na.rm = TRUE)
+  args <- list(y = data_vec - centre, season = "none", quiet = TRUE,
                print.progress = FALSE, ...)
   # Rbeast::beast() has no `seed` argument; its sampler is seeded via
   # mcmc.seed (0 means "random").
@@ -225,12 +237,12 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
     attempt <- attempt + 1
   }
   if (!is.finite(fit$trend$ncp)) {
-    stop("Rbeast::beast() returned an invalid (all-NaN) fit on ", attempt,
-         " attempts. This is an intermittent upstream issue, and it is not ",
-         "always transient: it can persist for the rest of an R session, ",
-         "so a fresh session is a better bet than another call. Measured ",
-         "rates across sessions on one identical series ranged from 0 to ",
-         "100 percent.", call. = FALSE)
+    cpt_abort("Rbeast::beast() returned an invalid (all-NaN) fit on ", attempt,
+              " attempts. This is an intermittent upstream issue, and it is not ",
+              "always transient: it can persist for the rest of an R session, ",
+              "so a fresh session is a better bet than another call. Measured ",
+              "rates across sessions on one identical series ranged from 0 to ",
+              "100 percent.", class = "engine_error")
   }
 
   # beast reports candidate changepoints (most probable first) as the first
@@ -258,6 +270,6 @@ beast_wrapper <- function(x, prob_threshold = 0.5, seed = NULL, ...) {
     extra_cp_cols = if (length(cp_indices) > 0) {
       list(posterior_prob = cp_prob)
     },
-    fitted = as.numeric(fit$trend$Y)
+    fitted = as.numeric(fit$trend$Y) + centre
   )
 }

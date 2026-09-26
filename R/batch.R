@@ -56,8 +56,8 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
   validate_flag(keep_fit, "keep_fit")
   series_list <- if (is.list(x) && !is.data.frame(x)) {
     if (length(x) == 0L) {
-      stop("`x` is empty: `cpt_batch()` needs at least one series.",
-           call. = FALSE)
+      cpt_abort("`x` is empty: `cpt_batch()` needs at least one series.",
+                class = "bad_argument")
     }
     # coerce_series_values(), not a bare as.numeric(): a factor coerces to
     # its LEVEL CODES -- an alphabetical ordering of the labels rather than
@@ -84,18 +84,18 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
                                    "cpt_detect() directly, or split the",
                                    "columns into separate panel members.")),
           error = function(e) {
-            stop(label, ": ", conditionMessage(e), call. = FALSE)
+            cpt_rethrow(e, label, ": ")
           })
         return(withCallingHandlers(
           as_mv_matrix(xi, arg = "x")[, 1],
           error = function(e) {
-            stop(label, ": ", conditionMessage(e), call. = FALSE)
+            cpt_rethrow(e, label, ": ")
           }))
       }
       withCallingHandlers(
         coerce_series_values(xi),
         error = function(e) {
-          stop(label, ": ", conditionMessage(e), call. = FALSE)
+          cpt_rethrow(e, label, ": ")
         })
     }), names(x))
   } else {
@@ -147,21 +147,21 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
                    function(i) !is.null(index_for(i)), logical(1))
     if (!all(have)) {
       miss <- names(series_list)[!have]
-      stop("`index` is a list, so it gives one index per series, but it has ",
-           "none for ", length(miss), " of ", length(series_list), ": ",
-           paste(utils::head(miss, 3), collapse = ", "),
-           if (length(miss) > 3) ", ..." else "", ". Supply one for every ",
-           "series, or pass one vector shared by the whole panel.",
-           call. = FALSE)
+      cpt_abort("`index` is a list, so it gives one index per series, but it ",
+                 "has ", "none for ", length(miss), " of ", length(series_list),
+                ": ", paste(utils::head(miss, 3), collapse = ", "),
+                if (length(miss) > 3) ", ..." else "", ". Supply one for ",
+                 "every ", "series, or pass one vector shared by the whole ",
+                 "panel.", class = "bad_argument")
     }
     kinds <- unique(vapply(seq_along(series_list), function(i) {
       class(index_for(i))[1]
     }, character(1)))
     if (length(kinds) > 1L) {
-      stop("`index` mixes index types across series (",
-           paste(kinds, collapse = ", "), "); tidy() and autoplot() stack ",
-           "them into one column and one axis, so they must share one.",
-           call. = FALSE)
+      cpt_abort("`index` mixes index types across series (",
+                paste(kinds, collapse = ", "), "); tidy() and autoplot() ",
+                 "stack ", "them into one column and one axis, so they must ",
+                 "share one.", class = "bad_argument")
     }
   }
 
@@ -170,8 +170,8 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
       cpt_detect(series_list[[i]], method = method, change_in = change_in,
                  index = index_for(i), ...),
       error = function(e) {
-        stop("Series `", names(series_list)[i], "` (", i, " of ",
-             length(series_list), "): ", conditionMessage(e), call. = FALSE)
+        cpt_rethrow(e, "Series `", names(series_list)[i], "` (", i, " of ",
+                    length(series_list), "): ")
       }
     )
   }
@@ -199,8 +199,8 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
 
   out <- tibble::tibble(
     series = names(series_list),
-    n_changepoints = vapply(results, function(r) nrow(r$changepoints),
-                            integer(1)),
+    n_changepoints = unname(vapply(results, function(r) nrow(r$changepoints),
+                                   integer(1))),
     changepoints = lapply(results, function(r) r$changepoints),
     result = results
   )
@@ -216,7 +216,9 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
 print.ggcpt_batch <- function(x, ...) {
   cat("ggcpt_batch (", nrow(x), " series, method: ",
       attr(x, "method") %||% "?", ")\n\n", sep = "")
-  print(tibble::as_tibble(x[, c("series", "n_changepoints")]), n = 20)
+  cols <- intersect(c(attr(x, "group_vars"), "series", "n_changepoints"),
+                    names(x))
+  print(tibble::as_tibble(x)[, cols], n = 20)
   invisible(x)
 }
 
@@ -235,8 +237,17 @@ tidy.ggcpt_batch <- function(x, ...) {
     tibble::add_column(cp[, cols, drop = FALSE], series = x$series[i],
                        .before = 1)
   }))
-  out %||% tibble::tibble(series = character(), cp = integer(),
-                          cp_value = numeric())
+  out <- out %||% tibble::tibble(series = character(), cp = integer(),
+                                 cp_value = numeric())
+  # A batch built from grouped data carries its grouping columns, so the
+  # changepoints join back to the frame they came from.
+  groups <- intersect(attr(x, "group_vars"), names(x))
+  if (length(groups)) {
+    keys <- tibble::as_tibble(x)[match(out$series, x$series), groups,
+                                 drop = FALSE]
+    out <- dplyr::bind_cols(keys, out)
+  }
+  out
 }
 
 #' @rdname cpt_batch

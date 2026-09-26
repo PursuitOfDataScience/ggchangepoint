@@ -8,3 +8,4 @@
 inst/doc
 docs
 .claude/scheduled_tasks.lock
+next_release.md

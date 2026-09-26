@@ -37,6 +37,20 @@
 #' \code{tidy()}'s \code{cp_index}, or plot the results with
 #' \code{autoplot()}.
 #'
+#' @section Choosing the method by its answer:
+#' Running several methods and reporting the one that found a change, as
+#' if it were the only one run, is a garden of forking paths with a plot
+#' attached, and fifty methods behind one call make it easier here than
+#' anywhere else. A method chosen because of its answer carries no valid
+#' p-value, and neither does any test at its changepoints: the selection
+#' across methods is a second selection on top of the one each method
+#' already makes (see \code{\link{cpt_test}()}'s \code{selection_adjusted}).
+#' Choose the method before seeing the data (\code{\link{cpt_recommend}()}
+#' answers from what you know about the problem, not from the series), or
+#' report every method you ran. Agreement across methods, as
+#' \code{\link{cpt_consensus}()} counts it, is a robustness display, not a
+#' correction: the methods share engines, costs and assumptions.
+#'
 #' @return A ggplot object.
 #' @export
 #'
@@ -51,7 +65,7 @@ ggcpt_compare <- function(x,
                           seed = NULL,
                           ...) {
 
-  layout <- match.arg(layout)
+  layout <- cpt_match_arg(layout)
   # De-duplicate methods so repeated names do not crash factor construction
   # (duplicated factor levels) downstream.
   methods <- unique(methods)
@@ -212,9 +226,9 @@ compare_input <- function(x, fn) {
   if (is.matrix(x) || is.data.frame(x)) {
     nc <- ncol(as.matrix(x))
     if (nc > 1) {
-      stop("`", fn, "()` compares univariate detectors, but `x` has ", nc,
-           " columns. Pass a single series, or use `cpt_batch()` to run a ",
-           "detector over every column.", call. = FALSE)
+      cpt_abort("`", fn, "()` compares univariate detectors, but `x` has ", nc,
+                " columns. Pass a single series, or use `cpt_batch()` to run a ",
+                "detector over every column.", class = "wrong_dimension")
     }
   }
   as_uni_vector(x, fn)

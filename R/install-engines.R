@@ -51,7 +51,7 @@
 cpt_install_engines <- function(bundle = "core", dry_run = FALSE, ...) {
   validate_flag(dry_run, "dry_run")
   bundles <- engine_bundles()
-  bundle <- match.arg(bundle, c(names(bundles), "all"), several.ok = TRUE)
+  bundle <- cpt_match_arg(bundle, c(names(bundles), "all"), several.ok = TRUE)
   if ("all" %in% bundle) bundle <- names(bundles)
 
   want <- do.call(rbind, lapply(bundle, function(b) {
@@ -63,13 +63,13 @@ cpt_install_engines <- function(bundle = "core", dry_run = FALSE, ...) {
 
   todo <- want$package[!want$installed_before]
   if (length(todo) == 0) {
-    message("Every package in ", paste(bundle, collapse = ", "),
-            " is already installed.")
+    cpt_inform("Every package in ", paste(bundle, collapse = ", "),
+               " is already installed.")
     want$installed_after <- TRUE
     return(invisible(want))
   }
   if (isTRUE(dry_run)) {
-    message("Would install: ", paste(todo, collapse = ", "))
+    cpt_inform("Would install: ", paste(todo, collapse = ", "))
     want$installed_after <- want$installed_before
     return(invisible(want))
   }
@@ -89,10 +89,9 @@ cpt_install_engines <- function(bundle = "core", dry_run = FALSE, ...) {
                                  logical(1))
   failed <- want$package[!want$installed_after]
   if (length(failed) > 0) {
-    warning("These packages are still not installed: ",
-            paste(failed, collapse = ", "),
-            ". Some need system libraries (JAGS for mcp, for example).",
-            call. = FALSE)
+    cpt_warn("These packages are still not installed: ",
+             paste(failed, collapse = ", "), ". Some need system libraries ",
+              "(JAGS for mcp, for example).", class = "engine_failed")
   }
   invisible(want)
 }

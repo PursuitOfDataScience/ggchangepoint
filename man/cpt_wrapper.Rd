@@ -19,7 +19,11 @@ and \code{cpt.np()} respectively. The default is \code{mean_var}.}
 \code{np} or \code{cpt_np}, \code{PELT} is the only option.}
 
 \item{...}{Extra arguments for each \code{cpt} function mentioned in the
-\code{change_in} section.}
+\code{change_in} section. For a change in mean (and for \code{np})
+\code{minseglen} defaults to \code{2} rather than the engine's
+\code{1}, so no segment is a single observation; pass it to choose
+another value. SegNeigh keeps the engine's default, which is the only
+one it implements.}
 }
 \value{
 A tibble including which point(s) is/are the changepoint along with

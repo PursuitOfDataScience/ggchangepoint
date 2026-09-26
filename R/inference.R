@@ -123,9 +123,9 @@ cpt_confint <- function(object, level = 0.95,
                                    "posterior"),
                         B = 200, seed = NULL, ...) {
   if (!is_ggcpt(object)) {
-    stop("`object` must be a ggcpt object.", call. = FALSE)
+    cpt_abort("`object` must be a ggcpt object.", class = "bad_argument")
   }
-  method <- match.arg(method)
+  method <- cpt_match_arg(method)
   # Whether the caller asked for a level, as opposed to taking the default.
   # Used at the end: only an explicit request is worth warning about.
   level_supplied <- !missing(level)
@@ -156,13 +156,13 @@ cpt_confint <- function(object, level = 0.95,
     # of what the caller asked for rather than letting the bootstrap branch
     # complain about a method the caller never named.
     if (method == "bootstrap" && !bootstrap_possible(object)) {
-      stop("`method = \"auto\"` has nothing to fall back on for this ",
-           "result: the engine supplied no interval and no posterior, and ",
-           "the bootstrap route needs to re-run the detector, but `",
-           scalar_chr(object$method), "` is not a method cpt_detect() ",
-           "knows. Supply the interval yourself via as_ggcpt(ci = ), or ",
-           "register the detector with cpt_register_method() so it can be ",
-           "re-run.", call. = FALSE)
+      cpt_abort("`method = \"auto\"` has nothing to fall back on for this ",
+                "result: the engine supplied no interval and no posterior, and ",
+                "the bootstrap route needs to re-run the detector, but `",
+                scalar_chr(object$method), "` is not a method cpt_detect() ",
+                "knows. Supply the interval yourself via as_ggcpt(ci = ), or ",
+                "register the detector with cpt_register_method() so it can be ",
+                "re-run.", class = "capability_absent")
     }
   }
 
@@ -171,15 +171,16 @@ cpt_confint <- function(object, level = 0.95,
   # so the reachable call is the EXPLICIT `method = "bootstrap"` the review
   # named, which skipped every check in that block.
   if (method == "bootstrap" && !rerun_matches_result(object)) {
-    stop("This result reports `change_in = \"",
-         scalar_chr(object$change_in), "\"`, which `",
-         scalar_chr(object$method),
-         "` cannot be asked for through cpt_detect(), so the bootstrap ",
-         "would re-run a different model than the one that produced it and ",
-         "report the spread of the wrong search as this result's interval. ",
-         "A formula fit keeps neither the formula nor `data` on the object. ",
-         "Use the engine's own intervals with `method = \"native\"`, or ",
-         "supply the interval yourself via as_ggcpt(ci = ).", call. = FALSE)
+    cpt_abort("This result reports `change_in = \"",
+              scalar_chr(object$change_in), "\"`, which `",
+              scalar_chr(object$method), "` cannot be asked for through ",
+               "cpt_detect(), so the bootstrap ", "would re-run a different ",
+               "model than the one that produced it and ", "report the spread ",
+               "of the wrong search as this result's interval. ",
+              "A formula fit keeps neither the formula nor `data` on the object. ",
+              "Use the engine's own intervals with `method = \"native\"`, or ",
+              "supply the interval yourself via as_ggcpt(ci = ).",
+              class = "capability_absent")
   }
 
   if (method %in% c("bootstrap", "nsp")) {
@@ -193,12 +194,12 @@ cpt_confint <- function(object, level = 0.95,
   out <- switch(method,
     native = {
       if (!has_native) {
-        stop("This result carries no engine confidence intervals. Engines ",
-             "that supply them: ",
-             paste(subset(cpt_methods(), ci %in% TRUE)$method,
-                   collapse = ", "),
-             ". Use method = \"bootstrap\" for a model-agnostic interval.",
-             call. = FALSE)
+        cpt_abort("This result carries no engine confidence intervals. Engines ",
+                  "that supply them: ",
+                  paste(subset(cpt_methods(), ci %in% TRUE)$method,
+                        collapse = ", "),
+                  ". Use method = \"bootstrap\" for a model-agnostic interval.",
+                  class = "capability_absent")
       }
       tibble::tibble(cp = cp,
                      ci_lower = as.integer(native$lower),
@@ -244,19 +245,21 @@ cpt_confint <- function(object, level = 0.95,
     # so an explicit `level = 0.8` passed through without a word there --
     # the silence the paragraph above exists to prevent.
     if (length(got) == 0 && nrow(out) > 0 && identical(method, "native")) {
-      warning("`level = ", format(requested), "` was not applied: `method = ",
-              "\"native\"` reports the interval the engine already ",
-              "computed, and this result does not record the level it was ",
-              "computed at (see the engine's own `alpha` or `conf_level`). ",
-              "Use `method = \"bootstrap\"` or `\"nsp\"` for an interval ",
-              "computed at the level you ask for.", call. = FALSE)
+      cpt_warn("`level = ", format(requested), "` was not applied: `method = ",
+               "\"native\"` reports the interval the engine already ",
+               "computed, and this result does not record the level it was ",
+               "computed at (see the engine's own `alpha` or `conf_level`). ",
+               "Use `method = \"bootstrap\"` or `\"nsp\"` for an interval ",
+               "computed at the level you ask for.",
+               class = "level_not_applied")
     }
     if (length(got) > 0 && !any(abs(got - requested) < 1e-9)) {
-      warning("`level = ", format(requested), "` was not applied: `method = ",
-              "\"", method, "\"` reports the interval the engine already ",
-              "computed, at level ", paste(format(got), collapse = "/"),
-              ". Use `method = \"bootstrap\"` or `\"nsp\"` for an interval ",
-              "computed at the level you ask for.", call. = FALSE)
+      cpt_warn("`level = ", format(requested), "` was not applied: `method = ",
+               "\"", method, "\"` reports the interval the engine already ",
+               "computed, at level ", paste(format(got), collapse = "/"),
+               ". Use `method = \"bootstrap\"` or `\"nsp\"` for an interval ",
+               "computed at the level you ask for.",
+               class = "level_not_applied")
     }
   }
   out
@@ -398,30 +401,37 @@ rerun_penalty <- function(object) {
 #' @noRd
 rerun_dots <- function(object, dots, what) {
   if (n_coordinates(object) > 1L) {
-    stop("`", what, "` re-runs the detector on the result's series, but ",
-         "this `", scalar_chr(object$method), "` result has ",
-         n_coordinates(object), " coordinates and the re-run would see only ",
-         "`$data$value` (the first coordinate, or the cross-sectional ",
-         "mean): a different problem from the one that produced these ",
-         "changepoints. Re-run the multivariate detector yourself, or use ",
-         "an interval the engine supplied (`cpt_confint(method = ",
-         "\"native\")`).", call. = FALSE)
+    cpt_abort("`", what, "` re-runs the detector on the result's series, but ",
+              "this `", scalar_chr(object$method), "` result has ",
+              n_coordinates(object), " coordinates and the re-run would see ",
+               "only ", "`$data$value` (the first coordinate, or the ",
+               "cross-sectional ", "mean): a different problem from the one ",
+               "that produced these ", "changepoints. Re-run the multivariate ",
+               "detector yourself, or use ", "an interval the engine supplied ",
+               "(`cpt_confint(method = ", "\"native\")`).",
+              class = "unsupported")
   }
   if (is.null(dots[["change_in", exact = TRUE]])) {
     ci <- rerun_change_in(object)
     if (is.null(ci)) {
-      stop("`", what, "` re-runs `", scalar_chr(object$method), "`, but ",
-           "this result records `change_in = \"",
-           scalar_chr(object$change_in), "\"`, which cpt_detect() cannot ",
-           "be asked for, so the re-run would fit a different model. Pass ",
-           "`change_in` through `...`, together with the engine argument ",
-           "that produced this result (for example `family`, ",
-           "`running_stat` or `parameter`).", call. = FALSE)
+      cpt_abort("`", what, "` re-runs `", scalar_chr(object$method), "`, but ",
+                "this result records `change_in = \"",
+                scalar_chr(object$change_in), "\"`, which cpt_detect() cannot ",
+                "be asked for, so the re-run would fit a different model. Pass ",
+                "`change_in` through `...`, together with the engine argument ",
+                "that produced this result (for example `family`, ",
+                "`running_stat` or `parameter`).", class = "unsupported")
     }
     dots$change_in <- ci
   }
   if (is.null(dots[["penalty", exact = TRUE]])) {
     dots$penalty <- rerun_penalty(object)
+  }
+  # ...and the family: a Poisson fit re-run without it would be re-run as a
+  # Gaussian one, a different model answering a different question.
+  if (is.null(dots[["family", exact = TRUE]]) && !is.null(object$family) &&
+      is.null(registry_get(scalar_chr(object$method)))) {
+    dots$family <- object$family
   }
   dots
 }
@@ -438,34 +448,36 @@ rerun_dots <- function(object, dots, what) {
 check_detect_request <- function(method, change_in = "mean") {
   if (!is.character(method) || length(method) != 1L || is.na(method) ||
       !nzchar(method)) {
-    stop("`method` must be a single method name; see cpt_methods().",
-         call. = FALSE)
+    cpt_abort("`method` must be a single method name; see cpt_methods().",
+              class = "bad_argument")
   }
   if (method %in% planned_methods()$method) {
-    stop("`", method, "` is planned but not wired in this release: see the ",
-         "\"planned\" rows of `cpt_methods()`.", call. = FALSE)
+    cpt_abort("`", method, "` is planned but not wired in this release: see ",
+               "the ", "\"planned\" rows of `cpt_methods()`.",
+              class = "planned_method")
   }
   entry <- registry_get(method)
   if (is.null(entry)) {
     hit <- pmatch(method, builtin_registry()$method)
     if (is.na(hit)) {
-      stop("`", method, "` is not a method cpt_detect() knows. See ",
-           "cpt_methods() for the available ones, or register a detector ",
-           "with cpt_register_method().", call. = FALSE)
+      cpt_abort("`", method, "` is not a method cpt_detect() knows. See ",
+                "cpt_methods() for the available ones, or register a detector ",
+                "with cpt_register_method().", class = "unknown_method")
     }
     method <- builtin_registry()$method[hit]
   }
   if (!is.character(change_in) || length(change_in) != 1L ||
       !change_in %in% cpt_change_in_levels()) {
-    stop("`change_in` must be one of ",
-         paste0("\"", cpt_change_in_levels(), "\"", collapse = ", "), ".",
-         call. = FALSE)
+    cpt_abort("`change_in` must be one of ",
+              paste0("\"", cpt_change_in_levels(), "\"", collapse = ", "), ".",
+              class = "bad_argument")
   }
   if (!is.null(entry)) {
     if (!change_in %in% entry$change_in) {
-      stop("`change_in = \"", change_in, "\"` is not supported by the ",
-           "registered method `", method, "`. Supported: ",
-           paste(entry$change_in, collapse = ", "), ".", call. = FALSE)
+      cpt_abort("`change_in = \"", change_in, "\"` is not supported by the ",
+                "registered method `", method, "`. Supported: ",
+                paste(entry$change_in, collapse = ", "), ".",
+                class = "unsupported")
     }
   } else {
     validate_method_change_in(method, change_in)
@@ -495,9 +507,9 @@ empty_confint <- function(object) {
 confint_posterior <- function(object, level) {
   prob <- posterior_prob_profile(object)
   if (is.null(prob)) {
-    stop("This result carries no posterior changepoint-probability profile; ",
-         "bcp and beast supply one. Use method = \"bootstrap\" instead.",
-         call. = FALSE)
+    cpt_abort("This result carries no posterior changepoint-probability ",
+               "profile; ", "bcp and beast supply one. Use method = ",
+               "\"bootstrap\" instead.", class = "capability_absent")
   }
   cp <- object$changepoints$cp
   n <- length(prob)
@@ -550,15 +562,15 @@ confint_posterior <- function(object, level) {
     span <- hi[i] - lo[i] + 1L
     if (span > length(win) / 2 && length(win) > 4L) {
       at_mode <- p[centre] / total
-      warning("The posterior interval for the changepoint at ", cp[i],
-              " covers ", span, " of the ", length(win),
-              " positions in its window. That is the profile, not the ",
-              "location: ", format(100 * at_mode, digits = 2),
-              "% of the window's posterior changepoint mass sits at the ",
-              "estimate itself and the rest is spread thinly, so reaching ",
-              format(level), " requires most of the window. Compare ",
-              "`method = \"bootstrap\"`, and see the `\"posterior\"` note ",
-              "in ?cpt_confint.", call. = FALSE)
+      cpt_warn("The posterior interval for the changepoint at ", cp[i],
+               " covers ", span, " of the ", length(win), " positions in its ",
+                "window. That is the profile, not the ", "location: ",
+               format(100 * at_mode, digits = 2), "% of the window's ",
+                "posterior changepoint mass sits at the ", "estimate itself ",
+                "and the rest is spread thinly, so reaching ", format(level),
+               " requires most of the window. Compare ",
+               "`method = \"bootstrap\"`, and see the `\"posterior\"` note ",
+               "in ?cpt_confint.", class = "wide_interval")
     }
   }
   tibble::tibble(cp = cp, ci_lower = lo, ci_upper = hi, level = level,
@@ -589,19 +601,20 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
   # `...` still wins, so an explicit `change_in` overrides the object --
   # same precedence cpt_detect() gives `dots` over `derived_args_for()`.
   if (isTRUE(object$registered) && is.null(registry_get(method))) {
-    stop("This result came from a registered method (`", method,
-         "`) that is no longer registered, so it cannot be re-run for a ",
-         "bootstrap interval.", call. = FALSE)
+    cpt_abort("This result came from a registered method (`", method,
+              "`) that is no longer registered, so it cannot be re-run for a ",
+              "bootstrap interval.", class = "capability_absent")
   }
   if (!bootstrap_possible(object)) {
-    stop("A bootstrap interval re-runs the detector, but `", method,
-         "` is not a method cpt_detect() knows. Use method = \"native\" or ",
-         "\"posterior\" if the engine supplied one, or register the ",
-         "detector with cpt_register_method() so it can be re-run.",
-         call. = FALSE)
+    cpt_abort("A bootstrap interval re-runs the detector, but `", method,
+              "` is not a method cpt_detect() knows. Use method = \"native\" or ",
+              "\"posterior\" if the engine supplied one, or register the ",
+              "detector with cpt_register_method() so it can be re-run.",
+              class = "capability_absent")
   }
   # ...and the penalty, and a change type cpt_detect() can be asked for;
   # see rerun_dots().
+  refuse_resampling_family(object, "cpt_confint(method = \"bootstrap\")")
   dots <- rerun_dots(object, list(...), "cpt_confint(method = \"bootstrap\")")
 
   data_vec <- object$data$value
@@ -669,22 +682,22 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
     hi[j] <- as.integer(ceiling(q[2]))
   }
   if (n_failed == B) {
-    stop("The detector could not be re-run on any of the ", B, " bootstrap ",
-         "replicates, so there is no interval to report. The first error ",
-         "was: ", first_error, call. = FALSE)
+    cpt_abort("The detector could not be re-run on any of the ", B,
+              " bootstrap ", "replicates, so there is no interval to report. ",
+               "The first error ", "was: ", first_error, class = "engine_error")
   }
   if (n_failed > 0L) {
-    warning("The detector failed on ", n_failed, " of ", B, " bootstrap ",
-            "replicate(s), which are excluded; the first error was: ",
-            first_error, call. = FALSE)
+    cpt_warn("The detector failed on ", n_failed, " of ", B, " bootstrap ",
+             "replicate(s), which are excluded; the first error was: ",
+             first_error, class = "replicates_failed")
   }
   n_empty <- sum(B - n_failed - n_eff)
   if (n_empty > 0) {
-    warning("The detector found no changepoints in ", n_empty,
-            " of ", (B - n_failed) * length(cp), " (replicate, changepoint) ",
-            "draws; those draws are excluded, so the interval is based on ",
-            "fewer than `B` replicates. `n_replicates` records how many were ",
-            "used.", call. = FALSE)
+    cpt_warn("The detector found no changepoints in ", n_empty, " of ",
+             (B - n_failed) * length(cp), " (replicate, changepoint) ",
+             "draws; those draws are excluded, so the interval is based on ",
+             "fewer than `B` replicates. `n_replicates` records how many were ",
+             "used.", class = "replicates_failed")
   }
 
   tibble::tibble(cp = cp, ci_lower = lo, ci_upper = hi, level = level,
@@ -716,10 +729,10 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
     }
   }
   if (anyNA(lo)) {
-    message(sum(is.na(lo)), " of ", length(cp), " changepoint(s) fall in no ",
-            "NSP region at global level ", format(alpha),
-            "; those rows are NA. A changepoint in no region is not ",
-            "supported by NSP at this level.")
+    cpt_inform(sum(is.na(lo)), " of ", length(cp), " changepoint(s) fall in ",
+                "no ", "NSP region at global level ", format(alpha),
+               "; those rows are NA. A changepoint in no region is not ",
+               "supported by NSP at this level.")
   }
   out <- tibble::tibble(cp = cp, ci_lower = lo, ci_upper = hi, level = level,
                         source = "nsp_region")
@@ -743,6 +756,13 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
 #'   of the \code{\link[stats]{p.adjust}} methods (\code{"none"},
 #'   \code{"bonferroni"}, \code{"holm"}, \code{"BH"}, ...). Defaults to
 #'   \code{"none"}; a \code{p_adjusted} column is added when it is not.
+#' @param relevance Optional smallest change worth acting on, in noise
+#'   standard deviations. The null hypothesis becomes "the change is no
+#'   larger than \code{relevance}" rather than "there is no change", so a
+#'   statistically detectable but practically negligible shift is not
+#'   significant. Applies to the Welch route (the changepoints of a series
+#'   fit); the \code{p_value} column is then the relevance test's, and a
+#'   \code{relevance} column records the threshold in the data's units.
 #'
 #' @section Selection bias: read this before quoting a p-value:
 #' Testing a changepoint at a location that was \emph{chosen because the data
@@ -798,30 +818,37 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
 #' fit <- cpt_detect(c(rnorm(60), rnorm(60, 4)), method = "pelt")
 #' cpt_test(fit)
 cpt_test <- function(object, type = c("jump", "segment"),
-                     correction = "none") {
+                     correction = "none", relevance = NULL) {
   if (!is_ggcpt(object)) {
-    stop("`object` must be a ggcpt object.", call. = FALSE)
+    cpt_abort("`object` must be a ggcpt object.", class = "bad_argument")
   }
-  type <- match.arg(type)
-  correction <- match.arg(correction, stats::p.adjust.methods)
+  type <- cpt_match_arg(type)
+  correction <- cpt_match_arg(correction, stats::p.adjust.methods)
+  if (!is.null(relevance)) validate_scalar(relevance, "relevance", min = 0)
   # Every route below tests `$data$value`, the result's one univariate
   # series; for a multivariate result that is its first coordinate (or the
   # cross-sectional mean), which need not carry the change at all.
   if (n_coordinates(object) > 1L) {
-    stop("`cpt_test()` compares the segments either side of each ",
-         "changepoint on a single series, but this `",
-         scalar_chr(object$method), "` result has ", n_coordinates(object),
-         " coordinates and the test would see only `$data$value` (the ",
-         "first coordinate, or the cross-sectional mean). Test a ",
-         "coordinate you care about with cpt_test(as_ggcpt(",
-         "fit$changepoints$cp, <that column>)).", call. = FALSE)
+    cpt_abort("`cpt_test()` compares the segments either side of each ",
+              "changepoint on a single series, but this `",
+              scalar_chr(object$method), "` result has ", n_coordinates(object),
+              " coordinates and the test would see only `$data$value` (the ",
+              "first coordinate, or the cross-sectional mean). Test a ",
+              "coordinate you care about with cpt_test(as_ggcpt(",
+              "fit$changepoints$cp, <that column>)).",
+              class = "wrong_dimension")
   }
 
   out <- if (type == "segment") {
     test_segments(object)
+  } else if (!is.null(relevance)) {
+    naive_jump_test(object)
   } else {
     native <- native_jump_test(object)
-    native %||% naive_jump_test(object)
+    native %||% regression_jump_test(object) %||% naive_jump_test(object)
+  }
+  if (!is.null(relevance) && nrow(out) > 0) {
+    out <- apply_relevance(out, object, relevance)
   }
 
   # On the original scale too, when there is one. `cpt_confint()` has
@@ -841,11 +868,11 @@ cpt_test <- function(object, type = c("jump", "segment"),
     attr(out, "correction") <- correction
   }
   if (nrow(out) > 0 && any(!out$selection_adjusted)) {
-    warning("`selection_adjusted` is FALSE for ",
-            sum(!out$selection_adjusted), " of ", nrow(out), " row(s): the ",
-            "changepoint locations were chosen from these data, so those ",
-            "p-values are anti-conservative. See the selection-bias section ",
-            "of ?cpt_test.", call. = FALSE)
+    cpt_warn("`selection_adjusted` is FALSE for ", sum(!out$selection_adjusted),
+             " of ", nrow(out), " row(s): the ", "changepoint locations were ",
+              "chosen from these data, so those ", "p-values are ",
+              "anti-conservative. See the selection-bias section ",
+             "of ?cpt_test.", class = "selection")
   }
   out
 }
@@ -929,10 +956,28 @@ strucchange_jump_test <- function(object, fit) {
 #' @noRd
 segmented_jump_test <- function(object, fit) {
   cp <- object$changepoints$cp
+  # Davies' test asks whether the BASE model (the line before any
+  # breakpoint) needs a breakpoint. Handed the segmented fit itself it asks
+  # something else, whether one MORE breakpoint is needed, which on a
+  # correctly fitted series is "no": a p-value near 1 labelled as the test
+  # of the breakpoint that was found.
+  base <- attr(fit, "ggcpt_base")
+  seg_var <- object$regression$seg_z %||% ".t"
+  if (is.null(base)) {
+    base <- stats::lm(.y ~ .t,
+                      data = data.frame(.y = object$data$value,
+                                        .t = seq_len(nrow(object$data))))
+    seg_var <- ".t"
+  }
   dav <- tryCatch(
-    segmented::davies.test(fit, seg.Z = ~.t),
+    segmented::davies.test(base,
+                           seg.Z = stats::as.formula(paste("~", seg_var))),
     error = function(e) NULL
   )
+  # A Davies test that could not be computed must not become a row that
+  # claims a selection-adjusted p-value of NA: fall back to the honest,
+  # unadjusted route instead.
+  if (is.null(dav) || !is.finite(as.numeric(dav$p.value))) return(NULL)
   tt <- tryCatch(summary(fit)$Ttable, error = function(e) NULL)
   u_rows <- if (!is.null(tt)) grep("^U[0-9]+", rownames(tt)) else integer(0)
 
@@ -962,6 +1007,73 @@ segmented_jump_test <- function(object, fit) {
     method = "Davies test (segmented; global, one test per fit)",
     selection_adjusted = TRUE
   )
+}
+
+# Internal: a Chow F test at each break of a regression fit whose design
+# the result carries (a formula fit through fastcpd), on the rows between
+# the neighbouring breaks. Unadjusted, like every pointwise test at a
+# data-chosen date. NULL for a result that is not a regression.
+#' @noRd
+regression_jump_test <- function(object) {
+  X <- object$regression$X
+  cp <- object$changepoints$cp
+  if (is.null(X) || !length(cp)) return(NULL)
+  y <- object$data$value
+  cp_fit <- cp
+  if (!is.null(object$na_map)) {
+    y <- y[object$na_map]
+    cp_fit <- match(cp, object$na_map)
+  }
+  n <- length(y)
+  k <- ncol(X)
+  bounds <- c(0L, cp_fit, n)
+  rss <- function(r) {
+    sum(stats::lm.fit(X[r, , drop = FALSE], y[r])$residuals^2)
+  }
+  rows <- lapply(seq_along(cp_fit), function(i) {
+    left <- (bounds[i] + 1L):bounds[i + 1L]
+    right <- (bounds[i + 1L] + 1L):bounds[i + 2L]
+    f <- NA_real_
+    pv <- NA_real_
+    if (length(left) > k && length(right) > k) {
+      r1 <- rss(left) + rss(right)
+      r0 <- rss(c(left, right))
+      dfd <- length(left) + length(right) - 2 * k
+      f <- ((r0 - r1) / k) / (r1 / dfd)
+      pv <- stats::pf(f, k, dfd, lower.tail = FALSE)
+    }
+    tibble::tibble(
+      cp = cp[i], estimate = NA_real_, statistic = f, p_value = pv,
+      method = "Chow F at estimated break, full regression model (unadjusted)",
+      selection_adjusted = FALSE)
+  })
+  do.call(rbind, rows)
+}
+
+# Internal: replace each Welch row's p-value with the test of a relevance
+# hypothesis, H0: |change| <= relevance * sigma, one-sided on |t|.
+#' @noRd
+apply_relevance <- function(out, object, relevance) {
+  y <- object$data$value
+  thr <- relevance * noise_sd(y)
+  cp <- object$changepoints$cp
+  bounds <- c(0L, cp, length(y))
+  out$p_value <- vapply(seq_len(nrow(out)), function(i) {
+    k <- match(out$cp[i], cp)
+    if (is.na(k)) return(NA_real_)
+    a <- y[(bounds[k] + 1L):bounds[k + 1L]]
+    b <- y[(bounds[k + 1L] + 1L):bounds[k + 2L]]
+    if (length(a) < 2L || length(b) < 2L) return(NA_real_)
+    va <- stats::var(a) / length(a)
+    vb <- stats::var(b) / length(b)
+    se <- sqrt(va + vb)
+    dfw <- se^4 / (va^2 / (length(a) - 1) + vb^2 / (length(b) - 1))
+    stats::pt((abs(mean(b) - mean(a)) - thr) / se, dfw, lower.tail = FALSE)
+  }, numeric(1))
+  out$relevance <- thr
+  out$method <- paste0(out$method, ", relevance test (H0: |change| <= ",
+                       format(signif(thr, 3)), ")")
+  out
 }
 
 # Internal: the generic fallback. A Welch two-sample t-test across each

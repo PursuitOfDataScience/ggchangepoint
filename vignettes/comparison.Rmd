@@ -478,6 +478,16 @@ engine-native intervals, bootstrap stability, and penalty paths give three
 independent views of how much a reported changepoint should be trusted, and
 all three render directly with **ggplot2** [@wickham2016ggplot2].
 
+One warning belongs next to all of this. Running several methods and
+reporting the one that found a change, as if it were the only one run, is
+a garden of forking paths, and fifty methods behind one call make it easier
+here than anywhere else. A method chosen for its answer carries no valid
+p-value, and neither does a test at its changepoints: choose the method
+before looking at the series (`cpt_recommend()` answers from what you know
+about the problem), or report every method you ran. Agreement across
+methods is a robustness display, not a correction, because the methods
+share engines, costs and assumptions.
+
 For the detection surface itself (the dispatcher, the engine wave, the
 Bayesian displays, and the multivariate tools), see
 `vignette("introduction", package = "ggchangepoint")` and the feature tour in

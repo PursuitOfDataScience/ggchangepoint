@@ -4,11 +4,20 @@
 \alias{segmented_wrapper}
 \title{Broken-line regression wrapper (segmented)}
 \usage{
-segmented_wrapper(x, npsi = 1, conf_level = 0.95, seed = NULL, ...)
+segmented_wrapper(
+  x,
+  npsi = 1,
+  conf_level = 0.95,
+  seed = NULL,
+  data = NULL,
+  seg_z = NULL,
+  family = c("gaussian", "poisson", "binomial"),
+  ...
+)
 }
 \arguments{
-\item{x}{A numeric vector; a linear model of \code{x} on time
-\code{1:length(x)} is segmented.}
+\item{x}{A numeric vector (a line in time is segmented), or a model
+formula (supply \code{data}).}
 
 \item{npsi}{Number of breakpoints to estimate. Defaults to \code{1}.}
 
@@ -20,7 +29,19 @@ seed is scoped to this call: \code{.Random.seed} is saved and restored,
 so a seeded call inside a simulation loop does not pin the loop's own
 stream.}
 
-\item{...}{Additional arguments passed to \code{segmented::segmented()}.}
+\item{data}{A data frame, for formula input.}
+
+\item{seg_z}{For formula input, the covariate whose relationship with
+the response breaks: its name, or a one-sided formula (\code{~ t}) as
+\pkg{segmented}'s own \code{seg.Z} takes it. Defaults to the formula's
+only numeric covariate, and must be named when there are several.}
+
+\item{family}{\code{"gaussian"} (a linear model, the default),
+\code{"poisson"} or \code{"binomial"} (a generalised linear model on
+the log or logit scale).}
+
+\item{...}{Additional arguments passed to \code{segmented::segmented()},
+for example \code{psi} (starting values) or \code{fixed.psi}.}
 }
 \value{
 A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} columns
@@ -28,6 +49,9 @@ A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} columns
   rounded to the nearest index; for a continuous fit the reported location
   is the kink itself. A constant series has no kink and returns an empty
   result, rather than the arbitrary breakpoint a singular fit would give.
+  Formula input adds \code{psi}, \code{psi_lower} and \code{psi_upper}
+  (the breakpoints on the covariate's scale) and a \code{$coefficients}
+  table with the slope of \code{seg_z} in each segment.
 }
 \description{
 Wraps \code{segmented::segmented()} (Muggeo, 2003, 2008): maximum
@@ -38,6 +62,15 @@ model jumps in the level, \code{segmented} models kinks in the trend, so
 \code{change_in} is \code{"slope"} and the fitted broken line is stored in
 the \code{fitted} column for \code{autoplot(show_fit = TRUE)}.
 }
+\details{
+Called with a numeric vector it segments a line in time. Called with a
+formula and \code{data} it does what the engine exists for: breakpoints
+in the relationship between the response and a covariate,
+\code{seg_z}. The result is then ordered by that covariate, which
+becomes its index, so \code{tidy()}'s \code{cp_index} and the plot speak
+in the covariate's units, and \code{psi}, \code{psi_lower} and
+\code{psi_upper} give the breakpoints on that scale exactly.
+}
 \examples{
 \dontshow{if (requireNamespace("segmented", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 set.seed(2026)
@@ -45,6 +78,12 @@ y <- cumsum(c(rep(0.5, 100), rep(-0.3, 100))) + rnorm(200)
 res <- segmented_wrapper(y, npsi = 1)
 res$changepoints
 ggplot2::autoplot(res, show_fit = TRUE, show_ci = TRUE)
+
+# A breakpoint in a dose-response relationship
+d <- data.frame(dose = runif(150, 0, 10))
+d$response <- 2 + 0.8 * pmin(d$dose, 6) + rnorm(150, 0, 0.4)
+fit <- segmented_wrapper(response ~ dose, data = d)
+fit$changepoints[, c("cp", "psi", "psi_lower", "psi_upper")]
 \dontshow{\}) # examplesIf}
 }
 \references{

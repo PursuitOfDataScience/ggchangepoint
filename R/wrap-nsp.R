@@ -87,8 +87,8 @@ nsp_wrapper <- function(x, alpha = 0.1,
   # none of which names the argument. Measured across all 64 wrapper
   # argument slots; these are the ones that needed it.
   validate_scalar(ord, "ord", min = 0)
-  variant <- match.arg(variant)
-  change_in <- match.arg(change_in)
+  variant <- cpt_match_arg(variant)
+  change_in <- cpt_match_arg(change_in)
   validate_scalar(alpha, "alpha", min = 0, max = 1,
                   min_open = TRUE, max_open = TRUE)
   validate_scalar(M, "M", min = 1)
@@ -109,14 +109,16 @@ nsp_wrapper <- function(x, alpha = 0.1,
                           deg = deg, ...),
     tvreg = {
       if (is.null(covariates)) {
-        stop("`variant = \"tvreg\"` fits a linear model whose coefficients ",
-             "change, so it needs `covariates`: a design matrix with one ",
-             "row per observation.", call. = FALSE)
+        cpt_abort("`variant = \"tvreg\"` fits a linear model whose ",
+                   "coefficients ", "change, so it needs `covariates`: a ",
+                   "design matrix with one ", "row per observation.",
+                  class = "bad_argument")
       }
       Xd <- as.matrix(covariates)
       if (nrow(Xd) != n) {
-        stop("`covariates` must have one row per observation: the series has ",
-             n, " but `covariates` has ", nrow(Xd), ".", call. = FALSE)
+        cpt_abort("`covariates` must have one row per observation: the series ",
+                   "has ", n, " but `covariates` has ", nrow(Xd), ".",
+                  class = "wrong_dimension")
       }
       # The tvreg variant fits a linear model whose COEFFICIENTS change, so
       # `change_in` -- match.arg'ed from c("mean", "slope") and reported as
@@ -181,22 +183,22 @@ nsp_wrapper <- function(x, alpha = 0.1,
   dup <- duplicated(mids[ord])
   collapsed <- ord[dup]
   if (length(collapsed) > 0 || any(drop_lo)) {
-    warning("`nsp` returned ", length(mids), " significance regions but ",
-            length(mids) - length(union(collapsed, which(drop_lo))),
-            " distinct usable midpoint(s): ",
-            if (length(collapsed) > 0) {
-              paste0(length(collapsed),
-                     " region(s) share a midpoint with a narrower one")
-            } else "",
-            if (length(collapsed) > 0 && any(drop_lo)) ", and " else "",
-            if (any(drop_lo)) {
-              paste0(sum(drop_lo), " midpoint(s) fall outside 1..",
-                     length(data_vec) - 1L)
-            } else "",
-            ". The regions slot keeps only the rows a changepoint could be ",
-            "keyed to, so `nrow(fit$regions)` and `nrow(fit$changepoints)` ",
-            "agree; read `$fit` for everything the engine returned.",
-            call. = FALSE)
+    cpt_warn("`nsp` returned ", length(mids), " significance regions but ",
+             length(mids) - length(union(collapsed, which(drop_lo))),
+             " distinct usable midpoint(s): ",
+             if (length(collapsed) > 0) {
+               paste0(length(collapsed),
+                      " region(s) share a midpoint with a narrower one")
+             } else "",
+             if (length(collapsed) > 0 && any(drop_lo)) ", and " else "",
+             if (any(drop_lo)) {
+               paste0(sum(drop_lo), " midpoint(s) fall outside 1..",
+                      length(data_vec) - 1L)
+             } else "",
+             ". The regions slot keeps only the rows a changepoint could be ",
+             "keyed to, so `nrow(fit$regions)` and `nrow(fit$changepoints)` ",
+             "agree; read `$fit` for everything the engine returned.",
+             class = "dropped_input")
   }
   keep_region <- setdiff(seq_along(mids), union(collapsed, which(drop_lo)))
   keep_region <- keep_region[order(mids[keep_region])]

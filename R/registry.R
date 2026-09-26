@@ -61,7 +61,7 @@
 #   path          exposes a solution path (candidate splits, in order)
 #   scale_space   has a bandwidth/scale parameter worth sweeping
 #' @noRd
-builtin_registry <- function() {
+builtin_registry_core <- function() {
   reg <- tibble::tribble(
     ~method,       ~change_in,                            ~engine,              ~supports,                 ~wrapper,               ~multivariate, ~univariate, ~online, ~ci,   ~fitted, ~posterior, ~statistic, ~path, ~scale_space,
     "pelt",        "mean, var, meanvar",                  "changepoint",        "mean,var,meanvar",       "cpt_wrapper",          FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
@@ -81,19 +81,19 @@ builtin_registry <- function() {
     "hsmuce",      "mean (heteroskedastic, with CIs)",    "stepR",              "mean",                   "smuce_wrapper",        FALSE, TRUE,  FALSE, TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE,
     "cpop",        "slope",                               "cpop",               "slope",                  "cpop_wrapper",         FALSE, TRUE,  FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE,
     "bcp",         "mean (Bayesian)",                     "bcp",                "mean",                   "bcp_wrapper",          FALSE, TRUE,  FALSE, FALSE, TRUE,  TRUE,  TRUE,  FALSE, FALSE,
-    "bocpd",       "mean (Bayesian online)",              "ocp",                "mean",                   "bocpd_wrapper",        FALSE, TRUE,  TRUE,  FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE,
+    "bocpd",       "mean (Bayesian online)",              "ocp",                "mean",                   "bocpd_wrapper",        FALSE, TRUE,  TRUE,  FALSE, TRUE,  TRUE,  FALSE, FALSE, FALSE,
     "beast",       "mean/trend (Bayesian)",               "Rbeast",             "mean",                   "beast_wrapper",        FALSE, TRUE,  FALSE, FALSE, TRUE,  TRUE,  TRUE,  FALSE, FALSE,
     "cpm",         "distribution (sequential)",           "cpm",                "distribution,mean,var",  "cpm_wrapper",          FALSE, TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     "kcp",         "running statistics (kernel)",         "kcpRS",              "mean,var",               "kcp_wrapper",          TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-    "npmojo",      "distribution (multivariate)",         "CptNonPar",          "distribution",           "npmojo_wrapper",       TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,
+    "npmojo",      "distribution (multivariate)",         "CptNonPar",          "distribution",           "npmojo_wrapper",       TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, TRUE,
     "decafs",      "mean (drift + AR noise)",             "DeCAFS",             "mean",                   "decafs_wrapper",       FALSE, TRUE,  FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE,
     "sn",          "mean, var, acf, correlation",         "SNSeg",              "mean,var",               "sn_wrapper",           FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     "inspect",     "mean (high-dimensional)",             "InspectChangepoint", "mean",                   "inspect_wrapper",      TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     "ocd",         "mean (high-dimensional, online)",     "ocd",                "mean",                   "ocd_wrapper",          TRUE,  FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
     "geomcp",      "distribution (multivariate)",         "changepoint.geo",    "distribution",           "geomcp_wrapper",       TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
-    "strucchange", "mean, regression (with CIs)",         "strucchange",        "mean",                   "strucchange_wrapper",  FALSE, TRUE,  FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE,
+    "strucchange", "mean, regression (with CIs)",         "strucchange",        "mean",                   "strucchange_wrapper",  FALSE, TRUE,  FALSE, TRUE,  FALSE, FALSE, FALSE, TRUE,  FALSE,
     "segmented",   "slope (with CIs)",                    "segmented",          "slope",                  "segmented_wrapper",    FALSE, TRUE,  FALSE, TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE,
-    "envcpt",      "mean/trend vs autocorrelation",       "EnvCpt",             "mean",                   "envcpt_wrapper",       FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+    "envcpt",      "mean/trend vs autocorrelation",       "EnvCpt",             "mean",                   "envcpt_wrapper",       FALSE, TRUE,  FALSE, FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE,
     "fastcpd",     "mean, var, meanvar, AR/ARMA/GARCH",   "fastcpd",            "mean,var,meanvar",       "fastcpd_wrapper",      TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
 
     # ---- 0.5.0 engine wave -------------------------------------------------
@@ -124,6 +124,46 @@ builtin_registry <- function() {
   reg$status <- "available"
   reg$target_release <- NA_character_
   reg
+}
+
+# Internal: the built-in table with the 0.6.0 vocabulary columns, computed
+# once per session (the columns are derived from code, not from state):
+#   families      distribution families `family =` accepts (character(0)
+#                 for a distribution-free method); see cpt_families()
+#   choices       named list of the method's modelling-choice arguments and
+#                 their legal values; see method_choices()
+#   formula       takes a formula with covariates (every univariate method
+#                 takes `y ~ 1`)
+#   min_segment   the engine argument `min_segment =` is translated into,
+#                 or NA when the method has none
+#   na_handling   what the engine does with a missing value, measured by
+#                 data-raw/na_handling.R: "native" (handles it and reports
+#                 original positions), "compacts" (drops it and reports
+#                 positions in the shortened series), "silent_loss"
+#                 (returns a well-formed but wrong answer) or "reject"
+#' @noRd
+builtin_registry <- function() {
+  cached("builtin_registry", {
+    reg <- builtin_registry_core()
+    fams <- method_families()
+    reg$families <- unname(fams[reg$method])
+    ch <- method_choices()
+    reg$choices <- lapply(reg$method, function(m) ch[[m]] %||% list())
+    reg$formula <- reg$method %in% formula_methods()
+    msa <- min_segment_args()
+    reg$min_segment <- vapply(reg$method, function(m) {
+      msa[[m]]$arg %||% NA_character_
+    }, character(1), USE.NAMES = FALSE)
+    nah <- na_handling_table()
+    na_col <- unname(nah[reg$method])
+    if (length(na_col) != nrow(reg)) na_col <- rep(NA_character_, nrow(reg))
+    na_col[is.na(na_col)] <- "reject"
+    reg$na_handling <- na_col
+    conv <- upstream_conventions()
+    reg$cp_convention_upstream <- unname(ifelse(reg$method %in% names(conv),
+                                                conv[reg$method], "left"))
+    reg
+  })
 }
 
 # Internal: which dispatcher-derived arguments a method takes. Kept as a
@@ -274,45 +314,49 @@ cpt_register_method <- function(name, fn, change_in = "mean",
                                 cp_convention = c("left", "right"),
                                 overwrite = FALSE) {
   if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
-    stop("`name` must be a single non-empty string.", call. = FALSE)
+    cpt_abort("`name` must be a single non-empty string.",
+              class = "bad_argument")
   }
   if (!is.function(fn)) {
-    stop("`fn` must be a function called as fn(x, ...).", call. = FALSE)
+    cpt_abort("`fn` must be a function called as fn(x, ...).",
+              class = "bad_argument")
   }
   validate_flag(overwrite, "overwrite")
-  cp_convention <- match.arg(cp_convention)
+  cp_convention <- cpt_match_arg(cp_convention)
 
   if (name %in% builtin_registry()$method) {
-    stop("`", name, "` is a built-in method and cannot be overridden. ",
-         "Pick another name.", call. = FALSE)
+    cpt_abort("`", name, "` is a built-in method and cannot be overridden. ",
+              "Pick another name.", class = "bad_argument")
   }
   if (name %in% planned_methods()$method) {
-    stop("`", name, "` is the name this package reserves for a planned ",
-         "built-in method (see the \"planned\" rows of `cpt_methods()`). ",
-         "Pick another name so the two cannot be confused.", call. = FALSE)
+    cpt_abort("`", name, "` is the name this package reserves for a planned ",
+              "built-in method (see the \"planned\" rows of `cpt_methods()`). ",
+              "Pick another name so the two cannot be confused.",
+              class = "bad_argument")
   }
   if (!isTRUE(overwrite) && exists(name, envir = .cpt_registry,
                                    inherits = FALSE)) {
-    stop("`", name, "` is already registered. Pass `overwrite = TRUE` to ",
-         "replace it, or call cpt_unregister_method(\"", name, "\") first.",
-         call. = FALSE)
+    cpt_abort("`", name, "` is already registered. Pass `overwrite = TRUE` to ",
+              "replace it, or call cpt_unregister_method(\"", name,
+              "\") first.", class = "bad_argument")
   }
 
   change_in <- as.character(change_in)
   unknown <- setdiff(change_in, cpt_change_in_levels())
   if (length(unknown) > 0) {
-    stop("Unknown `change_in` value(s): ", paste(unknown, collapse = ", "),
-         ". Known values: ", paste(cpt_change_in_levels(), collapse = ", "),
-         ".", call. = FALSE)
+    cpt_abort("Unknown `change_in` value(s): ", paste(unknown, collapse = ", "),
+              ". Known values: ",
+              paste(cpt_change_in_levels(), collapse = ", "), ".",
+              class = "bad_argument")
   }
 
   caps <- utils::modifyList(default_capabilities(), as.list(capabilities))
   bad_caps <- setdiff(names(caps), names(default_capabilities()))
   if (length(bad_caps) > 0) {
-    stop("Unknown capability flag(s): ", paste(bad_caps, collapse = ", "),
-         ". Known flags: ",
-         paste(names(default_capabilities()), collapse = ", "), ".",
-         call. = FALSE)
+    cpt_abort("Unknown capability flag(s): ", paste(bad_caps, collapse = ", "),
+              ". Known flags: ",
+              paste(names(default_capabilities()), collapse = ", "), ".",
+              class = "bad_argument")
   }
   # The NAMES were checked and the VALUES were not, and every flag is read
   # downstream through isTRUE() -- so `capabilities = list(ci = 1)`
@@ -322,19 +366,21 @@ cpt_register_method <- function(name, fn, change_in = "mean",
     is.logical(v) && length(v) == 1L && !is.na(v)
   }, logical(1))]
   if (length(not_flag) > 0) {
-    stop("Capability flag(s) ", paste0("`", not_flag, "`", collapse = ", "),
-         " must be TRUE or FALSE: they are read as flags, so a 1 or a ",
-         "\"yes\" registers as FALSE and the capability silently ",
-         "disappears.", call. = FALSE)
+    cpt_abort("Capability flag(s) ",
+              paste0("`", not_flag, "`", collapse = ", "), " must be TRUE or ",
+               "FALSE: they are read as flags, so a 1 or a ",
+              "\"yes\" registers as FALSE and the capability silently ",
+              "disappears.", class = "bad_argument")
   }
   # `citation` is put in a tibble column by cpt_cite() and cat()ed, so a
   # list or a function reached the user as `argument 1 (type 'list') cannot
   # be handled by 'cat'`.
   if (!is.null(citation) &&
       !(is.character(citation) && length(citation) == 1L)) {
-    stop("`citation` must be NULL or a single string; cpt_cite() prints ",
-         "it verbatim. For a BibTeX entry or a citation object, pass ",
-         "format(citation) or a one-line reference.", call. = FALSE)
+    cpt_abort("`citation` must be NULL or a single string; cpt_cite() prints ",
+              "it verbatim. For a BibTeX entry or a citation object, pass ",
+              "format(citation) or a one-line reference.",
+              class = "bad_argument")
   }
 
   assign(name, list(method = name, fn = fn, change_in = change_in,
@@ -353,12 +399,12 @@ cpt_unregister_method <- function(name) {
   # answers with base R's "invalid first argument" or a "first element
   # used" warning.
   if (!is.character(name) || length(name) != 1L || !nzchar(name)) {
-    stop("`name` must be a single non-empty string. ",
-         "See cpt_registered_methods().", call. = FALSE)
+    cpt_abort("`name` must be a single non-empty string. ",
+              "See cpt_registered_methods().", class = "bad_argument")
   }
   if (!exists(name, envir = .cpt_registry, inherits = FALSE)) {
-    stop("`", name, "` is not a registered method. ",
-         "See cpt_registered_methods().", call. = FALSE)
+    cpt_abort("`", name, "` is not a registered method. ",
+              "See cpt_registered_methods().", class = "unknown_method")
   }
   rm(list = name, envir = .cpt_registry)
   invisible(name)
@@ -476,7 +522,15 @@ registered_registry <- function() {
     path = caps("path"),
     scale_space = caps("scale_space"),
     status = "registered",
-    target_release = NA_character_
+    target_release = NA_character_,
+    families = lapply(entries, function(e) character(0)),
+    choices = lapply(entries, function(e) list()),
+    formula = FALSE,
+    min_segment = NA_character_,
+    na_handling = "reject",
+    cp_convention_upstream = vapply(entries, function(e) {
+      e$cp_convention %||% "left"
+    }, character(1))
   )
 }
 

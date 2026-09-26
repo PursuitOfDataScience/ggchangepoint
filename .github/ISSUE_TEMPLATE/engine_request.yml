@@ -1,0 +1,26 @@
+name: Engine request
+description: A changepoint method this package should wrap.
+labels: ["engine"]
+body:
+  - type: input
+    id: package
+    attributes:
+      label: Package
+      description: Its CRAN page (engines are wrapped only once they are on CRAN).
+    validations:
+      required: true
+  - type: textarea
+    id: gap
+    attributes:
+      label: What can it do that no wired method can?
+      description: >
+        Check `cpt_methods()` and `cpt_families()` first. A new kind of
+        change, data, output (intervals, posteriors) or a big speed-up is
+        a strong case; another method of a kind already wired is weaker.
+    validations:
+      required: true
+  - type: textarea
+    id: reference
+    attributes:
+      label: Reference
+      description: The paper that describes the method.

@@ -64,13 +64,13 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
   }, logical(1))
   if (any(no_scale)) {
     nm <- colnames(X_fit) %||% paste0("V", seq_len(ncol(X_fit)))
-    stop("`inspect` rescales each coordinate by the median absolute ",
-         "deviation of its successive differences, and that is zero for ",
-         paste(nm[no_scale], collapse = ", "), ": more than half of the ",
-         "differences are identical. Drop or jitter ",
-         if (sum(no_scale) > 1) "those coordinates" else "that coordinate",
-         ", or use a method that does not rescale this way, such as ",
-         "`ecp` or `kcp`.", call. = FALSE)
+    cpt_abort("`inspect` rescales each coordinate by the median absolute ",
+              "deviation of its successive differences, and that is zero for ",
+              paste(nm[no_scale], collapse = ", "), ": more than half of the ",
+              "differences are identical. Drop or jitter ",
+              if (sum(no_scale) > 1) "those coordinates" else "that coordinate",
+              ", or use a method that does not rescale this way, such as ",
+              "`ecp` or `kcp`.", class = "input_error")
   }
   # Forwarded unchecked, `NA` failed with "missing value where TRUE/FALSE
   # needed", a vector with "the condition has length > 1", a string ran
@@ -157,14 +157,17 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #'   number of coordinates; see the timing note below.
 #' @param ... Additional arguments passed to
 #'   \code{ocd::ChangepointDetector()}.
-#' @return A \code{ggcpt} object. Because the detector is online, reported
-#'   locations are \emph{declaration times} (the changepoint plus the
-#'   detection delay). The \code{declared_at} column holds the same values
-#'   as \code{cp}, and deliberately: \pkg{ocd} declares a change without
-#'   also estimating where it began, so there is no separate location for
-#'   the second column to carry. Compare \code{\link{cpm_wrapper}()},
-#'   whose engine supplies both, and whose \code{cp} is an estimated
-#'   location with \code{detection_time} strictly later.
+#' @return A \code{ggcpt} object. Because the detector is online, it
+#'   declares a change without estimating where it began. \code{cp} is the
+#'   declaration time \emph{minus one}: the latest changepoint consistent
+#'   with the alarm in this package's convention (the last observation
+#'   before the change), and exact when the change is declared on the first
+#'   observation after it; a later declaration makes \code{cp} late by the
+#'   detection delay. The \code{declared_at} column holds the declaration
+#'   time itself. (Before 0.6.0 \code{cp} was the declaration time, one
+#'   position late even at zero delay, which the convention test found.)
+#'   Compare \code{\link{cpm_wrapper}()}, whose engine estimates the
+#'   location separately from its \code{detection_time}.
 #' @section How long this takes:
 #' Nearly all of the run time is \code{ocd}'s Monte Carlo threshold
 #' calibration, which happens before a single observation is read. It is
@@ -195,7 +198,7 @@ inspect_wrapper <- function(x, lambda = NULL, threshold = NULL, ...) {
 #' # pass: the calibration is linear in `mc_reps` and is nearly all of the
 #' # cost, so 5 measured 9.7 s here against CRAN's 5 s budget and 2
 #' # measures 3.8 s for the same answer. Neither is a calibration you
-#' # would trust -- see the timing section above.
+#' # would trust (see the timing section above).
 #' res <- ocd_wrapper(X, mc_reps = 2)
 #' res$changepoints
 #' }
@@ -230,9 +233,9 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
   # depends on an argument the caller may never have set.) Say so rather
   # than surfacing the engine's internal error.
   if (p < 2) {
-    stop("Method `ocd` is high-dimensional and needs at least two ",
-         "coordinates, but `x` has ", p,
-         ". See cpt_methods() for univariate methods.", call. = FALSE)
+    cpt_abort("Method `ocd` is high-dimensional and needs at least two ",
+              "coordinates, but `x` has ", p, ". See cpt_methods() for ",
+               "univariate methods.", class = "wrong_dimension")
   }
   data_vec <- as.numeric(X[, 1])
 
@@ -244,7 +247,8 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
   validate_scalar(train, "train", min = 2)
   train <- min(as.integer(train), floor(n / 2))
   if (train < 2) {
-    stop("`train` must be at least 2 observations.", call. = FALSE)
+    cpt_abort("`train` must be at least 2 observations.",
+              class = "short_series")
   }
 
   estimate_baseline <- function(rows) {
@@ -289,18 +293,21 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
     }
   }
 
+  # A declaration at observation i says the change is at or before i - 1
+  # in the "left" convention; reporting i itself was one late even when the
+  # alarm fired on the first post-change observation.
   ggcpt_build(
-    data_vec, declared,
+    data_vec, declared - 1L,
     method = "ocd",
     change_in = "mean",
     penalty = list(type = "patience", value = patience),
     fit = detector,
     call = match.call(),
     extra_cp_cols = if (length(declared) > 0) {
-      # The same values as `cp`, because ocd declares a change without
-      # estimating where it began -- see @return. Kept as a column so the
-      # online engines have one name for "when the alarm fired" whether or
-      # not the engine also estimates a location.
+      # When the alarm fired, one after `cp`, because ocd declares a change
+      # without estimating where it began -- see @return. Kept as a column
+      # so the online engines have one name for "when the alarm fired"
+      # whether or not the engine also estimates a location.
       list(declared_at = as.integer(declared))
     },
     data_wide = mv_data_wide(X)
@@ -337,7 +344,7 @@ ocd_wrapper <- function(x, train = NULL, thresh = "MC", patience = 5000,
 geomcp_wrapper <- function(x, penalty = "MBIC",
                            mapping = c("both", "distance", "angle"), ...) {
   need_pkg("changepoint.geo")
-  mapping <- match.arg(mapping)
+  mapping <- cpt_match_arg(mapping)
 
   validate_data(x)
   X <- as_mv_matrix(x)
@@ -347,9 +354,9 @@ geomcp_wrapper <- function(x, penalty = "MBIC",
   # flight cannot tell which call failed. Match the other eight
   # multivariate-only engines.
   if (ncol(X) < 2) {
-    stop("Method `geomcp` is high-dimensional and needs at least two ",
-         "coordinates, but `x` has ", ncol(X),
-         ". See cpt_methods() for univariate methods.", call. = FALSE)
+    cpt_abort("Method `geomcp` is high-dimensional and needs at least two ",
+              "coordinates, but `x` has ", ncol(X), ". See cpt_methods() for ",
+               "univariate methods.", class = "wrong_dimension")
   }
   data_vec <- as.numeric(X[, 1])
 

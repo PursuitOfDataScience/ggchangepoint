@@ -1636,7 +1636,8 @@ test_that("R61: cpm and kcp no longer report 'no changepoints' when the
   }
   # "ExponentialAdjusted" was described as rejected upstream alongside
   # "GLRAdjusted"; it is not, so only the latter is withheld here
-  expect_error(cpm_wrapper(x, cpm_type = "GLRAdjusted"), "should be one of")
+  expect_error(cpm_wrapper(x, cpm_type = "GLRAdjusted"),
+               class = "ggchangepoint_bad_argument")
   expect_s3_class(cpm_wrapper(abs(x) + 1, cpm_type = "Exponential"), "ggcpt")
 
   skip_if_not_installed("kcpRS")
@@ -1684,16 +1685,38 @@ test_that("R63: the comparison functions refuse wide input instead of
 })
 
 test_that("R64: ggcpt_compare asks future.apply for a documented seed value", {
+  skip_if_not_installed("future")
+  skip_if_not_installed("future.apply")
   # `future.seed` is documented as a logical, an integer, or a list of
   # pre-generated seeds. `ggcpt_compare()` passed `seed` straight through and
   # `seed` defaults to NULL, so every parallel run without an explicit seed
   # handed future.apply a value outside its contract. `cpt_batch()` already
-  # sent TRUE there. This pins the two on the same behaviour without needing
-  # a worker: read it off the source of the branch that runs.
-  body_txt <- paste(deparse(body(ggcpt_compare)), collapse = " ")
-  expect_match(body_txt, "future.seed = seed %||% TRUE", fixed = TRUE)
-  expect_match(paste(deparse(body(cpt_batch)), collapse = " "),
-               "future.seed = seed %||% TRUE", fixed = TRUE)
+  # sent TRUE there. This used to read the value off the functions' deparsed
+  # source, which made the package impossible to instrument (a coverage
+  # run weaves counters through the body and the literal disappears). It
+  # now asserts the behaviour: what future_lapply() actually receives, with
+  # a parallel plan reported and no worker started.
+  seen <- list()
+  local_mocked_bindings(
+    future_lapply = function(X, FUN, ..., future.seed = FALSE) {
+      seen[[length(seen) + 1L]] <<- future.seed
+      lapply(X, FUN)
+    },
+    .package = "future.apply")
+  local_mocked_bindings(
+    plan = function(...) structure(list(), class = c("multisession",
+                                                     "future")),
+    .package = "future")
+  set.seed(64)
+  x <- c(stats::rnorm(60), stats::rnorm(60, 3))
+  invisible(ggcpt_compare(x, methods = c("pelt", "binseg")))
+  cpt_batch(list(a = x, b = rev(x)), method = "pelt")
+  expect_length(seen, 2L)
+  expect_true(all(vapply(seen, isTRUE, logical(1))))
+  # ...and an explicit seed is passed on as given.
+  seen <- list()
+  cpt_batch(list(a = x), method = "pelt", seed = 7)
+  expect_identical(seen[[1]], 7)
 })
 
 test_that("R65: the strucchange result-size note is accurate", {
@@ -1743,8 +1766,9 @@ test_that("R66: a planned method is named as planned, not denied", {
     expect_error(cpt_detect(rnorm(50), method = m),
                  tb$engine[tb$method == m], fixed = TRUE, info = m)
   }
-  # an outright unknown name still gets the ordinary match.arg list
-  expect_error(cpt_detect(rnorm(50), method = "nosuchmethod"), "should be one of")
+  # an outright unknown name is refused as one, with the nearest names
+  expect_error(cpt_detect(rnorm(50), method = "nosuchmethod"),
+               class = "ggchangepoint_unknown_method")
 
   # planned rows carry no installed flag and every wired row does
   expect_true(all(is.na(tb$installed[tb$status == "planned"])))

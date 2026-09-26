@@ -24,14 +24,65 @@
 #'   geom_changepoint(aes(xintercept = cp), data = cp, colour = "blue")
 geom_changepoint <- function(mapping = NULL, data = NULL, ...,
                              na.rm = FALSE, show.legend = NA) {
-  ggplot2::geom_vline(
-    mapping = mapping,
-    data = data,
-    ...,
-    na.rm = na.rm,
-    show.legend = show.legend
+  dots <- list(...)
+  # geom_vline()'s shorthand: a fixed `xintercept` makes its own data, as
+  # the layer this used to delegate to did.
+  if (!is.null(dots$xintercept)) {
+    data <- data.frame(xintercept = dots$xintercept)
+    mapping <- ggplot2::aes(xintercept = xintercept)
+    dots$xintercept <- NULL
+    show.legend <- FALSE
+  }
+  la <- layer_args(dots, FALSE)
+  ggplot2::layer(
+    data = data, mapping = mapping, stat = "identity",
+    geom = GeomChangepoint, position = "identity",
+    show.legend = show.legend, inherit.aes = la$inherit,
+    key_glyph = la$key_glyph, params = c(list(na.rm = na.rm), la$params)
   )
 }
+
+#' ggproto objects for the changepoint layers
+#'
+#' The layers are real \pkg{ggplot2} extensions: each \code{geom_*()} is a
+#' layer built on one of these, with its own default aesthetics, required
+#' aesthetics and legend glyph, so they take part in scales, guides and the
+#' position system like any geom, and can be extended with
+#' \code{ggplot2::ggproto()}. Until 0.6.0 every layer was a thin wrapper
+#' around a stock geom and borrowed its glyph.
+#' \describe{
+#'   \item{\code{GeomChangepoint}}{a vertical rule at each \code{xintercept}
+#'     (\code{\link{geom_changepoint}()}); key: a vertical rule.}
+#'   \item{\code{GeomCptSegment}}{a segment level
+#'     (\code{\link{geom_cpt_segment}()}).}
+#'   \item{\code{GeomCptCi}}{a horizontal interval with caps
+#'     (\code{\link{geom_cpt_ci}()}); key: the same interval.}
+#'   \item{\code{GeomCptRegion}}{a band from \code{xmin} to \code{xmax},
+#'     full height unless \code{ymin}/\code{ymax} are mapped
+#'     (\code{\link{geom_cpt_region}()}); key: a shaded band.}
+#'   \item{\code{GeomCptLabel}}{a labelled interval behind the series
+#'     (\code{\link{geom_cpt_label}()}).}
+#'   \item{\code{GeomCptEvent}}{a dotted rule with its label
+#'     (\code{\link{geom_cpt_event}()}); key: a dotted rule with a flag.}
+#'   \item{\code{StatChangepoint}, \code{StatCptRegion}}{detection inside the
+#'     layer (\code{\link{stat_changepoint}()},
+#'     \code{\link{stat_cpt_region}()}).}
+#' }
+#' @name ggchangepoint-ggproto
+#' @aliases GeomChangepoint GeomCptSegment GeomCptCi GeomCptRegion
+#'   GeomCptLabel GeomCptEvent StatChangepoint StatCptRegion
+#' @format ggproto objects.
+#' @family ggplot2 layers
+#' @examples
+#' library(ggplot2)
+#' class(GeomChangepoint)
+#' GeomCptRegion$default_aes
+NULL
+
+#' @export
+GeomChangepoint <- ggplot2::ggproto("GeomChangepoint", ggplot2::GeomVline,
+  draw_key = draw_key_cpt_rule
+)
 
 #' Changepoint segment level geom
 #'
@@ -58,14 +109,17 @@ geom_changepoint <- function(mapping = NULL, data = NULL, ...,
 #'                    data = fit$segments, colour = "blue", linewidth = 1)
 geom_cpt_segment <- function(mapping = NULL, data = NULL, ...,
                              na.rm = FALSE, show.legend = NA) {
-  ggplot2::geom_segment(
-    mapping = mapping,
-    data = data,
-    ...,
-    na.rm = na.rm,
-    show.legend = show.legend
+  la <- layer_args(list(...), TRUE)
+  ggplot2::layer(
+    data = data, mapping = mapping, stat = "identity",
+    geom = GeomCptSegment, position = "identity",
+    show.legend = show.legend, inherit.aes = la$inherit,
+    key_glyph = la$key_glyph, params = c(list(na.rm = na.rm), la$params)
   )
 }
+
+#' @export
+GeomCptSegment <- ggplot2::ggproto("GeomCptSegment", ggplot2::GeomSegment)
 
 #' Changepoint confidence interval geom
 #'
@@ -97,17 +151,22 @@ geom_cpt_segment <- function(mapping = NULL, data = NULL, ...,
 #'               inherit.aes = FALSE, width = 0.4, colour = "blue")
 geom_cpt_ci <- function(mapping = NULL, data = NULL, ...,
                         na.rm = FALSE, show.legend = NA) {
-  # geom_errorbarh() is deprecated since ggplot2 3.5.0; geom_errorbar()
-  # handles horizontal intervals natively via orientation = "y".
-  ggplot2::geom_errorbar(
-    mapping = mapping,
-    data = data,
-    ...,
-    orientation = "y",
-    na.rm = na.rm,
-    show.legend = show.legend
+  # A horizontal error bar: GeomErrorbar with orientation = "y", which is
+  # how ggplot2 draws one since geom_errorbarh() was deprecated in 3.5.0.
+  la <- layer_args(list(...), TRUE)
+  ggplot2::layer(
+    data = data, mapping = mapping, stat = "identity",
+    geom = GeomCptCi, position = "identity",
+    show.legend = show.legend, inherit.aes = la$inherit,
+    key_glyph = la$key_glyph,
+    params = c(list(orientation = "y", na.rm = na.rm), la$params)
   )
 }
+
+#' @export
+GeomCptCi <- ggplot2::ggproto("GeomCptCi", ggplot2::GeomErrorbar,
+  draw_key = draw_key_cpt_ci
+)
 
 #' Changepoint detection stat
 #'
@@ -166,6 +225,7 @@ stat_changepoint <- function(mapping = NULL, data = NULL,
   )
 }
 
+#' @export
 StatChangepoint <- ggplot2::ggproto("StatChangepoint", ggplot2::Stat,
   required_aes = c("x", "y"),
   dropped_aes = c("x", "y"),

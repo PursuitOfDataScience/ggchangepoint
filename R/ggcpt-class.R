@@ -202,11 +202,26 @@ print.ggcpt <- function(x, ...) {
   if (!is.null(x$index)) {
     cat_field("Index", format_index_range(x$index))
   }
+  if (!is.null(x$family)) {
+    cat_field("Family", x$family)
+  }
+  if (!is.null(x$diagnostics$na_omitted)) {
+    cat_field("Missing values", paste0(
+      length(x$diagnostics$na_omitted$positions), " omitted; locations ",
+      "are in the original positions"))
+  }
+  if (!is.null(x$constraints$fixed)) {
+    cat_field("Fixed", paste(x$constraints$fixed, collapse = ", "))
+  }
+  drift <- version_drift(x)
+  if (!is.null(drift)) {
+    cat_field("Engine version", drift)
+  }
   if (nrow(x$changepoints) > 0) {
     cat("\nChangepoints:\n")
     print(x$changepoints, n = 10)
   } else {
-    cat("\nNo changepoints detected.\n")
+    cat("\n", empty_answer_note(x), "\n", sep = "")
   }
   if (!is.null(x$regions)) {
     cat("\nSignificance regions (each contains at least one changepoint",
@@ -228,6 +243,27 @@ print.ggcpt <- function(x, ...) {
         "?cpt_register_method.\n", sep = "")
   }
   invisible(x)
+}
+
+# Internal: what an empty result means. A constant series and a series in
+# which the detector looked and found nothing are different situations
+# with different next steps, and "No changepoints detected." alone said
+# the same thing about both: a stuck sensor got the answer that means
+# "nothing happened".
+#' @noRd
+empty_answer_note <- function(x) {
+  v <- x$data$value
+  if (is_constant(v)) {
+    return(paste0("No changepoints detected: the series is constant (no ",
+                  "variation at all), so there is nothing to detect. A ",
+                  "flat series is often a stuck sensor or a filled gap ",
+                  "rather than a stable process."))
+  }
+  paste0("No changepoints detected. That means either the series is ",
+         "stable or a change was too small to see at this length and ",
+         "noise level: cpt_null_power(fit) gives the smallest shift this ",
+         "analysis would have found, and cpt_test_null(fit) tests for a ",
+         "change anywhere.")
 }
 
 # Internal: a compact "first to last" description of a time index for

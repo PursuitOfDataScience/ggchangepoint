@@ -198,7 +198,7 @@ not_wrapper <- function(x, contrast = "pcwsConstMean", seed = NULL, ...) {
 
   need_pkg("not")
 
-  contrast <- match.arg(contrast, c("pcwsConstMean", "pcwsLinContMean",
+  contrast <- cpt_match_arg(contrast, c("pcwsConstMean", "pcwsLinContMean",
                                      "pcwsLinMean", "pcwsConstMeanVar"))
 
   validate_data(x)
@@ -310,11 +310,12 @@ mosum_wrapper <- function(x, G = NULL, multiscale = FALSE, seed = NULL, ...) {
       # bandwidth at 2.
       G <- max(2L, as.integer(ceiling(min(length(data_vec) / 10, 100))))
       if (length(data_vec) <= 2L * G) {
-        stop("`mosum` needs a moving-sum window on each side of a candidate ",
-             "changepoint (bandwidth ", G, " requires more than ", 2L * G,
-             " observations), but `x` has ", length(data_vec),
-             ". Use a longer series, or see cpt_methods() for a method that ",
-             "suits short series.", call. = FALSE)
+        cpt_abort("`mosum` needs a moving-sum window on each side of a ",
+                   "candidate ", "changepoint (bandwidth ", G,
+                  " requires more than ", 2L * G, " observations), but `x` ",
+                   "has ", length(data_vec), ". Use a longer series, or see ",
+                   "cpt_methods() for a method that ", "suits short series.",
+                  class = "short_series")
       }
     }
     fit <- mosum::mosum(data_vec, G = G, ...)

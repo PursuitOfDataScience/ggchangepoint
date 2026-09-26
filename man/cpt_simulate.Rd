@@ -16,7 +16,8 @@ cpt_simulate(
   rho = 0,
   seasonality = NULL,
   sd_trend = NULL,
-  seed = NULL
+  seed = NULL,
+  family = c("gaussian", "poisson", "binomial", "exponential")
 )
 
 rcpt(...)
@@ -91,6 +92,18 @@ detectors shatter, and the condition HSMUCE, NSP-self-normalised and
 call: \code{.Random.seed} is saved and restored, so a seeded call
 inside a simulation loop does not pin the loop's own stream.}
 
+\item{family}{The distribution of the observations: \code{"gaussian"}
+(the default, signal plus \code{noise}), \code{"poisson"} (counts
+whose rate is the segment's parameter), \code{"binomial"} (0/1
+outcomes whose probability is the segment's parameter) or
+\code{"exponential"} (waiting times whose mean is the segment's
+parameter). The last three generate a change in that one parameter, so
+they take \code{change_in = "mean"}, one number per segment in
+\code{params} (defaults: rate 5, probability 0.5, mean 1), and no
+\code{noise}, \code{sd}, \code{seasonality} or \code{sd_trend}. A
+rate change in counts is a different detection problem from a Gaussian
+mean shift, which is why the power curves are not interchangeable.}
+
 \item{...}{Passed to \code{\link{cpt_simulate}}.}
 }
 \value{
@@ -112,6 +125,10 @@ seasonal <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
                          seed = 1)
 drifting <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
                          sd_trend = c(0.5, 3), seed = 1)
+
+# counts whose rate doubles
+counts <- cpt_simulate(200, changepoints = 100, params = c(4, 8),
+                       family = "poisson", seed = 1)
 }
 \seealso{
 Other test signals: 

@@ -7,8 +7,10 @@
 #' analyst sees every segmentation the data admits along the path, together
 #' with its cost, and picks the elbow.
 #'
-#' @param x For \code{cpt_crops()}, a numeric vector; for the \code{print()}
-#'   and \code{tidy()} methods, a \code{ggcpt_path} object.
+#' @param x For \code{cpt_crops()}, a numeric vector, or a \code{ggcpt}
+#'   fit whose series is used (with its change type, when it is one CROPS
+#'   sweeps); for the \code{print()} and \code{tidy()} methods, a
+#'   \code{ggcpt_path} object.
 #' @param change_in What to detect change in: \code{"mean"}, \code{"var"},
 #'   or \code{"meanvar"}. Defaults to \code{"mean"}.
 #' @param pen_min,pen_max The penalty interval to sweep. Default to
@@ -53,7 +55,20 @@ cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
     method = paste("the penalty path is computed by PELT; the other search",
                    "methods do not produce one"),
     pen.value = "use `pen_min` and `pen_max` to set the interval to sweep"))
-  change_in <- match.arg(change_in)
+  if (is_ggcpt(x)) {
+    # The series a fit carries, as every other post-detection tool reads
+    # it; the fit's own change type when the caller did not choose one.
+    if (n_coordinates(x) > 1L) {
+      cpt_abort("`cpt_crops()` sweeps one series, and this fit has ",
+                n_coordinates(x), " coordinates.", class = "wrong_dimension")
+    }
+    if (missing(change_in) &&
+        scalar_chr(x$change_in) %in% c("mean", "var", "meanvar")) {
+      change_in <- scalar_chr(x$change_in)
+    }
+    x <- x$data$value
+  }
+  change_in <- cpt_match_arg(change_in)
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "crops")
@@ -64,7 +79,8 @@ cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
   validate_scalar(pen_min, "pen_min", min = 0, min_open = TRUE)
   validate_scalar(pen_max, "pen_max", min = 0, min_open = TRUE)
   if (pen_min >= pen_max) {
-    stop("`pen_min` must be strictly smaller than `pen_max`.", call. = FALSE)
+    cpt_abort("`pen_min` must be strictly smaller than `pen_max`.",
+              class = "bad_argument")
   }
 
   cpt_fun <- switch(change_in,
@@ -165,7 +181,7 @@ cpt_crops <- function(x, change_in = c("mean", "var", "meanvar"),
 autoplot.ggcpt_path <- function(object,
                                 type = c("elbow", "path", "segmentations"),
                                 max_facets = 12, ...) {
-  type <- match.arg(type)
+  type <- cpt_match_arg(type)
   sol <- object$solutions
 
   if (type == "elbow") {

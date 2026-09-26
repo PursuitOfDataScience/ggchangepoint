@@ -35,6 +35,7 @@
 #' @family result class
 as_cpt_series <- function(x, index = NULL, check_regular = TRUE) {
   validate_flag(check_regular, "check_regular")
+  refuse_special_values(x)
   label <- "Index"
   # A `ts` is the only input class here that states its seasonal frequency,
   # and it is the input bfast_wrapper()'s documentation tells the user to
@@ -52,8 +53,9 @@ as_cpt_series <- function(x, index = NULL, check_regular = TRUE) {
     label <- parts$label
   } else if (inherits(x, c("xts", "zoo"))) {
     if (!requireNamespace("zoo", quietly = TRUE)) {
-      stop("Package 'zoo' is required to read a ", class(x)[1],
-           " object. Install it with install.packages('zoo').", call. = FALSE)
+      cpt_abort("Package 'zoo' is required to read a ", class(x)[1],
+                " object. Install it with install.packages('zoo').",
+                class = "engine_missing")
     }
     values <- zoo::coredata(x)
     carried <- zoo::index(x)
@@ -94,23 +96,24 @@ as_cpt_series <- function(x, index = NULL, check_regular = TRUE) {
 #' @noRd
 tsibble_parts <- function(x) {
   if (!requireNamespace("tsibble", quietly = TRUE)) {
-    stop("Package 'tsibble' is required to read a tsibble. ",
-         "Install it with install.packages('tsibble').", call. = FALSE)
+    cpt_abort("Package 'tsibble' is required to read a tsibble. ",
+              "Install it with install.packages('tsibble').",
+              class = "engine_missing")
   }
   keys <- tsibble::key_vars(x)
   if (length(keys) > 0) {
-    stop("`x` is a keyed tsibble (key: ", paste(keys, collapse = ", "),
-         "), which holds several series. Detection runs on one series at a ",
-         "time: split it first, or use cpt_batch() for the whole panel.",
-         call. = FALSE)
+    cpt_abort("`x` is a keyed tsibble (key: ", paste(keys, collapse = ", "),
+              "), which holds several series. Detection runs on one series at a ",
+              "time: split it first, or use cpt_batch() for the whole panel.",
+              class = "bad_argument")
   }
   idx_var <- tsibble::index_var(x)
   measures <- setdiff(names(x), idx_var)
   num <- measures[vapply(measures, function(v) is.numeric(x[[v]]),
                          logical(1))]
   if (length(num) == 0) {
-    stop("The tsibble has no numeric measurement column to detect on.",
-         call. = FALSE)
+    cpt_abort("The tsibble has no numeric measurement column to detect on.",
+              class = "bad_type")
   }
   values <- if (length(num) == 1L) {
     as.numeric(x[[num]])
@@ -128,7 +131,7 @@ tsibble_parts <- function(x) {
 #' @noRd
 check_index_usable <- function(idx, check_regular = TRUE) {
   if (anyNA(idx)) {
-    stop("`index` must not contain NA.", call. = FALSE)
+    cpt_abort("`index` must not contain NA.", class = "bad_argument")
   }
   if (is.factor(idx) && !is.ordered(idx)) {
     # A factor's codes are LEVEL positions -- alphabetical unless the caller
@@ -147,18 +150,19 @@ check_index_usable <- function(idx, check_regular = TRUE) {
     return(invisible(TRUE))
   }
   if (is.unsorted(num, strictly = FALSE)) {
-    stop("`index` must be non-decreasing: the series is a sequence in time, ",
-         "and detection runs on its order.", call. = FALSE)
+    cpt_abort("`index` must be non-decreasing: the series is a sequence in ",
+               "time, ", "and detection runs on its order.",
+              class = "bad_argument")
   }
   if (isTRUE(check_regular) && length(num) > 2) {
     gaps <- diff(num)
     span <- max(num) - min(num)
     if (span > 0 && stats::sd(gaps) / mean(gaps) > 1e-6) {
-      warning("`index` is not equally spaced. Every engine in this package ",
-              "assumes equal spacing, so detection runs on observation ",
-              "positions and the index only labels them. Pass ",
-              "`check_regular = FALSE` (or use a regular index) to silence ",
-              "this.", call. = FALSE)
+      cpt_warn("`index` is not equally spaced. Every engine in this package ",
+               "assumes equal spacing, so detection runs on observation ",
+               "positions and the index only labels them. Pass ",
+               "`check_regular = FALSE` (or use a regular index) to silence ",
+               "this.", class = "irregular_index")
     }
   }
   invisible(TRUE)
@@ -176,10 +180,10 @@ attach_index <- function(res, index, label = "Index") {
     # Silently dropping it left the caller with a result that plots in
     # positions and a plausible reason to think the index had been used.
     # Every other optional slot reports a length mismatch by name.
-    warning("`index` has ", length(index), " value(s) for a series of ",
-            "length ", n, ", so it is ignored: the result reports and plots ",
-            "observation positions. Pass one index value per observation.",
-            call. = FALSE)
+    cpt_warn("`index` has ", length(index), " value(s) for a series of ",
+             "length ", n, ", so it is ignored: the result reports and plots ",
+             "observation positions. Pass one index value per observation.",
+             class = "argument_ignored")
     return(res)
   }
   res$index <- index
@@ -234,9 +238,9 @@ df_column <- function(df, expr, arg_name, env) {
     if (nm %in% names(df)) return(df[[nm]])
     val <- tryCatch(eval(expr, env), error = function(e) NULL)
     if (is.null(val)) {
-      stop("`", arg_name, " = ", nm, "`: no column called \"", nm,
-           "\" in the data frame (columns: ",
-           paste(names(df), collapse = ", "), ").", call. = FALSE)
+      cpt_abort("`", arg_name, " = ", nm, "`: no column called \"", nm,
+                "\" in the data frame (columns: ",
+                paste(names(df), collapse = ", "), ").", class = "bad_argument")
     }
   } else {
     val <- eval(expr, df, env)
@@ -254,9 +258,9 @@ df_column <- function(df, expr, arg_name, env) {
     }
   }
   if (length(val) != nrow(df)) {
-    stop("`", arg_name, "` must select a column of the data frame, or be a ",
-         "vector with one value per row (", nrow(df), "); got length ",
-         length(val), ".", call. = FALSE)
+    cpt_abort("`", arg_name, "` must select a column of the data frame, or be ",
+               "a ", "vector with one value per row (", nrow(df),
+              "); got length ", length(val), ".", class = "bad_argument")
   }
   val
 }

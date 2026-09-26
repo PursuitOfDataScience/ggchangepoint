@@ -66,9 +66,9 @@ fmean_wrapper <- function(x, statistic = c("Tn", "Mn"),
   # none of which names the argument. Measured across all 64 wrapper
   # argument slots; these are the ones that needed it.
   validate_scalar(alpha, "alpha", min = 0, max = 1, min_open = TRUE, max_open = TRUE)
-  statistic <- match.arg(statistic)
-  critical <- match.arg(critical)
-  type <- match.arg(type)
+  statistic <- cpt_match_arg(statistic)
+  critical <- cpt_match_arg(critical)
+  type <- cpt_match_arg(type)
   validate_flag(robust, "robust")
   fchange_run(x, method = if (robust) "robustmean" else "mean",
               statistic = statistic, critical = critical, type = type,
@@ -167,10 +167,10 @@ fcov_wrapper <- function(x,
   # the engine with "NA/NaN argument", which fchange_run() then blamed on
   # the grid resolution, and `alpha = -1` ran and reported no changepoints.
   validate_scalar(alpha, "alpha", min = 0, max = 1, min_open = TRUE, max_open = TRUE)
-  target <- match.arg(target)
-  statistic <- match.arg(statistic)
-  critical <- match.arg(critical)
-  type <- match.arg(type)
+  target <- cpt_match_arg(target)
+  statistic <- cpt_match_arg(statistic)
+  critical <- cpt_match_arg(critical)
+  type <- cpt_match_arg(type)
   fchange_run(x, method = target, statistic = statistic, critical = critical,
               type = type, alpha = alpha, change_in = "covariance",
               method_name = "fcov", call = match.call(), ...)
@@ -185,10 +185,10 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
   validate_data(x)
   X <- as_mv_matrix(x)
   if (ncol(X) < 2) {
-    stop("`", method_name, "` needs functional observations: one row per ",
-         "time point and one column per grid location. `x` has a single ",
-         "column, which is a scalar series; see cpt_methods() for the ",
-         "univariate engines.", call. = FALSE)
+    cpt_abort("`", method_name, "` needs functional observations: one row per ",
+              "time point and one column per grid location. `x` has a single ",
+              "column, which is a scalar series; see cpt_methods() for the ",
+              "univariate engines.", class = "wrong_dimension")
   }
   n <- nrow(X)
   data_vec <- as.numeric(rowMeans(X))
@@ -215,12 +215,12 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
       f
     },
     error = function(e) {
-      stop("`", method_name, "` failed on ", n, " time point(s) x ",
-           ncol(X), " grid point(s). fChange reported: ",
-           conditionMessage(e),
-           ". A functional observation is a curve sampled on a grid, so `x` ",
-           "wants one column per grid location; a handful of columns is ",
-           "usually too coarse for the basis expansion.", call. = FALSE)
+      cpt_abort("`", method_name, "` failed on ", n, " time point(s) x ",
+                ncol(X), " grid point(s). fChange reported: ",
+                conditionMessage(e), ". A functional observation is a curve ",
+                 "sampled on a grid, so `x` ", "wants one column per grid ",
+                 "location; a handful of columns is ", "usually too coarse ",
+                 "for the basis expansion.", class = "engine_error")
     }
   )
 
@@ -234,10 +234,10 @@ fchange_run <- function(x, method, statistic, critical, type, alpha,
     if (is.null(v)) return(rep(NA_real_, length(loc)))
     v <- as.numeric(v)
     if (length(v) == length(loc)) return(v)
-    warning("`", method_name, "` returned ", length(v), " p-value(s) for ",
-            length(loc), " changepoint(s), so they cannot be matched up ",
-            "and are dropped rather than recycled onto the wrong ",
-            "locations.", call. = FALSE)
+    cpt_warn("`", method_name, "` returned ", length(v), " p-value(s) for ",
+             length(loc), " changepoint(s), so they cannot be matched up ",
+             "and are dropped rather than recycled onto the wrong ",
+             "locations.", class = "dropped_input")
     rep(NA_real_, length(loc))
   }
   if (is.data.frame(fit) && nrow(fit) > 0) {
@@ -308,17 +308,17 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
                         change_in = c("covariance", "distribution"),
                         seed = NULL, ...) {
   need_pkg("KWCChangepoint")
-  algorithm <- match.arg(algorithm)
-  change_in <- match.arg(change_in)
+  algorithm <- cpt_match_arg(algorithm)
+  change_in <- cpt_match_arg(change_in)
   validate_data(x)
   X <- as_mv_matrix(x)
   # The engine fails on a single column with a message that names nothing
   # ("dim(X) must have a positive length"), while ocd, geomcp, fmean, fcov and
   # fabisearch all name the requirement. Match them.
   if (ncol(X) < 2) {
-    stop("Method `kwc` is high-dimensional and needs at least two ",
-         "coordinates, but `x` has ", ncol(X),
-         ". See cpt_methods() for univariate methods.", call. = FALSE)
+    cpt_abort("Method `kwc` is high-dimensional and needs at least two ",
+              "coordinates, but `x` has ", ncol(X), ". See cpt_methods() for ",
+               "univariate methods.", class = "wrong_dimension")
   }
   data_vec <- as.numeric(rowMeans(X))
   local_seed(seed)
@@ -409,17 +409,17 @@ kwc_wrapper <- function(x, algorithm = c("fkwc", "dwbs"), depth = NULL,
 #' \donttest{
 #' # A change in *structure*, not in scale: two latent factors drive
 #' # different halves of the node set before and after the change.
-#' # Deliberately tiny -- this is by far the most expensive engine in the
+#' # Deliberately tiny: this is by far the most expensive engine in the
 #' # package (n_runs x n_reps factorisations per candidate split). Measured
 #' # at 5-6 s across fresh sessions, against 27 s for the 2 x 25 /
 #' # n_reps = 4
-#' # version this replaced -- and this is the floor: `n_reps = 1` fails
+#' # version this replaced, and this is the floor: `n_reps = 1` fails
 #' # inside fabisearch with "not enough 'x' observations" (the permutation
 #' # test needs two), and smaller matrices are not reliably cheaper because
 #' # the search then evaluates more splits relative to `min_dist` (2 x 10 at
 #' # min_dist = 8 measured 6.6 s). So this one example stays near CRAN's 5 s
 #' # budget by necessity; `cran-comments.md` says so. Use the defaults on
-#' # real data -- the settings here are for the budget, not for detection.
+#' # real data; the settings here are for the budget, not for detection.
 #' set.seed(2026)
 #' block <- function(n, cols) {
 #'   f <- abs(stats::rnorm(n)) + 0.5
@@ -450,24 +450,24 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
   X <- as_mv_matrix(x)
   n <- nrow(X)
   if (any(X < 0)) {
-    stop("`fabisearch` factorises the series with non-negative matrix ",
-         "factorisation, which is undefined for negative values (", sum(X < 0),
-         " of ", length(X), " entries are negative). Shift or rescale the ",
-         "series first.", call. = FALSE)
+    cpt_abort("`fabisearch` factorises the series with non-negative matrix ",
+              "factorisation, which is undefined for negative values (",
+              sum(X < 0), " of ", length(X), " entries are negative). Shift ",
+               "or rescale the ", "series first.", class = "input_error")
   }
   # NMF also rejects an all-zero row, and the engine's own message names
   # neither the rows nor the reason. Catching it here keeps the wrapper's
   # preconditions in one place.
   zero_rows <- which(rowSums(X) == 0)
   if (length(zero_rows) > 0) {
-    stop("`fabisearch` cannot factorise a series with an all-zero time ",
-         "point: row", if (length(zero_rows) > 1) "s " else " ",
-         paste(utils::head(zero_rows, 5), collapse = ", "),
-         if (length(zero_rows) > 5) ", ..." else "",
-         " (", length(zero_rows), " of ", nrow(X), ") ",
-         if (length(zero_rows) > 1) "sum" else "sums",
-         " to zero. Drop those rows or add a small positive offset.",
-         call. = FALSE)
+    cpt_abort("`fabisearch` cannot factorise a series with an all-zero time ",
+              "point: row", if (length(zero_rows) > 1) "s " else " ",
+              paste(utils::head(zero_rows, 5), collapse = ", "),
+              if (length(zero_rows) > 5) ", ..." else "", " (",
+              length(zero_rows), " of ", nrow(X), ") ",
+              if (length(zero_rows) > 1) "sum" else "sums", " to zero. Drop ",
+               "those rows or add a small positive offset.",
+              class = "input_error")
   }
   data_vec <- as.numeric(rowMeans(X))
   validate_scalar(min_dist, "min_dist", min = 2)
@@ -483,8 +483,8 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
   if (!is.null(rank)) {
     validate_scalar(rank, "rank", min = 1)
     if (rank != round(rank)) {
-      stop("`rank` must be a whole number of NMF components (got ", rank,
-           ").", call. = FALSE)
+      cpt_abort("`rank` must be a whole number of NMF components (got ", rank,
+                ").", class = "bad_argument")
     }
   }
   if (!is.null(alpha)) {
@@ -506,11 +506,11 @@ fabisearch_wrapper <- function(x, min_dist = 35, n_runs = 50, n_reps = 100,
   if (testtype %in% c("wilcox", "ks")) {
     p_floor <- 1 / choose(2 * n_reps, n_reps)
     if (p_floor > level) {
-      warning("With `testtype = \"", testtype, "\"` and `n_reps = ", n_reps,
-              "` the smallest attainable p-value is ", format(p_floor),
-              ", which is above `alpha = ", format(level), "`, so no split ",
-              "can be significant whatever the data. Raise `n_reps` or ",
-              "`alpha`, or use the default t-test.", call. = FALSE)
+      cpt_warn("With `testtype = \"", testtype, "\"` and `n_reps = ", n_reps,
+               "` the smallest attainable p-value is ", format(p_floor),
+               ", which is above `alpha = ", format(level), "`, so no split ",
+               "can be significant whatever the data. Raise `n_reps` or ",
+               "`alpha`, or use the default t-test.", class = "warning")
     }
   }
   local_seed(seed)

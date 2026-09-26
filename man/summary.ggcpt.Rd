@@ -26,3 +26,7 @@ segment mean whatever `change_in` says; see \code{\link{new_ggcpt}}),
 total cost,
 penalty, and runtime.
 }
+\examples{
+set.seed(2026)
+summary(cpt_detect(c(rnorm(60), rnorm(60, 3)), method = "pelt"))
+}

@@ -1,0 +1,16 @@
+"guarantee","call","setting","kind","nominal","realised","mcse","reps","attempted"
+"cpt_confint() location interval","cpt_detect(x, method = ""strucchange"")","native 95% interval, one change of 1.5 sd, n = 200","coverage",0.95,0.953,0.00473238840333293,2000,2000
+"cpt_confint() location interval","cpt_detect(x, method = ""smuce"", alpha = 0.05)","stepR jump interval at 1 - alpha, one change of 1.5 sd, n = 200","coverage",0.95,0.9995,0.000499874984371065,2000,2000
+"cpt_confint() location interval","cpt_confint(cpt_detect(x), method = ""bootstrap"")","residual bootstrap, B = 199, one change of 1.5 sd, n = 200","coverage",0.95,0.967967967967968,0.00557108768320019,999,1000
+"cpt_test_at() size","cpt_test_at(x, when = 51)","Welch t, Gaussian noise, n = 100","size",0.05,0.0395,0.00435544199823623,2000,2000
+"cpt_test_at() size","cpt_test_at(x, when = 51, family = ""poisson"")","exact test of two rates, Poisson(4) counts, n = 100","size",0.05,0.038,0.00427527776875374,2000,2000
+"cpt_test_at() size","cpt_test_at(x, when = 51, family = ""binomial"")","Fisher's exact test, Bernoulli(0.3), n = 100","size",0.05,0.0295,0.0037835003634201,2000,2000
+"cpt_test_at() size","cpt_test_at(x, when = 51, family = ""exponential"")","exact F test of two rates, exponential waits, n = 100","size",0.05,0.059,0.00526872849936301,2000,2000
+"cpt_test_at() size","cpt_test_at(x, when = 51, family = ""l1"")","Wilcoxon rank-sum, t(3) noise, n = 100","size",0.05,0.0485,0.00480352734977121,2000,2000
+"cpt_test_at() size","cpt_test_at(x, when = 51, window = 5)","largest statistic over +/-5, permutation, B = 199, n = 100","size",0.05,0.048,0.00477995815881269,2000,2000
+"cpt_test_null() size","cpt_test_null(x)","CUSUM, Kolmogorov limit, Gaussian noise, n = 200","size",0.05,0.049,0.00482695556225661,2000,2000
+"cpt_test_null() size","cpt_test_null(x, method = ""pettitt"")","Pettitt's approximation, Gaussian noise, n = 200","size",0.05,0.0315,0.0039056209493498,2000,2000
+"cpt_test_null() size","cpt_test_null(x, method = ""supF"")","sup-F, 15% trimming, Gaussian noise, n = 200","size",0.05,0.0495,0.0048502448391808,2000,2000
+"cpt_test() at a location the data chose","cpt_test(cpt_detect(x, method = ""amoc"", penalty = ""None""))","Welch t at the one changepoint amoc always returns, Gaussian noise, n = 200 (selection_adjusted = FALSE)","size",0.05,0.545550289626119,0.0114260949437459,1899,2000
+"cpt_monitor() average run length","cpt_monitor(""cpm"", arl0 = 500)","Mann-Whitney statistic, in-control N(0, 1), stream of 4,000","run_length",500,548.2775,27.476195233249,400,400
+"cpt_monitor() average run length (lower bound)","cpt_monitor(""edetector"", baseline = b, alpha = 0.01)","in-control N(0, 1) after a baseline of 100, stream of 2,000; the guarantee is at least 1 / alpha","run_length",100,185.61,10.77294228443,400,400

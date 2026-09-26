@@ -683,7 +683,7 @@ test_that("an engine argument the wrapper renames redirects to the right name", 
     list(m = "fabisearch",  eng = "fabisearch",    a = "nruns",         use = "n_runs"),
     list(m = "bfast",       eng = "bfast",         a = "max.iter",      use = "max_iter"),
     list(m = "ocd",         eng = "ocd",           a = "dim",           use = NA),
-    list(m = "segmented",   eng = "segmented",     a = "seg.Z",         use = NA)
+    list(m = "segmented",   eng = "segmented",     a = "seg.Z",         use = "seg_z")
   )
   # How many of these cases can run here at all. Asserting a fixed minimum
   # instead ("tested > 5") is what broke the R-devel run: against an

@@ -58,7 +58,8 @@
 #'     \item{\code{"crops_elbow"}}{the knee of the CROPS cost-against-\eqn{K}
 #'       curve, made an explicit rule (maximum distance from the chord
 #'       joining the endpoints, the standard Kneedle construction) rather
-#'       than something eyeballed off a plot.}
+#'       than something eyeballed off a plot. An elbow needs \eqn{K \ge 1},
+#'       so this criterion \strong{cannot return} \eqn{K = 0}.}
 #'     \item{\code{"cv"}}{order-preserved sample-splitting cross-validation
 #'       (COPPS) via \pkg{crossvalidationCP}. This is the criterion with a
 #'       consistency guarantee. It chooses \eqn{K} with that package's own
@@ -70,8 +71,15 @@
 #'     \item{\code{"stability"}}{the \eqn{K} whose changepoints are
 #'       re-detected most often under within-segment bootstrap resampling.
 #'       A robustness criterion, not a model-selection one; use it to
-#'       cross-check the others.}
+#'       cross-check the others. It \strong{cannot return} \eqn{K = 0}.}
 #'   }
+#'   \code{"bic"}, \code{"mbic"} and \code{"cv"} can return \eqn{K = 0};
+#'   \code{"aic"} in principle can and in practice (measured at
+#'   \eqn{n = 400}) picked \code{k_max} or next to it at every true
+#'   \eqn{K}. \code{cpt_select()} warns (class
+#'   \code{ggchangepoint_selection_unadjusted}) when \code{"aic"} lands at
+#'   the top of the ladder, and when \code{"crops_elbow"} or
+#'   \code{"stability"} returns its smallest candidate.
 #' @param k_max Largest number of changepoints considered. Defaults to
 #'   \code{20}, capped at \code{floor(n / 4)}.
 #' @param folds Folds for \code{criterion = "cv"}. Defaults to \code{5};
@@ -134,7 +142,7 @@ cpt_select <- function(x, method = "pelt",
                                      "cv", "stability"),
                        k_max = 20, folds = 5, B = 100, change_in = "mean",
                        index = NULL, seed = NULL, ...) {
-  criterion <- match.arg(criterion)
+  criterion <- cpt_match_arg(criterion)
   if (is_ggcpt(x)) {
     method <- x$method
     # ...and the change type, which was left at this function's own default
@@ -172,8 +180,9 @@ cpt_select <- function(x, method = "pelt",
     index_label <- parts$index_label %||% "Index"
   }
   if (!is.null(index) && length(index) != length(series)) {
-    stop("`index` must have one entry per observation: ", length(index),
-         " supplied for a series of ", length(series), ".", call. = FALSE)
+    cpt_abort("`index` must have one entry per observation: ", length(index),
+              " supplied for a series of ", length(series), ".",
+              class = "bad_argument")
   }
   n <- length(series)
   validate_scalar(k_max, "k_max", min = 0)
@@ -191,13 +200,13 @@ cpt_select <- function(x, method = "pelt",
   # segmentation at every rung, so there is no ladder to score. Say so
   # rather than reporting a "chosen" K off a one- or two-point curve.
   if (length(ks) < 3) {
-    warning("`", method, "` produced only ", length(ks),
-            " distinct segmentation(s) over the candidate range, so there ",
-            "is little for `criterion = \"", criterion,
-            "\"` to choose between. Methods with an explicit penalty ",
-            "(pelt, binseg, segneigh, amoc, fpop) give a full ladder; the ",
-            "search-based methods tune themselves and largely ignore ",
-            "`penalty`.", call. = FALSE)
+    cpt_warn("`", method, "` produced only ", length(ks),
+             " distinct segmentation(s) over the candidate range, so there ",
+             "is little for `criterion = \"", criterion, "\"` to choose ",
+              "between. Methods with an explicit penalty ", "(pelt, binseg, ",
+              "segneigh, amoc, fpop) give a full ladder; the ", "search-based ",
+              "methods tune themselves and largely ignore ", "`penalty`.",
+             class = "collapsed_ladder")
   }
 
   value <- switch(criterion,
@@ -232,12 +241,13 @@ cpt_select <- function(x, method = "pelt",
   # `0:NA` into candidate_ladder(). Neither message names the criterion or
   # the series.
   if (length(chosen_k) != 1L || is.na(chosen_k)) {
-    stop("`criterion = \"", criterion, "\"` could not score the candidate ",
-         "segmentations for `", method, "`: it scores by re-detection, and ",
-         "every rung on the ladder (K = ", paste(ks, collapse = ", "),
-         ") came back undefined. Use `criterion = \"bic\"`, `\"aic\"` or ",
-         "`\"mbic\"`, which are closed-form, or a method with an explicit ",
-         "penalty (pelt, binseg, segneigh, amoc, fpop).", call. = FALSE)
+    cpt_abort("`criterion = \"", criterion, "\"` could not score the ",
+               "candidate ", "segmentations for `", method, "`: it scores by ",
+               "re-detection, and ", "every rung on the ladder (K = ",
+              paste(ks, collapse = ", "), ") came back undefined. Use ",
+               "`criterion = \"bic\"`, `\"aic\"` or ", "`\"mbic\"`, which are ",
+               "closed-form, or a method with an explicit ", "penalty (pelt, ",
+               "binseg, segneigh, amoc, fpop).", class = "engine_error")
   }
   if (!chosen_k %in% ks) {
     # Cross-validation searches its own ladder, so its answer can exceed the
@@ -249,6 +259,32 @@ cpt_select <- function(x, method = "pelt",
     ks <- ladder$k
     costs <- c(costs, gaussian_cost(series, ladder$cpts[[length(ks)]]))
     value <- c(value, NA_real_)
+  }
+
+  # Two ways the answer can be forced rather than chosen, each said once.
+  # AIC's penalty does not grow with n, so it is not consistent for the
+  # number of changepoints: measured at n = 400, it picked k_max or next to
+  # it at every true K from 0 to 5. And an elbow or a re-detection ladder is
+  # defined only for K >= 1, so crops_elbow and stability cannot answer "no
+  # changepoints"; returning their smallest candidate is the only sign the
+  # answer was the floor of the question rather than the data's.
+  if (criterion == "aic" && chosen_k >= max(ks) - 1L && max(ks) > 1L) {
+    cpt_warn("`criterion = \"aic\"` chose K = ", chosen_k, " of at most ",
+             max(ks), ". AIC's penalty does not grow with the series, so it ",
+             "is not consistent for the number of changepoints and tends to ",
+             "`k_max` whatever the data; `\"bic\"` or `\"mbic\"` recovered ",
+             "the true K in 90% of measured cases.", class = "selection",
+             data = list(criterion = criterion, k = chosen_k))
+  }
+  if (criterion %in% c("crops_elbow", "stability") &&
+      chosen_k == min(ks[ks >= 1L])) {
+    cpt_warn("`criterion = \"", criterion, "\"` chose K = ", chosen_k,
+             ", its smallest candidate, and it cannot choose K = 0 at all: ",
+             "the answer may be the edge of what it can say rather than ",
+             "what the data say. `\"bic\"`, `\"mbic\"` and `\"cv\"` can ",
+             "return no changepoints; cpt_test_null() tests for any.",
+             class = "selection",
+             data = list(criterion = criterion, k = chosen_k))
   }
 
   chosen_i <- match(chosen_k, ks)
@@ -390,9 +426,9 @@ select_by_cv <- function(series, k_max, folds) {
     error = function(e) NULL
   )
   if (is.null(out)) {
-    stop("crossvalidationCP could not select a number of changepoints for ",
-         "this series. Try a different `criterion`, or a larger `k_max`.",
-         call. = FALSE)
+    cpt_abort("crossvalidationCP could not select a number of changepoints ",
+               "for ", "this series. Try a different `criterion`, or a larger ",
+               "`k_max`.", class = "engine_error")
   }
   as.integer(out)[1]
 }
@@ -453,9 +489,9 @@ stability_curve <- function(series, ladder, method, B, change_in = "mean",
     mean(hits / B)
   }, numeric(1))
   if (n_tried > 0L && n_failed == n_tried) {
-    stop("`criterion = \"stability\"` could not re-run `", method,
-         "` on any bootstrap replicate. The first error was: ", first_error,
-         call. = FALSE)
+    cpt_abort("`criterion = \"stability\"` could not re-run `", method,
+              "` on any bootstrap replicate. The first error was: ",
+              first_error, class = "engine_error")
   }
   curve
 }
@@ -514,7 +550,7 @@ autoplot.ggcpt_selection <- function(object,
                                      plot_type = c("criterion",
                                                    "segmentation", "ladder"),
                                      max_facets = 12, ...) {
-  plot_type <- match.arg(plot_type)
+  plot_type <- cpt_match_arg(plot_type)
   tab <- object$criterion_table
 
   if (plot_type == "criterion") {

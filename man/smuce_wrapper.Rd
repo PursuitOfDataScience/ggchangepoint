@@ -4,7 +4,12 @@
 \alias{smuce_wrapper}
 \title{SMUCE / HSMUCE wrapper: multiscale changepoint inference}
 \usage{
-smuce_wrapper(x, alpha = 0.5, family = c("gauss", "hsmuce"), ...)
+smuce_wrapper(
+  x,
+  alpha = 0.5,
+  family = c("gauss", "hsmuce", "poisson", "binomial"),
+  ...
+)
 }
 \arguments{
 \item{x}{A numeric vector.}
@@ -14,10 +19,21 @@ smaller values yield more conservative (fewer-changepoint) fits.
 Defaults to \code{0.5}, the upstream recommendation for estimation.}
 
 \item{family}{Noise model: \code{"gauss"} (SMUCE, homogeneous Gaussian
-noise) or \code{"hsmuce"} (HSMUCE, segment-wise variance). Defaults to
-\code{"gauss"}. The remaining \code{stepR} families (\code{"jsmurf"},
-\code{"mDependentPS"}, ...) all require a filter or covariance
-specification; call \code{stepR::stepFit()} directly for those.
+noise), \code{"hsmuce"} (HSMUCE, segment-wise variance),
+\code{"poisson"} (counts: a change in the rate) or \code{"binomial"}
+(0/1 outcomes: a change in the probability). Defaults to
+\code{"gauss"}. The two count families run \code{stepR::smuceR()},
+the multiscale estimator for exponential families, with the same
+level and the same jump intervals; \code{cpt_detect(x, method =
+"smuce", family = "poisson")} reaches them. \pkg{stepR} documents
+\code{smuceR()} as deprecated but working, and as the only route to
+these families until \code{stepFit()} gains them; should it be
+removed, the error says so and names the methods that fit the same
+family. With \code{alpha} given, \code{smuceR()} takes its threshold
+from the asymptotic null distribution rather than a simulated one. The remaining \code{stepR}
+families (\code{"jsmurf"}, \code{"mDependentPS"}, ...) all require a
+filter or covariance specification; call \code{stepR::stepFit()}
+directly for those.
 \code{"hsmuce"} additionally refuses a series whose point-to-point
 variation lies more than about seven orders of magnitude below its own
 scale: a globally flat series, or a step whose segments are numerically
@@ -26,7 +42,8 @@ added. \pkg{stepR}'s heterogeneous variance estimator aborts the \R
 session on such input rather than raising an error, so it cannot be
 caught. \code{"gauss"} handles the whole range.}
 
-\item{...}{Additional arguments passed to \code{stepR::stepFit()}.}
+\item{...}{Additional arguments passed to \code{stepR::stepFit()}
+(\code{stepR::smuceR()} for the count families).}
 }
 \value{
 A \code{ggcpt} object. The \code{changepoints} tibble carries

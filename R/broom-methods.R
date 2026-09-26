@@ -20,14 +20,39 @@ tibble::as_tibble
 
 #' Tidy a ggcpt object
 #'
-#' Returns the changepoints tibble (one row per changepoint).
+#' Returns the changepoints tibble (one row per changepoint), or the
+#' coefficients of every segment.
 #'
 #' @param x A \code{ggcpt} object.
+#' @param what \code{"changepoints"} (the default) or
+#'   \code{"coefficients"}: one row per segment and model term, with
+#'   \code{estimate}, \code{std_error} and a Wald interval. For a formula
+#'   fit the terms are the regression's; for a series they are the segment
+#'   level (and its slope in time, for a change in slope), so a mean-shift
+#'   result reports each segment's mean with its standard error. Engines
+#'   that estimate the coefficients themselves (\pkg{segmented}'s slopes,
+#'   \pkg{fastcpd}'s per-segment parameters) report their own estimates.
+#' @param conf_level Confidence level for the coefficient intervals.
 #' @param ... Additional arguments (ignored).
-#' @return A tibble with columns \code{cp}, \code{cp_value}, and any
-#'   method-specific columns.
+#' @return A tibble. For \code{"changepoints"}: columns \code{cp},
+#'   \code{cp_value}, and any method-specific columns. For
+#'   \code{"coefficients"}: \code{segment}, \code{start}, \code{end},
+#'   \code{term}, \code{estimate}, \code{std_error}, \code{conf_low},
+#'   \code{conf_high} (plus \code{coordinate} for a multivariate result).
 #' @export
-tidy.ggcpt <- function(x, ...) {
+#' @examples
+#' set.seed(1)
+#' fit <- cpt_detect(c(rnorm(80), rnorm(80, 3)), method = "pelt")
+#' tidy(fit)
+#' tidy(fit, "coefficients")
+tidy.ggcpt <- function(x, what = c("changepoints", "coefficients"),
+                       conf_level = 0.95, ...) {
+  what <- cpt_match_arg(what)
+  if (what == "coefficients") {
+    validate_scalar(conf_level, "conf_level", min = 0, max = 1,
+                    min_open = TRUE, max_open = TRUE)
+    return(tidy_coefficients(x, conf_level))
+  }
   x$changepoints
 }
 
@@ -57,7 +82,7 @@ tidy.ggcpt <- function(x, ...) {
 #' cpt_regions(fit)
 cpt_regions <- function(x) {
   if (!is_ggcpt(x)) {
-    stop("`x` must be a ggcpt object.", call. = FALSE)
+    cpt_abort("`x` must be a ggcpt object.", class = "bad_argument")
   }
   reg <- x$regions
   if (is.null(reg) || nrow(reg) == 0) {
@@ -93,7 +118,13 @@ cpt_regions <- function(x) {
 #'   \code{method}, \code{change_in}, \code{penalty_type}, \code{penalty_value},
 #'   \code{cp_convention}, \code{total_cost} (\code{NA} when the engine does
 #'   not expose a cost), \code{runtime} (elapsed seconds when measured by
-#'   \code{cpt_detect()}, otherwise \code{NA}).
+#'   \code{cpt_detect()}, otherwise \code{NA}) and \code{engine_version}
+#'   (the version of the engine package that produced the result, recorded
+#'   when it was made, or \code{NA} for a result with no engine package,
+#'   such as one built by \code{\link{as_ggcpt}()}; see
+#'   \code{\link{cpt_verify}()}) and \code{family} (the distribution family
+#'   the fit was asked for with \code{cpt_detect(family = )}, or \code{NA}
+#'   for the method's own default).
 #'
 #' @details
 #' \code{total_cost} is reported on whatever scale the engine itself uses, so
@@ -117,6 +148,10 @@ cpt_regions <- function(x) {
 #'     \code{"meanvar"}.
 #' }
 #' @export
+#' @examples
+#' set.seed(2026)
+#' fit <- cpt_detect(c(rnorm(60), rnorm(60, 3)), method = "pelt")
+#' glance(fit)
 glance.ggcpt <- function(x, ...) {
   total_cost <- NA_real_
   if (!is.null(x$fit)) {
@@ -200,7 +235,9 @@ glance.ggcpt <- function(x, ...) {
     penalty_value = penalty_value,
     cp_convention = x$cp_convention %||% "left",
     total_cost = total_cost,
-    runtime = runtime
+    runtime = runtime,
+    engine_version = scalar_chr(x$versions$engine_version %||% NA_character_),
+    family = scalar_chr(x$family %||% NA_character_)
   )
 }
 
@@ -237,7 +274,9 @@ glance.ggcpt <- function(x, ...) {
 #' @details
 #' For a multivariate result every coordinate is returned, but the
 #' changepoints are shared across them, so \code{seg_id} and
-#' \code{is_changepoint} apply to the whole row while \code{.fitted} and
+#' \code{is_changepoint} apply to the whole row. Each coordinate also gets
+#' its own \code{.fitted_<name>} and \code{.resid_<name>} (its segment
+#' means and residuals), while \code{.fitted} and
 #' \code{.resid} describe the \strong{univariate series the result
 #' carries}: \code{$data$value}, the same series
 #' \code{$segments$param_estimate} summarises, so \code{.resid} is always
@@ -252,9 +291,15 @@ glance.ggcpt <- function(x, ...) {
 #' its own, so for those engines the two columns agree. The engines that
 #' do this are exactly the ones \code{\link{cpt_methods}()} marks in its
 #' \code{fitted} column: \code{smuce}, \code{hsmuce}, \code{cpop},
-#' \code{bcp}, \code{beast}, \code{decafs}, \code{segmented},
-#' \code{mcp} and \code{bfast}.
+#' \code{bcp}, \code{bocpd}, \code{beast}, \code{decafs},
+#' \code{segmented}, \code{envcpt}, \code{mcp} and \code{bfast}; a
+#' formula fit carries its piecewise regression's fitted values the same
+#' way.
 #' @export
+#' @examples
+#' set.seed(2026)
+#' fit <- cpt_detect(c(rnorm(60), rnorm(60, 3)), method = "pelt")
+#' head(augment(fit))
 augment.ggcpt <- function(x, ...) {
   # For a multivariate result use the wide frame (index + one column per
   # coordinate) so all coordinates are kept; otherwise use the univariate
@@ -323,6 +368,24 @@ augment.ggcpt <- function(x, ...) {
     data$.resid <- value_vec - data$.fitted
   }
 
+  # And for a multivariate result, every coordinate's own segment means and
+  # residuals: `.fitted`/`.resid` describe only the one univariate series
+  # the result carries, which was the whole of the diagnostics a
+  # multivariate fit got.
+  if (use_wide && nrow(x$segments) > 0) {
+    coords <- setdiff(names(x$data_wide), c("index", "index_value"))
+    for (cl in coords) {
+      v <- as.numeric(x$data_wide[[cl]])
+      fit_c <- rep(NA_real_, length(v))
+      for (i in seq_len(nrow(x$segments))) {
+        idx <- seq(x$segments$start[i], x$segments$end[i])
+        fit_c[idx] <- mean(v[idx], na.rm = TRUE)
+      }
+      data[[paste0(".fitted_", cl)]] <- fit_c
+      data[[paste0(".resid_", cl)]] <- v - fit_c
+    }
+  }
+
   if (nrow(x$changepoints) > 0) {
     data$is_changepoint[index_col %in% x$changepoints$cp] <- TRUE
   }
@@ -361,6 +424,9 @@ cpt_test_stat <- function(fit) {
 #' @param ... Additional arguments (ignored).
 #' @return A list with class \code{summary.ggcpt} containing the summary.
 #' @exportS3Method base::summary
+#' @examples
+#' set.seed(2026)
+#' summary(cpt_detect(c(rnorm(60), rnorm(60, 3)), method = "pelt"))
 summary.ggcpt <- function(object, ...) {
   structure(
     list(

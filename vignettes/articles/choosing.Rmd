@@ -1,0 +1,146 @@
+---
+title: "Choosing a Method: a Decision Tree and a Cheatsheet"
+author: "Youzhi Yu<br><span style='font-size:85%;'>University of Chicago</span>"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>")
+library(ggchangepoint)
+wired <- subset(cpt_methods(), status == "available")
+fams <- cpt_families()
+supports <- function(ci) unique(fams$method[fams$change_in == ci])
+list_of <- function(v) paste0("`", v, "`", collapse = ", ")
+```
+
+"Which of these fifty do I want?" is the first question every new user has.
+This page answers it three ways: a tree to walk, a cheatsheet to scan, and
+`cpt_recommend()`, which answers from the same measurements in code. Every
+list below is computed from `cpt_methods()` when the page is built, so it
+cannot drift from the registry.
+
+## Decide before you look
+
+Pick the method from what you know about the problem, before you see what
+each method says about your series. A method chosen because it found a
+change carries no valid p-value, and that selection is the easiest mistake
+to make with fifty methods behind one call.
+
+## The tree
+
+```
+What arrives?
+|
++-- data still arriving, and you want an alarm ---> cpt_monitor()
+|                                                   (edetector, cpm, ocd)
++-- a formula: did a regression's relationship change?
+|       ---> cpt_detect(y ~ x, data, method = "strucchange" | "segmented" | "fastcpd")
+|
++-- several series that should change together ---> the multivariate methods
+|
++-- one finished series. What changes?
+    |
+    +-- its level (the mean)
+    |     is the noise independent?   yes --> see "A change in mean" below
+    |                                 no  --> cpt_assumptions() says so; see
+    |                                         "Autocorrelated noise"
+    +-- its spread, or level and spread together --> change_in = "var" / "meanvar"
+    +-- its slope, the level staying continuous   --> change_in = "slope"
+    +-- its whole distribution                    --> change_in = "distribution"
+    +-- counts, 0/1 outcomes, waiting times       --> family = "poisson" |
+                                                      "binomial" | "exponential"
+```
+
+## A change in mean
+
+`r length(supports("mean"))` methods detect a change in mean. Which of them
+depends on three things.
+
+**How long is the series?** The univariate ones measured to fit a
+1,000,000-point series within five minutes (`cpt_runtimes`):
+
+```{r long}
+long <- subset(wired, max_n >= 1e6 & univariate &
+                 method %in% supports("mean"))
+long[order(long$method), c("method", "engine", "cost", "scale_invariant")]
+```
+
+**Do you need to say where it could be?** Methods returning a location
+interval or a significance region: `r list_of(subset(wired, ci)$method)`.
+Methods returning a posterior over locations:
+`r list_of(subset(wired, posterior)$method)`.
+
+**Is the noise on unit scale?** These were measured to give a different
+answer on the same series in different units, so standardise first or
+choose another: `r list_of(subset(wired, scale_invariant %in% FALSE)$method)`.
+
+## Autocorrelated noise
+
+Measured on AR(1) noise with a lag-one correlation of 0.7, two real changes
+and 300 observations, the calls with the fewest false positives that still
+find the changes (`cpt_noise_benchmark`):
+
+```{r ar1}
+ar <- subset(cpt_noise_benchmark, regime == "ar1" & fp <= 1)
+head(ar[order(-ar$hits, ar$fp), c("call", "hits", "fp")], 6)
+```
+
+A general-purpose detector on the same data, for comparison:
+
+```{r ar1-pelt}
+subset(cpt_noise_benchmark, regime == "ar1" & method == "pelt" &
+         setting == "default")[, c("call", "hits", "fp")]
+```
+
+## Counts, binary outcomes and waiting times
+
+Methods that fit a Poisson cost: `r list_of(unique(subset(cpt_families(), family == "poisson")$method))`.
+A binomial cost: `r list_of(unique(subset(cpt_families(), family == "binomial")$method))`.
+An exponential cost: `r list_of(unique(subset(cpt_families(), family == "exponential")$method))`.
+`cpt_families()` has the engine call each combination becomes.
+
+## One change, or several?
+
+Some designs return at most one changepoint, which is right for a
+before-and-after question and wrong for everything else:
+`r list_of(subset(wired, max_cp %in% 1L)$method)`. Two of them
+(`segmented` and `mcp`) return exactly as many as they are asked for, one
+by default, whether or not the data change: test the answer with
+`cpt_test()` before reporting it.
+
+## The cheatsheet
+
+| I need | Start with |
+| :- | :- |
+| A default for one series, one kind of change | `cpt_detect(x)` (`pelt`, on standardised data) |
+| Intervals for the locations | `cpt_detect(x, method = "smuce")`, `"strucchange"`, `"nsp"` |
+| A posterior probability of change at each time | `method = "bcp"`, `"beast"`, `"bocpd"` |
+| Robustness to outliers | `cpt_detect(x, method = "binsegrcpp", family = "l1")` |
+| A change in slope | `cpt_detect(x, method = "cpop", change_in = "slope")` |
+| Counts | `cpt_detect(x, method = "pelt", family = "poisson")` |
+| 0/1 outcomes | `cpt_detect(x, method = "smuce", family = "binomial")` |
+| A regression break | `cpt_detect(y ~ x, data = d, method = "strucchange")` |
+| Several series at once | `cpt_detect(X, method = "inspect")`, `"geomcp"`, `"ecp"` |
+| A long series (10^6) | `method = "pelt"`, `"fpop"`, `"binsegrcpp"`, `"mosum"` |
+| An alarm as data arrive | `cpt_monitor("edetector", baseline = b)` |
+| A test at a date fixed in advance | `cpt_test_at(x, when = date)` |
+| To know whether to believe the answer | `cpt_assumptions(fit)`, `cpt_robustness(fit)` |
+
+## The same answer in code
+
+`cpt_recommend()` reads the same tables and scores every method on what you
+tell it; it returns the call to run, the measured numbers behind the score,
+and a reason:
+
+```{r recommend}
+cpt_recommend(noise = "autocorrelated", n = 5000, n_expected = 2)
+```
+
+Given a fit you already made, it fills in what the fit knows (length,
+dimension, data type, and whether the residuals are autocorrelated):
+
+```{r recommend-fit}
+set.seed(1)
+fit <- suppressWarnings(cpt_detect(as.numeric(arima.sim(list(ar = 0.7), 400)),
+                                   method = "pelt"))
+head(cpt_recommend(fit = fit)[, c("method", "call", "why")], 3)
+```

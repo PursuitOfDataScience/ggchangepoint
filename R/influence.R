@@ -75,25 +75,25 @@ cpt_influence <- function(object, type = c("delete", "outlier"),
                                      "recompute"),
                           subset = NULL, outlier_sd = 5, seed = NULL, ...) {
   if (!is_ggcpt(object)) {
-    stop("`object` must be a ggcpt object.", call. = FALSE)
+    cpt_abort("`object` must be a ggcpt object.", class = "bad_argument")
   }
-  type <- match.arg(type)
-  engine <- match.arg(engine)
+  type <- cpt_match_arg(type)
+  engine <- cpt_match_arg(engine)
   validate_scalar(outlier_sd, "outlier_sd", min = 0)
 
   y <- object$data$value
   n <- length(y)
   if (n < 4) {
-    stop("Influence diagnostics need at least 4 observations; the series ",
-         "has ", n, ".", call. = FALSE)
+    cpt_abort("Influence diagnostics need at least 4 observations; the series ",
+              "has ", n, ".", class = "short_series")
   }
   if (is.null(subset)) {
     subset <- seq_len(n)
   } else {
     subset <- sort(unique(as.integer(subset)))
     if (any(subset < 1 | subset > n)) {
-      stop("`subset` must index observations of the series (1..", n, ").",
-           call. = FALSE)
+      cpt_abort("`subset` must index observations of the series (1..", n, ").",
+                class = "bad_argument")
     }
   }
 
@@ -108,11 +108,12 @@ cpt_influence <- function(object, type = c("delete", "outlier"),
   can_native <- mean_cpt &&
     requireNamespace("changepoint.influence", quietly = TRUE)
   if (engine == "changepoint.influence" && !can_native) {
-    stop("`engine = \"changepoint.influence\"` needs a change-in-mean result ",
-         "from a changepoint-package engine (pelt, binseg, segneigh, amoc), ",
-         "which is all that package supports, and the ",
-         "changepoint.influence package installed. `engine = \"recompute\"` ",
-         "works for every method.", call. = FALSE)
+    cpt_abort("`engine = \"changepoint.influence\"` needs a change-in-mean ",
+               "result ", "from a changepoint-package engine (pelt, binseg, ",
+               "segneigh, amoc), ", "which is all that package supports, and ",
+               "the ", "changepoint.influence package installed. `engine = ",
+               "\"recompute\"` ", "works for every method.",
+              class = "unsupported")
   }
   # Only a DELETION goes to changepoint.influence under "auto". The two
   # engines agree on what deleting an observation means; they do not agree
@@ -124,10 +125,10 @@ cpt_influence <- function(object, type = c("delete", "outlier"),
     engine == "changepoint.influence"
 
   if (!use_native && length(subset) > 500) {
-    warning("Recomputing influence perturbs one observation at a time, so ",
-            "this is ", length(subset), " detector fits. Pass `subset` to ",
-            "sample positions, or set a parallel `future::plan()`.",
-            call. = FALSE)
+    cpt_warn("Recomputing influence perturbs one observation at a time, so ",
+             "this is ", length(subset), " detector fits. Pass `subset` to ",
+             "sample positions, or set a parallel `future::plan()`.",
+             class = "warning")
   }
 
   local_seed(seed)
@@ -281,14 +282,14 @@ influence_recompute <- function(object, type, subset, outlier_sd, seed = NULL,
   errs <- vapply(outs, function(o) o$error %||% NA_character_, character(1))
   failed <- !is.na(errs)
   if (all(failed)) {
-    stop("The detector could not be re-run on any of the ", length(failed),
-         " perturbed series, so there is no influence to report. The first ",
-         "error was: ", errs[failed][1], call. = FALSE)
+    cpt_abort("The detector could not be re-run on any of the ", length(failed),
+              " perturbed series, so there is no influence to report. The first ",
+              "error was: ", errs[failed][1], class = "engine_error")
   }
   if (any(failed)) {
-    warning("The detector failed on ", sum(failed), " of ", length(failed),
-            " perturbed series; those rows have `n_cp = NA`. The first error ",
-            "was: ", errs[failed][1], call. = FALSE)
+    cpt_warn("The detector failed on ", sum(failed), " of ", length(failed),
+             " perturbed series; those rows have `n_cp = NA`. The first error ",
+             "was: ", errs[failed][1], class = "replicates_failed")
   }
   summarise_influence(cpts, param_mat, orig_cp, orig_param, subset,
                       failed = failed)
@@ -393,7 +394,8 @@ print.ggcpt_influence <- function(x, ...) {
 cpt_leverage <- function(object, ...) {
   if (is_ggcpt(object)) object <- cpt_influence(object, ...)
   if (!inherits(object, "ggcpt_influence")) {
-    stop("`object` must be a ggcpt_influence or ggcpt object.", call. = FALSE)
+    cpt_abort("`object` must be a ggcpt_influence or ggcpt object.",
+              class = "bad_argument")
   }
   inf <- object$influence
   z <- function(v) {
@@ -452,7 +454,7 @@ autoplot.ggcpt_influence <- function(object,
                                      plot_type = c("overview", "location",
                                                    "parameter", "map"),
                                      ...) {
-  plot_type <- match.arg(plot_type)
+  plot_type <- cpt_match_arg(plot_type)
   inf <- object$influence
   orig <- object$original
   orig_cp <- orig$changepoints$cp
@@ -496,8 +498,9 @@ autoplot.ggcpt_influence <- function(object,
       tibble::tibble(perturbed = inf$index[i], cp = v)
     }))
     if (is.null(rows)) {
-      stop("No perturbation produced a changepoint, so there is nothing to ",
-           "draw. Try plot_type = \"parameter\".", call. = FALSE)
+      cpt_abort("No perturbation produced a changepoint, so there is nothing ",
+                 "to ", "draw. Try plot_type = \"parameter\".",
+                class = "input_error")
     }
     rows$perturbed_x <- idx_vals[rows$perturbed]
     rows$cp_x <- idx_vals[rows$cp]
@@ -607,8 +610,8 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
   }
   if (!is.list(over) || length(over) == 0 || is.null(names(over)) ||
       any(!nzchar(names(over)))) {
-    stop("`over` must be a non-empty named list of parameter vectors, e.g. ",
-         "list(penalty = c(5, 10, 20)).", call. = FALSE)
+    cpt_abort("`over` must be a non-empty named list of parameter vectors, ",
+               "e.g. ", "list(penalty = c(5, 10, 20)).", class = "bad_argument")
   }
   grid <- expand.grid(over, stringsAsFactors = FALSE,
                       KEEP.OUT.ATTRS = FALSE)
@@ -652,9 +655,9 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
   grid$cpts <- lapply(outs, function(o) o$cpts)
   grid$error <- vapply(outs, function(o) o$error, character(1))
   if (any(!is.na(grid$error))) {
-    warning(sum(!is.na(grid$error)), " of ", nrow(grid),
-            " settings errored; their rows report 0 changepoints and carry ",
-            "the message in the `error` column.", call. = FALSE)
+    cpt_warn(sum(!is.na(grid$error)), " of ", nrow(grid), " settings errored; ",
+              "their rows report 0 changepoints and carry ", "the message in ",
+              "the `error` column.", class = "replicates_failed")
   }
 
   structure(

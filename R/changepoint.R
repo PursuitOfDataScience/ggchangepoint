@@ -21,7 +21,11 @@
 #'   \code{SegNeigh} or \code{BinSeg}). Please note when \code{change_in} is
 #'   \code{np} or \code{cpt_np}, \code{PELT} is the only option.
 #' @param ... Extra arguments for each \code{cpt} function mentioned in the
-#'   \code{change_in} section.
+#'   \code{change_in} section. For a change in mean (and for \code{np})
+#'   \code{minseglen} defaults to \code{2} rather than the engine's
+#'   \code{1}, so no segment is a single observation; pass it to choose
+#'   another value. SegNeigh keeps the engine's default, which is the only
+#'   one it implements.
 #'
 #' @section Standardise the data for a change in mean:
 #' With \code{change_in = "mean"} the upstream Normal cost assumes a noise
@@ -67,7 +71,8 @@ cpt_wrapper <- function(data,
                         cp_method = "PELT",
                         ...){
 
-  change_in <- match.arg(change_in, c("mean_var", "mean", "var", "np", "cpt_np"))
+  change_in <- cpt_match_arg(change_in,
+                             c("mean_var", "mean", "var", "np", "cpt_np"))
 
   # `...` reaches changepoint::cpt.*(), whose `method` this function renames
   # to `cp_method`; passing the engine's own name gave R's raw "formal
@@ -79,27 +84,28 @@ cpt_wrapper <- function(data,
                            "package; use `ecp_wrapper()` for a multivariate",
                            "series."))
   if (!is.numeric(data)) {
-    stop("`data` must be numeric.", nonnumeric_columns_note(data),
-         call. = FALSE)
+    cpt_abort("`data` must be numeric.", nonnumeric_columns_note(data),
+              class = "bad_type")
   }
   data <- as.numeric(data)
   if (anyNA(data) || any(!is.finite(data))) {
     stop_nonfinite(data, "data")
   }
   if (length(data) < 3) {
-    stop("`data` must have at least 3 observations.", call. = FALSE)
+    cpt_abort("`data` must have at least 3 observations.",
+              class = "short_series")
   }
 
-  cp_method <- match.arg(cp_method, c("AMOC", "PELT", "SegNeigh", "BinSeg"))
+  cp_method <- cpt_match_arg(cp_method, c("AMOC", "PELT", "SegNeigh", "BinSeg"))
 
   # changepoint.np::cpt.np() implements PELT only: it rejects "AMOC" outright
   # and has no `Q` argument, so BinSeg/SegNeigh die on the segment-count clamp
   # below with "unused argument (Q = ...)". Refuse up front with the reason.
   is_np <- change_in %in% c("np", "cpt_np")
   if (is_np && cp_method != "PELT") {
-    stop("`change_in = \"", change_in, "\"` uses changepoint.np, which ",
-         "implements `cp_method = \"PELT\"` only (got \"", cp_method,
-         "\").", call. = FALSE)
+    cpt_abort("`change_in = \"", change_in, "\"` uses changepoint.np, which ",
+              "implements `cp_method = \"PELT\"` only (got \"", cp_method,
+              "\").", class = "unsupported")
   }
 
   cpt_fun <- switch(change_in,
@@ -144,16 +150,29 @@ cpt_wrapper <- function(data,
       # estimated per segment.
       q_hi <- if (change_in == "mean") n - 2L else as.integer(floor(n / 2) + 1L)
       if (q_hi < 3L) {
-        stop("SegNeigh requires at least Q = 3 maximum segments, but ", n,
-             " observations admit at most Q = ", q_hi,
-             ". Use `cp_method = \"PELT\"` or \"BinSeg\" for a series this short.",
-             call. = FALSE)
+        cpt_abort("SegNeigh requires at least Q = 3 maximum segments, but ", n,
+                  " observations admit at most Q = ", q_hi, ". Use `cp_method ",
+                   "= \"PELT\"` or \"BinSeg\" for a series this short.",
+                  class = "short_series")
       }
       args$Q <- max(3L, min(5L, q_hi))
     } else {
       q_cap <- max(1L, floor(n / 2) - 1L)
       args$Q <- min(5L, q_cap)
     }
+  }
+
+  # A floor of two observations per segment for a change in mean, where the
+  # engine's own default is one: with one, `pelt` put a changepoint after
+  # every observation of `c(1, 5, 9)`, and on binary data an unconstrained
+  # engine marks nearly every 0/1 transition (roadmap §172.1, §246.2). The
+  # variance costs already default to two. SegNeigh implements no minimum
+  # segment length, and a series under four observations cannot hold two
+  # segments of two, so both keep the engine's default.
+  if (!"minseglen" %in% names(args) &&
+      change_in %in% c("mean", "np", "cpt_np") && cp_method != "SegNeigh" &&
+      length(data) >= 4L) {
+    args$minseglen <- 2L
   }
 
   fit <- do.call(cpt_fun, args)
@@ -246,9 +265,9 @@ ggcptplot <- function(data,
   # the matrix would be rows times columns).
   if (is.matrix(data) || is.data.frame(data)) {
     if (ncol(as.matrix(data)) > 1) {
-      message("Multivariate input: plotting the first column. ",
-              "Use autoplot(cpt_detect(data, method = \"pelt\")) for a ",
-              "faceted multivariate plot.")
+      cpt_inform("Multivariate input: plotting the first column. ",
+                 "Use autoplot(cpt_detect(data, method = \"pelt\")) for a ",
+                 "faceted multivariate plot.")
     }
     data <- as.numeric(as.matrix(data)[, 1])
   }

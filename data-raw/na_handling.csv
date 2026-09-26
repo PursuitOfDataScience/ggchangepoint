@@ -1,0 +1,49 @@
+"method","na_handling","clean","with_na","error","seconds"
+"pelt","reject","70,140","ERR","`data` must be finite (no NA/NaN/Inf); 5 of 200 values are not. To detect around",0.5
+"binseg","reject","70,140","ERR","`data` must be finite (no NA/NaN/Inf); 5 of 200 values are not. To detect around",0.1
+"segneigh","reject","70,140","ERR","`data` must be finite (no NA/NaN/Inf); 5 of 200 values are not. To detect around",0.2
+"amoc","reject","140","ERR","`data` must be finite (no NA/NaN/Inf); 5 of 200 values are not. To detect around",0.2
+"np","reject","70,140","ERR","`data` must be finite (no NA/NaN/Inf); 5 of 200 values are not. To detect around",0
+"ecp","reject","70,140","ERR","`data` must be finite (no NA/NaN/Inf); 5 of 200 values are not. To detect around",0.7
+"fpop","reject","70,140","ERR","NA/NaN/Inf in foreign function call (arg 1)",0.1
+"wbs","reject","70,140","ERR","x vector cannot contain NA's",0.1
+"wbs2","reject","70,140","ERR","Data vector x vector cannot contain NA's",0.3
+"not","reject","70,140","ERR","Data vector x vector cannot contain NA's",0.1
+"mosum","silent_loss","70,140","","",0.1
+"idetect","reject","70,140","ERR","missing value where TRUE/FALSE needed",0
+"tguh","reject","70,140","ERR","Data vector x vector cannot contain NA's",0.1
+"smuce","reject","70,140","ERR","for family 'gauss' y must be a double vector containing only finite values",0.8
+"hsmuce","reject","70,140","ERR","missing value where TRUE/FALSE needed",0.1
+"cpop","reject","70,71,139,141","ERR","NAs are not allowed in subscripted assignments",0.3
+"bcp","silent_loss","70,140","","",0.3
+"bocpd","reject","70,140","ERR","data has missing points, specify a missPts replacement method",0.2
+"beast","native","70,140","70,140","",0.3
+"cpm","reject","70,139","ERR","NA/NaN/Inf in foreign function call (arg 2)",0.1
+"kcp","reject","68,142","ERR","NA values are found in the data.",4.7
+"npmojo","reject","70,140","ERR","Missing values in data: NA is not allowed in the data.",0.6
+"decafs","reject","70,140","ERR","0 (non-NA) cases",0.1
+"sn","reject","70,140","ERR","missing value where TRUE/FALSE needed",1.1
+"inspect","reject","70,140","ERR","missing value where TRUE/FALSE needed",1.3
+"ocd","reject","71,141","ERR","missing value where TRUE/FALSE needed",408.9
+"geomcp","reject","70,132,140","ERR","Missing value: NA is not allowed in the data",0.1
+"strucchange","compacts","70,140","67,136","",0.3
+"segmented","native","107","107","",0.4
+"envcpt","reject","68,138","ERR","data has missing values, this function cannot handle missing values",0.2
+"fastcpd","compacts","70,140","67,136","",0.3
+"nsp","reject","69,140","ERR","missing value where TRUE/FALSE needed",2.2
+"esac","silent_loss","70,140","","",0.2
+"pilliat","silent_loss","70,140","","",0
+"hdcov","reject","70,103,124,150,169","ERR","argument is of length zero",2
+"network","reject","70,140","ERR","`x` must be finite (no NA/NaN/Inf); 15 of 600 values are not. To detect around t",10.8
+"var","silent_loss","45,125","","",2
+"hdreg","clean_fit_failed","ERR","ERR","`hdreg` regresses a response on the covariates, so `response` is required: cpt_d",0
+"fmean","reject","70,140","ERR","`fmean` failed on 200 time point(s) x 3 grid point(s). fChange reported: infinit",12.7
+"fcov","reject","23,40,70,78,84,90,98,107,111,112,113,114,115,116,119,123,124,125,126,127,128,129,130,131,137,140,162","ERR","`fcov` failed on 200 time point(s) x 3 grid point(s). fChange reported: infinite",482.7
+"kwc","silent_loss","70,144","29,32,70","",0.1
+"wbsts","unclassified","","","",0.1
+"bfast","silent_loss","70,140","","",0.8
+"pettitt","reject","140","ERR","missing values in object",0.1
+"buishand","reject","140","ERR","`buishand` standardises by the series' standard deviation, which is 0 here: ever",1.2
+"snht","reject","140","ERR","`snht` standardises by the series' standard deviation, which is 0 here: every on",1.5
+"taylor","reject","70,140","ERR","missing value where TRUE/FALSE needed",0.9
+"binsegrcpp","reject","70,140","ERR","data must be finite",0.5

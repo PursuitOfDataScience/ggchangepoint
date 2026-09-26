@@ -1,0 +1,1681 @@
+"method","setting","regime","rep","hits","fp"
+"pelt","default","iid",1,2,0
+"pelt","default","iid",2,2,0
+"pelt","default","iid",3,2,0
+"pelt","default","iid",4,2,0
+"pelt","default","iid",5,2,0
+"pelt","default","iid",6,2,0
+"pelt","default","iid",7,2,0
+"pelt","default","iid",8,2,0
+"pelt","default","iid",9,2,0
+"pelt","default","iid",10,2,0
+"pelt","default","heavy",1,2,0
+"pelt","default","heavy",2,2,0
+"pelt","default","heavy",3,2,0
+"pelt","default","heavy",4,2,0
+"pelt","default","heavy",5,2,0
+"pelt","default","heavy",6,2,0
+"pelt","default","heavy",7,2,0
+"pelt","default","heavy",8,2,0
+"pelt","default","heavy",9,2,4
+"pelt","default","heavy",10,2,0
+"pelt","default","ar1",1,1,3
+"pelt","default","ar1",2,2,0
+"pelt","default","ar1",3,2,2
+"pelt","default","ar1",4,2,0
+"pelt","default","ar1",5,2,0
+"pelt","default","ar1",6,2,4
+"pelt","default","ar1",7,2,0
+"pelt","default","ar1",8,2,2
+"pelt","default","ar1",9,1,1
+"pelt","default","ar1",10,1,3
+"pelt","default","hetero",1,2,5
+"pelt","default","hetero",2,2,3
+"pelt","default","hetero",3,2,7
+"pelt","default","hetero",4,2,0
+"pelt","default","hetero",5,2,6
+"pelt","default","hetero",6,2,4
+"pelt","default","hetero",7,2,1
+"pelt","default","hetero",8,2,11
+"pelt","default","hetero",9,2,11
+"pelt","default","hetero",10,2,9
+"pelt","change_in = ""meanvar""","iid",1,2,0
+"pelt","change_in = ""meanvar""","iid",2,2,0
+"pelt","change_in = ""meanvar""","iid",3,2,0
+"pelt","change_in = ""meanvar""","iid",4,2,0
+"pelt","change_in = ""meanvar""","iid",5,2,0
+"pelt","change_in = ""meanvar""","iid",6,2,0
+"pelt","change_in = ""meanvar""","iid",7,2,0
+"pelt","change_in = ""meanvar""","iid",8,2,0
+"pelt","change_in = ""meanvar""","iid",9,2,0
+"pelt","change_in = ""meanvar""","iid",10,2,0
+"pelt","change_in = ""meanvar""","heavy",1,2,1
+"pelt","change_in = ""meanvar""","heavy",2,2,3
+"pelt","change_in = ""meanvar""","heavy",3,2,1
+"pelt","change_in = ""meanvar""","heavy",4,2,0
+"pelt","change_in = ""meanvar""","heavy",5,2,1
+"pelt","change_in = ""meanvar""","heavy",6,2,0
+"pelt","change_in = ""meanvar""","heavy",7,2,1
+"pelt","change_in = ""meanvar""","heavy",8,2,0
+"pelt","change_in = ""meanvar""","heavy",9,2,4
+"pelt","change_in = ""meanvar""","heavy",10,2,0
+"pelt","change_in = ""meanvar""","ar1",1,1,3
+"pelt","change_in = ""meanvar""","ar1",2,2,0
+"pelt","change_in = ""meanvar""","ar1",3,2,1
+"pelt","change_in = ""meanvar""","ar1",4,2,1
+"pelt","change_in = ""meanvar""","ar1",5,2,0
+"pelt","change_in = ""meanvar""","ar1",6,2,5
+"pelt","change_in = ""meanvar""","ar1",7,2,2
+"pelt","change_in = ""meanvar""","ar1",8,2,2
+"pelt","change_in = ""meanvar""","ar1",9,1,2
+"pelt","change_in = ""meanvar""","ar1",10,1,4
+"pelt","change_in = ""meanvar""","hetero",1,2,0
+"pelt","change_in = ""meanvar""","hetero",2,2,0
+"pelt","change_in = ""meanvar""","hetero",3,2,0
+"pelt","change_in = ""meanvar""","hetero",4,2,0
+"pelt","change_in = ""meanvar""","hetero",5,2,0
+"pelt","change_in = ""meanvar""","hetero",6,2,0
+"pelt","change_in = ""meanvar""","hetero",7,2,0
+"pelt","change_in = ""meanvar""","hetero",8,2,0
+"pelt","change_in = ""meanvar""","hetero",9,2,0
+"pelt","change_in = ""meanvar""","hetero",10,2,0
+"binseg","default","iid",1,2,0
+"binseg","default","iid",2,2,0
+"binseg","default","iid",3,2,0
+"binseg","default","iid",4,2,0
+"binseg","default","iid",5,2,0
+"binseg","default","iid",6,2,0
+"binseg","default","iid",7,2,1
+"binseg","default","iid",8,2,0
+"binseg","default","iid",9,2,0
+"binseg","default","iid",10,2,0
+"binseg","default","heavy",1,2,0
+"binseg","default","heavy",2,2,0
+"binseg","default","heavy",3,2,0
+"binseg","default","heavy",4,2,0
+"binseg","default","heavy",5,2,0
+"binseg","default","heavy",6,2,0
+"binseg","default","heavy",7,2,0
+"binseg","default","heavy",8,2,0
+"binseg","default","heavy",9,2,0
+"binseg","default","heavy",10,2,0
+"binseg","default","ar1",1,1,3
+"binseg","default","ar1",2,2,0
+"binseg","default","ar1",3,2,2
+"binseg","default","ar1",4,2,0
+"binseg","default","ar1",5,2,0
+"binseg","default","ar1",6,2,2
+"binseg","default","ar1",7,2,1
+"binseg","default","ar1",8,2,2
+"binseg","default","ar1",9,1,1
+"binseg","default","ar1",10,1,2
+"binseg","default","hetero",1,2,0
+"binseg","default","hetero",2,2,3
+"binseg","default","hetero",3,2,1
+"binseg","default","hetero",4,2,0
+"binseg","default","hetero",5,2,0
+"binseg","default","hetero",6,2,2
+"binseg","default","hetero",7,2,0
+"binseg","default","hetero",8,2,0
+"binseg","default","hetero",9,2,1
+"binseg","default","hetero",10,2,2
+"binseg","change_in = ""meanvar""","iid",1,2,0
+"binseg","change_in = ""meanvar""","iid",2,2,0
+"binseg","change_in = ""meanvar""","iid",3,2,0
+"binseg","change_in = ""meanvar""","iid",4,2,0
+"binseg","change_in = ""meanvar""","iid",5,2,0
+"binseg","change_in = ""meanvar""","iid",6,2,0
+"binseg","change_in = ""meanvar""","iid",7,2,0
+"binseg","change_in = ""meanvar""","iid",8,2,0
+"binseg","change_in = ""meanvar""","iid",9,2,0
+"binseg","change_in = ""meanvar""","iid",10,1,1
+"binseg","change_in = ""meanvar""","heavy",1,2,1
+"binseg","change_in = ""meanvar""","heavy",2,2,1
+"binseg","change_in = ""meanvar""","heavy",3,2,1
+"binseg","change_in = ""meanvar""","heavy",4,2,0
+"binseg","change_in = ""meanvar""","heavy",5,2,1
+"binseg","change_in = ""meanvar""","heavy",6,2,0
+"binseg","change_in = ""meanvar""","heavy",7,2,1
+"binseg","change_in = ""meanvar""","heavy",8,2,0
+"binseg","change_in = ""meanvar""","heavy",9,2,2
+"binseg","change_in = ""meanvar""","heavy",10,2,0
+"binseg","change_in = ""meanvar""","ar1",1,1,3
+"binseg","change_in = ""meanvar""","ar1",2,2,0
+"binseg","change_in = ""meanvar""","ar1",3,2,1
+"binseg","change_in = ""meanvar""","ar1",4,2,1
+"binseg","change_in = ""meanvar""","ar1",5,2,0
+"binseg","change_in = ""meanvar""","ar1",6,2,3
+"binseg","change_in = ""meanvar""","ar1",7,2,0
+"binseg","change_in = ""meanvar""","ar1",8,2,2
+"binseg","change_in = ""meanvar""","ar1",9,1,2
+"binseg","change_in = ""meanvar""","ar1",10,1,1
+"binseg","change_in = ""meanvar""","hetero",1,2,0
+"binseg","change_in = ""meanvar""","hetero",2,2,0
+"binseg","change_in = ""meanvar""","hetero",3,2,0
+"binseg","change_in = ""meanvar""","hetero",4,2,0
+"binseg","change_in = ""meanvar""","hetero",5,2,0
+"binseg","change_in = ""meanvar""","hetero",6,2,0
+"binseg","change_in = ""meanvar""","hetero",7,2,0
+"binseg","change_in = ""meanvar""","hetero",8,2,0
+"binseg","change_in = ""meanvar""","hetero",9,2,0
+"binseg","change_in = ""meanvar""","hetero",10,2,0
+"segneigh","default","iid",1,2,1
+"segneigh","default","iid",2,2,0
+"segneigh","default","iid",3,2,0
+"segneigh","default","iid",4,2,0
+"segneigh","default","iid",5,2,0
+"segneigh","default","iid",6,2,0
+"segneigh","default","iid",7,2,0
+"segneigh","default","iid",8,2,0
+"segneigh","default","iid",9,2,0
+"segneigh","default","iid",10,2,2
+"segneigh","default","heavy",1,2,2
+"segneigh","default","heavy",2,2,2
+"segneigh","default","heavy",3,2,2
+"segneigh","default","heavy",4,2,2
+"segneigh","default","heavy",5,2,2
+"segneigh","default","heavy",6,2,0
+"segneigh","default","heavy",7,2,2
+"segneigh","default","heavy",8,2,2
+"segneigh","default","heavy",9,2,2
+"segneigh","default","heavy",10,2,2
+"segneigh","default","ar1",1,1,3
+"segneigh","default","ar1",2,2,2
+"segneigh","default","ar1",3,2,2
+"segneigh","default","ar1",4,2,0
+"segneigh","default","ar1",5,2,2
+"segneigh","default","ar1",6,2,2
+"segneigh","default","ar1",7,2,2
+"segneigh","default","ar1",8,2,2
+"segneigh","default","ar1",9,1,3
+"segneigh","default","ar1",10,1,3
+"segneigh","default","hetero",1,2,2
+"segneigh","default","hetero",2,2,2
+"segneigh","default","hetero",3,2,0
+"segneigh","default","hetero",4,2,2
+"segneigh","default","hetero",5,2,1
+"segneigh","default","hetero",6,2,2
+"segneigh","default","hetero",7,2,1
+"segneigh","default","hetero",8,2,2
+"segneigh","default","hetero",9,2,2
+"segneigh","default","hetero",10,2,2
+"amoc","default","iid",1,1,0
+"amoc","default","iid",2,1,0
+"amoc","default","iid",3,1,0
+"amoc","default","iid",4,1,0
+"amoc","default","iid",5,1,0
+"amoc","default","iid",6,1,0
+"amoc","default","iid",7,0,1
+"amoc","default","iid",8,1,0
+"amoc","default","iid",9,1,0
+"amoc","default","iid",10,1,0
+"amoc","default","heavy",1,1,0
+"amoc","default","heavy",2,1,0
+"amoc","default","heavy",3,1,0
+"amoc","default","heavy",4,1,0
+"amoc","default","heavy",5,1,0
+"amoc","default","heavy",6,1,0
+"amoc","default","heavy",7,1,0
+"amoc","default","heavy",8,1,0
+"amoc","default","heavy",9,1,0
+"amoc","default","heavy",10,1,0
+"amoc","default","ar1",1,0,1
+"amoc","default","ar1",2,1,0
+"amoc","default","ar1",3,1,0
+"amoc","default","ar1",4,1,0
+"amoc","default","ar1",5,1,0
+"amoc","default","ar1",6,0,1
+"amoc","default","ar1",7,1,0
+"amoc","default","ar1",8,1,0
+"amoc","default","ar1",9,0,1
+"amoc","default","ar1",10,0,1
+"amoc","default","hetero",1,1,0
+"amoc","default","hetero",2,1,0
+"amoc","default","hetero",3,1,0
+"amoc","default","hetero",4,1,0
+"amoc","default","hetero",5,1,0
+"amoc","default","hetero",6,0,1
+"amoc","default","hetero",7,1,0
+"amoc","default","hetero",8,1,0
+"amoc","default","hetero",9,1,0
+"amoc","default","hetero",10,1,0
+"np","default","iid",1,2,1
+"np","default","iid",2,2,0
+"np","default","iid",3,2,0
+"np","default","iid",4,2,0
+"np","default","iid",5,2,0
+"np","default","iid",6,2,1
+"np","default","iid",7,2,0
+"np","default","iid",8,2,0
+"np","default","iid",9,2,0
+"np","default","iid",10,2,0
+"np","default","heavy",1,2,2
+"np","default","heavy",2,2,0
+"np","default","heavy",3,2,1
+"np","default","heavy",4,2,0
+"np","default","heavy",5,2,0
+"np","default","heavy",6,2,0
+"np","default","heavy",7,2,0
+"np","default","heavy",8,2,0
+"np","default","heavy",9,2,0
+"np","default","heavy",10,2,0
+"np","default","ar1",1,1,3
+"np","default","ar1",2,2,8
+"np","default","ar1",3,2,7
+"np","default","ar1",4,2,1
+"np","default","ar1",5,2,4
+"np","default","ar1",6,2,9
+"np","default","ar1",7,2,8
+"np","default","ar1",8,2,7
+"np","default","ar1",9,1,9
+"np","default","ar1",10,2,9
+"np","default","hetero",1,2,3
+"np","default","hetero",2,2,0
+"np","default","hetero",3,2,0
+"np","default","hetero",4,2,0
+"np","default","hetero",5,2,0
+"np","default","hetero",6,2,3
+"np","default","hetero",7,2,0
+"np","default","hetero",8,2,0
+"np","default","hetero",9,2,0
+"np","default","hetero",10,2,0
+"ecp","default","iid",1,2,1
+"ecp","default","iid",2,2,0
+"ecp","default","iid",3,2,0
+"ecp","default","iid",4,2,0
+"ecp","default","iid",5,2,0
+"ecp","default","iid",6,2,1
+"ecp","default","iid",7,2,0
+"ecp","default","iid",8,2,1
+"ecp","default","iid",9,2,0
+"ecp","default","iid",10,2,0
+"ecp","default","heavy",1,2,0
+"ecp","default","heavy",2,2,0
+"ecp","default","heavy",3,2,0
+"ecp","default","heavy",4,2,0
+"ecp","default","heavy",5,2,0
+"ecp","default","heavy",6,2,0
+"ecp","default","heavy",7,2,0
+"ecp","default","heavy",8,2,0
+"ecp","default","heavy",9,2,0
+"ecp","default","heavy",10,2,0
+"ecp","default","ar1",1,2,7
+"ecp","default","ar1",2,2,12
+"ecp","default","ar1",3,2,13
+"ecp","default","ar1",4,2,8
+"ecp","default","ar1",5,2,7
+"ecp","default","ar1",6,2,10
+"ecp","default","ar1",7,2,9
+"ecp","default","ar1",8,2,10
+"ecp","default","ar1",9,1,19
+"ecp","default","ar1",10,2,15
+"ecp","default","hetero",1,2,0
+"ecp","default","hetero",2,2,0
+"ecp","default","hetero",3,2,0
+"ecp","default","hetero",4,2,0
+"ecp","default","hetero",5,2,0
+"ecp","default","hetero",6,2,2
+"ecp","default","hetero",7,2,0
+"ecp","default","hetero",8,2,0
+"ecp","default","hetero",9,2,0
+"ecp","default","hetero",10,2,0
+"fpop","default","iid",1,2,0
+"fpop","default","iid",2,2,0
+"fpop","default","iid",3,2,0
+"fpop","default","iid",4,2,0
+"fpop","default","iid",5,2,0
+"fpop","default","iid",6,2,0
+"fpop","default","iid",7,2,0
+"fpop","default","iid",8,2,0
+"fpop","default","iid",9,2,0
+"fpop","default","iid",10,2,0
+"fpop","default","heavy",1,2,0
+"fpop","default","heavy",2,2,2
+"fpop","default","heavy",3,2,2
+"fpop","default","heavy",4,2,0
+"fpop","default","heavy",5,2,2
+"fpop","default","heavy",6,2,0
+"fpop","default","heavy",7,2,0
+"fpop","default","heavy",8,2,0
+"fpop","default","heavy",9,2,4
+"fpop","default","heavy",10,2,0
+"fpop","default","ar1",1,1,3
+"fpop","default","ar1",2,2,0
+"fpop","default","ar1",3,2,2
+"fpop","default","ar1",4,2,0
+"fpop","default","ar1",5,2,0
+"fpop","default","ar1",6,2,4
+"fpop","default","ar1",7,2,0
+"fpop","default","ar1",8,2,2
+"fpop","default","ar1",9,1,1
+"fpop","default","ar1",10,1,2
+"fpop","default","hetero",1,2,7
+"fpop","default","hetero",2,2,8
+"fpop","default","hetero",3,2,7
+"fpop","default","hetero",4,2,5
+"fpop","default","hetero",5,2,2
+"fpop","default","hetero",6,2,5
+"fpop","default","hetero",7,2,0
+"fpop","default","hetero",8,2,12
+"fpop","default","hetero",9,2,11
+"fpop","default","hetero",10,2,9
+"wbs","default","iid",1,2,1
+"wbs","default","iid",2,2,0
+"wbs","default","iid",3,2,0
+"wbs","default","iid",4,2,0
+"wbs","default","iid",5,2,0
+"wbs","default","iid",6,2,0
+"wbs","default","iid",7,2,2
+"wbs","default","iid",8,2,0
+"wbs","default","iid",9,2,0
+"wbs","default","iid",10,2,2
+"wbs","default","heavy",1,2,4
+"wbs","default","heavy",2,2,2
+"wbs","default","heavy",3,2,6
+"wbs","default","heavy",4,2,4
+"wbs","default","heavy",5,2,7
+"wbs","default","heavy",6,2,0
+"wbs","default","heavy",7,2,10
+"wbs","default","heavy",8,2,13
+"wbs","default","heavy",9,2,8
+"wbs","default","heavy",10,2,2
+"wbs","default","ar1",1,2,9
+"wbs","default","ar1",2,2,10
+"wbs","default","ar1",3,2,12
+"wbs","default","ar1",4,2,4
+"wbs","default","ar1",5,2,12
+"wbs","default","ar1",6,2,10
+"wbs","default","ar1",7,2,12
+"wbs","default","ar1",8,2,7
+"wbs","default","ar1",9,1,19
+"wbs","default","ar1",10,2,17
+"wbs","default","hetero",1,2,4
+"wbs","default","hetero",2,2,0
+"wbs","default","hetero",3,2,8
+"wbs","default","hetero",4,2,9
+"wbs","default","hetero",5,2,0
+"wbs","default","hetero",6,2,4
+"wbs","default","hetero",7,2,0
+"wbs","default","hetero",8,2,3
+"wbs","default","hetero",9,2,11
+"wbs","default","hetero",10,2,3
+"wbs2","default","iid",1,2,0
+"wbs2","default","iid",2,2,0
+"wbs2","default","iid",3,2,0
+"wbs2","default","iid",4,2,0
+"wbs2","default","iid",5,2,0
+"wbs2","default","iid",6,2,1
+"wbs2","default","iid",7,2,1
+"wbs2","default","iid",8,2,0
+"wbs2","default","iid",9,2,0
+"wbs2","default","iid",10,2,1
+"wbs2","default","heavy",1,2,6
+"wbs2","default","heavy",2,2,8
+"wbs2","default","heavy",3,2,24
+"wbs2","default","heavy",4,2,16
+"wbs2","default","heavy",5,2,8
+"wbs2","default","heavy",6,2,6
+"wbs2","default","heavy",7,2,11
+"wbs2","default","heavy",8,2,21
+"wbs2","default","heavy",9,2,13
+"wbs2","default","heavy",10,2,5
+"wbs2","default","ar1",1,2,27
+"wbs2","default","ar1",2,2,29
+"wbs2","default","ar1",3,2,26
+"wbs2","default","ar1",4,2,75
+"wbs2","default","ar1",5,2,26
+"wbs2","default","ar1",6,2,20
+"wbs2","default","ar1",7,2,42
+"wbs2","default","ar1",8,2,65
+"wbs2","default","ar1",9,1,21
+"wbs2","default","ar1",10,2,34
+"wbs2","default","hetero",1,2,45
+"wbs2","default","hetero",2,2,44
+"wbs2","default","hetero",3,2,20
+"wbs2","default","hetero",4,2,20
+"wbs2","default","hetero",5,2,58
+"wbs2","default","hetero",6,2,28
+"wbs2","default","hetero",7,2,21
+"wbs2","default","hetero",8,2,23
+"wbs2","default","hetero",9,2,31
+"wbs2","default","hetero",10,2,49
+"not","default","iid",1,2,1
+"not","default","iid",2,2,0
+"not","default","iid",3,2,0
+"not","default","iid",4,2,0
+"not","default","iid",5,2,0
+"not","default","iid",6,2,0
+"not","default","iid",7,2,0
+"not","default","iid",8,2,0
+"not","default","iid",9,2,0
+"not","default","iid",10,2,2
+"not","default","heavy",1,2,0
+"not","default","heavy",2,2,0
+"not","default","heavy",3,2,0
+"not","default","heavy",4,2,0
+"not","default","heavy",5,2,0
+"not","default","heavy",6,2,0
+"not","default","heavy",7,2,0
+"not","default","heavy",8,2,0
+"not","default","heavy",9,2,0
+"not","default","heavy",10,2,0
+"not","default","ar1",1,2,6
+"not","default","ar1",2,2,15
+"not","default","ar1",3,2,8
+"not","default","ar1",4,2,14
+"not","default","ar1",5,2,10
+"not","default","ar1",6,2,11
+"not","default","ar1",7,2,6
+"not","default","ar1",8,2,7
+"not","default","ar1",9,1,6
+"not","default","ar1",10,2,16
+"not","default","hetero",1,2,4
+"not","default","hetero",2,2,0
+"not","default","hetero",3,2,0
+"not","default","hetero",4,2,0
+"not","default","hetero",5,2,2
+"not","default","hetero",6,2,3
+"not","default","hetero",7,2,0
+"not","default","hetero",8,2,0
+"not","default","hetero",9,2,0
+"not","default","hetero",10,2,0
+"mosum","default","iid",1,2,0
+"mosum","default","iid",2,2,0
+"mosum","default","iid",3,2,0
+"mosum","default","iid",4,2,0
+"mosum","default","iid",5,2,0
+"mosum","default","iid",6,2,0
+"mosum","default","iid",7,2,0
+"mosum","default","iid",8,2,0
+"mosum","default","iid",9,2,0
+"mosum","default","iid",10,2,0
+"mosum","default","heavy",1,2,0
+"mosum","default","heavy",2,2,0
+"mosum","default","heavy",3,2,0
+"mosum","default","heavy",4,2,0
+"mosum","default","heavy",5,2,0
+"mosum","default","heavy",6,2,0
+"mosum","default","heavy",7,2,0
+"mosum","default","heavy",8,2,0
+"mosum","default","heavy",9,2,0
+"mosum","default","heavy",10,2,0
+"mosum","default","ar1",1,1,4
+"mosum","default","ar1",2,2,2
+"mosum","default","ar1",3,2,6
+"mosum","default","ar1",4,2,2
+"mosum","default","ar1",5,2,1
+"mosum","default","ar1",6,2,4
+"mosum","default","ar1",7,2,3
+"mosum","default","ar1",8,2,2
+"mosum","default","ar1",9,1,2
+"mosum","default","ar1",10,1,5
+"mosum","default","hetero",1,1,1
+"mosum","default","hetero",2,2,0
+"mosum","default","hetero",3,2,0
+"mosum","default","hetero",4,2,0
+"mosum","default","hetero",5,2,0
+"mosum","default","hetero",6,2,0
+"mosum","default","hetero",7,2,0
+"mosum","default","hetero",8,1,0
+"mosum","default","hetero",9,2,0
+"mosum","default","hetero",10,2,0
+"idetect","default","iid",1,2,1
+"idetect","default","iid",2,2,0
+"idetect","default","iid",3,2,0
+"idetect","default","iid",4,2,0
+"idetect","default","iid",5,2,0
+"idetect","default","iid",6,2,0
+"idetect","default","iid",7,2,2
+"idetect","default","iid",8,2,0
+"idetect","default","iid",9,2,0
+"idetect","default","iid",10,2,2
+"idetect","default","heavy",1,2,4
+"idetect","default","heavy",2,2,2
+"idetect","default","heavy",3,2,0
+"idetect","default","heavy",4,2,0
+"idetect","default","heavy",5,2,6
+"idetect","default","heavy",6,2,0
+"idetect","default","heavy",7,2,0
+"idetect","default","heavy",8,2,8
+"idetect","default","heavy",9,2,13
+"idetect","default","heavy",10,2,0
+"idetect","default","ar1",1,1,5
+"idetect","default","ar1",2,2,9
+"idetect","default","ar1",3,2,9
+"idetect","default","ar1",4,2,3
+"idetect","default","ar1",5,2,12
+"idetect","default","ar1",6,2,12
+"idetect","default","ar1",7,2,8
+"idetect","default","ar1",8,2,8
+"idetect","default","ar1",9,1,20
+"idetect","default","ar1",10,2,18
+"idetect","default","hetero",1,2,2
+"idetect","default","hetero",2,2,0
+"idetect","default","hetero",3,2,6
+"idetect","default","hetero",4,2,0
+"idetect","default","hetero",5,2,2
+"idetect","default","hetero",6,2,7
+"idetect","default","hetero",7,2,0
+"idetect","default","hetero",8,2,0
+"idetect","default","hetero",9,2,7
+"idetect","default","hetero",10,2,7
+"tguh","default","iid",1,2,1
+"tguh","default","iid",2,2,0
+"tguh","default","iid",3,2,0
+"tguh","default","iid",4,2,0
+"tguh","default","iid",5,2,0
+"tguh","default","iid",6,2,0
+"tguh","default","iid",7,2,0
+"tguh","default","iid",8,2,0
+"tguh","default","iid",9,2,0
+"tguh","default","iid",10,2,2
+"tguh","default","heavy",1,2,0
+"tguh","default","heavy",2,2,0
+"tguh","default","heavy",3,2,0
+"tguh","default","heavy",4,2,0
+"tguh","default","heavy",5,2,0
+"tguh","default","heavy",6,2,0
+"tguh","default","heavy",7,2,0
+"tguh","default","heavy",8,2,0
+"tguh","default","heavy",9,2,6
+"tguh","default","heavy",10,2,0
+"tguh","default","ar1",1,1,3
+"tguh","default","ar1",2,2,9
+"tguh","default","ar1",3,2,10
+"tguh","default","ar1",4,2,0
+"tguh","default","ar1",5,2,5
+"tguh","default","ar1",6,2,12
+"tguh","default","ar1",7,2,8
+"tguh","default","ar1",8,2,12
+"tguh","default","ar1",9,1,22
+"tguh","default","ar1",10,2,19
+"tguh","default","hetero",1,2,0
+"tguh","default","hetero",2,2,0
+"tguh","default","hetero",3,2,0
+"tguh","default","hetero",4,2,0
+"tguh","default","hetero",5,2,0
+"tguh","default","hetero",6,2,5
+"tguh","default","hetero",7,2,0
+"tguh","default","hetero",8,2,0
+"tguh","default","hetero",9,2,14
+"tguh","default","hetero",10,2,0
+"smuce","default","iid",1,2,0
+"smuce","default","iid",2,2,0
+"smuce","default","iid",3,2,0
+"smuce","default","iid",4,2,0
+"smuce","default","iid",5,2,0
+"smuce","default","iid",6,2,1
+"smuce","default","iid",7,2,0
+"smuce","default","iid",8,2,0
+"smuce","default","iid",9,2,0
+"smuce","default","iid",10,2,0
+"smuce","default","heavy",1,2,6
+"smuce","default","heavy",2,2,5
+"smuce","default","heavy",3,2,4
+"smuce","default","heavy",4,2,4
+"smuce","default","heavy",5,2,7
+"smuce","default","heavy",6,2,3
+"smuce","default","heavy",7,2,7
+"smuce","default","heavy",8,2,6
+"smuce","default","heavy",9,2,8
+"smuce","default","heavy",10,2,2
+"smuce","default","ar1",1,2,12
+"smuce","default","ar1",2,2,11
+"smuce","default","ar1",3,2,13
+"smuce","default","ar1",4,2,9
+"smuce","default","ar1",5,2,13
+"smuce","default","ar1",6,2,11
+"smuce","default","ar1",7,2,10
+"smuce","default","ar1",8,2,11
+"smuce","default","ar1",9,1,16
+"smuce","default","ar1",10,2,17
+"smuce","default","hetero",1,2,10
+"smuce","default","hetero",2,2,15
+"smuce","default","hetero",3,2,7
+"smuce","default","hetero",4,2,7
+"smuce","default","hetero",5,2,12
+"smuce","default","hetero",6,2,6
+"smuce","default","hetero",7,2,8
+"smuce","default","hetero",8,2,11
+"smuce","default","hetero",9,2,12
+"smuce","default","hetero",10,2,11
+"smuce","family = ""hsmuce""","iid",1,2,0
+"smuce","family = ""hsmuce""","iid",2,2,0
+"smuce","family = ""hsmuce""","iid",3,2,0
+"smuce","family = ""hsmuce""","iid",4,2,0
+"smuce","family = ""hsmuce""","iid",5,2,0
+"smuce","family = ""hsmuce""","iid",6,2,0
+"smuce","family = ""hsmuce""","iid",7,2,0
+"smuce","family = ""hsmuce""","iid",8,2,0
+"smuce","family = ""hsmuce""","iid",9,2,0
+"smuce","family = ""hsmuce""","iid",10,2,0
+"smuce","family = ""hsmuce""","heavy",1,2,1
+"smuce","family = ""hsmuce""","heavy",2,2,0
+"smuce","family = ""hsmuce""","heavy",3,2,0
+"smuce","family = ""hsmuce""","heavy",4,2,0
+"smuce","family = ""hsmuce""","heavy",5,2,0
+"smuce","family = ""hsmuce""","heavy",6,2,0
+"smuce","family = ""hsmuce""","heavy",7,2,0
+"smuce","family = ""hsmuce""","heavy",8,2,0
+"smuce","family = ""hsmuce""","heavy",9,2,0
+"smuce","family = ""hsmuce""","heavy",10,2,0
+"smuce","family = ""hsmuce""","ar1",1,1,4
+"smuce","family = ""hsmuce""","ar1",2,2,2
+"smuce","family = ""hsmuce""","ar1",3,1,3
+"smuce","family = ""hsmuce""","ar1",4,2,1
+"smuce","family = ""hsmuce""","ar1",5,2,2
+"smuce","family = ""hsmuce""","ar1",6,2,2
+"smuce","family = ""hsmuce""","ar1",7,2,1
+"smuce","family = ""hsmuce""","ar1",8,2,3
+"smuce","family = ""hsmuce""","ar1",9,1,4
+"smuce","family = ""hsmuce""","ar1",10,1,6
+"smuce","family = ""hsmuce""","hetero",1,2,0
+"smuce","family = ""hsmuce""","hetero",2,2,0
+"smuce","family = ""hsmuce""","hetero",3,2,0
+"smuce","family = ""hsmuce""","hetero",4,2,0
+"smuce","family = ""hsmuce""","hetero",5,2,0
+"smuce","family = ""hsmuce""","hetero",6,2,0
+"smuce","family = ""hsmuce""","hetero",7,2,0
+"smuce","family = ""hsmuce""","hetero",8,2,0
+"smuce","family = ""hsmuce""","hetero",9,2,0
+"smuce","family = ""hsmuce""","hetero",10,2,0
+"hsmuce","default","iid",1,2,0
+"hsmuce","default","iid",2,2,0
+"hsmuce","default","iid",3,2,0
+"hsmuce","default","iid",4,2,0
+"hsmuce","default","iid",5,2,0
+"hsmuce","default","iid",6,2,0
+"hsmuce","default","iid",7,2,0
+"hsmuce","default","iid",8,2,0
+"hsmuce","default","iid",9,2,0
+"hsmuce","default","iid",10,2,0
+"hsmuce","default","heavy",1,2,1
+"hsmuce","default","heavy",2,2,0
+"hsmuce","default","heavy",3,2,0
+"hsmuce","default","heavy",4,2,0
+"hsmuce","default","heavy",5,2,0
+"hsmuce","default","heavy",6,2,0
+"hsmuce","default","heavy",7,2,0
+"hsmuce","default","heavy",8,2,0
+"hsmuce","default","heavy",9,2,0
+"hsmuce","default","heavy",10,2,0
+"hsmuce","default","ar1",1,1,4
+"hsmuce","default","ar1",2,2,2
+"hsmuce","default","ar1",3,1,3
+"hsmuce","default","ar1",4,2,1
+"hsmuce","default","ar1",5,2,2
+"hsmuce","default","ar1",6,2,2
+"hsmuce","default","ar1",7,2,1
+"hsmuce","default","ar1",8,2,3
+"hsmuce","default","ar1",9,1,4
+"hsmuce","default","ar1",10,1,6
+"hsmuce","default","hetero",1,2,0
+"hsmuce","default","hetero",2,2,0
+"hsmuce","default","hetero",3,2,0
+"hsmuce","default","hetero",4,2,0
+"hsmuce","default","hetero",5,2,0
+"hsmuce","default","hetero",6,2,0
+"hsmuce","default","hetero",7,2,0
+"hsmuce","default","hetero",8,2,0
+"hsmuce","default","hetero",9,2,0
+"hsmuce","default","hetero",10,2,0
+"cpop","default","iid",1,1,0
+"cpop","default","iid",2,2,0
+"cpop","default","iid",3,2,0
+"cpop","default","iid",4,2,0
+"cpop","default","iid",5,2,0
+"cpop","default","iid",6,1,1
+"cpop","default","iid",7,2,0
+"cpop","default","iid",8,1,0
+"cpop","default","iid",9,2,0
+"cpop","default","iid",10,1,0
+"cpop","default","heavy",1,2,0
+"cpop","default","heavy",2,2,3
+"cpop","default","heavy",3,1,2
+"cpop","default","heavy",4,2,0
+"cpop","default","heavy",5,2,0
+"cpop","default","heavy",6,2,0
+"cpop","default","heavy",7,2,0
+"cpop","default","heavy",8,2,0
+"cpop","default","heavy",9,1,3
+"cpop","default","heavy",10,2,0
+"cpop","default","ar1",1,2,8
+"cpop","default","ar1",2,2,15
+"cpop","default","ar1",3,2,14
+"cpop","default","ar1",4,1,12
+"cpop","default","ar1",5,2,15
+"cpop","default","ar1",6,2,15
+"cpop","default","ar1",7,1,12
+"cpop","default","ar1",8,2,10
+"cpop","default","ar1",9,1,15
+"cpop","default","ar1",10,2,21
+"cpop","default","hetero",1,1,0
+"cpop","default","hetero",2,1,0
+"cpop","default","hetero",3,1,0
+"cpop","default","hetero",4,1,0
+"cpop","default","hetero",5,1,0
+"cpop","default","hetero",6,0,3
+"cpop","default","hetero",7,1,0
+"cpop","default","hetero",8,0,1
+"cpop","default","hetero",9,0,2
+"cpop","default","hetero",10,0,1
+"bcp","default","iid",1,2,0
+"bcp","default","iid",2,1,0
+"bcp","default","iid",3,1,0
+"bcp","default","iid",4,2,0
+"bcp","default","iid",5,2,0
+"bcp","default","iid",6,1,0
+"bcp","default","iid",7,2,0
+"bcp","default","iid",8,1,0
+"bcp","default","iid",9,1,0
+"bcp","default","iid",10,0,1
+"bcp","default","heavy",1,2,6
+"bcp","default","heavy",2,2,2
+"bcp","default","heavy",3,1,8
+"bcp","default","heavy",4,2,2
+"bcp","default","heavy",5,2,7
+"bcp","default","heavy",6,1,0
+"bcp","default","heavy",7,2,10
+"bcp","default","heavy",8,2,13
+"bcp","default","heavy",9,1,14
+"bcp","default","heavy",10,2,2
+"bcp","default","ar1",1,2,11
+"bcp","default","ar1",2,2,20
+"bcp","default","ar1",3,2,25
+"bcp","default","ar1",4,2,10
+"bcp","default","ar1",5,2,17
+"bcp","default","ar1",6,2,8
+"bcp","default","ar1",7,2,12
+"bcp","default","ar1",8,2,7
+"bcp","default","ar1",9,1,21
+"bcp","default","ar1",10,2,16
+"bcp","default","hetero",1,2,31
+"bcp","default","hetero",2,2,47
+"bcp","default","hetero",3,1,10
+"bcp","default","hetero",4,1,10
+"bcp","default","hetero",5,2,42
+"bcp","default","hetero",6,2,29
+"bcp","default","hetero",7,2,38
+"bcp","default","hetero",8,2,30
+"bcp","default","hetero",9,1,35
+"bcp","default","hetero",10,2,33
+"bocpd","default","iid",1,2,0
+"bocpd","default","iid",2,2,0
+"bocpd","default","iid",3,2,0
+"bocpd","default","iid",4,2,0
+"bocpd","default","iid",5,2,0
+"bocpd","default","iid",6,2,0
+"bocpd","default","iid",7,2,0
+"bocpd","default","iid",8,2,0
+"bocpd","default","iid",9,2,0
+"bocpd","default","iid",10,2,0
+"bocpd","default","heavy",1,2,1
+"bocpd","default","heavy",2,2,2
+"bocpd","default","heavy",3,2,1
+"bocpd","default","heavy",4,2,0
+"bocpd","default","heavy",5,2,1
+"bocpd","default","heavy",6,2,0
+"bocpd","default","heavy",7,2,2
+"bocpd","default","heavy",8,2,1
+"bocpd","default","heavy",9,2,2
+"bocpd","default","heavy",10,2,0
+"bocpd","default","ar1",1,1,3
+"bocpd","default","ar1",2,2,0
+"bocpd","default","ar1",3,2,1
+"bocpd","default","ar1",4,2,1
+"bocpd","default","ar1",5,2,0
+"bocpd","default","ar1",6,2,5
+"bocpd","default","ar1",7,2,2
+"bocpd","default","ar1",8,2,2
+"bocpd","default","ar1",9,1,2
+"bocpd","default","ar1",10,2,3
+"bocpd","default","hetero",1,2,0
+"bocpd","default","hetero",2,2,0
+"bocpd","default","hetero",3,2,0
+"bocpd","default","hetero",4,2,0
+"bocpd","default","hetero",5,2,0
+"bocpd","default","hetero",6,2,0
+"bocpd","default","hetero",7,2,0
+"bocpd","default","hetero",8,2,0
+"bocpd","default","hetero",9,2,0
+"bocpd","default","hetero",10,2,0
+"beast","default","iid",1,2,0
+"beast","default","iid",2,2,0
+"beast","default","iid",3,2,0
+"beast","default","iid",4,2,0
+"beast","default","iid",5,2,0
+"beast","default","iid",6,2,0
+"beast","default","iid",7,2,1
+"beast","default","iid",8,2,1
+"beast","default","iid",9,2,0
+"beast","default","iid",10,1,1
+"beast","default","heavy",1,2,0
+"beast","default","heavy",2,2,0
+"beast","default","heavy",3,2,1
+"beast","default","heavy",4,2,0
+"beast","default","heavy",5,2,0
+"beast","default","heavy",6,2,0
+"beast","default","heavy",7,2,0
+"beast","default","heavy",8,2,0
+"beast","default","heavy",9,2,2
+"beast","default","heavy",10,2,0
+"beast","default","ar1",1,2,5
+"beast","default","ar1",2,2,7
+"beast","default","ar1",3,2,6
+"beast","default","ar1",4,2,4
+"beast","default","ar1",5,2,5
+"beast","default","ar1",6,2,7
+"beast","default","ar1",7,2,6
+"beast","default","ar1",8,2,7
+"beast","default","ar1",9,1,7
+"beast","default","ar1",10,2,6
+"beast","default","hetero",1,2,2
+"beast","default","hetero",2,2,1
+"beast","default","hetero",3,2,4
+"beast","default","hetero",4,2,5
+"beast","default","hetero",5,2,2
+"beast","default","hetero",6,2,4
+"beast","default","hetero",7,2,0
+"beast","default","hetero",8,2,1
+"beast","default","hetero",9,2,5
+"beast","default","hetero",10,1,3
+"cpm","default","iid",1,2,1
+"cpm","default","iid",2,2,0
+"cpm","default","iid",3,2,0
+"cpm","default","iid",4,2,0
+"cpm","default","iid",5,2,0
+"cpm","default","iid",6,2,1
+"cpm","default","iid",7,2,1
+"cpm","default","iid",8,2,1
+"cpm","default","iid",9,2,0
+"cpm","default","iid",10,2,1
+"cpm","default","heavy",1,2,0
+"cpm","default","heavy",2,2,0
+"cpm","default","heavy",3,2,0
+"cpm","default","heavy",4,2,0
+"cpm","default","heavy",5,2,0
+"cpm","default","heavy",6,2,1
+"cpm","default","heavy",7,2,0
+"cpm","default","heavy",8,2,0
+"cpm","default","heavy",9,2,0
+"cpm","default","heavy",10,2,0
+"cpm","default","ar1",1,2,9
+"cpm","default","ar1",2,2,7
+"cpm","default","ar1",3,2,10
+"cpm","default","ar1",4,2,8
+"cpm","default","ar1",5,2,10
+"cpm","default","ar1",6,2,11
+"cpm","default","ar1",7,2,7
+"cpm","default","ar1",8,2,8
+"cpm","default","ar1",9,1,13
+"cpm","default","ar1",10,2,10
+"cpm","default","hetero",1,2,1
+"cpm","default","hetero",2,2,0
+"cpm","default","hetero",3,2,0
+"cpm","default","hetero",4,2,0
+"cpm","default","hetero",5,2,0
+"cpm","default","hetero",6,2,1
+"cpm","default","hetero",7,2,0
+"cpm","default","hetero",8,2,1
+"cpm","default","hetero",9,2,0
+"cpm","default","hetero",10,2,1
+"cpm","cpm_type = ""Student""","iid",1,2,1
+"cpm","cpm_type = ""Student""","iid",2,2,0
+"cpm","cpm_type = ""Student""","iid",3,2,0
+"cpm","cpm_type = ""Student""","iid",4,2,0
+"cpm","cpm_type = ""Student""","iid",5,2,0
+"cpm","cpm_type = ""Student""","iid",6,2,2
+"cpm","cpm_type = ""Student""","iid",7,2,1
+"cpm","cpm_type = ""Student""","iid",8,2,1
+"cpm","cpm_type = ""Student""","iid",9,2,0
+"cpm","cpm_type = ""Student""","iid",10,2,0
+"cpm","cpm_type = ""Student""","heavy",1,2,2
+"cpm","cpm_type = ""Student""","heavy",2,2,1
+"cpm","cpm_type = ""Student""","heavy",3,2,1
+"cpm","cpm_type = ""Student""","heavy",4,2,1
+"cpm","cpm_type = ""Student""","heavy",5,2,2
+"cpm","cpm_type = ""Student""","heavy",6,2,0
+"cpm","cpm_type = ""Student""","heavy",7,2,3
+"cpm","cpm_type = ""Student""","heavy",8,2,1
+"cpm","cpm_type = ""Student""","heavy",9,2,2
+"cpm","cpm_type = ""Student""","heavy",10,2,3
+"cpm","cpm_type = ""Student""","ar1",1,2,10
+"cpm","cpm_type = ""Student""","ar1",2,2,9
+"cpm","cpm_type = ""Student""","ar1",3,2,11
+"cpm","cpm_type = ""Student""","ar1",4,2,7
+"cpm","cpm_type = ""Student""","ar1",5,2,9
+"cpm","cpm_type = ""Student""","ar1",6,2,11
+"cpm","cpm_type = ""Student""","ar1",7,2,8
+"cpm","cpm_type = ""Student""","ar1",8,2,8
+"cpm","cpm_type = ""Student""","ar1",9,1,13
+"cpm","cpm_type = ""Student""","ar1",10,2,14
+"cpm","cpm_type = ""Student""","hetero",1,2,1
+"cpm","cpm_type = ""Student""","hetero",2,2,0
+"cpm","cpm_type = ""Student""","hetero",3,2,0
+"cpm","cpm_type = ""Student""","hetero",4,2,0
+"cpm","cpm_type = ""Student""","hetero",5,2,0
+"cpm","cpm_type = ""Student""","hetero",6,2,2
+"cpm","cpm_type = ""Student""","hetero",7,2,1
+"cpm","cpm_type = ""Student""","hetero",8,2,1
+"cpm","cpm_type = ""Student""","hetero",9,2,0
+"cpm","cpm_type = ""Student""","hetero",10,2,1
+"kcp","default","iid",1,2,0
+"kcp","default","iid",2,2,0
+"kcp","default","iid",3,2,0
+"kcp","default","iid",4,2,0
+"kcp","default","iid",5,2,0
+"kcp","default","iid",6,2,0
+"kcp","default","iid",7,2,0
+"kcp","default","iid",8,2,0
+"kcp","default","iid",9,2,0
+"kcp","default","iid",10,2,0
+"kcp","default","heavy",1,2,0
+"kcp","default","heavy",2,2,0
+"kcp","default","heavy",3,2,0
+"kcp","default","heavy",4,2,0
+"kcp","default","heavy",5,2,0
+"kcp","default","heavy",6,2,0
+"kcp","default","heavy",7,2,0
+"kcp","default","heavy",8,2,0
+"kcp","default","heavy",9,2,0
+"kcp","default","heavy",10,2,0
+"kcp","default","ar1",1,2,1
+"kcp","default","ar1",2,2,0
+"kcp","default","ar1",3,1,1
+"kcp","default","ar1",4,2,0
+"kcp","default","ar1",5,2,0
+"kcp","default","ar1",6,2,1
+"kcp","default","ar1",7,2,0
+"kcp","default","ar1",8,2,0
+"kcp","default","ar1",9,2,0
+"kcp","default","ar1",10,2,0
+"kcp","default","hetero",1,2,0
+"kcp","default","hetero",2,2,0
+"kcp","default","hetero",3,2,0
+"kcp","default","hetero",4,2,0
+"kcp","default","hetero",5,2,0
+"kcp","default","hetero",6,2,0
+"kcp","default","hetero",7,2,0
+"kcp","default","hetero",8,2,0
+"kcp","default","hetero",9,2,0
+"kcp","default","hetero",10,2,0
+"decafs","default","iid",1,1,0
+"decafs","default","iid",2,0,0
+"decafs","default","iid",3,0,0
+"decafs","default","iid",4,0,0
+"decafs","default","iid",5,0,0
+"decafs","default","iid",6,0,0
+"decafs","default","iid",7,0,0
+"decafs","default","iid",8,0,0
+"decafs","default","iid",9,0,0
+"decafs","default","iid",10,0,0
+"decafs","default","heavy",1,2,2
+"decafs","default","heavy",2,1,2
+"decafs","default","heavy",3,1,2
+"decafs","default","heavy",4,2,2
+"decafs","default","heavy",5,2,6
+"decafs","default","heavy",6,1,0
+"decafs","default","heavy",7,2,4
+"decafs","default","heavy",8,2,2
+"decafs","default","heavy",9,2,6
+"decafs","default","heavy",10,1,0
+"decafs","default","ar1",1,1,1
+"decafs","default","ar1",2,0,0
+"decafs","default","ar1",3,1,1
+"decafs","default","ar1",4,2,0
+"decafs","default","ar1",5,0,0
+"decafs","default","ar1",6,0,0
+"decafs","default","ar1",7,0,0
+"decafs","default","ar1",8,0,0
+"decafs","default","ar1",9,1,1
+"decafs","default","ar1",10,0,0
+"decafs","default","hetero",1,2,7
+"decafs","default","hetero",2,1,13
+"decafs","default","hetero",3,1,0
+"decafs","default","hetero",4,1,6
+"decafs","default","hetero",5,1,6
+"decafs","default","hetero",6,1,5
+"decafs","default","hetero",7,1,3
+"decafs","default","hetero",8,0,8
+"decafs","default","hetero",9,0,7
+"decafs","default","hetero",10,1,9
+"sn","default","iid",1,2,0
+"sn","default","iid",2,2,0
+"sn","default","iid",3,2,0
+"sn","default","iid",4,2,0
+"sn","default","iid",5,2,0
+"sn","default","iid",6,2,0
+"sn","default","iid",7,2,0
+"sn","default","iid",8,2,1
+"sn","default","iid",9,2,0
+"sn","default","iid",10,2,0
+"sn","default","heavy",1,2,1
+"sn","default","heavy",2,2,0
+"sn","default","heavy",3,2,0
+"sn","default","heavy",4,2,0
+"sn","default","heavy",5,2,0
+"sn","default","heavy",6,2,0
+"sn","default","heavy",7,2,0
+"sn","default","heavy",8,2,0
+"sn","default","heavy",9,2,0
+"sn","default","heavy",10,2,0
+"sn","default","ar1",1,1,2
+"sn","default","ar1",2,1,2
+"sn","default","ar1",3,1,2
+"sn","default","ar1",4,2,1
+"sn","default","ar1",5,2,0
+"sn","default","ar1",6,2,0
+"sn","default","ar1",7,2,0
+"sn","default","ar1",8,2,0
+"sn","default","ar1",9,1,2
+"sn","default","ar1",10,1,3
+"sn","default","hetero",1,2,0
+"sn","default","hetero",2,2,0
+"sn","default","hetero",3,2,0
+"sn","default","hetero",4,2,0
+"sn","default","hetero",5,2,0
+"sn","default","hetero",6,2,0
+"sn","default","hetero",7,2,0
+"sn","default","hetero",8,2,1
+"sn","default","hetero",9,2,0
+"sn","default","hetero",10,2,0
+"strucchange","default","iid",1,2,0
+"strucchange","default","iid",2,2,0
+"strucchange","default","iid",3,2,0
+"strucchange","default","iid",4,2,0
+"strucchange","default","iid",5,2,0
+"strucchange","default","iid",6,2,0
+"strucchange","default","iid",7,2,0
+"strucchange","default","iid",8,2,0
+"strucchange","default","iid",9,2,0
+"strucchange","default","iid",10,2,0
+"strucchange","default","heavy",1,2,0
+"strucchange","default","heavy",2,2,0
+"strucchange","default","heavy",3,2,0
+"strucchange","default","heavy",4,2,0
+"strucchange","default","heavy",5,2,0
+"strucchange","default","heavy",6,2,0
+"strucchange","default","heavy",7,2,0
+"strucchange","default","heavy",8,2,0
+"strucchange","default","heavy",9,2,0
+"strucchange","default","heavy",10,2,0
+"strucchange","default","ar1",1,1,2
+"strucchange","default","ar1",2,2,1
+"strucchange","default","ar1",3,2,1
+"strucchange","default","ar1",4,2,0
+"strucchange","default","ar1",5,2,1
+"strucchange","default","ar1",6,2,2
+"strucchange","default","ar1",7,1,2
+"strucchange","default","ar1",8,2,0
+"strucchange","default","ar1",9,1,1
+"strucchange","default","ar1",10,1,2
+"strucchange","default","hetero",1,2,0
+"strucchange","default","hetero",2,2,0
+"strucchange","default","hetero",3,2,0
+"strucchange","default","hetero",4,2,0
+"strucchange","default","hetero",5,2,0
+"strucchange","default","hetero",6,2,0
+"strucchange","default","hetero",7,2,0
+"strucchange","default","hetero",8,2,0
+"strucchange","default","hetero",9,2,0
+"strucchange","default","hetero",10,2,0
+"segmented","default","iid",1,0,1
+"segmented","default","iid",2,0,1
+"segmented","default","iid",3,0,1
+"segmented","default","iid",4,0,1
+"segmented","default","iid",5,0,1
+"segmented","default","iid",6,0,1
+"segmented","default","iid",7,0,1
+"segmented","default","iid",8,0,1
+"segmented","default","iid",9,0,1
+"segmented","default","iid",10,0,1
+"segmented","default","heavy",1,0,1
+"segmented","default","heavy",2,0,1
+"segmented","default","heavy",3,0,1
+"segmented","default","heavy",4,0,1
+"segmented","default","heavy",5,0,1
+"segmented","default","heavy",6,0,1
+"segmented","default","heavy",7,0,1
+"segmented","default","heavy",8,0,1
+"segmented","default","heavy",9,0,1
+"segmented","default","heavy",10,0,1
+"segmented","default","ar1",1,0,1
+"segmented","default","ar1",2,0,1
+"segmented","default","ar1",3,0,1
+"segmented","default","ar1",4,0,1
+"segmented","default","ar1",5,0,1
+"segmented","default","ar1",6,0,1
+"segmented","default","ar1",7,0,1
+"segmented","default","ar1",8,0,1
+"segmented","default","ar1",9,0,1
+"segmented","default","ar1",10,0,1
+"segmented","default","hetero",1,0,1
+"segmented","default","hetero",2,0,1
+"segmented","default","hetero",3,0,1
+"segmented","default","hetero",4,0,1
+"segmented","default","hetero",5,0,1
+"segmented","default","hetero",6,0,1
+"segmented","default","hetero",7,0,1
+"segmented","default","hetero",8,0,1
+"segmented","default","hetero",9,0,1
+"segmented","default","hetero",10,0,1
+"envcpt","default","iid",1,2,0
+"envcpt","default","iid",2,2,0
+"envcpt","default","iid",3,2,0
+"envcpt","default","iid",4,2,0
+"envcpt","default","iid",5,2,0
+"envcpt","default","iid",6,2,0
+"envcpt","default","iid",7,2,0
+"envcpt","default","iid",8,2,0
+"envcpt","default","iid",9,2,0
+"envcpt","default","iid",10,2,0
+"envcpt","default","heavy",1,2,1
+"envcpt","default","heavy",2,2,1
+"envcpt","default","heavy",3,2,1
+"envcpt","default","heavy",4,2,0
+"envcpt","default","heavy",5,2,1
+"envcpt","default","heavy",6,2,0
+"envcpt","default","heavy",7,2,1
+"envcpt","default","heavy",8,2,0
+"envcpt","default","heavy",9,2,2
+"envcpt","default","heavy",10,2,0
+"envcpt","default","ar1",1,2,4
+"envcpt","default","ar1",2,0,0
+"envcpt","default","ar1",3,0,0
+"envcpt","default","ar1",4,1,0
+"envcpt","default","ar1",5,0,0
+"envcpt","default","ar1",6,0,0
+"envcpt","default","ar1",7,1,0
+"envcpt","default","ar1",8,0,0
+"envcpt","default","ar1",9,0,0
+"envcpt","default","ar1",10,0,0
+"envcpt","default","hetero",1,2,0
+"envcpt","default","hetero",2,2,0
+"envcpt","default","hetero",3,2,0
+"envcpt","default","hetero",4,2,0
+"envcpt","default","hetero",5,2,0
+"envcpt","default","hetero",6,2,0
+"envcpt","default","hetero",7,2,0
+"envcpt","default","hetero",8,2,0
+"envcpt","default","hetero",9,2,0
+"envcpt","default","hetero",10,2,0
+"fastcpd","default","iid",1,2,0
+"fastcpd","default","iid",2,2,0
+"fastcpd","default","iid",3,2,0
+"fastcpd","default","iid",4,2,0
+"fastcpd","default","iid",5,2,0
+"fastcpd","default","iid",6,2,0
+"fastcpd","default","iid",7,2,0
+"fastcpd","default","iid",8,2,0
+"fastcpd","default","iid",9,2,0
+"fastcpd","default","iid",10,2,0
+"fastcpd","default","heavy",1,2,0
+"fastcpd","default","heavy",2,2,1
+"fastcpd","default","heavy",3,2,0
+"fastcpd","default","heavy",4,2,0
+"fastcpd","default","heavy",5,2,2
+"fastcpd","default","heavy",6,2,0
+"fastcpd","default","heavy",7,2,1
+"fastcpd","default","heavy",8,2,1
+"fastcpd","default","heavy",9,2,1
+"fastcpd","default","heavy",10,2,0
+"fastcpd","default","ar1",1,2,3
+"fastcpd","default","ar1",2,2,6
+"fastcpd","default","ar1",3,2,4
+"fastcpd","default","ar1",4,2,2
+"fastcpd","default","ar1",5,2,3
+"fastcpd","default","ar1",6,2,6
+"fastcpd","default","ar1",7,2,5
+"fastcpd","default","ar1",8,2,4
+"fastcpd","default","ar1",9,1,5
+"fastcpd","default","ar1",10,1,8
+"fastcpd","default","hetero",1,2,0
+"fastcpd","default","hetero",2,2,0
+"fastcpd","default","hetero",3,2,0
+"fastcpd","default","hetero",4,2,0
+"fastcpd","default","hetero",5,2,0
+"fastcpd","default","hetero",6,2,1
+"fastcpd","default","hetero",7,2,0
+"fastcpd","default","hetero",8,2,0
+"fastcpd","default","hetero",9,2,0
+"fastcpd","default","hetero",10,2,0
+"fastcpd","family = ""ar""","iid",1,2,0
+"fastcpd","family = ""ar""","iid",2,1,1
+"fastcpd","family = ""ar""","iid",3,2,0
+"fastcpd","family = ""ar""","iid",4,1,1
+"fastcpd","family = ""ar""","iid",5,2,0
+"fastcpd","family = ""ar""","iid",6,1,1
+"fastcpd","family = ""ar""","iid",7,1,1
+"fastcpd","family = ""ar""","iid",8,1,1
+"fastcpd","family = ""ar""","iid",9,2,0
+"fastcpd","family = ""ar""","iid",10,2,0
+"fastcpd","family = ""ar""","heavy",1,1,0
+"fastcpd","family = ""ar""","heavy",2,1,2
+"fastcpd","family = ""ar""","heavy",3,1,1
+"fastcpd","family = ""ar""","heavy",4,1,1
+"fastcpd","family = ""ar""","heavy",5,1,1
+"fastcpd","family = ""ar""","heavy",6,1,1
+"fastcpd","family = ""ar""","heavy",7,2,0
+"fastcpd","family = ""ar""","heavy",8,1,1
+"fastcpd","family = ""ar""","heavy",9,2,1
+"fastcpd","family = ""ar""","heavy",10,1,1
+"fastcpd","family = ""ar""","ar1",1,1,0
+"fastcpd","family = ""ar""","ar1",2,0,0
+"fastcpd","family = ""ar""","ar1",3,1,0
+"fastcpd","family = ""ar""","ar1",4,0,0
+"fastcpd","family = ""ar""","ar1",5,0,0
+"fastcpd","family = ""ar""","ar1",6,0,0
+"fastcpd","family = ""ar""","ar1",7,0,0
+"fastcpd","family = ""ar""","ar1",8,0,0
+"fastcpd","family = ""ar""","ar1",9,0,0
+"fastcpd","family = ""ar""","ar1",10,0,0
+"fastcpd","family = ""ar""","hetero",1,2,0
+"fastcpd","family = ""ar""","hetero",2,2,0
+"fastcpd","family = ""ar""","hetero",3,2,0
+"fastcpd","family = ""ar""","hetero",4,2,0
+"fastcpd","family = ""ar""","hetero",5,2,0
+"fastcpd","family = ""ar""","hetero",6,2,0
+"fastcpd","family = ""ar""","hetero",7,1,1
+"fastcpd","family = ""ar""","hetero",8,0,1
+"fastcpd","family = ""ar""","hetero",9,2,0
+"fastcpd","family = ""ar""","hetero",10,2,0
+"nsp","default","iid",1,1,1
+"nsp","default","iid",2,2,0
+"nsp","default","iid",3,2,0
+"nsp","default","iid",4,2,0
+"nsp","default","iid",5,2,0
+"nsp","default","iid",6,2,1
+"nsp","default","iid",7,2,0
+"nsp","default","iid",8,2,0
+"nsp","default","iid",9,2,0
+"nsp","default","iid",10,2,0
+"nsp","default","heavy",1,2,5
+"nsp","default","heavy",2,2,7
+"nsp","default","heavy",3,2,4
+"nsp","default","heavy",4,2,4
+"nsp","default","heavy",5,2,7
+"nsp","default","heavy",6,2,2
+"nsp","default","heavy",7,2,7
+"nsp","default","heavy",8,2,5
+"nsp","default","heavy",9,2,7
+"nsp","default","heavy",10,2,1
+"nsp","default","ar1",1,2,8
+"nsp","default","ar1",2,2,8
+"nsp","default","ar1",3,2,12
+"nsp","default","ar1",4,2,7
+"nsp","default","ar1",5,2,12
+"nsp","default","ar1",6,2,9
+"nsp","default","ar1",7,2,9
+"nsp","default","ar1",8,2,8
+"nsp","default","ar1",9,1,14
+"nsp","default","ar1",10,2,15
+"nsp","default","hetero",1,2,11
+"nsp","default","hetero",2,2,15
+"nsp","default","hetero",3,2,8
+"nsp","default","hetero",4,2,8
+"nsp","default","hetero",5,2,11
+"nsp","default","hetero",6,2,8
+"nsp","default","hetero",7,2,10
+"nsp","default","hetero",8,2,13
+"nsp","default","hetero",9,2,13
+"nsp","default","hetero",10,1,12
+"nsp","variant = ""selfnorm""","iid",1,2,0
+"nsp","variant = ""selfnorm""","iid",2,2,0
+"nsp","variant = ""selfnorm""","iid",3,2,0
+"nsp","variant = ""selfnorm""","iid",4,2,0
+"nsp","variant = ""selfnorm""","iid",5,2,0
+"nsp","variant = ""selfnorm""","iid",6,2,0
+"nsp","variant = ""selfnorm""","iid",7,2,0
+"nsp","variant = ""selfnorm""","iid",8,2,0
+"nsp","variant = ""selfnorm""","iid",9,2,0
+"nsp","variant = ""selfnorm""","iid",10,1,1
+"nsp","variant = ""selfnorm""","heavy",1,2,0
+"nsp","variant = ""selfnorm""","heavy",2,2,0
+"nsp","variant = ""selfnorm""","heavy",3,2,0
+"nsp","variant = ""selfnorm""","heavy",4,2,0
+"nsp","variant = ""selfnorm""","heavy",5,2,0
+"nsp","variant = ""selfnorm""","heavy",6,2,0
+"nsp","variant = ""selfnorm""","heavy",7,2,0
+"nsp","variant = ""selfnorm""","heavy",8,2,0
+"nsp","variant = ""selfnorm""","heavy",9,2,0
+"nsp","variant = ""selfnorm""","heavy",10,2,0
+"nsp","variant = ""selfnorm""","ar1",1,1,1
+"nsp","variant = ""selfnorm""","ar1",2,1,1
+"nsp","variant = ""selfnorm""","ar1",3,1,1
+"nsp","variant = ""selfnorm""","ar1",4,0,2
+"nsp","variant = ""selfnorm""","ar1",5,1,1
+"nsp","variant = ""selfnorm""","ar1",6,2,0
+"nsp","variant = ""selfnorm""","ar1",7,1,1
+"nsp","variant = ""selfnorm""","ar1",8,2,0
+"nsp","variant = ""selfnorm""","ar1",9,2,0
+"nsp","variant = ""selfnorm""","ar1",10,1,1
+"nsp","variant = ""selfnorm""","hetero",1,2,0
+"nsp","variant = ""selfnorm""","hetero",2,2,0
+"nsp","variant = ""selfnorm""","hetero",3,2,0
+"nsp","variant = ""selfnorm""","hetero",4,1,1
+"nsp","variant = ""selfnorm""","hetero",5,2,0
+"nsp","variant = ""selfnorm""","hetero",6,2,0
+"nsp","variant = ""selfnorm""","hetero",7,2,0
+"nsp","variant = ""selfnorm""","hetero",8,1,0
+"nsp","variant = ""selfnorm""","hetero",9,1,1
+"nsp","variant = ""selfnorm""","hetero",10,0,1
+"nsp","variant = ""ar""","iid",1,0,0
+"nsp","variant = ""ar""","iid",2,0,0
+"nsp","variant = ""ar""","iid",3,0,0
+"nsp","variant = ""ar""","iid",4,0,0
+"nsp","variant = ""ar""","iid",5,0,0
+"nsp","variant = ""ar""","iid",6,0,0
+"nsp","variant = ""ar""","iid",7,1,0
+"nsp","variant = ""ar""","iid",8,0,0
+"nsp","variant = ""ar""","iid",9,0,0
+"nsp","variant = ""ar""","iid",10,0,0
+"nsp","variant = ""ar""","heavy",1,0,1
+"nsp","variant = ""ar""","heavy",2,0,1
+"nsp","variant = ""ar""","heavy",3,1,3
+"nsp","variant = ""ar""","heavy",4,0,2
+"nsp","variant = ""ar""","heavy",5,0,3
+"nsp","variant = ""ar""","heavy",6,1,0
+"nsp","variant = ""ar""","heavy",7,0,2
+"nsp","variant = ""ar""","heavy",8,1,2
+"nsp","variant = ""ar""","heavy",9,1,3
+"nsp","variant = ""ar""","heavy",10,0,1
+"nsp","variant = ""ar""","ar1",1,0,1
+"nsp","variant = ""ar""","ar1",2,0,0
+"nsp","variant = ""ar""","ar1",3,0,0
+"nsp","variant = ""ar""","ar1",4,0,0
+"nsp","variant = ""ar""","ar1",5,0,0
+"nsp","variant = ""ar""","ar1",6,0,0
+"nsp","variant = ""ar""","ar1",7,0,0
+"nsp","variant = ""ar""","ar1",8,0,0
+"nsp","variant = ""ar""","ar1",9,0,0
+"nsp","variant = ""ar""","ar1",10,0,0
+"nsp","variant = ""ar""","hetero",1,1,4
+"nsp","variant = ""ar""","hetero",2,1,6
+"nsp","variant = ""ar""","hetero",3,1,2
+"nsp","variant = ""ar""","hetero",4,0,4
+"nsp","variant = ""ar""","hetero",5,1,4
+"nsp","variant = ""ar""","hetero",6,1,4
+"nsp","variant = ""ar""","hetero",7,0,3
+"nsp","variant = ""ar""","hetero",8,1,8
+"nsp","variant = ""ar""","hetero",9,1,5
+"nsp","variant = ""ar""","hetero",10,0,4
+"wbsts","default","iid",1,0,0
+"wbsts","default","iid",2,0,0
+"wbsts","default","iid",3,0,0
+"wbsts","default","iid",4,0,0
+"wbsts","default","iid",5,0,0
+"wbsts","default","iid",6,0,0
+"wbsts","default","iid",7,0,0
+"wbsts","default","iid",8,0,0
+"wbsts","default","iid",9,0,0
+"wbsts","default","iid",10,0,0
+"wbsts","default","heavy",1,0,0
+"wbsts","default","heavy",2,0,0
+"wbsts","default","heavy",3,1,2
+"wbsts","default","heavy",4,0,0
+"wbsts","default","heavy",5,0,0
+"wbsts","default","heavy",6,0,0
+"wbsts","default","heavy",7,0,0
+"wbsts","default","heavy",8,0,1
+"wbsts","default","heavy",9,0,4
+"wbsts","default","heavy",10,0,1
+"wbsts","default","ar1",1,0,0
+"wbsts","default","ar1",2,0,0
+"wbsts","default","ar1",3,0,0
+"wbsts","default","ar1",4,0,0
+"wbsts","default","ar1",5,0,0
+"wbsts","default","ar1",6,0,0
+"wbsts","default","ar1",7,0,0
+"wbsts","default","ar1",8,0,0
+"wbsts","default","ar1",9,0,0
+"wbsts","default","ar1",10,0,0
+"wbsts","default","hetero",1,2,0
+"wbsts","default","hetero",2,2,0
+"wbsts","default","hetero",3,2,0
+"wbsts","default","hetero",4,2,0
+"wbsts","default","hetero",5,2,0
+"wbsts","default","hetero",6,2,0
+"wbsts","default","hetero",7,1,1
+"wbsts","default","hetero",8,1,1
+"wbsts","default","hetero",9,2,0
+"wbsts","default","hetero",10,2,0
+"bfast","default","iid",1,2,0
+"bfast","default","iid",2,2,0
+"bfast","default","iid",3,2,0
+"bfast","default","iid",4,2,0
+"bfast","default","iid",5,2,0
+"bfast","default","iid",6,2,0
+"bfast","default","iid",7,2,0
+"bfast","default","iid",8,2,0
+"bfast","default","iid",9,2,0
+"bfast","default","iid",10,1,1
+"bfast","default","heavy",1,2,0
+"bfast","default","heavy",2,2,0
+"bfast","default","heavy",3,2,0
+"bfast","default","heavy",4,2,0
+"bfast","default","heavy",5,2,0
+"bfast","default","heavy",6,2,0
+"bfast","default","heavy",7,2,0
+"bfast","default","heavy",8,2,0
+"bfast","default","heavy",9,2,0
+"bfast","default","heavy",10,2,0
+"bfast","default","ar1",1,2,3
+"bfast","default","ar1",2,2,1
+"bfast","default","ar1",3,2,1
+"bfast","default","ar1",4,2,0
+"bfast","default","ar1",5,2,0
+"bfast","default","ar1",6,1,0
+"bfast","default","ar1",7,2,0
+"bfast","default","ar1",8,2,0
+"bfast","default","ar1",9,1,2
+"bfast","default","ar1",10,0,3
+"bfast","default","hetero",1,2,0
+"bfast","default","hetero",2,2,0
+"bfast","default","hetero",3,2,1
+"bfast","default","hetero",4,2,0
+"bfast","default","hetero",5,2,0
+"bfast","default","hetero",6,2,1
+"bfast","default","hetero",7,2,0
+"bfast","default","hetero",8,1,0
+"bfast","default","hetero",9,1,1
+"bfast","default","hetero",10,1,1
+"pettitt","default","iid",1,1,0
+"pettitt","default","iid",2,1,0
+"pettitt","default","iid",3,1,0
+"pettitt","default","iid",4,1,0
+"pettitt","default","iid",5,1,0
+"pettitt","default","iid",6,1,0
+"pettitt","default","iid",7,1,0
+"pettitt","default","iid",8,1,0
+"pettitt","default","iid",9,1,0
+"pettitt","default","iid",10,1,0
+"pettitt","default","heavy",1,1,0
+"pettitt","default","heavy",2,1,0
+"pettitt","default","heavy",3,1,0
+"pettitt","default","heavy",4,1,0
+"pettitt","default","heavy",5,1,0
+"pettitt","default","heavy",6,1,0
+"pettitt","default","heavy",7,1,0
+"pettitt","default","heavy",8,1,0
+"pettitt","default","heavy",9,1,0
+"pettitt","default","heavy",10,1,0
+"pettitt","default","ar1",1,0,1
+"pettitt","default","ar1",2,1,0
+"pettitt","default","ar1",3,1,0
+"pettitt","default","ar1",4,1,0
+"pettitt","default","ar1",5,1,0
+"pettitt","default","ar1",6,1,0
+"pettitt","default","ar1",7,1,0
+"pettitt","default","ar1",8,1,0
+"pettitt","default","ar1",9,1,0
+"pettitt","default","ar1",10,0,1
+"pettitt","default","hetero",1,1,0
+"pettitt","default","hetero",2,1,0
+"pettitt","default","hetero",3,1,0
+"pettitt","default","hetero",4,1,0
+"pettitt","default","hetero",5,1,0
+"pettitt","default","hetero",6,1,0
+"pettitt","default","hetero",7,1,0
+"pettitt","default","hetero",8,1,0
+"pettitt","default","hetero",9,1,0
+"pettitt","default","hetero",10,1,0
+"buishand","default","iid",1,1,0
+"buishand","default","iid",2,1,0
+"buishand","default","iid",3,1,0
+"buishand","default","iid",4,1,0
+"buishand","default","iid",5,1,0
+"buishand","default","iid",6,1,0
+"buishand","default","iid",7,0,1
+"buishand","default","iid",8,1,0
+"buishand","default","iid",9,1,0
+"buishand","default","iid",10,1,0
+"buishand","default","heavy",1,1,0
+"buishand","default","heavy",2,1,0
+"buishand","default","heavy",3,1,0
+"buishand","default","heavy",4,1,0
+"buishand","default","heavy",5,1,0
+"buishand","default","heavy",6,1,0
+"buishand","default","heavy",7,1,0
+"buishand","default","heavy",8,1,0
+"buishand","default","heavy",9,1,0
+"buishand","default","heavy",10,1,0
+"buishand","default","ar1",1,0,1
+"buishand","default","ar1",2,1,0
+"buishand","default","ar1",3,1,0
+"buishand","default","ar1",4,1,0
+"buishand","default","ar1",5,1,0
+"buishand","default","ar1",6,1,0
+"buishand","default","ar1",7,1,0
+"buishand","default","ar1",8,1,0
+"buishand","default","ar1",9,0,1
+"buishand","default","ar1",10,0,1
+"buishand","default","hetero",1,1,0
+"buishand","default","hetero",2,1,0
+"buishand","default","hetero",3,1,0
+"buishand","default","hetero",4,1,0
+"buishand","default","hetero",5,1,0
+"buishand","default","hetero",6,1,0
+"buishand","default","hetero",7,1,0
+"buishand","default","hetero",8,1,0
+"buishand","default","hetero",9,1,0
+"buishand","default","hetero",10,1,0
+"snht","default","iid",1,1,0
+"snht","default","iid",2,1,0
+"snht","default","iid",3,1,0
+"snht","default","iid",4,1,0
+"snht","default","iid",5,1,0
+"snht","default","iid",6,1,0
+"snht","default","iid",7,0,1
+"snht","default","iid",8,1,0
+"snht","default","iid",9,1,0
+"snht","default","iid",10,1,0
+"snht","default","heavy",1,1,0
+"snht","default","heavy",2,1,0
+"snht","default","heavy",3,1,0
+"snht","default","heavy",4,1,0
+"snht","default","heavy",5,1,0
+"snht","default","heavy",6,1,0
+"snht","default","heavy",7,1,0
+"snht","default","heavy",8,1,0
+"snht","default","heavy",9,1,0
+"snht","default","heavy",10,1,0
+"snht","default","ar1",1,0,1
+"snht","default","ar1",2,1,0
+"snht","default","ar1",3,1,0
+"snht","default","ar1",4,1,0
+"snht","default","ar1",5,1,0
+"snht","default","ar1",6,0,1
+"snht","default","ar1",7,1,0
+"snht","default","ar1",8,1,0
+"snht","default","ar1",9,0,1
+"snht","default","ar1",10,0,1
+"snht","default","hetero",1,1,0
+"snht","default","hetero",2,1,0
+"snht","default","hetero",3,1,0
+"snht","default","hetero",4,1,0
+"snht","default","hetero",5,1,0
+"snht","default","hetero",6,0,1
+"snht","default","hetero",7,1,0
+"snht","default","hetero",8,1,0
+"snht","default","hetero",9,1,0
+"snht","default","hetero",10,1,0
+"taylor","default","iid",1,2,1
+"taylor","default","iid",2,2,0
+"taylor","default","iid",3,2,0
+"taylor","default","iid",4,2,0
+"taylor","default","iid",5,2,0
+"taylor","default","iid",6,2,3
+"taylor","default","iid",7,2,0
+"taylor","default","iid",8,2,1
+"taylor","default","iid",9,2,0
+"taylor","default","iid",10,2,1
+"taylor","default","heavy",1,2,2
+"taylor","default","heavy",2,2,0
+"taylor","default","heavy",3,2,1
+"taylor","default","heavy",4,2,0
+"taylor","default","heavy",5,2,0
+"taylor","default","heavy",6,2,1
+"taylor","default","heavy",7,2,0
+"taylor","default","heavy",8,2,1
+"taylor","default","heavy",9,2,0
+"taylor","default","heavy",10,2,0
+"taylor","default","ar1",1,2,14
+"taylor","default","ar1",2,2,22
+"taylor","default","ar1",3,2,25
+"taylor","default","ar1",4,2,19
+"taylor","default","ar1",5,2,18
+"taylor","default","ar1",6,2,18
+"taylor","default","ar1",7,2,19
+"taylor","default","ar1",8,2,18
+"taylor","default","ar1",9,2,21
+"taylor","default","ar1",10,2,25
+"taylor","default","hetero",1,2,1
+"taylor","default","hetero",2,2,0
+"taylor","default","hetero",3,2,0
+"taylor","default","hetero",4,2,0
+"taylor","default","hetero",5,2,0
+"taylor","default","hetero",6,2,1
+"taylor","default","hetero",7,2,0
+"taylor","default","hetero",8,2,1
+"taylor","default","hetero",9,2,0
+"taylor","default","hetero",10,2,1
+"binsegrcpp","default","iid",1,2,1
+"binsegrcpp","default","iid",2,2,0
+"binsegrcpp","default","iid",3,2,0
+"binsegrcpp","default","iid",4,2,0
+"binsegrcpp","default","iid",5,2,0
+"binsegrcpp","default","iid",6,2,0
+"binsegrcpp","default","iid",7,2,2
+"binsegrcpp","default","iid",8,2,0
+"binsegrcpp","default","iid",9,2,0
+"binsegrcpp","default","iid",10,2,2
+"binsegrcpp","default","heavy",1,2,0
+"binsegrcpp","default","heavy",2,2,3
+"binsegrcpp","default","heavy",3,2,0
+"binsegrcpp","default","heavy",4,2,0
+"binsegrcpp","default","heavy",5,2,0
+"binsegrcpp","default","heavy",6,2,0
+"binsegrcpp","default","heavy",7,2,0
+"binsegrcpp","default","heavy",8,2,1
+"binsegrcpp","default","heavy",9,2,6
+"binsegrcpp","default","heavy",10,2,0
+"binsegrcpp","default","ar1",1,1,6
+"binsegrcpp","default","ar1",2,2,11
+"binsegrcpp","default","ar1",3,2,13
+"binsegrcpp","default","ar1",4,2,1
+"binsegrcpp","default","ar1",5,2,5
+"binsegrcpp","default","ar1",6,2,13
+"binsegrcpp","default","ar1",7,2,8
+"binsegrcpp","default","ar1",8,2,11
+"binsegrcpp","default","ar1",9,1,10
+"binsegrcpp","default","ar1",10,2,15
+"binsegrcpp","default","hetero",1,2,2
+"binsegrcpp","default","hetero",2,2,0
+"binsegrcpp","default","hetero",3,2,4
+"binsegrcpp","default","hetero",4,2,0
+"binsegrcpp","default","hetero",5,2,0
+"binsegrcpp","default","hetero",6,2,4
+"binsegrcpp","default","hetero",7,2,0
+"binsegrcpp","default","hetero",8,2,0
+"binsegrcpp","default","hetero",9,2,12
+"binsegrcpp","default","hetero",10,2,6

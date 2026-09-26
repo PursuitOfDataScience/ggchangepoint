@@ -44,8 +44,8 @@ cpt_labels <- function(start, end, change = "change", series = NA_character_) {
   start <- as_cp_locations(start, "start")
   end <- as_cp_locations(end, "end")
   if (length(start) != length(end)) {
-    stop("`start` and `end` must be the same length (", length(start),
-         " vs ", length(end), ").", call. = FALSE)
+    cpt_abort("`start` and `end` must be the same length (", length(start),
+              " vs ", length(end), ").", class = "bad_argument")
   }
   if (length(start) == 0) {
     return(new_cpt_labels(tibble::tibble(
@@ -56,12 +56,13 @@ cpt_labels <- function(start, end, change = "change", series = NA_character_) {
   change <- rep(as.character(change), length.out = length(start))
   bad <- setdiff(unique(change), c("change", "one_change", "no_change"))
   if (length(bad) > 0) {
-    stop("Unknown label(s): ", paste(bad, collapse = ", "),
-         ". Use \"change\", \"one_change\" or \"no_change\".", call. = FALSE)
+    cpt_abort("Unknown label(s): ", paste(bad, collapse = ", "),
+              ". Use \"change\", \"one_change\" or \"no_change\".",
+              class = "bad_argument")
   }
   if (any(end < start)) {
-    stop("Every label must have `end >= start`; ", sum(end < start),
-         " do not.", call. = FALSE)
+    cpt_abort("Every label must have `end >= start`; ", sum(end < start),
+              " do not.", class = "bad_argument")
   }
   out <- tibble::tibble(
     label_id = seq_along(start),
@@ -180,12 +181,12 @@ cpt_label_error <- function(object, labels) {
   # returning a number that mixes them.
   ser <- unique(labels$series[!is.na(labels$series)])
   if (length(ser) > 1L) {
-    warning("`labels` names ", length(ser), " series (",
-            paste(utils::head(ser, 3), collapse = ", "),
-            if (length(ser) > 3) ", ..." else "",
-            ") and all of them are scored against this one fit. Subset ",
-            "first, e.g. `labels[labels$series == \"", ser[1],
-            "\", ]`.", call. = FALSE)
+    cpt_warn("`labels` names ", length(ser), " series (",
+             paste(utils::head(ser, 3), collapse = ", "),
+             if (length(ser) > 3) ", ..." else "", ") and all of them are ",
+              "scored against this one fit. Subset ", "first, e.g. ",
+              "`labels[labels$series == \"", ser[1], "\", ]`.",
+             class = "warning")
   }
   if (nrow(labels) == 0) {
     # `series` too: the non-empty return carries it, and a column set that
@@ -268,14 +269,15 @@ print.cpt_label_error <- function(x, ...) {
 #' @noRd
 check_labels <- function(labels) {
   if (is.null(labels)) {
-    stop("`labels` is required. Build one with cpt_labels().", call. = FALSE)
+    cpt_abort("`labels` is required. Build one with cpt_labels().",
+              class = "bad_argument")
   }
   labels <- tibble::as_tibble(labels)
   need <- c("start", "end", "change")
   miss <- setdiff(need, names(labels))
   if (length(miss) > 0) {
-    stop("`labels` needs column(s): ", paste(miss, collapse = ", "),
-         ". Build one with cpt_labels().", call. = FALSE)
+    cpt_abort("`labels` needs column(s): ", paste(miss, collapse = ", "),
+              ". Build one with cpt_labels().", class = "bad_argument")
   }
   # cpt_labels() validates the vocabulary; this door only checked that the
   # columns exist -- and `@param labels` deliberately widens the contract to
@@ -287,10 +289,10 @@ check_labels <- function(labels) {
   bad <- setdiff(unique(as.character(labels$change)),
                  c("change", "one_change", "no_change"))
   if (length(bad) > 0) {
-    stop("Unknown `change` label(s): ", paste(bad, collapse = ", "),
-         ". Use \"change\", \"one_change\" or \"no_change\"; ",
-         "cpt_labels() builds a table with the right vocabulary.",
-         call. = FALSE)
+    cpt_abort("Unknown `change` label(s): ", paste(bad, collapse = ", "),
+              ". Use \"change\", \"one_change\" or \"no_change\"; ",
+              "cpt_labels() builds a table with the right vocabulary.",
+              class = "bad_argument")
   }
   if (!"label_id" %in% names(labels)) labels$label_id <- seq_len(nrow(labels))
   if (!"series" %in% names(labels)) labels$series <- NA_character_
@@ -350,8 +352,8 @@ cpt_label_error_curve <- function(x, labels, method = "pelt",
   }
   penalties <- sort(unique(as.numeric(penalties)))
   if (any(penalties <= 0)) {
-    stop("`penalties` must be positive (the curve is fitted on the log ",
-         "scale).", call. = FALSE)
+    cpt_abort("`penalties` must be positive (the curve is fitted on the log ",
+              "scale).", class = "bad_argument")
   }
 
   rows <- lapply(penalties, function(p) {
@@ -588,7 +590,7 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
                               engine = c("auto", "penaltyLearning",
                                          "native"),
                               ...) {
-  engine <- match.arg(engine)
+  engine <- cpt_match_arg(engine)
   series_list <- as_series_list(series)
   label_list <- as_label_list(labels, names(series_list))
 
@@ -606,9 +608,10 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
 
   usable <- is.finite(targets[, 1]) | is.finite(targets[, 2])
   if (!any(usable)) {
-    stop("Every series has an unbounded target interval, so there is nothing ",
-         "to learn: the labels are satisfied at every penalty in the grid. ",
-         "Add `no_change` labels, or widen `penalties`.", call. = FALSE)
+    cpt_abort("Every series has an unbounded target interval, so there is ",
+               "nothing ", "to learn: the labels are satisfied at every ",
+               "penalty in the grid. ", "Add `no_change` labels, or widen ",
+               "`penalties`.", class = "input_error")
   }
   # `usable` gated the error above and nothing else: the unusable rows still
   # reached the fit. In the native path a (-Inf, Inf) row contributes zero
@@ -619,14 +622,14 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
   if (!all(usable)) {
     dropped <- rownames(targets)[!usable] %||%
       as.character(which(!usable))
-    warning(length(dropped), " of ", nrow(targets), " series have an ",
-            "unbounded target interval (",
-            paste(utils::head(dropped, 3), collapse = ", "),
-            if (length(dropped) > 3) ", ..." else "",
-            ") and are dropped from the fit: their labels are satisfied at ",
-            "every penalty in the grid, so they say nothing about how the ",
-            "penalty should scale. Widen `penalties` to close them.",
-            call. = FALSE)
+    cpt_warn(length(dropped), " of ", nrow(targets), " series have an ",
+             "unbounded target interval (",
+             paste(utils::head(dropped, 3), collapse = ", "),
+             if (length(dropped) > 3) ", ..." else "", ") and are dropped ",
+              "from the fit: their labels are satisfied at ", "every penalty ",
+              "in the grid, so they say nothing about how the ",
+             "penalty should scale. Widen `penalties` to close them.",
+             class = "dropped_input")
     feats <- feats[usable, , drop = FALSE]
     targets <- targets[usable, , drop = FALSE]
   }
@@ -639,13 +642,13 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
     !is.finite(sd_v) || sd_v == 0
   }, logical(1))
   if (any(flat)) {
-    warning(sum(flat), " training series ",
-            if (sum(flat) > 1) "are" else "is", " constant (",
-            paste(utils::head(names(series_list)[flat], 3),
-                  collapse = ", "),
-            "), so the scale features are at their floor rather than at a ",
-            "measured value and the fit is pulled toward it. Drop the flat ",
-            "series, or check the input.", call. = FALSE)
+    cpt_warn(sum(flat), " training series ",
+             if (sum(flat) > 1) "are" else "is", " constant (",
+             paste(utils::head(names(series_list)[flat], 3),
+                   collapse = ", "),
+             "), so the scale features are at their floor rather than at a ",
+             "measured value and the fit is pulled toward it. Drop the flat ",
+             "series, or check the input.", class = "warning")
   }
 
   use_pl <- (engine == "penaltyLearning") ||
@@ -653,9 +656,9 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
        nrow(feats) >= 10)
   if (engine == "penaltyLearning" &&
       !requireNamespace("penaltyLearning", quietly = TRUE)) {
-    stop("Package 'penaltyLearning' is required for ",
-         "`engine = \"penaltyLearning\"`. Install it with ",
-         "install.packages('penaltyLearning').", call. = FALSE)
+    cpt_abort("Package 'penaltyLearning' is required for ",
+              "`engine = \"penaltyLearning\"`. Install it with ",
+              "install.packages('penaltyLearning').", class = "engine_missing")
   }
 
   pl_why <- NULL
@@ -684,15 +687,15 @@ cpt_learn_penalty <- function(series, labels, method = "pelt",
       }
     )
     if (is.null(pl)) {
-      warning("penaltyLearning::IntervalRegressionCV() failed",
-              if (is.null(pl_why)) {
-                "."
-              } else {
-                # The engine's message may or may not end in punctuation.
-                paste0(": ", sub("[.[:space:]]*$", "", pl_why), ".")
-              },
-              " Falling back to the built-in squared-hinge fit.",
-              call. = FALSE)
+      cpt_warn("penaltyLearning::IntervalRegressionCV() failed",
+               if (is.null(pl_why)) {
+                 "."
+               } else {
+                 # The engine's message may or may not end in punctuation.
+                 paste0(": ", sub("[.[:space:]]*$", "", pl_why), ".")
+               },
+               " Falling back to the built-in squared-hinge fit.",
+               class = "engine_failed")
       interval_regression(feats, targets)
     } else {
       list(engine = "penaltyLearning", model = pl,
@@ -779,9 +782,9 @@ as_series_list <- function(series) {
       withCallingHandlers(
         coerce_series_values(series[[i]], arg = "series"),
         error = function(e) {
-          stop("Series ", if (nzchar(nm)) paste0("`", nm, "` ") else "",
-               "(", i, " of ", length(series), "): ", conditionMessage(e),
-               call. = FALSE)
+          cpt_rethrow(e, "Series ",
+                      if (nzchar(nm)) paste0("`", nm, "` ") else "",
+                      "(", i, " of ", length(series), "): ")
         })
     }), names(series))
   } else {
@@ -805,7 +808,7 @@ as_series_list <- function(series) {
     withCallingHandlers(
       validate_data(out[[i]]),
       error = function(e) {
-        stop(label, ": ", conditionMessage(e), call. = FALSE)
+        cpt_rethrow(e, label, ": ")
       })
   }
   out
@@ -816,9 +819,10 @@ as_label_list <- function(labels, series_names) {
   if (inherits(labels, "cpt_labels") || is.data.frame(labels)) {
     labels <- check_labels(labels)
     if (all(is.na(labels$series))) {
-      stop("A single label tibble must name its series in the `series` ",
-           "column so each label can be matched to a series; or pass a list ",
-           "of label tibbles parallel to `series`.", call. = FALSE)
+      cpt_abort("A single label tibble must name its series in the `series` ",
+                "column so each label can be matched to a series; or pass a list ",
+                "of label tibbles parallel to `series`.",
+                class = "bad_argument")
     }
     out <- lapply(series_names, function(nm) {
       labels[labels$series == nm, , drop = FALSE]
@@ -832,9 +836,9 @@ as_label_list <- function(labels, series_names) {
   missing_lab <- vapply(out, function(l) is.null(l) || nrow(l) == 0,
                         logical(1))
   if (any(missing_lab)) {
-    stop("No labels for series: ",
-         paste(series_names[missing_lab], collapse = ", "), ".",
-         call. = FALSE)
+    cpt_abort("No labels for series: ",
+              paste(series_names[missing_lab], collapse = ", "), ".",
+              class = "bad_argument")
   }
   out
 }

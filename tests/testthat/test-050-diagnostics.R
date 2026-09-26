@@ -37,9 +37,18 @@ test_that("every selection criterion runs and agrees on an easy series", {
   # n, so it over-selects changepoints, and on this series it takes every
   # rung of the ladder. That is the criterion behaving as documented, not a
   # failure, so the test asserts only that it finds at least the real ones.
-  aic <- cpt_select(x_two, criterion = "aic", k_max = 6)
+  # Since 0.6.0 it says so when it lands at the top of the ladder.
+  aic <- withCallingHandlers(
+    cpt_select(x_two, criterion = "aic", k_max = 6),
+    ggchangepoint_selection_unadjusted = function(w) {
+      expect_match(conditionMessage(w), "not consistent")
+      invokeRestart("muffleWarning")
+    })
   expect_gte(aic$k, 2)
-  st <- cpt_select(x_two, criterion = "stability", k_max = 3, B = 5)
+  # stability cannot return K = 0 and warns when it returns its smallest
+  # candidate; the choice itself is what this checks.
+  st <- suppressWarnings(cpt_select(x_two, criterion = "stability",
+                                    k_max = 3, B = 5))
   expect_true(st$k %in% 0:3)
   skip_if_not_installed("crossvalidationCP")
   cv <- cpt_select(x_two, criterion = "cv", k_max = 6)

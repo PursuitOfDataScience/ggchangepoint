@@ -6,17 +6,30 @@
 \alias{autoplot.ggcpt_stability}
 \title{Changepoint stability diagnostics via bootstrap}
 \usage{
-cpt_stability(x, method = "pelt", B = 100, margin = 5, seed = NULL, ...)
+cpt_stability(
+  x,
+  method = "pelt",
+  B = 100,
+  margin = 5,
+  seed = NULL,
+  bootstrap = c("iid", "block"),
+  block_length = NULL,
+  reversal = TRUE,
+  ...
+)
 
 \method{print}{ggcpt_stability}(x, ...)
 
 \method{autoplot}{ggcpt_stability}(object, ...)
 }
 \arguments{
-\item{x}{For \code{cpt_stability()}, a numeric vector; for the
-\code{print()} method, a \code{ggcpt_stability} object.}
+\item{x}{A numeric vector, or a \code{ggcpt} fit (its series, method,
+change type and penalty are used, and it is the original the
+replicates are compared with); for the \code{print()} method, a
+\code{ggcpt_stability} object.}
 
-\item{method}{Detection method, passed to \code{\link{cpt_detect}()}.}
+\item{method}{Detection method, passed to \code{\link{cpt_detect}()}.
+Ignored when \code{x} is a fit.}
 
 \item{B}{Number of bootstrap replicates. Defaults to \code{100}.}
 
@@ -27,6 +40,25 @@ as a re-detection of a location. Defaults to \code{5}.}
 call: \code{.Random.seed} is saved and restored, so a seeded call
 inside a simulation loop does not pin the loop's own stream.}
 
+\item{bootstrap}{\code{"iid"} (the default) resamples residuals one at a
+time within each segment; \code{"block"} resamples contiguous blocks
+of them, which keeps the residuals' short-range dependence, so an
+artifact of autocorrelated noise can move between replicates instead
+of being rebuilt in the same place every time.}
+
+\item{block_length}{Block length for \code{bootstrap = "block"}. Defaults
+to \eqn{n^{1/3}} lengthened by the residuals' lag-1 autocorrelation
+\eqn{r} by the factor \eqn{(1 + |r|)/(1 - |r|)}, and capped at a
+quarter of the series.}
+
+\item{reversal}{Also run the detector once on the reversed series, and
+flag each changepoint that the reversed series does not find within
+\code{margin}? Defaults to \code{TRUE}. An offline detector looks at the
+whole series, so a changepoint that does not survive reversal is a
+borderline one: measured, it is the same instability the bootstrap
+finds, for one extra fit. Sequential (online) detectors genuinely
+depend on direction and get \code{NA}.}
+
 \item{...}{Additional arguments passed to every \code{cpt_detect()} call.}
 
 \item{object}{A \code{ggcpt_stability} object (for \code{autoplot()}).}
@@ -35,7 +67,11 @@ inside a simulation loop does not pin the loop's own stream.}
 A \code{ggcpt_stability} object: a list with \code{frequency}
   (a tibble of \code{index} and \code{freq}, the proportion of replicates
   detecting a changepoint within \code{margin} of that index),
-  \code{original} (the point-estimate \code{ggcpt}), and \code{B}.
+  \code{original} (the point-estimate \code{ggcpt}), \code{B},
+  \code{n_failed} (replicates on which the detector failed, which are
+  left out of the proportion rather than counted as "found nothing"),
+  \code{bootstrap}, \code{block_length} and \code{reversal} (one row per
+  original changepoint: \code{cp} and \code{survives}).
   Methods: \code{print()} and \code{autoplot()} (frequency profile with
   the original detections marked).
 }
@@ -49,6 +85,20 @@ detection-frequency profile is a cheap, model-agnostic confidence signal
 available for every wrapped engine, including the many that ship no
 confidence intervals.
 }
+\section{What a high score means}{
+
+\emph{Reproducible under resampling}, which is not the same as
+\emph{real}, and under dependent noise the two diverge: measured under
+AR(1) noise, a spurious changepoint reached a stability of 1.00 and the
+score separated real from spurious changepoints in only 4 of 10
+replicates. The artifact is a feature of the realised noise path, and an
+i.i.d. resample of the residuals rebuilds it every time.
+\code{bootstrap = "block"} lets it vary; \code{\link{cpt_robustness}()},
+which changes the noise model rather than the sample, is the check that
+touches the cause; and \code{\link{cpt_assumptions}()} tests the
+residuals directly.
+}
+
 \examples{
 set.seed(2026)
 x <- c(rnorm(60), rnorm(60, 4))

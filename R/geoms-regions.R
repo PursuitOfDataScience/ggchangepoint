@@ -14,28 +14,13 @@ aes_has <- function(mapping, nm) {
   !is.null(mapping) && !is.null(mapping[[nm, exact = TRUE]])
 }
 
-# Internal: the full-panel height, supplied as fixed PARAMETERS rather than
-# as default aesthetics. Passing `ymin`/`ymax` through `aes()` would mean
-# merging two mapping objects and re-attaching the class by hand, which
-# reaches into ggplot2's internals; passing them as parameters is the
-# documented way to fix an aesthetic and renders identically. They must be
-# omitted when the caller maps them, or ggplot2 rejects the duplicate.
-#' @noRd
-full_height_params <- function(mapping) {
-  out <- list()
-  if (!aes_has(mapping, "ymin")) out$ymin <- -Inf
-  if (!aes_has(mapping, "ymax")) out$ymax <- Inf
-  out
-}
-
 # Internal: the fixed styling parameters a layer passes, minus any the caller
 # has MAPPED. In ggplot2 a fixed parameter silently beats a mapping, so a
 # layer that always passes `fill = "steelblue"` cannot be filled by a column:
 # `geom_cpt_region(aes(xmin, xmax, fill = level))` drew every band
 # steelblue, `geom_cpt_label(aes(..., colour = change))` drew no borders,
 # and geom_cpt_event() coloured its rules by `kind` while its labels stayed
-# grey30. The same rule full_height_params() applies to ymin/ymax, for the
-# styling arguments. `colour` and `color` are one aesthetic.
+# grey30. The styling arguments are passed only when not mapped. `colour` and `color` are one aesthetic.
 #' @noRd
 unmapped_params <- function(mapping, params) {
   keep <- vapply(names(params), function(nm) {
@@ -86,13 +71,35 @@ unmapped_params <- function(mapping, params) {
 geom_cpt_region <- function(mapping = NULL, data = NULL, ..., alpha = 0.2,
                             fill = "steelblue", na.rm = FALSE,
                             show.legend = NA, inherit.aes = FALSE) {
-  do.call(ggplot2::geom_rect, c(
-    list(mapping = mapping, data = data, na.rm = na.rm,
-         show.legend = show.legend, inherit.aes = inherit.aes),
-    unmapped_params(mapping, list(alpha = alpha, fill = fill)),
-    full_height_params(mapping), list(...)
-  ))
+  la <- layer_args(list(...), inherit.aes)
+  ggplot2::layer(
+    data = data, mapping = mapping, stat = "identity",
+    geom = GeomCptRegion, position = "identity",
+    show.legend = show.legend, inherit.aes = inherit.aes,
+    key_glyph = la$key_glyph,
+    params = c(list(na.rm = na.rm),
+               unmapped_params(mapping, list(alpha = alpha, fill = fill)),
+               la$params)
+  )
 }
+
+#' @export
+GeomCptRegion <- ggplot2::ggproto("GeomCptRegion", ggplot2::GeomRect,
+  required_aes = c("xmin", "xmax"),
+  # Declared, or a mapped height is dropped as an "unknown aesthetic".
+  optional_aes = c("ymin", "ymax"),
+  default_aes = ggplot2::aes(colour = NA, fill = "steelblue", linewidth = 0.5,
+                             linetype = 1, alpha = 0.2),
+  # Full panel height unless the caller maps a height: a region is an
+  # interval in time, and -Inf/Inf are drawn to the panel's edges without
+  # entering the y scale.
+  setup_data = function(self, data, params) {
+    if (is.null(data$ymin)) data$ymin <- -Inf
+    if (is.null(data$ymax)) data$ymax <- Inf
+    ggplot2::ggproto_parent(ggplot2::GeomRect, self)$setup_data(data, params)
+  },
+  draw_key = draw_key_cpt_region
+)
 
 #' Changepoint label geom
 #'
@@ -134,13 +141,23 @@ geom_cpt_region <- function(mapping = NULL, data = NULL, ..., alpha = 0.2,
 geom_cpt_label <- function(mapping = NULL, data = NULL, ..., alpha = 0.25,
                            colour = NA, na.rm = FALSE, show.legend = NA,
                            inherit.aes = FALSE) {
-  do.call(ggplot2::geom_rect, c(
-    list(mapping = mapping, data = data, na.rm = na.rm,
-         show.legend = show.legend, inherit.aes = inherit.aes),
-    unmapped_params(mapping, list(alpha = alpha, colour = colour)),
-    full_height_params(mapping), list(...)
-  ))
+  la <- layer_args(list(...), inherit.aes)
+  ggplot2::layer(
+    data = data, mapping = mapping, stat = "identity",
+    geom = GeomCptLabel, position = "identity",
+    show.legend = show.legend, inherit.aes = inherit.aes,
+    key_glyph = la$key_glyph,
+    params = c(list(na.rm = na.rm),
+               unmapped_params(mapping, list(alpha = alpha, colour = colour)),
+               la$params)
+  )
 }
+
+#' @export
+GeomCptLabel <- ggplot2::ggproto("GeomCptLabel", GeomCptRegion,
+  default_aes = ggplot2::aes(colour = NA, fill = "grey35", linewidth = 0.5,
+                             linetype = 1, alpha = 0.25)
+)
 
 #' Colour scales for changepoint labels and label errors
 #'
@@ -244,67 +261,179 @@ geom_cpt_event <- function(mapping = NULL, data = NULL, ...,
                            repel = NULL, inherit.aes = FALSE,
                            na.rm = FALSE) {
   if (is.null(mapping)) {
-    stop("`geom_cpt_event()` needs a mapping with at least `xintercept`.",
-         call. = FALSE)
+    cpt_abort("`geom_cpt_event()` needs a mapping with at least `xintercept`.",
+              class = "bad_argument")
   }
   has_ggrepel <- requireNamespace("ggrepel", quietly = TRUE)
   if (is.null(repel)) repel <- has_ggrepel && aes_has(mapping, "y")
   validate_flag(repel, "repel")
   if (isTRUE(repel) && !has_ggrepel) {
-    stop("`repel = TRUE` needs the ggrepel package. ",
-         "Install it with install.packages('ggrepel'), or pass ",
-         "`repel = FALSE`.", call. = FALSE)
+    cpt_abort("`repel = TRUE` needs the ggrepel package. ", "Install it with ",
+               "install.packages('ggrepel'), or pass ", "`repel = FALSE`.",
+              class = "engine_missing")
   }
 
-  rule_map <- mapping[intersect(names(mapping), c("xintercept", "colour",
-                                                  "color", "linetype",
-                                                  "linewidth", "alpha"))]
+  # One layer draws both marks: the rule and its label, which is what lets
+  # the event have its own legend glyph (a dotted rule with a flag) and
+  # take part in the position system. A colour or linetype the caller maps
+  # must reach the marks, so the fixed defaults are passed only when not
+  # mapped: in ggplot2 a fixed parameter silently beats a mapping.
+  styling <- unmapped_params(mapping, list(colour = colour,
+                                           linetype = linetype))
+  if (!isTRUE(repel)) {
+    return(ggplot2::layer(
+      data = data, mapping = mapping, stat = "identity",
+      geom = GeomCptEvent, position = "identity", show.legend = NA,
+      inherit.aes = inherit.aes,
+      params = c(list(na.rm = na.rm, angle = angle, size = size,
+                      vjust = vjust, hjust = hjust), styling, list(...))))
+  }
+  # With ggrepel the labels are placed by its own grob, so the rules are
+  # this package's layer (without labels) and the text is ggrepel's.
+  rule_map <- mapping[setdiff(names(mapping), c("label", "y"))]
   class(rule_map) <- class(mapping)
-  # Five aesthetics are pulled out of the caller's mapping so they can reach
-  # the rule layer, and two of them -- colour and linetype -- were then set
-  # as fixed parameters from this function's own formals as well. In ggplot2
-  # a fixed parameter beats a mapping, silently, so
-  # `geom_cpt_event(aes(xintercept = x, colour = kind))` could not colour
-  # the rules by `kind` at all -- while `alpha` and `linewidth`, which are
-  # not shadowed, worked. Omit the parameter when the caller maps it, the
-  # way full_height_params() already does for ymin/ymax.
-  rule_params <- list(na.rm = na.rm)
-  if (!aes_has(rule_map, "colour") && !aes_has(rule_map, "color")) {
-    rule_params$colour <- colour
-  }
-  if (!aes_has(rule_map, "linetype")) rule_params$linetype <- linetype
-  rule <- do.call(ggplot2::geom_vline,
-                  c(list(mapping = rule_map, data = data), rule_params))
-
-  # The text layer needs an x, and events arrive with `xintercept`; alias it
-  # rather than making the caller map the same column twice.
-  #
-  # `[[` with exact = TRUE, not `$`: a mapping is a list, and `$x` partially
-  # matches `xintercept`, so the guard below silently decided `x` was
-  # already mapped and the text layer went out with no x at all.
+  rule <- ggplot2::layer(
+    data = data, mapping = rule_map, stat = "identity", geom = GeomCptEvent,
+    position = "identity", show.legend = NA, inherit.aes = inherit.aes,
+    params = c(list(na.rm = na.rm, draw_label = FALSE), styling))
   text_map <- mapping
   if (!aes_has(text_map, "x") && aes_has(text_map, "xintercept")) {
     text_map[["x"]] <- text_map[["xintercept", exact = TRUE]]
   }
   text_map[["xintercept"]] <- NULL
-  if (!aes_has(text_map, "y")) text_map[["y"]] <- ggplot2::aes(y = -Inf)$y
+  text_map[["linetype"]] <- NULL
   class(text_map) <- class(mapping)
-
-  # The label layer follows the same rule as the rule layer above: a colour
-  # the caller mapped must reach the text too, not only the rules.
   text_params <- unmapped_params(text_map, list(colour = colour))
-  text_layer <- if (isTRUE(repel)) {
-    do.call(ggrepel::geom_text_repel, c(
-      list(mapping = text_map, data = data, size = size, angle = angle,
-           na.rm = na.rm, inherit.aes = inherit.aes),
-      text_params, list(...)))
-  } else {
-    do.call(ggplot2::geom_text, c(
-      list(mapping = text_map, data = data, size = size, angle = angle,
-           vjust = vjust, hjust = hjust, na.rm = na.rm,
-           inherit.aes = inherit.aes),
-      text_params, list(...)))
-  }
-
+  text_layer <- do.call(ggrepel::geom_text_repel, c(
+    list(mapping = text_map, data = data, size = size, angle = angle,
+         na.rm = na.rm, inherit.aes = inherit.aes),
+    text_params, list(...)))
   list(rule, text_layer)
 }
+
+#' @export
+GeomCptEvent <- ggplot2::ggproto("GeomCptEvent", ggplot2::Geom,
+  required_aes = "xintercept",
+  optional_aes = c("label", "y"),
+  non_missing_aes = c("colour", "linetype"),
+  default_aes = ggplot2::aes(colour = "grey30", linewidth = 0.5,
+                             linetype = "dotted", alpha = NA, label = NA,
+                             y = -Inf),
+  extra_params = c("na.rm", "angle", "size", "vjust", "hjust",
+                   "draw_label", "family", "fontface"),
+  draw_panel = function(data, panel_params, coord, angle = 90, size = 3,
+                        vjust = -0.4, hjust = 0, draw_label = TRUE,
+                        family = "", fontface = 1) {
+    ranges <- coord$backtransform_range(panel_params)
+    rule <- data
+    rule$x <- rule$xintercept
+    rule$xend <- rule$xintercept
+    rule$y <- ranges$y[1]
+    rule$yend <- ranges$y[2]
+    grobs <- list(ggplot2::GeomSegment$draw_panel(unique0_rows(rule),
+                                                  panel_params, coord))
+    labelled <- draw_label && "label" %in% names(data) &&
+      !all(is.na(data$label))
+    if (labelled) {
+      txt <- data[!is.na(data$label), , drop = FALSE]
+      txt$x <- txt$xintercept
+      pts <- coord$transform(txt, panel_params)
+      grobs[[2]] <- grid::textGrob(
+        as.character(txt$label), x = pts$x, y = pts$y, rot = angle,
+        hjust = hjust, vjust = vjust, default.units = "native",
+        gp = grid::gpar(col = ggplot2::alpha(txt$colour, txt$alpha),
+                        fontsize = size * ggplot2::.pt,
+                        fontfamily = family, fontface = fontface))
+    }
+    grid::gTree(children = do.call(grid::gList, grobs))
+  },
+  draw_key = draw_key_cpt_event
+)
+
+# Internal: one rule per distinct location and style, so an event listed
+# twice is not overdrawn.
+#' @noRd
+unique0_rows <- function(d) {
+  keep <- intersect(c("x", "xend", "y", "yend", "colour", "linewidth",
+                      "linetype", "alpha", "PANEL", "group"), names(d))
+  d[!duplicated(d[, keep, drop = FALSE]), , drop = FALSE]
+}
+
+#' Significance regions computed in the layer
+#'
+#' The region twin of \code{\link{stat_changepoint}()}: runs detection on
+#' the layer's own \code{x}/\code{y} and draws what the method returns as
+#' an interval, so
+#' \code{ggplot(d, aes(t, y)) + geom_line() + stat_cpt_region()} is the
+#' whole plot. Narrowest Significance Pursuit (\code{method = "nsp"}, the
+#' default) returns regions, each containing a changepoint at a global
+#' significance level; a method with location intervals (\code{"smuce"},
+#' \code{"strucchange"}, \code{"segmented"}, ...) draws those instead.
+#'
+#' @inheritParams stat_changepoint
+#' @param geom The geom to draw with. Defaults to
+#'   \code{\link{geom_cpt_region}()}'s.
+#' @param method Detection method: \code{"nsp"} (the default) or any method
+#'   whose result carries regions or location intervals (see
+#'   \code{cpt_methods()$ci}).
+#' @param ... Further arguments: those \code{cpt_detect()} takes (for
+#'   example \code{alpha} for NSP's level) go to the detector, the rest to
+#'   the geom.
+#' @return A ggplot layer.
+#' @export
+#' @family ggplot2 layers
+#' @examplesIf requireNamespace("nsp", quietly = TRUE)
+#' library(ggplot2)
+#' set.seed(2026)
+#' d <- data.frame(t = 1:200, y = c(rnorm(100), rnorm(100, 2)))
+#' ggplot(d, aes(t, y)) + stat_cpt_region(seed = 1) + geom_line()
+stat_cpt_region <- function(mapping = NULL, data = NULL, geom = GeomCptRegion,
+                            position = "identity", ..., method = "nsp",
+                            na.rm = FALSE, show.legend = NA) {
+  dots <- list(...)
+  geom_args <- c("alpha", "fill", "colour", "color", "linewidth",
+                 "linetype")
+  detect_args <- dots[setdiff(names(dots), geom_args)]
+  ggplot2::layer(
+    stat = StatCptRegion, data = data, mapping = mapping, geom = geom,
+    position = position, show.legend = show.legend, inherit.aes = TRUE,
+    params = c(list(method = method, detect_args = detect_args,
+                    na.rm = na.rm), dots[intersect(names(dots), geom_args)])
+  )
+}
+
+#' @export
+StatCptRegion <- ggplot2::ggproto("StatCptRegion", ggplot2::Stat,
+  required_aes = c("x", "y"),
+  dropped_aes = c("x", "y"),
+  compute_group = function(data, scales, method = "nsp",
+                           detect_args = list()) {
+    ord <- order(data$x)
+    y <- data$y[ord]
+    x <- data$x[ord]
+    fit <- do.call(cpt_detect, c(list(y, method = method), detect_args))
+    reg <- fit$regions
+    if (!is.null(reg) && nrow(reg)) {
+      lo <- reg$start
+      hi <- reg$end
+    } else if (all(c("ci_lower", "ci_upper") %in% names(fit$changepoints))) {
+      cp <- fit$changepoints
+      cp <- cp[!is.na(cp$ci_lower) & !is.na(cp$ci_upper), , drop = FALSE]
+      lo <- cp$ci_lower
+      hi <- cp$ci_upper
+    } else if (nrow(fit$changepoints) == 0L) {
+      return(data.frame())
+    } else {
+      reg <- builtin_registry()
+      with_ci <- reg$method[reg$ci]
+      cpt_abort("`method = \"", method, "\"` returns neither regions nor ",
+                "location intervals, so `stat_cpt_region()` has nothing to ",
+                "draw. Methods that do: ", paste(with_ci, collapse = ", "),
+                ". stat_changepoint() draws the changepoints themselves.",
+                class = "capability_absent",
+                data = list(method = method, supported = with_ci))
+    }
+    n <- length(x)
+    data.frame(xmin = x[pmax(1L, pmin(lo, n))], xmax = x[pmax(1L, pmin(hi, n))])
+  }
+)

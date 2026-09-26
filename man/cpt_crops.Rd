@@ -27,8 +27,10 @@ cpt_crops(
 \method{tidy}{ggcpt_path}(x, ...)
 }
 \arguments{
-\item{x}{For \code{cpt_crops()}, a numeric vector; for the \code{print()}
-and \code{tidy()} methods, a \code{ggcpt_path} object.}
+\item{x}{For \code{cpt_crops()}, a numeric vector, or a \code{ggcpt}
+fit whose series is used (with its change type, when it is one CROPS
+sweeps); for the \code{print()} and \code{tidy()} methods, a
+\code{ggcpt_path} object.}
 
 \item{change_in}{What to detect change in: \code{"mean"}, \code{"var"},
 or \code{"meanvar"}. Defaults to \code{"mean"}.}

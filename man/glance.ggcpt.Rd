@@ -16,7 +16,13 @@ A one-row tibble with columns: \code{n}, \code{n_changepoints},
   \code{method}, \code{change_in}, \code{penalty_type}, \code{penalty_value},
   \code{cp_convention}, \code{total_cost} (\code{NA} when the engine does
   not expose a cost), \code{runtime} (elapsed seconds when measured by
-  \code{cpt_detect()}, otherwise \code{NA}).
+  \code{cpt_detect()}, otherwise \code{NA}) and \code{engine_version}
+  (the version of the engine package that produced the result, recorded
+  when it was made, or \code{NA} for a result with no engine package,
+  such as one built by \code{\link{as_ggcpt}()}; see
+  \code{\link{cpt_verify}()}) and \code{family} (the distribution family
+  the fit was asked for with \code{cpt_detect(family = )}, or \code{NA}
+  for the method's own default).
 }
 \description{
 Returns a one-row summary of a changepoint detection result.
@@ -42,4 +48,9 @@ the same thing:
     reports normally, as do \code{change_in = "var"} and
     \code{"meanvar"}.
 }
+}
+\examples{
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(60), rnorm(60, 3)), method = "pelt")
+glance(fit)
 }

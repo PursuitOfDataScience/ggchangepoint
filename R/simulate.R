@@ -58,6 +58,17 @@
 #'   \emph{gradual} heteroscedasticity that makes constant-variance
 #'   detectors shatter, and the condition HSMUCE, NSP-self-normalised and
 #'   \pkg{fastcpd}'s variance families exist to handle.
+#' @param family The distribution of the observations: \code{"gaussian"}
+#'   (the default, signal plus \code{noise}), \code{"poisson"} (counts
+#'   whose rate is the segment's parameter), \code{"binomial"} (0/1
+#'   outcomes whose probability is the segment's parameter) or
+#'   \code{"exponential"} (waiting times whose mean is the segment's
+#'   parameter). The last three generate a change in that one parameter, so
+#'   they take \code{change_in = "mean"}, one number per segment in
+#'   \code{params} (defaults: rate 5, probability 0.5, mean 1), and no
+#'   \code{noise}, \code{sd}, \code{seasonality} or \code{sd_trend}. A
+#'   rate change in counts is a different detection problem from a Gaussian
+#'   mean shift, which is why the power curves are not interchangeable.
 #' @param seed Optional seed for reproducibility. The seed is scoped to this
 #'   call: \code{.Random.seed} is saved and restored, so a seeded call
 #'   inside a simulation loop does not pin the loop's own stream.
@@ -76,6 +87,10 @@
 #'                          seed = 1)
 #' drifting <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
 #'                          sd_trend = c(0.5, 3), seed = 1)
+#'
+#' # counts whose rate doubles
+#' counts <- cpt_simulate(200, changepoints = 100, params = c(4, 8),
+#'                        family = "poisson", seed = 1)
 #' @family test signals
 cpt_simulate <- function(n,
                          changepoints = integer(),
@@ -87,10 +102,21 @@ cpt_simulate <- function(n,
                          rho = 0,
                          seasonality = NULL,
                          sd_trend = NULL,
-                         seed = NULL) {
+                         seed = NULL,
+                         family = c("gaussian", "poisson", "binomial",
+                                    "exponential")) {
 
-  change_in <- match.arg(change_in)
-  noise <- match.arg(noise)
+  # Before the arguments are matched: missing() reports FALSE for an
+  # argument the function has since reassigned.
+  noise_given <- !missing(noise) || !missing(sd) || !is.null(seasonality) ||
+    !is.null(sd_trend)
+  change_in <- cpt_match_arg(change_in)
+  noise <- cpt_match_arg(noise)
+  family <- cpt_match_arg(family)
+  if (family != "gaussian") {
+    return(simulate_family(n, changepoints, change_in, params, family,
+                           noise_given = noise_given, seed = seed))
+  }
   # `min = 3`, matching validate_data(): at n < 3 the simulator handed back
   # a tibble every consumer in the package then refuses, which is a
   # confusing place to learn the limit.
@@ -121,13 +147,13 @@ cpt_simulate <- function(n,
   # discarded location becomes a scoring error nobody can see.
   keep <- changepoints > 0 & changepoints < n
   if (any(!keep)) {
-    warning("`changepoints`: ", sum(!keep), " of ", length(changepoints),
-            " outside 1..", n - 1L, " (",
-            paste(utils::head(changepoints[!keep], 5), collapse = ", "),
-            if (sum(!keep) > 5) ", ..." else "",
-            ") and dropped. The ground truth recorded on the result is the ",
-            "set that survived, so a benchmark scored against it would not ",
-            "see the difference.", call. = FALSE)
+    cpt_warn("`changepoints`: ", sum(!keep), " of ", length(changepoints),
+             " outside 1..", n - 1L, " (",
+             paste(utils::head(changepoints[!keep], 5), collapse = ", "),
+             if (sum(!keep) > 5) ", ..." else "", ") and dropped. The ground ",
+              "truth recorded on the result is the ", "set that survived, so ",
+              "a benchmark scored against it would not ", "see the difference.",
+             class = "dropped_input")
   }
   changepoints <- changepoints[keep]
 
@@ -155,9 +181,9 @@ cpt_simulate <- function(n,
   # change behind them -- corrupt ground truth for benchmarking. Warn for
   # every change type (this used to fire only for "mean").
   if (length(params) < n_seg) {
-    warning("`params` has ", length(params), " value(s) for ", n_seg,
-            " segments; the last value is reused, so the extra ",
-            "segments carry no actual change.", call. = FALSE)
+    cpt_warn("`params` has ", length(params), " value(s) for ", n_seg,
+             " segments; the last value is reused, so the extra ",
+             "segments carry no actual change.", class = "recycled")
   }
   # ...and the other direction was silent. `n` changepoints make `n + 1`
   # segments, which is the arithmetic easiest to get wrong: supplying three
@@ -167,11 +193,11 @@ cpt_simulate <- function(n,
   # two changepoints. Same asymmetry the too-few branch above already
   # refused to accept, in the direction nothing was checking.
   if (length(params) > n_seg) {
-    warning("`params` has ", length(params), " value(s) but ",
-            length(changepoints), " changepoint(s) make only ", n_seg,
-            " segment(s), so the last ", length(params) - n_seg,
-            " are unused. `changepoints` sets the number of segments, not ",
-            "`params`.", call. = FALSE)
+    cpt_warn("`params` has ", length(params), " value(s) but ",
+             length(changepoints), " changepoint(s) make only ", n_seg,
+             " segment(s), so the last ", length(params) - n_seg,
+             " are unused. `changepoints` sets the number of segments, not ",
+             "`params`.", class = "argument_ignored")
   }
 
   # "slope" is the one change type whose per-segment parameters are not
@@ -188,12 +214,13 @@ cpt_simulate <- function(n,
           is.numeric(p[["intercept"]]) && is.numeric(p[["slope"]])
       }, logical(1)))
     if (!ok) {
-      stop("`change_in = \"slope\"` needs `params` to be a list with one ",
-           "`list(intercept = , slope = )` per segment, e.g. ",
-           "`params = list(list(intercept = 0, slope = 0.1), ",
-           "list(intercept = 5, slope = -0.2))`. Got ",
-           if (is.list(params)) "a list of something else" else
-             paste0("a ", class(params)[1], " vector"), ".", call. = FALSE)
+      cpt_abort("`change_in = \"slope\"` needs `params` to be a list with one ",
+                "`list(intercept = , slope = )` per segment, e.g. ",
+                "`params = list(list(intercept = 0, slope = 0.1), ",
+                "list(intercept = 5, slope = -0.2))`. Got ",
+                if (is.list(params)) "a list of something else" else
+                  paste0("a ", class(params)[1], " vector"), ".",
+                class = "bad_argument")
     }
   }
 
@@ -209,8 +236,9 @@ cpt_simulate <- function(n,
   if (!is.null(sd_trend)) {
     if (!is.numeric(sd_trend) || length(sd_trend) != 2L ||
         any(!is.finite(sd_trend)) || any(sd_trend <= 0)) {
-      stop("`sd_trend` must be two positive finite numbers: the noise-scale ",
-           "multiplier at the first and last observation.", call. = FALSE)
+      cpt_abort("`sd_trend` must be two positive finite numbers: the ",
+                 "noise-scale ", "multiplier at the first and last ",
+                 "observation.", class = "bad_argument")
     }
     mult <- exp(seq(log(sd_trend[1]), log(sd_trend[2]), length.out = n))
   } else {
@@ -264,7 +292,8 @@ cpt_simulate <- function(n,
     # 2" is worth saying with its reason.
     validate_scalar(df, "df")
     if (df <= 2) {
-      stop("`df` must exceed 2 so the t-noise variance exists.", call. = FALSE)
+      cpt_abort("`df` must exceed 2 so the t-noise variance exists.",
+                class = "bad_argument")
     }
     # Rescale so the noise standard deviation is exactly sd_vec
     errors <- stats::rt(n, df = df) / sqrt(df / (df - 2)) * sd_vec
@@ -308,8 +337,8 @@ cpt_simulate <- function(n,
 #' @noRd
 seasonal_component <- function(seasonality, n) {
   if (!is.list(seasonality)) {
-    stop("`seasonality` must be a list with `period` and `amplitude`.",
-         call. = FALSE)
+    cpt_abort("`seasonality` must be a list with `period` and `amplitude`.",
+              class = "bad_argument")
   }
   period <- seasonality$period
   amplitude <- seasonality$amplitude
@@ -318,10 +347,10 @@ seasonal_component <- function(seasonality, n) {
   validate_scalar(period, "seasonality$period", min = 2)
   validate_scalar(amplitude, "seasonality$amplitude", min = 0)
   validate_scalar(phase, "seasonality$phase")
-  shape <- match.arg(shape, c("sine", "sawtooth"))
+  shape <- cpt_match_arg(shape, c("sine", "sawtooth"))
   if (period > n) {
-    warning("`seasonality$period` (", period, ") exceeds the series length (",
-            n, "), so less than one cycle is simulated.", call. = FALSE)
+    cpt_warn("`seasonality$period` (", period, ") exceeds the series length (",
+             n, "), so less than one cycle is simulated.", class = "warning")
   }
   t <- seq_len(n)
   if (shape == "sine") {
@@ -362,7 +391,8 @@ rcpt <- function(...) cpt_simulate(...)
 signal_blocks <- function(n = 2048, seed = NULL) {
   local_seed(seed)
   if (n < 100) {
-    stop("`n` must be at least 100 for the blocks signal.", call. = FALSE)
+    cpt_abort("`n` must be at least 100 for the blocks signal.",
+              class = "bad_argument")
   }
 
   # Standard blocks changepoints (scaled to [0,1]) and signed jump sizes
@@ -413,7 +443,8 @@ signal_blocks <- function(n = 2048, seed = NULL) {
 signal_fms <- function(n = 2000, seed = NULL) {
   local_seed(seed)
   if (n < 40) {
-    stop("`n` must be at least 40 for the fms signal.", call. = FALSE)
+    cpt_abort("`n` must be at least 40 for the fms signal.",
+              class = "bad_argument")
   }
 
   seg_means <- c(0, 1, 0, -1, 0, 0.5, -0.5, 0)
@@ -453,7 +484,8 @@ signal_fms <- function(n = 2000, seed = NULL) {
 signal_mix <- function(n = 2000, seed = NULL) {
   local_seed(seed)
   if (n < 40) {
-    stop("`n` must be at least 40 for the mix signal.", call. = FALSE)
+    cpt_abort("`n` must be at least 40 for the mix signal.",
+              class = "bad_argument")
   }
 
   seg_lens <- round(n * c(0.15, 0.2, 0.1, 0.2, 0.15, 0.2))
@@ -498,8 +530,8 @@ signal_teeth <- function(n = 2000, seed = NULL) {
   teeth_width <- 100
   n_teeth <- floor(n / teeth_width)
   if (n_teeth < 2) {
-    stop("`n` must be at least 200 for the teeth signal ",
-         "(two teeth of width 100).", call. = FALSE)
+    cpt_abort("`n` must be at least 200 for the teeth signal ",
+              "(two teeth of width 100).", class = "bad_argument")
   }
 
   vals <- rep(c(0, 3), length.out = n_teeth)
@@ -537,8 +569,8 @@ signal_stairs <- function(n = 2000, seed = NULL) {
   n_steps <- 10
   step_size <- n %/% n_steps
   if (step_size < 1) {
-    stop("`n` must be at least 10 for the stairs signal (10 steps).",
-         call. = FALSE)
+    cpt_abort("`n` must be at least 10 for the stairs signal (10 steps).",
+              class = "bad_argument")
   }
   heights <- seq(0, by = 2, length.out = n_steps)
 
@@ -550,5 +582,73 @@ signal_stairs <- function(n = 2000, seed = NULL) {
 
   res <- tibble::tibble(index = seq_len(n), value = signal)
   attr(res, "true_changepoints") <- cp_idx
+  res
+}
+
+# Internal: counts, binary outcomes or waiting times whose one parameter
+# changes at `changepoints`.
+#' @noRd
+simulate_family <- function(n, changepoints, change_in, params, family,
+                            noise_given, seed) {
+  validate_scalar(n, "n", min = 3)
+  if (change_in != "mean") {
+    cpt_abort("`family = \"", family, "\"` has one parameter, so its change ",
+              "is `change_in = \"mean\"` (a change in the rate, probability ",
+              "or mean).", class = "unsupported")
+  }
+  if (noise_given) {
+    cpt_abort("`noise`, `sd`, `seasonality` and `sd_trend` shape Gaussian ",
+              "noise; a ", family, " series draws its variation from the ",
+              "family itself. Drop them.", class = "bad_argument")
+  }
+  local_seed(seed)
+  changepoints <- as_cp_locations(changepoints, "changepoints", sort = TRUE)
+  keep <- changepoints > 0 & changepoints < n
+  if (any(!keep)) {
+    cpt_warn("`changepoints`: ", sum(!keep), " outside 1..", n - 1L,
+             " dropped.", class = "dropped_input")
+  }
+  changepoints <- changepoints[keep]
+  ends <- unique(c(changepoints, n))
+  starts <- c(1L, ends[-length(ends)] + 1L)
+  k <- length(ends)
+  default <- switch(family, poisson = 5, binomial = 0.5, exponential = 1)
+  params <- if (is.null(params) || !length(params)) rep(default, k) else
+    as.numeric(unlist(params))
+  if (length(params) < k) {
+    cpt_warn("`params` has ", length(params), " value(s) for ", k,
+             " segments; the last value is reused, so the extra segments ",
+             "carry no actual change.", class = "recycled")
+  }
+  bad <- switch(family,
+    poisson = params < 0,
+    binomial = params < 0 | params > 1,
+    exponential = params <= 0)
+  if (any(!is.finite(params)) || any(bad)) {
+    cpt_abort("`params` for `family = \"", family, "\"` must be ",
+              switch(family, poisson = "non-negative rates",
+                     binomial = "probabilities in [0, 1]",
+                     exponential = "positive means"), ".",
+              class = "bad_argument")
+  }
+  value <- numeric(n)
+  seg_id <- integer(n)
+  for (i in seq_len(k)) {
+    idx <- starts[i]:ends[i]
+    p <- params[min(i, length(params))]
+    value[idx] <- switch(family,
+      poisson = stats::rpois(length(idx), p),
+      binomial = stats::rbinom(length(idx), 1, p),
+      exponential = stats::rexp(length(idx), rate = 1 / p))
+    seg_id[idx] <- i
+  }
+  res <- tibble::tibble(index = seq_len(n), value = value, seg_id = seg_id)
+  attr(res, "true_changepoints") <- as.integer(changepoints)
+  attr(res, "family") <- family
+  attr(res, "segments") <- tibble::tibble(
+    seg_id = seq_len(k), start = starts, end = ends,
+    param_estimate = vapply(seq_len(k), function(i) {
+      mean(value[starts[i]:ends[i]])
+    }, numeric(1)))
   res
 }

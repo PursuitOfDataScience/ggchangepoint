@@ -76,7 +76,8 @@ to one or two rungs and the function warns.}
   \item{\code{"crops_elbow"}}{the knee of the CROPS cost-against-\eqn{K}
     curve, made an explicit rule (maximum distance from the chord
     joining the endpoints, the standard Kneedle construction) rather
-    than something eyeballed off a plot.}
+    than something eyeballed off a plot. An elbow needs \eqn{K \ge 1},
+    so this criterion \strong{cannot return} \eqn{K = 0}.}
   \item{\code{"cv"}}{order-preserved sample-splitting cross-validation
     (COPPS) via \pkg{crossvalidationCP}. This is the criterion with a
     consistency guarantee. It chooses \eqn{K} with that package's own
@@ -88,8 +89,15 @@ to one or two rungs and the function warns.}
   \item{\code{"stability"}}{the \eqn{K} whose changepoints are
     re-detected most often under within-segment bootstrap resampling.
     A robustness criterion, not a model-selection one; use it to
-    cross-check the others.}
-}}
+    cross-check the others. It \strong{cannot return} \eqn{K = 0}.}
+}
+\code{"bic"}, \code{"mbic"} and \code{"cv"} can return \eqn{K = 0};
+\code{"aic"} in principle can and in practice (measured at
+\eqn{n = 400}) picked \code{k_max} or next to it at every true
+\eqn{K}. \code{cpt_select()} warns (class
+\code{ggchangepoint_selection_unadjusted}) when \code{"aic"} lands at
+the top of the ladder, and when \code{"crops_elbow"} or
+\code{"stability"} returns its smallest candidate.}
 
 \item{k_max}{Largest number of changepoints considered. Defaults to
 \code{20}, capped at \code{floor(n / 4)}.}

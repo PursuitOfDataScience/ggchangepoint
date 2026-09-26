@@ -66,14 +66,15 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
   if (!is.null(breaks)) {
     validate_scalar(breaks, "breaks", min = 1)
     if (breaks != round(breaks)) {
-      stop("`breaks` must be a whole number of breaks (got ", breaks, ").",
-           call. = FALSE)
+      cpt_abort("`breaks` must be a whole number of breaks (got ", breaks, ").",
+                class = "bad_argument")
     }
   }
 
   if (inherits(x, "formula")) {
     if (is.null(data)) {
-      stop("`data` must be supplied when `x` is a formula.", call. = FALSE)
+      cpt_abort("`data` must be supplied when `x` is a formula.",
+                class = "bad_argument")
     }
     response <- all.vars(x)[1]
     # The formula interface reads the response column straight out of `data`,
@@ -138,21 +139,41 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
 #' \code{change_in} is \code{"slope"} and the fitted broken line is stored in
 #' the \code{fitted} column for \code{autoplot(show_fit = TRUE)}.
 #'
-#' @param x A numeric vector; a linear model of \code{x} on time
-#'   \code{1:length(x)} is segmented.
+#' Called with a numeric vector it segments a line in time. Called with a
+#' formula and \code{data} it does what the engine exists for: breakpoints
+#' in the relationship between the response and a covariate,
+#' \code{seg_z}. The result is then ordered by that covariate, which
+#' becomes its index, so \code{tidy()}'s \code{cp_index} and the plot speak
+#' in the covariate's units, and \code{psi}, \code{psi_lower} and
+#' \code{psi_upper} give the breakpoints on that scale exactly.
+#'
+#' @param x A numeric vector (a line in time is segmented), or a model
+#'   formula (supply \code{data}).
+#' @param data A data frame, for formula input.
+#' @param seg_z For formula input, the covariate whose relationship with
+#'   the response breaks: its name, or a one-sided formula (\code{~ t}) as
+#'   \pkg{segmented}'s own \code{seg.Z} takes it. Defaults to the formula's
+#'   only numeric covariate, and must be named when there are several.
 #' @param npsi Number of breakpoints to estimate. Defaults to \code{1}.
+#' @param family \code{"gaussian"} (a linear model, the default),
+#'   \code{"poisson"} or \code{"binomial"} (a generalised linear model on
+#'   the log or logit scale).
 #' @param conf_level Confidence level for breakpoint intervals. Defaults to
 #'   \code{0.95}.
 #' @param seed Optional seed (the estimator uses bootstrap restarting). The
 #'   seed is scoped to this call: \code{.Random.seed} is saved and restored,
 #'   so a seeded call inside a simulation loop does not pin the loop's own
 #'   stream.
-#' @param ... Additional arguments passed to \code{segmented::segmented()}.
+#' @param ... Additional arguments passed to \code{segmented::segmented()},
+#'   for example \code{psi} (starting values) or \code{fixed.psi}.
 #' @return A \code{ggcpt} object with \code{ci_lower}/\code{ci_upper} columns
 #'   and the fitted broken line in \code{$data$fitted}. Breakpoints are
 #'   rounded to the nearest index; for a continuous fit the reported location
 #'   is the kink itself. A constant series has no kink and returns an empty
 #'   result, rather than the arbitrary breakpoint a singular fit would give.
+#'   Formula input adds \code{psi}, \code{psi_lower} and \code{psi_upper}
+#'   (the breakpoints on the covariate's scale) and a \code{$coefficients}
+#'   table with the slope of \code{seg_z} in each segment.
 #' @references
 #' \insertRef{muggeo2003segmented}{ggchangepoint}
 #'
@@ -164,11 +185,20 @@ strucchange_wrapper <- function(x, data = NULL, breaks = NULL, h = 0.15,
 #' res <- segmented_wrapper(y, npsi = 1)
 #' res$changepoints
 #' ggplot2::autoplot(res, show_fit = TRUE, show_ci = TRUE)
+#'
+#' # A breakpoint in a dose-response relationship
+#' d <- data.frame(dose = runif(150, 0, 10))
+#' d$response <- 2 + 0.8 * pmin(d$dose, 6) + rnorm(150, 0, 0.4)
+#' fit <- segmented_wrapper(response ~ dose, data = d)
+#' fit$changepoints[, c("cp", "psi", "psi_lower", "psi_upper")]
 #' @family changepoint engines
 segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
+                              data = NULL, seg_z = NULL,
+                              family = c("gaussian", "poisson", "binomial"),
                               ...) {
   need_pkg("segmented")
   reject_renamed_args(list(...), "segmented")
+  family <- cpt_match_arg(family)
   # Forwarded to the engine, which reported a bad value from deep inside
   # itself -- "missing value where TRUE/FALSE needed", "negative length
   # vectors are not allowed", "NAs in foreign function call" and the like,
@@ -177,17 +207,30 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
   validate_scalar(npsi, "npsi", min = 1)
   validate_scalar(conf_level, "conf_level", min = 0, max = 1,
                   min_open = TRUE, max_open = TRUE)
+  fam_obj <- switch(family, gaussian = stats::gaussian(),
+                    poisson = stats::poisson(), binomial = stats::binomial())
+
+  if (inherits(x, "formula")) {
+    return(segmented_formula(x, data, seg_z, npsi, family, fam_obj,
+                             conf_level, seed, match.call(), ...))
+  }
+  if (!is.null(data) || !is.null(seg_z)) {
+    cpt_abort("`data` and `seg_z` are for formula input: ",
+              "`segmented_wrapper(y ~ x, data = d)`.", class = "bad_argument")
+  }
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "segmented")
+  if (family != "gaussian") check_family_data(data_vec, family, "segmented")
   # Every segment of a broken line needs two points for its slope. Past
   # that the engine either refuses with "psi starting values too close each
   # other" or, for `npsi = 1e6` on 120 observations, runs without returning.
   max_psi <- floor(length(data_vec) / 2) - 1
   if (npsi > max_psi) {
-    stop("`npsi = ", format(npsi), "` asks for more breakpoints than a series ",
-         "of ", length(data_vec), " can hold: each of the npsi + 1 segments ",
-         "needs two observations, so at most ", max_psi, ".", call. = FALSE)
+    cpt_abort("`npsi = ", format(npsi), "` asks for more breakpoints than a ",
+               "series ", "of ", length(data_vec), " can hold: each of the ",
+               "npsi + 1 segments ", "needs two observations, so at most ",
+              max_psi, ".", class = "bad_argument")
   }
 
   # A flat line has no kink. Left to itself the estimator returns an
@@ -204,7 +247,11 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
 
   local_seed(seed)
 
-  base_fit <- stats::lm(.y ~ .t, data = df)
+  base_fit <- if (family == "gaussian") {
+    stats::lm(.y ~ .t, data = df)
+  } else {
+    stats::glm(.y ~ .t, data = df, family = fam_obj)
+  }
   fit <- segmented::segmented(base_fit, seg.Z = ~.t, npsi = npsi, ...)
 
   if (!inherits(fit, "segmented") || is.null(fit$psi)) {
@@ -215,6 +262,7 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
       fit = fit, call = match.call()
     ))
   }
+  attr(fit, "ggcpt_base") <- base_fit
 
   psi <- fit$psi[, "Est."]
   # `round()`, not the truncation as_cp_locations() and as_ggcpt() use: a
@@ -237,7 +285,7 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
     }
   }
 
-  ggcpt_build(
+  res <- ggcpt_build(
     data_vec, cp_indices,
     method = "segmented",
     change_in = "slope",
@@ -249,6 +297,147 @@ segmented_wrapper <- function(x, npsi = 1, conf_level = 0.95, seed = NULL,
     },
     fitted = as.numeric(stats::fitted(fit))
   )
+  if (family != "gaussian") res$family <- family
+  res$coefficients <- segmented_coefficients(fit, ".t", c(.t = "time"),
+                                             res$changepoints$cp,
+                                             length(data_vec), conf_level)
+  res
+}
+
+# Internal: the formula route of segmented_wrapper(). The rows are put in
+# the order of the segmentation covariate, which becomes the result's
+# index: a breakpoint in a dose-response curve is a dose, not a time.
+#' @noRd
+segmented_formula <- function(formula, data, seg_z, npsi, family, fam_obj,
+                              conf_level, seed, call, ...) {
+  if (is.null(data) || !is.data.frame(data)) {
+    cpt_abort("`data` must be supplied as a data frame when `x` is a ",
+              "formula.", class = "bad_argument")
+  }
+  mf <- stats::model.frame(formula, data = data, na.action = stats::na.omit)
+  y <- stats::model.response(mf)
+  refuse_special_values(y, "response")
+  y <- coerce_series_values(y, arg = "response")
+  if (family != "gaussian") check_family_data(y, family, "segmented")
+  term_labels <- attr(stats::terms(mf), "term.labels")
+  numeric_terms <- term_labels[vapply(term_labels, function(t) {
+    t %in% names(mf) && is.numeric(mf[[t]])
+  }, logical(1))]
+  # segmented's own spelling is a one-sided formula, `seg.Z = ~ t`; a user
+  # who knows the engine writes it that way.
+  if (inherits(seg_z, "formula")) {
+    zv <- all.vars(seg_z)
+    seg_z <- if (length(zv) == 1L) zv else seg_z
+  }
+  if (is.null(seg_z)) {
+    if (length(numeric_terms) != 1L) {
+      cpt_abort("The formula has ", length(numeric_terms), " numeric ",
+                "covariates", if (length(numeric_terms)) {
+                  paste0(" (", paste(numeric_terms, collapse = ", "), ")")
+                } else "", "; name the one whose relationship breaks with ",
+                "`seg_z`.", class = "bad_argument")
+    }
+    seg_z <- numeric_terms
+  }
+  if (!is.character(seg_z) || length(seg_z) != 1L ||
+      !seg_z %in% numeric_terms) {
+    cpt_abort("`seg_z` must name one numeric covariate of the formula (",
+              paste(numeric_terms, collapse = ", "), ").",
+              class = "bad_argument")
+  }
+  ord <- order(mf[[seg_z]])
+  mf <- mf[ord, , drop = FALSE]
+  y <- y[ord]
+  z <- mf[[seg_z]]
+  n <- length(y)
+  max_psi <- floor(n / 2) - 1
+  if (npsi > max_psi) {
+    cpt_abort("`npsi = ", format(npsi), "` asks for more breakpoints than ",
+              n, " rows can hold: at most ", max_psi, ".",
+              class = "bad_argument")
+  }
+  local_seed(seed)
+  model_data <- mf
+  names(model_data)[1] <- ".y"
+  rhs <- paste(deparse(formula[[3]]), collapse = "")
+  base_formula <- stats::as.formula(paste(".y ~", rhs))
+  environment(base_formula) <- environment(formula)
+  base_fit <- if (family == "gaussian") {
+    stats::lm(base_formula, data = model_data)
+  } else {
+    stats::glm(base_formula, data = model_data, family = fam_obj)
+  }
+  fit <- segmented::segmented(base_fit,
+                              seg.Z = stats::as.formula(paste("~", seg_z)),
+                              npsi = npsi, ...)
+  if (!inherits(fit, "segmented") || is.null(fit$psi)) {
+    res <- ggcpt_build(y, integer(0), method = "segmented",
+                       change_in = "regression",
+                       penalty = list(type = "npsi", value = npsi),
+                       fit = fit, call = call)
+    return(attach_index(res, z, seg_z))
+  }
+  attr(fit, "ggcpt_base") <- base_fit
+  psi <- as.numeric(fit$psi[, "Est."])
+  # A breakpoint on the covariate's scale sits between two ordered rows:
+  # the changepoint is the last row at or below it.
+  cp_indices <- vapply(psi, function(p) sum(z <= p), numeric(1))
+  ci <- tryCatch(as.matrix(segmented::confint.segmented(fit,
+                                                        level = conf_level)),
+                 error = function(e) NULL)
+  extra <- list(psi = psi)
+  if (!is.null(ci) && nrow(ci) == length(psi) && ncol(ci) >= 3) {
+    extra$psi_lower <- as.numeric(ci[, 2])
+    extra$psi_upper <- as.numeric(ci[, 3])
+    extra$ci_lower <- pmax(1L, vapply(ci[, 2], function(p) sum(z <= p),
+                                      numeric(1)))
+    extra$ci_upper <- pmin(n - 1L, vapply(ci[, 3], function(p) sum(z <= p),
+                                          numeric(1)))
+  }
+  res <- ggcpt_build(y, as.integer(cp_indices), method = "segmented",
+                     change_in = "regression",
+                     penalty = list(type = "npsi", value = npsi), fit = fit,
+                     call = call, extra_cp_cols = extra,
+                     fitted = as.numeric(stats::fitted(fit)))
+  res$coefficients <- segmented_coefficients(fit, seg_z,
+                                             stats::setNames(seg_z, seg_z),
+                                             res$changepoints$cp, n,
+                                             conf_level)
+  res$regression <- list(formula = formula, response = names(mf)[1],
+                         seg_z = seg_z, family = family, row_order = ord)
+  if (family != "gaussian") res$family <- family
+  attach_index(res, z, seg_z)
+}
+
+# Internal: the per-segment intercepts and slopes of a segmented fit, in
+# the coefficient-table shape (segment, start, end, term, estimate,
+# std_error, conf_low, conf_high). The slope of the segmentation variable
+# changes at each breakpoint and has intervals; the intercepts are implied
+# by continuity and have none.
+#' @noRd
+segmented_coefficients <- function(fit, var, label, cps, n, conf_level) {
+  sl <- tryCatch(segmented::slope(fit, conf.level = conf_level)[[var]],
+                 error = function(e) NULL)
+  ic <- tryCatch(segmented::intercept(fit)[[var]], error = function(e) NULL)
+  if (is.null(sl)) return(NULL)
+  k <- nrow(sl)
+  bounds <- c(0L, sort(cps), n)
+  if (length(bounds) != k + 1L) bounds <- c(0L, rep(NA_integer_, k - 1L), n)
+  starts <- bounds[-length(bounds)] + 1L
+  ends <- bounds[-1L]
+  slope_rows <- tibble::tibble(
+    segment = seq_len(k), start = starts, end = ends,
+    term = unname(label[var]), estimate = as.numeric(sl[, 1]),
+    std_error = as.numeric(sl[, 2]),
+    conf_low = as.numeric(sl[, ncol(sl) - 1L]),
+    conf_high = as.numeric(sl[, ncol(sl)]))
+  if (is.null(ic) || nrow(ic) != k) return(slope_rows)
+  int_rows <- tibble::tibble(
+    segment = seq_len(k), start = starts, end = ends,
+    term = "(Intercept)", estimate = as.numeric(ic[, 1]),
+    std_error = NA_real_, conf_low = NA_real_, conf_high = NA_real_)
+  out <- rbind(int_rows, slope_rows)
+  out[order(out$segment, out$term != "(Intercept)"), , drop = FALSE]
 }
 
 #' EnvCpt wrapper: changepoints versus trends versus autocorrelation
@@ -301,7 +490,7 @@ envcpt_wrapper <- function(x, models = c("mean", "meancpt", "meanar1",
   reject_managed_args(list(...), "envcpt", c(
     verbose = paste("the wrapper keeps the engine's \"Fitting 12 models\"",
                     "narration and its progress bar out of the result")))
-  criterion <- match.arg(criterion)
+  criterion <- cpt_match_arg(criterion)
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "envcpt")
@@ -354,14 +543,27 @@ envcpt_wrapper <- function(x, models = c("mean", "meancpt", "meanar1",
   crit_vals <- if (criterion == "AIC") stats::AIC(fit) else stats::BIC(fit)
   crit_vals <- crit_vals[is.finite(crit_vals)]
   if (length(crit_vals) == 0) {
-    stop("envcpt did not successfully fit any of the requested models.",
-         call. = FALSE)
+    cpt_abort("envcpt did not successfully fit any of the requested models.",
+              class = "engine_error")
   }
   best <- names(which.min(crit_vals))
 
+  # The autoregressive changepoint models fit a regression on lagged values,
+  # so their locations are rows of a design that starts `p` observations
+  # into the series: measured, `meanar1cpt` put a change at 100 at 99 and
+  # `meanar2cpt` at 98, and each model also reports the design's last row
+  # as a changepoint, which is not one. Shifted back by the lag, and the
+  # end marker dropped.
+  lag <- if (grepl("ar2", best)) 2L else if (grepl("ar1", best)) 1L else 0L
   cp_indices <- if (grepl("cpt", best)) {
-    tryCatch(as.integer(changepoint::cpts(fit[[best]])),
-             error = function(e) integer(0))
+    tryCatch({
+      cps <- as.integer(changepoint::cpts(fit[[best]]))
+      # NROW(): a mean model's data.set is the series itself, a vector.
+      rows <- tryCatch(NROW(changepoint::data.set(fit[[best]])),
+                       error = function(e) length(data_vec))
+      cps <- cps[cps < rows]
+      cps + lag
+    }, error = function(e) integer(0))
   } else {
     integer(0)
   }
@@ -373,6 +575,48 @@ envcpt_wrapper <- function(x, models = c("mean", "meancpt", "meanar1",
     penalty = list(type = paste0(criterion, ": ", best),
                    value = unname(min(crit_vals))),
     fit = fit,
-    call = match.call()
+    call = match.call(),
+    fitted = envcpt_fitted(fit[[best]], best, data_vec, lag)
   )
+}
+
+# Internal: the winning EnvCpt model's fitted signal, on the series'
+# positions (the lagged models' first `lag` values have no fit and are NA).
+# NULL when the model's form is not one of the eight EnvCpt returns.
+#' @noRd
+envcpt_fitted <- function(model, name, y, lag) {
+  n <- length(y)
+  out <- tryCatch({
+    if (identical(name, "mean")) {
+      rep(mean(y), n)
+    } else if (inherits(model, "Arima")) {
+      as.numeric(y - stats::residuals(model))
+    } else if (inherits(model, "lm")) {
+      f <- as.numeric(stats::fitted(model))
+      c(rep(NA_real_, n - length(f)), f)
+    } else if (inherits(model, "cpt.reg")) {
+      d <- changepoint::data.set(model)
+      beta <- changepoint::param.est(model)$beta
+      if (is.null(dim(beta))) beta <- matrix(beta, nrow = 1)
+      rows <- nrow(d)
+      cps <- as.integer(changepoint::cpts(model))
+      cps <- cps[cps < rows]
+      bounds <- c(0L, cps, rows)
+      f <- numeric(rows)
+      X <- d[, -1, drop = FALSE]
+      for (k in seq_len(length(bounds) - 1L)) {
+        r <- (bounds[k] + 1L):bounds[k + 1L]
+        f[r] <- X[r, , drop = FALSE] %*% beta[min(k, nrow(beta)), ]
+      }
+      c(rep(NA_real_, n - rows), f)
+    } else if (inherits(model, "cpt")) {
+      means <- changepoint::param.est(model)$mean
+      cps <- as.integer(changepoint::cpts(model))
+      bounds <- c(0L, cps[cps < n], n)
+      rep(means[seq_len(length(bounds) - 1L)], diff(bounds))
+    } else {
+      NULL
+    }
+  }, error = function(e) NULL)
+  if (!is.null(out) && length(out) != n) NULL else out
 }

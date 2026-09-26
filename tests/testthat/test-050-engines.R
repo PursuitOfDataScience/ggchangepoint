@@ -353,10 +353,22 @@ test_that("fabisearch reads both shapes of its significance column", {
   pvalue_form <- data.frame(T = c(16L, 40L, 52L),
                             stat_test = c(1, 0.01, 0.4))
   expect_equal(pick(pvalue_form, NULL), 40L)
-  # And the wrapper itself uses exactly this rule.
+  # And the wrapper itself uses exactly this rule: asserted on its
+  # behaviour, with the engine replaced by a stub returning each form, so
+  # the NMF search never runs (it is never run in this suite) and the
+  # package stays instrumentable (reading the deparsed source, as this used
+  # to, fails under a coverage run).
   skip_if_not_installed("fabisearch")
-  body_txt <- paste(deparse(body(fabisearch_wrapper)), collapse = " ")
-  expect_true(grepl("is.logical(st)", body_txt, fixed = TRUE))
+  skip_if_not_installed("NMF")
+  X <- matrix(abs(stats::rnorm(60 * 4)) + 0.1, 60, 4)
+  for (form in list(logical_form, pvalue_form)) {
+    local_mocked_bindings(
+      detect.cps = function(...) list(change_points = form),
+      .package = "fabisearch")
+    res <- suppressWarnings(fabisearch_wrapper(X, min_dist = 10, n_runs = 2,
+                                               n_reps = 2))
+    expect_equal(res$changepoints$cp, 40L)
+  }
 })
 
 test_that("hdreg dates a break in a high-dimensional regression", {

@@ -10,7 +10,7 @@ cpt_consensus(
   x,
   methods = c("pelt", "binseg", "amoc"),
   tolerance = 5,
-  min_votes = 2,
+  min_votes = "majority",
   change_in = "mean",
   index = NULL,
   seed = NULL,
@@ -24,12 +24,19 @@ cpt_consensus(
 \arguments{
 \item{x}{A \code{ggcpt_consensus} object (for \code{print()}).}
 
-\item{methods}{Character vector of method names.}
+\item{methods}{Character vector of method names. A method that fails on
+this series (its engine errors or is not installed, or it does not
+offer \code{change_in}) is left out of the vote with a warning; invalid
+data or arguments stop the call.}
 
 \item{tolerance}{Matching window, in positions. Defaults to \code{5}.}
 
 \item{min_votes}{Minimum number of methods that must find a location for
-  it to enter the consensus. Defaults to \code{2}.
+  it to enter the consensus. Defaults to \code{"majority"}: more than
+  half of the methods that ran (two of three, three of four or five), so
+  the rule does not silently change with the size of the panel, as a
+  fixed count of two did (a bare majority of three, a fifth of ten).
+  \code{"all"} asks for unanimity.
 
   A value \strong{strictly between 0 and 1} is read as a proportion of
   the methods that ran; anything else is a count, rounded \emph{up}
@@ -83,6 +90,22 @@ detections are swept in order and a new cluster opens as soon as one lies
 more than \code{tolerance} from the cluster's first member. That cap stops
 a chain of near-neighbours merging into one arbitrarily wide cluster.
 }
+\section{Consensus does not remove shared false positives}{
+
+Voting removes the idiosyncrasies of individual algorithms. It does not
+remove a false positive that every algorithm makes for the same reason,
+and a violated assumption is exactly such a reason: measured under
+AR(1) noise, every one of \code{pelt}'s spurious changepoints was
+reproduced by \code{wbs} within five observations, and the 2-of-3
+consensus of \code{pelt}, \code{binseg} and \code{wbs} had more false
+positives (1.40) than two of its own members. The useful signal in a
+panel is its \strong{disagreement}: the \code{disagreement} value in
+the \code{consensus} attribute is the share of the locations any member
+found that not every member found, and a high value says the members'
+shared assumption may be what is wrong (see
+\code{\link{cpt_assumptions}()} and \code{\link{cpt_robustness}()}).
+}
+
 \section{Consensus is not inference}{
 
 Agreement among detectors is \strong{not} a p-value, and a location found

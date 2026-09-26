@@ -84,12 +84,12 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
   # declaring it would add a second package that cannot install without the
   # system library.
   if (!requireNamespace("mcp", quietly = TRUE)) {
-    stop("Package 'mcp' is required, and it samples through JAGS, a ",
-         "separate program installed outside R. Install JAGS from ",
-         "https://mcmc-jags.sourceforge.io and then ",
-         "install.packages('mcp').", call. = FALSE)
+    cpt_abort("Package 'mcp' is required, and it samples through JAGS, a ",
+              "separate program installed outside R. Install JAGS from ",
+              "https://mcmc-jags.sourceforge.io and then ",
+              "install.packages('mcp').", class = "engine_missing")
   }
-  change_in <- match.arg(change_in)
+  change_in <- cpt_match_arg(change_in)
   validate_scalar(n_changepoints, "n_changepoints", min = 1)
   # Positive integers in mcp's own documentation, and forwarded to JAGS.
   validate_scalar(iter, "iter", min = 1)
@@ -134,11 +134,12 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
   # a fit either has samples or it is not a fit -- is what makes this
   # reportable, and it holds however JAGS came to be unavailable.
   if (!mcp_has_samples(fit)) {
-    stop("`mcp` returned a fit with no posterior samples, which means JAGS ",
-         "could not be reached. The 'mcp' package is installed, but JAGS ",
-         "itself is a separate program: install it from ",
-         "https://mcmc-jags.sourceforge.io and make sure 'rjags' can load ",
-         "(`requireNamespace(\"rjags\")`).", call. = FALSE)
+    cpt_abort("`mcp` returned a fit with no posterior samples, which means ",
+               "JAGS ", "could not be reached. The 'mcp' package is ",
+               "installed, but JAGS ", "itself is a separate program: install ",
+               "it from ", "https://mcmc-jags.sourceforge.io and make sure ",
+               "'rjags' can load ", "(`requireNamespace(\"rjags\")`).",
+              class = "engine_missing")
   }
 
   # The changepoint parameters are named cp_1, cp_2, ...

@@ -1,0 +1,33 @@
+name: Bug report
+description: An error, or an answer that runs and is wrong.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened, and what did you expect?
+      description: For a wrong answer, say what you expected and why.
+    validations:
+      required: true
+  - type: textarea
+    id: reprex
+    attributes:
+      label: Reproducible example
+      description: >
+        The smallest code that shows it, ideally made with
+        reprex::reprex(). Simulated data is fine (cpt_simulate() is there
+        for this).
+      render: r
+    validations:
+      required: true
+  - type: textarea
+    id: versions
+    attributes:
+      label: Versions
+      description: >
+        The output of `fit$versions` for a result that shows the problem
+        (or `packageVersion("ggchangepoint")` and the engine's version), and
+        `R.version.string`.
+      render: text
+    validations:
+      required: true

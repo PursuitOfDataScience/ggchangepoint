@@ -61,15 +61,16 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
                      change_in = "mean", ci = NULL, regions = NULL,
                      penalty = NULL, cp_convention = c("left", "right"),
                      index = NULL, fit = NULL, extra = NULL) {
-  cp_convention <- match.arg(cp_convention)
+  cp_convention <- cpt_match_arg(cp_convention)
   # Kept because the checks below need the value as the caller wrote it:
   # as_cp_locations() truncates a fractional index through as.integer(),
   # which is exactly one of the things worth refusing.
   cp_input <- cp
   if (!is.character(method) || length(method) != 1L || !nzchar(method)) {
-    stop("`method` must be a single non-empty string.", call. = FALSE)
+    cpt_abort("`method` must be a single non-empty string.",
+              class = "bad_argument")
   }
-  change_in <- match.arg(change_in, cpt_change_in_levels())
+  change_in <- cpt_match_arg(change_in, cpt_change_in_levels())
 
   series <- as_cpt_series(x, index = index)
   values <- series$values
@@ -168,9 +169,7 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
         },
         ". Check the values against the series rather than relying on ",
         "this normalisation.")
-      warning(structure(
-        class = c("ggchangepoint_cp_dropped", "warning", "condition"),
-        list(message = msg, call = NULL)))
+      cpt_warn(msg, class = "cp_dropped")
     }
   }
   if (cp_convention == "right") cp <- cp - 1L
@@ -180,20 +179,22 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
   # silently -- after which autoplot(show_fit = TRUE) tells the user the
   # result "carries no fitted signal", about a signal they supplied.
   if (!is.null(fitted) && length(fitted) != n) {
-    stop("`fitted` must have one value per observation: the series has ", n,
-         " observation(s) but `fitted` has ", length(fitted), ".",
-         call. = FALSE)
+    cpt_abort("`fitted` must have one value per observation: the series has ",
+              n, " observation(s) but `fitted` has ", length(fitted), ".",
+              class = "bad_argument")
   }
 
   extra_cols <- list()
   if (!is.null(ci)) {
     ci_m <- as.matrix(ci)
     if (ncol(ci_m) != 2L) {
-      stop("`ci` must have two columns (lower, upper).", call. = FALSE)
+      cpt_abort("`ci` must have two columns (lower, upper).",
+                class = "bad_argument")
     }
     if (nrow(ci_m) != length(cp)) {
-      stop("`ci` must have one row per changepoint: ", length(cp),
-           " changepoint(s) but ", nrow(ci_m), " row(s).", call. = FALSE)
+      cpt_abort("`ci` must have one row per changepoint: ", length(cp),
+                " changepoint(s) but ", nrow(ci_m), " row(s).",
+                class = "bad_argument")
     }
     # The bounds are locations in the same convention as `cp`, so they move
     # with it. Converting `cp` alone left a "right" interval one position
@@ -218,19 +219,19 @@ as_ggcpt <- function(cp, x, fitted = NULL, method = "custom",
     miss <- is.na(suppressWarnings(as.numeric(rg[[cols[1]]]))) |
       is.na(suppressWarnings(as.numeric(rg[[cols[2]]])))
     if (any(miss)) {
-      warning("`regions`: ", sum(miss), " of ", nrow(rg), " region(s) ",
-              "have a missing bound and are dropped.", call. = FALSE)
+      cpt_warn("`regions`: ", sum(miss), " of ", nrow(rg), " region(s) ",
+               "have a missing bound and are dropped.", class = "dropped_input")
     }
   }
   if (!is.null(extra)) {
     if (!is.list(extra) || is.null(names(extra)) || any(!nzchar(names(extra)))) {
-      stop("`extra` must be a named list.", call. = FALSE)
+      cpt_abort("`extra` must be a named list.", class = "bad_argument")
     }
     bad <- names(extra)[lengths(extra) != length(cp)]
     if (length(bad) > 0) {
-      stop("Every element of `extra` must have one value per changepoint (",
-           length(cp), "); wrong length: ", paste(bad, collapse = ", "), ".",
-           call. = FALSE)
+      cpt_abort("Every element of `extra` must have one value per changepoint ",
+                 "(", length(cp), "); wrong length: ",
+                paste(bad, collapse = ", "), ".", class = "bad_argument")
     }
     extra_cols <- c(extra_cols, extra)
   }

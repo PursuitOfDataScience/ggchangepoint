@@ -23,9 +23,10 @@
 #' @param show_fit Logical. Whether to draw the engine's fitted signal (the
 #'   \code{fitted} column of \code{$data}, provided by the engines
 #'   \code{\link{cpt_methods}()} marks in its \code{fitted} column:
-#'   \code{smuce}, \code{hsmuce}, \code{cpop}, \code{bcp}, \code{beast},
-#'   \code{decafs}, \code{segmented}, \code{mcp} and \code{bfast}). Defaults to
-#'   \code{FALSE}.
+#'   \code{smuce}, \code{hsmuce}, \code{cpop}, \code{bcp}, \code{bocpd}
+#'   (a causal running mean), \code{beast}, \code{decafs},
+#'   \code{segmented}, \code{envcpt}, \code{mcp} and \code{bfast}, plus
+#'   every formula fit). Defaults to \code{FALSE}.
 #' @param show_regions Logical. Whether to shade the significance regions an
 #'   interval-valued method returns (the \code{regions} slot; currently
 #'   \code{\link{nsp_wrapper}()}). Each band is an interval that contains at
@@ -55,7 +56,12 @@
 #'   supporting engines when this one does not expose the internals.
 #'   \code{"scale_space"} delegates to \code{\link{ggcpt_scale_space}()},
 #'   which needs nothing from the engine: it sweeps a multiscale detector
-#'   over the same series, so it draws for any result.
+#'   over the same series, so it draws for any result. \code{"diagnostics"}
+#'   is the residual check of the fit in four panels: the residuals with the
+#'   segment boundaries (structure left behind), their autocorrelation per
+#'   segment (the independence most engines assume), a normal Q-Q plot per
+#'   segment (the Gaussian cost) and the spread of each segment (a constant
+#'   variance); \code{\link{cpt_gof}()} gives the same checks as numbers.
 #' @param ... Unknown arguments are ignored with a warning, except when
 #'   \code{type} is not \code{"series"}, in which case they are passed to
 #'   the delegate.
@@ -67,6 +73,15 @@
 #'   layers by hand.
 #' @importFrom ggplot2 autoplot
 #' @export
+#' @examples
+#' set.seed(2026)
+#' fit <- cpt_detect(c(rnorm(60), rnorm(60, 3), rnorm(60)), method = "pelt")
+#' ggplot2::autoplot(fit)
+#' ggplot2::autoplot(fit, type = "diagnostics")
+#'
+#' # a dated series draws its dates
+#' dated <- cpt_detect(Nile, method = "pelt", change_in = "meanvar")
+#' ggplot2::autoplot(dated)
 autoplot.ggcpt <- function(object,
                            show_segments = FALSE,
                            show_ci = FALSE,
@@ -81,21 +96,23 @@ autoplot.ggcpt <- function(object,
                            index = NULL,
                            labels = NULL,
                            type = c("series", "statistic", "path",
-                                    "scale_space"),
+                                    "scale_space", "diagnostics"),
                            ...) {
 
-  type <- match.arg(type)
+  type <- cpt_match_arg(type)
   if (type != "series") {
     return(switch(type,
       statistic = ggcpt_statistic(object, ...),
       path = ggcpt_solution_path(object, ...),
-      scale_space = ggcpt_scale_space(object, ...)
+      scale_space = ggcpt_scale_space(object, ...),
+      diagnostics = autoplot_diagnostics(object, ...)
     ))
   }
 
   data_vec <- object$data$value
   if (length(data_vec) == 0) {
-    stop("Cannot autoplot an empty ggcpt object (no data).", call. = FALSE)
+    cpt_abort("Cannot autoplot an empty ggcpt object (no data).",
+              class = "input_error")
   }
   validate_flag(show_segments, "show_segments")
   validate_flag(show_ci, "show_ci")
@@ -121,17 +138,17 @@ autoplot.ggcpt <- function(object,
     # one dropped both without a word.
     extra <- list(...)
     if (length(extra) > 0) {
-      warning("Ignoring unknown argument(s): ",
-              paste(names(extra), collapse = ", "), call. = FALSE)
+      cpt_warn("Ignoring unknown argument(s): ",
+               paste(names(extra), collapse = ", "), class = "argument_ignored")
     }
     unsupported <- c(show_segments = isTRUE(show_segments),
                      show_ci = isTRUE(show_ci),
                      show_fit = isTRUE(show_fit),
                      labels = !is.null(labels))
     if (any(unsupported)) {
-      warning("Ignoring ", paste(names(unsupported)[unsupported],
-                                 collapse = ", "),
-              " for multivariate results.", call. = FALSE)
+      cpt_warn("Ignoring ", paste(names(unsupported)[unsupported],
+               collapse = ", "),
+" for multivariate results.", class = "argument_ignored")
     }
     return(autoplot_ggcpt_mv(object,
                              cptline_alpha = cptline_alpha,
@@ -188,9 +205,9 @@ autoplot.ggcpt <- function(object,
 
   if (isTRUE(show_regions)) {
     if (is.null(object$regions) || nrow(object$regions) == 0) {
-      warning("`show_regions = TRUE` but this result carries no significance ",
-              "regions; nsp is the method that produces them.",
-              call. = FALSE)
+      cpt_warn("`show_regions = TRUE` but this result carries no significance ",
+               "regions; nsp is the method that produces them.",
+               class = "argument_ignored")
     } else {
       reg_df <- tibble::tibble(
         xmin = idx_vals[object$regions$start],
@@ -225,9 +242,9 @@ autoplot.ggcpt <- function(object,
 
   if (isTRUE(show_fit)) {
     if (!"fitted" %in% names(object$data)) {
-      warning("`show_fit = TRUE` but this result carries no fitted signal; ",
-              "engines providing one include smuce, decafs, cpop, ",
-              "segmented, bcp, and beast.", call. = FALSE)
+      cpt_warn("`show_fit = TRUE` but this result carries no fitted signal; ",
+               "engines providing one include smuce, decafs, cpop, ",
+               "segmented, bcp, and beast.", class = "argument_ignored")
     } else {
       fit_df <- tibble::tibble(x = idx_vals,
                                y = object$data$fitted)
@@ -241,9 +258,10 @@ autoplot.ggcpt <- function(object,
   if (isTRUE(show_ci)) {
     cp_tbl <- object$changepoints
     if (!all(c("ci_lower", "ci_upper") %in% names(cp_tbl))) {
-      warning("`show_ci = TRUE` but this result carries no ",
-              "ci_lower/ci_upper columns; engines providing them include ",
-              "smuce, hsmuce, strucchange, and segmented.", call. = FALSE)
+      cpt_warn("`show_ci = TRUE` but this result carries no ",
+               "ci_lower/ci_upper columns; engines providing them include ",
+               "smuce, hsmuce, strucchange, and segmented.",
+               class = "argument_ignored")
     } else if (nrow(cp_tbl) > 0) {
       rng <- range(data_vec, na.rm = TRUE)
       y_ci <- rng[1] - 0.08 * max(diff(rng), 1)
@@ -321,11 +339,11 @@ autoplot_ggcpt_mv <- function(object, cptline_alpha = 1,
   # the call that just produced the stacked panels; the summary series is
   # drawn once the wide frame is out of the way.
   if (length(vars) > 24) {
-    message("This result has ", length(vars), " coordinates, so the plot ",
-            "will have ", length(vars), " stacked panels and is unlikely ",
-            "to be readable. To draw the one summary series the result ",
-            "carries, drop the wide frame first (`object$data_wide <- NULL; ",
-            "autoplot(object)`), or plot `object$data_wide` yourself.")
+    cpt_inform("This result has ", length(vars), " coordinates, so the plot ",
+               "will have ", length(vars), " stacked panels and is unlikely ",
+               "to be readable. To draw the one summary series the result ",
+               "carries, drop the wide frame first (`object$data_wide <- NULL; ",
+               "autoplot(object)`), or plot `object$data_wide` yourself.")
   }
 
   p <- ggplot2::ggplot(long, ggplot2::aes(index, value)) +

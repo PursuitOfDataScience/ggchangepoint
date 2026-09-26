@@ -1,3 +1,243 @@
+# ggchangepoint 0.6.0
+
+The stabilisation release. It settles the contract before 1.0 freezes it
+(classed conditions, versioned results, a JSON schema, real `ggproto`
+layers, a changepoint convention verified across every engine), connects
+what already existed (families the engines could fit but nobody could ask
+for, a formula interface the regression engines had and `cpt_detect()`
+could not reach), and replaces the package's hand-written claims about its
+engines with measurements that ship as data.
+
+## Changes to results
+
+Read these first: each changes what an existing call returns.
+
+- The `changepoint` engines (`pelt`, `binseg`, `amoc`, `np`) and
+  `binsegrcpp` now use a minimum segment of two observations for a change
+  in mean. The engines' own default of one let a single observation be a
+  segment, so an outlier became two changepoints and a monotone series was
+  split after every point. `segneigh`, which refuses `minseglen > 1`, and
+  series shorter than four observations keep the old behaviour; pass
+  `minseglen = 1` (or `min_segment = 1`) to restore it. On wide noise the
+  documented shattering of a raw-scale penalty drops from 39 and 141
+  changepoints to 27 and 76 (`?cpt_detect`).
+- `cpm`'s `arl0` now defaults to the smallest average run length it ships
+  that is at least five times the series length, instead of 500 whatever
+  the length. On a series of 1,000 the old default expected two false
+  alarms; the expected count is now recorded on the result
+  (`$diagnostics$expected_false_positives`).
+- `cpt_consensus()`'s `min_votes` defaults to `"majority"` (more than half
+  the methods that ran). For the default three methods that is the old
+  default of 2; for larger panels it is stricter. `"all"` asks for every
+  method.
+- `envcpt`: the autoregressive models reported rows of a lagged design, one
+  or two positions early, and the design's last row as a changepoint. Both
+  fixed; found by the new convention test.
+- `ocd`: `cp` was the declaration time, one after the last observation
+  consistent with the change; it is now the declaration time minus one,
+  with the declaration itself in `declared_at`. Found by the same test.
+- `binsegrcpp` with a non-normal `distribution` used a BIC on the wrong
+  scale and chose no change; it now uses the distribution's own likelihood.
+- `beast` detects on the centred series (its answer depended on the
+  series' level) and returns the fitted trend and seasonal signal.
+- `cpt_monitor("cpm")` given a baseline containing a change no longer
+  alarms on the first monitored observation: the model restarts after
+  each change inside the baseline, and a warning says the baseline was not
+  in control.
+
+## Distribution families
+
+- `cpt_detect()` gains `family`: `"gaussian"`, `"poisson"`, `"binomial"`,
+  `"exponential"`, `"gamma"`, `"laplace"` or `"l1"`. Counts, 0/1 outcomes
+  and waiting times get a cost written for them, through the engines that
+  already had one: `changepoint`'s test statistics, `binsegRcpp`'s
+  distributions, `fastcpd`'s families, `stepR::smuceR()`, `cpm`'s
+  parametric statistics, `ocp` and `segmented`'s GLMs.
+- New `cpt_families()` is the translation table: every legal combination
+  of method, change type and family, and the engine call it becomes. A
+  combination not in it is refused by name, with the methods that can fit
+  the family.
+- The data are checked against the family before the engine sees them
+  (whole non-negative counts, 0/1 outcomes, positive waiting times).
+- `cpt_simulate()` and `cpt_power()` gain `family`, so a power curve can be
+  drawn for the data a study will actually collect.
+- `smuce_wrapper()` accepts `family = "poisson"` and `"binomial"`, and
+  `fastcpd_wrapper()` accepts thirteen of `fastcpd`'s families (among them
+  `lm`, `binomial`, `poisson`, `exponential`, `lasso`, `arima` and `var`);
+  0.5.0 exposed six. `glm`, `mvtnorm` and a custom cost are not wired.
+
+## Regression breaks and segment models
+
+- `cpt_detect(y ~ x1 + x2, data = d, method = )` reaches `strucchange`,
+  `segmented` and `fastcpd` with covariates, and `y ~ 1` any univariate
+  method. The result carries per-segment coefficients with standard errors
+  (`tidy(fit, what = "coefficients")`), fitted values, and the design.
+- New `cpt_segment_models()` fits your own model to every segment and
+  returns them as a table with `tidy()`, `glance()` and `print()`; new
+  `predict()` for a result forecasts from the last segment (or any other).
+- `segmented_wrapper()` takes a formula with `data`, the covariate that
+  breaks as `seg_z` (a name or `~ t`), and `family`.
+
+## The data you hand it
+
+- Grouped data frames, keyed `tsibble`s and long data frames with
+  `group =` are detected one series per group and returned as a
+  `ggcpt_batch` with the grouping columns.
+- New `na_action`: `"error"` (the default) refuses missing values and says
+  how to proceed; `"omit"` detects on what was observed and reports every
+  location in the original positions, gaps kept in `$data`; `"engine"`
+  passes them to the engines measured to handle them.
+  `cpt_methods()$na_handling` records what each engine does with a missing
+  value, measured (`"native"`, `"compacts"`, `"silent_loss"`, `"reject"`).
+- Timestamps, dates and survival objects are refused rather than coerced
+  to numbers that mean nothing.
+- Warnings, each classed, for what the data look like: fewer than ten
+  observations; counts or 0/1 data under a Gaussian cost; noise far from
+  unit scale for the engines measured to depend on it; and an implausible
+  number of changepoints in the answer.
+
+## Constraints
+
+- `fixed`: changepoints known in advance, kept, with the rest estimated
+  around them. `within`: windows the changepoints must fall in.
+  `min_segment`: a minimum segment length translated into each engine's own
+  argument (`cpt_methods()$min_segment` names it). `min_effect`: drop
+  changes smaller than a given number of noise standard deviations.
+  Locations are positions or values of the index; on a numeric index such
+  as a `ts`'s years, a number outside `1..n` is read as a year, as
+  `cpt_annotate_events()` already did.
+- `keep_fit = FALSE` drops the engine's own object, which for
+  `strucchange` is most of a result's size; a fit over 10 MB warns once per
+  method per session.
+
+## How big, when, and whether at all
+
+- New `cpt_effect()`: the size of each change in the data's units and in
+  noise standard deviations, with an interval, the percentage change, the
+  change in spread, and the rate, odds or hazard ratio for the families.
+  `method = "split"` locates on half the observations and measures on the
+  other half, removing the winner's curse.
+- New `cpt_test_at()`: a test for a change at a date fixed in advance, the
+  statistically easy case and the commonest applied question, with an
+  exact test per family, a permutation test over a window, and a Chow test
+  for a formula.
+- New `cpt_attribute_event()`: is a known event inside a detected change's
+  interval?
+- New `cpt_test_null()`: a test for a change anywhere (CUSUM, Pettitt,
+  sup-F), which locates nothing and so selects nothing.
+- New `cpt_null_power()`, and an empty result now says which kind of empty
+  it is: a constant series, or a series where the smallest detectable shift
+  is reported.
+- `cpt_test()` gains `relevance`, a test for a change larger than a given
+  number of noise standard deviations.
+
+## Should I believe it?
+
+- New `cpt_assumptions()`: residual dependence, scale sensitivity, the
+  expected number of false positives, count plausibility and data type,
+  each flagged with the measured alternative. `cpt_report()` prints it.
+- New `cpt_gof()` and `autoplot(fit, type = "diagnostics")`: residuals,
+  their autocorrelation, and per-segment checks.
+- New `cpt_robustness()`: re-runs a detector under each setting of its
+  noise-model argument and reports which changepoints survive, the check
+  that touches the commonest cause of a false positive.
+- `cpt_stability()` gains a block bootstrap and a reversal check, takes a
+  fit, and counts failed replicates instead of treating them as "found
+  nothing".
+- Every result records the residual dependence of its segmentation
+  (`$diagnostics$residual_dependence`).
+
+## Measured, not asserted
+
+- New data sets, each regenerated by a script in `data-raw/`:
+  `cpt_runtimes` (every engine up to a million observations),
+  `cpt_invariances` (scale, shift and reversal), `cpt_noise_benchmark`
+  (false positives and power under four noise regimes),
+  `cpt_data_types` (Gaussian, Bernoulli, Poisson and proportion data),
+  `cpt_null_sizes` (false alarms on pure noise at scale) and
+  `cpt_calibration` (the package's own intervals, tests and monitors
+  against their promises).
+- `cpt_methods()` gains the vocabulary columns (`families`, `choices`,
+  `formula`, `min_segment`, `na_handling`, `cp_convention_upstream`) and
+  the measured ones (`scale_invariant`, `sequential`, `max_cp`, `tier`,
+  `noise_model_arg`, `rate_arg`, `cost`, `max_n`).
+- `cpt_recommend()` is rebuilt on the measurements: it scores every method
+  on its measured errors in the stated noise regime and data type, returns
+  the call to run (with the noise-model or family argument the score
+  depends on), the measured hits and false positives, ties, reasons and
+  caveats; it takes `n_expected`, `data_type`, `family`, `jump` (simulated
+  power) and a `fit` to read the rest from; and it has an `autoplot()`.
+
+## The contract
+
+- Every error, warning and message is a classed condition
+  (`?ggchangepoint-conditions`): refusals carry their data (`method`,
+  `requested`, `supported`, ...) and no call; an engine's own failure is
+  re-signalled as `ggchangepoint_engine_error` keeping the engine's call.
+  Fan-outs (`cpt_consensus()`, `cpt_benchmark()`, ...) record a method that
+  fails and raise anything else.
+- A mistyped choice suggests the fix ("Did you mean \"Poisson\"?"), and a
+  `...` name that is a near miss of a real argument is refused instead of
+  being swallowed by an engine.
+- A missing engine's error names the installed methods that detect the
+  same change.
+- `seed` means the same for every method: taken by the wrappers that have
+  one, scoped around the fit for the rest.
+- Results record the engine and package versions that made them
+  (`fit$versions`, `glance()`'s `engine_version`); `print()` notes when the
+  installed engine has moved on, and new `cpt_verify()` re-runs a result
+  and reports what changed.
+- New `as_json()` writes a result under a documented, versioned schema;
+  new `cpt_export()` and `cpt_import()` write and read JSON or CSV;
+  `cpt_report(format = "json")`.
+- The layers are real `ggplot2` extensions (`GeomChangepoint`,
+  `GeomCptSegment`, `GeomCptCi`, `GeomCptRegion`, `GeomCptLabel`,
+  `GeomCptEvent`, `StatChangepoint`, `StatCptRegion`), each with its own
+  legend glyph. New `stat_cpt_region()` draws significance regions or
+  location intervals computed in the layer.
+- Every exported argument of 0.5.0 keeps its name and position; a test
+  holds the package to it.
+
+## Smaller changes
+
+- `cpt_metrics()`, `cpt_metrics_annotated()` and `ggcpt_eval()` take a fit
+  (and `cpt_metrics()` a monitor); `cpt_metrics()` adds `covering_floor`
+  (what the trivial answer scores) and `covering_scaled`.
+- `cpt_crops()` and `cpt_stability()` take a fit.
+- `cpt_select()` warns when AIC sits at the top of the ladder and when a
+  criterion picks the smallest candidate.
+- `cpt_consensus()` reports its panel's disagreement and each method's
+  count.
+- `augment()` gives per-coordinate fitted values and residuals for a
+  multivariate fit; `glance()` gains `engine_version` and `family`.
+- Capability flags corrected: `bocpd` and `envcpt` return a fitted signal,
+  `npmojo` a detector statistic and `strucchange` a solution path.
+- `?ggcpt_compare` and the comparison vignette say plainly what choosing a
+  method by its answer does to a p-value.
+
+## Documentation
+
+- The README is rewritten: one real example (the Nile), the next questions
+  as a table, three setup steps and the traps.
+- New articles on the website: *Ten ways to get a changepoint wrong*,
+  *Choosing a method* (a decision tree and a cheatsheet computed from the
+  registry), *Five packages, one series* (the Nile through `changepoint`,
+  `strucchange`, `segmented`, `bcp` and `ecp`), *Calibration* and
+  *Stability, deprecation and the contract*.
+- A contributor guide, issue templates, a wrapper scaffold
+  (`data-raw/use_cpt_wrapper.R`) and a weekly workflow that installs every
+  engine, runs the whole suite and checks every dependency against CRAN.
+
+## Testing
+
+- A convention test runs every engine on an unmistakable step and checks
+  it reports the same index; property and metamorphic tests check the
+  measured invariances; a boundary-input matrix checks that no engine
+  returns a changepoint per observation unannounced; and a static check
+  asserts every export is called somewhere in the suite.
+- The two tests that read the package's own source to assert behaviour now
+  assert the behaviour.
+
 # ggchangepoint 0.5.0
 
 The release that fills in what 0.4.0's engine wave left open: inference,

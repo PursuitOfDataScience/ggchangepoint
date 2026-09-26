@@ -6,23 +6,37 @@
 \usage{
 fastcpd_wrapper(
   x,
-  family = c("mean", "variance", "meanvariance", "ar", "arma", "garch"),
+  family = c("mean", "variance", "meanvariance", "ar", "arma", "arima", "garch", "var",
+    "lm", "lasso", "poisson", "binomial", "exponential"),
   order = NULL,
+  covariates = NULL,
   ...
 )
 }
 \arguments{
 \item{x}{A numeric vector, or (for \code{family} \code{"mean"},
-\code{"variance"}, \code{"meanvariance"}) a matrix with one row per time
-point for multivariate detection.}
+\code{"variance"}, \code{"meanvariance"} and \code{"var"}) a matrix
+with one row per time point for multivariate detection.}
 
-\item{family}{Model family: \code{"mean"}, \code{"variance"},
-\code{"meanvariance"}, \code{"ar"}, \code{"arma"}, or \code{"garch"}.
-Defaults to \code{"mean"}.}
+\item{family}{Model family. \code{"mean"} (the default),
+\code{"variance"}, \code{"meanvariance"}; \code{"poisson"},
+\code{"binomial"}, \code{"exponential"} (a change in the rate or
+probability of a count, binary or waiting-time series, or in a
+regression on \code{covariates}); \code{"lm"}, \code{"lasso"}
+(regression, which needs \code{covariates}); \code{"ar"},
+\code{"arma"}, \code{"arima"}, \code{"garch"}, \code{"var"}.}
 
-\item{order}{Model order for \code{"ar"} (a single integer),
-\code{"arma"} (length-2), or \code{"garch"} (length-2). Defaults to
-\code{1} for AR, \code{c(1, 1)} otherwise.}
+\item{order}{Model order for \code{"ar"} and \code{"var"} (a single
+integer), \code{"arma"} and \code{"garch"} (length 2) or
+\code{"arima"} (length 3). Defaults to \code{1} for AR and VAR,
+\code{c(1, 1)} for ARMA and GARCH and \code{c(1, 0, 0)} for ARIMA.}
+
+\item{covariates}{Optional numeric matrix of regressors, one row per
+observation, for \code{"lm"}, \code{"lasso"}, \code{"poisson"} and
+\code{"binomial"}. Include a column of ones for an intercept. Without
+it the count and binary families fit an intercept only: a change in
+the rate or probability. \code{\link{cpt_detect}()} builds it from a
+formula.}
 
 \item{...}{Additional arguments passed to the corresponding
 \code{fastcpd::fastcpd.*()} function (e.g. \code{beta}, \code{trim}).
@@ -35,21 +49,35 @@ with \pkg{fastcpd}; see the penalty-semantics section of
 \code{\link{cpt_penalty}()}.}
 }
 \value{
-A \code{ggcpt} object.
+A \code{ggcpt} object. The engine's per-segment parameter
+  estimates (\code{thetas}) are kept as \code{$coefficients}, one row
+  per segment and parameter, for the families where they are
+  coefficients (the regressions and the intercept-only count, binary and
+  waiting-time models).
 }
 \description{
 Wraps the \pkg{fastcpd} package (Li and Zhang, 2024), a modern PELT-family
 engine that pairs pruning with sequential gradient descent so that exact or
 near-exact segmentations of many model families run in near-linear time.
-This wrapper exposes the time-series families most useful alongside the
-other engines: mean, variance, mean-and-variance, and AR/ARMA/GARCH model
-changepoints.
+Every family the engine documents is reachable except its user-supplied
+\code{custom} cost: Gaussian mean, variance and both; the count and
+binary families (\code{"poisson"}, \code{"binomial"}) and waiting times
+(\code{"exponential"}); linear and penalised regression (\code{"lm"},
+\code{"lasso"}) and generalised linear models (\code{"poisson"},
+\code{"binomial"} with \code{covariates}); and the time-series models
+\code{"ar"}, \code{"arma"}, \code{"arima"}, \code{"garch"} and, for a
+multivariate series, \code{"var"}.
 }
 \examples{
 \dontshow{if (requireNamespace("fastcpd", quietly = TRUE)) (if (getRversion() >= "3.4") withAutoprint else force)(\{ # examplesIf}
 set.seed(2026)
 res <- fastcpd_wrapper(c(rnorm(100), rnorm(100, 4)))
 res$changepoints
+
+# A change in a Poisson rate
+counts <- fastcpd_wrapper(c(rpois(100, 3), rpois(100, 9)),
+                          family = "poisson")
+counts$changepoints
 \dontshow{\}) # examplesIf}
 }
 \references{

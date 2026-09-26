@@ -88,6 +88,18 @@ plot.ggcpt_power <- function(x, ...) plot_via_autoplot(x, ...)
 
 #' @rdname ggcpt_plot_methods
 #' @exportS3Method base::plot
+plot.ggcpt_effect <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
+plot.ggcpt_robustness <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
+plot.ggcpt_recommendation <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
 plot.ggcpt_events <- function(x, ...) plot_via_autoplot(x, ...)
 
 #' @rdname ggcpt_plot_methods

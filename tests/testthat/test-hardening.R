@@ -14,8 +14,10 @@ test_that("cpt_wrapper validates input", {
   expect_error(cpt_wrapper("a"), "must be numeric")
   expect_error(cpt_wrapper(c(1, NA, 3)), "be finite")
   expect_error(cpt_wrapper(c(1, 2)), "at least 3 observations")
-  expect_error(cpt_wrapper(1:10, change_in = "MEAN"), "should be one of")
-  expect_error(cpt_wrapper(1:10, cp_method = "NOPE"), "should be one of")
+  expect_error(cpt_wrapper(1:10, change_in = "MEAN"),
+               class = "ggchangepoint_bad_argument")
+  expect_error(cpt_wrapper(1:10, cp_method = "NOPE"),
+               class = "ggchangepoint_bad_argument")
 })
 
 test_that("cpt_wrapper accepts np alias", {
@@ -47,7 +49,8 @@ test_that("ecp_wrapper no-change bug is fixed", {
 })
 
 test_that("ecp_wrapper validates input", {
-  expect_error(ecp_wrapper(1:3, algorithm = "nope"), "should be one of")
+  expect_error(ecp_wrapper(1:3, algorithm = "nope"),
+               class = "ggchangepoint_bad_argument")
 })
 
 test_that("ggcptplot and ggecpplot return ggplot", {
@@ -152,22 +155,26 @@ test_that("the tools that validate first agree with the ones that coerce", {
   expect_true(ggchangepoint:::validate_data(lg))
 })
 
-test_that("the evaluation functions say so when handed a fit", {
-  # cpt_metrics(), cpt_metrics_annotated() and ggcpt_eval() are the only
-  # tools in the package that take bare changepoint indices rather than the
-  # `ggcpt`, so passing the fit is the obvious mistake. as.integer() used to
-  # answer it with "'list' object cannot be coerced to type 'integer'", and
-  # a `ggcpt` IS a list, so cpt_metrics_annotated() read one as a set of
-  # annotators and scored its own fields.
+test_that("the evaluation functions take a fit as the prediction", {
+  # cpt_metrics(), cpt_metrics_annotated() and ggcpt_eval() were the only
+  # tools in the package that took bare changepoint indices rather than the
+  # `ggcpt`, so passing the fit was the obvious mistake. as.integer() used
+  # to answer it with "'list' object cannot be coerced to type 'integer'",
+  # and a `ggcpt` IS a list, so cpt_metrics_annotated() read one as a set of
+  # annotators and scored its own fields. 0.6.0 takes the fit as the
+  # prediction; as the truth or the annotations it is still refused.
   set.seed(7)
   x <- c(stats::rnorm(100), stats::rnorm(100, 4))
   fit <- cpt_detect(x, method = "pelt")
   cp <- fit$changepoints$cp
 
-  expect_error(cpt_metrics(fit, 100, n = 200), "not a `ggcpt` object")
+  expect_identical(cpt_metrics(fit, 100), cpt_metrics(cp, 100, n = 200))
+  expect_identical(cpt_metrics_annotated(fit, list(100, 105)),
+                   cpt_metrics_annotated(cp, list(100, 105), 200))
+  expect_s3_class(ggcpt_eval(fit, 100), "ggplot", exact = FALSE)
   expect_error(cpt_metrics(cp, fit, n = 200), "not a `ggcpt` object")
-  expect_error(ggcpt_eval(fit, 100, x), "not a `ggcpt` object")
   expect_error(cpt_metrics_annotated(cp, fit, 200), "not a `ggcpt` object")
+  expect_error(cpt_metrics(cp, 100), class = "ggchangepoint_bad_argument")
   expect_error(cpt_metrics(generics::tidy(fit), 100, n = 200),
                "not a table")
 
@@ -350,9 +357,17 @@ test_that("a changepoint after every observation is reported, not returned quiet
                  "changepoint after every observation")
 
   # and it stays quiet for every non-degenerate result, including a
-  # legitimate single changepoint on the same three points
-  expect_no_warning(cpt_detect(c(1, 5, 9), method = "amoc"))
-  expect_no_warning(cpt_detect(c(1, 2, 10, 11, 12), method = "pelt"))
+  # legitimate single changepoint on the same three points. (A series this
+  # short gets 0.6.0's separate short-series warning, which says the result
+  # is uninterpretable at this length, not that it is degenerate.)
+  expect_warning(
+    expect_no_warning(cpt_detect(c(1, 5, 9), method = "amoc"),
+                      class = "ggchangepoint_degenerate_segmentation"),
+    class = "ggchangepoint_short_series_warning")
+  expect_warning(
+    expect_no_warning(cpt_detect(c(1, 2, 10, 11, 12), method = "pelt"),
+                      class = "ggchangepoint_degenerate_segmentation"),
+    class = "ggchangepoint_short_series_warning")
   set.seed(101)
   expect_no_warning(cpt_detect(c(stats::rnorm(60), stats::rnorm(60, 4)),
                                method = "pelt"))
@@ -1230,10 +1245,10 @@ test_that("as_ggcpt() converts a right-convention location on the way in", {
 
 test_that("every plot() method delegates to autoplot(), as documented", {
   skip_on_cran()
-  # README.md shows the same figure twice, and that is deliberate: chunk 6
-  # is autoplot(res) and chunk 50 is plot(res), captioned "base-graphics
-  # fallback (delegates to autoplot)". The two PNGs are byte-identical,
-  # which is the evidence the delegation works -- and nothing asserted it.
+  # The 0.5.0 README showed the same figure twice, deliberately: once from
+  # autoplot(res) and once from plot(res), captioned "base-graphics
+  # fallback (delegates to autoplot)". The two PNGs were byte-identical,
+  # which was the evidence the delegation worked, and nothing asserted it.
   # The suite only checked that each returns *a* ggplot, which a divergent
   # implementation would also satisfy.
   #
@@ -2784,7 +2799,10 @@ test_that("cpt_metrics_annotated() averages exactly four metrics", {
   # the columns a caller loses, named so a future widening is deliberate
   expect_setequal(setdiff(full, ann),
                   c("n_truth", "hausdorff", "rand_index", "annotation_error",
-                    "mae_matched", "rmse_matched"))
+                    "mae_matched", "rmse_matched",
+                    # 0.6.0: what the trivial answer scores depends on the
+                    # truth, so it is per annotator and not averaged
+                    "covering_floor", "covering_scaled"))
 
   # each averaged value is the plain unweighted mean of the per-annotator one
   anns <- list(c(98, 200), c(100, 203), c(150))
@@ -3140,7 +3158,7 @@ test_that("B2: cpt_monitor(method = 'cpm') applies the wrapper's guards", {
   # `only 0's may be mixed with negative subscripts` for the lambda.
   b <- stats::rnorm(60)
   expect_error(cpt_monitor("cpm", cpm_type = "GLRAdjusted", baseline = b),
-               "should be one of")
+               class = "ggchangepoint_bad_argument")
   expect_error(cpt_monitor("cpm", cpm_type = "FET", baseline = b),
                "needs a `lambda` value")
   expect_error(cpt_monitor("cpm", arl0 = 123, baseline = b),
@@ -3157,7 +3175,7 @@ test_that("B2: cpt_monitor(method = 'cpm') applies the wrapper's guards", {
                   "ggcpt_monitor")
   # and the batch wrapper's own messages are unchanged.
   expect_error(cpm_wrapper(stats::rnorm(50), cpm_type = "GLRAdjusted"),
-               "should be one of")
+               class = "ggchangepoint_bad_argument")
   expect_error(cpm_wrapper(stats::rnorm(50), arl0 = 123),
                "not an average run length")
 })
@@ -3969,8 +3987,9 @@ test_that("the posterior interval delivers its level, and says when it is wide",
 
 test_that("the documented scale-sensitivity counts are still true", {
   skip_on_cran()
-  # ?cpt_detect, README and the introduction vignette all quote the same
-  # three numbers for how badly a raw-scale penalty shatters on wide noise.
+  # ?cpt_detect and the introduction vignette quote the same three numbers
+  # for how badly a raw-scale penalty shatters on wide noise (the 0.5.0
+  # README did too).
   # They had drifted: the pages said 1 / 29 / 138 and the measurement says
   # 1 / 39 / 141 at n = 200 -- close on the third, half a factor out on the
   # second, and quoted without the `n` that produced them, so neither
@@ -3984,20 +4003,22 @@ test_that("the documented scale-sensitivity counts are still true", {
     mean(vapply(1:6, function(k) {
       set.seed(k)
       x <- c(stats::rnorm(100, 0, s), stats::rnorm(100, 5 * s, s))
-      nrow(cpt_detect(x, method = "pelt")$changepoints)
+      # the scale warning is the point of the section, not of this count
+      nrow(suppressWarnings(cpt_detect(x, method = "pelt"))$changepoints)
     }, numeric(1)))
   }, numeric(1))
 
   # sigma = 1: the penalty is calibrated for this, so exactly one.
   expect_equal(counts[1], 1)
   # sigma = 3 and sigma = 10: shattered, monotonically, and in the
-  # neighbourhood of the documented 39 and 141.
+  # neighbourhood of the documented 27 and 76 (0.6.0's two-point minimum
+  # segment brought them down from 0.5.0's 39 and 141).
   expect_gt(counts[2], counts[1])
   expect_gt(counts[3], counts[2])
-  expect_true(counts[2] > 20 && counts[2] < 70,
-              info = paste("sigma = 3 gave", counts[2], "(docs say ~39)"))
-  expect_true(counts[3] > 90 && counts[3] < 190,
-              info = paste("sigma = 10 gave", counts[3], "(docs say ~141)"))
+  expect_true(counts[2] > 12 && counts[2] < 50,
+              info = paste("sigma = 3 gave", counts[2], "(docs say ~27)"))
+  expect_true(counts[3] > 45 && counts[3] < 115,
+              info = paste("sigma = 10 gave", counts[3], "(docs say ~76)"))
 
   # ...and the first documented remedy really does recover the changepoint.
   set.seed(1)
@@ -4025,15 +4046,17 @@ test_that("no engine answers a degenerate series with a base-R error", {
     flat_run     = c(rep(0, 20), stats::rnorm(40)),
     all_na       = rep(NA_real_, 60)
   )
-  # Provenance, not phrasing. This package raises every error with
-  # `call. = FALSE`, so `conditionCall(e)` is NULL for an error it meant to
-  # raise and non-NULL for one that leaked from base R or an engine. The
+  # Provenance, not phrasing. This package raises every error through
+  # cpt_abort(), which leaves the call NULL, so `conditionCall(e)` is NULL
+  # for an error it meant to raise and non-NULL for one that leaked from
+  # base R or an engine (cpt_detect() classes a leak as
+  # `ggchangepoint_engine_error` but keeps its call for exactly this). The
   # earlier version of this test carried a list of base-R phrasings, which
   # is a heuristic built from the failures already seen: it classified
   # `cpt_learn_penalty()`'s "missing values and NaN's not allowed if
   # 'na.rm' is FALSE" as a deliberate refusal and would have passed over
-  # it. The test below asserts the `call. = FALSE` convention that makes
-  # this discriminator valid.
+  # it. The meta-test below asserts the convention that makes this
+  # discriminator valid.
   leaked <- function(e) !is.null(conditionCall(e))
 
   tab <- cpt_methods()
@@ -4285,34 +4308,55 @@ test_that("the penalty learner refuses a non-finite series at both doors", {
                "Series `z`")
 })
 
-test_that("every error this package raises carries no call", {
+test_that("every condition this package raises is classed and carries no call", {
   skip_on_cran()
-  # The convention that makes the provenance check above valid: an error
-  # raised with `call. = FALSE` has a NULL `conditionCall()`, so anything
-  # with a call leaked from base R or from an engine. 241 `stop()` calls in
-  # R/ follow it; this asserts there is no exception, because one bare
-  # `stop()` would make a real leak indistinguishable from a deliberate
-  # refusal and quietly blunt the sweep.
+  # The convention that makes the provenance check above valid: a condition
+  # raised through cpt_abort() has a NULL `conditionCall()`, so anything
+  # with a call leaked from base R or from an engine. Since 0.6.0 the same
+  # helper gives every condition a class from ?ggchangepoint-conditions.
+  # This asserts there is no exception, three ways: a message-building
+  # stop(), warning() or message() would be unclassed, and its provenance
+  # unreadable by the sweep; a cpt_abort() or cpt_warn() without a literal
+  # `class =` hides its kind from this check; and one naming a kind the
+  # table does not know falls back to a class nobody documented.
   skip_if_no_sources()
   root <- pkg_source_root()
   files <- list.files(file.path(root, "R"), pattern = "\\.R$",
                       full.names = TRUE)
   expect_gt(length(files), 10L)
+  # conditions.R is where the helpers raise the objects they build.
+  files <- files[basename(files) != "conditions.R"]
 
+  kinds <- list(cpt_abort = names(ggchangepoint:::cpt_error_classes()),
+                cpt_warn = names(ggchangepoint:::cpt_warning_classes()))
   offenders <- character()
+  flag <- function(e, file) {
+    offenders <<- c(offenders, paste0(basename(file), ": ",
+                                      paste(deparse(e), collapse = " ")))
+  }
   walk <- function(e, file) {
     if (is.call(e)) {
       fn <- e[[1]]
-      if (is.name(fn) && identical(as.character(fn), "stop")) {
+      if (is.name(fn)) {
+        f <- as.character(fn)
         args <- as.list(e)[-1]
         nms <- names(args) %||% rep("", length(args))
-        # `stop(e)` re-raises a condition object and takes no `call.`; only
-        # a message-building stop() needs it.
+        # `stop(e)` re-raises a condition object; only a message-building
+        # call makes an unclassed condition.
         reraise <- length(args) == 1L && is.name(args[[1]])
-        if (!reraise && !("call." %in% nms)) {
-          offenders <<- c(offenders,
-                          paste0(basename(file), ": ",
-                                 paste(deparse(e), collapse = " ")))
+        if (f %in% c("stop", "warning", "message") && !reraise) {
+          flag(e, file)
+        }
+        if (f %in% names(kinds)) {
+          cls <- args[nms == "class"]
+          # `class = class` is a helper passing its own `class` parameter
+          # through (cpt_match_arg()): the literal is at its call sites.
+          passthrough <- length(cls) == 1L && is.name(cls[[1]]) &&
+            identical(as.character(cls[[1]]), "class")
+          ok <- passthrough || (length(cls) == 1L &&
+                                  is.character(cls[[1]]) &&
+                                  cls[[1]] %in% kinds[[f]])
+          if (!ok) flag(e, file)
         }
       }
       for (i in seq_along(e)) {
@@ -4326,21 +4370,25 @@ test_that("every error this package raises carries no call", {
   }
   expect_equal(paste(substr(offenders, 1, 70), collapse = " | "), "")
 
-  # ...and the walker has to be able to find one, or this test passes for
-  # the wrong reason. Demonstrated on a synthetic file rather than trusted.
+  # ...and the walker has to be able to find each kind of offender, or this
+  # test passes for the wrong reason. Demonstrated on a synthetic file
+  # rather than trusted.
   probe <- tempfile(fileext = ".R")
   on.exit(unlink(probe), add = TRUE)
   writeLines(c(
     "f <- function(x) {",
-    '  if (x < 0) stop("negative", call. = FALSE)',
+    '  if (x < 0) cpt_abort("negative", class = "bad_argument")',
     '  if (x > 9) stop("too big")',
+    '  if (x > 8) cpt_abort("no kind at all")',
+    '  if (x > 7) cpt_warn("an unknown kind", class = "not_a_kind")',
+    '  if (x > 6) message("unclassed chatter")',
     "  g <- function(e) stop(e)",
     "  x",
     "}"), probe)
   offenders <- character()
   for (ex in parse(probe, keep.source = FALSE)) walk(ex, probe)
-  expect_length(offenders, 1L)
-  expect_match(offenders, "too big")
+  expect_length(offenders, 4L)
+  expect_true(all(grepl("too big|no kind|unknown kind|chatter", offenders)))
 })
 
 test_that("an engine hint the caller cannot act on does not reach them", {
@@ -4938,15 +4986,16 @@ test_that("the geoms let a mapped aesthetic win over their fixed styling", {
       geom_cpt_event(ggplot2::aes(xintercept = x, label = label,
                                   colour = kind),
                      data = ev, repel = FALSE))
-  # the labels follow the mapping, as the rules already did
-  expect_length(unique(b$data[[3]]$colour), 2L)
-  expect_false("grey30" %in% b$data[[3]]$colour)
+  # the labels follow the mapping, as the rules already did (since 0.6.0
+  # one GeomCptEvent layer draws both, so one colour column serves them)
+  expect_length(unique(b$data[[2]]$colour), 2L)
+  expect_false("grey30" %in% b$data[[2]]$colour)
   # ...and the defaults still apply when nothing is mapped
   b0 <- ggplot2::ggplot_build(
     ggplot2::ggplot(d, ggplot2::aes(t, y)) +
       geom_cpt_event(ggplot2::aes(xintercept = x, label = label), data = ev,
                      repel = FALSE))
-  expect_identical(unique(b0$data[[2]]$colour), "grey30")
+  expect_identical(unique(b0$data[[1]]$colour), "grey30")
 
   reg <- data.frame(xmin = c(20, 60), xmax = c(30, 70), lev = c("a", "b"))
   rf <- ggplot2::ggplot_build(

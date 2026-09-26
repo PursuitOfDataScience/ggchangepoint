@@ -18,7 +18,7 @@
 #'   for 0/1 Bernoulli data; this one also needs a \code{lambda} value passed
 #'   through \code{...}, e.g. \code{lambda = 0.3}).
 #' @param arl0 Target in-control average run length (how many observations,
-#'   on average, before a false alarm). Defaults to \code{500}. \pkg{cpm}
+#'   on average, before a false alarm). \pkg{cpm}
 #'   ships thresholds only for a fixed grid (100, 200, 300, 370, 400, 500,
 #'   600, 700, 800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000,
 #'   9000, 10000, 20000, 30000, 40000 and 50000), and any other value is
@@ -26,6 +26,17 @@
 #'   reporting no changepoints. The grid is the same for every
 #'   \code{cpm_type}, and 50000 is the ceiling: a long series cannot be
 #'   given an \code{arl0} proportional to its length indefinitely.
+#'
+#'   When \code{NULL} (the default) it \strong{scales with the series}: the
+#'   smallest grid value of at least \eqn{5n}, capped at 50000. A
+#'   sequential test run over a whole series raises about
+#'   \eqn{n / \mathrm{arl0}} false alarms, so the streaming default of 500
+#'   meant 36 changepoints on 10,000 observations with 4 real ones, and 350
+#'   on 100,000; \eqn{5n} turned the 36 into exactly the 4. The expected
+#'   count is recorded as \code{$diagnostics$expected_false_positives}. Pass
+#'   \code{arl0 = 500} for the 0.5.0 behaviour, and use
+#'   \code{\link{cpt_monitor}()} for genuine streaming, whose default is
+#'   unchanged.
 #' @param startup Number of observations after each restart before monitoring
 #'   begins. Defaults to \code{20}.
 #' @param ... Additional arguments passed to \code{cpm::processStream()}.
@@ -39,7 +50,7 @@
 #' res <- cpm_wrapper(c(rnorm(100), rnorm(100, 3)))
 #' res$changepoints
 #' @family changepoint engines
-cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
+cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = NULL,
                         startup = 20, ...) {
   need_pkg("cpm")
   reject_renamed_args(list(...), "cpm")
@@ -52,13 +63,14 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
   # the average run lengths cpm actually ships thresholds for, which is
   # far more useful than a range complaint. This catches only what that
   # guard cannot see -- NA, a string, a length-2 vector.
-  validate_scalar(arl0, "arl0")
+  if (!is.null(arl0)) validate_scalar(arl0, "arl0")
   validate_scalar(startup, "startup", min = 1)
 
   cpm_type <- cpm_check_type(cpm_type, list(...))
 
   validate_data(x)
   data_vec <- as_uni_vector(x, "cpm")
+  arl0 <- arl0 %||% cpm_default_arl0(length(data_vec))
 
   # cpm ships thresholds for a fixed set of average run lengths. For any
   # other value processStream() *prints* "Error: No thresholds available for
@@ -78,17 +90,43 @@ cpm_wrapper <- function(x, cpm_type = "Mann-Whitney", arl0 = 500,
 
   cp_indices <- as.integer(fit$changePoints)
 
-  ggcpt_build(
+  # The distribution-free statistics detect a change in distribution; the
+  # parametric ones test one parameter, and say which.
+  change_lab <- switch(cpm_type,
+    Student = "mean", Bartlett = "var", GLR = "meanvar",
+    Exponential = "mean", FET = "mean", "distribution")
+  res <- ggcpt_build(
     data_vec, cp_indices,
     method = "cpm",
-    change_in = "distribution",
+    change_in = change_lab,
     penalty = list(type = "ARL0", value = arl0),
     fit = fit,
     call = match.call(),
     extra_cp_cols = if (length(cp_indices) > 0) {
       list(detection_time = as.integer(fit$detectionTimes))
-    }
+    },
+    diagnostics = list(expected_false_positives =
+                         length(data_vec) / arl0)
   )
+  if (cpm_type == "Exponential") res$family <- "exponential"
+  if (cpm_type == "FET") res$family <- "binomial"
+  res
+}
+
+# Internal: the average run lengths cpm ships thresholds for.
+#' @noRd
+cpm_arl0_grid <- function() {
+  c(100, 200, 300, 370, 400, 500, 600, 700, 800, 900, 1000, 2000, 3000,
+    4000, 5000, 6000, 7000, 8000, 9000, 10000, 20000, 30000, 40000, 50000)
+}
+
+# Internal: the offline default: the smallest grid value of at least 5n,
+# capped at the grid's ceiling (50000; cpm errors above it).
+#' @noRd
+cpm_default_arl0 <- function(n) {
+  grid <- cpm_arl0_grid()
+  hit <- grid[grid >= 5 * n]
+  if (length(hit)) hit[1] else max(grid)
 }
 
 # Internal: the cpm argument guards, in one place because there are two
@@ -123,12 +161,13 @@ cpm_types <- function() {
 # other value takes the printed-error path in cpm_check_printed_error().
 #' @noRd
 cpm_check_type <- function(cpm_type, dots) {
-  cpm_type <- match.arg(cpm_type, cpm_types())
+  cpm_type <- cpt_match_arg(cpm_type, cpm_types())
   if (identical(cpm_type, "FET") && !"lambda" %in% names(dots)) {
-    stop("`cpm_type = \"FET\"` needs a `lambda` value passed through `...`; ",
-         "cpm has no default for it and fails with an unrelated subscript ",
-         "error when it is missing. Supported values are `lambda = 0.1` and ",
-         "`lambda = 0.3`.", call. = FALSE)
+    cpt_abort("`cpm_type = \"FET\"` needs a `lambda` value passed through ",
+               "`...`; ", "cpm has no default for it and fails with an ",
+               "unrelated subscript ", "error when it is missing. Supported ",
+               "values are `lambda = 0.1` and ", "`lambda = 0.3`.",
+              class = "bad_argument")
   }
   cpm_type
 }
@@ -145,18 +184,18 @@ cpm_check_printed_error <- function(cpm_out, arl0, dots) {
   }
   if (any(grepl("selected lambda", cpm_out, fixed = TRUE))) {
     lam <- dots[["lambda"]]
-    stop("`lambda = ", if (is.null(lam)) "<unset>" else lam, "` is not a ",
-         "value cpm ships FET thresholds for; it returns no changepoints ",
-         "rather than failing, which is indistinguishable from a genuine ",
-         "\"no changes\" result. Supported values are 0.1 and 0.3.",
-         call. = FALSE)
+    cpt_abort("`lambda = ", if (is.null(lam)) "<unset>" else lam, "` is not a ",
+              "value cpm ships FET thresholds for; it returns no changepoints ",
+              "rather than failing, which is indistinguishable from a genuine ",
+              "\"no changes\" result. Supported values are 0.1 and 0.3.",
+              class = "bad_argument")
   }
-  stop("`arl0 = ", arl0, "` is not an average run length that cpm ships ",
-       "thresholds for; it returns no changepoints rather than failing, ",
-       "which is indistinguishable from a genuine \"no changes\" result. ",
-       "Supported values are 100, 200, 300, 370, 400, 500, 600, 700, ",
-       "800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, ",
-       "10000, 20000, 30000, 40000 and 50000.", call. = FALSE)
+  cpt_abort("`arl0 = ", arl0, "` is not an average run length that cpm ships ",
+            "thresholds for; it returns no changepoints rather than failing, ",
+            "which is indistinguishable from a genuine \"no changes\" result. ",
+            "Supported values are 100, 200, 300, 370, 400, 500, 600, 700, ",
+            "800, 900, 1000, 2000, 3000, 4000, 5000, 6000, 7000, 8000, 9000, ",
+            "10000, 20000, 30000, 40000 and 50000.", class = "bad_argument")
 }
 
 #' Kernel changepoint wrapper (KCP on running statistics)
@@ -215,7 +254,7 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
   # argument slots; these are the ones that needed it.
   validate_scalar(wsize, "wsize", min = 2)
   validate_scalar(kmax, "kmax", min = 1)
-  running_stat <- match.arg(running_stat)
+  running_stat <- cpt_match_arg(running_stat)
   validate_scalar(alpha, "alpha", min = 0, max = 1, min_open = TRUE,
                   max_open = TRUE)
   # A permutation test needs a permutation distribution. With nperm = 0 or a
@@ -229,17 +268,17 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
   is_mv <- is.matrix(x) || is.data.frame(x)
   X <- if (is_mv) as_mv_matrix(x) else matrix(as.numeric(x), ncol = 1)
   if (running_stat == "corr" && ncol(X) < 2) {
-    stop("`running_stat = \"corr\"` requires at least two columns.",
-         call. = FALSE)
+    cpt_abort("`running_stat = \"corr\"` requires at least two columns.",
+              class = "wrong_dimension")
   }
   data_vec <- as.numeric(X[, 1])
 
   # The running statistic needs at least one full window; without one the
   # engine fails with "wrong sign in 'by' argument".
   if (nrow(X) < wsize) {
-    stop("`kcp` needs at least `wsize` observations to form a running ",
-         "window, but `x` has ", nrow(X), " and `wsize` is ", wsize,
-         ". Lower `wsize` or use a longer series.", call. = FALSE)
+    cpt_abort("`kcp` needs at least `wsize` observations to form a running ",
+              "window, but `x` has ", nrow(X), " and `wsize` is ", wsize,
+              ". Lower `wsize` or use a longer series.", class = "short_series")
   }
 
   # A flat coordinate makes the running statistic NA on every window, which
@@ -254,8 +293,8 @@ kcp_wrapper <- function(x, running_stat = c("mean", "var", "autocorr", "corr"),
                        data_wide = if (is_mv) mv_data_wide(X)))
   }
   if (running_stat == "corr" && ncol(X_fit) < 2) {
-    stop("`running_stat = \"corr\"` needs at least two varying columns.",
-         call. = FALSE)
+    cpt_abort("`running_stat = \"corr\"` needs at least two varying columns.",
+              class = "wrong_dimension")
   }
 
   rs_fun <- switch(running_stat,

@@ -42,7 +42,9 @@ Returns the original data with added columns: \code{seg_id}, \code{.fitted},
 \details{
 For a multivariate result every coordinate is returned, but the
 changepoints are shared across them, so \code{seg_id} and
-\code{is_changepoint} apply to the whole row while \code{.fitted} and
+\code{is_changepoint} apply to the whole row. Each coordinate also gets
+its own \code{.fitted_<name>} and \code{.resid_<name>} (its segment
+means and residuals), while \code{.fitted} and
 \code{.resid} describe the \strong{univariate series the result
 carries}: \code{$data$value}, the same series
 \code{$segments$param_estimate} summarises, so \code{.resid} is always
@@ -57,6 +59,13 @@ place of the segment means, and rides along in a \code{fitted} column of
 its own, so for those engines the two columns agree. The engines that
 do this are exactly the ones \code{\link{cpt_methods}()} marks in its
 \code{fitted} column: \code{smuce}, \code{hsmuce}, \code{cpop},
-\code{bcp}, \code{beast}, \code{decafs}, \code{segmented},
-\code{mcp} and \code{bfast}.
+\code{bcp}, \code{bocpd}, \code{beast}, \code{decafs},
+\code{segmented}, \code{envcpt}, \code{mcp} and \code{bfast}; a
+formula fit carries its piecewise regression's fitted values the same
+way.
+}
+\examples{
+set.seed(2026)
+fit <- cpt_detect(c(rnorm(60), rnorm(60, 3)), method = "pelt")
+head(augment(fit))
 }

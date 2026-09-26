@@ -187,18 +187,21 @@ pilliat_dimension_guard <- function(p, p_supplied) {
   if (!isTRUE(utils::packageVersion("HDCD") <= "1.1")) {
     return(invisible(TRUE))
   }
-  stop("`pilliat` cannot be trusted on exactly ", p, " coordinates",
-       if (!identical(p, p_supplied)) {
-         paste0(" (", p_supplied, " supplied, ", p_supplied - p,
-                " constant and dropped)")
-       } else "",
-       ": HDCD ", as.character(utils::packageVersion("HDCD")),
-       "'s Pilliat() computes one fewer partial-sum threshold than it uses ",
-       "whenever the number of coordinates is a power of two, and reports a ",
-       "changepoint at every observation as a result. That is an engine bug, ",
-       "not a property of the data. Use method = \"esac\", which is ",
-       "unaffected at every dimension, or change the number of coordinates ",
-       "so it is not a power of two.", call. = FALSE)
+  cpt_abort("`pilliat` cannot be trusted on exactly ", p, " coordinates",
+            if (!identical(p, p_supplied)) {
+              paste0(" (", p_supplied, " supplied, ", p_supplied - p,
+                     " constant and dropped)")
+            } else "",
+            ": HDCD ", as.character(utils::packageVersion("HDCD")),
+            "'s Pilliat() computes one fewer partial-sum threshold than it uses ",
+            "whenever the number of coordinates is a power of two, and reports a ",
+            "changepoint at every observation as a result. That is an engine bug, ",
+            "not a property of the data. Use method = \"esac\", which is ",
+            "unaffected at every dimension, or change the number of coordinates ",
+            "so it is not a power of two.", class = "upstream_bug",
+            data = list(package = "HDCD",
+                        version = as.character(utils::packageVersion("HDCD")),
+                        method = "pilliat"))
 }
 
 #' Pilliat wrapper: high-dimensional detection by three complementary tests
@@ -296,10 +299,14 @@ pilliat_wrapper <- function(x, threshold_d_const = 4,
   # same output from `pelt` yields a result plus a warning, so the two are
   # not directly comparable in a benchmark table. @section notes it.
   if (length(cp) > 0.9 * nrow(X)) {
-    stop("`pilliat` returned ", length(cp), " changepoints on ", nrow(X),
-         " observations, which is a degenerate threshold rather than a ",
-         "segmentation. Cross-check with method = \"esac\" and report this ",
-         "to HDCD if the dimension is not a power of two.", call. = FALSE)
+    cpt_abort("`pilliat` returned ", length(cp), " changepoints on ", nrow(X),
+              " observations, which is a degenerate threshold rather than a ",
+              "segmentation. Cross-check with method = \"esac\" and report this ",
+              "to HDCD if the dimension is not a power of two.",
+              class = "upstream_bug",
+              data = list(package = "HDCD",
+                          version = as.character(utils::packageVersion("HDCD")),
+                          method = "pilliat"))
   }
 
   ggcpt_build(
@@ -362,9 +369,9 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
   # ("non-conformable arrays"), while ocd, geomcp, fmean, fcov and
   # fabisearch all name the requirement. Match them.
   if (ncol(X) < 2) {
-    stop("Method `hdcov` is high-dimensional and needs at least two ",
-         "coordinates, but `x` has ", ncol(X),
-         ". See cpt_methods() for univariate methods.", call. = FALSE)
+    cpt_abort("Method `hdcov` is high-dimensional and needs at least two ",
+              "coordinates, but `x` has ", ncol(X), ". See cpt_methods() for ",
+               "univariate methods.", class = "wrong_dimension")
   }
   n <- nrow(X)
   data_vec <- as.numeric(X[, 1])
@@ -375,11 +382,11 @@ hdcov_wrapper <- function(x, threshold = NULL, alpha = 0.05, n_perm = 20,
   }
   local_seed(seed)
   if (is.null(threshold) && n_perm < 1 / alpha) {
-    warning("The permutation threshold is the ", format(1 - alpha),
-            " quantile of ", n_perm, " values, which extrapolates beyond ",
-            "the permutation sample. Use at least ", ceiling(1 / alpha),
-            " permutations for `alpha = ", format(alpha),
-            "`, or pass `threshold` directly.", call. = FALSE)
+    cpt_warn("The permutation threshold is the ", format(1 - alpha),
+             " quantile of ", n_perm, " values, which extrapolates beyond ",
+             "the permutation sample. Use at least ", ceiling(1 / alpha),
+             " permutations for `alpha = ", format(alpha),
+             "`, or pass `threshold` directly.", class = "warning")
   }
 
   bs <- changepoints::BS.cov(t(X), 1, n)
@@ -514,16 +521,16 @@ network_wrapper <- function(x, copy2 = NULL, n_intervals = 100,
   # method nor the shape. ocd, geomcp, fmean, fcov and fabisearch all name
   # the requirement; match them.
   if (is.null(dim(x)) && !is.list(x)) {
-    stop("Method `network` needs a sequence of networks: an n x p^2 matrix ",
-         "of vectorised adjacency matrices, or an n x p x p array. `x` is a ",
-         "plain vector. See cpt_methods() for univariate methods.",
-         call. = FALSE)
+    cpt_abort("Method `network` needs a sequence of networks: an n x p^2 ",
+               "matrix ", "of vectorised adjacency matrices, or an n x p x p ",
+               "array. `x` is a ", "plain vector. See cpt_methods() for ",
+               "univariate methods.", class = "wrong_dimension")
   }
   X <- network_matrix(x)
   n <- nrow(X)
   if (n < 6) {
-    stop("Network changepoint detection needs at least 6 time points; got ",
-         n, ".", call. = FALSE)
+    cpt_abort("Network changepoint detection needs at least 6 time points; ",
+               "got ", n, ".", class = "short_series")
   }
   # `network` reaches the engine through network_matrix() rather than
   # validate_data(), so it was the one high-dimensional route with no
@@ -543,17 +550,17 @@ network_wrapper <- function(x, copy2 = NULL, n_intervals = 100,
   }
   local_seed(seed)
   if (is.null(threshold) && n_perm < 1 / alpha) {
-    warning("The permutation threshold is the ", format(1 - alpha),
-            " quantile of ", n_perm, " values, which extrapolates beyond ",
-            "the permutation sample. Use at least ", ceiling(1 / alpha),
-            " permutations for `alpha = ", format(alpha),
-            "`, or pass `threshold` directly.", call. = FALSE)
+    cpt_warn("The permutation threshold is the ", format(1 - alpha),
+             " quantile of ", n_perm, " values, which extrapolates beyond ",
+             "the permutation sample. Use at least ", ceiling(1 / alpha),
+             " permutations for `alpha = ", format(alpha),
+             "`, or pass `threshold` directly.", class = "warning")
   }
 
   if (is.null(copy2)) {
-    message("No independent second observation supplied: splitting each ",
-            "edge at random to build one. See the \"When you have only one ",
-            "copy\" section of ?network_wrapper.")
+    cpt_inform("No independent second observation supplied: splitting each ",
+               "edge at random to build one. See the \"When you have only one ",
+               "copy\" section of ?network_wrapper.")
     # Binomial thinning is exact for binary and count networks: each edge is
     # assigned to one copy with probability one half, and the two copies are
     # independent given the total. For continuous weights there is no exact
@@ -573,8 +580,9 @@ network_wrapper <- function(x, copy2 = NULL, n_intervals = 100,
     A <- X
     B <- network_matrix(copy2)
     if (!identical(dim(A), dim(B))) {
-      stop("`copy2` must have the same shape as `x` (", nrow(A), " x ",
-           ncol(A), "); got ", nrow(B), " x ", ncol(B), ".", call. = FALSE)
+      cpt_abort("`copy2` must have the same shape as `x` (", nrow(A), " x ",
+                ncol(A), "); got ", nrow(B), " x ", ncol(B), ".",
+                class = "wrong_dimension")
     }
   }
 
@@ -628,7 +636,7 @@ network_matrix <- function(x) {
     return(matrix(aperm(x, c(1, 2, 3)), nrow = d[1], ncol = d[2] * d[3]))
   }
   X <- as.matrix(x)
-  if (!is.numeric(X)) stop("`x` must be numeric.", call. = FALSE)
+  if (!is.numeric(X)) cpt_abort("`x` must be numeric.", class = "bad_type")
   X
 }
 
@@ -678,9 +686,9 @@ var_wrapper <- function(x, gamma_set = NULL, lambda_set = NULL,
   # ("incorrect number of dimensions"), while ocd, geomcp, fmean, fcov and
   # fabisearch all name the requirement. Match them.
   if (ncol(X) < 2) {
-    stop("Method `var` is high-dimensional and needs at least two ",
-         "coordinates, but `x` has ", ncol(X),
-         ". See cpt_methods() for univariate methods.", call. = FALSE)
+    cpt_abort("Method `var` is high-dimensional and needs at least two ",
+              "coordinates, but `x` has ", ncol(X), ". See cpt_methods() for ",
+               "univariate methods.", class = "wrong_dimension")
   }
   n <- nrow(X)
   data_vec <- as.numeric(X[, 1])
@@ -688,9 +696,9 @@ var_wrapper <- function(x, gamma_set = NULL, lambda_set = NULL,
   # odd) and fits each half's transitions, so it needs two per half: at 5
   # rows the engine's C++ failed with "Not a matrix."
   if (floor((n - n %% 2L) / 2) - 1 < 2) {
-    stop("`var` needs at least 6 observations (7 when the count is odd): ",
-         "its cross-validation fits the transitions of every other ",
-         "observation, and `x` has ", n, ".", call. = FALSE)
+    cpt_abort("`var` needs at least 6 observations (7 when the count is odd): ",
+              "its cross-validation fits the transitions of every other ",
+              "observation, and `x` has ", n, ".", class = "short_series")
   }
   if (is.null(delta)) delta <- max(5L, floor(n / 20))
   if (is.null(gamma_set)) gamma_set <- c(0.1, 1, 10) * log(n)
@@ -778,17 +786,18 @@ hdreg_wrapper <- function(x, response = NULL, gamma_set = NULL,
                           lambda_set = NULL, delta = NULL, ...) {
   need_pkg("changepoints")
   if (is.null(response)) {
-    stop("`hdreg` regresses a response on the covariates, so `response` is ",
-         "required: cpt_detect(X, method = \"hdreg\", response = y).",
-         call. = FALSE)
+    cpt_abort("`hdreg` regresses a response on the covariates, so `response` ",
+               "is ", "required: cpt_detect(X, method = \"hdreg\", response = ",
+               "y).", class = "bad_argument")
   }
   validate_data(x)
   X <- as_mv_matrix(x)
   n <- nrow(X)
   y <- as.numeric(response)
   if (length(y) != n) {
-    stop("`response` must have one value per row of `x`: `x` has ", n,
-         " row(s) but `response` has ", length(y), ".", call. = FALSE)
+    cpt_abort("`response` must have one value per row of `x`: `x` has ", n,
+              " row(s) but `response` has ", length(y), ".",
+              class = "wrong_dimension")
   }
   if (anyNA(y) || any(!is.finite(y))) {
     stop_nonfinite(y, "response")
@@ -801,11 +810,11 @@ hdreg_wrapper <- function(x, response = NULL, gamma_set = NULL,
   # "replacement has length zero" on every series shorter than
   # 4 * delta + 4, which at the default delta of 5 is anything under 24.
   if (n < 4 * delta + 4) {
-    stop("`hdreg` with `delta = ", delta, "` needs at least ",
-         4 * delta + 4, " observations (4 * delta + 4): its ",
-         "cross-validation fits on every other observation with segments ",
-         "of at least `delta`, and `x` has ", n, ". Lower `delta` or use a ",
-         "longer series.", call. = FALSE)
+    cpt_abort("`hdreg` with `delta = ", delta, "` needs at least ",
+              4 * delta + 4, " observations (4 * delta + 4): its ",
+              "cross-validation fits on every other observation with segments ",
+              "of at least `delta`, and `x` has ", n, ". Lower `delta` or use ",
+               "a ", "longer series.", class = "short_series")
   }
   # As in var_wrapper().
   validate_grid(gamma_set, "gamma_set", min = 0)

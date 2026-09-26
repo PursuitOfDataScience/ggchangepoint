@@ -5,9 +5,15 @@
 #' Hausdorff distance, adjusted Rand index, annotation error, and MAE/RMSE
 #' of matched locations.
 #'
-#' @param pred Predicted changepoint indices (integer vector).
+#' @param pred Predicted changepoint indices (integer vector), or a
+#'   \code{ggcpt} fit, whose changepoints and length are used. A
+#'   \code{\link{cpt_monitor}()} object is accepted with a warning: its
+#'   alarm times are \emph{detection} times, which lag each change by the
+#'   detection delay, so the location metrics score the delay as an error;
+#'   \code{\link{cpt_delay}()} is the evaluation built for a monitor.
 #' @param truth Ground truth changepoint indices (integer vector).
-#' @param n Length of the series.
+#' @param n Length of the series. Taken from \code{pred} when it is a fit or
+#'   a monitor.
 #' @param margin Tolerance margin for matching (default 5).
 #'
 #' @details Precision/recall use a one-to-one matching: each truth may be
@@ -62,7 +68,20 @@
 #'       segmentation covering metric: each true segment's best Jaccard
 #'       overlap with a predicted segment, averaged weighted by segment
 #'       length. Unlike F1 it needs no margin and degrades smoothly with
-#'       location error.}
+#'       location error. It has a \strong{floor}: an empty prediction
+#'       scores about \eqn{1/(K+1)} for \eqn{K} true changepoints (0.5
+#'       for one change in the middle), so covering is not comparable across
+#'       problems with different \eqn{K} and should not be averaged over
+#'       them.
+#'       \code{\link{cpt_benchmark}()} ranks within each dataset instead
+#'       for exactly that reason.}
+#'     \item{\code{covering_floor}, \code{covering_scaled}}{the covering
+#'       an empty prediction scores on this truth (the sum of the squared
+#'       true segment shares, \eqn{1/(K+1)} when the segments are equal),
+#'       and covering rescaled so that the floor is 0 and a perfect
+#'       segmentation 1, \eqn{(covering - floor)/(1 - floor)}: comparable
+#'       across problems with different \eqn{K}. \code{NA} when
+#'       \eqn{K = 0}, where the floor is already 1.}
 #'     \item{\code{hausdorff}}{lower is better, in observations. The
 #'       largest distance from any changepoint on either side to the nearest
 #'       one on the other: a worst-case location error, so one badly placed
@@ -83,6 +102,12 @@
 #'       that were found are placed and ignore the ones that were missed.
 #'       \code{NA} when nothing matched.}
 #'   }
+#'   \code{precision}, \code{recall} and \code{f1} are
+#'   \strong{thresholded} at \code{margin}: a changepoint off by
+#'   \code{margin} counts as found and one off by \code{margin + 1} as
+#'   missed, so they can move from 1 to 0 on a one-observation change.
+#'   \code{covering}, \code{hausdorff}, \code{rand_index} and the matched
+#'   errors are continuous in the location.
 #' @seealso \code{\link{cpt_metrics_annotated}()} for scoring against
 #'   multiple annotators, and \code{\link{cpt_benchmark}()} to run a
 #'   method-by-dataset grid on these metrics.
@@ -91,8 +116,15 @@
 #' @examples
 #' cpt_metrics(c(100, 200), c(100, 200), n = 300)
 #' cpt_metrics(c(101, 205), c(100, 200), n = 300, margin = 5)
-cpt_metrics <- function(pred, truth, n, margin = 5) {
+cpt_metrics <- function(pred, truth, n = NULL, margin = 5) {
 
+  from <- metric_prediction(pred, n)
+  pred <- from$pred
+  n <- from$n
+  if (is.null(n)) {
+    cpt_abort("`n` (the series length) is required when `pred` is a vector ",
+              "of locations.", class = "bad_argument")
+  }
   pred <- as_cp_locations(pred, "pred", sort = TRUE)
   truth <- as_cp_locations(truth, "truth", sort = TRUE)
   validate_scalar(n, "n", min = 1)
@@ -104,9 +136,9 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
   bad_pred <- pred[pred < 1 | pred >= n]
   bad_truth <- truth[truth < 1 | truth >= n]
   if (length(bad_pred) > 0 || length(bad_truth) > 0) {
-    warning("Dropping changepoint indices outside 1..(n-1): ",
-            paste(unique(c(bad_pred, bad_truth)), collapse = ", "),
-            call. = FALSE)
+    cpt_warn("Dropping changepoint indices outside 1..(n-1): ",
+             paste(unique(c(bad_pred, bad_truth)), collapse = ", "),
+             class = "dropped_input")
     pred <- pred[pred >= 1 & pred < n]
     truth <- truth[truth >= 1 & truth < n]
   }
@@ -133,6 +165,9 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
     rmse_matched <- NA_real_
   }
 
+  # The covering an empty prediction gets: the sum of the squared true
+  # segment shares, which is 1/(K+1) when the K + 1 segments are equal.
+  floor_cov <- calc_covering(integer(0), truth, n)
   tibble::tibble(
     n = n,
     n_pred = length(pred),
@@ -141,6 +176,12 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
     recall = recall,
     f1 = f1,
     covering = covering,
+    covering_floor = floor_cov,
+    covering_scaled = if (floor_cov < 1) {
+      (covering - floor_cov) / (1 - floor_cov)
+    } else {
+      NA_real_
+    },
     hausdorff = hausdorff,
     rand_index = rand_index,
     annotation_error = annotation_error,
@@ -154,9 +195,10 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
 #' Computes averaged covering and F1 scores against multiple annotation sets,
 #' as used in the Turing Change Point Dataset benchmark.
 #'
-#' @param pred Predicted changepoint indices.
+#' @param pred Predicted changepoint indices, or a \code{ggcpt} fit (see
+#'   \code{\link{cpt_metrics}()}).
 #' @param annotations A list of ground-truth annotation vectors.
-#' @param n Length of the series.
+#' @param n Length of the series; taken from \code{pred} when it is a fit.
 #' @param margin Tolerance margin (default 5).
 #'
 #' @return A tibble with one row: \code{n}, \code{n_annotators},
@@ -194,14 +236,21 @@ cpt_metrics <- function(pred, truth, n, margin = 5) {
 #' cpt_metrics_annotated(c(100, 200),
 #'                       annotations = list(c(98, 200), c(100, 203)),
 #'                       n = 300, margin = 5)
-cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
+cpt_metrics_annotated <- function(pred, annotations, n = NULL, margin = 5) {
+  from <- metric_prediction(pred, n)
+  pred <- from$pred
+  n <- from$n
+  if (is.null(n)) {
+    cpt_abort("`n` (the series length) is required when `pred` is a vector ",
+              "of locations.", class = "bad_argument")
+  }
 
   # A `ggcpt` is a list, so it would be read as a set of annotators and its
   # own fields scored one by one.
   if (is_ggcpt(annotations)) {
-    stop("`annotations` takes changepoint indices, not a `ggcpt` object. ",
-         "Pass the locations instead, e.g. `fit$changepoints$cp` or ",
-         "`tidy(fit)$cp`.", call. = FALSE)
+    cpt_abort("`annotations` takes changepoint indices, not a `ggcpt` object. ",
+              "Pass the locations instead, e.g. `fit$changepoints$cp` or ",
+              "`tidy(fit)$cp`.", class = "bad_type")
   }
   # A data frame IS a list, so `cpt_metrics_annotated(pred, tidy(fit), n)`
   # read each COLUMN as an annotator -- scoring `cp_value`, which holds raw
@@ -209,10 +258,11 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
   # indices outside 1..(n-1)" and then produced plausible-looking numbers.
   # cpt_metrics() refuses a data frame for either argument.
   if (is.data.frame(annotations)) {
-    stop("`annotations` is a data frame, and a data frame is a list, so ",
-         "each COLUMN would be read as one annotator's changepoints. Pass ",
-         "a list of index vectors, one per annotator, e.g. ",
-         "`split(df$cp, df$annotator)` or `list(df$cp)`.", call. = FALSE)
+    cpt_abort("`annotations` is a data frame, and a data frame is a list, so ",
+              "each COLUMN would be read as one annotator's changepoints. Pass ",
+              "a list of index vectors, one per annotator, e.g. ",
+              "`split(df$cp, df$annotator)` or `list(df$cp)`.",
+              class = "bad_argument")
   }
   # With no annotators there is nothing to average, and the arithmetic below
   # does not notice: `do.call(rbind, list())` is NULL, `NULL$n_pred[1]` is
@@ -220,10 +270,10 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
   # tibble with the `n_pred` column MISSING, four NA metrics and four base-R
   # warnings about a non-numeric argument to mean().
   if (length(annotations) == 0L) {
-    stop("`annotations` is empty, so there is no ground truth to score ",
-         "against. Pass one vector of changepoint indices per annotator, ",
-         "e.g. `annotations = list(c(98, 200), c(100, 203))`.",
-         call. = FALSE)
+    cpt_abort("`annotations` is empty, so there is no ground truth to score ",
+              "against. Pass one vector of changepoint indices per annotator, ",
+              "e.g. `annotations = list(c(98, 200), c(100, 203))`.",
+              class = "bad_argument")
   }
   if (!is.list(annotations)) {
     annotations <- list(annotations)
@@ -240,7 +290,9 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
   avg <- do.call(rbind, results)
 
   tibble::tibble(
-    n = n,
+    # As cpt_metrics() reports it: an integer whether it came from the
+    # caller or from the fit.
+    n = as.integer(n),
     n_annotators = length(annotations),
     n_pred = avg$n_pred[1],
     precision = mean(avg$precision, na.rm = TRUE),
@@ -257,9 +309,11 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
 #' one-to-one matching as \code{\link{cpt_metrics}()}, so the plot and the
 #' metrics agree.
 #'
-#' @param pred Predicted changepoint indices.
+#' @param pred Predicted changepoint indices, or a \code{ggcpt} fit (whose
+#'   changepoints and series are used).
 #' @param truth Ground truth changepoint indices.
-#' @param data_vec The original data vector (for context).
+#' @param data_vec The original data vector (for context). Taken from
+#'   \code{pred} when it is a fit.
 #' @param margin Tolerance margin (default 5).
 #'
 #' @return A ggplot object.
@@ -270,12 +324,20 @@ cpt_metrics_annotated <- function(pred, annotations, n, margin = 5) {
 #' x <- c(rnorm(100), rnorm(100, 5))
 #' fit <- cpt_detect(x, method = "pelt")
 #' ggcpt_eval(fit$changepoints$cp, truth = 100, data_vec = x)
-ggcpt_eval <- function(pred, truth, data_vec, margin = 5) {
+ggcpt_eval <- function(pred, truth, data_vec = NULL, margin = 5) {
 
   # cpt_metrics() validates `margin` and this plot is meant to agree with
   # it; a negative margin also draws its tolerance rectangles inside out
   # (xmin > xmax).
   validate_scalar(margin, "margin", min = 0)
+  if (is_ggcpt(pred)) {
+    data_vec <- data_vec %||% pred$data$value
+    pred <- pred$changepoints$cp
+  }
+  if (is.null(data_vec)) {
+    cpt_abort("`data_vec` (the series) is required when `pred` is a vector ",
+              "of locations.", class = "bad_argument")
+  }
   pred <- as_cp_locations(pred, "pred", sort = TRUE)
   truth <- as_cp_locations(truth, "truth", sort = TRUE)
 
@@ -445,4 +507,26 @@ label_segments <- function(cp, n) {
   breaks <- sort(unique(c(0, cp, n)))
   labels <- rep(seq_len(length(breaks) - 1), diff(breaks))
   labels
+}
+
+# Internal: the prediction a metric scores. A fit is scored on its
+# changepoints and its own length; a monitor on its alarm times, with the
+# caveat that they are detection times. `cpt_metrics(fit, truth)` used to
+# reach as.integer() on a list and fail with "'list' object cannot be
+# coerced to type 'integer'", although every other tool in the package
+# takes the fit.
+#' @noRd
+metric_prediction <- function(pred, n) {
+  if (is_ggcpt(pred)) {
+    return(list(pred = pred$changepoints$cp, n = n %||% nrow(pred$data)))
+  }
+  if (inherits(pred, "ggcpt_monitor")) {
+    cpt_warn("`pred` is a monitor, so it is scored on its alarm times, which ",
+             "are detection times: each lags its change by the detection ",
+             "delay, and the location metrics count that delay as error. ",
+             "cpt_delay() evaluates a monitor on delay and false alarms, ",
+             "which is what an alarm time measures.", class = "warning")
+    return(list(pred = pred$alarms$time, n = n %||% max(pred$t, 1L)))
+  }
+  list(pred = pred, n = n)
 }
