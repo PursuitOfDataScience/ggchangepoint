@@ -4,6 +4,7 @@
 \alias{cpt_learn_penalty}
 \alias{print.ggcpt_penalty_model}
 \alias{coef.ggcpt_penalty_model}
+\alias{tidy.ggcpt_penalty_model}
 \alias{predict.ggcpt_penalty_model}
 \title{Learn a penalty from labelled series}
 \usage{
@@ -19,6 +20,8 @@ cpt_learn_penalty(
 \method{print}{ggcpt_penalty_model}(x, ...)
 
 \method{coef}{ggcpt_penalty_model}(object, ...)
+
+\method{tidy}{ggcpt_penalty_model}(x, ...)
 
 \method{predict}{ggcpt_penalty_model}(object, newdata, ...)
 }
@@ -54,7 +57,8 @@ building the curves.}
 }
 \value{
 A \code{ggcpt_penalty_model} object with \code{print()},
-  \code{coef()} and \code{predict()} methods.
+  \code{coef()}, \code{tidy()} (the coefficients as \code{term} and
+  \code{estimate}) and \code{predict()} methods.
 
   The two scales differ and it matters: \code{coef()} gives an
   intercept plus one weight per feature \strong{on the log-penalty

@@ -176,14 +176,24 @@ taylor_wrapper <- function(x, n_bootstraps = 1000, min_candidate_conf = 0.5,
 
   # The engine narrates ("3 Change(s) Identified", "NA supplied to 'label'")
   # through both stdout and the message stream; keep the console clean.
+  # And when a candidate set comes back empty (seen on the stretch before a
+  # `fixed` changepoint) its summarise() of `max(change_conf)` warns "no
+  # non-missing arguments to max" about a table it then discards.
   suppressMessages(utils::capture.output(
-    fit <- engine_short_series(
-      ChangePointTaylor::change_point_analyzer(
-        data_vec, n_bootstraps = n_bootstraps,
-        min_candidate_conf = min_candidate_conf,
-        min_tbl_conf = min_conf, CI = conf_level
-      ),
-      "taylor", length(data_vec))
+    fit <- withCallingHandlers(
+      engine_short_series(
+        ChangePointTaylor::change_point_analyzer(
+          data_vec, n_bootstraps = n_bootstraps,
+          min_candidate_conf = min_candidate_conf,
+          min_tbl_conf = min_conf, CI = conf_level
+        ),
+        "taylor", length(data_vec)),
+      warning = function(w) {
+        if (grepl("no non-missing arguments to max", conditionMessage(w),
+                  fixed = TRUE)) {
+          invokeRestart("muffleWarning")
+        }
+      })
   ))
   if (is.null(fit) || nrow(fit) == 0) {
     return(ggcpt_build(data_vec, integer(0), method = "taylor",

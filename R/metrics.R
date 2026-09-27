@@ -125,6 +125,13 @@ cpt_metrics <- function(pred, truth, n = NULL, margin = 5) {
     cpt_abort("`n` (the series length) is required when `pred` is a vector ",
               "of locations.", class = "bad_argument")
   }
+  # The sort below drops a missing location silently, so `truth = NA` was
+  # scored as "no true changepoints": precision 0 against nothing, no word.
+  n_missing <- sum(is.na(pred)) + sum(is.na(truth))
+  if (n_missing > 0L) {
+    cpt_warn("Dropping ", n_missing, " missing changepoint location(s) from ",
+             "`pred` and `truth`.", class = "dropped_input")
+  }
   pred <- as_cp_locations(pred, "pred", sort = TRUE)
   truth <- as_cp_locations(truth, "truth", sort = TRUE)
   validate_scalar(n, "n", min = 1)

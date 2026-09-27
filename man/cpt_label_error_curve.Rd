@@ -3,6 +3,7 @@
 \name{cpt_label_error_curve}
 \alias{cpt_label_error_curve}
 \alias{print.ggcpt_label_curve}
+\alias{tidy.ggcpt_label_curve}
 \alias{autoplot.ggcpt_label_curve}
 \title{Label error as a function of the penalty}
 \usage{
@@ -16,6 +17,8 @@ cpt_label_error_curve(
 )
 
 \method{print}{ggcpt_label_curve}(x, ...)
+
+\method{tidy}{ggcpt_label_curve}(x, ...)
 
 \method{autoplot}{ggcpt_label_curve}(object, ...)
 }
@@ -46,7 +49,8 @@ explicitly for an expensive engine.}
 \value{
 A \code{ggcpt_label_curve} object: a tibble with \code{penalty},
   \code{n_cp}, \code{errors}, \code{false_positive},
-  \code{false_negative}, plus \code{print()} and \code{autoplot()}.
+  \code{false_negative}, plus \code{print()}, \code{tidy()} and
+  \code{autoplot()}.
   The \code{target} attribute holds the interval of \code{log(penalty)}
   achieving the minimum error, which is what
   \code{\link{cpt_learn_penalty}()} regresses on.

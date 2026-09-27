@@ -43,6 +43,12 @@
 cpt_labels <- function(start, end, change = "change", series = NA_character_) {
   start <- as_cp_locations(start, "start")
   end <- as_cp_locations(end, "end")
+  # A missing bound reached `end < start` below as base R's "missing value
+  # where TRUE/FALSE needed".
+  if (anyNA(start) || anyNA(end)) {
+    cpt_abort("`start` and `end` must not contain missing values.",
+              class = "bad_argument")
+  }
   if (length(start) != length(end)) {
     cpt_abort("`start` and `end` must be the same length (", length(start),
               " vs ", length(end), ").", class = "bad_argument")
@@ -323,7 +329,8 @@ check_labels <- function(labels) {
 #'
 #' @return A \code{ggcpt_label_curve} object: a tibble with \code{penalty},
 #'   \code{n_cp}, \code{errors}, \code{false_positive},
-#'   \code{false_negative}, plus \code{print()} and \code{autoplot()}.
+#'   \code{false_negative}, plus \code{print()}, \code{tidy()} and
+#'   \code{autoplot()}.
 #'   The \code{target} attribute holds the interval of \code{log(penalty)}
 #'   achieving the minimum error, which is what
 #'   \code{\link{cpt_learn_penalty}()} regresses on.
@@ -458,6 +465,12 @@ print.ggcpt_label_curve <- function(x, ...) {
 }
 
 #' @rdname cpt_label_error_curve
+#' @export
+tidy.ggcpt_label_curve <- function(x, ...) {
+  tibble::as_tibble(unclass_keep_tbl(x))
+}
+
+#' @rdname cpt_label_error_curve
 #' @param object A \code{ggcpt_label_curve} object (for \code{autoplot()}).
 #' @export
 autoplot.ggcpt_label_curve <- function(object, ...) {
@@ -532,7 +545,8 @@ autoplot.ggcpt_label_curve <- function(object, ...) {
 #'   building the curves.
 #'
 #' @return A \code{ggcpt_penalty_model} object with \code{print()},
-#'   \code{coef()} and \code{predict()} methods.
+#'   \code{coef()}, \code{tidy()} (the coefficients as \code{term} and
+#'   \code{estimate}) and \code{predict()} methods.
 #'
 #'   The two scales differ and it matters: \code{coef()} gives an
 #'   intercept plus one weight per feature \strong{on the log-penalty
@@ -869,6 +883,17 @@ print.ggcpt_penalty_model <- function(x, ...) {
 coef.ggcpt_penalty_model <- function(object, ...) {
   if (identical(object$fit$engine, "native")) return(object$fit$coefficients)
   tryCatch(stats::coef(object$fit$model), error = function(e) NULL)
+}
+
+#' @rdname cpt_learn_penalty
+#' @export
+tidy.ggcpt_penalty_model <- function(x, ...) {
+  cf <- stats::coef(x)
+  if (is.null(cf)) {
+    return(tibble::tibble(term = character(), estimate = numeric()))
+  }
+  tibble::tibble(term = names(cf) %||% paste0("b", seq_along(cf) - 1L),
+                 estimate = unname(as.numeric(cf)))
 }
 
 #' @rdname cpt_learn_penalty

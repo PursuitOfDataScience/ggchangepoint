@@ -46,7 +46,9 @@
 #' difference it reports is the largest the noise allowed. The bias is
 #' worst for the marginal detections, which are exactly the ones whose size
 #' matters. \code{method = "naive"} rows carry \code{selection_adjusted =
-#' FALSE} for that reason. \code{method = "split"} is honest about the size
+#' FALSE} for that reason, except at a changepoint fixed in advance with
+#' \code{cpt_detect(fixed = )}, which the data did not locate and which is
+#' \code{TRUE}. \code{method = "split"} is honest about the size
 #' (the measuring half never influenced the locations) and less precise
 #' about the location (the locating half has half the data), and it assumes
 #' the noise is independent from one observation to the next, since the
@@ -82,13 +84,25 @@ cpt_effect <- function(fit, level = 0.95, method = c("naive", "split"),
     out <- coefficient_effects(fit, level)
     return(new_effect(out, fit, "naive"))
   }
+  # Levels are the wrong measure of a change in slope: a rise and a fall
+  # with equal means (cpop, 0 to 10 and back) measured a "change" of 0.05.
+  if (identical(scalar_chr(fit$change_in), "slope")) {
+    cpt_warn("This fit detected a change in slope, and `cpt_effect()` ",
+             "measures each change as a difference in segment means, which a ",
+             "change in slope need not move. cpt_segment_models(fit) fits a ",
+             "line per segment and reports the slopes.", class = "assumption",
+             data = list(change_in = "slope"))
+  }
   if (method == "split") {
     return(split_effect(fit, level, seed, ...))
   }
   out <- series_effects(fit, fit$changepoints$cp, level, family)
-  out$selection_adjusted <- rep(FALSE, nrow(out))
-  out$method <- rep("naive (measured where the data located the change)",
-                    nrow(out))
+  # A changepoint fixed in advance was never located by these data, so its
+  # effect carries no winner's curse.
+  out$selection_adjusted <- out$cp %in% fixed_changepoints(fit)
+  out$method <- ifelse(out$selection_adjusted,
+                       "naive (at a changepoint fixed in advance)",
+                       "naive (measured where the data located the change)")
   new_effect(out, fit, "naive")
 }
 
@@ -317,7 +331,8 @@ new_effect <- function(out, fit, how) {
 print.ggcpt_effect <- function(x, ...) {
   cat("ggcpt_effect (method: ", attr(x, "method") %||% "?", ", ",
       attr(x, "how") %||% "naive", ")\n", sep = "")
-  if (identical(attr(x, "how"), "naive") && nrow(x)) {
+  if (identical(attr(x, "how"), "naive") && nrow(x) &&
+      !all(x$selection_adjusted %in% TRUE)) {
     cat("Measured where the same data located each change, so the sizes are",
         "biased upward\n(selection_adjusted = FALSE).",
         if (!"term" %in% names(x)) {
@@ -523,6 +538,12 @@ cpt_test_at <- function(x, when, window = 0,
 #' @noRd
 effective_position <- function(when, idx, n) {
   p <- locate_on_series(when, idx, n, "when", side = "after")
+  # Inf passed the NA check and became NA in as.integer(), which the range
+  # check then met as "missing value where TRUE/FALSE needed".
+  if (!is.na(p) && !is.finite(p)) {
+    cpt_abort("`when` must be a finite location; got ", format(when), ".",
+              class = "bad_argument")
+  }
   if (is.na(p)) {
     cpt_abort("`when` is after the last observation",
               if (!is.null(idx)) paste0(" (", format_index_range(idx), ")"),
@@ -691,6 +712,14 @@ split_lr <- function(a, b, family) {
 #' @noRd
 test_at_formula <- function(formula, data, when, window, span, level, B,
                             seed) {
+  # One regression; a grouped `data` would be tested as one stacked series.
+  grouped <- if (is.data.frame(data)) detect_groups(data, NULL, parent.frame())
+  if (length(grouped)) {
+    cpt_abort("`cpt_test_at()` tests one series, and `data` is grouped by ",
+              paste0("`", grouped, "`", collapse = ", "), ". Test each ",
+              "group's rows on their own.", class = "unsupported",
+              data = list(group = grouped))
+  }
   spec <- formula_series(formula, data, NULL, parent.frame())
   y <- spec$y
   X <- spec$X
@@ -804,6 +833,16 @@ cpt_attribute_event <- function(fit, event, level = 0.95, ...) {
     event_pos <- locate_on_series(event, fit$index, nrow(fit$data), "event",
                                   side = "before")
   }
+  # No events used to reach the column bind below as base R's "attempt to
+  # set an attribute on NULL".
+  if (!length(event_pos)) {
+    cpt_abort("`event` holds no event locations.", class = "bad_argument")
+  }
+  # A position before the first observation or after the last is outside
+  # the series, as an index value there already was: `event = -1` was
+  # matched to the nearest changepoint and judged against its interval.
+  event_pos[!is.na(event_pos) & (event_pos < 1 | event_pos > nrow(fit$data))] <-
+    NA_real_
   cps <- fit$changepoints$cp
   if (!length(cps)) {
     cpt_abort("The fit has no changepoints, so there is nothing to attribute ",

@@ -73,7 +73,7 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
     res$change_in <- change_in
     res$penalty <- penalty
     res$fit <- fit
-    res$call <- call
+    res$call <- record_call(call)
     res$data <- data_tbl
     res$data_wide <- data_wide
     res$regions <- normalise_regions(regions, n)
@@ -90,7 +90,7 @@ ggcpt_build <- function(data_vec, cp_indices, method, change_in, penalty,
     change_in = change_in,
     penalty = penalty,
     fit = fit,
-    call = call,
+    call = record_call(call),
     cp_convention = "left"
   )
   res$data_wide <- data_wide
@@ -472,4 +472,66 @@ mv_data_wide <- function(X) {
   out <- tibble::as_tibble(as.data.frame(X, check.names = FALSE),
                            .name_repair = "minimal")
   tibble::add_column(out, index = seq_len(nrow(X)), .before = 1)
+}
+
+# Internal: the call a result records, with any bulky value inlined into it
+# replaced by a placeholder naming what it was. `do.call(cpt_detect,
+# list(x, method = "pelt"))` records the series itself as `x`, so a
+# 1,000-point fit carried a 31 KB call: `as_json(fit, data = FALSE)` still
+# wrote every value, and cpt_report() printed them all under "Call:". A
+# literal short enough to replay (a penalty, a `Q`, a window) is kept, and
+# so is anything written as a name or an expression.
+#'
+#' `do.call(cpt_detect, ...)` also puts the function itself at the head of
+#' the call, and deparsing that printed its whole source; the head becomes
+#' the function's name (`name`, or the export it is identical to).
+#' @noRd
+record_call <- function(call, name = NULL) {
+  if (!is.call(call)) return(call)
+  if (is.function(call[[1]])) {
+    call[[1]] <- as.name(name %||% function_name(call[[1]]))
+  }
+  if (length(call) < 2L) return(call)
+  args <- as.list(call)
+  for (i in seq_along(args)[-1]) {
+    v <- args[[i]]
+    if (is.null(v) || is.name(v) || is.call(v)) next
+    bulky <- if (is.atomic(v)) {
+      length(v) > 20L
+    } else {
+      !is.list(v) || is.data.frame(v) || length(v) > 20L ||
+        utils::object.size(v) > 2048
+    }
+    if (bulky) args[[i]] <- as.name(paste0("<", describe_value(v), ">"))
+  }
+  as.call(args)
+}
+
+# Internal: the exported name of a function of this package, for
+# record_call(); "<function>" for anything else.
+#' @noRd
+function_name <- function(f) {
+  # The re-running tools reach here with cpt_detect() itself, once per
+  # replicate, so that one is checked before the search.
+  if (identical(f, cpt_detect)) return("cpt_detect")
+  ns <- asNamespace("ggchangepoint")
+  for (nm in getNamespaceExports(ns)) {
+    g <- get0(nm, envir = ns, inherits = FALSE)
+    if (is.function(g) && identical(g, f)) return(nm)
+  }
+  "<function>"
+}
+
+# Internal: a short description of a value, for record_call().
+#' @noRd
+describe_value <- function(v) {
+  d <- dim(v)
+  if (length(d) == 2L) {
+    return(paste0(class(v)[1], " ", d[1], " x ", d[2]))
+  }
+  if (is.function(v)) return("function")
+  if (is.atomic(v) || is.list(v)) {
+    return(paste0(class(v)[1], "[", length(v), "]"))
+  }
+  class(v)[1]
 }

@@ -727,11 +727,12 @@ test_that("tidy() works on every result class that offers it", {
   expect_true(all(is.finite(objs$ggcpt_power$power)))
   expect_true(all(is.finite(objs$ggcpt_power$mc_se)))
 
-  # the documented exception, pinned in both directions
+  # The one class that inherits nothing, and so had no route to tidy()
+  # until it got a method of its own; its @return names it.
   st <- cpt_stability(x, method = "pelt", B = 6, seed = 1)
-  expect_identical(class(st), "ggcpt_stability")   # inherits nothing
-  expect_error(generics::tidy(st), "no applicable method")
-  expect_s3_class(ggplot2::autoplot(st), "ggplot") # what it does offer
+  expect_identical(class(st), "ggcpt_stability")
+  expect_named(generics::tidy(st), c("cp", "stability", "survives_reversal"))
+  expect_s3_class(ggplot2::autoplot(st), "ggplot")
   expect_output(print(st))
 
   for (nm in names(objs)) {

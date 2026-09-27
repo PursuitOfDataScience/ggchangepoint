@@ -90,6 +90,13 @@ cpt_influence <- function(object, type = c("delete", "outlier"),
   if (is.null(subset)) {
     subset <- seq_len(n)
   } else {
+    # Checked before the coercion, which turned Inf or text into NA that
+    # sort() then dropped: the run failed with "could not be re-run on any
+    # of the 0 perturbed series".
+    if (!is.numeric(subset) || !length(subset) || any(!is.finite(subset))) {
+      cpt_abort("`subset` must be one or more observation positions (1..", n,
+                ").", class = "bad_argument")
+    }
     subset <- sort(unique(as.integer(subset)))
     if (any(subset < 1 | subset > n)) {
       cpt_abort("`subset` must index observations of the series (1..", n, ").",
@@ -220,8 +227,12 @@ influence_recompute <- function(object, type, subset, outlier_sd, seed = NULL,
   refuse_unrerunnable(object, "cpt_influence()")
   dots <- rerun_dots(object, list(...), "cpt_influence()")
   orig_cp <- object$changepoints$cp
-  fitted_step <- rep(object$segments$param_estimate, times = object$segments$n)
-  orig_param <- fitted_step
+  orig_param <- rep(object$segments$param_estimate,
+                    times = object$segments$n)
+  # An outlier is placed against the fitted signal, in the residuals' own
+  # spread: against segment means, a slope fit's "outlier" sat off the
+  # segment's average by the trend's spread, not the noise's.
+  fitted_step <- resampling_signal(object)
   resid_sd <- stats::sd(y - fitted_step, na.rm = TRUE)
   if (!is.finite(resid_sd) || resid_sd == 0) resid_sd <- stats::sd(y, na.rm = TRUE)
   if (!is.finite(resid_sd) || resid_sd == 0) resid_sd <- 1
@@ -272,7 +283,7 @@ influence_recompute <- function(object, type, subset, outlier_sd, seed = NULL,
     list(cp = cp, param = par_i)
   }
 
-  outs <- if (has_future) {
+  outs <- once_per_kind(if (has_future) {
     future.apply::future_lapply(subset, with_session_registry(run_one),
                                 # `seed %||% TRUE`, as the other three
                                 # parallel call sites do. local_seed(seed)
@@ -286,7 +297,7 @@ influence_recompute <- function(object, type, subset, outlier_sd, seed = NULL,
                                 future.seed = seed %||% TRUE)
   } else {
     lapply(subset, run_one)
-  }
+  })
 
   cpts <- lapply(outs, function(o) o$cp)
   param_mat <- do.call(rbind, lapply(outs, function(o) o$param))
@@ -656,7 +667,7 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
     list(cpts = fit$changepoints$cp, error = NA_character_)
   }
 
-  outs <- if (has_future) {
+  outs <- once_per_kind(if (has_future) {
     future.apply::future_lapply(seq_len(nrow(grid)),
                                 with_session_registry(run_one),
                                 # `seed %||% TRUE`, as the other three
@@ -671,7 +682,7 @@ cpt_sensitivity <- function(x, method = "pelt", over = list(), seed = NULL,
                                 future.seed = seed %||% TRUE)
   } else {
     lapply(seq_len(nrow(grid)), run_one)
-  }
+  })
 
   grid <- tibble::as_tibble(grid)
   grid$n_cp <- vapply(outs, function(o) length(o$cpts), integer(1))

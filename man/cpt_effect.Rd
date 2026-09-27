@@ -63,7 +63,9 @@ the detector put the boundary where the two sides differ most, so the
 difference it reports is the largest the noise allowed. The bias is
 worst for the marginal detections, which are exactly the ones whose size
 matters. \code{method = "naive"} rows carry \code{selection_adjusted =
-FALSE} for that reason. \code{method = "split"} is honest about the size
+FALSE} for that reason, except at a changepoint fixed in advance with
+\code{cpt_detect(fixed = )}, which the data did not locate and which is
+\code{TRUE}. \code{method = "split"} is honest about the size
 (the measuring half never influenced the locations) and less precise
 about the location (the locating half has half the data), and it assumes
 the noise is independent from one observation to the next, since the

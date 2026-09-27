@@ -154,6 +154,11 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
                                      exponential = 1)
     validate_scalar(baseline, "baseline", min = 0)
   }
+  # One scenario per value of each, so grids rather than scalars; an empty
+  # one made a zero-row scenario table that failed as "attempt to set an
+  # attribute on NULL", and `jump = "a"` ran every replicate on NA.
+  validate_grid(n, "n", min = 3)
+  validate_grid(jump, "jump")
   validate_scalar(n_sim, "n_sim", min = 1)
   validate_scalar(tolerance, "tolerance", min = 0)
   # `sigma` reaches cpt_simulate() as its `sd`, so without a check here a bad
@@ -278,13 +283,13 @@ cpt_power <- function(n, jump, sigma = 1, method = "pelt", location = 0.5,
     )
   }
 
-  rows <- if (has_future) {
+  rows <- once_per_kind(if (has_future) {
     future.apply::future_lapply(seq_len(nrow(scen)),
                                 with_session_registry(run_scenario),
                                 future.seed = seed %||% TRUE)
   } else {
     lapply(seq_len(nrow(scen)), run_scenario)
-  }
+  })
   out <- do.call(rbind, rows)
   attr(out, "method") <- method
   attr(out, "change_in") <- change_in
@@ -390,7 +395,8 @@ autoplot.ggcpt_power <- function(object, ...) {
 #' @param max_iter Maximum bisection steps. Defaults to \code{12}.
 #' @return A list with \code{jump} (the smallest change reaching
 #'   \code{power}), \code{achieved_power}, \code{mc_se}, and the
-#'   \code{trace} of evaluations, with a \code{print()} method.
+#'   \code{trace} of evaluations, with \code{print()} and \code{tidy()}
+#'   (one row) methods.
 #' @seealso \code{\link{cpt_power}()}.
 #' @export
 #' @examples
@@ -443,11 +449,14 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
               class = "ggcpt_min_detectable")
   }
 
+  seen <- new.env(parent = emptyenv())
   eval_at <- function(j) {
-    r <- cpt_power(n = n, jump = j, sigma = sigma, method = method,
-                   location = location, n_sim = n_sim,
-                   tolerance = tolerance, change_in = change_in,
-                   noise = noise, rho = rho, df = df, parallel = FALSE, ...)
+    r <- once_per_kind(
+      cpt_power(n = n, jump = j, sigma = sigma, method = method,
+                location = location, n_sim = n_sim,
+                tolerance = tolerance, change_in = change_in,
+                noise = noise, rho = rho, df = df, parallel = FALSE, ...),
+      seen)
     p <- r$power[1]
     # Without this the NaN from an all-failed scenario reaches
     # `if (trace[[2]]["power"] < power)` and R reports "missing value where
@@ -505,6 +514,15 @@ cpt_min_detectable <- function(n, sigma = 1, method = "pelt", power = 0.8,
   md_result(jump = best, achieved_power = best_row[["power"]],
             mc_se = best_row[["mc_se"]], target = power,
             trace = tibble::as_tibble(do.call(rbind, trace)), note = NULL)
+}
+
+#' @rdname cpt_min_detectable
+#' @export
+tidy.ggcpt_min_detectable <- function(x, ...) {
+  tibble::tibble(target = x$target, jump = x$jump,
+                 achieved_power = x$achieved_power, mc_se = x$mc_se,
+                 family = x$family %||% "gaussian",
+                 baseline = x$baseline %||% NA_real_)
 }
 
 #' @rdname cpt_min_detectable

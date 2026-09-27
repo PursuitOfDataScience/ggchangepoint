@@ -28,11 +28,15 @@ works for any).}
 }
 \value{
 A \code{ggcpt_null_power} list with \code{n}, \code{sigma} (the
-  noise level used), \code{jump} (the smallest detectable shift, in the
+  noise level used), \code{jump} (the smallest detectable change, in the
   data's units), \code{jump_sd} (the same in noise standard deviations),
-  \code{power}, \code{method} and \code{constant} (\code{TRUE} when the
-  series has no variation, in which case nothing is simulated). With a
-  \code{print()} method.
+  \code{change_in} (the fit's change type, which sets what \code{jump}
+  measures: a shift in the mean, a rise in the standard deviation, both,
+  or a trend, as \code{\link{cpt_power}()} defines them), \code{power},
+  \code{method} and \code{constant} (\code{TRUE} when the series has no
+  variation, in which case nothing is simulated). With \code{print()} and
+  \code{tidy()} methods. A formula fit is refused: the simulation has no
+  covariates to draw.
 }
 \description{
 When a detection comes back empty, the useful question is whether a

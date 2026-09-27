@@ -53,7 +53,7 @@ fitting the same family.
     both need JAGS. Both are on CRAN; every use is guarded with
     `requireNamespace()`, and the local run uses
     `_R_CHECK_FORCE_SUGGESTS_=false`.
-  * NOTE: installed size 5.2 MB, of which `doc` is 3.8 MB: the seven
+  * NOTE: installed size 5.3 MB, of which `doc` is 3.8 MB: the seven
     vignettes, whose figures are already rendered at `dpi = 72`. The size
     fell from 0.5.0's: the README now has one figure instead of
     twenty-three. The new material for this release is on the package
@@ -63,10 +63,10 @@ Depending on when this is submitted, the incoming-feasibility check may
 add a "days since last update" note: 0.5.0 was published in September
 2026.
 
-The test suite runs in 33 seconds under CRAN conditions (22 on R 4.6.0);
+The test suite runs in 45 seconds under CRAN conditions (25 on R 4.6.0);
 tests that take longer, and every test that runs 'stepR', skip on CRAN and
 run on every CI push. The whole suite with every engine installed and
-`NOT_CRAN=true` reports 8,350 passing expectations and no failures.
+`NOT_CRAN=true` reports 8,387 passing expectations and no failures.
 
 ## Suggested methods and their references
 

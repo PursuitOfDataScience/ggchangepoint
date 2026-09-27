@@ -34,9 +34,12 @@ ggcpt_posterior <- function(x, prob_threshold = NULL) {
                    " `ci_lower`/`ci_upper` on the changepoints tibble and",
                    " `fitted` on $data, not as a per-location profile."),
       "")
-    cpt_abort("No posterior probability profile found on this object. ",
-              "ggcpt_posterior() supports results from bcp_wrapper() and ",
-              "beast_wrapper().", extra, class = "capability_absent")
+    cpt_abort(dropped_fit_reason(x, c("bcp", "beast"),
+                                 "the posterior profile") %||%
+                paste0("No posterior probability profile found on this ",
+                       "object. ggcpt_posterior() supports results from ",
+                       "bcp_wrapper() and beast_wrapper().", extra),
+              class = "capability_absent")
   }
 
   if (is.null(prob_threshold)) {
@@ -136,8 +139,10 @@ posterior_prob_profile <- function(x) {
 #' ggcpt_runlength(res)
 ggcpt_runlength <- function(x, prob_floor = 1e-3) {
   if (!is_ggcpt(x) || !inherits(x$fit, "ocp")) {
-    cpt_abort("`x` must be a ggcpt object produced by bocpd_wrapper().",
-              class = "capability_absent")
+    cpt_abort((if (is_ggcpt(x)) {
+      dropped_fit_reason(x, "bocpd", "the run-length posterior")
+    }) %||% "`x` must be a ggcpt object produced by bocpd_wrapper().",
+    class = "capability_absent")
   }
 
   R <- x$fit$R

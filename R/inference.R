@@ -480,6 +480,21 @@ rerun_dots <- function(object, dots, what) {
                "(`cpt_confint(method = ", "\"native\")`).",
               class = "unsupported")
   }
+  # A formula fit keeps neither the formula nor `data`, so a re-run would
+  # search the response alone: an intercept-only breakpoint search standing
+  # in for the regression that found these changepoints. cpt_influence(),
+  # cpt_leverage(), cpt_sensitivity() and cpt_select() did exactly that
+  # (a minute of re-fits, reported as the regression's influence), while
+  # the tools that checked first refused.
+  if (!rerun_matches_result(object)) {
+    cpt_abort("`", what, "` re-runs the detector, and this result was ",
+              "fitted from a formula: the covariates are not stored on it, ",
+              "so a re-run would search the response alone, a different ",
+              "model from the one that found these changepoints. Re-run the ",
+              "original cpt_detect(y ~ ..., data = ) call on the perturbed ",
+              "data yourself.", class = "capability_absent",
+              data = list(method = scalar_chr(object$method)))
+  }
   if (is.null(dots[["change_in", exact = TRUE]])) {
     ci <- rerun_change_in(object)
     if (is.null(ci)) {
@@ -649,6 +664,64 @@ confint_posterior <- function(object, level) {
                  source = "posterior")
 }
 
+# Internal: the signal the resampling tools perturb around. Residuals are
+# resampled within segments and added back to it, so it has to carry the
+# change the fit found. The segment means do for a change in mean, variance
+# or distribution, where anything constant within a segment cancels out of
+# a within-segment resample. They do not for a change in slope or in
+# seasonality: there the residuals against a segment mean still hold the
+# trend or the seasonal cycle, and resampling them shuffled it away. On a
+# clean slope change (cpop, a rise to 10 and back, noise sd 0.5) every
+# bootstrap replicate came back flat, the interval collapsed onto the
+# point with "the detector found no changepoints in 20 of 20 draws", and
+# cpt_stability() scored the change 0. So those two use the engine's
+# fitted signal, or a least-squares line per segment when a slope engine
+# supplies none (not, nsp).
+#' @noRd
+resampling_signal <- function(object) {
+  seg <- object$segments
+  step <- rep(seg$param_estimate, times = seg$n)
+  ci <- scalar_chr(object$change_in)
+  if (!ci %in% c("slope", "seasonality")) return(step)
+  v <- object$data$value
+  eng <- object$data[["fitted"]]
+  if (!is.null(eng) && length(eng) == length(v)) return(as.numeric(eng))
+  if (!identical(ci, "slope")) return(step)
+  segment_lines(v, seg$start, seg$end, step)
+}
+
+# Internal: a least-squares line through each segment `start[i]..end[i]` of
+# `v`, on position, ignoring gaps; `fallback` where a segment has fewer
+# than two observations to fit.
+#' @noRd
+segment_lines <- function(v, start, end, fallback) {
+  out <- fallback
+  for (i in seq_along(start)) {
+    idx <- seq.int(start[i], end[i])
+    ok <- idx[!is.na(v[idx])]
+    if (length(ok) < 2L) next
+    co <- stats::coef(stats::lm.fit(cbind(1, ok), v[ok]))
+    if (all(is.finite(co))) out[idx] <- co[1] + co[2] * idx
+  }
+  out
+}
+
+# Internal: the fitted signal the residual diagnostics are taken against,
+# or NULL for the segment means (residual_dependence()'s own default): the
+# engine's signal where the result has one, and for a slope fit without
+# one the line per segment above. Against a segment's level, a slope
+# fit's residuals carry the trend, which the Ljung-Box test reads as
+# dependent noise.
+#' @noRd
+residual_signal <- function(fit) {
+  eng <- fit$data[["fitted"]]
+  if (!is.null(eng) && length(eng) == nrow(fit$data)) return(as.numeric(eng))
+  if (identical(scalar_chr(fit$change_in), "slope")) {
+    return(resampling_signal(fit))
+  }
+  NULL
+}
+
 # Internal: bootstrap interval. Resamples residuals within the fitted
 # segments (preserving the regime structure), re-runs the detector, and for
 # each original changepoint records the nearest re-detection. Quantiles of
@@ -693,7 +766,7 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
   n <- length(data_vec)
   cp <- object$changepoints$cp
   seg <- object$segments
-  fitted_step <- rep(seg$param_estimate, times = seg$n)
+  fitted_step <- resampling_signal(object)
   resid <- data_vec - fitted_step
   seg_id <- rep(seq_len(nrow(seg)), times = seg$n)
 
@@ -705,7 +778,7 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
   # raised: the one diagnostic this bootstrap gave was the wrong one.
   n_failed <- 0L
   first_error <- NULL
-  for (b in seq_len(B)) {
+  once_per_kind(for (b in seq_len(B)) {
     resampled <- resid
     for (s in seq_len(nrow(seg))) {
       # Observed positions only: a gap stays where it is, rather than
@@ -738,7 +811,7 @@ confint_bootstrap <- function(object, level, B = 200, seed = NULL, ...) {
     draws[b, ] <- vapply(cp, function(k) {
       rep_cp[which.min(abs(rep_cp - k))]
     }, numeric(1))
-  }
+  })
 
   a <- (1 - level) / 2
   lo <- integer(length(cp))
@@ -853,7 +926,13 @@ confint_nsp <- function(object, level, seed = NULL, ...) {
 #'     compares the segments either side of the changepoint as if the
 #'     location had been fixed in advance. Useful as a descriptive effect
 #'     size with a scale attached; not a valid significance test for the
-#'     existence of the change.
+#'     existence of the change. The exception is a changepoint that
+#'     \emph{was} fixed in advance, through \code{cpt_detect(fixed = )}:
+#'     its row is \code{TRUE}.
+#'   \item The fallback compares means whatever the fit detected, so on a
+#'     fit of a change in variance, slope or distribution it tests a
+#'     different change from the one found, and warns (class
+#'     \code{ggchangepoint_assumption}).
 #'   \item \code{FALSE} for \pkg{strucchange}'s route as well, which is
 #'     the Chow F evaluated \emph{at} each estimated break date. The Chow
 #'     statistic's reference distribution assumes the date was fixed in
@@ -940,6 +1019,19 @@ cpt_test <- function(object, type = c("jump", "segment"),
   if (nrow(out) > 0 && correction != "none") {
     out$p_adjusted <- stats::p.adjust(out$p_value, method = correction)
     attr(out, "correction") <- correction
+  }
+  # The fallback compares segment MEANS, whatever the fit detected: on a
+  # clean variance change it reported p = 0.31, and on a slope change (a
+  # rise and a fall with equal means) p = 0.90, each beside a changepoint
+  # the detector had no doubt about.
+  welch <- nrow(out) > 0 && any(grepl("^Welch", out$method))
+  ci_fit <- scalar_chr(object$change_in)
+  if (welch && !is.na(ci_fit) && !ci_fit %in% c("mean", "regression")) {
+    cpt_warn("`cpt_test()` compares the segment means either side of each ",
+             "changepoint (a Welch t-test), but this fit detected a change in ",
+             "`", ci_fit, "`. The test measures a shift in the mean only, so ",
+             "a large p-value does not argue against the change the detector ",
+             "found.", class = "assumption", data = list(change_in = ci_fit))
   }
   if (nrow(out) > 0 && any(!out$selection_adjusted)) {
     cpt_warn("`selection_adjusted` is FALSE for ", sum(!out$selection_adjusted),
@@ -1165,20 +1257,35 @@ naive_jump_test <- function(object) {
                           selection_adjusted = logical()))
   }
   bounds <- c(0L, cp, n)
+  fixed <- fixed_changepoints(object)
   rows <- lapply(seq_along(cp), function(i) {
     left <- y[seq.int(bounds[i] + 1L, bounds[i + 1L])]
     right <- y[seq.int(bounds[i + 1L] + 1L, bounds[i + 2L])]
     tt <- tryCatch(stats::t.test(right, left), error = function(e) NULL)
+    # A location fixed in advance was not chosen from these data, which is
+    # the one thing `selection_adjusted` records.
+    pre <- cp[i] %in% fixed
     tibble::tibble(
       cp = cp[i],
-      estimate = mean(right) - mean(left),
+      # na.rm: t.test() drops a fit's gaps itself, and the estimate beside
+      # its statistic came back NA for every `na_action = "omit"` fit.
+      estimate = mean(right, na.rm = TRUE) - mean(left, na.rm = TRUE),
       statistic = if (is.null(tt)) NA_real_ else as.numeric(tt$statistic),
       p_value = if (is.null(tt)) NA_real_ else as.numeric(tt$p.value),
-      method = "Welch two-sample t (unadjusted)",
-      selection_adjusted = FALSE
+      method = if (pre) "Welch two-sample t (location fixed in advance)" else
+        "Welch two-sample t (unadjusted)",
+      selection_adjusted = pre
     )
   })
   do.call(rbind, rows)
+}
+
+# Internal: the changepoints a fit was given through `fixed`, as positions.
+#' @noRd
+fixed_changepoints <- function(object) {
+  cp <- object$changepoints
+  if (!"fixed" %in% names(cp)) return(integer(0))
+  as.integer(cp$cp[cp$fixed %in% TRUE])
 }
 
 # Internal: one row per segment, comparing it with the segment before.
@@ -1192,17 +1299,20 @@ test_segments <- function(object) {
                           method = character(),
                           selection_adjusted = logical()))
   }
+  fixed <- fixed_changepoints(object)
   rows <- lapply(seq.int(2L, nrow(seg)), function(i) {
     prev <- y[seq.int(seg$start[i - 1], seg$end[i - 1])]
     cur <- y[seq.int(seg$start[i], seg$end[i])]
     tt <- tryCatch(stats::t.test(cur, prev), error = function(e) NULL)
+    pre <- seg$end[i - 1] %in% fixed
     tibble::tibble(
       seg_id = seg$seg_id[i],
-      estimate = mean(cur) - mean(prev),
+      estimate = mean(cur, na.rm = TRUE) - mean(prev, na.rm = TRUE),
       statistic = if (is.null(tt)) NA_real_ else as.numeric(tt$statistic),
       p_value = if (is.null(tt)) NA_real_ else as.numeric(tt$p.value),
-      method = "Welch two-sample t (unadjusted)",
-      selection_adjusted = FALSE
+      method = if (pre) "Welch two-sample t (location fixed in advance)" else
+        "Welch two-sample t (unadjusted)",
+      selection_adjusted = pre
     )
   })
   do.call(rbind, rows)

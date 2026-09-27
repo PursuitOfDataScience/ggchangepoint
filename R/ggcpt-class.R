@@ -295,10 +295,16 @@ empty_answer_note <- function(x) {
 #' @noRd
 format_index_range <- function(idx) {
   if (length(idx) == 0) return("(empty)")
-  fmt <- function(v) {
-    if (inherits(v, c("Date", "POSIXct", "POSIXt"))) return(format(v))
-    if (is.numeric(v)) return(format(v, digits = 6))
-    as.character(v)
+  ends <- idx[c(1L, length(idx))]
+  # Both ends in one format() call: formatted apart, a timestamp at
+  # midnight lost its time of day while the other end kept it
+  # ("2020-03-07 to 2020-03-15 08:00:00").
+  f <- if (inherits(ends, c("Date", "POSIXct", "POSIXt"))) {
+    format(ends)
+  } else if (is.numeric(ends)) {
+    vapply(ends, format, character(1), digits = 6)
+  } else {
+    as.character(ends)
   }
-  paste0(fmt(idx[1]), " to ", fmt(idx[length(idx)]))
+  paste0(f[1], " to ", f[2])
 }

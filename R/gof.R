@@ -10,8 +10,8 @@
 # ---------------------------------------------------------------------------
 
 # Internal: the residuals of a univariate fit against its fitted signal (the
-# engine's when it supplied one, the segment means otherwise), with segment
-# ids.
+# engine's when it supplied one, a line per segment for a slope fit without
+# one, the segment means otherwise), with segment ids.
 #' @noRd
 fit_residuals <- function(fit, values = NULL) {
   v <- values %||% fit$data$value
@@ -25,8 +25,8 @@ fit_residuals <- function(fit, values = NULL) {
     fitted[rows] <- if (is.null(values)) seg$param_estimate[i] else
       mean(v[rows], na.rm = TRUE)
   }
-  eng <- fit$data[["fitted"]]
-  if (is.null(values) && !is.null(eng) && length(eng) == n) fitted <- eng
+  sig <- if (is.null(values)) residual_signal(fit)
+  if (!is.null(sig)) fitted <- sig
   tibble::tibble(index = seq_len(n), value = v, seg_id = seg_id,
                  fitted = fitted, resid = v - fitted)
 }
@@ -100,7 +100,7 @@ cpt_gof <- function(fit, lag = NULL) {
   })
   out <- do.call(rbind, rows)
   overall <- residual_dependence(fit$data$value, fit$changepoints$cp,
-                                 fitted = fit$data[["fitted"]], lag = lag)
+                                 fitted = residual_signal(fit), lag = lag)
   structure(out, class = c("ggcpt_gof", class(tibble::tibble())),
             overall = overall, method = scalar_chr(fit$method))
 }

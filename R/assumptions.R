@@ -235,8 +235,15 @@ cpt_assumptions <- function(fit, lag = NULL) {
   }
 
   dep <- residual_dependence(v, fit$changepoints$cp,
-                             fitted = fit$data[["fitted"]], lag = lag)
-  if (is.null(dep)) {
+                             fitted = residual_signal(fit), lag = lag)
+  # A lag at or past the number of residuals gives Box.test() nothing to
+  # test and an NA p-value, which `if (flagged)` below met as "missing
+  # value where TRUE/FALSE needed".
+  if (!is.null(dep) && !is.finite(dep$p_value)) {
+    add("residual_dependence", NA_real_, NA,
+        paste0("Ljung-Box at lag ", dep$lag, " is undefined for ",
+               sum(is.finite(v)), " residuals; use a smaller `lag`"))
+  } else if (is.null(dep)) {
     add("residual_dependence", NA_real_, NA,
         "too few residuals to test")
   } else {

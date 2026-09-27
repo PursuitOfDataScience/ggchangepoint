@@ -178,11 +178,15 @@ supf_test <- function(v) {
 #' @param seed Optional seed, scoped to this call.
 #' @param ... Further arguments for \code{\link{cpt_min_detectable}()}.
 #' @return A \code{ggcpt_null_power} list with \code{n}, \code{sigma} (the
-#'   noise level used), \code{jump} (the smallest detectable shift, in the
+#'   noise level used), \code{jump} (the smallest detectable change, in the
 #'   data's units), \code{jump_sd} (the same in noise standard deviations),
-#'   \code{power}, \code{method} and \code{constant} (\code{TRUE} when the
-#'   series has no variation, in which case nothing is simulated). With a
-#'   \code{print()} method.
+#'   \code{change_in} (the fit's change type, which sets what \code{jump}
+#'   measures: a shift in the mean, a rise in the standard deviation, both,
+#'   or a trend, as \code{\link{cpt_power}()} defines them), \code{power},
+#'   \code{method} and \code{constant} (\code{TRUE} when the series has no
+#'   variation, in which case nothing is simulated). With \code{print()} and
+#'   \code{tidy()} methods. A formula fit is refused: the simulation has no
+#'   covariates to draw.
 #' @export
 #' @family inference
 #' @examples
@@ -208,12 +212,27 @@ cpt_null_power <- function(fit, power = 0.8, n_sim = 50, seed = NULL, ...) {
               "` is not a method cpt_detect() knows.",
               class = "capability_absent")
   }
+  # The simulation has no covariates to draw, so for a formula fit it would
+  # measure an intercept-only shift in the response, in the response's raw
+  # spread: the power of a model the fit never used.
+  if (!rerun_matches_result(fit)) {
+    cpt_abort("`cpt_null_power()` simulates the detector on series without ",
+              "covariates, and this result was fitted from a formula, so the ",
+              "answer would describe an intercept-only model. Use ",
+              "cpt_power() with a series of your own design instead.",
+              class = "capability_absent")
+  }
   dots <- list(...)
   if (is.null(dots$penalty)) dots$penalty <- rerun_penalty(fit)
   ci <- rerun_change_in(fit) %||% "mean"
   if (!ci %in% c("mean", "var", "meanvar", "slope")) ci <- "mean"
   family <- fit$family %||% "gaussian"
   out$family <- family
+  out$change_in <- if (family %in% c("poisson", "binomial", "exponential")) {
+    "mean"
+  } else {
+    dots$change_in %||% ci
+  }
   if (family %in% c("poisson", "binomial", "exponential")) {
     # A count, binary or waiting-time fit is simulated in its own family,
     # from its own level: in Gaussian units the answer was a "shift of 1.1
@@ -261,7 +280,7 @@ print.ggcpt_null_power <- function(x, ...) {
     return(invisible(x))
   }
   if (is.na(x$jump)) {
-    cat("No shift in the range searched reached power ", x$power, ": ",
+    cat("No change in the range searched reached power ", x$power, ": ",
         x$note %||% "", "\n", sep = "")
     return(invisible(x))
   }
@@ -275,10 +294,23 @@ print.ggcpt_null_power <- function(x, ...) {
         sep = "")
     return(invisible(x))
   }
-  cat("At this length and noise level (sd ", format(signif(x$sigma, 3)),
-      "), a single shift of about ", format(signif(x$jump, 3)), " (",
-      format(signif(x$jump_sd, 3)), " sd) is\ndetected with power ",
-      x$power, ". A smaller change could be present and missed.\n", sep = "")
+  # `jump_sd` is cpt_power()'s `jump`, whose meaning depends on the change
+  # type; every one of them used to be printed as a shift in the mean.
+  sg <- function(v) format(signif(v, 3))
+  what <- switch(x$change_in %||% "mean",
+    var = paste0("a rise in the noise standard deviation from ", sg(x$sigma),
+                 " to about ", sg(x$sigma * (1 + x$jump_sd)), " (a factor of ",
+                 sg(1 + x$jump_sd), ")"),
+    meanvar = paste0("a shift in the mean of about ", sg(x$jump), " (",
+                     sg(x$jump_sd), " sd) with the standard deviation rising ",
+                     "by a factor of ", sg(1 + x$jump_sd / 2)),
+    slope = paste0("a trend rising by about ", sg(x$jump), " (",
+                   sg(x$jump_sd), " sd) over the series"),
+    paste0("a single shift of about ", sg(x$jump), " (", sg(x$jump_sd),
+           " sd)"))
+  cat("At this length and noise level (sd ", sg(x$sigma), "), ", what,
+      " is\ndetected with power ", x$power, ". A smaller change could be ",
+      "present and missed.\n", sep = "")
   if (!is.null(x$note) && nzchar(x$note)) cat(x$note, "\n")
   invisible(x)
 }
@@ -287,6 +319,7 @@ print.ggcpt_null_power <- function(x, ...) {
 #' @export
 tidy.ggcpt_null_power <- function(x, ...) {
   tibble::tibble(method = x$method, n = x$n,
+                 change_in = x$change_in %||% "mean",
                  family = x$family %||% "gaussian",
                  baseline = x$baseline %||% NA_real_,
                  sigma = x$sigma, jump = x$jump, jump_sd = x$jump_sd,

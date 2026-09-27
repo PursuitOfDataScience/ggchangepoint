@@ -458,7 +458,8 @@ cpt_recommend <- function(dimension = c("univariate", "multivariate"),
     }
     if (missing(data_type)) data_type <- detect_data_type(fit$data$value)
     dep <- fit$diagnostics$residual_dependence %||%
-      residual_dependence(fit$data$value, fit$changepoints$cp)
+      residual_dependence(fit$data$value, fit$changepoints$cp,
+                          fitted = residual_signal(fit))
     if (!noise_given && !is.null(dep) && isTRUE(dep$p_value < 0.05)) {
       noise <- "autocorrelated"
       notes <- c(notes, paste0("the fit's residuals are autocorrelated ",

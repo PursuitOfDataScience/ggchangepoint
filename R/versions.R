@@ -95,7 +95,12 @@ version_drift <- function(object) {
 #' argument of the original call that was written as a literal (\code{seed = 42},
 #' \code{n_intervals = 500}). An argument written as a variable cannot be
 #' recovered from the object, and is listed in \code{not_recovered}; pass
-#' it again through \code{...} if it mattered.
+#' it again through \code{...} if it mattered. A result read back with
+#' \code{\link{cpt_import}()} from JSON keeps the call it was written with,
+#' so it replays the same way; one made by anything but \code{cpt_detect()}
+#' or a wrapper (\code{\link{as_ggcpt}()}, the fit
+#' \code{\link{cpt_select}()} returns) is refused, since re-running
+#' \code{cpt_detect()} would not reproduce how it was made.
 #'
 #' @return A \code{ggcpt_verification} object: a list with \code{verified}
 #'   (\code{TRUE} when every changepoint reproduces within
@@ -125,6 +130,23 @@ cpt_verify <- function(object, ..., tolerance = 0) {
               "as_ggcpt() records someone else's changepoints; register the ",
               "detector with cpt_register_method() to make it re-runnable.",
               class = "capability_absent",
+              data = list(method = scalar_chr(object$method)))
+  }
+  # The replay rebuilds a cpt_detect() call, which only reproduces a result
+  # a cpt_detect() call (or a wrapper) made. A cpt_select() fit was chosen
+  # from a ladder of segmentations and came back "CHANGED" against the
+  # default penalty; an as_ggcpt() result is someone else's changepoints.
+  maker <- called_function(object$call)
+  if (!is.na(maker) && !identical(maker, "cpt_detect") &&
+      !grepl("_wrapper$", maker)) {
+    cpt_abort("`cpt_verify()` re-runs cpt_detect(), and this result was made ",
+              "by `", maker, "()`, so re-running cpt_detect() would not ",
+              "reproduce how it was made. ",
+              if (identical(maker, "as_ggcpt")) {
+                "Its changepoints were found elsewhere: re-run whatever found them."
+              } else {
+                paste0("Call `", maker, "()` again to check it.")
+              }, class = "capability_absent",
               data = list(method = scalar_chr(object$method)))
   }
   if (!rerun_matches_result(object)) {
@@ -197,6 +219,20 @@ cpt_verify <- function(object, ..., tolerance = 0) {
          method = method),
     class = "ggcpt_verification"
   )
+}
+
+# Internal: the name of the function a recorded call calls
+# (`ggchangepoint::cpt_detect(...)` gives "cpt_detect"), or NA.
+#' @noRd
+called_function <- function(call) {
+  if (!is.call(call)) return(NA_character_)
+  head <- call[[1]]
+  if (is.call(head) && length(head) == 3L &&
+      (identical(head[[1]], as.name("::")) ||
+         identical(head[[1]], as.name(":::")))) {
+    head <- head[[3]]
+  }
+  if (is.name(head)) as.character(head) else NA_character_
 }
 
 # Internal: the arguments of a recorded cpt_detect() call that can be

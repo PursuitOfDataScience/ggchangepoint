@@ -89,6 +89,16 @@ cpt_annotate_events <- function(object, events, location = NULL,
   idx <- object$index
   n <- nrow(object$data)
 
+  # Column names, one each: a number or a vector reached `%in%` and `[[`
+  # as base R's "the condition has length > 1" or "subscript out of
+  # bounds".
+  for (a in c("location", "label")) {
+    v <- get(a)
+    if (!is.null(v) && !(is.character(v) && length(v) == 1L && !is.na(v))) {
+      cpt_abort("`", a, "` must be the name of one column of `events`.",
+                class = "bad_argument")
+    }
+  }
   if (is.null(location)) {
     location <- guess_event_column(events, idx)
   }
@@ -107,6 +117,11 @@ cpt_annotate_events <- function(object, events, location = NULL,
     } else {
       label <- cand[1]
     }
+  }
+  if (!label %in% names(events)) {
+    cpt_abort("`label = \"", label, "\"` is not a column of `events` ",
+              "(columns: ", paste(names(events), collapse = ", "), ").",
+              class = "bad_argument")
   }
 
   raw <- events[[location]]
@@ -571,7 +586,11 @@ cpt_report <- function(object, format = c("md", "text", "gt", "json"),
     out <- c(out, h("Citation"), "", ref, "")
   }
   out <- c(out, h("Reproducibility"), "",
-           fenced(c("Call:", utils::capture.output(print(object$call)))), "",
+           fenced(c("Call:", if (is.null(object$call)) {
+             "(not recorded)"
+           } else {
+             utils::capture.output(print(object$call))
+           })), "",
            archive_note(object), "")
   if (isTRUE(session)) {
     out <- c(out,

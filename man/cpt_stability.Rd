@@ -3,6 +3,7 @@
 \name{cpt_stability}
 \alias{cpt_stability}
 \alias{print.ggcpt_stability}
+\alias{tidy.ggcpt_stability}
 \alias{autoplot.ggcpt_stability}
 \title{Changepoint stability diagnostics via bootstrap}
 \usage{
@@ -19,6 +20,8 @@ cpt_stability(
 )
 
 \method{print}{ggcpt_stability}(x, ...)
+
+\method{tidy}{ggcpt_stability}(x, ...)
 
 \method{autoplot}{ggcpt_stability}(object, ...)
 }
@@ -72,7 +75,9 @@ A \code{ggcpt_stability} object: a list with \code{frequency}
   left out of the proportion rather than counted as "found nothing"),
   \code{bootstrap}, \code{block_length} and \code{reversal} (one row per
   original changepoint: \code{cp} and \code{survives}).
-  Methods: \code{print()} and \code{autoplot()} (frequency profile with
+  Methods: \code{print()}, \code{tidy()} (one row per original
+  changepoint: \code{cp}, \code{stability} and, when reversal ran,
+  \code{survives_reversal}) and \code{autoplot()} (frequency profile with
   the original detections marked).
 }
 \description{

@@ -115,7 +115,7 @@ detect_regression <- function(spec, method, change_in, penalty, family,
     res <- do.call(segmented_wrapper,
                    c(list(spec$formula, data = spec$vars_data,
                           family = fam$family), dots))
-    res$call <- user_call
+    res$call <- record_call(user_call, "cpt_detect")
     res$regression$terms <- colnames(X)
     res$family <- fam$family
     if (!is.null(na_info)) res$diagnostics$na_omitted <- list(
@@ -583,6 +583,8 @@ print.ggcpt_segment_models <- function(x, ...) {
 #' predict(fit, h = 3)
 predict.ggcpt <- function(object, newdata = NULL, h = 1, segment = "last",
                           models = NULL, level = 0.95, ...) {
+  validate_scalar(level, "level", min = 0, max = 1, min_open = TRUE,
+                  max_open = TRUE)
   models <- models %||% cpt_segment_models(object)
   if (!inherits(models, "ggcpt_segment_models")) {
     cpt_abort("`models` must come from cpt_segment_models().",

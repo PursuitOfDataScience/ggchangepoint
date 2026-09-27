@@ -46,7 +46,9 @@
 #'   left out of the proportion rather than counted as "found nothing"),
 #'   \code{bootstrap}, \code{block_length} and \code{reversal} (one row per
 #'   original changepoint: \code{cp} and \code{survives}).
-#'   Methods: \code{print()} and \code{autoplot()} (frequency profile with
+#'   Methods: \code{print()}, \code{tidy()} (one row per original
+#'   changepoint: \code{cp}, \code{stability} and, when reversal ran,
+#'   \code{survives_reversal}) and \code{autoplot()} (frequency profile with
 #'   the original detections marked).
 #'
 #' @section What a high score means:
@@ -109,7 +111,7 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
   original <- original %||% detect(data_vec)
 
   seg <- original$segments
-  fitted_step <- rep(seg$param_estimate, times = seg$n)
+  fitted_step <- resampling_signal(original)
   resid <- data_vec - fitted_step
   seg_id <- rep(seq_len(nrow(seg)), times = seg$n)
   if (bootstrap == "block" && is.null(block_length)) {
@@ -127,7 +129,9 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
   hits <- numeric(n)
   n_failed <- 0L
   first_error <- NULL
-  for (b in seq_len(B)) {
+  # Each replicate's advisories once, not once per replicate.
+  seen <- new.env(parent = emptyenv())
+  once_per_kind(for (b in seq_len(B)) {
     resampled <- resid
     for (s in seq_len(nrow(seg))) {
       # Observed positions only: a gap stays where it is, rather than
@@ -172,7 +176,7 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
       covered[lo:hi] <- TRUE
     }
     hits <- hits + covered
-  }
+  }, seen)
   n_ok <- B - n_failed
   if (n_ok == 0L) {
     cpt_abort("`", method, "` failed on all ", B, " bootstrap replicates, so ",
@@ -200,8 +204,9 @@ cpt_stability <- function(x, method = "pelt", B = 100, margin = 5,
       # so is a fixed one or a window bound the fit was made with.
       rev_dots <- map_rerun_positions(dots, function(p) n - p, n)
       rev_cp <- tryCatch(
-        do.call(cpt_detect, c(list(rev(data_vec), method = method),
-                              rev_dots))$changepoints$cp,
+        once_per_kind(do.call(cpt_detect,
+                              c(list(rev(data_vec), method = method),
+                                rev_dots))$changepoints$cp, seen),
         error = function(e) NULL)
       if (is.null(rev_cp)) rep(NA, length(cps)) else {
         mapped <- n - rev_cp
@@ -285,6 +290,22 @@ print.ggcpt_stability <- function(x, ...) {
     cat("\nNo changepoints detected in the original fit.\n")
   }
   invisible(x)
+}
+
+#' @rdname cpt_stability
+#' @export
+tidy.ggcpt_stability <- function(x, ...) {
+  # The table print() shows: one row per original changepoint. `tidy()`
+  # failed here with "no applicable method" although it is documented to
+  # work on every result class.
+  cp <- as.integer(x$original$changepoints$cp)
+  out <- tibble::tibble(cp = cp, stability = x$frequency$freq[cp])
+  if (!is.null(x$original$index)) {
+    out <- tibble::add_column(out, cp_index = x$original$index[cp],
+                              .after = "cp")
+  }
+  if (!is.null(x$reversal)) out$survives_reversal <- x$reversal$survives
+  out
 }
 
 #' @rdname cpt_stability

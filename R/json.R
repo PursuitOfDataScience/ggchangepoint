@@ -232,6 +232,12 @@ cpt_export <- function(fit, file, format = NULL, ...) {
   if (!is_ggcpt(fit)) {
     cpt_abort("`fit` must be a ggcpt object.", class = "bad_argument")
   }
+  # validate_report_path() lets NULL through for cpt_report(), which then
+  # returns the lines; an export has nowhere else to go, and NULL reached
+  # the extension check as "argument is of length zero".
+  if (is.null(file)) {
+    cpt_abort("`file` must be the path to write to.", class = "bad_argument")
+  }
   validate_report_path(file)
   format <- export_format(file, format)
   if (format == "json") {
@@ -296,6 +302,9 @@ cpt_import <- function(file, format = NULL, method = "imported",
       NULL
     res <- with_na_allowed(as_ggcpt(cp, series, method = method,
                                     change_in = change_in, index = idx))
+    # A CSV records no call, and the one as_ggcpt() just stored is this
+    # function's own code.
+    res$call <- NULL
     return(restore_imported_gaps(res, first, which(is.na(first))))
   }
   need_pkg("jsonlite")
@@ -365,7 +374,24 @@ cpt_import <- function(file, format = NULL, method = "imported",
   res$versions <- list(engine = j$engine, engine_version = j$engine_version,
                        ggchangepoint = j$ggchangepoint_version,
                        r = j$r_version, created = j$created)
+  # The call the file recorded, not the as_ggcpt() call above: reports
+  # printed this function's internals as the result's "Call", and
+  # cpt_verify() re-ran without the engine arguments that call carried (a
+  # `Q = 1` binseg fit read back as "CHANGED").
+  res$call <- import_call(j$call)
   res
+}
+
+# Internal: a recorded call read back from its text, or NULL when there is
+# none or it no longer parses.
+#' @noRd
+import_call <- function(txt) {
+  if (!is.character(txt) || length(txt) != 1L || is.na(txt) ||
+      !nzchar(txt)) {
+    return(NULL)
+  }
+  cl <- tryCatch(str2lang(txt), error = function(e) NULL)
+  if (is.call(cl)) cl else NULL
 }
 
 # Internal: an imported result's gaps, recorded the way cpt_detect(na_action

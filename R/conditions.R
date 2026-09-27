@@ -249,6 +249,25 @@ cpt_warn <- function(..., class = "warning", data = list(), call. = FALSE) {
   warning(structure(cond, class = cpt_condition_class(class, "warning")))
 }
 
+# Internal: evaluate `expr`, a loop of re-fits or simulations, letting each
+# kind of this package's warnings through once. Every replicate re-raised
+# the advisories its own fit earned, about its own draw: on a pelt fit of a
+# series with noise sd 0.3, `scale_sensitive` came back 100 times from
+# cpt_confint(B = 100), 180 from cpt_null_power() and 400 from
+# cpt_select(criterion = "stability"). The first of each kind still reaches
+# the caller, so nothing it says is lost. A warning of the generic class is
+# keyed on its message instead. Pass `seen` to share one record across
+# several calls (cpt_min_detectable()'s search calls cpt_power() per step).
+#' @noRd
+once_per_kind <- function(expr, seen = new.env(parent = emptyenv())) {
+  withCallingHandlers(expr, ggchangepoint_warning = function(w) {
+    key <- class(w)[1]
+    if (identical(key, "ggchangepoint_warning")) key <- conditionMessage(w)
+    if (isTRUE(seen[[key]])) invokeRestart("muffleWarning")
+    assign(key, TRUE, envir = seen)
+  })
+}
+
 #' Emit a classed ggchangepoint message
 #' @inheritParams cpt_abort
 #' @noRd

@@ -349,6 +349,14 @@ validate_flag <- function(value, name, allow_null = FALSE) {
 #' @noRd
 local_seed <- function(seed, envir = parent.frame()) {
   if (is.null(seed)) return(invisible(FALSE))
+  # Every seeded tool arrives here, and `seed = "a"` or `NA` reached
+  # set.seed() as base R's unclassed "supplied seed is not a valid integer".
+  if (!is.numeric(seed) || length(seed) != 1L || !is.finite(seed)) {
+    shown <- if (length(seed)) paste(trimws(utils::head(format(seed), 3)),
+                                     collapse = ", ") else "a zero-length value"
+    cpt_abort("`seed` must be a single finite number, or NULL for no seed; ",
+              "got ", shown, ".", class = "bad_argument")
+  }
   g <- globalenv()
   # A fresh session has no `.Random.seed` until the first draw, and leaving
   # one behind would itself be a change to the caller's state.
@@ -694,7 +702,14 @@ coerce_series_values <- function(x, arg = "x") {
   )
   if (!clean || is.null(num)) {
     cpt_abort("`", arg, "` must be a numeric vector, matrix, or data.frame, ",
-               "not ", class(x)[1], ".", class = "bad_type")
+               "not ", class(x)[1], ".",
+              # A fit where a series belongs is the likely mistake here
+              # (cpt_consensus(fit), cpt_replay(fit)): name the fix.
+              if (is_ggcpt(x)) {
+                paste0(" This function takes the series itself: pass `",
+                       arg, "$data$value` (and `index = ", arg,
+                       "$index`) from the fit.")
+              }, class = "bad_type")
   }
   num
 }

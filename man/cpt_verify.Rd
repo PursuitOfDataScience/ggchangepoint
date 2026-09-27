@@ -57,7 +57,12 @@ handling and constraints it recorded (\code{na_action}, \code{fixed},
 argument of the original call that was written as a literal (\code{seed = 42},
 \code{n_intervals = 500}). An argument written as a variable cannot be
 recovered from the object, and is listed in \code{not_recovered}; pass
-it again through \code{...} if it mattered.
+it again through \code{...} if it mattered. A result read back with
+\code{\link{cpt_import}()} from JSON keeps the call it was written with,
+so it replays the same way; one made by anything but \code{cpt_detect()}
+or a wrapper (\code{\link{as_ggcpt}()}, the fit
+\code{\link{cpt_select}()} returns) is refused, since re-running
+\code{cpt_detect()} would not reproduce how it was made.
 }
 \examples{
 set.seed(2026)

@@ -2,6 +2,7 @@
 % Please edit documentation in R/power.R
 \name{cpt_min_detectable}
 \alias{cpt_min_detectable}
+\alias{tidy.ggcpt_min_detectable}
 \alias{print.ggcpt_min_detectable}
 \title{The smallest detectable change}
 \usage{
@@ -23,6 +24,8 @@ cpt_min_detectable(
   seed = NULL,
   ...
 )
+
+\method{tidy}{ggcpt_min_detectable}(x, ...)
 
 \method{print}{ggcpt_min_detectable}(x, ...)
 }
@@ -85,7 +88,8 @@ simulation loop does not pin the loop's own stream.}
 \value{
 A list with \code{jump} (the smallest change reaching
   \code{power}), \code{achieved_power}, \code{mc_se}, and the
-  \code{trace} of evaluations, with a \code{print()} method.
+  \code{trace} of evaluations, with \code{print()} and \code{tidy()}
+  (one row) methods.
 }
 \description{
 Inverts \code{\link{cpt_power}()}: searches for the change size at which

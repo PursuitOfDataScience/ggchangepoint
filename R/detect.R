@@ -302,6 +302,24 @@ cpt_detect <- function(x,
   # object cannot be coerced to type 'double'". An intercept-only formula is
   # the response as a series, so every univariate method takes it.
   if (inherits(x, "formula")) {
+    # Grouping is read off `x`, and a formula's rows are in `data`, so a
+    # `group =` or a grouped `data` was ignored: every group went into one
+    # regression, with a spurious break where one group's rows met the
+    # next (two groups of 200 rows gave a "change" at 200).
+    grouped <- if (is.data.frame(data)) {
+      detect_groups(data, group_expr, caller)
+    } else if (!is.null(group_expr)) {
+      deparse(group_expr)
+    }
+    if (length(grouped)) {
+      cpt_abort("The formula interface fits one series, and `data` holds ",
+                "several (grouped by ", paste0("`", grouped, "`",
+                                               collapse = ", "),
+                "). Fit each group's rows on their own, e.g. ",
+                "lapply(split(data, data$", grouped[1], "), function(d) ",
+                "cpt_detect(<formula>, data = d, method = ...)).",
+                class = "unsupported", data = list(group = grouped))
+    }
     spec <- formula_series(x, data, index_expr, caller)
     if (!spec$intercept_only) {
       return(detect_regression(
@@ -597,7 +615,7 @@ cpt_detect <- function(x,
   # match.call(), which for a dispatched run is an internal, unexported helper
   # (`wrap_cpt_to_ggcpt(x = data_vec, change_in = ci, ...)`) that the reader
   # can neither recognise nor re-run.
-  res$call <- user_call
+  res$call <- record_call(user_call, "cpt_detect")
   if (!is.null(fam)) {
     res$family <- fam$family
     if (!is.null(fam$reported) && identical(scalar_chr(res$change_in),
@@ -612,7 +630,7 @@ cpt_detect <- function(x,
   # and a warning on every one would be tuned out within a week (§201.2).
   # cpt_assumptions() and cpt_report() read it.
   dep <- residual_dependence(res$data$value, res$changepoints$cp,
-                             fitted = res$data[["fitted"]])
+                             fitted = residual_signal(res))
   if (!is.null(dep)) {
     res$diagnostics <- c(res$diagnostics %||% list(),
                          list(residual_dependence = dep))

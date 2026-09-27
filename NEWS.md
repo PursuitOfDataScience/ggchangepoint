@@ -297,6 +297,98 @@ Read these first: each changes what an existing call returns.
   class does: `cpt_effect()`, `cpt_test_at()`, `cpt_assumptions()`,
   `cpt_gof()`, `cpt_robustness()`, `cpt_verify()` and `cpt_null_power()`.
 
+## Fixes from the second pre-release audit
+
+Every analysis tool run against fits of every shape: no changepoints,
+gaps, dates, a slope, a formula, fixed locations, small units.
+
+- The bootstrap interval, `cpt_stability()`, `cpt_select(criterion =
+  "stability")` and `cpt_influence(type = "outlier")` resample a slope fit
+  around its fitted line (the engine's signal, or a least-squares line per
+  segment for `not` and `nsp`) and a seasonal fit around its cycle.
+  Resampled around the segment means, every replicate of a clean slope
+  change came back flat: the interval collapsed onto the point and the
+  stability was 0. The residual checks of `cpt_gof()`,
+  `cpt_assumptions()` and the diagnostics a fit records use the same line.
+- `cpt_influence()`, `cpt_leverage()`, `cpt_sensitivity()`, `cpt_select()`
+  and `cpt_null_power()` refuse a formula fit, as the other tools that
+  re-run a fit already did: its covariates are not stored on it, and they
+  re-ran an intercept-only search in its place.
+- `cpt_select()` warns when its criterion scores a ladder of another change
+  type as a change in the mean (measured, it chose K = 0 on a variance
+  change and K = 19 on a slope), and no longer repeats the
+  implausible-count warning of every over-segmenting rung.
+- `cpt_test()` reports an `estimate` for a fit with gaps (it was `NA`
+  beside a valid statistic), and its Welch fallback warns that it tests a
+  shift in the mean when the fit found a change in variance, slope or
+  distribution.
+- A changepoint fixed in advance with `cpt_detect(fixed = )` is
+  `selection_adjusted = TRUE` in `cpt_test()` and `cpt_effect()`: the data
+  did not locate it.
+- `cpt_effect()` warns that segment means do not measure a change in
+  slope, and names `cpt_segment_models()`, which fits the lines.
+- `cpt_null_power()` says what its answer measures for a change in
+  variance, in mean and variance, or in slope, where it called every one a
+  shift in the mean; `tidy()` gains `change_in`.
+- The tools that re-fit or simulate many times (`cpt_confint()`,
+  `cpt_stability()`, `cpt_influence()`, `cpt_sensitivity()`,
+  `cpt_select()`, `cpt_power()`, `cpt_min_detectable()`,
+  `cpt_null_power()`) raise each kind of warning once per call, not once
+  per replicate: on a series in small units `cpt_confint(B = 100)` warned
+  100 times.
+- Selecting columns of a `cpt_assumptions()`, `cpt_gof()`, `cpt_effect()`,
+  `cpt_segment_models()` or `cpt_power()` result drops its class, so it
+  prints like any tibble; `print()` failed or warned about the columns
+  that were gone.
+- `tidy()` works on `cpt_stability()`, `cpt_min_detectable()`,
+  `cpt_label_error_curve()` and `cpt_learn_penalty()` results.
+- A result's `call` no longer holds the data or a function's source.
+  `do.call(cpt_detect, list(x, ...))` stored the whole series and the
+  source of `cpt_detect()`, so `as_json(fit, data = FALSE)` still wrote
+  every value (31 KB for 1,000 points) and `cpt_report()` printed them
+  under "Call".
+- `cpt_import()` restores the call a JSON result was written with. Reports
+  showed the importer's own code, and `cpt_verify()` re-ran without the
+  engine arguments the call held (a `Q = 1` binseg fit read back as
+  "CHANGED"). A CSV import records no call.
+- `cpt_verify()` refuses a result that no `cpt_detect()` call made
+  (`as_ggcpt()`, the fit `cpt_select()` returns), which it re-ran at the
+  defaults and reported as changed.
+- A warning from one series of a grouped or batch detection names the
+  series, as an error from it already did.
+- The formula interface refuses `group =` or grouped `data`, and so does
+  `cpt_test_at()`, where every group was fitted as one stacked regression
+  with a spurious break at the join.
+- `print()` formats both ends of a timestamp index alike, and a fit passed
+  where a series belongs (`cpt_consensus(fit)`) says how to pass the
+  series.
+- Refused by name where base R used to answer: a `seed` that is not a
+  single number (every seeded tool, "supplied seed is not a valid
+  integer"), an infinite `fixed` position or `when`, `cpt_labels()` with a
+  missing bound, `cpt_attribute_event()` with no events, an
+  `cpt_annotate_events()` `location` or `label` that is not one column
+  name, a non-finite influence `subset`, an empty or non-numeric
+  `cpt_power()` grid, and `predict(level = )` outside (0, 1).
+  `cpt_assumptions()` reports a Ljung-Box lag too large for the series
+  instead of failing on it.
+- `cpt_simulate()` refuses `params` that are not finite numbers (a string
+  failed in the arithmetic; `NA` or `Inf` returned a series of `NA` or
+  `Inf`) and a missing changepoint, which it dropped without a word.
+- `cpt_attribute_event()` reports an event position before the first or
+  after the last observation as outside the series, as it already did for
+  an index value there.
+- `taylor` no longer passes on its engine's "no non-missing arguments to
+  max" warning from a stretch with no candidate change.
+- `cpt_statistic()`, `cpt_solution_path()`, `ggcpt_posterior()` and
+  `ggcpt_runlength()` on a result without its engine object
+  (`keep_fit = FALSE`, or read back with `cpt_import()`) say so, where they
+  said the engine "does not expose" the thing and then listed that engine
+  among the ones that do.
+- `cpt_export()` refuses `file = NULL` by name, `cpt_scale_space()` refuses
+  bandwidths that are not numbers (they became "No usable bandwidth"), and
+  `cpt_metrics()` warns when it drops a missing location (`truth = NA` was
+  scored as no true changepoints).
+
 ## Documentation
 
 - The README is rewritten: one real example (the Nile), the next questions

@@ -36,12 +36,29 @@ cpt_statistic <- function(object) {
   }
   out <- extract_statistic(object)
   if (is.null(out)) {
-    cpt_abort("Engine `", object$method, "` does not expose a per-location ",
-              "statistic. These do: ",
-              paste(subset(cpt_methods(), statistic %in% TRUE)$method,
-                    collapse = ", "), ".", class = "capability_absent")
+    capable <- subset(cpt_methods(), statistic %in% TRUE)$method
+    cpt_abort(dropped_fit_reason(object, capable, "the statistic") %||%
+                paste0("Engine `", object$method, "` does not expose a ",
+                       "per-location statistic. These do: ",
+                       paste(capable, collapse = ", "), "."),
+              class = "capability_absent")
   }
   out
+}
+
+# Internal: why an accessor found nothing on a result whose method does
+# offer it: the result carries no engine object, which is where the thing
+# is read from. Its refusal used to say the engine "does not expose" it and
+# then list that same engine among the ones that do. NULL when that is not
+# the reason.
+#' @noRd
+dropped_fit_reason <- function(object, capable, what) {
+  method <- scalar_chr(object$method)
+  if (!is.null(object$fit) || !method %in% capable) return(NULL)
+  paste0("This `", method, "` result carries no engine object (it was made ",
+         "with `keep_fit = FALSE`, or read back with cpt_import()), and ",
+         what, " is read from that object. Re-run the detection with ",
+         "`keep_fit = TRUE`.")
 }
 
 # Internal: per-engine statistic extraction. Returns NULL when the engine
@@ -270,12 +287,14 @@ cpt_solution_path <- function(object) {
   }
   out <- extract_solution_path(object)
   if (is.null(out)) {
-    cpt_abort("Engine `", object$method, "` does not expose a solution path. ",
-              "These do: ",
-              paste(subset(cpt_methods(), path %in% TRUE)$method,
-                    collapse = ", "),
-              ". For the penalty path of an optimal-partitioning method see ",
-              "cpt_crops().", class = "capability_absent")
+    capable <- subset(cpt_methods(), path %in% TRUE)$method
+    cpt_abort(dropped_fit_reason(object, capable, "the solution path") %||%
+                paste0("Engine `", object$method, "` does not expose a ",
+                       "solution path. These do: ",
+                       paste(capable, collapse = ", "), ". For the penalty ",
+                       "path of an optimal-partitioning method see ",
+                       "cpt_crops()."),
+              class = "capability_absent")
   }
   out
 }
@@ -615,6 +634,9 @@ cpt_scale_space <- function(x, bandwidths = NULL,
       exp(seq(log(lo), log(hi), length.out = 8))
     )))
   }
+  # Checked before the coercion: text or Inf became NA with a warning and
+  # was reported as "No usable bandwidth" for a series that has plenty.
+  validate_grid(bandwidths, "bandwidths", min = 1)
   bandwidths <- sort(unique(as.integer(bandwidths)))
   bandwidths <- bandwidths[bandwidths >= 2 & 2 * bandwidths < n]
   if (length(bandwidths) == 0) {

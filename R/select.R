@@ -211,7 +211,25 @@ cpt_select <- function(x, method = "pelt",
   k_max <- min(as.integer(k_max), max(1L, floor(n / 4)))
   local_seed(seed)
 
-  ladder <- candidate_ladder(series, method, change_in, k_max, ...)
+  # Every criterion but "stability" scores a change in the mean (see
+  # `change_in` above), and a ladder of another change type is scored as one
+  # anyway. Said on the call, not only on the help page: measured, a real
+  # variance change at n = 200 chose K = 0 under "bic", and a slope change
+  # chose K = 19, the mean cost's staircase of steps along the line.
+  if (!identical(change_in, "mean") && criterion != "stability") {
+    cpt_warn("`criterion = \"", criterion, "\"` scores every candidate as a ",
+             "change in the mean, but this ladder's `change_in` is \"",
+             change_in, "\", so the chosen K answers a different question ",
+             "from the one the candidates were found for. ",
+             "`criterion = \"stability\"` scores by re-detection with the ",
+             "same change type.", class = "assumption",
+             data = list(criterion = criterion, change_in = change_in))
+  }
+  # The ladder and the re-detection criteria re-fit many times; each
+  # advisory once.
+  seen <- new.env(parent = emptyenv())
+  ladder <- once_per_kind(candidate_ladder(series, method, change_in, k_max,
+                                           ...), seen)
   costs <- vapply(ladder$cpts, function(cp) gaussian_cost(series, cp),
                   numeric(1))
   ks <- ladder$k
@@ -240,7 +258,7 @@ cpt_select <- function(x, method = "pelt",
     stability = rep(NA_real_, length(ks))
   )
 
-  chosen_k <- switch(criterion,
+  chosen_k <- once_per_kind(switch(criterion,
     bic = ks[which.min(value)],
     aic = ks[which.min(value)],
     mbic = ks[which.min(value)],
@@ -251,7 +269,7 @@ cpt_select <- function(x, method = "pelt",
                                change_in = change_in, ...)
       ks[which.max(value)]
     }
-  )
+  ), seen)
   # `cv` and `stability` are the two criteria whose answer comes from a
   # separate search rather than from `value`, and each can come back with
   # nothing usable: stability_curve() is NA at every rung with no
@@ -272,7 +290,8 @@ cpt_select <- function(x, method = "pelt",
   if (!chosen_k %in% ks) {
     # Cross-validation searches its own ladder, so its answer can exceed the
     # candidates we scored; extend rather than silently snapping to k_max.
-    extra <- candidate_ladder(series, method, change_in, chosen_k, ...)
+    extra <- once_per_kind(candidate_ladder(series, method, change_in,
+                                            chosen_k, ...), seen)
     keep <- extra$k == chosen_k
     ladder <- list(k = c(ks, chosen_k),
                    cpts = c(ladder$cpts, extra$cpts[keep]))
@@ -320,6 +339,8 @@ cpt_select <- function(x, method = "pelt",
                   change_in = change_in,
                   penalty = list(type = paste0("selected by ", criterion),
                                  value = NA_real_))
+  # What made it, rather than the as_ggcpt() line above.
+  fit$call <- record_call(match.call(), "cpt_select")
   if (!is.null(na_keep)) {
     pos <- which(na_keep)
     fit <- restore_missing(fit, list(keep = na_keep, pos = pos,
@@ -371,9 +392,16 @@ candidate_ladder <- function(series, method, change_in, k_max, ...) {
     found <- vector("list", k_max + 1L)
     found[[1]] <- integer(0)
     for (p in pens) {
+      # The low end of the sweep over-segments on purpose, so the
+      # implausible-count warning each such rung raises is about the
+      # ladder, not the data: a cpop slope ladder printed twelve of them.
       cp <- tryCatch(
-        cpt_detect(series, method = method, change_in = change_in,
-                   penalty = p, ...)$changepoints$cp,
+        withCallingHandlers(
+          cpt_detect(series, method = method, change_in = change_in,
+                     penalty = p, ...)$changepoints$cp,
+          ggchangepoint_implausible_count = function(w) {
+            invokeRestart("muffleWarning")
+          }),
         error = function(e) NULL
       )
       if (is.null(cp)) next
@@ -482,6 +510,13 @@ stability_curve <- function(series, ladder, method, B, change_in = "mean",
     cp <- ladder$cpts[[i]]
     if (length(cp) == 0) return(NA_real_)
     fitted_step <- rep_segment_means(series, cp)
+    # A slope ladder resamples around a line per segment, as the
+    # bootstrap does (see resampling_signal()).
+    if (identical(change_in, "slope")) {
+      b <- c(0L, cp, n)
+      fitted_step <- segment_lines(series, b[-length(b)] + 1L, b[-1],
+                                   fitted_step)
+    }
     resid <- series - fitted_step
     seg_id <- rep(seq_len(length(cp) + 1L), diff(c(0L, cp, n)))
     hits <- numeric(length(cp))

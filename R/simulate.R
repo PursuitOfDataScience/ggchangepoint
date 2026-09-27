@@ -133,6 +133,12 @@ cpt_simulate <- function(n,
 
   local_seed(seed)
 
+  # Before the sort, which drops a missing value without a word: `NA` came
+  # back as a series with no change in it and no warning.
+  if (anyNA(changepoints)) {
+    cpt_abort("`changepoints` must not contain missing values.",
+              class = "bad_argument")
+  }
   changepoints <- as_cp_locations(changepoints, "changepoints", sort = TRUE)
   # Out-of-range locations are dropped, and `attr(res, "true_changepoints")`
   # below records the *filtered* set -- so this used to return a series with
@@ -174,6 +180,27 @@ cpt_simulate <- function(n,
       meanvar = rep(list(list(mean = 0, sd = 1)), n_seg),
       slope   = rep(list(list(intercept = 0, slope = 0)), n_seg)
     )
+  }
+
+  # One number per segment for "mean" (its mean) and "var" (its noise
+  # standard deviation). A string reached the arithmetic below as base R's
+  # "non-numeric argument to binary operator", and NA or Inf came back as a
+  # series of NA or Inf, which every detector then refused.
+  if (change_in %in% c("mean", "var")) {
+    vals <- if (is.list(params)) unlist(params) else params
+    bad <- !is.numeric(vals) || length(vals) != length(params) ||
+      any(!is.finite(vals)) || (change_in == "var" && any(vals < 0))
+    if (bad) {
+      cpt_abort("`params` for `change_in = \"", change_in, "\"` must be ",
+                "finite numbers, one ", if (change_in == "mean") {
+                  "segment mean"
+                } else {
+                  "non-negative noise standard deviation"
+                }, " per segment; got ",
+                paste(trimws(utils::head(format(params), 3)), collapse = ", "),
+                if (length(params) > 3) ", ..." else "", ".",
+                class = "bad_argument")
+    }
   }
 
   # Too few parameters means the last one is recycled, so the trailing

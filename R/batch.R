@@ -166,9 +166,20 @@ cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
   }
 
   run_one <- function(i) {
+    where <- paste0("Series `", names(series_list)[i], "` (", i, " of ",
+                    length(series_list), "): ")
     tryCatch(
-      cpt_detect(series_list[[i]], method = method, change_in = change_in,
-                 index = index_for(i), ...),
+      withCallingHandlers(
+        cpt_detect(series_list[[i]], method = method, change_in = change_in,
+                   index = index_for(i), ...),
+        # Named like an error from the same series: in a panel of fifty, a
+        # warning that "`x` has only 3 observations" said what and not
+        # which. Re-raised with its class and fields intact.
+        warning = function(w) {
+          w$message <- paste0(where, conditionMessage(w))
+          warning(w)
+          invokeRestart("muffleWarning")
+        }),
       error = function(e) {
         cpt_rethrow(e, "Series `", names(series_list)[i], "` (", i, " of ",
                     length(series_list), "): ")

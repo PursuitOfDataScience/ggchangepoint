@@ -452,6 +452,13 @@ constraint_positions <- function(v, idx, n, arg) {
   if (is.null(v)) return(NULL)
   p <- locate_on_series(v, idx, n, arg, side = "before")
   if (anyNA(p)) refuse_unlocated(v, idx, arg)
+  # An infinite position became NA in as.integer(), and the range check
+  # below then failed with base R's "missing value where TRUE/FALSE needed".
+  if (any(!is.finite(p))) {
+    cpt_abort("`", arg, "` must hold finite positions; got ",
+              paste(trimws(format(v[!is.finite(p)])), collapse = ", "), ".",
+              class = "bad_argument")
+  }
   p <- as.integer(round(p))
   bad <- p < 1L | p >= n
   if (any(bad)) {

@@ -1,9 +1,13 @@
 # ---------------------------------------------------------------------------
 # Keeping tibble subclasses honest under `[`.
 #
-# Several 0.5.0 results are tibbles carrying an extra class and a `print()`
+# Several results are tibbles carrying an extra class and a `print()`
 # method that reads specific columns: ggcpt_benchmark, ggcpt_batch,
-# ggcpt_recommendation, ggcpt_label_curve, cpt_labels, cpt_label_error.
+# ggcpt_recommendation, ggcpt_label_curve, cpt_labels, cpt_label_error and
+# ggcpt_power, and from 0.6.0 ggcpt_assumptions, ggcpt_gof, ggcpt_effect and
+# ggcpt_segment_models. The 0.6.0 five shipped without these methods, so
+# `cpt_assumptions(fit)[, "component"]` failed to print with "argument is
+# of length zero" and the rest warned about the columns they had lost.
 # Base `[` keeps the class, so `bm[, c("dataset", "method")]` came back
 # still claiming to be a benchmark, and printing it then reached for a
 # `error` column that was no longer there -- "Unknown or uninitialised
@@ -84,4 +88,35 @@ reclass_subset <- function(x, out, required) {
   out <- NextMethod()
   reclass_subset(x, out, c("label_id", "start", "end", "change",
                            "n_changes", "status"))
+}
+
+#' @export
+`[.ggcpt_power` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("n", "jump", "power", "mc_se", "n_sim"))
+}
+
+#' @export
+`[.ggcpt_assumptions` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("component", "flag", "detail", "advice"))
+}
+
+#' @export
+`[.ggcpt_gof` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("seg_id", "sd", "ljung_box_p", "shapiro_p",
+                           "too_short"))
+}
+
+#' @export
+`[.ggcpt_effect` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("cp", "selection_adjusted"))
+}
+
+#' @export
+`[.ggcpt_segment_models` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("segment", "start", "end", "n", "model"))
 }
