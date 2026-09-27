@@ -75,7 +75,13 @@ test accounts for that:
   segments either side of the changepoint as if the location had been
   fixed in advance. Useful as a descriptive effect size with a scale
   attached; not a valid significance test for the existence of the
-  change.
+  change. The exception is a changepoint that *was* fixed in advance,
+  through `cpt_detect(fixed = )`: its row is `TRUE`.
+
+- The fallback compares means whatever the fit detected, so on a fit of
+  a change in variance, slope or distribution it tests a different
+  change from the one found, and warns (class
+  `ggchangepoint_assumption`).
 
 - `FALSE` for strucchange's route as well, which is the Chow F evaluated
   *at* each estimated break date. The Chow statistic's reference

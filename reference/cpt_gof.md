@@ -12,6 +12,9 @@ cpt_gof(fit, lag = NULL)
 
 # S3 method for class 'ggcpt_gof'
 print(x, ...)
+
+# S3 method for class 'ggcpt_gof'
+tidy(x, ...)
 ```
 
 ## Arguments

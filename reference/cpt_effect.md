@@ -14,6 +14,9 @@ cpt_effect(fit, level = 0.95, method = c("naive", "split"), seed = NULL, ...)
 print(x, ...)
 
 # S3 method for class 'ggcpt_effect'
+tidy(x, ...)
+
+# S3 method for class 'ggcpt_effect'
 autoplot(object, ...)
 ```
 
@@ -74,9 +77,11 @@ the detector put the boundary where the two sides differ most, so the
 difference it reports is the largest the noise allowed. The bias is
 worst for the marginal detections, which are exactly the ones whose size
 matters. `method = "naive"` rows carry `selection_adjusted = FALSE` for
-that reason. `method = "split"` is honest about the size (the measuring
-half never influenced the locations) and less precise about the location
-(the locating half has half the data), and it assumes the noise is
+that reason, except at a changepoint fixed in advance with
+`cpt_detect(fixed = )`, which the data did not locate and which is
+`TRUE`. `method = "split"` is honest about the size (the measuring half
+never influenced the locations) and less precise about the location (the
+locating half has half the data), and it assumes the noise is
 independent from one observation to the next, since the two halves are
 interleaved.
 

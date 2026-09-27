@@ -92,6 +92,9 @@ confidence intervals.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ggcpt_stability'</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'ggcpt_stability'</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -169,7 +172,9 @@ depend on direction and get <code>NA</code>.</p></dd>
   left out of the proportion rather than counted as "found nothing"),
   <code>bootstrap</code>, <code>block_length</code> and <code>reversal</code> (one row per
   original changepoint: <code>cp</code> and <code>survives</code>).
-  Methods: <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> (frequency profile with
+  Methods: <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> (one row per original
+  changepoint: <code>cp</code>, <code>stability</code> and, when reversal ran,
+  <code>survives_reversal</code>) and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> (frequency profile with
   the original detections marked).</p>
     </div>
     <div class="section level2">

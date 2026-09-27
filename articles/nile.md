@@ -116,10 +116,6 @@ extraction recipes.
 fit <- cpt_detect(Nile, method = "strucchange")
 cpt_effect(fit)[, c("cp_index", "before", "after", "delta", "delta_lower",
                     "delta_upper", "pct_change")]
-#> ggcpt_effect (method: strucchange, naive)
-#> Measured where the same data located each change, so the sizes are biased upward
-#> (selection_adjusted = FALSE). method = "split" measures on held-out observations. 
-#> 
 #> # A tibble: 1 × 7
 #>   cp_index before after delta delta_lower delta_upper pct_change
 #>      <dbl>  <dbl> <dbl> <dbl>       <dbl>       <dbl>      <dbl>

@@ -13,6 +13,9 @@ cpt_assumptions(fit, lag = NULL)
 
 # S3 method for class 'ggcpt_assumptions'
 print(x, ...)
+
+# S3 method for class 'ggcpt_assumptions'
+tidy(x, ...)
 ```
 
 ## Arguments

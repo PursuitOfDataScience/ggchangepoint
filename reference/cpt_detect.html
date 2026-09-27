@@ -257,7 +257,8 @@ an index value and one inside as a position).</p></dd>
 <dt id="arg-within">within<a class="anchor" aria-label="anchor" href="#arg-within"></a></dt>
 <dd><p>Windows the changepoints must fall in ("the policy took
 effect sometime in Q2"): a pair <code>c(start, end)</code>, a list of pairs,
-or a two-column table, in positions or index values. The engine
+or a two-column table, in positions or index values; a bound beyond
+either end of the series is read as that end. The engine
 searches the whole series and changepoints outside every window are
 dropped (recorded in <code>$constraints</code>); it restricts what is
 reported rather than re-optimising.</p></dd>
@@ -338,13 +339,17 @@ of convenience:</p><ul><li><p>standardise the series first
 Isolate-Detect, TGUH, CPOP, <code>"bcp"</code>, <code>"beast"</code> and the
 nonparametric and multivariate methods estimate or cancel the noise scale
 internally, and returned the same segmentation at a thousandth, one and
-a thousand times the units. Three did not, on the same series:
+a thousand times the units. Five did not, on the same series:
 <code>"geomcp"</code> runs PELT on its mapped distance and angle series and so
 inherits the sensitivity above; <code>"decafs"</code> floors its noise
 estimate at about 0.03, so it under-segments a series whose noise is
-smaller than that; and <code>"bocpd"</code>'s default prior is on the data's
-own scale. At a thousandth of the units the last two found nothing.
-Standardising first avoids all three.</p>
+smaller than that; <code>"bocpd"</code>'s default prior is on the data's
+own scale; and <code>"envcpt"</code> and <code>"var"</code> changed their answer
+with the units too (<code>var</code>'s <code>gamma_set</code> and <code>lambda_set</code>
+penalise a squared-error loss on an absolute scale). At a
+thousandth of the units <code>"decafs"</code>, <code>"bocpd"</code> and
+<code>"var"</code> found nothing. Standardising first avoids all five, and
+<code><a href="cpt_invariances.html">cpt_invariances</a></code> holds the measurement.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -83,8 +83,9 @@ does not apply is `null`, so a reader never has to test for a key.
 
 - `index`:
 
-  `{"class", "label"}` of the time index, or `null`. Dates are written
-  as ISO 8601 strings and timestamps with their offset.
+  `{"class", "label", "tz"}` of the time index, or `null`. Dates are
+  written as ISO 8601 strings and timestamps with their offset; `tz` is
+  a timestamp index's time zone (`null` otherwise).
 
 - `changepoints`:
 
@@ -118,7 +119,10 @@ does not apply is `null`, so a reader never has to test for a key.
 
 - `data`:
 
-  `{"index", "value", "fitted"}` arrays, or `null`.
+  `{"index", "value", "fitted", "coordinates"}` arrays, or `null`.
+  `coordinates` is an object with one array per coordinate of a
+  multivariate result (`null` for a single series), whose first is
+  `value`.
 
 ## See also
 
@@ -154,7 +158,7 @@ cat(as_json(fit, data = FALSE))
 #>   "engine_version": "2.3",
 #>   "ggchangepoint_version": "0.6.0",
 #>   "r_version": "4.6.1",
-#>   "created": "2026-09-26T14:14:32+0000",
+#>   "created": "2026-09-27T04:15:35+0000",
 #>   "change_in": "mean",
 #>   "family": null,
 #>   "penalty": {

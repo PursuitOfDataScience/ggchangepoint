@@ -15,6 +15,9 @@ cpt_null_power(fit, power = 0.8, n_sim = 50, seed = NULL, ...)
 
 # S3 method for class 'ggcpt_null_power'
 print(x, ...)
+
+# S3 method for class 'ggcpt_null_power'
+tidy(x, ...)
 ```
 
 ## Arguments
@@ -47,11 +50,16 @@ print(x, ...)
 ## Value
 
 A `ggcpt_null_power` list with `n`, `sigma` (the noise level used),
-`jump` (the smallest detectable shift, in the data's units), `jump_sd`
-(the same in noise standard deviations), `power`, `method` and
-`constant` (`TRUE` when the series has no variation, in which case
-nothing is simulated). With a
-[`print()`](https://rdrr.io/r/base/print.html) method.
+`jump` (the smallest detectable change, in the data's units), `jump_sd`
+(the same in noise standard deviations), `change_in` (the fit's change
+type, which sets what `jump` measures: a shift in the mean, a rise in
+the standard deviation, both, or a trend, as
+[`cpt_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)
+defines them), `power`, `method` and `constant` (`TRUE` when the series
+has no variation, in which case nothing is simulated). With
+[`print()`](https://rdrr.io/r/base/print.html) and
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) methods. A
+formula fit is refused: the simulation has no covariates to draw.
 
 ## See also
 

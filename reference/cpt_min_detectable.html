@@ -81,6 +81,9 @@ power curve, and the number that belongs in a pre-registration.</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ggcpt_min_detectable'</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'ggcpt_min_detectable'</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -106,7 +109,12 @@ power curve, and the number that belongs in a pre-registration.</p>
 
 <dt id="arg-range">range<a class="anchor" aria-label="anchor" href="#arg-range"></a></dt>
 <dd><p>Search range for the change size, in standard deviations.
-Defaults to <code>c(0.1, 5)</code>.</p></dd>
+Defaults to <code>c(0.1, 5)</code>. With a non-Gaussian <code>family</code> passed
+through <code>...</code> to <code><a href="cpt_power.html">cpt_power()</a></code>, the change is in the
+family's own parameter and the default follows it: <code>c(0.1, 5)</code>
+times the square root of the baseline rate for <code>"poisson"</code>, up to
+a probability of 0.99 for <code>"binomial"</code>, and <code>c(0.1, 5)</code>
+times the baseline mean for <code>"exponential"</code>.</p></dd>
 
 
 <dt id="arg-n-sim">n_sim<a class="anchor" aria-label="anchor" href="#arg-n-sim"></a></dt>
@@ -176,7 +184,8 @@ simulation loop does not pin the loop's own stream.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A list with <code>jump</code> (the smallest change reaching
   <code>power</code>), <code>achieved_power</code>, <code>mc_se</code>, and the
-  <code>trace</code> of evaluations, with a <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> method.</p>
+  <code>trace</code> of evaluations, with <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>
+  (one row) methods.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

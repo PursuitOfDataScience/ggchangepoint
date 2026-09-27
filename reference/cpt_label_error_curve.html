@@ -74,6 +74,9 @@ see whether <em>any</em> penalty can satisfy the labels.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ggcpt_label_curve'</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'ggcpt_label_curve'</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -122,7 +125,8 @@ explicitly for an expensive engine.</p></dd>
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>ggcpt_label_curve</code> object: a tibble with <code>penalty</code>,
   <code>n_cp</code>, <code>errors</code>, <code>false_positive</code>,
-  <code>false_negative</code>, plus <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.
+  <code>false_negative</code>, plus <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code>, <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> and
+  <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.
   The <code>target</code> attribute holds the interval of <code>log(penalty)</code>
   achieving the minimum error, which is what
   <code><a href="cpt_learn_penalty.html">cpt_learn_penalty()</a></code> regresses on.</p>

@@ -70,6 +70,9 @@ change, and for count and waiting-time data the rate or hazard ratio.</p>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ggcpt_effect'</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'ggcpt_effect'</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -135,7 +138,9 @@ the detector put the boundary where the two sides differ most, so the
 difference it reports is the largest the noise allowed. The bias is
 worst for the marginal detections, which are exactly the ones whose size
 matters. <code>method = "naive"</code> rows carry <code>selection_adjusted =
-FALSE</code> for that reason. <code>method = "split"</code> is honest about the size
+FALSE</code> for that reason, except at a changepoint fixed in advance with
+<code>cpt_detect(fixed = )</code>, which the data did not locate and which is
+<code>TRUE</code>. <code>method = "split"</code> is honest about the size
 (the measuring half never influenced the locations) and less precise
 about the location (the locating half has half the data), and it assumes
 the noise is independent from one observation to the next, since the

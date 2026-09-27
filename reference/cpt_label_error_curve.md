@@ -20,6 +20,9 @@ cpt_label_error_curve(
 print(x, ...)
 
 # S3 method for class 'ggcpt_label_curve'
+tidy(x, ...)
+
+# S3 method for class 'ggcpt_label_curve'
 autoplot(object, ...)
 ```
 
@@ -69,7 +72,8 @@ autoplot(object, ...)
 
 A `ggcpt_label_curve` object: a tibble with `penalty`, `n_cp`, `errors`,
 `false_positive`, `false_negative`, plus
-[`print()`](https://rdrr.io/r/base/print.html) and
+[`print()`](https://rdrr.io/r/base/print.html),
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
 The `target` attribute holds the interval of `log(penalty)` achieving
 the minimum error, which is what

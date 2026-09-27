@@ -26,6 +26,9 @@ cpt_test_at(
 
 # S3 method for class 'ggcpt_test_at'
 print(x, ...)
+
+# S3 method for class 'ggcpt_test_at'
+tidy(x, ...)
 ```
 
 ## Arguments

@@ -73,7 +73,10 @@ that could well be there and missed.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_null_power</span><span class="op">(</span><span class="va">fit</span>, power <span class="op">=</span> <span class="fl">0.8</span>, n_sim <span class="op">=</span> <span class="fl">50</span>, seed <span class="op">=</span> <span class="cn">NULL</span>, <span class="va">...</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ggcpt_null_power'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'ggcpt_null_power'</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -108,11 +111,15 @@ works for any).</p></dd>
     <div class="section level2">
     <h2 id="value">Value<a class="anchor" aria-label="anchor" href="#value"></a></h2>
     <p>A <code>ggcpt_null_power</code> list with <code>n</code>, <code>sigma</code> (the
-  noise level used), <code>jump</code> (the smallest detectable shift, in the
+  noise level used), <code>jump</code> (the smallest detectable change, in the
   data's units), <code>jump_sd</code> (the same in noise standard deviations),
-  <code>power</code>, <code>method</code> and <code>constant</code> (<code>TRUE</code> when the
-  series has no variation, in which case nothing is simulated). With a
-  <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> method.</p>
+  <code>change_in</code> (the fit's change type, which sets what <code>jump</code>
+  measures: a shift in the mean, a rise in the standard deviation, both,
+  or a trend, as <code><a href="cpt_power.html">cpt_power()</a></code> defines them), <code>power</code>,
+  <code>method</code> and <code>constant</code> (<code>TRUE</code> when the series has no
+  variation, in which case nothing is simulated). With <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and
+  <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code> methods. A formula fit is refused: the simulation has no
+  covariates to draw.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

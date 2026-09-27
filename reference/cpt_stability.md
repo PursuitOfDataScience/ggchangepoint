@@ -28,6 +28,9 @@ cpt_stability(
 print(x, ...)
 
 # S3 method for class 'ggcpt_stability'
+tidy(x, ...)
+
+# S3 method for class 'ggcpt_stability'
 autoplot(object, ...)
 ```
 
@@ -104,8 +107,11 @@ and `freq`, the proportion of replicates detecting a changepoint within
 `n_failed` (replicates on which the detector failed, which are left out
 of the proportion rather than counted as "found nothing"), `bootstrap`,
 `block_length` and `reversal` (one row per original changepoint: `cp`
-and `survives`). Methods: [`print()`](https://rdrr.io/r/base/print.html)
-and
+and `survives`). Methods:
+[`print()`](https://rdrr.io/r/base/print.html),
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) (one row per
+original changepoint: `cp`, `stability` and, when reversal ran,
+`survives_reversal`) and
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 (frequency profile with the original detections marked).
 

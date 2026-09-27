@@ -28,8 +28,9 @@ cpt_import(file, format = NULL, method = "imported", change_in = "mean")
 
   `"json"` (the full result, see
   [`as_json()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_json.md))
-  or `"csv"` (one row per observation: `index`, `value`, the time index
-  as `index_value` when there is one, `seg_id`, `fitted` and
+  or `"csv"` (one row per observation: `index`, `value` (for a
+  multivariate result, one `value_<name>` per coordinate), the time
+  index as `index_value` when there is one, `seg_id`, `fitted` and
   `is_changepoint`, which is everything needed to rebuild the
   segmentation but not its metadata). Defaults to the file's extension.
 

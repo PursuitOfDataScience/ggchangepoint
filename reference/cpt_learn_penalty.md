@@ -29,6 +29,9 @@ print(x, ...)
 coef(object, ...)
 
 # S3 method for class 'ggcpt_penalty_model'
+tidy(x, ...)
+
+# S3 method for class 'ggcpt_penalty_model'
 predict(object, newdata, ...)
 ```
 
@@ -85,7 +88,9 @@ predict(object, newdata, ...)
 
 A `ggcpt_penalty_model` object with
 [`print()`](https://rdrr.io/r/base/print.html),
-[`coef()`](https://rdrr.io/r/stats/coef.html) and
+[`coef()`](https://rdrr.io/r/stats/coef.html),
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) (the
+coefficients as `term` and `estimate`) and
 [`predict()`](https://rdrr.io/r/stats/predict.html) methods.
 
 The two scales differ and it matters:

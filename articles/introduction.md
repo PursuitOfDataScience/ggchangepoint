@@ -118,12 +118,15 @@ assumes unit noise. Standardise the series, pass a penalty on the data’s
 own scale (say `2 * log(n) * var(diff(x)) / 2`), or use
 `change_in = "meanvar"`, which estimates a variance per segment. Methods
 that estimate the noise level as part of their procedure (SMUCE, the WBS
-family, CPOP, bcp, BEAST and the nonparametric engines) return the same
-segmentation whatever the units. Three exceptions are worth knowing:
-`geomcp` runs PELT on its mapped series and inherits its sensitivity,
-DeCAFS floors its noise estimate near 0.03, and BOCPD’s default prior is
-on the data’s own scale, so the last two miss changes in a series
-measured in very small units.
+family, CPOP, bcp, BEAST and the nonparametric engines) returned the
+same segmentation from a thousandth to a thousand times the units. Five
+exceptions are worth knowing: `geomcp` runs PELT on its mapped series
+and inherits its sensitivity, DeCAFS floors its noise estimate near
+0.03, BOCPD’s default prior is on the data’s own scale, and `envcpt` and
+`var` change their answer with the units too (`var` penalises a
+squared-error loss on an absolute scale), so DeCAFS, BOCPD and `var`
+miss changes in a series measured in very small units. `cpt_invariances`
+holds the measurement.
 
 ### Search-based and multiscale methods
 

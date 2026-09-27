@@ -46,10 +46,11 @@ stat_cpt_region(
 
 - ...:
 
-  Further arguments: those
-  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-  takes (for example `alpha` for NSP's level) go to the detector, the
-  rest to the geom.
+  Further arguments: those the detector takes (for example `alpha` for
+  NSP's level, or `seed`) go to it, the rest to the geom. With
+  `method = "nsp"` that makes `alpha` the level, so set the band's
+  transparency through its fill instead
+  (`fill = ggplot2::alpha("steelblue", 0.3)`).
 
 - method:
 

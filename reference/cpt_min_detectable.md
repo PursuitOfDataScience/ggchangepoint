@@ -29,6 +29,9 @@ cpt_min_detectable(
 )
 
 # S3 method for class 'ggcpt_min_detectable'
+tidy(x, ...)
+
+# S3 method for class 'ggcpt_min_detectable'
 print(x, ...)
 ```
 
@@ -53,7 +56,12 @@ print(x, ...)
 - range:
 
   Search range for the change size, in standard deviations. Defaults to
-  `c(0.1, 5)`.
+  `c(0.1, 5)`. With a non-Gaussian `family` passed through `...` to
+  [`cpt_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md),
+  the change is in the family's own parameter and the default follows
+  it: `c(0.1, 5)` times the square root of the baseline rate for
+  `"poisson"`, up to a probability of 0.99 for `"binomial"`, and
+  `c(0.1, 5)` times the baseline mean for `"exponential"`.
 
 - n_sim:
 
@@ -120,8 +128,10 @@ print(x, ...)
 ## Value
 
 A list with `jump` (the smallest change reaching `power`),
-`achieved_power`, `mc_se`, and the `trace` of evaluations, with a
-[`print()`](https://rdrr.io/r/base/print.html) method.
+`achieved_power`, `mc_se`, and the `trace` of evaluations, with
+[`print()`](https://rdrr.io/r/base/print.html) and
+[`tidy()`](https://generics.r-lib.org/reference/tidy.html) (one row)
+methods.
 
 ## See also
 

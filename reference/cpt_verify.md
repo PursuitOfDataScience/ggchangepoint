@@ -15,6 +15,9 @@ cpt_verify(object, ..., tolerance = 0)
 
 # S3 method for class 'ggcpt_verification'
 print(x, ...)
+
+# S3 method for class 'ggcpt_verification'
+tidy(x, ...)
 ```
 
 ## Arguments
@@ -58,11 +61,24 @@ so. This is the check to run when re-opening an analysis, and before
 quoting an old result as current.
 
 The re-run uses the series stored on the result, its method, the change
-type it can be asked for, its penalty, and every engine argument of the
-original call that was written as a literal (`seed = 42`,
-`n_intervals = 500`). An argument written as a variable cannot be
-recovered from the object, and is listed in `not_recovered`; pass it
-again through `...` if it mattered.
+type it can be asked for, its penalty and family, the missing-value
+handling and constraints it recorded (`na_action`, `fixed`, `within`,
+`min_segment`, `min_effect`), and every engine argument of the original
+call that was written as a literal (`seed = 42`, `n_intervals = 500`).
+An argument written as a variable cannot be recovered from the object,
+and is listed in `not_recovered`; pass it again through `...` if it
+mattered. A result read back with
+[`cpt_import()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_export.md)
+from JSON keeps the call it was written with, so it replays the same
+way; one made by anything but
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+or a wrapper
+([`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md),
+the fit
+[`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+returns) is refused, since re-running
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+would not reproduce how it was made.
 
 ## See also
 

@@ -28,6 +28,9 @@ cpt_robustness(
 print(x, ...)
 
 # S3 method for class 'ggcpt_robustness'
+tidy(x, ...)
+
+# S3 method for class 'ggcpt_robustness'
 autoplot(object, ...)
 ```
 

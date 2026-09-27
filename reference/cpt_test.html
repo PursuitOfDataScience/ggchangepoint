@@ -131,7 +131,13 @@ records, per row, whether the test accounts for that:</p><ul><li><p><code>TRUE</
     compares the segments either side of the changepoint as if the
     location had been fixed in advance. Useful as a descriptive effect
     size with a scale attached; not a valid significance test for the
-    existence of the change.</p></li>
+    existence of the change. The exception is a changepoint that
+    <em>was</em> fixed in advance, through <code>cpt_detect(fixed = )</code>:
+    its row is <code>TRUE</code>.</p></li>
+<li><p>The fallback compares means whatever the fit detected, so on a
+    fit of a change in variance, slope or distribution it tests a
+    different change from the one found, and warns (class
+    <code>ggchangepoint_assumption</code>).</p></li>
 <li><p><code>FALSE</code> for <span class="pkg">strucchange</span>'s route as well, which is
     the Chow F evaluated <em>at</em> each estimated break date. The Chow
     statistic's reference distribution assumes the date was fixed in

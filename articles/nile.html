@@ -193,10 +193,6 @@ level shift.</li>
 <code class="sourceCode R"><span><span class="va">fit</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">Nile</span>, method <span class="op">=</span> <span class="st">"strucchange"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/cpt_effect.html">cpt_effect</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp_index"</span>, <span class="st">"before"</span>, <span class="st">"after"</span>, <span class="st">"delta"</span>, <span class="st">"delta_lower"</span>,</span>
 <span>                    <span class="st">"delta_upper"</span>, <span class="st">"pct_change"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt; ggcpt_effect (method: strucchange, naive)</span></span>
-<span><span class="co">#&gt; Measured where the same data located each change, so the sizes are biased upward</span></span>
-<span><span class="co">#&gt; (selection_adjusted = FALSE). method = "split" measures on held-out observations. </span></span>
-<span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
 <span><span class="co">#&gt;   cp_index before after delta delta_lower delta_upper pct_change</span></span>
 <span><span class="co">#&gt;      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>

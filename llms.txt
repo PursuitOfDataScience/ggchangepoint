@@ -103,6 +103,7 @@ wrong](https://pursuitofdatascience.github.io/ggchangepoint/articles/pitfalls.ht
   : Print a ggcpt object
 - [`cpt_verify()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_verify.md)
   [`print(`*`<ggcpt_verification>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_verify.md)
+  [`tidy(`*`<ggcpt_verification>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_verify.md)
   : Re-run a result against the engines installed now
 
 ## The contract
@@ -192,10 +193,12 @@ mean.
 
 - [`cpt_effect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md)
   [`print(`*`<ggcpt_effect>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md)
+  [`tidy(`*`<ggcpt_effect>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md)
   [`autoplot(`*`<ggcpt_effect>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_effect.md)
   : Effect size at each changepoint
 - [`cpt_test_at()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_at.md)
   [`print(`*`<ggcpt_test_at>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_at.md)
+  [`tidy(`*`<ggcpt_test_at>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test_at.md)
   : Test for a change at a date fixed in advance
 - [`cpt_attribute_event()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute_event.md)
   : Was a detected change the event you have in mind?
@@ -203,6 +206,7 @@ mean.
   : Test for a change anywhere in a series
 - [`cpt_null_power()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_null_power.md)
   [`print(`*`<ggcpt_null_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_null_power.md)
+  [`tidy(`*`<ggcpt_null_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_null_power.md)
   : What an empty answer could have detected
 
 ## Segment models
@@ -259,12 +263,15 @@ survive a change of noise model?
 
 - [`cpt_assumptions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_assumptions.md)
   [`print(`*`<ggcpt_assumptions>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_assumptions.md)
+  [`tidy(`*`<ggcpt_assumptions>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_assumptions.md)
   : Check the assumptions behind a segmentation
 - [`cpt_gof()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
   [`print(`*`<ggcpt_gof>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
+  [`tidy(`*`<ggcpt_gof>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
   : Goodness of fit, segment by segment
 - [`cpt_robustness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
   [`print(`*`<ggcpt_robustness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
+  [`tidy(`*`<ggcpt_robustness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
   [`autoplot(`*`<ggcpt_robustness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
   : Does a changepoint survive a change of noise model?
 
@@ -284,11 +291,13 @@ and a learned penalty.
   : Score a segmentation against labels
 - [`cpt_label_error_curve()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
   [`print(`*`<ggcpt_label_curve>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
+  [`tidy(`*`<ggcpt_label_curve>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
   [`autoplot(`*`<ggcpt_label_curve>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_label_error_curve.md)
   : Label error as a function of the penalty
 - [`cpt_learn_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
   [`print(`*`<ggcpt_penalty_model>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
   [`coef(`*`<ggcpt_penalty_model>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
+  [`tidy(`*`<ggcpt_penalty_model>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
   [`predict(`*`<ggcpt_penalty_model>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_learn_penalty.md)
   : Learn a penalty from labelled series
 
@@ -358,6 +367,7 @@ and a learned penalty.
   [`autoplot(`*`<ggcpt_power>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_power.md)
   : Detection power for a changepoint scenario
 - [`cpt_min_detectable()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
+  [`tidy(`*`<ggcpt_min_detectable>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
   [`print(`*`<ggcpt_min_detectable>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_min_detectable.md)
   : The smallest detectable change
 - [`cpt_scenarios()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_scenarios.md)
@@ -559,6 +569,7 @@ and a learned penalty.
   : Batch changepoint detection over many series
 - [`cpt_stability()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
   [`print(`*`<ggcpt_stability>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
+  [`tidy(`*`<ggcpt_stability>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
   [`autoplot(`*`<ggcpt_stability>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_stability.md)
   : Changepoint stability diagnostics via bootstrap
 

@@ -73,7 +73,10 @@ the changepoints moved and which versions changed in between.</p>
     <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">cpt_verify</span><span class="op">(</span><span class="va">object</span>, <span class="va">...</span>, tolerance <span class="op">=</span> <span class="fl">0</span><span class="op">)</span></span>
 <span></span>
 <span><span class="co"># S3 method for class 'ggcpt_verification'</span></span>
-<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+<span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'ggcpt_verification'</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy</a></span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -119,11 +122,18 @@ so. This is the check to run when re-opening an analysis, and before
 quoting an old result as current.</p>
 
 <p>The re-run uses the series stored on the result, its method, the change
-type it can be asked for, its penalty, and every engine argument of the
-original call that was written as a literal (<code>seed = 42</code>,
+type it can be asked for, its penalty and family, the missing-value
+handling and constraints it recorded (<code>na_action</code>, <code>fixed</code>,
+<code>within</code>, <code>min_segment</code>, <code>min_effect</code>), and every engine
+argument of the original call that was written as a literal (<code>seed = 42</code>,
 <code>n_intervals = 500</code>). An argument written as a variable cannot be
 recovered from the object, and is listed in <code>not_recovered</code>; pass
-it again through <code>...</code> if it mattered.</p>
+it again through <code>...</code> if it mattered. A result read back with
+<code><a href="cpt_export.html">cpt_import()</a></code> from JSON keeps the call it was written with,
+so it replays the same way; one made by anything but <code><a href="cpt_detect.html">cpt_detect()</a></code>
+or a wrapper (<code><a href="as_ggcpt.html">as_ggcpt()</a></code>, the fit
+<code><a href="cpt_select.html">cpt_select()</a></code> returns) is refused, since re-running
+<code><a href="cpt_detect.html">cpt_detect()</a></code> would not reproduce how it was made.</p>
     </div>
     <div class="section level2">
     <h2 id="see-also">See also<a class="anchor" aria-label="anchor" href="#see-also"></a></h2>

@@ -29,8 +29,8 @@ cpm_wrapper(x, cpm_type = "Mann-Whitney", arl0 = NULL, startup = 20, ...)
   default), `"Mood"` (scale), `"Lepage"`, `"Kolmogorov-Smirnov"`,
   `"Cramer-von-Mises"`. Parametric: `"Student"`, `"Bartlett"`, `"GLR"`
   (Gaussian), `"Exponential"` (positive data), `"FET"` (Fisher's exact
-  test, for 0/1 Bernoulli data; this one also needs a `lambda` value
-  passed through `...`, e.g. `lambda = 0.3`).
+  test, for 0/1 Bernoulli data, with a smoothing `lambda` passed through
+  `...`: `0.1`, cpm's default, or `0.3`).
 
 - arl0:
 

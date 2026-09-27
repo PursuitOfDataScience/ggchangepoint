@@ -87,7 +87,8 @@ leaving R, or for a format a person can open.</p>
 
 <dt id="arg-format">format<a class="anchor" aria-label="anchor" href="#arg-format"></a></dt>
 <dd><p><code>"json"</code> (the full result, see <code><a href="as_json.html">as_json()</a></code>)
-or <code>"csv"</code> (one row per observation: <code>index</code>, <code>value</code>,
+or <code>"csv"</code> (one row per observation: <code>index</code>, <code>value</code>
+(for a multivariate result, one <code>value_&lt;name&gt;</code> per coordinate),
 the time index as <code>index_value</code> when there is one,
 <code>seg_id</code>, <code>fitted</code> and <code>is_changepoint</code>, which is
 everything needed to rebuild the segmentation but not its metadata).
