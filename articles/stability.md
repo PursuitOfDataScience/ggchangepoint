@@ -68,15 +68,28 @@ matter of routine. When one goes:
 
 - the method stays in
   [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md)
-  and its wrapper and tests stay in the package, skipped, so it returns
-  the day the engine does;
+  and its wrapper and tests stay in the package, so it keeps working
+  wherever the engine is installed;
+- the package website serves the engine’s last CRAN release as a
+  CRAN-like repository,
+  <https://pursuitofdatascience.github.io/ggchangepoint/repo/>, declared
+  in DESCRIPTION’s `Additional_repositories`, so an archived engine
+  stays installable even when it has no other home;
 - [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-  says where the engine can still be installed from (`fpop`, archived in
-  September 2026, installs from R-Forge) and names the installed methods
-  that detect the same kind of change;
+  and
+  [`cpt_install_engines()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_install_engines.md)
+  say where the engine can be installed from (`fpop`, archived in
+  September 2026, from R-Forge, where it is developed; `ocp`, archived
+  in October 2026, from the website) and
+  [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+  names the installed methods that detect the same kind of change;
 - a scheduled check (the all-engines workflow) compares every declared
   dependency with the live CRAN index each week, so an archival is found
   by the check, not by a user.
+
+An engine that is installed but will not load, usually because a package
+it depends on changed underneath it, is reported as that, with the load
+error, rather than as missing.
 
 ## Versioned results
 
@@ -89,7 +102,7 @@ str(fit$versions)
 #>  $ engine_version: chr "1.6-0"
 #>  $ ggchangepoint : chr "0.6.0"
 #>  $ r             : chr "4.6.1"
-#>  $ created       : chr "2026-09-27T04:20:43+0000"
+#>  $ created       : chr "2026-10-12T16:45:09+0000"
 ```
 
 `glance(fit)` carries the engine version as a column, so a table of

@@ -83,9 +83,13 @@ Invisibly, a tibble with one row per package (`package`, `bundle`,
 ## Details
 
 Every package comes from the repositories in `getOption("repos")` except
-fpop, which was archived from CRAN in 2026 at its maintainer's request
-and is installed from R-Forge (<https://R-Forge.R-project.org>), where
-it is developed.
+the two engines CRAN has archived. fpop, archived in September 2026 at
+its maintainer's request, is installed from R-Forge
+(<https://R-Forge.R-project.org>), where it is developed. ocp, archived
+in October 2026, is installed from the package website
+(<https://pursuitofdatascience.github.io/ggchangepoint/repo/>), a
+CRAN-like repository that serves the last CRAN release of every engine
+CRAN no longer does.
 
 ## See also
 

@@ -553,6 +553,23 @@ gaps, dates, a slope, a formula, fixed locations, small units.
   warns when it drops a missing location (`truth = NA` was scored as no
   true changepoints).
 
+### When an engine leaves CRAN
+
+- `ocp` was archived from CRAN on 2026-10-12, over two documentation
+  notes in its own checks, and has no other lasting home. It stays an
+  optional engine: the package website now serves the last CRAN release
+  of every dependency CRAN has archived as a CRAN-like repository,
+  <https://pursuitofdatascience.github.io/ggchangepoint/repo/>, declared
+  in `Additional_repositories`, and `cpt_install_engines("bayesian")`
+  and the “Package ‘ocp’ is required” error install from there. `fpop`
+  still comes from R-Forge; the website serves it too, so CRAN’s check
+  of the declared repositories no longer depends on R-Forge answering.
+- An engine that is installed but will not load is reported as that,
+  with the load error, instead of as missing. On 2026-10-12 `crops`
+  1.0.5 stopped exporting two methods that `cpop` 1.0.9 re-exports, and
+  `cpt_detect(x, method = "cpop")` told users to install `cpop`, which
+  they had.
+
 ### Documentation
 
 - The README is rewritten: one real example (the Nile), the next
@@ -2058,7 +2075,7 @@ every argument its engine accepts.
   paired, interleaved runs (15.1 times faster, 95% CI 14.0 to 15.5,
   slowest pair 13.4). The skipped tests still run wherever `NOT_CRAN` is
   `"true"`: on every CI runner, on every push, and under
-  `devtools::test()`.
+  [`devtools::test()`](https://devtools.r-lib.org/reference/test.html).
 - **Eleven vignette chunks generated their data without seeding it**, so
   their rendered output was a function of how much randomness every
   chunk above them happened to consume, and several of those chunks are

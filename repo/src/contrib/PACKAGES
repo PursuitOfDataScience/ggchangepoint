@@ -1,0 +1,14 @@
+Package: fpop
+Version: 2019.08.26
+License: LGPL (>= 2.1)
+MD5sum: cc572b4be47407f3fccc74f8f8ce5a5d
+NeedsCompilation: yes
+
+Package: ocp
+Version: 0.1.1
+Depends: R (>= 3.4.0)
+Imports: grid (>= 3.4.0), graphics (>= 3.4.0), grDevices (>= 3.4.0)
+Suggests: testthat, knitr, rmarkdown
+License: GPL-3
+MD5sum: 8b5ff659839749886937bcb5e3c50b40
+NeedsCompilation: no
