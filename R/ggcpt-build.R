@@ -329,24 +329,59 @@ need_pkg <- function(pkg) {
   # Suppressed here and only here, because this function's job is to make
   # the engine available; the fit runs afterwards, outside this call, so
   # nothing an engine says about the data can be hidden by it.
-  if (!suppressMessages(suppressWarnings(
+  if (suppressMessages(suppressWarnings(
         requireNamespace(pkg, quietly = TRUE)))) {
-    cpt_abort("Package '", pkg, "' is required. ", "Install it with ",
-              install_hint(pkg), ".", class = "engine_missing",
-              data = list(package = pkg, install = install_hint(pkg)))
+    return(invisible(TRUE))
   }
-  invisible(TRUE)
+  # An engine that is installed and will not load needs different advice
+  # from one that is missing. On 2026-10-12 crops 1.0.5 stopped exporting
+  # the S4 plot() and summary() methods that cpop 1.0.9 re-exports, so every
+  # installed cpop failed in loadNamespace(), and this error told its users
+  # to install the package they already had. The load error names the
+  # package that broke.
+  why <- if (engine_installed(pkg)) engine_load_error(pkg)
+  if (!is.null(why)) {
+    cpt_abort("Package '", pkg, "' is installed but does not load: ", why,
+              if (!grepl("[.!?]$", why)) ".",
+              " The failure is in '", pkg, "' or a package it depends on.",
+              class = "engine_missing",
+              data = list(package = pkg, install = install_hint(pkg),
+                          load_error = why))
+  }
+  cpt_abort("Package '", pkg, "' is required. ", "Install it with ",
+            install_hint(pkg), ".", class = "engine_missing",
+            data = list(package = pkg, install = install_hint(pkg)))
+}
+
+# Internal: why an installed package will not load, as loadNamespace() puts
+# it (requireNamespace() only answers FALSE), or NULL if it loads.
+#' @noRd
+engine_load_error <- function(pkg) {
+  tryCatch({
+    suppressMessages(suppressWarnings(loadNamespace(pkg)))
+    NULL
+  }, error = function(e) gsub("\\s+", " ", trimws(conditionMessage(e))))
 }
 
 # Internal: suggested engines that CRAN no longer serves, and the repository
-# that does. `fpop` was archived from CRAN on 2026-09-14 at its maintainer's
-# request and is still built on R-Forge, where it is developed. DESCRIPTION
-# declares the same repositories in `Additional_repositories`, which is what
-# CRAN policy asks of a suggested package outside the mainstream
-# repositories; a test keeps the two in agreement.
+# that does. DESCRIPTION declares the same repositories in
+# `Additional_repositories`, which is what CRAN policy asks of a suggested
+# package outside the mainstream repositories; a test keeps the two in
+# agreement, and the weekly all-engines workflow fails when a declared
+# dependency leaves CRAN without an entry here.
+#
+# - `fpop`, archived on 2026-09-14 at its maintainer's request, is still
+#   built on R-Forge, where it is developed.
+# - `ocp`, archived on 2026-10-12 over two documentation notes, has no
+#   other home: its GitHub repository has not changed since 2021, and
+#   r-universe drops an archived package after 60 days. The package website
+#   serves the last CRAN release of every dependency CRAN has archived, as
+#   a CRAN-like repository (`.github/off-cran.R` builds it on each pkgdown
+#   deploy), and that is where it comes from.
 #' @noRd
 engine_repos <- function() {
-  c(fpop = "https://R-Forge.R-project.org")
+  c(fpop = "https://R-Forge.R-project.org",
+    ocp = "https://pursuitofdatascience.github.io/ggchangepoint/repo")
 }
 
 # Internal: the install.packages() call that fetches `pkg`, as text for an

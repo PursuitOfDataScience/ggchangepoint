@@ -389,6 +389,23 @@ gaps, dates, a slope, a formula, fixed locations, small units.
   `cpt_metrics()` warns when it drops a missing location (`truth = NA` was
   scored as no true changepoints).
 
+## When an engine leaves CRAN
+
+- `ocp` was archived from CRAN on 2026-10-12, over two documentation notes
+  in its own checks, and has no other lasting home. It stays an optional
+  engine: the package website now serves the last CRAN release of every
+  dependency CRAN has archived as a CRAN-like repository,
+  https://pursuitofdatascience.github.io/ggchangepoint/repo/, declared in
+  `Additional_repositories`, and `cpt_install_engines("bayesian")` and the
+  "Package 'ocp' is required" error install from there. `fpop` still comes
+  from R-Forge; the website serves it too, so CRAN's check of the declared
+  repositories no longer depends on R-Forge answering.
+- An engine that is installed but will not load is reported as that, with
+  the load error, instead of as missing. On 2026-10-12 `crops` 1.0.5
+  stopped exporting two methods that `cpop` 1.0.9 re-exports, and
+  `cpt_detect(x, method = "cpop")` told users to install `cpop`, which they
+  had.
+
 ## Documentation
 
 - The README is rewritten: one real example (the Nile), the next questions

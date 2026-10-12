@@ -7,6 +7,13 @@
 # dependency against the live CRAN index, so an archival is found here,
 # on a schedule, rather than by a user or a broken release.
 #
+# An archival no longer breaks an install: every workflow installs an
+# archived dependency from the CRAN archive, and the website serves it
+# (.github/off-cran.R). What fails here is what needs a person: a
+# dependency outside CRAN that no declared repository serves, one the
+# package gives no install advice for, an engine that will not load, or a
+# test that fails.
+#
 # A failure is reported the way any failed scheduled run is: GitHub emails
 # the maintainer. It opens no issues and posts nothing.
 on:
@@ -26,34 +33,15 @@ jobs:
       - uses: r-lib/actions/setup-r@v2
         with:
           use-public-rspm: true
-      - name: Every declared dependency is on CRAN
+      - name: Every declared dependency is on CRAN or a declared repository
         shell: Rscript {0}
+        # CRAN's own rule for a dependency outside CRAN (a repository in
+        # Additional_repositories serves it), and the package's advice for it
+        # (engine_repos() names one). A failure says which package, when and
+        # why CRAN archived it, and what to change.
         run: |
-          desc <- read.dcf("DESCRIPTION")
-          fields <- intersect(c("Imports", "Suggests"), colnames(desc))
-          deps <- trimws(unlist(strsplit(gsub("\\([^)]*\\)", "",
-                                              desc[, fields]), ",")))
-          deps <- setdiff(deps[nzchar(deps)],
-                          rownames(installed.packages(priority = "base")))
-          # Engines CRAN no longer serves but another repository does,
-          # declared in DESCRIPTION's Additional_repositories (fpop, since
-          # 2026-09-14, on R-Forge).
-          known <- "fpop"
-          cran <- rownames(available.packages(
-            repos = "https://cloud.r-project.org"))
-          gone <- setdiff(deps, c(cran, known))
-          if (length(gone)) {
-            stop("Declared dependencies not on CRAN: ",
-                 paste(gone, collapse = ", "),
-                 ". See the archival policy in the stability article.")
-          }
-          back <- intersect(known, cran)
-          if (length(back)) {
-            message("Back on CRAN, drop from `known` and engine_repos(): ",
-                    paste(back, collapse = ", "))
-          }
-          cat(length(deps), "dependencies, all on CRAN or a declared",
-              "repository\n")
+          source(".github/off-cran.R")
+          check_availability()
 
   all-engines:
     runs-on: ubuntu-latest
@@ -77,6 +65,23 @@ jobs:
         with:
           use-public-rspm: true
 
+      - name: Dependencies CRAN no longer serves, and one upstream break
+        id: off-cran
+        shell: Rscript {0}
+        run: |
+          source(".github/off-cran.R")
+          # cpop 1.0.9 does not load with crops 1.0.5 (2026-10-12, the same
+          # maintainer): crops stopped exporting the S4 plot() and summary()
+          # methods that cpop's NAMESPACE re-exports, so loadNamespace("cpop")
+          # fails with "Functions found when exporting methods from the
+          # namespace 'cpop' which are not S4 generic". With crops 1.0.4 every
+          # cpop test runs. The pin holds only while CRAN has exactly that
+          # pair, so it lapses when either ships a fix; a fix that does not
+          # work fails the load step below again.
+          write_output("refs", c(
+            archive_refs(),
+            pin_while("crops", "1.0.4", c(crops = "1.0.5", cpop = "1.0.9"))))
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
           dependencies: '"all"'
@@ -86,26 +91,36 @@ jobs:
           # cache (pkgdown's shares the key prefix) held the previous
           # release there: the first run's workers had 0.5.0 and failed
           # with 'could not find function "cpt_warn"'.
-          extra-packages: any::devtools, local::.,
-            url::https://cran.r-project.org/src/contrib/Archive/fpop/fpop_2019.08.26.tar.gz
+          extra-packages: any::devtools, local::., ${{ steps.off-cran.outputs.refs }}
           cache-version: 1
 
       - name: Every suggested engine loads
         shell: Rscript {0}
         # Unlike the CRAN-like check, a Suggests package that will not load
-        # is the failure this job exists to report.
+        # is the failure this job exists to report, so it reports why: the
+        # first one to fail named only the package, and the cause (another
+        # package's release that day) took a reproduction to find.
         run: |
           desc <- read.dcf("DESCRIPTION")
           sug <- trimws(strsplit(gsub("\\([^)]*\\)", "", desc[, "Suggests"]),
                                  ",")[[1]])
           sug <- sug[nzchar(sug)]
           options(rgl.useNULL = TRUE)
-          bad <- sug[!vapply(sug, function(p) {
-            isTRUE(suppressWarnings(suppressMessages(
-              requireNamespace(p, quietly = TRUE))))
-          }, logical(1))]
+          why <- vapply(sug, function(p) {
+            tryCatch({
+              suppressWarnings(suppressMessages(loadNamespace(p)))
+              NA_character_
+            }, error = function(e) gsub("\\s+", " ", conditionMessage(e)))
+          }, character(1))
+          bad <- why[!is.na(why)]
+          for (p in names(bad)) {
+            v <- tryCatch(as.character(packageVersion(p)),
+                          error = function(e) "(not installed)")
+            cat("::error::", p, " ", v, " does not load: ", bad[[p]], "\n",
+                sep = "")
+          }
           if (length(bad)) {
-            stop("Suggests that do not load: ", paste(bad, collapse = ", "))
+            stop("Suggests that do not load: ", paste(names(bad), collapse = ", "))
           }
           cat(length(sug), "suggested packages, all loading\n")
 

@@ -107,16 +107,23 @@ jobs:
           http-user-agent: ${{ matrix.config.http-user-agent }}
           use-public-rspm: true
 
+      # pak resolves Suggests as hard requirements when it builds the
+      # lockfile, so a suggested engine CRAN has archived (fpop on
+      # 2026-09-14, ocp on 2026-10-12) stops every job at dependency setup
+      # rather than at check time. This step asks CRAN which declared
+      # dependencies it no longer serves and points pak at their last CRAN
+      # releases in the archive, so those engines are still tested and the
+      # next archival needs no edit here. See .github/off-cran.R.
+      - name: Dependencies CRAN no longer serves
+        id: off-cran
+        shell: Rscript {0}
+        run: |
+          source(".github/off-cran.R")
+          write_output("refs", archive_refs())
+
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:
-          # fpop was archived from CRAN on 2026-09-14 at its maintainer's
-          # request. It is in Suggests, and pak resolves Suggests as hard
-          # requirements when building the lockfile, so every job died at
-          # dependency setup rather than at check time. Point pak at the
-          # archived tarball so the optional engine still gets tested,
-          # rather than dropping Suggests and checking less.
-          extra-packages: any::rcmdcheck,
-            url::https://cran.r-project.org/src/contrib/Archive/fpop/fpop_2019.08.26.tar.gz
+          extra-packages: any::rcmdcheck, ${{ steps.off-cran.outputs.refs }}
           needs: check
           # Pinned so the dependency cache can be invalidated deliberately;
           # there was no way to do that before.

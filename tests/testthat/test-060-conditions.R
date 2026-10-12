@@ -80,6 +80,35 @@ test_that("a missing engine is classed and names what to install", {
   expect_match(e$install, "wbs")
 })
 
+test_that("an engine that is installed but will not load says so", {
+  # cpop 1.0.9 under crops 1.0.5 (2026-10-12): installed, unloadable, and
+  # the error said to install it. A DESCRIPTION alone is enough for
+  # find.package() to see a package that loadNamespace() then refuses.
+  lib <- withr::local_tempdir()
+  dir.create(file.path(lib, "brokenengine42"))
+  writeLines(c("Package: brokenengine42", "Version: 1.0"),
+             file.path(lib, "brokenengine42", "DESCRIPTION"))
+  withr::local_libpaths(lib, action = "prefix")
+  why <- tryCatch(loadNamespace("brokenengine42"), error = conditionMessage)
+
+  e <- tryCatch(ggchangepoint:::need_pkg("brokenengine42"),
+                error = function(e) e)
+  expect_s3_class(e, "ggchangepoint_engine_missing")
+  expect_identical(e$package, "brokenengine42")
+  expect_identical(e$load_error, gsub("\\s+", " ", trimws(why)))
+  expect_match(conditionMessage(e),
+               "Package 'brokenengine42' is installed but does not load",
+               fixed = TRUE)
+  expect_true(grepl(e$load_error, conditionMessage(e), fixed = TRUE))
+  expect_false(grepl("Install it with", conditionMessage(e), fixed = TRUE))
+
+  # One that is not there at all keeps the install advice.
+  e <- tryCatch(ggchangepoint:::need_pkg("nosuchpkg42"), error = function(e) e)
+  expect_match(conditionMessage(e), "Install it with install.packages",
+               fixed = TRUE)
+  expect_null(e$load_error)
+})
+
 test_that("a missing engine's error gains the installed alternatives", {
   # The same error whether the engine was never installed or CRAN archived
   # it: the analysis should not stop at "install this".

@@ -52,9 +52,13 @@ family in one call.
 }
 \details{
 Every package comes from the repositories in \code{getOption("repos")}
-except \pkg{fpop}, which was archived from CRAN in 2026 at its
-maintainer's request and is installed from R-Forge
-(\url{https://R-Forge.R-project.org}), where it is developed.
+except the two engines CRAN has archived. \pkg{fpop}, archived in
+September 2026 at its maintainer's request, is installed from R-Forge
+(\url{https://R-Forge.R-project.org}), where it is developed. \pkg{ocp},
+archived in October 2026, is installed from the package website
+(\url{https://pursuitofdatascience.github.io/ggchangepoint/repo/}), a
+CRAN-like repository that serves the last CRAN release of every engine
+CRAN no longer does.
 }
 \examples{
 cpt_install_engines("bayesian", dry_run = TRUE)

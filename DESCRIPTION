@@ -110,7 +110,8 @@ Suggests:
     progressr,
     future,
     future.apply
-Additional_repositories: https://R-Forge.R-project.org
+Additional_repositories: https://R-Forge.R-project.org,
+    https://pursuitofdatascience.github.io/ggchangepoint/repo
 Config/testthat/edition: 3
 VignetteBuilder: knitr
 URL: https://pursuitofdatascience.github.io/ggchangepoint/

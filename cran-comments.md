@@ -34,6 +34,15 @@ added to `stepFit()` later. The wrapper checks for the function and, if it
 is ever removed, refuses with a classed error that names the other methods
 fitting the same family.
 
+Two suggested engines are no longer on CRAN, and both are declared in
+`Additional_repositories`: 'fpop' (archived 2026-09-14 at its maintainer's
+request, and still built on R-Forge, where it is developed) and 'ocp'
+(archived 2026-10-12). The second repository listed there is a CRAN-like
+repository on the package website that serves the last CRAN release of
+each, so both stay installable. Every use of either is conditional on
+`requireNamespace()`, and the tests and examples that need them skip
+without them.
+
 ## Test environments
 
 * local: R 4.4.1 on Rocky/RHEL 8 (x86_64), `R CMD check --as-cran`, with

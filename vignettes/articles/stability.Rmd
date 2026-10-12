@@ -66,13 +66,23 @@ Thirty-odd engines are in `Suggests`, and CRAN archives packages as a
 matter of routine. When one goes:
 
 - the method stays in `cpt_methods()` and its wrapper and tests stay in the
-  package, skipped, so it returns the day the engine does;
-- `cpt_detect()` says where the engine can still be installed from (`fpop`,
-  archived in September 2026, installs from R-Forge) and names the
-  installed methods that detect the same kind of change;
+  package, so it keeps working wherever the engine is installed;
+- the package website serves the engine's last CRAN release as a CRAN-like
+  repository, https://pursuitofdatascience.github.io/ggchangepoint/repo/,
+  declared in DESCRIPTION's `Additional_repositories`, so an archived engine
+  stays installable even when it has no other home;
+- `cpt_detect()` and `cpt_install_engines()` say where the engine can be
+  installed from (`fpop`, archived in September 2026, from R-Forge, where it
+  is developed; `ocp`, archived in October 2026, from the website) and
+  `cpt_detect()` names the installed methods that detect the same kind of
+  change;
 - a scheduled check (the all-engines workflow) compares every declared
   dependency with the live CRAN index each week, so an archival is found by
   the check, not by a user.
+
+An engine that is installed but will not load, usually because a package
+it depends on changed underneath it, is reported as that, with the load
+error, rather than as missing.
 
 ## Versioned results
 
