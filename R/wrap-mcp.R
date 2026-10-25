@@ -144,7 +144,7 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
 
   # The changepoint parameters are named cp_1, cp_2, ...
   smry <- as.data.frame(summary(fit))
-  cp_rows <- grep("^cp_", smry$name)
+  cp_rows <- grep("^cp_", smry[["parameter"]] %||% smry[["name"]])
   if (length(cp_rows) == 0) {
     return(ggcpt_build(data_vec, integer(0), method = "mcp",
                        change_in = change_in,
@@ -166,7 +166,7 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
 
   fitted <- tryCatch({
     pr <- stats::fitted(fit)
-    as.numeric(pr$fitted %||% pr$estimate)[seq_len(n)]
+    as.numeric(pr[[".mean"]] %||% pr[["fitted"]] %||% pr[["estimate"]])[seq_len(n)]
   }, error = function(e) NULL)
   if (!is.null(fitted) && length(fitted) != n) fitted <- NULL
 
