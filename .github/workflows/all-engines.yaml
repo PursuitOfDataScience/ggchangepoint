@@ -70,17 +70,12 @@ jobs:
         shell: Rscript {0}
         run: |
           source(".github/off-cran.R")
-          # cpop 1.0.9 does not load with crops 1.0.5 (2026-10-12, the same
-          # maintainer): crops stopped exporting the S4 plot() and summary()
-          # methods that cpop's NAMESPACE re-exports, so loadNamespace("cpop")
-          # fails with "Functions found when exporting methods from the
-          # namespace 'cpop' which are not S4 generic". With crops 1.0.4 every
-          # cpop test runs. The pin holds only while CRAN has exactly that
-          # pair, so it lapses when either ships a fix; a fix that does not
-          # work fails the load step below again.
-          write_output("refs", c(
-            archive_refs(),
-            pin_while("crops", "1.0.4", c(crops = "1.0.5", cpop = "1.0.9"))))
+          # A temporary pin goes here as pin_while(pkg, version, while_cran),
+          # which lapses by itself once CRAN moves on and then asks to be
+          # deleted. The last one, crops 1.0.4 while cpop 1.0.9 could not load
+          # with crops 1.0.5, lapsed with cpop 1.0.10, which loads with it
+          # (2026-11-02).
+          write_output("refs", archive_refs())
 
       - uses: r-lib/actions/setup-r-dependencies@v2
         with:

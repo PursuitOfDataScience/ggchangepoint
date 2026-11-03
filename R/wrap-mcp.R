@@ -3,7 +3,11 @@
 # only the posterior is missing.
 #' @noRd
 mcp_has_samples <- function(fit) {
-  post <- if (is.list(fit)) fit[["mcmc_post", exact = TRUE]] else NULL
+  # unclass() first: mcp 0.4.0 deprecated `fit$mcmc_post` in favour of
+  # as_draws(), and its `$` and `[[` methods now warn on every read. The field
+  # still holds the draws, and reading it without dispatch is silent on 0.3.x
+  # and 0.4.x alike.
+  post <- if (is.list(fit)) unclass(fit)[["mcmc_post", exact = TRUE]] else NULL
   !is.null(post) && length(post) > 0 && NROW(post[[1]]) > 0
 }
 
@@ -124,9 +128,14 @@ mcp_wrapper <- function(x, change_in = c("mean", "slope", "var"),
   # unless the caller already passed their own `par_x` through `...`.
   dots <- list(...)
   if (is.null(dots[["par_x", exact = TRUE]])) dots$par_x <- "t"
+  # mcp 0.4.0 renamed `adapt` to `warmup` and warns on the old name. This
+  # package keeps `adapt` as its own argument and passes it on under whichever
+  # name the installed mcp takes.
+  warmup_arg <- if ("warmup" %in% names(formals(mcp::mcp))) "warmup" else "adapt"
+  sampler <- stats::setNames(list(adapt), warmup_arg)
   fit <- do.call(mcp::mcp,
-                 c(list(model, data = df, prior = prior, iter = iter,
-                        adapt = adapt, chains = chains), dots))
+                 c(list(model, data = df, prior = prior, iter = iter),
+                   sampler, list(chains = chains), dots))
 
   # `mcp` warns rather than errors when JAGS cannot be reached, and hands
   # back an `mcpfit` with no posterior samples; `summary()` on that dies with

@@ -1,3 +1,11 @@
+# ggchangepoint (development version)
+
+- `mcp_wrapper()` works with mcp 0.4.0, which renamed the columns of
+  `summary()` and `fitted()`: the changepoints, their intervals and the
+  fitted signal had all come back empty (@lindeloev, #16). It also passes
+  `adapt` on as `warmup`, the name mcp 0.4.0 takes, and reads the posterior
+  draws without tripping mcp's new deprecation warning for `fit$mcmc_post`.
+
 # ggchangepoint 0.6.0
 
 The stabilisation release. It settles the contract before 1.0 freezes it

@@ -287,7 +287,14 @@ test_that("R9: beast seed makes results reproducible", {
   a <- beast_wrapper(x, seed = 7)
   b <- beast_wrapper(x, seed = 7)
   expect_identical(a$changepoints$cp, b$changepoints$cp)
-  expect_identical(a$changepoints$posterior_prob, b$changepoints$posterior_prob)
+  # Equal to single precision, not identical. Rbeast computes in float32 (every
+  # cpPr it returns is exactly representable as one), and the all-engines run
+  # of 2026-11-02 got 1 from one seeded call and 0.99999994, which is 1 - 2^-24,
+  # one float32 step below it, from the next. 40 of 40 seeded calls agreed
+  # locally, so it is rare, but the last bit is Rbeast's to give and not this
+  # package's. 1e-6 is about sixteen such steps at 1.
+  expect_equal(a$changepoints$posterior_prob, b$changepoints$posterior_prob,
+               tolerance = 1e-6)
 })
 
 test_that("R10: bcp_wrapper guards the n < 4 segfault", {
