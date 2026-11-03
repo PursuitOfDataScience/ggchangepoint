@@ -157,8 +157,8 @@ cat(as_json(fit, data = FALSE))
 #>   "engine": "changepoint",
 #>   "engine_version": "2.3",
 #>   "ggchangepoint_version": "0.6.0",
-#>   "r_version": "4.6.1",
-#>   "created": "2026-10-12T16:39:54+0000",
+#>   "r_version": "4.6.2",
+#>   "created": "2026-11-03T20:14:22+0000",
 #>   "change_in": "mean",
 #>   "family": null,
 #>   "penalty": {

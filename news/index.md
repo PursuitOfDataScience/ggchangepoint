@@ -1,5 +1,18 @@
 # Changelog
 
+## ggchangepoint (development version)
+
+- [`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
+  works with mcp 0.4.0, which renamed the columns of
+  [`summary()`](https://rdrr.io/r/base/summary.html) and
+  [`fitted()`](https://rdrr.io/r/stats/fitted.values.html): the
+  changepoints, their intervals and the fitted signal had all come back
+  empty ([@lindeloev](https://github.com/lindeloev),
+  [\#16](https://github.com/PursuitOfDataScience/ggchangepoint/issues/16)).
+  It also passes `adapt` on as `warmup`, the name mcp 0.4.0 takes, and
+  reads the posterior draws without tripping mcp’s new deprecation
+  warning for `fit$mcmc_post`.
+
 ## ggchangepoint 0.6.0
 
 The stabilisation release. It settles the contract before 1.0 freezes it
@@ -2075,7 +2088,7 @@ every argument its engine accepts.
   paired, interleaved runs (15.1 times faster, 95% CI 14.0 to 15.5,
   slowest pair 13.4). The skipped tests still run wherever `NOT_CRAN` is
   `"true"`: on every CI runner, on every push, and under
-  [`devtools::test()`](https://devtools.r-lib.org/reference/test.html).
+  `devtools::test()`.
 - **Eleven vignette chunks generated their data without seeding it**, so
   their rendered output was a function of how much randomness every
   chunk above them happened to consume, and several of those chunks are

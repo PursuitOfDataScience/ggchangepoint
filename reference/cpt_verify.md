@@ -114,5 +114,5 @@ cpt_verify(fit)
 #>   <chr>                <chr> <chr> <lgl>  
 #> 1 changepoint (engine) 2.3   2.3   FALSE  
 #> 2 ggchangepoint        0.6.0 0.6.0 FALSE  
-#> 3 R                    4.6.1 4.6.1 FALSE  
+#> 3 R                    4.6.2 4.6.2 FALSE  
 ```

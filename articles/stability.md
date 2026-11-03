@@ -101,8 +101,8 @@ str(fit$versions)
 #>  $ engine        : chr "strucchange"
 #>  $ engine_version: chr "1.6-0"
 #>  $ ggchangepoint : chr "0.6.0"
-#>  $ r             : chr "4.6.1"
-#>  $ created       : chr "2026-10-12T16:45:09+0000"
+#>  $ r             : chr "4.6.2"
+#>  $ created       : chr "2026-11-03T20:19:26+0000"
 ```
 
 `glance(fit)` carries the engine version as a column, so a table of

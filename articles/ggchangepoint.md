@@ -149,7 +149,7 @@ summary(res)
 #>   CP convention:      left
 #>   Series length:      200
 #>   Penalty:            MBIC
-#>   Runtime (seconds):  0.041
+#>   Runtime (seconds):  0.035
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
