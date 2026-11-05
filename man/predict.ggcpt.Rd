@@ -51,6 +51,7 @@ predict(fit, h = 3)
 }
 \seealso{
 Other segment models: 
+\code{\link{cpt_counterfactual}()},
 \code{\link{cpt_segment_models}()}
 }
 \concept{segment models}

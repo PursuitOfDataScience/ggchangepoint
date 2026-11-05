@@ -24,7 +24,7 @@ cpt_install_engines(bundle = "core", dry_run = FALSE, ...)
   \item{\code{"inference"}}{\pkg{nsp}, \pkg{crossvalidationCP},
     \pkg{changepoint.influence}, \pkg{penaltyLearning}.}
   \item{\code{"applied"}}{\pkg{trend}, \pkg{ChangePointTaylor},
-    \pkg{bfast}, \pkg{wbsts}, \pkg{binsegRcpp}.}
+    \pkg{bfast}, \pkg{wbsts}, \pkg{binsegRcpp}, \pkg{anomaly}.}
   \item{\code{"time"}}{index and coercion support: \pkg{zoo},
     \pkg{xts}, \pkg{tsibble}.}
   \item{\code{"reporting"}}{\pkg{gt}, \pkg{ggrepel}, \pkg{plotly},

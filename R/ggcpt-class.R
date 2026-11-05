@@ -246,7 +246,11 @@ print.ggcpt <- function(x, ...) {
   } else {
     cat("\n", empty_answer_note(x), "\n", sep = "")
   }
-  if (!is.null(x$regions)) {
+  if (!is.null(x$regions) && identical(x$region_kind, "anomaly")) {
+    cat("\nAnomalous windows (collective: a stretch away from the baseline; ",
+        "point: a single\noutlier):\n", sep = "")
+    print(x$regions, n = 10)
+  } else if (!is.null(x$regions)) {
     cat("\nSignificance regions (each contains at least one changepoint",
         if (!is.null(x$region_level)) {
           paste0(" at global level ", format(x$region_level))

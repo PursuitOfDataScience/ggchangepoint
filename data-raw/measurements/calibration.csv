@@ -14,3 +14,9 @@
 "cpt_test() at a location the data chose","cpt_test(cpt_detect(x, method = ""amoc"", penalty = ""None""))","Welch t at the one changepoint amoc always returns, Gaussian noise, n = 200 (selection_adjusted = FALSE)","size",0.05,0.545550289626119,0.0114260949437459,1899,2000
 "cpt_monitor() average run length","cpt_monitor(""cpm"", arl0 = 500)","Mann-Whitney statistic, in-control N(0, 1), stream of 4,000","run_length",500,548.2775,27.476195233249,400,400
 "cpt_monitor() average run length (lower bound)","cpt_monitor(""edetector"", baseline = b, alpha = 0.01)","in-control N(0, 1) after a baseline of 100, stream of 2,000; the guarantee is at least 1 / alpha","run_length",100,185.61,10.77294228443,400,400
+"cpt_confint() location set","cpt_confint(cpt_detect(x), method = ""conformal"")","CONCH, B = 199, one change of 1.5 sd, n = 200","coverage",0.95,0.97,0.00539444158370447,1000,1000
+"cpt_attribute() family-wise error","cpt_attribute(fit, alpha = 0.05)","ARM, Westfall-Young, B = 199; 8 t(3) coordinates, 2 shifted by 1, location from an aggregate CUSUM, n = 120","size",0.05,0.031,0.00548078461536302,1000,1000
+"cpt_monitor() average run length","cpt_monitor(""cusum"", arl0 = 500)","k = 0.5, limit from the Markov chain, in-control N(0, 1) after a baseline of 2,000, stream of 4,000","run_length",500,495.0825,25.3842051562169,400,400
+"cpt_monitor() average run length","cpt_monitor(""ewma"", arl0 = 500)","lambda = 0.2, limit from the Markov chain, in-control N(0, 1) after a baseline of 2,000, stream of 4,000","run_length",500,530.9525,27.7314647278006,400,400
+"cpt_screen() false discovery rate","cpt_screen(panel)","Pettitt p-values, Benjamini-Hochberg; 100 series of 120, ten with a shift of 1 sd","false_discovery_rate",0.05,0.0285277777777778,0.00253145926872212,400,400
+"cpt_abruptness() size","cpt_abruptness(cpt_detect(x))","step rejected for a ramp, level 0.95; one abrupt change of 2 sd, n = 300","size",0.05,0.018,0.002972877394041,2000,2000

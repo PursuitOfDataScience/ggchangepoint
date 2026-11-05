@@ -115,7 +115,10 @@ builtin_registry_core <- function() {
     "buishand",    "mean (single change, range test)",    "trend",              "mean",                   "trend_wrapper",        FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE,
     "snht",        "mean (standard normal homogeneity)",  "trend",              "mean",                   "trend_wrapper",        FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, TRUE,  FALSE, FALSE,
     "taylor",      "mean (Taylor's analyzer)",            "ChangePointTaylor",  "mean",                   "taylor_wrapper",       FALSE, TRUE,  FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE,
-    "binsegrcpp",  "mean, meanvar (fast BinSeg)",         "binsegRcpp",         "mean,meanvar",           "binsegrcpp_wrapper",   FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
+    "binsegrcpp",  "mean, meanvar (fast BinSeg)",         "binsegRcpp",         "mean,meanvar",           "binsegrcpp_wrapper",   FALSE, TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE,
+
+    # ---- 0.7.0 -------------------------------------------------------------
+    "capa",        "mean, meanvar (epidemic: anomalous windows)", "anomaly",    "mean,meanvar",           "capa_wrapper",         TRUE,  TRUE,  FALSE, FALSE, FALSE, FALSE, FALSE, FALSE, FALSE
   )
   # `supports` is stored as a comma-separated string so the table stays a
   # plain, printable, diffable tibble; a tribble list-column would deparse
@@ -215,6 +218,11 @@ derived_args_for <- function(method, change_in, pen_val) {
                       } else {
                         "mean"
                       }),
+    capa      = list(change_in = if (change_in %in% c("mean", "meanvar")) {
+                       change_in
+                     } else {
+                       "mean"
+                     }),
     list()
   )
 }

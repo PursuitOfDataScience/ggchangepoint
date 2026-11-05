@@ -49,6 +49,10 @@ navbar:
       href: articles/benchmarks.html
     - text: Stability, deprecation and the contract
       href: articles/stability.html
+    - text: Control charts are changepoint detectors
+      href: articles/control-charts.html
+    - text: 'Beyond the location: which, how sure, and what if'
+      href: articles/beyond-detection.html
   - text: News
     href: news/index.html
   right:
@@ -81,6 +85,8 @@ articles:
   - articles/calibration
   - articles/benchmarks
   - articles/stability
+  - articles/control-charts
+  - articles/beyond-detection
 
 reference:
 - title: Core API
@@ -133,11 +139,15 @@ reference:
   - cpt_crops
 - title: Inference
   desc: >
-    Where could this changepoint be, and is it real?
+    Where could this changepoint be, is it real, and which coordinates
+    changed?
   contents:
   - cpt_confint
+  - cpt_confint_coverage
   - cpt_test
   - cpt_regions
+  - cpt_attribute
+  - cpt_screen
 - title: Effects, dates and empty answers
   desc: >
     How big was the change, did anything change at a date fixed in advance,
@@ -151,13 +161,16 @@ reference:
   - cpt_null_power
 - title: Segment models
   desc: >
-    A model per regime, and a forecast from the last one.
+    A model per regime, a forecast from the last one, and what would have
+    happened without each change.
   contents:
   - cpt_segment_models
   - predict.ggcpt
+  - cpt_counterfactual
 - title: Choosing the number of changepoints
   contents:
   - cpt_select
+  - cpt_k_weights
 - title: Diagnostics
   desc: >
     Which observation is driving this, which setting, and what did the
@@ -176,6 +189,7 @@ reference:
   contents:
   - cpt_assumptions
   - cpt_gof
+  - cpt_abruptness
   - cpt_robustness
 - title: Supervised detection
   desc: >
@@ -258,6 +272,11 @@ reference:
   - taylor_wrapper
   - wbsts_wrapper
   - binsegrcpp_wrapper
+- title: Epidemic changes and anomalies
+  desc: >
+    Stretches that leave a baseline and return to it, and single outliers.
+  contents:
+  - capa_wrapper
 - title: Bayesian formula models
   contents:
   - mcp_wrapper

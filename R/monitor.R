@@ -34,6 +34,13 @@
 #'       \strong{Multivariate only}: it tracks a projection of the whole
 #'       vector and needs at least two coordinates, so it refuses a single
 #'       series rather than falling back to a univariate statistic.}
+#'     \item{\code{"cusum"}}{a two-sided tabular CUSUM control chart
+#'       (Page 1954) on the standardised stream, with reference value
+#'       \code{k} and its decision interval calibrated to \code{arl0}.
+#'       Implemented in this package; see the section on control charts.}
+#'     \item{\code{"ewma"}}{an EWMA control chart (Roberts 1959) with
+#'       smoothing \code{lambda} and limits calibrated to \code{arl0}.
+#'       Implemented in this package.}
 #'   }
 #' @param baseline A numeric vector (or, for \code{"ocd"}, a matrix with rows
 #'   as time points) of pre-change training data used to estimate the
@@ -44,8 +51,8 @@
 #'   average run length under the null is at least \code{1 / alpha}, by
 #'   optional stopping on the martingale \eqn{M_t - t} (see Details).
 #'   Defaults to \code{0.01}.
-#' @param arl0 Target in-control average run length for \code{"cpm"}.
-#'   Defaults to \code{500}.
+#' @param arl0 Target in-control average run length for \code{"cpm"},
+#'   \code{"cusum"} and \code{"ewma"}. Defaults to \code{500}.
 #' @param cpm_type Statistic for \code{"cpm"}. Defaults to
 #'   \code{"Mann-Whitney"}.
 #' @param patience Target patience (average run length) for \code{"ocd"}.
@@ -75,7 +82,42 @@
 #'   at the default \code{patience}), so pass thresholds directly when you
 #'   already have them, or lower \code{mc_reps} while exploring.
 #' @param mc_reps Monte Carlo repetitions for the \code{"ocd"} threshold.
-#' @param ... Additional arguments passed to the engine's constructor.
+#' @param ... Additional arguments passed to the engine's constructor
+#'   (\code{"cpm"} and \code{"ocd"}; the three native monitors take none).
+#' @param k CUSUM reference value, in baseline standard deviations: half
+#'   the shift the chart is tuned to detect fastest. Defaults to \code{0.5}
+#'   (a one-standard-deviation shift).
+#' @param lambda EWMA smoothing weight on the newest observation, in (0, 1].
+#'   Defaults to \code{0.2}; smaller values detect small shifts sooner and
+#'   large ones later.
+#' @param limit Optional control limit, overriding the calibration to
+#'   \code{arl0}: the CUSUM decision interval \eqn{h}, or the EWMA limit
+#'   multiplier \eqn{L}, both in baseline standard deviations.
+#'
+#' @section Control charts:
+#' \code{"cusum"} and \code{"ewma"} are the two charts statistical process
+#' control runs, and they are sequential changepoint detectors under
+#' another name. Each standardises the stream by the baseline's mean and
+#' standard deviation (Phase I; the baseline should be in control) and
+#' then monitors it (Phase II). The CUSUM keeps \eqn{S_t^+ =
+#' \max(0, S_{t-1}^+ + z_t - k)} and \eqn{S_t^- = \max(0, S_{t-1}^- - z_t -
+#' k)} and alarms when either reaches \eqn{h}; the EWMA keeps \eqn{z_t =
+#' \lambda x_t + (1 - \lambda) z_{t-1}} and alarms when it leaves \eqn{\pm L
+#' \sqrt{\lambda / (2 - \lambda)}}. The limit is solved for \code{arl0} by
+#' the Markov-chain approximation of the run length (Brook and Evans 1972;
+#' Lucas and Saccucci 1990), which reproduces the published tables: a CUSUM
+#' with \code{k = 0.5} and \eqn{h = 4} or 5 has in-control run lengths of
+#' 168 and 465, and an EWMA with \code{lambda = 0.1} and \eqn{L = 2.814}
+#' one of 500. Measured through this function with a 5,000-observation
+#' baseline and \code{arl0 = 100}, the first alarm on in-control data came
+#' after 99.4 observations on average for the CUSUM and 99.8 for the EWMA
+#' (400 runs each, standard errors about 5). The calibration treats the
+#' baseline's mean and standard deviation as exact, so a short baseline
+#' shortens the in-control run length: a few hundred observations is a
+#' reasonable minimum. Rational subgroups, run rules and capability indices are not
+#' modelled; for a formal quality-control programme use a dedicated
+#' package such as \pkg{qcc}. \code{autoplot(plot_type = "control_chart")}
+#' draws the chart.
 #'
 #' @section The e-detector, and why it is implemented rather than wrapped:
 #' Shin, Ramdas and Rinaldo (2023) give a nonparametric sequential framework
@@ -97,9 +139,10 @@
 #' asymptotics and no calibration run. A convex combination of e-detectors
 #' is an e-detector; a \emph{maximum} of them is not, and taking one
 #' silently multiplies the false-alarm rate by roughly the number of shifts
-#' mixed over. Every other detector in this package wraps published,
-#' separately maintained code; this one does not, and is labelled as such
-#' wherever it appears.
+#' mixed over. Apart from it and the two textbook control charts below,
+#' every detector in this package wraps published, separately maintained
+#' code; the three native monitors are labelled as such wherever they
+#' appear.
 #'
 #' @return A \code{ggcpt_monitor} object: a list carrying the detector's
 #'   state between calls, so it is meant to be passed to
@@ -130,6 +173,14 @@
 #'   }
 #' @references
 #' \insertRef{shin2023edetectors}{ggchangepoint}
+#'
+#' \insertRef{page1954continuous}{ggchangepoint}
+#'
+#' \insertRef{roberts1959ewma}{ggchangepoint}
+#'
+#' \insertRef{brook1972arl}{ggchangepoint}
+#'
+#' \insertRef{lucas1990ewma}{ggchangepoint}
 #' @seealso \code{\link{cpt_update}()}, \code{\link{alarms}()},
 #'   \code{\link{cpt_replay}()}, \code{\link{cpt_delay}()}.
 #' @export
@@ -139,11 +190,13 @@
 #' mon <- cpt_update(mon, rnorm(50))          # still in control
 #' mon <- cpt_update(mon, rnorm(50, 3))       # a change arrives
 #' alarms(mon)
-cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
+cpt_monitor <- function(method = c("edetector", "cpm", "ocd", "cusum",
+                                   "ewma"),
                         baseline = NULL, alpha = 0.01, arl0 = 500,
                         cpm_type = "Mann-Whitney", patience = 5000,
                         deltas = c(0.5, 1, 2), reset = TRUE, relearn = 20,
-                        thresh = "MC", mc_reps = 100, ...) {
+                        thresh = "MC", mc_reps = 100, ..., k = 0.5,
+                        lambda = 0.2, limit = NULL) {
   method <- cpt_match_arg(method)
 
   # The three detectors are calibrated in different currencies and each
@@ -152,19 +205,22 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
   # say so, which does not help the user who set one and is now reading an
   # unchanged answer. Only an argument the caller supplied is reported --
   # the defaults supply all of them.
-  governs <- c(alpha = "edetector", deltas = "edetector",
-               arl0 = "cpm", cpm_type = "cpm",
-               patience = "ocd", thresh = "ocd", mc_reps = "ocd")
+  governs <- list(alpha = "edetector", deltas = "edetector",
+                  arl0 = c("cpm", "cusum", "ewma"), cpm_type = "cpm",
+                  patience = "ocd", thresh = "ocd", mc_reps = "ocd",
+                  k = "cusum", lambda = "ewma", limit = c("cusum", "ewma"))
   supplied <- c(alpha = !missing(alpha), deltas = !missing(deltas),
                 arl0 = !missing(arl0), cpm_type = !missing(cpm_type),
                 patience = !missing(patience), thresh = !missing(thresh),
-                mc_reps = !missing(mc_reps))
-  ignored <- names(governs)[supplied[names(governs)] & governs != method]
+                mc_reps = !missing(mc_reps), k = !missing(k),
+                lambda = !missing(lambda), limit = !is.null(limit))
+  tunes <- vapply(governs, function(g) method %in% g, logical(1))
+  ignored <- names(governs)[supplied[names(governs)] & !tunes]
   if (length(ignored) > 0) {
     cpt_warn("`", paste(ignored, collapse = "`, `"), "` ",
              if (length(ignored) > 1) "do" else "does", " not affect `method ",
               "= \"", method, "\"`, which is tuned by `",
-             paste(names(governs)[governs == method], collapse = "`, `"),
+             paste(names(governs)[tunes], collapse = "`, `"),
              "`. See ?cpt_monitor.", class = "argument_ignored")
   }
 
@@ -191,6 +247,18 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
   # for `deltas`, this function's own arithmetic) unvalidated: `deltas = 0`
   # makes every `inc` exactly 1, so `R` grows LINEARLY whatever the data
   # does and the monitor alarms at t = 1/alpha on pure noise.
+  if (method %in% c("cusum", "ewma") && length(list(...)) > 0) {
+    extra <- names(list(...))
+    cpt_warn("`method = \"", method, "\"` is native to this package and ",
+             "takes no engine arguments, so ",
+             if (length(extra) && all(nzchar(extra))) {
+               paste0("`", paste(extra, collapse = "`, `"), "` ")
+             } else {
+               paste0(length(list(...)), " unnamed argument(s) ")
+             }, "would be ignored. It is tuned by `arl0`, `",
+             if (method == "cusum") "k" else "lambda", "` and `limit`.",
+             class = "argument_ignored")
+  }
   if (identical(method, "edetector")) {
     if (!is.numeric(deltas) || length(deltas) == 0L ||
         any(!is.finite(deltas)) || all(deltas == 0)) {
@@ -321,6 +389,9 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
       }
       list(model = m, cpm_type = cpm_type, arl0 = arl0)
     },
+    cusum = ,
+    ewma = chart_state(method, baseline, arl0 = arl0, k = k,
+                       lambda = lambda, limit = limit),
     ocd = {
       need_pkg("ocd")
       if (is.null(baseline)) {
@@ -364,11 +435,48 @@ cpt_monitor <- function(method = c("edetector", "cpm", "ocd"),
          relearn_left = 0L,
          relearn_buffer = NULL,
          data = numeric(0),
+         trace = tibble::tibble(time = integer(), statistic = numeric(),
+                                lower = numeric()),
          alarms = tibble::tibble(time = integer(), statistic = numeric(),
                                  threshold = numeric()),
          alpha = alpha),
     class = "ggcpt_monitor"
   )
+}
+
+# Internal: the state of a CUSUM or EWMA chart, standardised by the
+# baseline and calibrated to arl0 unless a limit is given.
+#' @noRd
+chart_state <- function(method, baseline, arl0, k, lambda, limit) {
+  if (is.null(baseline) || NROW(baseline) < 5) {
+    cpt_abort("`", method, "` standardises the stream by the in-control ",
+              "mean and standard deviation of `baseline`, so it needs at ",
+              "least 5 pre-change observations.", class = "short_series")
+  }
+  b <- as.numeric(baseline)
+  if (anyNA(b) || any(!is.finite(b))) {
+    stop_nonfinite(b, "baseline", stream_na_hint(b))
+  }
+  sd0 <- stats::sd(b)
+  if (!is.finite(sd0) || sd0 <= 0) {
+    cpt_abort("`baseline` has zero variability, so the chart's scale is ",
+              "undefined.", class = "input_error")
+  }
+  check_chart_arl0(arl0)
+  if (!is.null(limit)) validate_scalar(limit, "limit", min = 0,
+                                       min_open = TRUE)
+  if (method == "cusum") {
+    validate_scalar(k, "k", min = 0)
+    h <- limit %||% cusum_h_for(arl0, k)
+    return(list(mu0 = mean(b), sd0 = sd0, k = k, h = h, sp = 0, sn = 0,
+                threshold = h, arl0 = arl0,
+                calibrated = is.null(limit)))
+  }
+  validate_scalar(lambda, "lambda", min = 0, max = 1, min_open = TRUE)
+  L <- limit %||% ewma_L_for(arl0, lambda)
+  list(mu0 = mean(b), sd0 = sd0, lambda = lambda, L = L, z = 0,
+       threshold = L * sqrt(lambda / (2 - lambda)), arl0 = arl0,
+       calibrated = is.null(limit))
 }
 
 #' Feed observations to a monitor
@@ -427,6 +535,8 @@ cpt_update <- function(monitor, new_obs) {
   # `monitor$data <- c(monitor$data, xt[1])` inside the loop made replaying
   # 10,000 observations do on the order of 50 million element copies.
   seen <- numeric(nrow(X))
+  trace_stat <- rep(NA_real_, nrow(X))
+  trace_low <- rep(NA_real_, nrow(X))
 
   for (i in seq_len(nrow(X))) {
     monitor$t <- monitor$t + 1L
@@ -480,6 +590,27 @@ cpt_update <- function(monitor, new_obs) {
       thr <- st$threshold
       hit <- is.finite(stat) && stat >= thr
       if (hit && monitor$reset) st$R <- rep(0, length(st$deltas))
+    } else if (monitor$method == "cusum") {
+      z <- (xt[1] - st$mu0) / st$sd0
+      st$sp <- max(0, st$sp + z - st$k)
+      st$sn <- max(0, st$sn - z - st$k)
+      trace_low[i] <- -st$sn
+      stat <- max(st$sp, st$sn)
+      thr <- st$h
+      hit <- stat >= thr
+      trace_stat[i] <- st$sp
+      if (hit && monitor$reset) {
+        st$sp <- 0
+        st$sn <- 0
+      }
+    } else if (monitor$method == "ewma") {
+      z <- (xt[1] - st$mu0) / st$sd0
+      st$z <- st$lambda * z + (1 - st$lambda) * st$z
+      stat <- st$z
+      thr <- st$threshold
+      hit <- abs(stat) >= thr
+      trace_stat[i] <- st$z
+      if (hit && monitor$reset) st$z <- 0
     } else if (monitor$method == "cpm") {
       st$model <- cpm::processObservation(st$model, xt[1])
       stat <- suppressWarnings(as.numeric(
@@ -510,6 +641,7 @@ cpt_update <- function(monitor, new_obs) {
       }
     }
 
+    if (!monitor$method %in% c("cusum", "ewma")) trace_stat[i] <- stat
     if (isTRUE(hit)) {
       new_alarms[[length(new_alarms) + 1L]] <-
         tibble::tibble(time = monitor$t, statistic = stat, threshold = thr)
@@ -522,6 +654,11 @@ cpt_update <- function(monitor, new_obs) {
 
   monitor$state <- st
   monitor$data <- c(monitor$data, seen)
+  # The statistic at every observation (NA while re-learning), so a chart
+  # can be drawn; a monitor built before 0.7.0 has no trace to extend.
+  steps <- tibble::tibble(time = monitor$t - rev(seq_len(nrow(X))) + 1L,
+                          statistic = trace_stat, lower = trace_low)
+  monitor$trace <- rbind(monitor$trace %||% steps[0, ], steps)
   if (length(new_alarms) > 0) {
     monitor$alarms <- rbind(monitor$alarms, do.call(rbind, new_alarms))
   }
@@ -537,6 +674,8 @@ monitor_width <- function(monitor) {
     ocd = monitor$state$p,
     edetector = 1L,
     cpm = 1L,
+    cusum = 1L,
+    ewma = 1L,
     NA_integer_
   )
 }
@@ -556,6 +695,17 @@ monitor_relearn <- function(method, st, buffer) {
     }
     st$mu0 <- mean(v)
     st$R <- rep(0, length(st$deltas))
+  } else if (method %in% c("cusum", "ewma")) {
+    v <- as.numeric(buffer[, 1])
+    sd0 <- stats::sd(v)
+    if (is.finite(sd0) && sd0 > 0) st$sd0 <- sd0
+    st$mu0 <- mean(v)
+    if (method == "cusum") {
+      st$sp <- 0
+      st$sn <- 0
+    } else {
+      st$z <- 0
+    }
   } else if (method == "ocd") {
     st$mean <- colMeans(buffer)
     sdv <- apply(buffer, 2, stats::sd)
@@ -603,8 +753,23 @@ tidy.ggcpt_monitor <- function(x, ...) {
 #' @export
 print.ggcpt_monitor <- function(x, ...) {
   cat("ggcpt_monitor (", x$method,
-      if (identical(x$method, "edetector")) ", native implementation" else "",
+      if (x$method %in% c("edetector", "cusum", "ewma")) {
+        ", native implementation"
+      } else "",
       ")\n", sep = "")
+  st <- x$state
+  if (identical(x$method, "cusum")) {
+    cat("  Chart: k = ", format(st$k), ", h = ", format(signif(st$h, 4)),
+        if (isTRUE(st$calibrated)) paste0(" (in-control ARL ",
+                                          format(st$arl0), ")"),
+        "\n", sep = "")
+  } else if (identical(x$method, "ewma")) {
+    cat("  Chart: lambda = ", format(st$lambda), ", L = ",
+        format(signif(st$L, 4)),
+        if (isTRUE(st$calibrated)) paste0(" (in-control ARL ",
+                                          format(st$arl0), ")"),
+        "\n", sep = "")
+  }
   cat("  Baseline observations: ", x$n_baseline, "\n", sep = "")
   cat("  Monitored observations: ", x$t, "\n", sep = "")
   cat("  Alarms: ", nrow(x$alarms), "\n", sep = "")
@@ -622,20 +787,26 @@ print.ggcpt_monitor <- function(x, ...) {
 #' @rdname cpt_monitor
 #' @param object A \code{ggcpt_monitor} object (for \code{autoplot()}).
 #' @param plot_type \code{"timeline"} (the monitored series with the alarms
-#'   marked), \code{"statistic"} (the detection statistic at each alarm,
-#'   against its threshold: a monitor records its statistic only when an
-#'   alarm fires) or \code{"runlength"} (the gaps between alarms, which
-#'   estimate the run length). For a multivariate monitor the timeline draws
+#'   marked), \code{"control_chart"} (the detection statistic at every
+#'   observation against its limits, with the alarms flagged: for a CUSUM
+#'   the upper and lower sums against \eqn{\pm h}, for an EWMA the
+#'   smoothed statistic between its limits), \code{"statistic"} (the
+#'   statistic at each alarm only, against its threshold) or
+#'   \code{"runlength"} (the gaps between alarms, which estimate the run
+#'   length). For a multivariate monitor the timeline draws
 #'   the first coordinate: the alarms are shared, so the rules are right
 #'   whichever coordinate is shown, but the line is one of several.
 #' @export
 autoplot.ggcpt_monitor <- function(object,
                                    plot_type = c("timeline", "statistic",
-                                                 "runlength"),
+                                                 "runlength",
+                                                 "control_chart"),
                                    ...) {
   plot_type <- cpt_match_arg(plot_type)
   al <- object$alarms
   d <- tibble::tibble(time = seq_along(object$data), value = object$data)
+
+  if (plot_type == "control_chart") return(control_chart(object))
 
   if (plot_type == "timeline") {
     p <- ggplot2::ggplot(d, ggplot2::aes(time, value)) +
@@ -715,7 +886,8 @@ autoplot.ggcpt_monitor <- function(object,
 #' set.seed(2026)
 #' mon <- cpt_replay(c(rnorm(200), rnorm(200, 3)), method = "edetector")
 #' alarms(mon)
-cpt_replay <- function(x, method = c("edetector", "cpm", "ocd"),
+cpt_replay <- function(x, method = c("edetector", "cpm", "ocd", "cusum",
+                                  "ewma"),
                        baseline = NULL, ...) {
   method <- cpt_match_arg(method)
   # coerce_series_values()/as_mv_matrix(), not a bare as.numeric(): a factor
@@ -1010,4 +1182,59 @@ check_baseline_dependence <- function(baseline, method) {
            "residuals of an AR fit).", class = "dependence",
            data = list(p_value = p[worst], acf1 = acf1[worst]))
   invisible(NULL)
+}
+
+# Internal: the control chart of a monitor: its statistic at every
+# observation against its limits, alarms flagged.
+#' @noRd
+control_chart <- function(object) {
+  tr <- object$trace
+  if (is.null(tr) || !nrow(tr)) {
+    cpt_abort("This monitor has consumed no observations yet (or was built ",
+              "before 0.7.0, which recorded no trace), so there is no chart ",
+              "to draw. Feed it with cpt_update().",
+              class = "capability_absent")
+  }
+  st <- object$state
+  al <- object$alarms
+  lim <- switch(object$method,
+    cusum = c(-st$h, st$h),
+    ewma = c(-st$threshold, st$threshold),
+    edetector = c(NA_real_, st$threshold),
+    ocd = c(NA_real_, 1),
+    c(NA_real_, NA_real_)
+  )
+  ylab <- switch(object$method,
+    cusum = "CUSUM (upper, lower)",
+    ewma = "EWMA (standardised)",
+    edetector = "E-detector",
+    "Statistic"
+  )
+  p <- ggplot2::ggplot(tr, ggplot2::aes(x = time, y = statistic)) +
+    ggplot2::geom_line(colour = "#0072B2", na.rm = TRUE)
+  if (any(!is.na(tr$lower))) {
+    p <- p + ggplot2::geom_line(ggplot2::aes(y = lower), colour = "#0072B2",
+                                na.rm = TRUE)
+  }
+  lims <- lim[!is.na(lim)]
+  if (length(lims)) {
+    p <- p + ggplot2::geom_hline(yintercept = lims, linetype = "dashed",
+                                 colour = "#D55E00")
+  }
+  if (nrow(al)) {
+    hit <- tr[tr$time %in% al$time, , drop = FALSE]
+    yv <- if (object$method == "cusum") {
+      ifelse(abs(hit$lower) > hit$statistic, hit$lower, hit$statistic)
+    } else hit$statistic
+    p <- p + ggplot2::geom_point(data = tibble::tibble(time = hit$time,
+                                                       statistic = yv),
+                                 colour = "#D55E00", size = 2.2,
+                                 na.rm = TRUE)
+  }
+  p + ggplot2::labs(x = "Observation", y = ylab,
+                    title = paste0("Control chart (", object$method, ")"),
+                    subtitle = paste0(nrow(al), " alarm(s) in ", object$t,
+                                      " observations; dashed: control ",
+                                      "limits")) +
+    theme_ggcpt()
 }

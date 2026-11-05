@@ -33,7 +33,7 @@
 #'     \item{\code{"inference"}}{\pkg{nsp}, \pkg{crossvalidationCP},
 #'       \pkg{changepoint.influence}, \pkg{penaltyLearning}.}
 #'     \item{\code{"applied"}}{\pkg{trend}, \pkg{ChangePointTaylor},
-#'       \pkg{bfast}, \pkg{wbsts}, \pkg{binsegRcpp}.}
+#'       \pkg{bfast}, \pkg{wbsts}, \pkg{binsegRcpp}, \pkg{anomaly}.}
 #'     \item{\code{"time"}}{index and coercion support: \pkg{zoo},
 #'       \pkg{xts}, \pkg{tsibble}.}
 #'     \item{\code{"reporting"}}{\pkg{gt}, \pkg{ggrepel}, \pkg{plotly},
@@ -129,7 +129,7 @@ engine_bundles <- function() {
     inference = c("nsp", "crossvalidationCP", "changepoint.influence",
                   "penaltyLearning"),
     applied = eng(c("pettitt", "buishand", "snht", "taylor", "bfast",
-                    "wbsts", "binsegrcpp")),
+                    "wbsts", "binsegrcpp", "capa")),
     # Only packages this one actually reads or writes through. `tsbox` and
     # `patchwork` were listed here and appear nowhere else in the package --
     # not in Suggests, not in R/, not in the tests or vignettes -- so the

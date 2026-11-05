@@ -27,12 +27,13 @@
 #'   (a causal running mean), \code{beast}, \code{decafs},
 #'   \code{segmented}, \code{envcpt}, \code{mcp} and \code{bfast}, plus
 #'   every formula fit). Defaults to \code{FALSE}.
-#' @param show_regions Logical. Whether to shade the significance regions an
-#'   interval-valued method returns (the \code{regions} slot; currently
-#'   \code{\link{nsp_wrapper}()}). Each band is an interval that contains at
-#'   least one changepoint at the stated global level; it is not a confidence
-#'   interval around a point estimate. Defaults to \code{TRUE} when the
-#'   result carries regions, and is ignored otherwise.
+#' @param show_regions Logical. Whether to draw the \code{regions} slot:
+#'   the significance regions of \code{\link{nsp_wrapper}()} (each band
+#'   contains at least one changepoint at the stated global level; it is
+#'   not a confidence interval around a point estimate) or the anomalies of
+#'   \code{\link{capa_wrapper}()} (collective anomalies shaded, point
+#'   anomalies ringed). Defaults to \code{TRUE} when the result carries
+#'   regions, and is ignored otherwise.
 #' @param cptline_alpha Alpha for changepoint lines. Defaults to \code{1}.
 #' @param cptline_color Color for changepoint lines. Defaults to \code{"blue"}.
 #' @param cptline_type Linetype for changepoint lines. Defaults to \code{"solid"}.
@@ -62,6 +63,10 @@
 #'   segment (the independence most engines assume), a normal Q-Q plot per
 #'   segment (the Gaussian cost) and the spread of each segment (a constant
 #'   variance); \code{\link{cpt_gof}()} gives the same checks as numbers.
+#'   \code{"counterfactual"} draws the series against the segment before
+#'   each change carried forward (\code{\link{cpt_counterfactual}()}), and
+#'   \code{"attribution"} the coordinates certified to have changed at each
+#'   changepoint of a multivariate result (\code{\link{cpt_attribute}()}).
 #' @param ... Unknown arguments are ignored with a warning, except when
 #'   \code{type} is not \code{"series"}, in which case they are passed to
 #'   the delegate.
@@ -96,7 +101,8 @@ autoplot.ggcpt <- function(object,
                            index = NULL,
                            labels = NULL,
                            type = c("series", "statistic", "path",
-                                    "scale_space", "diagnostics"),
+                                    "scale_space", "diagnostics",
+                                    "counterfactual", "attribution"),
                            ...) {
 
   type <- cpt_match_arg(type)
@@ -105,7 +111,9 @@ autoplot.ggcpt <- function(object,
       statistic = ggcpt_statistic(object, ...),
       path = ggcpt_solution_path(object, ...),
       scale_space = ggcpt_scale_space(object, ...),
-      diagnostics = autoplot_diagnostics(object, ...)
+      diagnostics = autoplot_diagnostics(object, ...),
+      counterfactual = autoplot(cpt_counterfactual(object, ...)),
+      attribution = autoplot(cpt_attribute(object, ...))
     ))
   }
 
@@ -205,13 +213,21 @@ autoplot.ggcpt <- function(object,
 
   if (isTRUE(show_regions)) {
     if (is.null(object$regions) || nrow(object$regions) == 0) {
-      cpt_warn("`show_regions = TRUE` but this result carries no significance ",
-               "regions; nsp is the method that produces them.",
+      cpt_warn("`show_regions = TRUE` but this result carries no regions; ",
+               "nsp (significance regions) and capa (anomalous windows) are ",
+               "the methods that produce them.",
                class = "argument_ignored")
     } else {
+      reg <- object$regions
+      # A point anomaly (capa) is one observation, so it is marked on the
+      # series rather than shaded: a band from an index to itself has no
+      # width to draw.
+      is_point <- if ("type" %in% names(reg)) reg$type %in% "point" else
+        rep(FALSE, nrow(reg))
+      band <- reg[!is_point, , drop = FALSE]
       reg_df <- tibble::tibble(
-        xmin = idx_vals[object$regions$start],
-        xmax = idx_vals[object$regions$end]
+        xmin = idx_vals[band$start],
+        xmax = idx_vals[band$end]
       )
       # Drawn first so the series and the rules stay on top of the shading.
       p$layers <- c(
@@ -222,6 +238,15 @@ autoplot.ggcpt <- function(object,
         )),
         p$layers
       )
+      if (any(is_point)) {
+        pos <- reg$start[is_point]
+        pt_df <- tibble::tibble(x = idx_vals[pos],
+                                y = object$data$value[pos])
+        p <- p + ggplot2::geom_point(
+          data = pt_df, ggplot2::aes(x = x, y = y), inherit.aes = FALSE,
+          shape = 21, size = 3.2, stroke = 1, colour = cptline_color,
+          fill = NA, na.rm = TRUE)
+      }
     }
   }
 

@@ -8,7 +8,7 @@
 \title{A stateful sequential changepoint monitor}
 \usage{
 cpt_monitor(
-  method = c("edetector", "cpm", "ocd"),
+  method = c("edetector", "cpm", "ocd", "cusum", "ewma"),
   baseline = NULL,
   alpha = 0.01,
   arl0 = 500,
@@ -19,14 +19,21 @@ cpt_monitor(
   relearn = 20,
   thresh = "MC",
   mc_reps = 100,
-  ...
+  ...,
+  k = 0.5,
+  lambda = 0.2,
+  limit = NULL
 )
 
 \method{tidy}{ggcpt_monitor}(x, ...)
 
 \method{print}{ggcpt_monitor}(x, ...)
 
-\method{autoplot}{ggcpt_monitor}(object, plot_type = c("timeline", "statistic", "runlength"), ...)
+\method{autoplot}{ggcpt_monitor}(
+  object,
+  plot_type = c("timeline", "statistic", "runlength", "control_chart"),
+  ...
+)
 }
 \arguments{
 \item{method}{Which sequential detector:
@@ -39,6 +46,13 @@ cpt_monitor(
     \strong{Multivariate only}: it tracks a projection of the whole
     vector and needs at least two coordinates, so it refuses a single
     series rather than falling back to a univariate statistic.}
+  \item{\code{"cusum"}}{a two-sided tabular CUSUM control chart
+    (Page 1954) on the standardised stream, with reference value
+    \code{k} and its decision interval calibrated to \code{arl0}.
+    Implemented in this package; see the section on control charts.}
+  \item{\code{"ewma"}}{an EWMA control chart (Roberts 1959) with
+    smoothing \code{lambda} and limits calibrated to \code{arl0}.
+    Implemented in this package.}
 }}
 
 \item{baseline}{A numeric vector (or, for \code{"ocd"}, a matrix with rows
@@ -52,8 +66,8 @@ average run length under the null is at least \code{1 / alpha}, by
 optional stopping on the martingale \eqn{M_t - t} (see Details).
 Defaults to \code{0.01}.}
 
-\item{arl0}{Target in-control average run length for \code{"cpm"}.
-Defaults to \code{500}.}
+\item{arl0}{Target in-control average run length for \code{"cpm"},
+\code{"cusum"} and \code{"ewma"}. Defaults to \code{500}.}
 
 \item{cpm_type}{Statistic for \code{"cpm"}. Defaults to
 \code{"Mann-Whitney"}.}
@@ -91,17 +105,33 @@ already have them, or lower \code{mc_reps} while exploring.}
 
 \item{mc_reps}{Monte Carlo repetitions for the \code{"ocd"} threshold.}
 
-\item{...}{Additional arguments passed to the engine's constructor.}
+\item{...}{Additional arguments passed to the engine's constructor
+(\code{"cpm"} and \code{"ocd"}; the three native monitors take none).}
+
+\item{k}{CUSUM reference value, in baseline standard deviations: half
+the shift the chart is tuned to detect fastest. Defaults to \code{0.5}
+(a one-standard-deviation shift).}
+
+\item{lambda}{EWMA smoothing weight on the newest observation, in (0, 1].
+Defaults to \code{0.2}; smaller values detect small shifts sooner and
+large ones later.}
+
+\item{limit}{Optional control limit, overriding the calibration to
+\code{arl0}: the CUSUM decision interval \eqn{h}, or the EWMA limit
+multiplier \eqn{L}, both in baseline standard deviations.}
 
 \item{x}{A \code{ggcpt_monitor} object (for \code{print()}).}
 
 \item{object}{A \code{ggcpt_monitor} object (for \code{autoplot()}).}
 
 \item{plot_type}{\code{"timeline"} (the monitored series with the alarms
-marked), \code{"statistic"} (the detection statistic at each alarm,
-against its threshold: a monitor records its statistic only when an
-alarm fires) or \code{"runlength"} (the gaps between alarms, which
-estimate the run length). For a multivariate monitor the timeline draws
+marked), \code{"control_chart"} (the detection statistic at every
+observation against its limits, with the alarms flagged: for a CUSUM
+the upper and lower sums against \eqn{\pm h}, for an EWMA the
+smoothed statistic between its limits), \code{"statistic"} (the
+statistic at each alarm only, against its threshold) or
+\code{"runlength"} (the gaps between alarms, which estimate the run
+length). For a multivariate monitor the timeline draws
 the first coordinate: the alarms are shared, so the rules are right
 whichever coordinate is shown, but the line is one of several.}
 }
@@ -143,6 +173,33 @@ because for an online method "did you find the location?" is the wrong
 question and "how long did you take, and how often do you false-alarm?"
 is the right one.
 }
+\section{Control charts}{
+
+\code{"cusum"} and \code{"ewma"} are the two charts statistical process
+control runs, and they are sequential changepoint detectors under
+another name. Each standardises the stream by the baseline's mean and
+standard deviation (Phase I; the baseline should be in control) and
+then monitors it (Phase II). The CUSUM keeps \eqn{S_t^+ =
+\max(0, S_{t-1}^+ + z_t - k)} and \eqn{S_t^- = \max(0, S_{t-1}^- - z_t -
+k)} and alarms when either reaches \eqn{h}; the EWMA keeps \eqn{z_t =
+\lambda x_t + (1 - \lambda) z_{t-1}} and alarms when it leaves \eqn{\pm L
+\sqrt{\lambda / (2 - \lambda)}}. The limit is solved for \code{arl0} by
+the Markov-chain approximation of the run length (Brook and Evans 1972;
+Lucas and Saccucci 1990), which reproduces the published tables: a CUSUM
+with \code{k = 0.5} and \eqn{h = 4} or 5 has in-control run lengths of
+168 and 465, and an EWMA with \code{lambda = 0.1} and \eqn{L = 2.814}
+one of 500. Measured through this function with a 5,000-observation
+baseline and \code{arl0 = 100}, the first alarm on in-control data came
+after 99.4 observations on average for the CUSUM and 99.8 for the EWMA
+(400 runs each, standard errors about 5). The calibration treats the
+baseline's mean and standard deviation as exact, so a short baseline
+shortens the in-control run length: a few hundred observations is a
+reasonable minimum. Rational subgroups, run rules and capability indices are not
+modelled; for a formal quality-control programme use a dedicated
+package such as \pkg{qcc}. \code{autoplot(plot_type = "control_chart")}
+draws the chart.
+}
+
 \section{The e-detector, and why it is implemented rather than wrapped}{
 
 Shin, Ramdas and Rinaldo (2023) give a nonparametric sequential framework
@@ -164,9 +221,10 @@ finite-sample lower bound on the in-control average run length, with no
 asymptotics and no calibration run. A convex combination of e-detectors
 is an e-detector; a \emph{maximum} of them is not, and taking one
 silently multiplies the false-alarm rate by roughly the number of shifts
-mixed over. Every other detector in this package wraps published,
-separately maintained code; this one does not, and is labelled as such
-wherever it appears.
+mixed over. Apart from it and the two textbook control charts below,
+every detector in this package wraps published, separately maintained
+code; the three native monitors are labelled as such wherever they
+appear.
 }
 
 \examples{
@@ -178,6 +236,14 @@ alarms(mon)
 }
 \references{
 \insertRef{shin2023edetectors}{ggchangepoint}
+
+\insertRef{page1954continuous}{ggchangepoint}
+
+\insertRef{roberts1959ewma}{ggchangepoint}
+
+\insertRef{brook1972arl}{ggchangepoint}
+
+\insertRef{lucas1990ewma}{ggchangepoint}
 }
 \seealso{
 \code{\link{cpt_update}()}, \code{\link{alarms}()},

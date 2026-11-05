@@ -120,3 +120,43 @@ reclass_subset <- function(x, out, required) {
   out <- NextMethod()
   reclass_subset(x, out, c("segment", "start", "end", "n", "model"))
 }
+
+#' @export
+`[.ggcpt_attribution` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("cp", "coordinate", "p_adjusted", "changed",
+                           "type"))
+}
+
+#' @export
+`[.ggcpt_coverage` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("route", "coverage", "coverage_se", "level"))
+}
+
+#' @export
+`[.ggcpt_counterfactual` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("cp", "index", "observed", "counterfactual",
+                           "lower", "upper", "effect"))
+}
+
+#' @export
+`[.ggcpt_abruptness` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("cp", "window_start", "window_end", "width",
+                           "width_lower", "width_upper", "centre", "verdict"))
+}
+
+#' @export
+`[.ggcpt_screen` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("series", "rank", "p_value", "p_adjusted",
+                           "flagged"))
+}
+
+#' @export
+`[.ggcpt_k_weights` <- function(x, ...) {
+  out <- NextMethod()
+  reclass_subset(x, out, c("k", "weight", "chosen"))
+}

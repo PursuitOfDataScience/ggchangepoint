@@ -4,7 +4,12 @@
 \alias{cpt_replay}
 \title{Replay a series through a sequential detector}
 \usage{
-cpt_replay(x, method = c("edetector", "cpm", "ocd"), baseline = NULL, ...)
+cpt_replay(
+  x,
+  method = c("edetector", "cpm", "ocd", "cusum", "ewma"),
+  baseline = NULL,
+  ...
+)
 }
 \arguments{
 \item{x}{A numeric vector, or a matrix with rows as time points.}

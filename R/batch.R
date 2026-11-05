@@ -54,63 +54,7 @@
 cpt_batch <- function(x, method = "pelt", change_in = "mean", index = NULL,
                       seed = NULL, keep_fit = TRUE, ...) {
   validate_flag(keep_fit, "keep_fit")
-  series_list <- if (is.list(x) && !is.data.frame(x)) {
-    if (length(x) == 0L) {
-      cpt_abort("`x` is empty: `cpt_batch()` needs at least one series.",
-                class = "bad_argument")
-    }
-    # coerce_series_values(), not a bare as.numeric(): a factor coerces to
-    # its LEVEL CODES -- an alphabetical ordering of the labels rather than
-    # the data -- and a character vector to NAs, both silently. cpt_detect()
-    # has refused those since 0.4.0; cpt_batch() reached the engine through
-    # `as.numeric()` and so accepted a whole panel of them, reporting
-    # changepoints in the label ordering. The series name goes into the
-    # message because a panel is exactly where "which one?" is the question.
-    stats::setNames(lapply(seq_along(x), function(i) {
-      nm <- names(x)[i] %||% ""
-      label <- paste0("Series ", if (nzchar(nm)) paste0("`", nm, "` ") else "",
-                      "(", i, " of ", length(x), ")")
-      xi <- x[[i]]
-      # A panel is documented as "a list of numeric vectors", and that is
-      # load-bearing: as.numeric() on a matrix unrolls it column after
-      # column, so an 80x2 member became a 160-point series and reported a
-      # changepoint at index 80 -- the seam where the second column was
-      # appended, which the data does not contain. One column is exempt
-      # because unrolling it changes nothing.
-      if (is.matrix(xi) || is.data.frame(xi)) {
-        withCallingHandlers(
-          reject_multicolumn(xi, "x",
-                             paste("Pass a multivariate series to",
-                                   "cpt_detect() directly, or split the",
-                                   "columns into separate panel members.")),
-          error = function(e) {
-            cpt_rethrow(e, label, ": ")
-          })
-        return(withCallingHandlers(
-          as_mv_matrix(xi, arg = "x")[, 1],
-          error = function(e) {
-            cpt_rethrow(e, label, ": ")
-          }))
-      }
-      withCallingHandlers(
-        coerce_series_values(xi),
-        error = function(e) {
-          cpt_rethrow(e, label, ": ")
-        })
-    }), names(x))
-  } else {
-    X <- as_mv_matrix(x)
-    stats::setNames(lapply(seq_len(ncol(X)), function(j) X[, j]),
-                    colnames(X))
-  }
-  # Fill in only the missing names, keeping any the user supplied.
-  nms <- names(series_list) %||% rep("", length(series_list))
-  nms[is.na(nms)] <- ""
-  missing_nm <- !nzchar(nms)
-  nms[missing_nm] <- paste0("series_", which(missing_nm))
-  # De-duplicate so downstream factor levels (in autoplot()/tidy()) are
-  # unique; duplicate column names otherwise crash factor construction.
-  names(series_list) <- make.unique(as.character(nms))
+  series_list <- batch_series_list(x)
 
   has_future <- requireNamespace("future", quietly = TRUE) &&
     requireNamespace("future.apply", quietly = TRUE) &&
@@ -299,4 +243,70 @@ autoplot.ggcpt_batch <- function(object, ...) {
     )
   }
   p
+}
+
+# Internal: a panel as a named list of numeric vectors, from a list of
+# series, a matrix or a data frame (one column per series). Shared by
+# cpt_batch() and cpt_screen(), so both refuse the same inputs in the same
+# words.
+#' @noRd
+batch_series_list <- function(x, caller = "cpt_batch()") {
+  series_list <- if (is.list(x) && !is.data.frame(x)) {
+    if (length(x) == 0L) {
+      cpt_abort("`x` is empty: `", caller, "` needs at least one series.",
+                class = "bad_argument")
+    }
+    # coerce_series_values(), not a bare as.numeric(): a factor coerces to
+    # its LEVEL CODES -- an alphabetical ordering of the labels rather than
+    # the data -- and a character vector to NAs, both silently. cpt_detect()
+    # has refused those since 0.4.0; cpt_batch() reached the engine through
+    # `as.numeric()` and so accepted a whole panel of them, reporting
+    # changepoints in the label ordering. The series name goes into the
+    # message because a panel is exactly where "which one?" is the question.
+    stats::setNames(lapply(seq_along(x), function(i) {
+      nm <- names(x)[i] %||% ""
+      label <- paste0("Series ", if (nzchar(nm)) paste0("`", nm, "` ") else "",
+                      "(", i, " of ", length(x), ")")
+      xi <- x[[i]]
+      # A panel is documented as "a list of numeric vectors", and that is
+      # load-bearing: as.numeric() on a matrix unrolls it column after
+      # column, so an 80x2 member became a 160-point series and reported a
+      # changepoint at index 80 -- the seam where the second column was
+      # appended, which the data does not contain. One column is exempt
+      # because unrolling it changes nothing.
+      if (is.matrix(xi) || is.data.frame(xi)) {
+        withCallingHandlers(
+          reject_multicolumn(xi, "x",
+                             paste("Pass a multivariate series to",
+                                   "cpt_detect() directly, or split the",
+                                   "columns into separate panel members.")),
+          error = function(e) {
+            cpt_rethrow(e, label, ": ")
+          })
+        return(withCallingHandlers(
+          as_mv_matrix(xi, arg = "x")[, 1],
+          error = function(e) {
+            cpt_rethrow(e, label, ": ")
+          }))
+      }
+      withCallingHandlers(
+        coerce_series_values(xi),
+        error = function(e) {
+          cpt_rethrow(e, label, ": ")
+        })
+    }), names(x))
+  } else {
+    X <- as_mv_matrix(x)
+    stats::setNames(lapply(seq_len(ncol(X)), function(j) X[, j]),
+                    colnames(X))
+  }
+  # Fill in only the missing names, keeping any the user supplied.
+  nms <- names(series_list) %||% rep("", length(series_list))
+  nms[is.na(nms)] <- ""
+  missing_nm <- !nzchar(nms)
+  nms[missing_nm] <- paste0("series_", which(missing_nm))
+  # De-duplicate so downstream factor levels (in autoplot()/tidy()) are
+  # unique; duplicate column names otherwise crash factor construction.
+  names(series_list) <- make.unique(as.character(nms))
+  series_list
 }

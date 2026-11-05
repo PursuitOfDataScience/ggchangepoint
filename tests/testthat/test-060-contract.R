@@ -121,16 +121,19 @@ test_that("no engine returns a changepoint per observation without saying so", {
   expect_equal(offenders, character(0))
 })
 
-test_that("0.5.0's arguments keep their names and positions", {
+test_that("0.5.0's and 0.6.0's arguments keep their names and positions", {
   # The first release under the stability policy: an argument may be added
   # after the ones a caller could have passed by position, never before
   # them, and none may disappear. 0.6.0's first draft broke three (the
   # `seed` of cpt_simulate() and of cpt_stability(), and the segmented
-  # wrapper's `npsi`, all moved), which is the mistake this catches. The
-  # fixture is the formals of every 0.5.0 export.
-  old <- readRDS(test_path("fixtures", "formals-0.5.0.rds"))
+  # wrapper's `npsi`, all moved), which is the mistake this catches. Each
+  # fixture is the formals of every export of that release (0.6.0's taken
+  # from the v0.6.0 tag).
+  old <- c(readRDS(test_path("fixtures", "formals-0.5.0.rds")),
+           readRDS(test_path("fixtures", "formals-0.6.0.rds")))
   broken <- character(0)
-  for (fn in names(old)) {
+  for (i in seq_along(old)) {
+    fn <- names(old)[i]
     # Re-exports (tidy(), autoplot(), ...) live in the imports, so look up
     # the export rather than the namespace's own bindings.
     obj <- tryCatch(getExportedValue("ggchangepoint", fn),
@@ -140,7 +143,7 @@ test_that("0.5.0's arguments keep their names and positions", {
       next
     }
     new <- names(formals(obj))
-    o <- old[[fn]]
+    o <- old[[i]]
     positional <- o[seq_len(match("...", o, nomatch = length(o) + 1L) - 1L)]
     if (!identical(new[seq_along(positional)], positional)) {
       broken <- c(broken, paste0(fn, ": positions moved"))

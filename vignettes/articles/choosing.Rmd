@@ -12,7 +12,7 @@ supports <- function(ci) unique(fams$method[fams$change_in == ci])
 list_of <- function(v) paste0("`", v, "`", collapse = ", ")
 ```
 
-"Which of these fifty do I want?" is the first question every new user has.
+"Which of these 51 do I want?" is the first question every new user has.
 This page answers it three ways: a tree to walk, a cheatsheet to scan, and
 `cpt_recommend()`, which answers from the same measurements in code. Every
 list below is computed from `cpt_methods()` when the page is built, so it
@@ -23,7 +23,7 @@ cannot drift from the registry.
 Pick the method from what you know about the problem, before you see what
 each method says about your series. A method chosen because it found a
 change carries no valid p-value, and that selection is the easiest mistake
-to make with fifty methods behind one call.
+to make with 51 methods behind one call.
 
 ## The tree
 

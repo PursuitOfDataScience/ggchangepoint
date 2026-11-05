@@ -105,3 +105,27 @@ plot.ggcpt_events <- function(x, ...) plot_via_autoplot(x, ...)
 #' @rdname ggcpt_plot_methods
 #' @exportS3Method base::plot
 plot.ggcpt_label_curve <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
+plot.ggcpt_attribution <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
+plot.ggcpt_coverage <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
+plot.ggcpt_counterfactual <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
+plot.ggcpt_abruptness <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
+plot.ggcpt_screen <- function(x, ...) plot_via_autoplot(x, ...)
+
+#' @rdname ggcpt_plot_methods
+#' @exportS3Method base::plot
+plot.ggcpt_k_weights <- function(x, ...) plot_via_autoplot(x, ...)

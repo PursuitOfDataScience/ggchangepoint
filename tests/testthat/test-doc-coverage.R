@@ -512,7 +512,12 @@ test_that("the 0.5.0 method count agrees across registry, NEWS and the tour", {
     if (is.na(h)) return(NA_integer_)
     as.integer(sub(pat, "\\1", h))
   }
-  reached  <- grab(".*reaches ([0-9]+) wired methods.*")
+  # Every total NEWS has reported, newest first: the newest is the live
+  # count, and 0.5.0's is the one its engine wave adds up to.
+  reach_pat <- ".*reaches ([0-9]+) wired methods.*"
+  totals <- as.integer(sub(reach_pat, "\\1",
+                           grep(reach_pat, news, value = TRUE)))
+  reached  <- totals[1]
   baseline <- grab(".*from 13 to ([0-9]+) wired methods.*")
   # Any separator between "#2" and the count: the heading has been written
   # with a dash and with a colon, and the count is the part that matters.
@@ -520,7 +525,7 @@ test_that("the 0.5.0 method count agrees across registry, NEWS and the tour", {
   expect_false(anyNA(c(reached, baseline, delta)))
 
   expect_identical(reached, live)
-  expect_identical(baseline + delta, live)
+  expect_true((baseline + delta) %in% totals)
 
   # the tour's number word, and the noun it attaches to
   words <- c("Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen",
@@ -1311,7 +1316,7 @@ test_that("the `online` flag and cpt_monitor()'s methods are distinct sets", {
   monitor <- sort(eval(formals(cpt_monitor)$method))
 
   expect_setequal(online, c("bocpd", "cpm", "ocd"))
-  expect_setequal(monitor, c("cpm", "edetector", "ocd"))
+  expect_setequal(monitor, c("cpm", "cusum", "edetector", "ewma", "ocd"))
   expect_setequal(eval(formals(cpt_replay)$method), monitor)
 
   # the two facts the help now asserts

@@ -84,11 +84,16 @@ cpt_robustness(x, method = "pelt")
   for sweeping any argument.
 
 Other inference: 
+\code{\link{cpt_abruptness}()},
 \code{\link{cpt_assumptions}()},
+\code{\link{cpt_attribute}()},
 \code{\link{cpt_attribute_event}()},
+\code{\link{cpt_confint_coverage}()},
 \code{\link{cpt_effect}()},
 \code{\link{cpt_gof}()},
+\code{\link{cpt_k_weights}()},
 \code{\link{cpt_null_power}()},
+\code{\link{cpt_screen}()},
 \code{\link{cpt_test_at}()},
 \code{\link{cpt_test_null}()}
 }

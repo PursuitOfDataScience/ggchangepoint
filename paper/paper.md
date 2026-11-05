@@ -1,5 +1,5 @@
 ---
-title: "ggchangepoint: one interface to fifty changepoint detectors, and measurements of how each behaves"
+title: "ggchangepoint: one interface to fifty-one changepoint detectors, and measurements of how each behaves"
 tags:
   - R
   - changepoint detection
@@ -23,7 +23,7 @@ its level, its spread, its slope, its distribution, or the relationship
 between a response and its covariates. R has more changepoint software
 than any other language, spread over dozens of packages, and each takes
 its own input, returns its own object, reports locations in its own
-convention and draws its own plot. `ggchangepoint` puts fifty of those
+convention and draws its own plot. `ggchangepoint` puts fifty-one of those
 detectors behind one call, `cpt_detect()`, returns every answer as the
 same tidy result, and draws it with `ggplot2` [@wickham2016ggplot2]. It
 then answers the questions that follow a detection in the same grammar:
@@ -42,7 +42,7 @@ probability for each year; and `segmented` [@muggeo2008segmented] as a
 point on the covariate's continuous scale. An analyst comparing methods,
 or switching from one to another, has to know all of this. `ggchangepoint`
 translates every engine to one convention, verified by a test that runs
-each of the fifty on an unmistakable step (the test found two wrappers
+each of the fifty-one on an unmistakable step (the test found two wrappers
 off by one), and records it on the result.
 
 The larger need is for honesty about behaviour. A changepoint analysis

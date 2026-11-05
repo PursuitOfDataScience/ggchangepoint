@@ -52,12 +52,37 @@ fit
 
 # 1. Where could the changepoint be?
 
-## Four provenances, one contract
+## Five provenances, one contract
 
 Only a handful of engines ship an interval of their own. `cpt_confint()`
-covers the rest and, because the four routes mean genuinely different
+covers the rest and, because the five routes mean genuinely different
 things, reports which one it used in a `source` column rather than
 presenting them as interchangeable.
+
+The conformal route [@hore2026conch] is the one `method = "auto"` takes
+for a change between exchangeable segments. Each candidate split of the
+window is tested by permuting the observations within each side of it,
+and the candidates that survive form a set that holds the true location
+with probability at least `level`, whatever the distribution of the noise:
+
+```{r confint-conformal}
+ci <- cpt_confint(fit, method = "conformal", B = 99, seed = 1)
+ci
+```
+
+`set_size` says how many locations the set holds, and the p-value of every
+candidate is attached, so the uncertainty can be drawn as a profile rather
+than a bar:
+
+```{r confint-profile, fig.height = 3, fig.alt = "Conformal p-value of every candidate location around each changepoint"}
+ggplot(attr(ci, "profile"), aes(position, p_value)) +
+  geom_col(width = 1) +
+  geom_hline(yintercept = 0.05, linetype = "dashed") +
+  facet_wrap(~cp, scales = "free_x") +
+  labs(x = "Candidate location", y = "Conformal p-value")
+```
+
+The bootstrap route remains for everything else:
 
 ```{r confint-bootstrap}
 cpt_confint(fit, method = "bootstrap", B = 100, seed = 1)
@@ -287,6 +312,52 @@ An engine that exposes none of these says so, and names the ones that do:
 ```{r statistic-error, error = TRUE}
 cpt_statistic(fit)
 ```
+
+# 5. Beyond the location
+
+Four questions follow a detection, and each has a function.
+
+**Which coordinates changed?** For a multivariate fit, `cpt_attribute()`
+certifies the coordinates that changed at each changepoint, with
+family-wise error control that holds however the location was found
+[@peng2026arm]:
+
+```{r attribute}
+set.seed(7)
+X <- matrix(rnorm(160 * 5), 160, 5,
+            dimnames = list(NULL, paste0("sensor", 1:5)))
+X[81:160, 2] <- X[81:160, 2] + 1.5
+X[81:160, 4] <- X[81:160, 4] * 2.5
+att <- cpt_attribute(cpt_detect(X, method = "ecp"), B = 199, seed = 1)
+glance(att)
+att[att$changed, c("cp", "coordinate", "type", "p_adjusted")]
+```
+
+**What would have happened without it?** `cpt_counterfactual()` carries
+the segment before each change forward with its own model:
+
+```{r counterfactual, fig.height = 3, fig.alt = "Series with the pre-change level carried forward as a dashed counterfactual"}
+cf <- cpt_counterfactual(fit)
+glance(cf)
+autoplot(cf)
+```
+
+**Was the change abrupt?** A step and a ramp, compared at each changepoint:
+
+```{r abruptness}
+cpt_abruptness(fit)
+```
+
+**How sure is the number of changes?** `cpt_k_weights()` turns the
+criterion curve into weights over K:
+
+```{r k-weights}
+cpt_k_weights(cpt_select(x, criterion = "bic", k_max = 6))
+```
+
+For many series at once, `cpt_screen()` tests each one and controls the
+false discovery rate across the panel, and `cpt_confint_coverage()`
+measures how often each interval route covers on data like yours.
 
 # Putting it together
 

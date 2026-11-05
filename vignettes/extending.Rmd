@@ -25,7 +25,7 @@ library(ggplot2)
 theme_set(theme_ggcpt())
 ```
 
-This package wraps fifty detectors. It will never wrap all of them,
+This package wraps 51 detectors. It will never wrap all of them,
 and some of the most interesting ones it *cannot* wrap: `changeforest`
 [@londschien2023changeforest] is on conda-forge only,
 `ChangepointInference` [@jewell2022testing] is on GitHub only, `gfpop` and

@@ -10,7 +10,10 @@ A tibble with one row per guarantee and setting:
   \item{guarantee}{what is promised, and by which function.}
   \item{call}{the call that was measured.}
   \item{setting}{the data and the options it was measured on.}
-  \item{kind}{\code{"coverage"}, \code{"size"} or \code{"run_length"}.}
+  \item{kind}{\code{"coverage"}, \code{"size"} (for
+    \code{\link{cpt_attribute}()}, the family-wise error over the
+    coordinates that did not change), \code{"run_length"} or
+    \code{"false_discovery_rate"}.}
   \item{nominal}{the promised value: a confidence level, a test's level
     or an average run length (for the e-detector, a lower bound).}
   \item{realised}{the measured value.}
@@ -28,10 +31,11 @@ cpt_calibration
 \description{
 The calibration suite: every guarantee the documentation states that a
 simulation can check, with the realised value and its Monte Carlo
-standard error. Location intervals are scored for coverage (conditional
-on a changepoint landing within 20 positions of the truth), tests for
-their size at 5\% on data with no change, and monitors for their
-in-control run length. The row for \code{cpt_test()} at a location the
+standard error. Location intervals and sets are scored for coverage
+(conditional on a changepoint landing within 20 positions of the truth),
+tests for their size at 5\% on data with no change, monitors for their
+in-control run length, and the panel screen for its false discovery
+rate. The row for \code{cpt_test()} at a location the
 data chose is there to show what \code{selection_adjusted = FALSE}
 means: its nominal 5\% is not what it delivers.
 }

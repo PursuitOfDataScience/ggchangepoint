@@ -1,0 +1,172 @@
+---
+title: "Beyond the Location: Which, How Sure, and What If"
+author: "Youzhi Yu<br><span style='font-size:85%;'>University of Chicago</span>"
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(collapse = TRUE, comment = "#>", dpi = 72,
+                      fig.width = 8, fig.height = 3.2, message = FALSE,
+                      warning = FALSE)
+library(ggchangepoint)
+library(ggplot2)
+theme_set(theme_ggcpt())
+has_anomaly <- requireNamespace("anomaly", quietly = TRUE)
+```
+
+A detector answers *where*. Every applied field then asks the same few
+questions: which of the measured quantities changed, how sure the
+location is, what the series would have done otherwise, whether the
+change was a jump at all, and, with many series, which ones changed. This
+page answers each with one function, on data where the answer is known.
+
+## Which coordinates changed
+
+Testing each sensor at the detected changepoint is the obvious answer and
+an invalid one: the location was chosen where the evidence across all of
+them peaks, so an unchanged sensor is tested at the split most favourable
+to it. `cpt_attribute()` scores each coordinate by the maximum of a rank
+statistic over every split instead (ARM, Peng et al. 2026), so the
+certificate cannot depend on how the location was found.
+
+```{r attribute}
+set.seed(1)
+n <- 200
+X <- matrix(rnorm(n * 8), n, 8, dimnames = list(NULL, paste0("sensor", 1:8)))
+X[101:n, 3] <- X[101:n, 3] + 1.2      # a shift in sensor3
+X[101:n, 6] <- X[101:n, 6] * 2.5      # a scale change in sensor6
+fit_mv <- cpt_detect(X, method = "ecp")
+att <- cpt_attribute(fit_mv, B = 499, seed = 1)
+att
+```
+
+```{r attribute-plot, fig.height = 3.6, fig.alt = "Coordinate by changepoint map with the two certified sensors outlined"}
+autoplot(att)
+```
+
+The two changed sensors are certified, each with its type, and the six
+that did not change are left alone. Measured on the calibration design,
+the family-wise error over the unchanged coordinates is:
+
+```{r attribute-cal}
+cal <- cpt_calibration
+cal[grepl("cpt_attribute", cal$call), c("setting", "nominal", "realised", "mcse")]
+```
+
+## How sure is the location, with no model
+
+`cpt_confint(method = "conformal")` returns a set of locations that holds
+the true one with probability at least the level, for any distribution of
+the noise, provided the observations within each segment are exchangeable
+(Hore and Ramdas 2026). Here on heavy-tailed noise, where a Gaussian
+interval has no footing:
+
+```{r conformal}
+set.seed(2)
+y <- c(rt(150, df = 3), rt(150, df = 3) + 1.5)
+fit <- cpt_detect(y, method = "pelt")
+ci <- cpt_confint(fit, method = "conformal", B = 199, seed = 1)
+ci
+```
+
+```{r conformal-profile, fig.alt = "Conformal p-value of every candidate location, with the 0.05 line"}
+prof <- attr(ci, "profile")
+ggplot(prof, aes(position, p_value)) +
+  geom_col(width = 1, fill = "#5e3c99") +
+  geom_hline(yintercept = 0.05, linetype = "dashed") +
+  coord_cartesian(xlim = c(120, 180)) +
+  labs(x = "Candidate location", y = "Conformal p-value")
+```
+
+The coverage, measured on the calibration design and against the
+bootstrap:
+
+```{r conformal-cal}
+cal[grepl("location", cal$guarantee) & grepl("conformal|bootstrap", cal$call),
+    c("call", "nominal", "realised", "mcse")]
+```
+
+`cpt_confint_coverage()` runs the same study for your own length, jump and
+noise.
+
+## What would have happened
+
+`cpt_counterfactual()` carries the segment before each change forward with
+its own model, with a prediction band, and the gap is the effect in the
+data's units: the figure interrupted-time-series studies report.
+
+```{r counterfactual, fig.alt = "Nile flow with the pre-1898 level carried forward as a dashed counterfactual"}
+nile <- cpt_detect(Nile, method = "amoc", change_in = "meanvar")
+cf <- cpt_counterfactual(nile)
+glance(cf)
+autoplot(cf)
+```
+
+## Was it a jump?
+
+Every engine looks for a jump, and given a transition that took thirty
+observations it reports one confidently placed changepoint in the middle.
+`cpt_abruptness()` fits a step and a ramp at each changepoint and reports
+the transition width with an interval:
+
+```{r abruptness, fig.alt = "A gradual transition with the fitted step and the fitted ramp"}
+sim <- cpt_simulate(300, changepoints = 150, params = c(0, 3),
+                    transition = 40, seed = 3)
+ab <- cpt_abruptness(cpt_detect(sim$value, method = "pelt"))
+ab
+autoplot(ab)
+```
+
+## A change that comes back
+
+An outbreak that subsides or a fault that is repaired is a stretch away
+from a baseline, not a new regime. CAPA models exactly that, and reports
+the stretches and the single outliers:
+
+```{r capa, eval = has_anomaly, fig.alt = "Series with an anomalous stretch shaded and a point anomaly ringed"}
+set.seed(4)
+z <- c(rnorm(150), rnorm(40, 2.5), rnorm(150))
+z[60] <- 7
+ep <- cpt_detect(z, method = "capa")
+cpt_regions(ep)
+autoplot(ep)
+```
+
+## How many changes, and which series
+
+`cpt_k_weights()` turns the criterion curve of `cpt_select()` into weights
+over the number of changes, and averages the candidate segmentations into a
+probability at each location:
+
+```{r k-weights, fig.alt = "Weights over the number of changepoints"}
+set.seed(5)
+w <- cpt_k_weights(cpt_select(c(rnorm(100), rnorm(100, 0.8), rnorm(100)),
+                              criterion = "bic", k_max = 6))
+w
+autoplot(w)
+```
+
+And for a panel, `cpt_screen()` tests every series for a change anywhere
+and controls the false discovery rate across them:
+
+```{r screen, fig.alt = "Sorted p-values of 60 series against the Benjamini-Hochberg line"}
+set.seed(6)
+panel <- c(lapply(1:52, function(i) rnorm(120)),
+           lapply(1:8, function(i) c(rnorm(60), rnorm(60, 1.2))))
+names(panel) <- paste0("store", 1:60)
+sc <- cpt_screen(panel)
+glance(sc)
+autoplot(sc)
+```
+
+## References
+
+Fisch, A. T. M., Eckley, I. A. and Fearnhead, P. (2022). A linear time
+method for the detection of collective and point anomalies. *Statistical
+Analysis and Data Mining*, 15(4), 494-508.
+
+Hore, R. and Ramdas, A. (2026). Conformal changepoint localization.
+arXiv:2602.06267.
+
+Peng, C., Wu, M., Yan, Q., Chen, D. and Shen, Z. (2026). ARM:
+Detector-agnostic changepoint attribution with finite-sample error
+control. arXiv:2608.01691.

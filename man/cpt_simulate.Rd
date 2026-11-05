@@ -17,7 +17,8 @@ cpt_simulate(
   seasonality = NULL,
   sd_trend = NULL,
   seed = NULL,
-  family = c("gaussian", "poisson", "binomial", "exponential")
+  family = c("gaussian", "poisson", "binomial", "exponential"),
+  transition = 0
 )
 
 rcpt(...)
@@ -104,6 +105,13 @@ they take \code{change_in = "mean"}, one number per segment in
 rate change in counts is a different detection problem from a Gaussian
 mean shift, which is why the power curves are not interchangeable.}
 
+\item{transition}{Width, in observations, of a gradual change in level:
+the mean moves linearly from one segment's value to the next across
+\code{transition} observations centred on each changepoint. Defaults
+to \code{0}, an abrupt step. For \code{change_in = "mean"} and
+\code{"meanvar"}; it asks how a jump detector places a change that
+took time, and \code{\link{cpt_abruptness}()} is the check for one.}
+
 \item{...}{Passed to \code{\link{cpt_simulate}}.}
 }
 \value{
@@ -125,6 +133,10 @@ seasonal <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
                          seed = 1)
 drifting <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
                          sd_trend = c(0.5, 3), seed = 1)
+
+# a change that takes 30 observations instead of one
+gradual <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
+                        transition = 30, seed = 1)
 
 # counts whose rate doubles
 counts <- cpt_simulate(200, changepoints = 100, params = c(4, 8),

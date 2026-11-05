@@ -1,35 +1,41 @@
 Package: ggchangepoint
 Type: Package
 Title: Combines Changepoint Analysis with 'ggplot2'
-Version: 0.6.0
+Version: 0.7.0
 Authors@R:
     c(person(given = "Youzhi",
              family = "Yu",
              role = c("aut", "cre"),
              email = "yuyouzhi666@icloud.com"))
 Description: A unified, tidy, 'ggplot2'-native interface to changepoint
-    detection in R. A 'cpt_detect()' dispatcher covers fifty methods
+    detection in R. A 'cpt_detect()' dispatcher covers 51 methods
     (penalised and optimal partitioning, multiscale and search methods,
     nonparametric and kernel methods, Bayesian methods, high-dimensional,
     functional, covariance and network methods, regression breaks through
-    a formula interface, seasonal-trend decomposition and the classical
-    single-change tests), with distribution families for counts, binary
-    outcomes and waiting times, missing-value handling, grouped data,
-    and constraints on locations and segment lengths. Every result is the
-    same 'ggcpt' object, in one verified location convention, with
-    'broom'-style tidy/glance/augment methods, 'autoplot()' and composable
-    'ggproto' layers. Around detection: effect sizes, a test for a change
-    at a date fixed in advance, tests for a change anywhere, confidence
-    intervals, post-detection tests, selection of the number of changes,
-    assumption checks and goodness of fit, robustness to the noise model,
-    stability, consensus and influence diagnostics, supervised detection,
-    sequential monitoring, power and study design, benchmarks, reports
-    and an export under a documented 'JSON' schema. What each engine does
-    (its runtime, whether its answer survives a change of units or a
-    reversal of time, its false positives by noise regime and data type,
-    its false alarms on pure noise) and the calibration of the package's
-    own intervals and tests are measured and shipped as data, and
-    'cpt_recommend()' chooses from those measurements.
+    a formula interface, seasonal-trend decomposition, the classical
+    single-change tests, and anomalous stretches that return to a
+    baseline), with distribution families for counts, binary outcomes and
+    waiting times, missing-value handling, grouped data, and constraints
+    on locations and segment lengths. Every result is the same 'ggcpt'
+    object, in one verified location convention, with 'broom'-style
+    tidy/glance/augment methods, 'autoplot()' and composable 'ggproto'
+    layers. Around detection: which coordinates of a multivariate series
+    changed, certified with family-wise error control; distribution-free
+    confidence sets for each location; effect sizes and what the series
+    would have done without each change; a test for a change at a date
+    fixed in advance, tests for a change anywhere, and screening of many
+    series with false discovery rate control; a check of whether a change
+    was abrupt or gradual; weights over the number of changes; assumption
+    checks and goodness of fit, robustness to the noise model, stability,
+    consensus and influence diagnostics, supervised detection, sequential
+    monitoring including cumulative-sum and exponentially weighted
+    moving-average control charts, power and study design, benchmarks,
+    reports and an export under a documented 'JSON' schema. What each
+    engine does (its runtime, whether its answer survives a change of
+    units or a reversal of time, its false positives by noise regime and
+    data type, its false alarms on pure noise) and the calibration of the
+    package's own intervals, tests and monitors are measured and shipped
+    as data, and 'cpt_recommend()' chooses from those measurements.
     'cpt_register_method()' brings external and non-CRAN detectors into
     the same grammar.
 Depends:
@@ -99,6 +105,7 @@ Suggests:
     crossvalidationCP,
     changepoint.influence,
     penaltyLearning,
+    anomaly,
     zoo,
     xts,
     tsibble,

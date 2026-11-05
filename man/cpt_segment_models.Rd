@@ -71,6 +71,7 @@ glance(sm)
   the detection itself implies.
 
 Other segment models: 
+\code{\link{cpt_counterfactual}()},
 \code{\link{predict.ggcpt}()}
 }
 \concept{segment models}

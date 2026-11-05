@@ -470,7 +470,7 @@ are how an analyst earns confidence in a segmentation. The design of
 **ggchangepoint**'s toolkit follows three principles. First, *a common
 representation makes comparison trivial*: because every engine returns the
 same `ggcpt` contract in the same location convention, `ggcpt_compare()` and
-the metrics module work for all 50 wired methods without special cases.
+the metrics module work for all 51 wired methods without special cases.
 Second, *metrics must agree with their pictures*: `ggcpt_eval()` and
 `cpt_metrics()` share one matching routine, so a plotted true positive is a
 counted true positive. Third, *uncertainty deserves first-class treatment*:
@@ -480,7 +480,7 @@ all three render directly with **ggplot2** [@wickham2016ggplot2].
 
 One warning belongs next to all of this. Running several methods and
 reporting the one that found a change, as if it were the only one run, is
-a garden of forking paths, and fifty methods behind one call make it easier
+a garden of forking paths, and 51 methods behind one call make it easier
 here than anywhere else. A method chosen for its answer carries no valid
 p-value, and neither does a test at its changepoints: choose the method
 before looking at the series (`cpt_recommend()` answers from what you know

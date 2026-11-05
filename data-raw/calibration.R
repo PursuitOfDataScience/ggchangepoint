@@ -175,7 +175,80 @@ cells <- list(
        nominal = 100, kind = "run_length", reps = ceiling(reps / 5),
        fun = run_length_cell(function() {
          cpt_monitor("edetector", baseline = stats::rnorm(100), alpha = 0.01)
-       }, 2000))
+       }, 2000)),
+
+  # ---- 0.7.0 --------------------------------------------------------------
+  # Appended, so every earlier cell keeps its seeds and its value.
+  list(guarantee = "cpt_confint() location set",
+       call = "cpt_confint(cpt_detect(x), method = \"conformal\")",
+       setting = "CONCH, B = 199, one change of 1.5 sd, n = 200",
+       nominal = 0.95, kind = "coverage", reps = ceiling(reps / 2),
+       fun = coverage_cell(function(x, r) {
+         cpt_confint(cpt_detect(x, method = "pelt"), method = "conformal",
+                     B = 199, seed = r)
+       })),
+  list(guarantee = "cpt_attribute() family-wise error",
+       call = "cpt_attribute(fit, alpha = 0.05)",
+       setting = paste("ARM, Westfall-Young, B = 199; 8 t(3) coordinates, 2",
+                       "shifted by 1, location from an aggregate CUSUM,",
+                       "n = 120"),
+       nominal = 0.05, kind = "size", reps = ceiling(reps / 2),
+       fun = function(r) {
+         n <- 120
+         X <- matrix(stats::rt(n * 8, df = 3), n, 8)
+         X[61:n, 1:2] <- X[61:n, 1:2] + 1
+         cs <- apply(scale(X), 2, cumsum)
+         t <- 10:110
+         at <- t[which.max(rowSums(cs[t, ]^2) / (t * (n - t) / n))]
+         a <- quiet(cpt_attribute(as_ggcpt(at, X), alpha = 0.05, B = 199))
+         any(a$changed[-(1:2)])
+       }),
+  list(guarantee = "cpt_monitor() average run length",
+       call = "cpt_monitor(\"cusum\", arl0 = 500)",
+       setting = paste("k = 0.5, limit from the Markov chain, in-control",
+                       "N(0, 1) after a baseline of 2,000, stream of 4,000"),
+       nominal = 500, kind = "run_length", reps = ceiling(reps / 5),
+       fun = run_length_cell(function() {
+         cpt_monitor("cusum", baseline = stats::rnorm(2000), arl0 = 500)
+       }, 4000)),
+  list(guarantee = "cpt_monitor() average run length",
+       call = "cpt_monitor(\"ewma\", arl0 = 500)",
+       setting = paste("lambda = 0.2, limit from the Markov chain,",
+                       "in-control N(0, 1) after a baseline of 2,000, stream",
+                       "of 4,000"),
+       nominal = 500, kind = "run_length", reps = ceiling(reps / 5),
+       fun = run_length_cell(function() {
+         cpt_monitor("ewma", baseline = stats::rnorm(2000), arl0 = 500)
+       }, 4000)),
+  list(guarantee = "cpt_screen() false discovery rate",
+       call = "cpt_screen(panel)",
+       setting = paste("Pettitt p-values, Benjamini-Hochberg; 100 series of",
+                       "120, ten with a shift of 1 sd"),
+       nominal = 0.05, kind = "false_discovery_rate", reps = ceiling(reps / 5),
+       fun = function(r) {
+         pn <- lapply(1:100, function(i) {
+           if (i <= 10) c(stats::rnorm(60), stats::rnorm(60, 1)) else
+             stats::rnorm(120)
+         })
+         names(pn) <- paste0("s", 1:100)
+         s <- quiet(cpt_screen(pn))
+         fl <- as.integer(sub("s", "", s$series[s$flagged]))
+         if (!length(fl)) 0 else mean(fl > 10)
+       }),
+  list(guarantee = "cpt_abruptness() size",
+       call = "cpt_abruptness(cpt_detect(x))",
+       setting = paste("step rejected for a ramp, level 0.95; one abrupt",
+                       "change of 2 sd, n = 300"),
+       nominal = 0.05, kind = "size",
+       fun = function(r) {
+         f <- cpt_detect(c(stats::rnorm(150), stats::rnorm(150, 2)),
+                         method = "pelt")
+         if (!nrow(f$changepoints)) return(NA)
+         a <- cpt_abruptness(f)
+         j <- which.min(abs(a$cp - 150))
+         if (abs(a$cp[j] - 150) > 20) return(NA)
+         a$verdict[j] == "gradual"
+       })
 )
 
 # Each cell draws from its own stream (seed 10000 * cell + replicate), so
@@ -201,10 +274,13 @@ rows <- lapply(seq_along(cells), function(i) {
   v <- unlist(values[tasks$cell == i])
   ok <- v[is.finite(v)]
   realised <- if (length(ok)) mean(ok) else NA_real_
-  mcse <- if (length(ok) < 2) NA_real_ else if (cl$kind == "run_length") {
-    stats::sd(ok) / sqrt(length(ok))
-  } else {
+  # Coverage and size are proportions; a run length and a false discovery
+  # proportion are averages of something else.
+  mcse <- if (length(ok) < 2) NA_real_ else if (cl$kind %in% c("coverage",
+                                                                "size")) {
     sqrt(realised * (1 - realised) / length(ok))
+  } else {
+    stats::sd(ok) / sqrt(length(ok))
   }
   data.frame(guarantee = cl$guarantee, call = cl$call, setting = cl$setting,
              kind = cl$kind, nominal = cl$nominal, realised = realised,

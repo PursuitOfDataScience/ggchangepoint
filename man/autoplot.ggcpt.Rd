@@ -18,7 +18,8 @@
   show_line = TRUE,
   index = NULL,
   labels = NULL,
-  type = c("series", "statistic", "path", "scale_space", "diagnostics"),
+  type = c("series", "statistic", "path", "scale_space", "diagnostics", "counterfactual",
+    "attribution"),
   ...
 )
 }
@@ -47,12 +48,13 @@ near the bottom of the panel. Defaults to \code{FALSE}.}
 \code{segmented}, \code{envcpt}, \code{mcp} and \code{bfast}, plus
 every formula fit). Defaults to \code{FALSE}.}
 
-\item{show_regions}{Logical. Whether to shade the significance regions an
-interval-valued method returns (the \code{regions} slot; currently
-\code{\link{nsp_wrapper}()}). Each band is an interval that contains at
-least one changepoint at the stated global level; it is not a confidence
-interval around a point estimate. Defaults to \code{TRUE} when the
-result carries regions, and is ignored otherwise.}
+\item{show_regions}{Logical. Whether to draw the \code{regions} slot:
+the significance regions of \code{\link{nsp_wrapper}()} (each band
+contains at least one changepoint at the stated global level; it is
+not a confidence interval around a point estimate) or the anomalies of
+\code{\link{capa_wrapper}()} (collective anomalies shaded, point
+anomalies ringed). Defaults to \code{TRUE} when the result carries
+regions, and is ignored otherwise.}
 
 \item{cptline_alpha}{Alpha for changepoint lines. Defaults to \code{1}.}
 
@@ -90,7 +92,11 @@ is the residual check of the fit in four panels: the residuals with the
 segment boundaries (structure left behind), their autocorrelation per
 segment (the independence most engines assume), a normal Q-Q plot per
 segment (the Gaussian cost) and the spread of each segment (a constant
-variance); \code{\link{cpt_gof}()} gives the same checks as numbers.}
+variance); \code{\link{cpt_gof}()} gives the same checks as numbers.
+\code{"counterfactual"} draws the series against the segment before
+each change carried forward (\code{\link{cpt_counterfactual}()}), and
+\code{"attribution"} the coordinates certified to have changed at each
+changepoint of a multivariate result (\code{\link{cpt_attribute}()}).}
 
 \item{...}{Unknown arguments are ignored with a warning, except when
 \code{type} is not \code{"series"}, in which case they are passed to

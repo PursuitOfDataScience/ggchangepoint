@@ -50,7 +50,7 @@ has_envcpt      <- requireNamespace("EnvCpt", quietly = TRUE)
 **ggchangepoint** provides a unified, tidy interface to changepoint detection
 across the methodological spectrum. It introduces a single S3 result class,
 `ggcpt`, with `broom`-style methods (`tidy()`, `glance()`, `augment()`)
-[@robinson2017broom], a central dispatcher `cpt_detect()` covering 50
+[@robinson2017broom], a central dispatcher `cpt_detect()` covering 51
 detection methods across six algorithmic families, and native `ggplot2`
 [@wickham2016ggplot2] visualisation through `autoplot()` and a set of
 composable geoms. Where a method quantifies its uncertainty (the
@@ -679,7 +679,7 @@ ggchangepoint does not contribute a new detection algorithm; it contributes a
 *surface*. The value of a common contract compounds with the number of
 methods behind it: the same `tidy()` pipeline, the same plot, and the same
 evaluation code now span penalised, multiscale, nonparametric, Bayesian,
-high-dimensional, and regression-based detection: 50 methods in this
+high-dimensional, and regression-based detection: 51 methods in this
 release. Five more, whose engines are not currently on CRAN
 (graph-constrained gfpop [@hocking2020gfpop], robust segmentation under
 outliers [@fearnhead2019changepoint], FOCuS, sparsified binary segmentation,

@@ -433,8 +433,14 @@ test_that("cpt_confint reports an un-re-runnable result in its own terms", {
   # bootstrap re-runs the detector by name. Saying so in terms of
   # `method = "auto"` beats complaining about a bootstrap the caller never
   # asked for.
+  # Since 0.7.0 the conformal set serves a change in mean without re-running
+  # anything, so `auto` falls back on it; a change in slope has no
+  # exchangeable segments, so nothing is left.
   fit <- as_ggcpt(60, c(rnorm(60), rnorm(60, 4)), method = "somebody_elses")
-  expect_error(cpt_confint(fit), "has nothing to fall back on")
+  expect_equal(cpt_confint(fit, B = 49, seed = 1)$source, "conformal")
+  slope <- as_ggcpt(60, c(1:60, 60 - (1:60)) + rnorm(120),
+                    method = "somebody_elses", change_in = "slope")
+  expect_error(cpt_confint(slope), "has nothing to fall back on")
   expect_error(cpt_confint(fit, method = "bootstrap"),
                "is not a method cpt_detect\\(\\) knows")
   # With an interval supplied it works.

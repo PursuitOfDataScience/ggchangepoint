@@ -804,8 +804,10 @@ tidy.ggcpt_test_at <- function(x, ...) {
 #' @param event One or more event locations: positions, values of the fit's
 #'   index, or a \code{\link{cpt_annotate_events}()} result.
 #' @param level Confidence level of the interval. Defaults to \code{0.95}.
-#' @param ... Further arguments for \code{\link{cpt_confint}()} (for
-#'   example \code{B} or \code{seed} for a bootstrap interval).
+#' @param ... Further arguments for \code{\link{cpt_confint}()}: its
+#'   \code{method} (by default the engine's own interval, else the
+#'   conformal set, else the bootstrap), and \code{B} or \code{seed} for the
+#'   permutation and resampling routes.
 #' @return A tibble with one row per event: \code{event},
 #'   \code{event_position}, the nearest changepoint \code{cp} (and
 #'   \code{cp_index}), its interval \code{ci_lower}/\code{ci_upper},

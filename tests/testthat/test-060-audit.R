@@ -169,7 +169,8 @@ test_that("resampling tools raise each advisory once, not once per replicate", {
   fit <- suppressWarnings(cpt_detect(x, method = "pelt"))
   scale <- "ggchangepoint_scale_sensitive"
   # 100, 50, 180 and 20 of them before.
-  expect_equal(count_warnings(cpt_confint(fit, B = 100, seed = 1), scale), 1L)
+  expect_equal(count_warnings(cpt_confint(fit, method = "bootstrap", B = 100,
+                                          seed = 1), scale), 1L)
   expect_equal(count_warnings(cpt_stability(fit, B = 50, seed = 1), scale),
                1L)
   expect_equal(count_warnings(cpt_null_power(fit, n_sim = 20, seed = 1),

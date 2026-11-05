@@ -14,8 +14,10 @@ index, or a \code{\link{cpt_annotate_events}()} result.}
 
 \item{level}{Confidence level of the interval. Defaults to \code{0.95}.}
 
-\item{...}{Further arguments for \code{\link{cpt_confint}()} (for
-example \code{B} or \code{seed} for a bootstrap interval).}
+\item{...}{Further arguments for \code{\link{cpt_confint}()}: its
+\code{method} (by default the engine's own interval, else the
+conformal set, else the bootstrap), and \code{B} or \code{seed} for the
+permutation and resampling routes.}
 }
 \value{
 A tibble with one row per event: \code{event},
@@ -42,11 +44,16 @@ cpt_attribute_event(fit, as.Date(c("2026-02-28", "2026-04-10")))
 }
 \seealso{
 Other inference: 
+\code{\link{cpt_abruptness}()},
 \code{\link{cpt_assumptions}()},
+\code{\link{cpt_attribute}()},
+\code{\link{cpt_confint_coverage}()},
 \code{\link{cpt_effect}()},
 \code{\link{cpt_gof}()},
+\code{\link{cpt_k_weights}()},
 \code{\link{cpt_null_power}()},
 \code{\link{cpt_robustness}()},
+\code{\link{cpt_screen}()},
 \code{\link{cpt_test_at}()},
 \code{\link{cpt_test_null}()}
 }

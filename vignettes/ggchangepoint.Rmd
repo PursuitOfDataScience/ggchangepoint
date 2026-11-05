@@ -65,7 +65,7 @@ has_plotly    <- requireNamespace("plotly", quietly = TRUE)
 # Abstract
 
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface to
-changepoint detection in R: one dispatcher (`cpt_detect()`) covering 50
+changepoint detection in R: one dispatcher (`cpt_detect()`) covering 51
 methods across six methodological families, one result class (`ggcpt`) with
 a stable tidy contract, and one visualisation entry point (`autoplot()`)
 that draws everything a method reports, including confidence intervals and
@@ -93,6 +93,17 @@ sequential detection on a stream and its detection-delay accounting.
 > monitoring; power analysis; and `as_ggcpt()` / `cpt_register_method()`
 > for detectors this package does not wrap. Each has its own section
 > below or its own vignette.
+
+> **New in 0.7.0.** Which coordinates of a multivariate series changed
+> (`cpt_attribute()`); distribution-free confidence sets
+> (`cpt_confint(method = "conformal")`) and their measured coverage
+> (`cpt_confint_coverage()`); what the series would have done without each
+> change (`cpt_counterfactual()`); whether a change was abrupt
+> (`cpt_abruptness()`); which of many series changed (`cpt_screen()`);
+> weights over the number of changes (`cpt_k_weights()`); CUSUM and EWMA
+> control charts in `cpt_monitor()`; and `capa` (`capa_wrapper()`) for
+> stretches that return to a baseline. `vignette("inference")` covers the
+> first six and `vignette("monitoring")` the charts.
 
 ```{r data}
 set.seed(2026)

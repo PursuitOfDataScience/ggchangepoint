@@ -1,9 +1,7 @@
 
 <!-- README.md is generated from README.Rmd. Please edit that file -->
 
-<h1 align="center">ggchangepoint</h1>
-
-<p align="center"><img src="man/figures/logo.png" height="139" alt="ggchangepoint hex sticker" /></p>
+# ggchangepoint <img src="man/figures/logo.png" align="right" height="139" alt="ggchangepoint hex sticker" />
 
 <!-- badges: start -->
 
@@ -12,7 +10,8 @@
 status](https://www.r-pkg.org/badges/version/ggchangepoint)](https://CRAN.R-project.org/package=ggchangepoint)
 <!-- badges: end -->
 
-<p align="center"><b>Find where a time series changed with any of 50 methods, and get the same tidy, plottable answer from every one.</b></p>
+**Find where a time series changed with any of 51 methods, and get the
+same tidy, plottable answer from every one.**
 
 ## 🔍 One series, one call, one picture
 
@@ -49,12 +48,15 @@ ggcpt_compare_table(Nile, methods = c("smuce", "not", "wbs", "mosum",
 | You want to know | Call |
 |:---|:---|
 | How big was the change? | `cpt_effect(fit)` |
+| Where exactly, with no model assumed? | `cpt_confint(fit, method = "conformal")` |
+| What would have happened without it? | `cpt_counterfactual(fit)` |
+| Which of my sensors changed? | `cpt_attribute(fit)` |
 | Did anything change in a year I already had in mind? | `cpt_test_at(Nile, when = 1899)` |
 | Should I believe this count? | `cpt_assumptions(fit)` |
 | Which method suits my data? | `cpt_recommend(noise = "autocorrelated")` |
-| Counts, 0/1 outcomes, waiting times? | `cpt_detect(x, family = "poisson")` |
-| When did a regression’s slope break? | `cpt_detect(y ~ x, data = d, method = "strucchange")` |
-| What can each of the 50 methods do? | `cpt_methods()` |
+| A stretch that returns to normal? | `cpt_detect(x, method = "capa")` |
+| Watching a live stream? | `cpt_monitor("cusum", baseline = b)` |
+| What can each of the 51 methods do? | `cpt_methods()` |
 
 ## 🚀 Setup
 
@@ -64,21 +66,23 @@ ggcpt_compare_table(Nile, methods = c("smuce", "not", "wbs", "mosum",
     the package).
 3.  `cpt_detect(your_series)`, then `autoplot()` the result.
 
-## ⚠️ What will bite you
+## 💡 Good to know
 
-| Trap | Fix |
+| For | Do |
 |:---|:---|
-| `pelt`, `binseg` and `fpop` assume unit noise: on raw Nile flows `pelt` reports 42 changepoints | The package warns. Standardise, or use `change_in = "meanvar"` |
-| Autocorrelated noise makes spurious changepoints in every engine | `cpt_assumptions(fit)` checks; `cpt_robustness(fit)` re-runs under another noise model |
-| A p-value at a location the data chose is too small | `cpt_test_at()` at a date fixed in advance is exact |
-| Missing values are refused | `na_action = "omit"` keeps the original positions |
+| Data far from unit scale | Use `change_in = "meanvar"`, or standardise first: `pelt`, `binseg` and `fpop` assume unit noise |
+| Autocorrelated series | Check with `cpt_assumptions(fit)`; `cpt_robustness(fit)` re-runs under another noise model |
+| A date fixed in advance | `cpt_test_at()` gives an exact test at that date |
+| Gaps in the series | `na_action = "omit"` keeps the original positions |
 
 ## 📚 Learn more
 
 [Reference](https://pursuitofdatascience.github.io/ggchangepoint/reference/)
 · [Choosing a
 method](https://pursuitofdatascience.github.io/ggchangepoint/articles/choosing.html)
-· [Ten ways to get a changepoint
-wrong](https://pursuitofdatascience.github.io/ggchangepoint/articles/pitfalls.html)
+· [Beyond the
+location](https://pursuitofdatascience.github.io/ggchangepoint/articles/beyond-detection.html)
+· [Best
+practice](https://pursuitofdatascience.github.io/ggchangepoint/articles/pitfalls.html)
 ·
 [Introduction](https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.html)

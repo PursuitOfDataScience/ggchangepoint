@@ -18,6 +18,12 @@
 \alias{plot.ggcpt_recommendation}
 \alias{plot.ggcpt_events}
 \alias{plot.ggcpt_label_curve}
+\alias{plot.ggcpt_attribution}
+\alias{plot.ggcpt_coverage}
+\alias{plot.ggcpt_counterfactual}
+\alias{plot.ggcpt_abruptness}
+\alias{plot.ggcpt_screen}
+\alias{plot.ggcpt_k_weights}
 \title{Base plot() methods for ggchangepoint result objects}
 \usage{
 \method{plot}{ggcpt_selection}(x, ...)
@@ -51,6 +57,18 @@
 \method{plot}{ggcpt_events}(x, ...)
 
 \method{plot}{ggcpt_label_curve}(x, ...)
+
+\method{plot}{ggcpt_attribution}(x, ...)
+
+\method{plot}{ggcpt_coverage}(x, ...)
+
+\method{plot}{ggcpt_counterfactual}(x, ...)
+
+\method{plot}{ggcpt_abruptness}(x, ...)
+
+\method{plot}{ggcpt_screen}(x, ...)
+
+\method{plot}{ggcpt_k_weights}(x, ...)
 }
 \arguments{
 \item{x}{A result object created by one of the package's \code{cpt_*()}

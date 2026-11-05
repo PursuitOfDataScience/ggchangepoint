@@ -512,7 +512,8 @@ min_segment_args <- function() {
     var = list(arg = "delta", unit = "count"),
     hdreg = list(arg = "delta", unit = "count"),
     fabisearch = list(arg = "min_dist", unit = "count"),
-    binsegrcpp = list(arg = "min_segment_length", unit = "count")
+    binsegrcpp = list(arg = "min_segment_length", unit = "count"),
+    capa = list(arg = "min_seg_len", unit = "count")
   )
 }
 

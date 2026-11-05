@@ -14,7 +14,7 @@
 #' Confidence intervals for changepoint locations
 #'
 #' Answers "where could this changepoint be?" for any result, and says which
-#' of four routes it used. \code{show_ci = TRUE} in \code{autoplot()} works
+#' of five routes it used. \code{show_ci = TRUE} in \code{autoplot()} works
 #' only for the handful of engines that ship intervals of their own; this
 #' generic covers the rest, and (because the four routes mean genuinely
 #' different things) reports the provenance in a \code{source} column
@@ -34,7 +34,9 @@
 #' @param method Which route to use:
 #'   \describe{
 #'     \item{\code{"auto"}}{(default) native if the engine supplied
-#'       intervals, else posterior if it supplied one, else bootstrap.}
+#'       intervals, else posterior if it supplied one, else conformal where
+#'       the change is one between exchangeable segments (a change in mean,
+#'       variance, both, or distribution), else bootstrap.}
 #'     \item{\code{"native"}}{the engine's own \code{ci_lower}/\code{ci_upper}
 #'       (SMUCE/HSMUCE simultaneous confidence sets, \pkg{strucchange}
 #'       break-date intervals, \pkg{segmented} breakpoint intervals,
@@ -58,6 +60,25 @@
 #'       available for every engine; it measures the sampling variability of
 #'       the \emph{procedure}, conditional on the fitted segmentation, and it
 #'       is not exact.}
+#'     \item{\code{"conformal"}}{a distribution-free confidence set
+#'       (CONCH, Hore and Ramdas 2026). Each changepoint is examined in its
+#'       window between the neighbouring changepoints; every candidate
+#'       split of the window is tested by permuting the observations within
+#'       each side of it, and the candidates that survive at
+#'       \code{1 - level} form a set that contains the true location with
+#'       probability at least \code{level}, whatever the distribution of
+#'       the data, provided the observations within each segment are
+#'       exchangeable (independent and identically distributed is the
+#'       usual case) and the window holds one change. It needs no re-run of
+#'       the detector, so it serves results built with
+#'       \code{\link{as_ggcpt}()} and registered methods too. The set need
+#'       not be contiguous: \code{ci_lower} and \code{ci_upper} are its
+#'       hull and \code{set_size} counts its members, and the p-value of
+#'       every candidate is attached as the \code{"profile"} attribute.
+#'       The score matches what changed: a mean shift, a variance change,
+#'       both, or a rank statistic for a change in distribution; summed over
+#'       coordinates for a multivariate result. \code{B} sets the number of
+#'       permutations per candidate.}
 #'     \item{\code{"posterior"}}{a credible interval from the engine's
 #'       posterior changepoint-probability profile (\code{bcp},
 #'       \code{beast}): the narrowest \emph{contiguous} set of positions
@@ -93,8 +114,21 @@
 #' what separates them. The two native routes and the bootstrap are the
 #' ones to quote; see the note on \code{"posterior"} above for why its
 #' interval is so much wider.
-#' @param B Bootstrap replicates for \code{method = "bootstrap"}. Defaults to
-#'   \code{200}.
+#'
+#' The conformal route was measured with \code{\link{cpt_confint_coverage}()}
+#' on the same design (300 replicates per cell, \code{pelt}, level 0.95).
+#' For a jump of three standard deviations it covered 0.960 at a mean width
+#' of 0.5 (the bootstrap: 0.973 at 2.0); for a jump of one standard
+#' deviation 0.970 at 18.6, where the bootstrap fell short of the level at
+#' 0.926 (width 25.8); under \eqn{t_3} noise with a jump of two, 0.963 at
+#' 3.5 (bootstrap 0.943 at 4.4). Its guarantee assumes exchangeable
+#' observations within each segment, and under AR(1) noise with
+#' \eqn{\rho = 0.3} it covered 0.920 (bootstrap 0.887): dependent noise
+#' shortens every interval here, and \code{\link{cpt_assumptions}()}
+#' checks for it.
+#' @param B Bootstrap replicates for \code{method = "bootstrap"}, and
+#'   permutations per candidate split for \code{method = "conformal"}.
+#'   Defaults to \code{200}.
 #' @param seed Optional seed (bootstrap and NSP are both random). The seed
 #'   is scoped to this call: \code{.Random.seed} is saved and restored, so a
 #'   seeded call inside a simulation loop does not pin the loop's own
@@ -107,20 +141,28 @@
 #'   \code{cp_index}/\code{ci_lower_index}/\code{ci_upper_index} on the
 #'   original scale when the result carries a time index, and
 #'   \code{n_replicates} for \code{method = "bootstrap"} (how many
-#'   replicates actually contributed a draw for that changepoint).
+#'   replicates actually contributed a draw for that changepoint), and
+#'   \code{set_size} for \code{method = "conformal"} (how many locations
+#'   the confidence set holds; an empty set has \code{NA} bounds and
+#'   warns, because no single change between exchangeable segments fits
+#'   that window).
 #'   \code{method = "nsp"} returns \code{NA} bounds for a changepoint that
 #'   falls in no region, which is a finding rather than a failure.
-#' @seealso \code{\link{cpt_test}()}, \code{\link{cpt_stability}()},
-#'   \code{\link{nsp_wrapper}()}.
+#' @references
+#' \insertRef{hore2026conch}{ggchangepoint}
+#' @seealso \code{\link{cpt_confint_coverage}()}, which measures how often
+#'   each route covers; \code{\link{cpt_test}()},
+#'   \code{\link{cpt_stability}()}, \code{\link{nsp_wrapper}()}.
 #' @export
 #' @examples
 #' set.seed(2026)
 #' x <- c(rnorm(80), rnorm(80, 4))
 #' fit <- cpt_detect(x, method = "pelt")
+#' cpt_confint(fit, method = "conformal", B = 50, seed = 1)
 #' cpt_confint(fit, method = "bootstrap", B = 25, seed = 1)
 cpt_confint <- function(object, level = 0.95,
                         method = c("auto", "native", "nsp", "bootstrap",
-                                   "posterior"),
+                                   "posterior", "conformal"),
                         B = 200, seed = NULL, ...) {
   if (!is_ggcpt(object)) {
     cpt_abort("`object` must be a ggcpt object.", class = "bad_argument")
@@ -148,6 +190,8 @@ cpt_confint <- function(object, level = 0.95,
       "native"
     } else if (has_post) {
       "posterior"
+    } else if (conformal_possible(object)) {
+      "conformal"
     } else {
       "bootstrap"
     }
@@ -157,8 +201,10 @@ cpt_confint <- function(object, level = 0.95,
     # complain about a method the caller never named.
     if (method == "bootstrap" && !bootstrap_possible(object)) {
       cpt_abort("`method = \"auto\"` has nothing to fall back on for this ",
-                "result: the engine supplied no interval and no posterior, and ",
-                "the bootstrap route needs to re-run the detector, but `",
+                "result: the engine supplied no interval and no posterior, the ",
+                "change is not one between exchangeable segments that the ",
+                "conformal set needs, and the bootstrap route needs to re-run ",
+                "the detector, but `",
                 scalar_chr(object$method), "` is not a method cpt_detect() ",
                 "knows. Supply the interval yourself via as_ggcpt(ci = ), or ",
                 "register the detector with cpt_register_method() so it can be ",
@@ -207,6 +253,7 @@ cpt_confint <- function(object, level = 0.95,
                      level = native$level, source = native$source)
     },
     posterior = confint_posterior(object, level),
+    conformal = confint_conformal(object, level, B = B, seed = seed),
     bootstrap = confint_bootstrap(object, level, B = B, seed = seed, ...),
     nsp = confint_nsp(object, level, seed = seed, ...)
   )

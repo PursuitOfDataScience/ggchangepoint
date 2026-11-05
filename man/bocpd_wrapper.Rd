@@ -45,6 +45,7 @@ Other changepoint engines:
 \code{\link{beast_wrapper}()},
 \code{\link{bfast_wrapper}()},
 \code{\link{binsegrcpp_wrapper}()},
+\code{\link{capa_wrapper}()},
 \code{\link{cpm_wrapper}()},
 \code{\link{cpop_wrapper}()},
 \code{\link{cpt_wrapper}()},

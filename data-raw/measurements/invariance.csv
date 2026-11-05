@@ -231,3 +231,8 @@
 "binsegrcpp",3,2,TRUE,TRUE,TRUE,4,3,NA
 "binsegrcpp",4,2,TRUE,TRUE,TRUE,4,4,NA
 "binsegrcpp",5,2,TRUE,TRUE,TRUE,5,3,NA
+"capa",1,2,TRUE,TRUE,TRUE,5,5,NA
+"capa",2,2,TRUE,TRUE,TRUE,4,3,NA
+"capa",3,2,TRUE,TRUE,TRUE,6,3,NA
+"capa",4,2,TRUE,TRUE,TRUE,4,4,NA
+"capa",5,4,TRUE,TRUE,TRUE,8,6,NA

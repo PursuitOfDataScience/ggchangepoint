@@ -55,12 +55,13 @@ A tibble with columns:
         whole series through \code{\link{cpt_detect}()} it reports
         roughly \eqn{n / \mathrm{arl0}} changepoints by construction.
         It does \strong{not} mean the method can be passed to
-        \code{\link{cpt_monitor}()}, which takes its own three:
-        \code{"edetector"}, \code{"cpm"} and \code{"ocd"}. The two
-        sets overlap without coinciding: \code{bocpd} is an online
-        algorithm this table marks but the monitor does not offer, and
-        \code{edetector} is native to this package rather than a
-        wrapped engine, so it has no row here at all.}
+        \code{\link{cpt_monitor}()}, which takes its own five:
+        \code{"edetector"}, \code{"cpm"}, \code{"ocd"},
+        \code{"cusum"} and \code{"ewma"}. The two sets overlap without
+        coinciding: \code{bocpd} is an online algorithm this table marks
+        but the monitor does not offer, and \code{edetector},
+        \code{cusum} and \code{ewma} are native to this package rather
+        than wrapped engines, so they have no row here at all.}
   \item{families, choices, formula, min_segment, na_handling,
         cp_convention_upstream}{The modelling vocabulary (omitted when
         \code{capabilities = FALSE}): the distribution families

@@ -53,6 +53,7 @@ Other changepoint engines:
 \code{\link{bfast_wrapper}()},
 \code{\link{binsegrcpp_wrapper}()},
 \code{\link{bocpd_wrapper}()},
+\code{\link{capa_wrapper}()},
 \code{\link{cpm_wrapper}()},
 \code{\link{cpt_wrapper}()},
 \code{\link{decafs_wrapper}()},

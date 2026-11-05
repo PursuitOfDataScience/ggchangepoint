@@ -16,10 +16,10 @@ integration via \code{autoplot()} and composable geoms
 (\code{geom_changepoint()}, \code{geom_cpt_segment()},
 \code{geom_cpt_ci()}, \code{geom_cpt_region()}, \code{geom_cpt_label()},
 \code{geom_cpt_event()}, \code{stat_changepoint()}), and a unified
-dispatcher \code{cpt_detect()} that reaches fifty methods.
+dispatcher \code{cpt_detect()} that reaches 51 methods.
 
 \strong{Detection engines.} \code{cpt_detect()} dispatches to the methods in
-\code{cpt_methods()}, across nine families:
+\code{cpt_methods()}, across ten families:
 \itemize{
   \item \strong{Penalised/optimal:} PELT, BinSeg, SegNeigh, AMOC
     (\pkg{changepoint}); FPOP (\pkg{fpop}); fast binary segmentation
@@ -55,6 +55,9 @@ dispatcher \code{cpt_detect()} that reaches fifty methods.
     breaks (\pkg{bfast}).
   \item \strong{Classical single-change tests:} Pettitt, Buishand and
     SNHT (\pkg{trend}), Taylor's analyzer (\pkg{ChangePointTaylor}).
+  \item \strong{Epidemic changes and anomalies:} collective and point
+    anomalies against a baseline, for one series or many (\pkg{anomaly}'s
+    CAPA).
 }
 
 \strong{What surrounds the detectors.} Every detector returns a \code{ggcpt}
@@ -72,11 +75,16 @@ significance regions and diagnostics. Around that:
     \code{cpt_null_power()}.
   \item \strong{Should I believe it:} \code{cpt_assumptions()},
     \code{cpt_gof()}, \code{cpt_robustness()}, \code{cpt_verify()}.
-  \item \strong{Inference:} \code{cpt_confint()} (four provenances, one
-    contract), \code{cpt_test()}, \code{cpt_regions()}.
+  \item \strong{Inference:} \code{cpt_confint()} (five provenances, one
+    contract, including distribution-free conformal sets) and
+    \code{cpt_confint_coverage()}, \code{cpt_test()}, \code{cpt_regions()},
+    \code{cpt_attribute()} (which coordinates changed), \code{cpt_screen()}
+    (which of many series changed).
+  \item \strong{What would have happened, and how:}
+    \code{cpt_counterfactual()}, \code{cpt_abruptness()}.
   \item \strong{Choosing K:} \code{cpt_select()} (BIC, Zhang-Siegmund
     mBIC, AIC, CROPS elbow, cross-validation, stability),
-    \code{cpt_crops()}, \code{cpt_penalty()}.
+    \code{cpt_k_weights()}, \code{cpt_crops()}, \code{cpt_penalty()}.
   \item \strong{Diagnostics:} \code{cpt_influence()}, \code{cpt_leverage()},
     \code{cpt_sensitivity()}, \code{cpt_stability()},
     \code{cpt_statistic()}, \code{cpt_solution_path()},
@@ -89,7 +97,8 @@ significance regions and diagnostics. Around that:
   \item \strong{Evaluation:} \code{cpt_metrics()},
     \code{cpt_metrics_annotated()}, \code{cpt_benchmark()},
     \code{cpt_datasets()}, \code{cpt_load_tcpd()}.
-  \item \strong{Streaming:} \code{cpt_monitor()}, \code{cpt_update()},
+  \item \strong{Streaming:} \code{cpt_monitor()} (e-detector, CUSUM and
+    EWMA control charts, \pkg{cpm}, \pkg{ocd}), \code{cpt_update()},
     \code{alarms()}, \code{cpt_replay()}, \code{cpt_delay()}.
   \item \strong{Study design:} \code{cpt_simulate()}, \code{cpt_power()},
     \code{cpt_min_detectable()}, \code{cpt_scenarios()}.
@@ -122,7 +131,11 @@ The entry points, by group:
     \item \strong{Visualise:} \code{\link{autoplot.ggcpt}()},
       \code{\link{ggcptplot}()}, \code{\link{ggcpt_compare}()}.
     \item \strong{Inference and selection:} \code{\link{cpt_confint}()},
-      \code{\link{cpt_test}()}, \code{\link{cpt_select}()}.
+      \code{\link{cpt_test}()}, \code{\link{cpt_attribute}()},
+      \code{\link{cpt_screen}()}, \code{\link{cpt_select}()},
+      \code{\link{cpt_k_weights}()}.
+    \item \strong{What if:} \code{\link{cpt_counterfactual}()},
+      \code{\link{cpt_abruptness}()}.
     \item \strong{Choosing and combining methods:}
       \code{\link{cpt_consensus}()}, \code{\link{cpt_recommend}()},
       \code{\link{cpt_benchmark}()}.

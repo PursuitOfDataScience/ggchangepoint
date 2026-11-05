@@ -128,3 +128,7 @@ Caused by error:
 "binsegrcpp",10000,0.0109999999999999,4,"ok",""
 "binsegrcpp",1e+05,0.048,4,"ok",""
 "binsegrcpp",1e+06,0.618,4,"ok",""
+"capa",1000,0.135,9,"ok",NA
+"capa",10000,0.154,8,"ok",NA
+"capa",1e+05,0.356,9,"ok",NA
+"capa",1e+06,3.216,8,"ok",NA

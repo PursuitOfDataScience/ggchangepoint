@@ -72,6 +72,12 @@
 #' @param seed Optional seed for reproducibility. The seed is scoped to this
 #'   call: \code{.Random.seed} is saved and restored, so a seeded call
 #'   inside a simulation loop does not pin the loop's own stream.
+#' @param transition Width, in observations, of a gradual change in level:
+#'   the mean moves linearly from one segment's value to the next across
+#'   \code{transition} observations centred on each changepoint. Defaults
+#'   to \code{0}, an abrupt step. For \code{change_in = "mean"} and
+#'   \code{"meanvar"}; it asks how a jump detector places a change that
+#'   took time, and \code{\link{cpt_abruptness}()} is the check for one.
 #' @return A tibble with columns \code{index}, \code{value}, and \code{seg_id}.
 #'   The true changepoints are stored in the \code{true_changepoints} attribute.
 #' @export
@@ -87,6 +93,10 @@
 #'                          seed = 1)
 #' drifting <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
 #'                          sd_trend = c(0.5, 3), seed = 1)
+#'
+#' # a change that takes 30 observations instead of one
+#' gradual <- cpt_simulate(240, changepoints = 120, params = c(0, 3),
+#'                         transition = 30, seed = 1)
 #'
 #' # counts whose rate doubles
 #' counts <- cpt_simulate(200, changepoints = 100, params = c(4, 8),
@@ -104,7 +114,8 @@ cpt_simulate <- function(n,
                          sd_trend = NULL,
                          seed = NULL,
                          family = c("gaussian", "poisson", "binomial",
-                                    "exponential")) {
+                                    "exponential"),
+                         transition = 0) {
 
   # Before the arguments are matched: missing() reports FALSE for an
   # argument the function has since reassigned.
@@ -113,6 +124,12 @@ cpt_simulate <- function(n,
   change_in <- cpt_match_arg(change_in)
   noise <- cpt_match_arg(noise)
   family <- cpt_match_arg(family)
+  validate_scalar(transition, "transition", min = 0)
+  if (transition > 0 && family != "gaussian") {
+    cpt_abort("`transition` makes a change in a Gaussian level gradual; it ",
+              "is not available with `family = \"", family, "\"`.",
+              class = "bad_argument")
+  }
   if (family != "gaussian") {
     return(simulate_family(n, changepoints, change_in, params, family,
                            noise_given = noise_given, seed = seed))
@@ -296,6 +313,34 @@ cpt_simulate <- function(n,
       # level at absolute time zero.
       t_vals <- seq_along(idx)
       signal[idx] <- p$intercept + p$slope * t_vals
+    }
+  }
+
+  # A gradual change: the level moves linearly from one segment's value to
+  # the next over `transition` observations centred on the changepoint, so
+  # the changepoint stays the middle of the transition and
+  # `true_changepoints` keeps its meaning.
+  validate_scalar(transition, "transition", min = 0)
+  if (transition > 0) {
+    if (!change_in %in% c("mean", "meanvar")) {
+      cpt_abort("`transition` makes a change in the level gradual, so it ",
+                "needs `change_in = \"mean\"` or `\"meanvar\"`.",
+                class = "bad_argument")
+    }
+    seg_len <- seg_ends - seg_starts + 1L
+    if (n_seg > 1L && transition > min(seg_len)) {
+      cpt_abort("`transition = ", format(transition), "` is longer than the ",
+                "shortest segment (", min(seg_len), " observations), so two ",
+                "transitions would overlap.", class = "bad_argument")
+    }
+    for (k in seq_len(n_seg - 1L)) {
+      cpk <- seg_ends[k]
+      span <- seq.int(seg_starts[k], seg_ends[k + 1L])
+      a <- signal[seg_starts[k]]
+      b <- signal[seg_ends[k + 1L]]
+      near <- abs(span - (cpk + 0.5)) <= transition
+      tt <- span[near]
+      signal[tt] <- a + (b - a) * ramp_design(tt, cpk, transition)
     }
   }
 

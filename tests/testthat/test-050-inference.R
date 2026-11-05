@@ -34,7 +34,8 @@ test_that("cpt_regions is empty and typed for a result with no regions", {
   expect_equal(nrow(reg), 0)
   expect_true(all(c("start", "end", "length") %in% names(reg)))
   expect_warning(ggplot2::autoplot(fit, show_regions = TRUE),
-                 "carries no significance regions")
+                 "carries no regions",
+                 class = "ggchangepoint_argument_ignored")
   expect_error(cpt_regions(1:10), "must be a ggcpt object")
 })
 
