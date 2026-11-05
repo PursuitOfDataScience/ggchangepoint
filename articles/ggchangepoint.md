@@ -5,7 +5,7 @@
 **ggchangepoint** provides a unified, tidy, `ggplot2`-native interface
 to changepoint detection in R: one dispatcher
 ([`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md))
-covering 50 methods across six methodological families, one result class
+covering 51 methods across six methodological families, one result class
 (`ggcpt`) with a stable tidy contract, and one visualisation entry point
 ([`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html))
 that draws everything a method reports, including confidence intervals
@@ -47,6 +47,29 @@ accounting.
 > [`cpt_register_method()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_register_method.md)
 > for detectors this package does not wrap. Each has its own section
 > below or its own vignette.
+
+> **New in 0.7.0.** Which coordinates of a multivariate series changed
+> ([`cpt_attribute()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md));
+> distribution-free confidence sets
+> (`cpt_confint(method = "conformal")`) and their measured coverage
+> ([`cpt_confint_coverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint_coverage.md));
+> what the series would have done without each change
+> ([`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md));
+> whether a change was abrupt
+> ([`cpt_abruptness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_abruptness.md));
+> which of many series changed
+> ([`cpt_screen()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md));
+> weights over the number of changes
+> ([`cpt_k_weights()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md));
+> CUSUM and EWMA control charts in
+> [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md);
+> and `capa`
+> ([`capa_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/capa_wrapper.md))
+> for stretches that return to a baseline.
+> [`vignette("inference")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/inference.md)
+> covers the first six and
+> [`vignette("monitoring")`](https://pursuitofdatascience.github.io/ggchangepoint/articles/monitoring.md)
+> the charts.
 
 ``` r
 
@@ -149,7 +172,7 @@ summary(res)
 #>   CP convention:      left
 #>   Series length:      200
 #>   Penalty:            MBIC
-#>   Runtime (seconds):  0.035
+#>   Runtime (seconds):  0.023
 #> 
 #> Segments:
 #> # A tibble: 2 × 5
@@ -239,7 +262,7 @@ CRAN, so they are documented as future work and are *not* wired to
 ``` r
 
 print(cpt_methods(), n = Inf)
-#> # A tibble: 55 × 29
+#> # A tibble: 56 × 29
 #>    method       change_in    engine status installed target_release multivariate
 #>    <chr>        <chr>        <chr>  <chr>  <lgl>     <chr>          <lgl>       
 #>  1 pelt         mean, var, … chang… avail… TRUE      NA             FALSE       
@@ -292,11 +315,12 @@ print(cpt_methods(), n = Inf)
 #> 48 snht         mean (stand… trend  avail… TRUE      NA             FALSE       
 #> 49 taylor       mean (Taylo… Chang… avail… TRUE      NA             FALSE       
 #> 50 binsegrcpp   mean, meanv… binse… avail… TRUE      NA             FALSE       
-#> 51 gfpop        mean (graph… gfpop  plann… NA        when on CRAN   NA          
-#> 52 robust       mean (robus… robseg plann… NA        when on CRAN   NA          
-#> 53 focus        mean (onlin… FOCuS  plann… NA        when on CRAN   NA          
-#> 54 sbs          mean (high-… hdbin… plann… NA        when on CRAN   NA          
-#> 55 changeforest distributio… chang… plann… NA        when on CRAN   NA          
+#> 51 capa         mean, meanv… anoma… avail… TRUE      NA             TRUE        
+#> 52 gfpop        mean (graph… gfpop  plann… NA        when on CRAN   NA          
+#> 53 robust       mean (robus… robseg plann… NA        when on CRAN   NA          
+#> 54 focus        mean (onlin… FOCuS  plann… NA        when on CRAN   NA          
+#> 55 sbs          mean (high-… hdbin… plann… NA        when on CRAN   NA          
+#> 56 changeforest distributio… chang… plann… NA        when on CRAN   NA          
 #> # ℹ 22 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
 #> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>,
 #> #   families <chr>, choices <chr>, formula <lgl>, min_segment <chr>,
@@ -1386,13 +1410,13 @@ cpt_recommend(noise = "heavy")
 #> 4. cpt_detect(x, method = "bfast")
 #>    measured: 2 of 2 changes found, 0 spurious per series
 #>    why: handles change_in = "mean"; measured under heavy noise
-#> 5. cpt_detect(x, method = "ecp")
+#> 5. cpt_detect(x, method = "capa")
 #>    measured: 2 of 2 changes found, 0 spurious per series
 #>    why: handles change_in = "mean"; measured under heavy noise
 #> 
 #> 3 candidates tie for first on the information supplied: binseg, mosum, not. What would separate them: `n_expected`, `n`, `data_type`, `need_uncertainty`, or a `fit` to read the residuals of.
 #> 
-#> (31 further candidate(s); the full table is the return value.)
+#> (32 further candidate(s); the full table is the return value.)
 #> 
 #> Cite the method you use with cpt_cite(). Cross-check the choice with
 #> cpt_robustness() and cpt_assumptions().

@@ -49,7 +49,7 @@ cpt_install_engines(bundle = "core", dry_run = FALSE, ...)
 
   `"applied"`
 
-  :   trend, ChangePointTaylor, bfast, wbsts, binsegRcpp.
+  :   trend, ChangePointTaylor, bfast, wbsts, binsegRcpp, anomaly.
 
   `"time"`
 

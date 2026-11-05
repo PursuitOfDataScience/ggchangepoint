@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -307,7 +309,7 @@
       </dl></div><div class="section level2">
       <h2 id="inference">Inference<a class="anchor" aria-label="anchor" href="#inference"></a></h2>
 
-      <div class="section-desc"><p>Where could this changepoint be, and is it real?</p></div>
+      <div class="section-desc"><p>Where could this changepoint be, is it real, and which coordinates changed?</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -323,6 +325,13 @@
 
         <dt>
 
+          <code><a href="cpt_confint_coverage.html">cpt_confint_coverage()</a></code> <code><a href="cpt_confint_coverage.html">print(<i>&lt;ggcpt_coverage&gt;</i>)</a></code> <code><a href="cpt_confint_coverage.html">tidy(<i>&lt;ggcpt_coverage&gt;</i>)</a></code> <code><a href="cpt_confint_coverage.html">autoplot(<i>&lt;ggcpt_coverage&gt;</i>)</a></code>
+
+        </dt>
+        <dd>How often do the confidence intervals cover? A Monte Carlo check</dd>
+
+        <dt>
+
           <code><a href="cpt_test.html">cpt_test()</a></code>
 
         </dt>
@@ -334,6 +343,20 @@
 
         </dt>
         <dd>Tidy the significance regions of a ggcpt object</dd>
+
+        <dt>
+
+          <code><a href="cpt_attribute.html">cpt_attribute()</a></code> <code><a href="cpt_attribute.html">print(<i>&lt;ggcpt_attribution&gt;</i>)</a></code> <code><a href="cpt_attribute.html">tidy(<i>&lt;ggcpt_attribution&gt;</i>)</a></code> <code><a href="cpt_attribute.html">glance(<i>&lt;ggcpt_attribution&gt;</i>)</a></code> <code><a href="cpt_attribute.html">autoplot(<i>&lt;ggcpt_attribution&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Which coordinates changed? Certified attribution for a multivariate fit</dd>
+
+        <dt>
+
+          <code><a href="cpt_screen.html">cpt_screen()</a></code> <code><a href="cpt_screen.html">print(<i>&lt;ggcpt_screen&gt;</i>)</a></code> <code><a href="cpt_screen.html">tidy(<i>&lt;ggcpt_screen&gt;</i>)</a></code> <code><a href="cpt_screen.html">glance(<i>&lt;ggcpt_screen&gt;</i>)</a></code> <code><a href="cpt_screen.html">autoplot(<i>&lt;ggcpt_screen&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Which of many series changed? Screening with error control across the panel</dd>
       </dl></div><div class="section level2">
       <h2 id="effects-dates-and-empty-answers">Effects, dates and empty answers<a class="anchor" aria-label="anchor" href="#effects-dates-and-empty-answers"></a></h2>
 
@@ -381,7 +404,7 @@
       </dl></div><div class="section level2">
       <h2 id="segment-models">Segment models<a class="anchor" aria-label="anchor" href="#segment-models"></a></h2>
 
-      <div class="section-desc"><p>A model per regime, and a forecast from the last one.</p></div>
+      <div class="section-desc"><p>A model per regime, a forecast from the last one, and what would have happened without each change.</p></div>
 
       <dl></dl></div><div class="section level2">
 
@@ -401,6 +424,13 @@
 
         </dt>
         <dd>Forecast from a segment of a segmentation</dd>
+
+        <dt>
+
+          <code><a href="cpt_counterfactual.html">cpt_counterfactual()</a></code> <code><a href="cpt_counterfactual.html">print(<i>&lt;ggcpt_counterfactual&gt;</i>)</a></code> <code><a href="cpt_counterfactual.html">tidy(<i>&lt;ggcpt_counterfactual&gt;</i>)</a></code> <code><a href="cpt_counterfactual.html">glance(<i>&lt;ggcpt_counterfactual&gt;</i>)</a></code> <code><a href="cpt_counterfactual.html">autoplot(<i>&lt;ggcpt_counterfactual&gt;</i>)</a></code>
+
+        </dt>
+        <dd>What would have happened without the change? Observed against counterfactual</dd>
       </dl></div><div class="section level2">
       <h2 id="choosing-the-number-of-changepoints">Choosing the number of changepoints<a class="anchor" aria-label="anchor" href="#choosing-the-number-of-changepoints"></a></h2>
 
@@ -417,6 +447,13 @@
 
         </dt>
         <dd>Choose the number of changepoints</dd>
+
+        <dt>
+
+          <code><a href="cpt_k_weights.html">cpt_k_weights()</a></code> <code><a href="cpt_k_weights.html">print(<i>&lt;ggcpt_k_weights&gt;</i>)</a></code> <code><a href="cpt_k_weights.html">tidy(<i>&lt;ggcpt_k_weights&gt;</i>)</a></code> <code><a href="cpt_k_weights.html">glance(<i>&lt;ggcpt_k_weights&gt;</i>)</a></code> <code><a href="cpt_k_weights.html">autoplot(<i>&lt;ggcpt_k_weights&gt;</i>)</a></code>
+
+        </dt>
+        <dd>How sure is the number of changepoints? Weights over K</dd>
       </dl></div><div class="section level2">
       <h2 id="diagnostics">Diagnostics<a class="anchor" aria-label="anchor" href="#diagnostics"></a></h2>
 
@@ -491,6 +528,13 @@
 
         </dt>
         <dd>Goodness of fit, segment by segment</dd>
+
+        <dt>
+
+          <code><a href="cpt_abruptness.html">cpt_abruptness()</a></code> <code><a href="cpt_abruptness.html">print(<i>&lt;ggcpt_abruptness&gt;</i>)</a></code> <code><a href="cpt_abruptness.html">tidy(<i>&lt;ggcpt_abruptness&gt;</i>)</a></code> <code><a href="cpt_abruptness.html">autoplot(<i>&lt;ggcpt_abruptness&gt;</i>)</a></code>
+
+        </dt>
+        <dd>Was the change abrupt? A step against a ramp, at every changepoint</dd>
 
         <dt>
 
@@ -980,6 +1024,22 @@
         </dt>
         <dd>Fast binary segmentation across loss functions</dd>
       </dl></div><div class="section level2">
+      <h2 id="epidemic-changes-and-anomalies">Epidemic changes and anomalies<a class="anchor" aria-label="anchor" href="#epidemic-changes-and-anomalies"></a></h2>
+
+      <div class="section-desc"><p>Stretches that leave a baseline and return to it, and single outliers.</p></div>
+
+      <dl></dl></div><div class="section level2">
+
+
+
+
+      <dl><dt>
+
+          <code><a href="capa_wrapper.html">capa_wrapper()</a></code>
+
+        </dt>
+        <dd>CAPA wrapper: collective and point anomalies (epidemic changepoints)</dd>
+      </dl></div><div class="section level2">
       <h2 id="bayesian-formula-models">Bayesian formula models<a class="anchor" aria-label="anchor" href="#bayesian-formula-models"></a></h2>
 
 
@@ -1051,7 +1111,7 @@
 
         <dt>
 
-          <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_selection&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_stability&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_sensitivity&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_influence&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_batch&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_benchmark&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_consensus&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_monitor&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_delay&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_path&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_power&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_effect&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_robustness&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_events&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_label_curve&gt;</i>)</a></code>
+          <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_selection&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_stability&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_sensitivity&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_influence&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_batch&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_benchmark&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_consensus&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_monitor&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_delay&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_path&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_power&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_effect&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_robustness&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_recommendation&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_events&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_label_curve&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_attribution&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_coverage&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_counterfactual&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_abruptness&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_screen&gt;</i>)</a></code> <code><a href="ggcpt_plot_methods.html">plot(<i>&lt;ggcpt_k_weights&gt;</i>)</a></code>
 
         </dt>
         <dd>Base plot() methods for ggchangepoint result objects</dd>

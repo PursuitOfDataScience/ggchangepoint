@@ -38,3 +38,7 @@ do, and what the package promises.
   Coverage](https://pursuitofdatascience.github.io/ggchangepoint/articles/benchmarks.md):
 - [Stability, Deprecation and the
   Contract](https://pursuitofdatascience.github.io/ggchangepoint/articles/stability.md):
+- [Control Charts Are Changepoint
+  Detectors](https://pursuitofdatascience.github.io/ggchangepoint/articles/control-charts.md):
+- [Beyond the Location: Which, How Sure, and What
+  If](https://pursuitofdatascience.github.io/ggchangepoint/articles/beyond-detection.md):

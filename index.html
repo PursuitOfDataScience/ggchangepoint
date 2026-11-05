@@ -11,8 +11,8 @@
 <script src="deps/bootstrap-5.3.8/bootstrap.bundle.min.js"></script><link href="deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
 <link href="deps/font-awesome-6.5.2/css/v4-shims.min.css" rel="stylesheet">
 <script src="deps/headroom-0.11.0/headroom.min.js"></script><script src="deps/headroom-0.11.0/jQuery.headroom.min.js"></script><script src="deps/bootstrap-toc-1.0.1/bootstrap-toc.min.js"></script><script src="deps/clipboard.js-2.0.11/clipboard.min.js"></script><script src="deps/search-1.0.0/autocomplete.jquery.min.js"></script><script src="deps/search-1.0.0/fuse.min.js"></script><script src="deps/search-1.0.0/mark.min.js"></script><!-- pkgdown --><script src="pkgdown.js"></script><meta property="og:title" content="Combines Changepoint Analysis with ggplot2">
-<meta name="description" content="A unified, tidy, ggplot2-native interface to changepoint detection in R. A cpt_detect() dispatcher covers fifty methods (penalised and optimal partitioning, multiscale and search methods, nonparametric and kernel methods, Bayesian methods, high-dimensional, functional, covariance and network methods, regression breaks through a formula interface, seasonal-trend decomposition and the classical single-change tests), with distribution families for counts, binary outcomes and waiting times, missing-value handling, grouped data, and constraints on locations and segment lengths. Every result is the same ggcpt object, in one verified location convention, with broom-style tidy/glance/augment methods, autoplot() and composable ggproto layers. Around detection: effect sizes, a test for a change at a date fixed in advance, tests for a change anywhere, confidence intervals, post-detection tests, selection of the number of changes, assumption checks and goodness of fit, robustness to the noise model, stability, consensus and influence diagnostics, supervised detection, sequential monitoring, power and study design, benchmarks, reports and an export under a documented JSON schema. What each engine does (its runtime, whether its answer survives a change of units or a reversal of time, its false positives by noise regime and data type, its false alarms on pure noise) and the calibration of the packages own intervals and tests are measured and shipped as data, and cpt_recommend() chooses from those measurements. cpt_register_method()' brings external and non-CRAN detectors into the same grammar.">
-<meta property="og:description" content="A unified, tidy, ggplot2-native interface to changepoint detection in R. A cpt_detect() dispatcher covers fifty methods (penalised and optimal partitioning, multiscale and search methods, nonparametric and kernel methods, Bayesian methods, high-dimensional, functional, covariance and network methods, regression breaks through a formula interface, seasonal-trend decomposition and the classical single-change tests), with distribution families for counts, binary outcomes and waiting times, missing-value handling, grouped data, and constraints on locations and segment lengths. Every result is the same ggcpt object, in one verified location convention, with broom-style tidy/glance/augment methods, autoplot() and composable ggproto layers. Around detection: effect sizes, a test for a change at a date fixed in advance, tests for a change anywhere, confidence intervals, post-detection tests, selection of the number of changes, assumption checks and goodness of fit, robustness to the noise model, stability, consensus and influence diagnostics, supervised detection, sequential monitoring, power and study design, benchmarks, reports and an export under a documented JSON schema. What each engine does (its runtime, whether its answer survives a change of units or a reversal of time, its false positives by noise regime and data type, its false alarms on pure noise) and the calibration of the packages own intervals and tests are measured and shipped as data, and cpt_recommend() chooses from those measurements. cpt_register_method()' brings external and non-CRAN detectors into the same grammar.">
+<meta name="description" content="A unified, tidy, ggplot2-native interface to changepoint detection in R. A cpt_detect() dispatcher covers 51 methods (penalised and optimal partitioning, multiscale and search methods, nonparametric and kernel methods, Bayesian methods, high-dimensional, functional, covariance and network methods, regression breaks through a formula interface, seasonal-trend decomposition, the classical single-change tests, and anomalous stretches that return to a baseline), with distribution families for counts, binary outcomes and waiting times, missing-value handling, grouped data, and constraints on locations and segment lengths. Every result is the same ggcpt object, in one verified location convention, with broom-style tidy/glance/augment methods, autoplot() and composable ggproto layers. Around detection: which coordinates of a multivariate series changed, certified with family-wise error control; distribution-free confidence sets for each location; effect sizes and what the series would have done without each change; a test for a change at a date fixed in advance, tests for a change anywhere, and screening of many series with false discovery rate control; a check of whether a change was abrupt or gradual; weights over the number of changes; assumption checks and goodness of fit, robustness to the noise model, stability, consensus and influence diagnostics, supervised detection, sequential monitoring including cumulative-sum and exponentially weighted moving-average control charts, power and study design, benchmarks, reports and an export under a documented JSON schema. What each engine does (its runtime, whether its answer survives a change of units or a reversal of time, its false positives by noise regime and data type, its false alarms on pure noise) and the calibration of the packages own intervals, tests and monitors are measured and shipped as data, and cpt_recommend() chooses from those measurements. cpt_register_method()' brings external and non-CRAN detectors into the same grammar.">
+<meta property="og:description" content="A unified, tidy, ggplot2-native interface to changepoint detection in R. A cpt_detect() dispatcher covers 51 methods (penalised and optimal partitioning, multiscale and search methods, nonparametric and kernel methods, Bayesian methods, high-dimensional, functional, covariance and network methods, regression breaks through a formula interface, seasonal-trend decomposition, the classical single-change tests, and anomalous stretches that return to a baseline), with distribution families for counts, binary outcomes and waiting times, missing-value handling, grouped data, and constraints on locations and segment lengths. Every result is the same ggcpt object, in one verified location convention, with broom-style tidy/glance/augment methods, autoplot() and composable ggproto layers. Around detection: which coordinates of a multivariate series changed, certified with family-wise error control; distribution-free confidence sets for each location; effect sizes and what the series would have done without each change; a test for a change at a date fixed in advance, tests for a change anywhere, and screening of many series with false discovery rate control; a check of whether a change was abrupt or gradual; weights over the number of changes; assumption checks and goodness of fit, robustness to the noise model, stability, consensus and influence diagnostics, supervised detection, sequential monitoring including cumulative-sum and exponentially weighted moving-average control charts, power and study design, benchmarks, reports and an export under a documented JSON schema. What each engine does (its runtime, whether its answer survives a change of units or a reversal of time, its false positives by noise regime and data type, its false alarms on pure noise) and the calibration of the packages own intervals, tests and monitors are measured and shipped as data, and cpt_recommend() chooses from those measurements. cpt_register_method()' brings external and non-CRAN detectors into the same grammar.">
 <meta property="og:image" content="https://pursuitofdatascience.github.io/ggchangepoint/logo.png">
 </head>
 <body>
@@ -23,7 +23,7 @@
 
     <a class="navbar-brand me-2" href="index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -54,6 +54,8 @@
     <li><a class="dropdown-item" href="articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="news/index.html">News</a></li>
@@ -67,18 +69,14 @@
   </div>
 </nav><div class="container template-home">
 <div class="row">
-  <main id="main" class="col-md-9"><div class="page-header">
-<img src="logo.png" class="logo" alt=""><h1 align="center">
-ggchangepoint
+  <main id="main" class="col-md-9"><div class="section level1">
+<div class="page-header">
+<img src="logo.png" class="logo" alt=""><h1 id="ggchangepoint-">ggchangepoint <a class="anchor" aria-label="anchor" href="#ggchangepoint-"></a>
 </h1>
 </div>
-<p align="center">
-<img src="reference/figures/logo.png" height="139" alt="ggchangepoint hex sticker"></p>
 <!-- badges: start -->
 
-<p align="center">
-<b>Find where a time series changed with any of 50 methods, and get the same tidy, plottable answer from every one.</b>
-</p>
+<p><strong>Find where a time series changed with any of 51 methods, and get the same tidy, plottable answer from every one.</strong></p>
 <div class="section level2">
 <h2 id="mag-one-series-one-call-one-picture">🔍 One series, one call, one picture<a class="anchor" aria-label="anchor" href="#mag-one-series-one-call-one-picture"></a>
 </h2>
@@ -123,6 +121,18 @@ ggchangepoint
 <td align="left"><code>cpt_effect(fit)</code></td>
 </tr>
 <tr>
+<td align="left">Where exactly, with no model assumed?</td>
+<td align="left"><code>cpt_confint(fit, method = "conformal")</code></td>
+</tr>
+<tr>
+<td align="left">What would have happened without it?</td>
+<td align="left"><code>cpt_counterfactual(fit)</code></td>
+</tr>
+<tr>
+<td align="left">Which of my sensors changed?</td>
+<td align="left"><code>cpt_attribute(fit)</code></td>
+</tr>
+<tr>
 <td align="left">Did anything change in a year I already had in mind?</td>
 <td align="left"><code>cpt_test_at(Nile, when = 1899)</code></td>
 </tr>
@@ -135,15 +145,15 @@ ggchangepoint
 <td align="left"><code>cpt_recommend(noise = "autocorrelated")</code></td>
 </tr>
 <tr>
-<td align="left">Counts, 0/1 outcomes, waiting times?</td>
-<td align="left"><code>cpt_detect(x, family = "poisson")</code></td>
+<td align="left">A stretch that returns to normal?</td>
+<td align="left"><code>cpt_detect(x, method = "capa")</code></td>
 </tr>
 <tr>
-<td align="left">When did a regression’s slope break?</td>
-<td align="left"><code>cpt_detect(y ~ x, data = d, method = "strucchange")</code></td>
+<td align="left">Watching a live stream?</td>
+<td align="left"><code>cpt_monitor("cusum", baseline = b)</code></td>
 </tr>
 <tr>
-<td align="left">What can each of the 50 methods do?</td>
+<td align="left">What can each of the 51 methods do?</td>
 <td align="left"><code><a href="reference/cpt_methods.html">cpt_methods()</a></code></td>
 </tr>
 </tbody>
@@ -161,7 +171,7 @@ ggchangepoint
 </ol>
 </div>
 <div class="section level2">
-<h2 id="warning-what-will-bite-you">⚠️ What will bite you<a class="anchor" aria-label="anchor" href="#warning-what-will-bite-you"></a>
+<h2 id="bulb-good-to-know">💡 Good to know<a class="anchor" aria-label="anchor" href="#bulb-good-to-know"></a>
 </h2>
 <table class="table">
 <colgroup>
@@ -169,28 +179,25 @@ ggchangepoint
 <col width="50%">
 </colgroup>
 <thead><tr>
-<th align="left">Trap</th>
-<th align="left">Fix</th>
+<th align="left">For</th>
+<th align="left">Do</th>
 </tr></thead>
 <tbody>
 <tr>
-<td align="left">
-<code>pelt</code>, <code>binseg</code> and <code>fpop</code> assume unit noise: on raw Nile flows <code>pelt</code> reports 42 changepoints</td>
-<td align="left">The package warns. Standardise, or use <code>change_in = "meanvar"</code>
-</td>
+<td align="left">Data far from unit scale</td>
+<td align="left">Use <code>change_in = "meanvar"</code>, or standardise first: <code>pelt</code>, <code>binseg</code> and <code>fpop</code> assume unit noise</td>
 </tr>
 <tr>
-<td align="left">Autocorrelated noise makes spurious changepoints in every engine</td>
-<td align="left">
-<code>cpt_assumptions(fit)</code> checks; <code>cpt_robustness(fit)</code> re-runs under another noise model</td>
+<td align="left">Autocorrelated series</td>
+<td align="left">Check with <code>cpt_assumptions(fit)</code>; <code>cpt_robustness(fit)</code> re-runs under another noise model</td>
 </tr>
 <tr>
-<td align="left">A p-value at a location the data chose is too small</td>
+<td align="left">A date fixed in advance</td>
 <td align="left">
-<code><a href="reference/cpt_test_at.html">cpt_test_at()</a></code> at a date fixed in advance is exact</td>
+<code><a href="reference/cpt_test_at.html">cpt_test_at()</a></code> gives an exact test at that date</td>
 </tr>
 <tr>
-<td align="left">Missing values are refused</td>
+<td align="left">Gaps in the series</td>
 <td align="left">
 <code>na_action = "omit"</code> keeps the original positions</td>
 </tr>
@@ -200,9 +207,9 @@ ggchangepoint
 <div class="section level2">
 <h2 id="books-learn-more">📚 Learn more<a class="anchor" aria-label="anchor" href="#books-learn-more"></a>
 </h2>
-<p><a href="https://pursuitofdatascience.github.io/ggchangepoint/reference/">Reference</a> · <a href="https://pursuitofdatascience.github.io/ggchangepoint/articles/choosing.html">Choosing a method</a> · <a href="https://pursuitofdatascience.github.io/ggchangepoint/articles/pitfalls.html">Ten ways to get a changepoint wrong</a> · <a href="https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.html">Introduction</a></p>
+<p><a href="https://pursuitofdatascience.github.io/ggchangepoint/reference/">Reference</a> · <a href="https://pursuitofdatascience.github.io/ggchangepoint/articles/choosing.html">Choosing a method</a> · <a href="https://pursuitofdatascience.github.io/ggchangepoint/articles/beyond-detection.html">Beyond the location</a> · <a href="https://pursuitofdatascience.github.io/ggchangepoint/articles/pitfalls.html">Best practice</a> · <a href="https://pursuitofdatascience.github.io/ggchangepoint/articles/introduction.html">Introduction</a></p>
 </div>
-
+</div>
   </main><aside class="col-md-3"><div class="links">
 <h2 data-toc-skip>Links</h2>
 <ul class="list-unstyled">

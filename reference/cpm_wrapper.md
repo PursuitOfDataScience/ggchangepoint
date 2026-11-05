@@ -84,6 +84,7 @@ Other changepoint engines:
 [`bfast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bfast_wrapper.md),
 [`binsegrcpp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/binsegrcpp_wrapper.md),
 [`bocpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bocpd_wrapper.md),
+[`capa_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/capa_wrapper.md),
 [`cpop_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpop_wrapper.md),
 [`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
 [`decafs_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/decafs_wrapper.md),
@@ -130,5 +131,5 @@ res$changepoints
 #> # A tibble: 1 × 3
 #>      cp cp_value detection_time
 #>   <int>    <dbl>          <int>
-#> 1   100   -0.125            105
+#> 1    99    -1.70            104
 ```

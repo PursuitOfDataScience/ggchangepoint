@@ -10,7 +10,12 @@ locations.
 ## Usage
 
 ``` r
-cpt_replay(x, method = c("edetector", "cpm", "ocd"), baseline = NULL, ...)
+cpt_replay(
+  x,
+  method = c("edetector", "cpm", "ocd", "cusum", "ewma"),
+  baseline = NULL,
+  ...
+)
 ```
 
 ## Arguments

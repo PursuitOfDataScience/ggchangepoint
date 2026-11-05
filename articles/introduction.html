@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -89,7 +91,7 @@ changepoint detection across the methodological spectrum. It introduces
 a single S3 result class, <code>ggcpt</code>, with
 <code>broom</code>-style methods (<code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>,
 <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code>, <code><a href="https://generics.r-lib.org/reference/augment.html" class="external-link">augment()</a></code>) <span class="citation">(Robinson 2017)</span>, a central dispatcher
-<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> covering 50 detection methods across six
+<code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> covering 51 detection methods across six
 algorithmic families, and native <code>ggplot2</code> <span class="citation">(Wickham 2016)</span> visualisation through
 <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and a set of composable geoms. Where a method
 quantifies its uncertainty (the simultaneous confidence intervals of
@@ -449,7 +451,7 @@ labelled as user-supplied wherever it appears. See
 engine, what it can detect, and whether the engine is installed:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_methods.html">cpt_methods</a></span><span class="op">(</span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 55 × 29</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 56 × 29</span></span></span>
 <span><span class="co">#&gt;    method   change_in        engine status installed target_release multivariate</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>            <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>          <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> pelt     mean, var, mean… chang… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
@@ -462,7 +464,7 @@ engine, what it can detect, and whether the engine is installed:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> wbs      mean             wbs    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> wbs2     mean             break… avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> not      mean, var, mean… not    avail… TRUE      <span style="color: #BB0000;">NA</span>             FALSE       </span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 45 more rows</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 46 more rows</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># ℹ 22 more variables: univariate &lt;lgl&gt;, online &lt;lgl&gt;, ci &lt;lgl&gt;, fitted &lt;lgl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   posterior &lt;lgl&gt;, statistic &lt;lgl&gt;, path &lt;lgl&gt;, scale_space &lt;lgl&gt;,</span></span></span>
 <span><span class="co">#&gt; <span style="color: #949494;">#   families &lt;chr&gt;, choices &lt;chr&gt;, formula &lt;lgl&gt;, min_segment &lt;chr&gt;,</span></span></span>
@@ -1013,7 +1015,7 @@ contributes a <em>surface</em>. The value of a common contract compounds
 with the number of methods behind it: the same <code><a href="https://generics.r-lib.org/reference/tidy.html" class="external-link">tidy()</a></code>
 pipeline, the same plot, and the same evaluation code now span
 penalised, multiscale, nonparametric, Bayesian, high-dimensional, and
-regression-based detection: 50 methods in this release. Five more, whose
+regression-based detection: 51 methods in this release. Five more, whose
 engines are not currently on CRAN (graph-constrained gfpop <span class="citation">(Hocking et al. 2020)</span>, robust segmentation under
 outliers <span class="citation">(Fearnhead and Rigaill 2019)</span>,
 FOCuS, sparsified binary segmentation, and random-forest classification

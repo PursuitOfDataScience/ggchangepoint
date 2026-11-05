@@ -178,7 +178,7 @@ glance(cpt_delay(rep_e, truth = 200))
 #> 1         1          1          1            1              1   300   400
 ```
 
-## 4. The three methods
+## 4. The five methods
 
 ### `edetector`: the default, governed by `alpha`
 
@@ -287,6 +287,44 @@ a warning rather than an unchanged answer. The rough translation is
 $`\mathrm{ARL}_0 \approx
 1/\alpha`$, so `alpha = 0.002` and `arl0 = 500` ask for comparable
 strictness.
+
+### `cusum` and `ewma`: control charts, governed by `arl0`
+
+A CUSUM (Page 1954) and an EWMA are the two charts statistical process
+control runs, and they are sequential changepoint detectors under
+another name. Both standardise the stream by the baseline, and their
+limits are solved for the in-control average run length `arl0`:
+
+``` r
+
+set.seed(11)
+chart <- cpt_monitor("cusum", baseline = rnorm(300), arl0 = 500)
+chart <- cpt_update(chart, c(rnorm(150), rnorm(100, 1)))
+chart
+#> ggcpt_monitor (cusum, native implementation)
+#>   Chart: k = 0.5, h = 5.071 (in-control ARL 500)
+#>   Baseline observations: 300
+#>   Monitored observations: 250
+#>   Alarms: 2
+#>   Restart after alarm: TRUE (re-learning 20 observations)
+#> 
+#> # A tibble: 2 × 3
+#>    time statistic threshold
+#>   <int>     <dbl>     <dbl>
+#> 1    94      5.07      5.07
+#> 2   182      6.36      5.07
+```
+
+``` r
+
+autoplot(chart, plot_type = "control_chart")
+```
+
+![CUSUM control chart with its upper and lower sums against the decision
+interval](monitoring_files/figure-html/cusum-chart-1.png)
+
+`k` tunes the CUSUM to a shift of `2 * k` standard deviations, `lambda`
+the EWMA’s memory, and `limit` sets the limit directly.
 
 ### `ocd`: multivariate only
 

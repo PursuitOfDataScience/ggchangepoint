@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -721,7 +723,7 @@ The design of <strong>ggchangepoint</strong>’s toolkit follows three
 principles. First, <em>a common representation makes comparison
 trivial</em>: because every engine returns the same <code>ggcpt</code>
 contract in the same location convention, <code><a href="../reference/ggcpt_compare.html">ggcpt_compare()</a></code>
-and the metrics module work for all 50 wired methods without special
+and the metrics module work for all 51 wired methods without special
 cases. Second, <em>metrics must agree with their pictures</em>:
 <code><a href="../reference/ggcpt_eval.html">ggcpt_eval()</a></code> and <code><a href="../reference/cpt_metrics.html">cpt_metrics()</a></code> share one
 matching routine, so a plotted true positive is a counted true positive.
@@ -732,7 +734,7 @@ trusted, and all three render directly with <strong>ggplot2</strong>
 <span class="citation">(Wickham 2016)</span>.</p>
 <p>One warning belongs next to all of this. Running several methods and
 reporting the one that found a change, as if it were the only one run,
-is a garden of forking paths, and fifty methods behind one call make it
+is a garden of forking paths, and 51 methods behind one call make it
 easier here than anywhere else. A method chosen for its answer carries
 no valid p-value, and neither does a test at its changepoints: choose
 the method before looking at the series (<code><a href="../reference/cpt_recommend.html">cpt_recommend()</a></code>

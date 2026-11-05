@@ -65,6 +65,7 @@ A tibble with `time` (when forecasting by horizon), `.pred`, and
 ## See also
 
 Other segment models:
+[`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md),
 [`cpt_segment_models()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_segment_models.md)
 
 ## Examples

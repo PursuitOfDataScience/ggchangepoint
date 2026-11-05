@@ -10,7 +10,7 @@ result class, `ggcpt`, with `broom`-style methods
 [`augment()`](https://generics.r-lib.org/reference/augment.html))
 (Robinson 2017), a central dispatcher
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-covering 50 detection methods across six algorithmic families, and
+covering 51 detection methods across six algorithmic families, and
 native `ggplot2` (Wickham 2016) visualisation through
 [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
 and a set of composable geoms. Where a method quantifies its uncertainty
@@ -327,7 +327,7 @@ and whether the engine is installed:
 ``` r
 
 cpt_methods()
-#> # A tibble: 55 × 29
+#> # A tibble: 56 × 29
 #>    method   change_in        engine status installed target_release multivariate
 #>    <chr>    <chr>            <chr>  <chr>  <lgl>     <chr>          <lgl>       
 #>  1 pelt     mean, var, mean… chang… avail… TRUE      NA             FALSE       
@@ -340,7 +340,7 @@ cpt_methods()
 #>  8 wbs      mean             wbs    avail… TRUE      NA             FALSE       
 #>  9 wbs2     mean             break… avail… TRUE      NA             FALSE       
 #> 10 not      mean, var, mean… not    avail… TRUE      NA             FALSE       
-#> # ℹ 45 more rows
+#> # ℹ 46 more rows
 #> # ℹ 22 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
 #> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>,
 #> #   families <chr>, choices <chr>, formula <lgl>, min_segment <chr>,
@@ -985,7 +985,7 @@ the number of methods behind it: the same
 [`tidy()`](https://generics.r-lib.org/reference/tidy.html) pipeline, the
 same plot, and the same evaluation code now span penalised, multiscale,
 nonparametric, Bayesian, high-dimensional, and regression-based
-detection: 50 methods in this release. Five more, whose engines are not
+detection: 51 methods in this release. Five more, whose engines are not
 currently on CRAN (graph-constrained gfpop (Hocking et al. 2020), robust
 segmentation under outliers (Fearnhead and Rigaill 2019), FOCuS,
 sparsified binary segmentation, and random-forest classification

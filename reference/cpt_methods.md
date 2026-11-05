@@ -91,11 +91,11 @@ A tibble with columns:
   it reports roughly \\n / \mathrm{arl0}\\ changepoints by construction.
   It does **not** mean the method can be passed to
   [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md),
-  which takes its own three: `"edetector"`, `"cpm"` and `"ocd"`. The two
-  sets overlap without coinciding: `bocpd` is an online algorithm this
-  table marks but the monitor does not offer, and `edetector` is native
-  to this package rather than a wrapped engine, so it has no row here at
-  all.
+  which takes its own five: `"edetector"`, `"cpm"`, `"ocd"`, `"cusum"`
+  and `"ewma"`. The two sets overlap without coinciding: `bocpd` is an
+  online algorithm this table marks but the monitor does not offer, and
+  `edetector`, `cusum` and `ewma` are native to this package rather than
+  wrapped engines, so they have no row here at all.
 
 - families, choices, formula, min_segment, na_handling,
   cp_convention_upstream:
@@ -147,7 +147,7 @@ to add your own.
 
 ``` r
 cpt_methods()
-#> # A tibble: 55 × 29
+#> # A tibble: 56 × 29
 #>    method   change_in        engine status installed target_release multivariate
 #>    <chr>    <chr>            <chr>  <chr>  <lgl>     <chr>          <lgl>       
 #>  1 pelt     mean, var, mean… chang… avail… TRUE      NA             FALSE       
@@ -160,7 +160,7 @@ cpt_methods()
 #>  8 wbs      mean             wbs    avail… TRUE      NA             FALSE       
 #>  9 wbs2     mean             break… avail… TRUE      NA             FALSE       
 #> 10 not      mean, var, mean… not    avail… TRUE      NA             FALSE       
-#> # ℹ 45 more rows
+#> # ℹ 46 more rows
 #> # ℹ 22 more variables: univariate <lgl>, online <lgl>, ci <lgl>, fitted <lgl>,
 #> #   posterior <lgl>, statistic <lgl>, path <lgl>, scale_space <lgl>,
 #> #   families <chr>, choices <chr>, formula <lgl>, min_segment <chr>,

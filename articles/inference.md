@@ -40,13 +40,49 @@ fit
 
 ## 1. Where could the changepoint be?
 
-### Four provenances, one contract
+### Five provenances, one contract
 
 Only a handful of engines ship an interval of their own.
 [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
-covers the rest and, because the four routes mean genuinely different
+covers the rest and, because the five routes mean genuinely different
 things, reports which one it used in a `source` column rather than
 presenting them as interchangeable.
+
+The conformal route (Hore and Ramdas 2026) is the one `method = "auto"`
+takes for a change between exchangeable segments. Each candidate split
+of the window is tested by permuting the observations within each side
+of it, and the candidates that survive form a set that holds the true
+location with probability at least `level`, whatever the distribution of
+the noise:
+
+``` r
+
+ci <- cpt_confint(fit, method = "conformal", B = 99, seed = 1)
+ci
+#> # A tibble: 2 × 6
+#>      cp ci_lower ci_upper level source    set_size
+#>   <int>    <int>    <int> <dbl> <chr>        <int>
+#> 1   120      120      120  0.95 conformal        1
+#> 2   240      240      240  0.95 conformal        1
+```
+
+`set_size` says how many locations the set holds, and the p-value of
+every candidate is attached, so the uncertainty can be drawn as a
+profile rather than a bar:
+
+``` r
+
+ggplot(attr(ci, "profile"), aes(position, p_value)) +
+  geom_col(width = 1) +
+  geom_hline(yintercept = 0.05, linetype = "dashed") +
+  facet_wrap(~cp, scales = "free_x") +
+  labs(x = "Candidate location", y = "Conformal p-value")
+```
+
+![Conformal p-value of every candidate location around each
+changepoint](inference_files/figure-html/confint-profile-1.png)
+
+The bootstrap route remains for everything else:
 
 ``` r
 
@@ -445,6 +481,105 @@ cpt_statistic(fit)
 #> ! Engine `pelt` does not expose a per-location statistic. These do: amoc, wbs, not, mosum, bcp, beast, npmojo, nsp, pettitt, buishand, snht.
 ```
 
+## 5. Beyond the location
+
+Four questions follow a detection, and each has a function.
+
+**Which coordinates changed?** For a multivariate fit,
+[`cpt_attribute()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md)
+certifies the coordinates that changed at each changepoint, with
+family-wise error control that holds however the location was found
+(Peng et al. 2026):
+
+``` r
+
+set.seed(7)
+X <- matrix(rnorm(160 * 5), 160, 5,
+            dimnames = list(NULL, paste0("sensor", 1:5)))
+X[81:160, 2] <- X[81:160, 2] + 1.5
+X[81:160, 4] <- X[81:160, 4] * 2.5
+att <- cpt_attribute(cpt_detect(X, method = "ecp"), B = 199, seed = 1)
+glance(att)
+#> # A tibble: 1 × 7
+#>      cp n_coordinates n_changed n_location n_scale alpha control
+#>   <int>         <int>     <int>      <int>   <int> <dbl> <chr>  
+#> 1    81             5         2          1       1  0.05 fwer
+att[att$changed, c("cp", "coordinate", "type", "p_adjusted")]
+#> # A tibble: 2 × 4
+#>      cp coordinate type     p_adjusted
+#>   <int> <chr>      <chr>         <dbl>
+#> 1    81 sensor2    location      0.005
+#> 2    81 sensor4    scale         0.005
+```
+
+**What would have happened without it?**
+[`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md)
+carries the segment before each change forward with its own model:
+
+``` r
+
+cf <- cpt_counterfactual(fit)
+glance(cf)
+#> # A tibble: 2 × 5
+#>      cp     n mean_effect cumulative_effect share_outside
+#>   <int> <int>       <dbl>             <dbl>         <dbl>
+#> 1   120   120        3.25              390.         0.925
+#> 2   240   120       -2.60             -312.         0.783
+autoplot(cf)
+```
+
+![Series with the pre-change level carried forward as a dashed
+counterfactual](inference_files/figure-html/counterfactual-1.png)
+
+**Was the change abrupt?** A step and a ramp, compared at each
+changepoint:
+
+``` r
+
+cpt_abruptness(fit)
+#> ggcpt_abruptness (a step against a ramp at each changepoint)
+#>   Changepoint 120:    abrupt, transition width 0 (0 to 1)
+#>   Changepoint 240:    abrupt, transition width 0 (0 to 3)
+#> 
+#> # A tibble: 2 × 10
+#>      cp window_start window_end width width_lower width_upper centre statistic
+#>   <int>        <int>      <int> <dbl>       <dbl>       <dbl>  <dbl>     <dbl>
+#> 1   120            1        240     0           0           1    120         0
+#> 2   240          121        360     0           0           3    240         0
+#> # ℹ 2 more variables: p_value <dbl>, verdict <chr>
+```
+
+**How sure is the number of changes?**
+[`cpt_k_weights()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md)
+turns the criterion curve into weights over K:
+
+``` r
+
+cpt_k_weights(cpt_select(x, criterion = "bic", k_max = 6))
+#> ggcpt_k_weights (weights over the number of changepoints, from bic)
+#>   Chosen:             K = 2, weight 0.868
+#>   Largest weights:    K = 2: 0.868; K = 3: 0.125; K = 4: 0.007
+#>   95% of the weight:  K in {2, 3}
+#> 
+#> # A tibble: 7 × 5
+#>       k   value  delta   weight chosen
+#>   <int>   <dbl>  <dbl>    <dbl> <lgl> 
+#> 1     0 387.    392.   7.96e-86 FALSE 
+#> 2     1 274.    278.   3.06e-61 FALSE 
+#> 3     2  -4.14    0    8.68e- 1 TRUE  
+#> 4     3  -0.254   3.88 1.25e- 1 FALSE 
+#> 5     4   5.46    9.60 7.14e- 3 FALSE 
+#> 6     5  10.7    14.8  5.24e- 4 FALSE 
+#> 7     6  18.0    22.1  1.35e- 5 FALSE
+```
+
+For many series at once,
+[`cpt_screen()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md)
+tests each one and controls the false discovery rate across the panel,
+and
+[`cpt_confint_coverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint_coverage.md)
+measures how often each interval route covers on data like yours.
+
 ## Putting it together
 
 ``` r
@@ -459,7 +594,7 @@ cat(head(cpt_report(fit, session = FALSE), 20), sep = "\n")
     #> - Penalty: MBIC
     #> - Series length: 360
     #> - Changepoints found: 2
-    #> - Detection runtime: 0.042 s
+    #> - Detection runtime: 0.028 s
     #> 
     #> ## Changepoints
     #> 
@@ -479,6 +614,13 @@ Fryzlewicz, Piotr. 2024. “Narrowest Significance Pursuit: Inference for
 Multiple Change-Points in Linear Models.” *Journal of the American
 Statistical Association* 119 (546): 1633–46.
 <https://doi.org/10.1080/01621459.2023.2211733>.
+
+Hore, Rohan, and Aaditya Ramdas. 2026. “Conformal Changepoint
+Localization.” *arXiv Preprint arXiv:2602.06267*.
+
+Peng, Chenchen, Mixia Wu, Qijing Yan, Da Chen, and Zhiqi Shen. 2026.
+“ARM: Detector-Agnostic Changepoint Attribution with Finite-Sample Error
+Control.” *arXiv Preprint arXiv:2608.01691*.
 
 Wilms, Ines, Rebecca Killick, and David S Matteson. 2022. “Graphical
 Influence Diagnostics for Changepoint Models.” *Journal of Computational

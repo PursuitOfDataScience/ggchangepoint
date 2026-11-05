@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -122,14 +124,40 @@ and why the answer is harder than it looks.</li>
 <h2 id="where-could-the-changepoint-be">1. Where could the changepoint be?<a class="anchor" aria-label="anchor" href="#where-could-the-changepoint-be"></a>
 </h2>
 <div class="section level3">
-<h3 id="four-provenances-one-contract">Four provenances, one contract<a class="anchor" aria-label="anchor" href="#four-provenances-one-contract"></a>
+<h3 id="five-provenances-one-contract">Five provenances, one contract<a class="anchor" aria-label="anchor" href="#five-provenances-one-contract"></a>
 </h3>
 <p>Only a handful of engines ship an interval of their own.
-<code><a href="../reference/cpt_confint.html">cpt_confint()</a></code> covers the rest and, because the four routes
+<code><a href="../reference/cpt_confint.html">cpt_confint()</a></code> covers the rest and, because the five routes
 mean genuinely different things, reports which one it used in a
 <code>source</code> column rather than presenting them as
 interchangeable.</p>
+<p>The conformal route <span class="citation">(Hore and Ramdas
+2026)</span> is the one <code>method = "auto"</code> takes for a change
+between exchangeable segments. Each candidate split of the window is
+tested by permuting the observations within each side of it, and the
+candidates that survive form a set that holds the true location with
+probability at least <code>level</code>, whatever the distribution of
+the noise:</p>
 <div class="sourceCode" id="cb2"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">ci</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_confint.html">cpt_confint</a></span><span class="op">(</span><span class="va">fit</span>, method <span class="op">=</span> <span class="st">"conformal"</span>, B <span class="op">=</span> <span class="fl">99</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="va">ci</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
+<span><span class="co">#&gt;      cp ci_lower ci_upper level source    set_size</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   120      120      120  0.95 conformal        1</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   240      240      240  0.95 conformal        1</span></span></code></pre></div>
+<p><code>set_size</code> says how many locations the set holds, and the
+p-value of every candidate is attached, so the uncertainty can be drawn
+as a profile rather than a bar:</p>
+<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/ggplot.html" class="external-link">ggplot</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/attr.html" class="external-link">attr</a></span><span class="op">(</span><span class="va">ci</span>, <span class="st">"profile"</span><span class="op">)</span>, <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/aes.html" class="external-link">aes</a></span><span class="op">(</span><span class="va">position</span>, <span class="va">p_value</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_bar.html" class="external-link">geom_col</a></span><span class="op">(</span>width <span class="op">=</span> <span class="fl">1</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/geom_abline.html" class="external-link">geom_hline</a></span><span class="op">(</span>yintercept <span class="op">=</span> <span class="fl">0.05</span>, linetype <span class="op">=</span> <span class="st">"dashed"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/facet_wrap.html" class="external-link">facet_wrap</a></span><span class="op">(</span><span class="op">~</span><span class="va">cp</span>, scales <span class="op">=</span> <span class="st">"free_x"</span><span class="op">)</span> <span class="op">+</span></span>
+<span>  <span class="fu"><a href="https://ggplot2.tidyverse.org/reference/labs.html" class="external-link">labs</a></span><span class="op">(</span>x <span class="op">=</span> <span class="st">"Candidate location"</span>, y <span class="op">=</span> <span class="st">"Conformal p-value"</span><span class="op">)</span></span></code></pre></div>
+<p><img src="inference_files/figure-html/confint-profile-1.png" class="r-plt" alt="Conformal p-value of every candidate location around each changepoint" width="576"></p>
+<p>The bootstrap route remains for everything else:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_confint.html">cpt_confint</a></span><span class="op">(</span><span class="va">fit</span>, method <span class="op">=</span> <span class="st">"bootstrap"</span>, B <span class="op">=</span> <span class="fl">100</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
 <span><span class="co">#&gt;      cp ci_lower ci_upper level source    n_replicates</span></span>
@@ -143,7 +171,7 @@ conditional on the fitted segmentation. It is model-agnostic and
 available for every engine; it is not exact.</p>
 <p>When the engine has its own interval, <code>method = "auto"</code>
 uses it:</p>
-<div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sm</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/smuce_wrapper.html">smuce_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/cpt_confint.html">cpt_confint</a></span><span class="op">(</span><span class="va">sm</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
@@ -165,7 +193,7 @@ each of which contains at least one changepoint, with the guarantee
 holding <strong>globally</strong> across all the intervals at level
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>.
 The coverage is exact and finite-sample.</p>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_nsp</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/nsp_wrapper.html">nsp_wrapper</a></span><span class="op">(</span><span class="va">x</span>, alpha <span class="op">=</span> <span class="fl">0.1</span>, M <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/cpt_regions.html">cpt_regions</a></span><span class="op">(</span><span class="va">res_nsp</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
@@ -173,7 +201,7 @@ The coverage is exact and finite-sample.</p>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   113   122     10  4.31</span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   222   253     32  4.47</span></span></code></pre></div>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_nsp</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/nsp-plot-1.png" class="r-plt" alt="Series with shaded vertical bands marking NSP significance regions" width="576"></p>
 <p>Read the widths. A narrow band is a sharply located change; a wide
@@ -185,7 +213,7 @@ interval midpoint, is labelled <code>region_midpoint</code> in
 is the inferential object.</p>
 <p>The self-normalised and autoregressive variants keep the guarantee
 under heavy tails, heteroscedasticity and serial dependence:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">y_ar</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/numeric.html" class="external-link">as.numeric</a></span><span class="op">(</span><span class="fu">stats</span><span class="fu">::</span><span class="fu"><a href="https://rdrr.io/r/stats/arima.sim.html" class="external-link">arima.sim</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>ar <span class="op">=</span> <span class="fl">0.6</span><span class="op">)</span>, <span class="fl">300</span><span class="op">)</span><span class="op">)</span> <span class="op">+</span></span>
 <span>  <span class="fu"><a href="https://rdrr.io/r/base/rep.html" class="external-link">rep</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">0</span>, <span class="fl">3</span><span class="op">)</span>, each <span class="op">=</span> <span class="fl">150</span><span class="op">)</span></span>
 <span><span class="fu"><a href="../reference/cpt_regions.html">cpt_regions</a></span><span class="op">(</span><span class="fu"><a href="../reference/nsp_wrapper.html">nsp_wrapper</a></span><span class="op">(</span><span class="va">y_ar</span>, variant <span class="op">=</span> <span class="st">"ar"</span>, ord <span class="op">=</span> <span class="fl">1</span>, M <span class="op">=</span> <span class="fl">200</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span><span class="op">)</span></span>
@@ -209,14 +237,14 @@ reads <code>TRUE</code>; <code>strucchange</code>’s route is the Chow F
 evaluated at an estimated break date, which is conventional to report
 and still assumes the date was fixed in advance, so it reads
 <code>FALSE</code> alongside the generic fallback:</p>
-<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_test.html">cpt_test</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
 <span><span class="co">#&gt;      cp estimate statistic  p_value method                    selection_adjusted</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                     <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>             </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   120     3.25      25.6 4.24<span style="color: #949494;">e</span><span style="color: #BB0000;">-70</span> Welch two-sample t (unad… FALSE             </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   240    -<span style="color: #BB0000;">2.60</span>     -<span style="color: #BB0000;">21.7</span> 2.38<span style="color: #949494;">e</span><span style="color: #BB0000;">-58</span> Welch two-sample t (unad… FALSE</span></span></code></pre></div>
-<div class="sourceCode" id="cb8"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/warning.html" class="external-link">suppressWarnings</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_test.html">cpt_test</a></span><span class="op">(</span><span class="fu"><a href="../reference/strucchange_wrapper.html">strucchange_wrapper</a></span><span class="op">(</span><span class="va">x</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 6</span></span></span>
 <span><span class="co">#&gt;      cp estimate statistic     p_value method                 selection_adjusted</span></span>
@@ -230,7 +258,7 @@ detected changepoint to the narrowest region covering it and returns
 supports this at level
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>α</mi><annotation encoding="application/x-tex">\alpha</annotation></semantics></math>”
 is a finding, not a missing value.</p>
-<div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_confint.html">cpt_confint</a></span><span class="op">(</span><span class="va">fit</span>, method <span class="op">=</span> <span class="st">"nsp"</span>, level <span class="op">=</span> <span class="fl">0.9</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
 <span><span class="co">#&gt;      cp ci_lower ci_upper level source    </span></span>
@@ -245,7 +273,7 @@ is a finding, not a missing value.</p>
 <code><a href="../reference/cpt_select.html">cpt_select()</a></code> chooses from it, over one candidate ladder
 shared by every criterion, so “BIC says 2, cross-validation says 3” is a
 comparison of criteria and not of two different searches.</p>
-<div class="sourceCode" id="cb10"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sel</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_select.html">cpt_select</a></span><span class="op">(</span><span class="va">x</span>, criterion <span class="op">=</span> <span class="st">"mbic"</span>, k_max <span class="op">=</span> <span class="fl">8</span><span class="op">)</span></span>
 <span><span class="va">sel</span></span>
 <span><span class="co">#&gt; ggcpt_selection (criterion: mbic, method: pelt)</span></span>
@@ -273,16 +301,16 @@ which reads the segment lengths and so cannot be expressed by
 and
 <math display="inline" xmlns="http://www.w3.org/1998/Math/MathML"><semantics><mi>k</mi><annotation encoding="application/x-tex">k</annotation></semantics></math>
 alone.</p>
-<div class="sourceCode" id="cb11"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sel</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/select-criterion-1.png" class="r-plt" alt="Criterion value against the number of changepoints, with the chosen model highlighted" width="576"></p>
 <p>The ladder plot is more informative than the criterion curve, because
 it shows what each candidate actually <em>is</em>:</p>
-<div class="sourceCode" id="cb12"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">sel</span>, plot_type <span class="op">=</span> <span class="st">"ladder"</span>, max_facets <span class="op">=</span> <span class="fl">6</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/select-ladder-1.png" class="r-plt" alt="Small multiples showing how the segmentation coarsens as the number of changepoints falls" width="576"></p>
 <p>Cross-validation is the criterion with a consistency proof <span class="citation">(Zou et al. 2020)</span>:</p>
-<div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_select.html">cpt_select</a></span><span class="op">(</span><span class="va">x</span>, criterion <span class="op">=</span> <span class="st">"cv"</span>, k_max <span class="op">=</span> <span class="fl">8</span><span class="op">)</span><span class="op">$</span><span class="va">k</span></span>
 <span><span class="co">#&gt; [1] 2</span></span></code></pre></div>
 <p>A note on AIC: its
@@ -302,7 +330,7 @@ is instructive, not because it is a good default.</p>
 <p><code><a href="../reference/cpt_stability.html">cpt_stability()</a></code> answers “would I find this again?”.
 <code><a href="../reference/cpt_influence.html">cpt_influence()</a></code> asks the sharper question (which single
 observation, if perturbed, changes the segmentation), following <span class="citation">Wilms et al. (2022)</span>.</p>
-<div class="sourceCode" id="cb14"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">inf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_influence.html">cpt_influence</a></span><span class="op">(</span><span class="va">fit</span>, engine <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">has_infl</span><span class="op">)</span> <span class="st">"auto"</span> <span class="kw">else</span> <span class="st">"recompute"</span>,</span>
 <span>                     subset <span class="op">=</span> <span class="kw">if</span> <span class="op">(</span><span class="va">has_infl</span><span class="op">)</span> <span class="cn">NULL</span> <span class="kw">else</span> <span class="fu"><a href="https://rdrr.io/r/base/seq.html" class="external-link">seq</a></span><span class="op">(</span><span class="fl">1</span>, <span class="fl">360</span>, by <span class="op">=</span> <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">inf</span></span>
@@ -320,14 +348,14 @@ observation, if perturbed, changes the segmentation), following <span class="cit
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>   222          0         0      0.022<span style="text-decoration: underline;">6</span>  -<span style="color: #BB0000;">0.029</span><span style="color: #BB0000; text-decoration: underline;">2</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>    90          0         0      0.021<span style="text-decoration: underline;">2</span>  -<span style="color: #BB0000;">0.037</span><span style="color: #BB0000; text-decoration: underline;">4</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>   132          0         0      0.020<span style="text-decoration: underline;">9</span>  -<span style="color: #BB0000;">0.038</span><span style="color: #BB0000; text-decoration: underline;">8</span></span></span></code></pre></div>
-<div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/influence-overview-1.png" class="r-plt" alt="Series with each observation sized and coloured by its influence on the segmentation" width="576"></p>
-<div class="sourceCode" id="cb16"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">inf</span>, plot_type <span class="op">=</span> <span class="st">"map"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/influence-map-1.png" class="r-plt" alt="Influence map: perturbed observation on the horizontal axis, position on the vertical, segment-parameter shift as fill" width="576"></p>
 <p><code><a href="../reference/cpt_leverage.html">cpt_leverage()</a></code> ranks the observations:</p>
-<div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_leverage.html">cpt_leverage</a></span><span class="op">(</span><span class="va">inf</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 5</span></span></span>
 <span><span class="co">#&gt;   index delta_n_cp max_shift param_shift leverage</span></span>
@@ -341,7 +369,7 @@ observation, if perturbed, changes the segmentation), following <span class="cit
 <div class="section level3">
 <h3 id="which-setting">Which setting<a class="anchor" aria-label="anchor" href="#which-setting"></a>
 </h3>
-<div class="sourceCode" id="cb18"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">sens</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_sensitivity.html">cpt_sensitivity</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"pelt"</span>,</span>
 <span>                        over <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span>penalty <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">2</span>, <span class="fl">8</span>, <span class="fl">20</span>, <span class="fl">60</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">sens</span></span>
@@ -367,27 +395,27 @@ written up rather than after it is questioned.</p>
 </h3>
 <p>Every detector evaluates something at every location and then keeps
 only the argmax. Three accessors give the discarded object back.</p>
-<div class="sourceCode" id="cb19"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">res_mosum</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"mosum"</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">res_mosum</span>, type <span class="op">=</span> <span class="st">"statistic"</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/statistic-1.png" class="r-plt" alt="Two-panel display: the series above, the MOSUM statistic against its threshold below" width="576"></p>
 <p><code>autoplot(type = "statistic")</code> is a thin wrapper:
 <code><a href="../reference/cpt_statistic.html">ggcpt_statistic()</a></code> is the plotting function itself, and
 <code><a href="../reference/cpt_statistic.html">cpt_statistic()</a></code> returns the numbers behind it.</p>
-<div class="sourceCode" id="cb20"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_statistic.html">ggcpt_statistic</a></span><span class="op">(</span><span class="va">res_mosum</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/ggcpt-statistic-1.png" class="r-plt" alt="The same two-panel statistic display, drawn by ggcpt_statistic() directly" width="576"></p>
 <p>The scale-space view answers a question a single-bandwidth fit
 cannot: <em>at which resolutions does this feature exist?</em> A change
 visible only at a wide bandwidth is a slow shift; one visible only at a
 narrow bandwidth is a spike.</p>
-<div class="sourceCode" id="cb21"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_scale_space.html">ggcpt_scale_space</a></span><span class="op">(</span><span class="va">res_mosum</span>, bandwidths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span>, <span class="fl">60</span>, <span class="fl">90</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/scale-space-1.png" class="r-plt" alt="Heatmap of the MOSUM statistic by location and bandwidth, with accepted changepoints marked" width="576"></p>
 <p><code><a href="../reference/cpt_scale_space.html">cpt_scale_space()</a></code> returns the sweep as data, one row per
 (location, bandwidth) pair, so the picture can be counted rather than
 eyeballed. How many locations cross the threshold at each bandwidth:</p>
-<div class="sourceCode" id="cb22"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">ss</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_scale_space.html">cpt_scale_space</a></span><span class="op">(</span><span class="va">x</span>, bandwidths <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="fl">15</span>, <span class="fl">30</span>, <span class="fl">60</span>, <span class="fl">90</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/stats/aggregate.html" class="external-link">aggregate</a></span><span class="op">(</span><span class="va">significant</span> <span class="op">~</span> <span class="va">bandwidth</span>, data <span class="op">=</span> <span class="va">ss</span>, FUN <span class="op">=</span> <span class="va">sum</span><span class="op">)</span></span>
 <span><span class="co">#&gt;   bandwidth significant</span></span>
@@ -400,7 +428,7 @@ narrow one flags a few points, which is the resolution trade-off made
 numeric.</p>
 <p>And the solution path shows the order in which candidates entered the
 model, and how decisively each beat the next:</p>
-<div class="sourceCode" id="cb23"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_solution_path.html">ggcpt_solution_path</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"wbs"</span><span class="op">)</span>, max_steps <span class="op">=</span> <span class="fl">20</span><span class="op">)</span></span></code></pre></div>
 <p><img src="inference_files/figure-html/path-1.png" class="r-plt" alt="Solution path: each candidate changepoint against the step at which it entered, with the proposing interval drawn" width="576"></p>
 <p><code><a href="../reference/cpt_solution_path.html">cpt_solution_path()</a></code> is the same object as a tibble. The
@@ -408,7 +436,7 @@ model, and how decisively each beat the next:</p>
 the next, and <code>selected</code> marks the ones the penalty kept, so
 the gap between the last selected row and the first rejected one is how
 close the decision was:</p>
-<div class="sourceCode" id="cb24"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_solution_path.html">cpt_solution_path</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">x</span>, method <span class="op">=</span> <span class="st">"wbs"</span><span class="op">)</span><span class="op">)</span>, <span class="fl">5</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 5 × 6</span></span></span>
 <span><span class="co">#&gt;    step    cp contrast start   end selected</span></span>
@@ -420,16 +448,94 @@ close the decision was:</p>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     5    23     3.18     1   120 FALSE</span></span></code></pre></div>
 <p>An engine that exposes none of these says so, and names the ones that
 do:</p>
-<div class="sourceCode" id="cb25"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb27"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_statistic.html">cpt_statistic</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00; font-weight: bold;">Error</span><span style="font-weight: bold;">:</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> Engine `pelt` does not expose a per-location statistic. These do: amoc, wbs, not, mosum, bcp, beast, npmojo, nsp, pettitt, buishand, snht.</span></span></code></pre></div>
 </div>
 </div>
 <div class="section level2">
+<h2 id="beyond-the-location">5. Beyond the location<a class="anchor" aria-label="anchor" href="#beyond-the-location"></a>
+</h2>
+<p>Four questions follow a detection, and each has a function.</p>
+<p><strong>Which coordinates changed?</strong> For a multivariate fit,
+<code><a href="../reference/cpt_attribute.html">cpt_attribute()</a></code> certifies the coordinates that changed at
+each changepoint, with family-wise error control that holds however the
+location was found <span class="citation">(Peng et al. 2026)</span>:</p>
+<div class="sourceCode" id="cb28"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/Random.html" class="external-link">set.seed</a></span><span class="op">(</span><span class="fl">7</span><span class="op">)</span></span>
+<span><span class="va">X</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/matrix.html" class="external-link">matrix</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/stats/Normal.html" class="external-link">rnorm</a></span><span class="op">(</span><span class="fl">160</span> <span class="op">*</span> <span class="fl">5</span><span class="op">)</span>, <span class="fl">160</span>, <span class="fl">5</span>,</span>
+<span>            dimnames <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="cn">NULL</span>, <span class="fu"><a href="https://rdrr.io/r/base/paste.html" class="external-link">paste0</a></span><span class="op">(</span><span class="st">"sensor"</span>, <span class="fl">1</span><span class="op">:</span><span class="fl">5</span><span class="op">)</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="va">X</span><span class="op">[</span><span class="fl">81</span><span class="op">:</span><span class="fl">160</span>, <span class="fl">2</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">[</span><span class="fl">81</span><span class="op">:</span><span class="fl">160</span>, <span class="fl">2</span><span class="op">]</span> <span class="op">+</span> <span class="fl">1.5</span></span>
+<span><span class="va">X</span><span class="op">[</span><span class="fl">81</span><span class="op">:</span><span class="fl">160</span>, <span class="fl">4</span><span class="op">]</span> <span class="op">&lt;-</span> <span class="va">X</span><span class="op">[</span><span class="fl">81</span><span class="op">:</span><span class="fl">160</span>, <span class="fl">4</span><span class="op">]</span> <span class="op">*</span> <span class="fl">2.5</span></span>
+<span><span class="va">att</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_attribute.html">cpt_attribute</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_detect.html">cpt_detect</a></span><span class="op">(</span><span class="va">X</span>, method <span class="op">=</span> <span class="st">"ecp"</span><span class="op">)</span>, B <span class="op">=</span> <span class="fl">199</span>, seed <span class="op">=</span> <span class="fl">1</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">att</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 1 × 7</span></span></span>
+<span><span class="co">#&gt;      cp n_coordinates n_changed n_location n_scale alpha control</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    81             5         2          1       1  0.05 fwer</span></span>
+<span><span class="va">att</span><span class="op">[</span><span class="va">att</span><span class="op">$</span><span class="va">changed</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"cp"</span>, <span class="st">"coordinate"</span>, <span class="st">"type"</span>, <span class="st">"p_adjusted"</span><span class="op">)</span><span class="op">]</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 4</span></span></span>
+<span><span class="co">#&gt;      cp coordinate type     p_adjusted</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>    81 sensor2    location      0.005</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>    81 sensor4    scale         0.005</span></span></code></pre></div>
+<p><strong>What would have happened without it?</strong>
+<code><a href="../reference/cpt_counterfactual.html">cpt_counterfactual()</a></code> carries the segment before each change
+forward with its own model:</p>
+<div class="sourceCode" id="cb29"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">cf</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/cpt_counterfactual.html">cpt_counterfactual</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="fu"><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance</a></span><span class="op">(</span><span class="va">cf</span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 5</span></span></span>
+<span><span class="co">#&gt;      cp     n mean_effect cumulative_effect share_outside</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>             <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>         <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   120   120        3.25              390.         0.925</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   240   120       -<span style="color: #BB0000;">2.60</span>             -<span style="color: #BB0000;">312.</span>         0.783</span></span>
+<span><span class="fu"><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot</a></span><span class="op">(</span><span class="va">cf</span><span class="op">)</span></span></code></pre></div>
+<p><img src="inference_files/figure-html/counterfactual-1.png" class="r-plt" alt="Series with the pre-change level carried forward as a dashed counterfactual" width="576"></p>
+<p><strong>Was the change abrupt?</strong> A step and a ramp, compared
+at each changepoint:</p>
+<div class="sourceCode" id="cb30"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_abruptness.html">cpt_abruptness</a></span><span class="op">(</span><span class="va">fit</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ggcpt_abruptness (a step against a ramp at each changepoint)</span></span>
+<span><span class="co">#&gt;   Changepoint 120:    abrupt, transition width 0 (0 to 1)</span></span>
+<span><span class="co">#&gt;   Changepoint 240:    abrupt, transition width 0 (0 to 3)</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 2 × 10</span></span></span>
+<span><span class="co">#&gt;      cp window_start window_end width width_lower width_upper centre statistic</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>        <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;int&gt;</span> <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>     <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>   120            1        240     0           0           1    120         0</span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>   240          121        360     0           0           3    240         0</span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># ℹ 2 more variables: p_value &lt;dbl&gt;, verdict &lt;chr&gt;</span></span></span></code></pre></div>
+<p><strong>How sure is the number of changes?</strong>
+<code><a href="../reference/cpt_k_weights.html">cpt_k_weights()</a></code> turns the criterion curve into weights over
+K:</p>
+<div class="sourceCode" id="cb31"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="fu"><a href="../reference/cpt_k_weights.html">cpt_k_weights</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_select.html">cpt_select</a></span><span class="op">(</span><span class="va">x</span>, criterion <span class="op">=</span> <span class="st">"bic"</span>, k_max <span class="op">=</span> <span class="fl">6</span><span class="op">)</span><span class="op">)</span></span>
+<span><span class="co">#&gt; ggcpt_k_weights (weights over the number of changepoints, from bic)</span></span>
+<span><span class="co">#&gt;   Chosen:             K = 2, weight 0.868</span></span>
+<span><span class="co">#&gt;   Largest weights:    K = 2: 0.868; K = 3: 0.125; K = 4: 0.007</span></span>
+<span><span class="co">#&gt;   95% of the weight:  K in {2, 3}</span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 7 × 5</span></span></span>
+<span><span class="co">#&gt;       k   value  delta   weight chosen</span></span>
+<span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;int&gt;</span>   <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span> </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span>     0 387.    392.   7.96<span style="color: #949494;">e</span><span style="color: #BB0000;">-86</span> FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span>     1 274.    278.   3.06<span style="color: #949494;">e</span><span style="color: #BB0000;">-61</span> FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span>     2  -<span style="color: #BB0000;">4.14</span>    0    8.68<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span> TRUE  </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span>     3  -<span style="color: #BB0000;">0.254</span>   3.88 1.25<span style="color: #949494;">e</span><span style="color: #BB0000;">- 1</span> FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">5</span>     4   5.46    9.60 7.14<span style="color: #949494;">e</span><span style="color: #BB0000;">- 3</span> FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">6</span>     5  10.7    14.8  5.24<span style="color: #949494;">e</span><span style="color: #BB0000;">- 4</span> FALSE </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">7</span>     6  18.0    22.1  1.35<span style="color: #949494;">e</span><span style="color: #BB0000;">- 5</span> FALSE</span></span></code></pre></div>
+<p>For many series at once, <code><a href="../reference/cpt_screen.html">cpt_screen()</a></code> tests each one and
+controls the false discovery rate across the panel, and
+<code><a href="../reference/cpt_confint_coverage.html">cpt_confint_coverage()</a></code> measures how often each interval
+route covers on data like yours.</p>
+</div>
+<div class="section level2">
 <h2 id="putting-it-together">Putting it together<a class="anchor" aria-label="anchor" href="#putting-it-together"></a>
 </h2>
-<div class="sourceCode" id="cb26"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb32"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="https://rdrr.io/r/utils/head.html" class="external-link">head</a></span><span class="op">(</span><span class="fu"><a href="../reference/cpt_report.html">cpt_report</a></span><span class="op">(</span><span class="va">fit</span>, session <span class="op">=</span> <span class="cn">FALSE</span><span class="op">)</span>, <span class="fl">20</span><span class="op">)</span>, sep <span class="op">=</span> <span class="st">"\n"</span><span class="op">)</span></span></code></pre></div>
 <pre><code><span><span class="co">#&gt; # Changepoint analysis report</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -438,7 +544,7 @@ do:</p>
 <span><span class="co">#&gt; - Penalty: MBIC</span></span>
 <span><span class="co">#&gt; - Series length: 360</span></span>
 <span><span class="co">#&gt; - Changepoints found: 2</span></span>
-<span><span class="co">#&gt; - Detection runtime: 0.042 s</span></span>
+<span><span class="co">#&gt; - Detection runtime: 0.028 s</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ## Changepoints</span></span>
 <span><span class="co">#&gt; </span></span>
@@ -461,6 +567,16 @@ Fryzlewicz, Piotr. 2024. <span>“Narrowest Significance Pursuit:
 Inference for Multiple Change-Points in Linear Models.”</span>
 <em>Journal of the American Statistical Association</em> 119 (546):
 1633–46. <a href="https://doi.org/10.1080/01621459.2023.2211733" class="external-link">https://doi.org/10.1080/01621459.2023.2211733</a>.
+</div>
+<div id="ref-hore2026conch" class="csl-entry">
+Hore, Rohan, and Aaditya Ramdas. 2026. <span>“Conformal Changepoint
+Localization.”</span> <em>arXiv Preprint arXiv:2602.06267</em>.
+</div>
+<div id="ref-peng2026arm" class="csl-entry">
+Peng, Chenchen, Mixia Wu, Qijing Yan, Da Chen, and Zhiqi Shen. 2026.
+<span>“<span>ARM</span>: Detector-Agnostic Changepoint Attribution with
+Finite-Sample Error Control.”</span> <em>arXiv Preprint
+arXiv:2608.01691</em>.
 </div>
 <div id="ref-wilms2022influence" class="csl-entry">
 Wilms, Ines, Rebecca Killick, and David S Matteson. 2022.

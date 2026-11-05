@@ -16,7 +16,7 @@ is the right one.
 
 ``` r
 cpt_monitor(
-  method = c("edetector", "cpm", "ocd"),
+  method = c("edetector", "cpm", "ocd", "cusum", "ewma"),
   baseline = NULL,
   alpha = 0.01,
   arl0 = 500,
@@ -27,7 +27,10 @@ cpt_monitor(
   relearn = 20,
   thresh = "MC",
   mc_reps = 100,
-  ...
+  ...,
+  k = 0.5,
+  lambda = 0.2,
+  limit = NULL
 )
 
 # S3 method for class 'ggcpt_monitor'
@@ -37,7 +40,11 @@ tidy(x, ...)
 print(x, ...)
 
 # S3 method for class 'ggcpt_monitor'
-autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
+autoplot(
+  object,
+  plot_type = c("timeline", "statistic", "runlength", "control_chart"),
+  ...
+)
 ```
 
 ## Arguments
@@ -62,6 +69,18 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
       coordinates, so it refuses a single series rather than falling
       back to a univariate statistic.
 
+  `"cusum"`
+
+  :   a two-sided tabular CUSUM control chart (Page 1954) on the
+      standardised stream, with reference value `k` and its decision
+      interval calibrated to `arl0`. Implemented in this package; see
+      the section on control charts.
+
+  `"ewma"`
+
+  :   an EWMA control chart (Roberts 1959) with smoothing `lambda` and
+      limits calibrated to `arl0`. Implemented in this package.
+
 - baseline:
 
   A numeric vector (or, for `"ocd"`, a matrix with rows as time points)
@@ -77,7 +96,8 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
 
 - arl0:
 
-  Target in-control average run length for `"cpm"`. Defaults to `500`.
+  Target in-control average run length for `"cpm"`, `"cusum"` and
+  `"ewma"`. Defaults to `500`.
 
 - cpm_type:
 
@@ -130,7 +150,26 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
 
 - ...:
 
-  Additional arguments passed to the engine's constructor.
+  Additional arguments passed to the engine's constructor (`"cpm"` and
+  `"ocd"`; the three native monitors take none).
+
+- k:
+
+  CUSUM reference value, in baseline standard deviations: half the shift
+  the chart is tuned to detect fastest. Defaults to `0.5` (a
+  one-standard-deviation shift).
+
+- lambda:
+
+  EWMA smoothing weight on the newest observation, in (0, 1\]. Defaults
+  to `0.2`; smaller values detect small shifts sooner and large ones
+  later.
+
+- limit:
+
+  Optional control limit, overriding the calibration to `arl0`: the
+  CUSUM decision interval \\h\\, or the EWMA limit multiplier \\L\\,
+  both in baseline standard deviations.
 
 - x:
 
@@ -145,12 +184,15 @@ autoplot(object, plot_type = c("timeline", "statistic", "runlength"), ...)
 - plot_type:
 
   `"timeline"` (the monitored series with the alarms marked),
-  `"statistic"` (the detection statistic at each alarm, against its
-  threshold: a monitor records its statistic only when an alarm fires)
-  or `"runlength"` (the gaps between alarms, which estimate the run
-  length). For a multivariate monitor the timeline draws the first
-  coordinate: the alarms are shared, so the rules are right whichever
-  coordinate is shown, but the line is one of several.
+  `"control_chart"` (the detection statistic at every observation
+  against its limits, with the alarms flagged: for a CUSUM the upper and
+  lower sums against \\\pm h\\, for an EWMA the smoothed statistic
+  between its limits), `"statistic"` (the statistic at each alarm only,
+  against its threshold) or `"runlength"` (the gaps between alarms,
+  which estimate the run length). For a multivariate monitor the
+  timeline draws the first coordinate: the alarms are shared, so the
+  rules are right whichever coordinate is shown, but the line is one of
+  several.
 
 ## Value
 
@@ -198,6 +240,31 @@ are
   the detector's internal statistics. Engine internals: their shape
   differs by `method` and is not part of the interface.
 
+## Control charts
+
+`"cusum"` and `"ewma"` are the two charts statistical process control
+runs, and they are sequential changepoint detectors under another name.
+Each standardises the stream by the baseline's mean and standard
+deviation (Phase I; the baseline should be in control) and then monitors
+it (Phase II). The CUSUM keeps \\S_t^+ = \max(0, S\_{t-1}^+ + z_t - k)\\
+and \\S_t^- = \max(0, S\_{t-1}^- - z_t - k)\\ and alarms when either
+reaches \\h\\; the EWMA keeps \\z_t = \lambda x_t + (1 - \lambda)
+z\_{t-1}\\ and alarms when it leaves \\\pm L \sqrt{\lambda / (2 -
+\lambda)}\\. The limit is solved for `arl0` by the Markov-chain
+approximation of the run length (Brook and Evans 1972; Lucas and
+Saccucci 1990), which reproduces the published tables: a CUSUM with
+`k = 0.5` and \\h = 4\\ or 5 has in-control run lengths of 168 and 465,
+and an EWMA with `lambda = 0.1` and \\L = 2.814\\ one of 500. Measured
+through this function with a 5,000-observation baseline and
+`arl0 = 100`, the first alarm on in-control data came after 99.4
+observations on average for the CUSUM and 99.8 for the EWMA (400 runs
+each, standard errors about 5). The calibration treats the baseline's
+mean and standard deviation as exact, so a short baseline shortens the
+in-control run length: a few hundred observations is a reasonable
+minimum. Rational subgroups, run rules and capability indices are not
+modelled; for a formal quality-control programme use a dedicated package
+such as qcc. `autoplot(plot_type = "control_chart")` draws the chart.
+
 ## The e-detector, and why it is implemented rather than wrapped
 
 Shin, Ramdas and Rinaldo (2023) give a nonparametric sequential
@@ -218,9 +285,9 @@ finite-sample lower bound on the in-control average run length, with no
 asymptotics and no calibration run. A convex combination of e-detectors
 is an e-detector; a *maximum* of them is not, and taking one silently
 multiplies the false-alarm rate by roughly the number of shifts mixed
-over. Every other detector in this package wraps published, separately
-maintained code; this one does not, and is labelled as such wherever it
-appears.
+over. Apart from it and the two textbook control charts below, every
+detector in this package wraps published, separately maintained code;
+the three native monitors are labelled as such wherever they appear.
 
 ## References
 
@@ -228,6 +295,26 @@ Shin J, Ramdas A, Rinaldo A (2023). “E-detectors: a nonparametric
 framework for sequential change detection.” *The New England Journal of
 Statistics in Data Science*, **1**(2), 229–260.
 [doi:10.51387/23-NEJSDS49](https://doi.org/10.51387/23-NEJSDS49) .
+
+Page ES (1954). “Continuous inspection schemes.” *Biometrika*,
+**41**(1/2), 100–115.
+[doi:10.1093/biomet/41.1-2.100](https://doi.org/10.1093/biomet/41.1-2.100)
+.
+
+Roberts SW (1959). “Control chart tests based on geometric moving
+averages.” *Technometrics*, **1**(3), 239–250.
+[doi:10.1080/00401706.1959.10489860](https://doi.org/10.1080/00401706.1959.10489860)
+.
+
+Brook D, Evans DA (1972). “An approach to the probability distribution
+of CUSUM run length.” *Biometrika*, **59**(3), 539–549.
+[doi:10.1093/biomet/59.3.539](https://doi.org/10.1093/biomet/59.3.539) .
+
+Lucas JM, Saccucci MS (1990). “Exponentially weighted moving average
+control schemes: properties and enhancements.” *Technometrics*,
+**32**(1), 1–12.
+[doi:10.1080/00401706.1990.10484583](https://doi.org/10.1080/00401706.1990.10484583)
+.
 
 ## See also
 

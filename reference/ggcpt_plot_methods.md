@@ -64,6 +64,24 @@ plot(x, ...)
 
 # S3 method for class 'ggcpt_label_curve'
 plot(x, ...)
+
+# S3 method for class 'ggcpt_attribution'
+plot(x, ...)
+
+# S3 method for class 'ggcpt_coverage'
+plot(x, ...)
+
+# S3 method for class 'ggcpt_counterfactual'
+plot(x, ...)
+
+# S3 method for class 'ggcpt_abruptness'
+plot(x, ...)
+
+# S3 method for class 'ggcpt_screen'
+plot(x, ...)
+
+# S3 method for class 'ggcpt_k_weights'
+plot(x, ...)
 ```
 
 ## Arguments

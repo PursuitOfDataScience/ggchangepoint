@@ -2,10 +2,11 @@
 
 The calibration suite: every guarantee the documentation states that a
 simulation can check, with the realised value and its Monte Carlo
-standard error. Location intervals are scored for coverage (conditional
-on a changepoint landing within 20 positions of the truth), tests for
-their size at 5% on data with no change, and monitors for their
-in-control run length. The row for
+standard error. Location intervals and sets are scored for coverage
+(conditional on a changepoint landing within 20 positions of the truth),
+tests for their size at 5% on data with no change, monitors for their
+in-control run length, and the panel screen for its false discovery
+rate. The row for
 [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
 at a location the data chose is there to show what
 `selection_adjusted = FALSE` means: its nominal 5% is not what it
@@ -35,7 +36,10 @@ A tibble with one row per guarantee and setting:
 
 - kind:
 
-  `"coverage"`, `"size"` or `"run_length"`.
+  `"coverage"`, `"size"` (for
+  [`cpt_attribute()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md),
+  the family-wise error over the coordinates that did not change),
+  `"run_length"` or `"false_discovery_rate"`.
 
 - nominal:
 
@@ -75,22 +79,18 @@ Other measurement tables:
 
 ``` r
 cpt_calibration[, c("call", "nominal", "realised", "mcse")]
-#> # A tibble: 15 × 4
+#> # A tibble: 21 × 4
 #>    call                                                  nominal realised   mcse
 #>    <chr>                                                   <dbl>    <dbl>  <dbl>
-#>  1 "cpt_detect(x, method = \"strucchange\")"                0.95   0.953  4.7e-3
-#>  2 "cpt_detect(x, method = \"smuce\", alpha = 0.05)"        0.95   1      5  e-4
-#>  3 "cpt_confint(cpt_detect(x), method = \"bootstrap\")"     0.95   0.968  5.6e-3
-#>  4 "cpt_test_at(x, when = 51)"                              0.05   0.0395 4.4e-3
-#>  5 "cpt_test_at(x, when = 51, family = \"poisson\")"        0.05   0.038  4.3e-3
-#>  6 "cpt_test_at(x, when = 51, family = \"binomial\")"       0.05   0.0295 3.8e-3
-#>  7 "cpt_test_at(x, when = 51, family = \"exponential\")"    0.05   0.059  5.3e-3
-#>  8 "cpt_test_at(x, when = 51, family = \"l1\")"             0.05   0.0485 4.8e-3
-#>  9 "cpt_test_at(x, when = 51, window = 5)"                  0.05   0.048  4.8e-3
-#> 10 "cpt_test_null(x)"                                       0.05   0.049  4.8e-3
-#> 11 "cpt_test_null(x, method = \"pettitt\")"                 0.05   0.0315 3.9e-3
-#> 12 "cpt_test_null(x, method = \"supF\")"                    0.05   0.0495 4.9e-3
-#> 13 "cpt_test(cpt_detect(x, method = \"amoc\", penalty =…    0.05   0.546  1.1e-2
-#> 14 "cpt_monitor(\"cpm\", arl0 = 500)"                     500    548      2.7e+1
-#> 15 "cpt_monitor(\"edetector\", baseline = b, alpha = 0.…  100    186      1.1e+1
+#>  1 "cpt_detect(x, method = \"strucchange\")"                0.95   0.953  0.0047
+#>  2 "cpt_detect(x, method = \"smuce\", alpha = 0.05)"        0.95   1      0.0005
+#>  3 "cpt_confint(cpt_detect(x), method = \"bootstrap\")"     0.95   0.968  0.0056
+#>  4 "cpt_test_at(x, when = 51)"                              0.05   0.0395 0.0044
+#>  5 "cpt_test_at(x, when = 51, family = \"poisson\")"        0.05   0.038  0.0043
+#>  6 "cpt_test_at(x, when = 51, family = \"binomial\")"       0.05   0.0295 0.0038
+#>  7 "cpt_test_at(x, when = 51, family = \"exponential\")"    0.05   0.059  0.0053
+#>  8 "cpt_test_at(x, when = 51, family = \"l1\")"             0.05   0.0485 0.0048
+#>  9 "cpt_test_at(x, when = 51, window = 5)"                  0.05   0.048  0.0048
+#> 10 "cpt_test_null(x)"                                       0.05   0.049  0.0048
+#> # ℹ 11 more rows
 ```

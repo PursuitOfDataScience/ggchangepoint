@@ -52,19 +52,20 @@ Other measurement tables:
 
 ``` r
 subset(cpt_null_sizes, n == max(n))
-#> # A tibble: 12 × 5
+#> # A tibble: 13 × 5
 #>    method          n  reps  size mean_fp
 #>    <chr>       <int> <int> <dbl>   <dbl>
 #>  1 amoc       100000     6     0       0
 #>  2 binseg     100000     6     0       0
 #>  3 binsegrcpp 100000     6     0       0
-#>  4 decafs     100000     6     0       0
-#>  5 fastcpd    100000     6     0       0
-#>  6 fpop       100000     6     0       0
-#>  7 mosum      100000     6     0       0
-#>  8 not        100000     6     0       0
-#>  9 pelt       100000     6     0       0
-#> 10 segmented  100000     6     1       1
-#> 11 tguh       100000     6     0       0
-#> 12 wbs        100000     6     0       0
+#>  4 capa       100000     6     0       0
+#>  5 decafs     100000     6     0       0
+#>  6 fastcpd    100000     6     0       0
+#>  7 fpop       100000     6     0       0
+#>  8 mosum      100000     6     0       0
+#>  9 not        100000     6     0       0
+#> 10 pelt       100000     6     0       0
+#> 11 segmented  100000     6     1       1
+#> 12 tguh       100000     6     0       0
+#> 13 wbs        100000     6     0       0
 ```

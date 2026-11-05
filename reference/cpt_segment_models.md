@@ -81,6 +81,7 @@ to forecast from a segment,
 for the coefficients the detection itself implies.
 
 Other segment models:
+[`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md),
 [`predict.ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/predict.ggcpt.md)
 
 ## Examples

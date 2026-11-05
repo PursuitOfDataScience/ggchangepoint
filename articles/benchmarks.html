@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -81,7 +83,7 @@ Yu<br><span style="font-size:85%;">University of Chicago</span>
 
     
     
-<p>Fifty methods share one interface in this package, which makes it
+<p>All 51 methods share one interface in this package, which makes it
 easy to swap one for another and easy to forget that they do not cost
 the same thing. This article answers three questions a reader choosing a
 method has, from the measurements that ship with the package:</p>
@@ -180,293 +182,300 @@ one finished in under ten seconds.</p>
 <td align="left">1.56</td>
 </tr>
 <tr class="odd">
+<td align="left">capa</td>
+<td align="left">0.14</td>
+<td align="left">0.15</td>
+<td align="left">0.36</td>
+<td align="left">3.22</td>
+</tr>
+<tr class="even">
 <td align="left">fastcpd</td>
 <td align="left">0.01</td>
 <td align="left">0.06</td>
 <td align="left">0.44</td>
 <td align="left">4.01</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">decafs</td>
 <td align="left">0.09</td>
 <td align="left">0.15</td>
 <td align="left">0.63</td>
 <td align="left">7.04</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">esac</td>
 <td align="left">0.01</td>
 <td align="left">0.08</td>
 <td align="left">1.28</td>
 <td align="left">12.71</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">segmented</td>
 <td align="left">0.09</td>
 <td align="left">0.21</td>
 <td align="left">2.29</td>
 <td align="left">13.95</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">not</td>
 <td align="left">0.09</td>
 <td align="left">0.24</td>
 <td align="left">1.83</td>
 <td align="left">17.30</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">geomcp</td>
 <td align="left">0.11</td>
 <td align="left">0.23</td>
 <td align="left">1.82</td>
 <td align="left">18.36</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wbs</td>
 <td align="left">0.06</td>
 <td align="left">0.30</td>
 <td align="left">2.55</td>
 <td align="left">25.84</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">tguh</td>
 <td align="left">0.20</td>
 <td align="left">0.47</td>
 <td align="left">3.43</td>
 <td align="left">33.95</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">idetect</td>
 <td align="left">0.02</td>
 <td align="left">0.32</td>
 <td align="left">5.42</td>
 <td align="left">60.98</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">bcp</td>
 <td align="left">0.64</td>
 <td align="left">5.30</td>
 <td align="left">40.27</td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">beast</td>
 <td align="left">0.17</td>
 <td align="left">1.00</td>
 <td align="left">15.35</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">bfast</td>
 <td align="left">0.96</td>
 <td align="left">56.48</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">binseg</td>
 <td align="left">0.01</td>
 <td align="left">0.01</td>
 <td align="left">0.07</td>
 <td align="left">error</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">bocpd</td>
 <td align="left">4.53</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">buishand</td>
 <td align="left">19.91</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">cpm</td>
 <td align="left">0.01</td>
 <td align="left">0.13</td>
 <td align="left">11.76</td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">cpop</td>
 <td align="left">3.74</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ecp</td>
 <td align="left">20.43</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">envcpt</td>
 <td align="left">1.08</td>
 <td align="left">41.00</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">fcov</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">fmean</td>
 <td align="left">31.58</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hdcov</td>
 <td align="left">13.38</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">hdreg</td>
 <td align="left">error</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hsmuce</td>
 <td align="left">0.05</td>
 <td align="left">0.11</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">inspect</td>
 <td align="left">0.14</td>
 <td align="left">0.54</td>
 <td align="left">error</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">kcp</td>
 <td align="left">58.37</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">kwc</td>
 <td align="left">0.16</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">network</td>
 <td align="left">73.22</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">np</td>
 <td align="left">0.04</td>
 <td align="left">1.90</td>
 <td align="left">106.07</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">npmojo</td>
 <td align="left">2.07</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">nsp</td>
 <td align="left">8.00</td>
 <td align="left">108.72</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ocd</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">pettitt</td>
 <td align="left">0.04</td>
 <td align="left">0.45</td>
 <td align="left">35.63</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">segneigh</td>
 <td align="left">0.16</td>
 <td align="left">10.95</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">smuce</td>
 <td align="left">0.90</td>
 <td align="left">0.10</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">sn</td>
 <td align="left">2.19</td>
 <td align="left">96.05</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">snht</td>
 <td align="left">33.73</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">strucchange</td>
 <td align="left">3.18</td>
 <td align="left">timeout</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">taylor</td>
 <td align="left">13.42</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">var</td>
 <td align="left">38.27</td>
 <td align="left"></td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wbs2</td>
 <td align="left">1.10</td>
 <td align="left">12.22</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wbsts</td>
 <td align="left">0.27</td>
 <td align="left">6.50</td>
@@ -475,7 +484,7 @@ one finished in under ten seconds.</p>
 </tr>
 </tbody>
 </table>
-<p>15 methods fit a million points inside the cap. The pruned
+<p>16 methods fit a million points inside the cap. The pruned
 optimal-partitioning family and the single-change test are fast enough
 that length is not a consideration; the random-interval searches cost
 more because they fit many sub-intervals by construction, which is also
@@ -566,156 +575,162 @@ changepoint reported is a false alarm.</p>
 <td align="left"></td>
 </tr>
 <tr class="odd">
+<td align="left">capa</td>
+<td align="left">0.08 (50)</td>
+<td align="left">0.20 (10)</td>
+<td align="left">0.00 (6)</td>
+</tr>
+<tr class="even">
 <td align="left">cpm</td>
 <td align="left">0.34 (50)</td>
 <td align="left">0.40 (10)</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">cpop</td>
 <td align="left">0.00 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">decafs</td>
 <td align="left">0.00 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left">0.00 (6)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">ecp</td>
 <td align="left">0.16 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">envcpt</td>
 <td align="left">0.00 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">fastcpd</td>
 <td align="left">0.00 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left">0.00 (6)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">fpop</td>
 <td align="left">0.00 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left">0.00 (6)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">hsmuce</td>
 <td align="left">0.28 (50)</td>
 <td align="left">0.40 (10)</td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">idetect</td>
 <td align="left">0.06 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">mosum</td>
 <td align="left">0.04 (50)</td>
 <td align="left">0.20 (10)</td>
 <td align="left">0.00 (6)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">not</td>
 <td align="left">0.04 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left">0.00 (6)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">np</td>
 <td align="left">1.94 (50)</td>
 <td align="left">5.10 (10)</td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">nsp</td>
 <td align="left">0.02 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">pelt</td>
 <td align="left">0.00 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left">0.00 (6)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">pettitt</td>
 <td align="left">0.06 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">segmented</td>
 <td align="left">1.00 (50)</td>
 <td align="left">1.00 (10)</td>
 <td align="left">1.00 (6)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">segneigh</td>
 <td align="left">0.02 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">smuce</td>
 <td align="left">0.28 (50)</td>
 <td align="left">0.40 (10)</td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">sn</td>
 <td align="left">0.06 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">snht</td>
 <td align="left">0.04 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">strucchange</td>
 <td align="left">0.00 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">taylor</td>
 <td align="left">0.32 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">tguh</td>
 <td align="left">0.00 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left">0.00 (6)</td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wbs</td>
 <td align="left">0.04 (50)</td>
 <td align="left">0.00 (10)</td>
 <td align="left">0.00 (6)</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td align="left">wbs2</td>
 <td align="left">0.58 (50)</td>
 <td align="left"></td>
 <td align="left"></td>
 </tr>
-<tr class="even">
+<tr class="odd">
 <td align="left">wbsts</td>
 <td align="left">0.02 (50)</td>
 <td align="left">0.10 (10)</td>
@@ -762,12 +777,13 @@ of <code><a href="../reference/cpt_confint.html">cpt_confint()</a></code>:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">cpt_calibration</span>, <span class="va">kind</span> <span class="op">==</span> <span class="st">"coverage"</span><span class="op">)</span><span class="op">[</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"call"</span>, <span class="st">"nominal"</span>,</span>
 <span>                                                 <span class="st">"realised"</span>, <span class="st">"mcse"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 3 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 4 × 4</span></span></span>
 <span><span class="co">#&gt;   call                                                 nominal realised   mcse</span></span>
 <span><span class="co">#&gt;   <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>                                                  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>    <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span>  <span style="color: #949494; font-style: italic;">&lt;dbl&gt;</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">1</span> <span style="color: #949494;">"</span>cpt_detect(x, method = \"strucchange\")<span style="color: #949494;">"</span>               0.95    0.953 0.004<span style="text-decoration: underline;">7</span></span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;">2</span> <span style="color: #949494;">"</span>cpt_detect(x, method = \"smuce\", alpha = 0.05)<span style="color: #949494;">"</span>       0.95    1     0.000<span style="text-decoration: underline;">5</span></span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> <span style="color: #949494;">"</span>cpt_confint(cpt_detect(x), method = \"bootstrap\")<span style="color: #949494;">"</span>    0.95    0.968 0.005<span style="text-decoration: underline;">6</span></span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">3</span> <span style="color: #949494;">"</span>cpt_confint(cpt_detect(x), method = \"bootstrap\")<span style="color: #949494;">"</span>    0.95    0.968 0.005<span style="text-decoration: underline;">6</span></span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">4</span> <span style="color: #949494;">"</span>cpt_confint(cpt_detect(x), method = \"conformal\")<span style="color: #949494;">"</span>    0.95    0.97  0.005<span style="text-decoration: underline;">4</span></span></span></code></pre></div>
 <p>Two provenances are not in it yet. <strong>NSP’s regions</strong>
 hold a <em>global</em> guarantee across all intervals and survive
 selection, so they are conservative by design. <strong>Posterior

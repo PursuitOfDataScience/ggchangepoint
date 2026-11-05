@@ -95,14 +95,34 @@ plottable grammar.
 
 ## Inference
 
-Where could this changepoint be, and is it real?
+Where could this changepoint be, is it real, and which coordinates
+changed?
 
 - [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
   : Confidence intervals for changepoint locations
+- [`cpt_confint_coverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint_coverage.md)
+  [`print(`*`<ggcpt_coverage>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint_coverage.md)
+  [`tidy(`*`<ggcpt_coverage>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint_coverage.md)
+  [`autoplot(`*`<ggcpt_coverage>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint_coverage.md)
+  : How often do the confidence intervals cover? A Monte Carlo check
 - [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md)
   : Test detected changepoints
 - [`cpt_regions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_regions.md)
   : Tidy the significance regions of a ggcpt object
+- [`cpt_attribute()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md)
+  [`print(`*`<ggcpt_attribution>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md)
+  [`tidy(`*`<ggcpt_attribution>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md)
+  [`glance(`*`<ggcpt_attribution>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md)
+  [`autoplot(`*`<ggcpt_attribution>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md)
+  : Which coordinates changed? Certified attribution for a multivariate
+  fit
+- [`cpt_screen()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md)
+  [`print(`*`<ggcpt_screen>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md)
+  [`tidy(`*`<ggcpt_screen>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md)
+  [`glance(`*`<ggcpt_screen>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md)
+  [`autoplot(`*`<ggcpt_screen>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md)
+  : Which of many series changed? Screening with error control across
+  the panel
 
 ## Effects, dates and empty answers
 
@@ -130,7 +150,8 @@ mean.
 
 ## Segment models
 
-A model per regime, and a forecast from the last one.
+A model per regime, a forecast from the last one, and what would have
+happened without each change.
 
 - [`cpt_segment_models()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_segment_models.md)
   [`tidy(`*`<ggcpt_segment_models>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_segment_models.md)
@@ -139,6 +160,13 @@ A model per regime, and a forecast from the last one.
   : Fit a model to every segment of a segmentation
 - [`predict(`*`<ggcpt>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/predict.ggcpt.md)
   : Forecast from a segment of a segmentation
+- [`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md)
+  [`print(`*`<ggcpt_counterfactual>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md)
+  [`tidy(`*`<ggcpt_counterfactual>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md)
+  [`glance(`*`<ggcpt_counterfactual>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md)
+  [`autoplot(`*`<ggcpt_counterfactual>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md)
+  : What would have happened without the change? Observed against
+  counterfactual
 
 ## Choosing the number of changepoints
 
@@ -147,6 +175,12 @@ A model per regime, and a forecast from the last one.
   [`tidy(`*`<ggcpt_selection>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
   [`autoplot(`*`<ggcpt_selection>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
   : Choose the number of changepoints
+- [`cpt_k_weights()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md)
+  [`print(`*`<ggcpt_k_weights>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md)
+  [`tidy(`*`<ggcpt_k_weights>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md)
+  [`glance(`*`<ggcpt_k_weights>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md)
+  [`autoplot(`*`<ggcpt_k_weights>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md)
+  : How sure is the number of changepoints? Weights over K
 
 ## Diagnostics
 
@@ -188,6 +222,11 @@ survive a change of noise model?
   [`print(`*`<ggcpt_gof>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
   [`tidy(`*`<ggcpt_gof>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
   : Goodness of fit, segment by segment
+- [`cpt_abruptness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_abruptness.md)
+  [`print(`*`<ggcpt_abruptness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_abruptness.md)
+  [`tidy(`*`<ggcpt_abruptness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_abruptness.md)
+  [`autoplot(`*`<ggcpt_abruptness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_abruptness.md)
+  : Was the change abrupt? A step against a ramp, at every changepoint
 - [`cpt_robustness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
   [`print(`*`<ggcpt_robustness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
   [`tidy(`*`<ggcpt_robustness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_robustness.md)
@@ -377,6 +416,13 @@ and a learned penalty.
 - [`binsegrcpp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/binsegrcpp_wrapper.md)
   : Fast binary segmentation across loss functions
 
+## Epidemic changes and anomalies
+
+Stretches that leave a baseline and return to it, and single outliers.
+
+- [`capa_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/capa_wrapper.md)
+  : CAPA wrapper: collective and point anomalies (epidemic changepoints)
+
 ## Bayesian formula models
 
 - [`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
@@ -417,6 +463,12 @@ and a learned penalty.
   [`plot(`*`<ggcpt_recommendation>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
   [`plot(`*`<ggcpt_events>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
   [`plot(`*`<ggcpt_label_curve>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_attribution>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_coverage>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_counterfactual>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_abruptness>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_screen>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
+  [`plot(`*`<ggcpt_k_weights>`*`)`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_plot_methods.md)
   : Base plot() methods for ggchangepoint result objects
 
 ## Theming, palettes and accessibility

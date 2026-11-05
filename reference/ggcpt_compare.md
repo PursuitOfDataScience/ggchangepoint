@@ -86,7 +86,7 @@ and read [`tidy()`](https://generics.r-lib.org/reference/tidy.html)'s
 
 Running several methods and reporting the one that found a change, as if
 it were the only one run, is a garden of forking paths with a plot
-attached, and fifty methods behind one call make it easier here than
+attached, and 51 methods behind one call make it easier here than
 anywhere else. A method chosen because of its answer carries no valid
 p-value, and neither does any test at its changepoints: the selection
 across methods is a second selection on top of the one each method

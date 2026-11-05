@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -81,9 +83,9 @@ Yu<br><span style="font-size:85%;">University of Chicago</span>
 
     
     
-<p>“Which of these fifty do I want?” is the first question every new
-user has. This page answers it three ways: a tree to walk, a cheatsheet
-to scan, and <code><a href="../reference/cpt_recommend.html">cpt_recommend()</a></code>, which answers from the same
+<p>“Which of these 51 do I want?” is the first question every new user
+has. This page answers it three ways: a tree to walk, a cheatsheet to
+scan, and <code><a href="../reference/cpt_recommend.html">cpt_recommend()</a></code>, which answers from the same
 measurements in code. Every list below is computed from
 <code><a href="../reference/cpt_methods.html">cpt_methods()</a></code> when the page is built, so it cannot drift
 from the registry.</p>
@@ -93,7 +95,7 @@ from the registry.</p>
 <p>Pick the method from what you know about the problem, before you see
 what each method says about your series. A method chosen because it
 found a change carries no valid p-value, and that selection is the
-easiest mistake to make with fifty methods behind one call.</p>
+easiest mistake to make with 51 methods behind one call.</p>
 </div>
 <div class="section level2">
 <h2 id="the-tree">The tree<a class="anchor" aria-label="anchor" href="#the-tree"></a>
@@ -122,7 +124,7 @@ easiest mistake to make with fifty methods behind one call.</p>
 <div class="section level2">
 <h2 id="a-change-in-mean">A change in mean<a class="anchor" aria-label="anchor" href="#a-change-in-mean"></a>
 </h2>
-<p>37 methods detect a change in mean. Which of them depends on three
+<p>38 methods detect a change in mean. Which of them depends on three
 things.</p>
 <p><strong>How long is the series?</strong> The univariate ones measured
 to fit a 1,000,000-point series within five minutes
@@ -131,20 +133,21 @@ to fit a 1,000,000-point series within five minutes
 <code class="sourceCode R"><span><span class="va">long</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/subset.html" class="external-link">subset</a></span><span class="op">(</span><span class="va">wired</span>, <span class="va">max_n</span> <span class="op">&gt;=</span> <span class="fl">1e6</span> <span class="op">&amp;</span> <span class="va">univariate</span> <span class="op">&amp;</span></span>
 <span>                 <span class="va">method</span> <span class="op"><a href="https://rdrr.io/r/base/match.html" class="external-link">%in%</a></span> <span class="fu">supports</span><span class="op">(</span><span class="st">"mean"</span><span class="op">)</span><span class="op">)</span></span>
 <span><span class="va">long</span><span class="op">[</span><span class="fu"><a href="https://rdrr.io/r/base/order.html" class="external-link">order</a></span><span class="op">(</span><span class="va">long</span><span class="op">$</span><span class="va">method</span><span class="op">)</span>, <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"method"</span>, <span class="st">"engine"</span>, <span class="st">"cost"</span>, <span class="st">"scale_invariant"</span><span class="op">)</span><span class="op">]</span></span>
-<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 11 × 4</span></span></span>
+<span><span class="co">#&gt; <span style="color: #949494;"># A tibble: 12 × 4</span></span></span>
 <span><span class="co">#&gt;    method     engine      cost  scale_invariant</span></span>
 <span><span class="co">#&gt;    <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>      <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span>       <span style="color: #949494; font-style: italic;">&lt;chr&gt;</span> <span style="color: #949494; font-style: italic;">&lt;lgl&gt;</span>          </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 1</span> amoc       changepoint fast  FALSE          </span></span>
 <span><span class="co">#&gt; <span style="color: #BCBCBC;"> 2</span> binsegrcpp binsegRcpp  fast  TRUE           </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> decafs     DeCAFS      fast  TRUE           </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> fastcpd    fastcpd     fast  TRUE           </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fpop       fpop        fast  FALSE          </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> idetect    IDetect     fast  TRUE           </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> mosum      mosum       fast  TRUE           </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> not        not         fast  TRUE           </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> pelt       changepoint fast  FALSE          </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> tguh       breakfast   fast  TRUE           </span></span>
-<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> wbs        wbs         fast  TRUE</span></span></code></pre></div>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 3</span> capa       anomaly     fast  TRUE           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 4</span> decafs     DeCAFS      fast  TRUE           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 5</span> fastcpd    fastcpd     fast  TRUE           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 6</span> fpop       fpop        fast  FALSE          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 7</span> idetect    IDetect     fast  TRUE           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 8</span> mosum      mosum       fast  TRUE           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;"> 9</span> not        not         fast  TRUE           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">10</span> pelt       changepoint fast  FALSE          </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">11</span> tguh       breakfast   fast  TRUE           </span></span>
+<span><span class="co">#&gt; <span style="color: #BCBCBC;">12</span> wbs        wbs         fast  TRUE</span></span></code></pre></div>
 <p><strong>Do you need to say where it could be?</strong> Methods
 returning a location interval or a significance region:
 <code>smuce</code>, <code>hsmuce</code>, <code>strucchange</code>,
@@ -325,7 +328,7 @@ numbers behind the score, and a reason:</p>
 <span><span class="co">#&gt;    measured: 0.2 of 2 changes found, 0 spurious per series</span></span>
 <span><span class="co">#&gt;    why: handles change_in = "mean"; its best setting under autocorrelated noise is family = "ar"; measured under autocorrelated noise; fast at this length</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; (31 further candidate(s); the full table is the return value.)</span></span>
+<span><span class="co">#&gt; (32 further candidate(s); the full table is the return value.)</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Cite the method you use with cpt_cite(). Cross-check the choice with</span></span>
 <span><span class="co">#&gt; cpt_robustness() and cpt_assumptions().</span></span></code></pre></div>

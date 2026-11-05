@@ -66,7 +66,7 @@ Other measurement tables:
 
 ``` r
 subset(cpt_runtimes, n == 1e5 & status == "ok")
-#> # A tibble: 21 × 5
+#> # A tibble: 22 × 5
 #>    method       n seconds     k status
 #>    <chr>    <int>   <dbl> <int> <chr> 
 #>  1 pelt    100000   0.071     4 ok    
@@ -79,5 +79,5 @@ subset(cpt_runtimes, n == 1e5 & status == "ok")
 #>  8 mosum   100000   0.107     4 ok    
 #>  9 idetect 100000   5.42      4 ok    
 #> 10 tguh    100000   3.43      4 ok    
-#> # ℹ 11 more rows
+#> # ℹ 12 more rows
 ```

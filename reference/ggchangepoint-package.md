@@ -21,13 +21,13 @@ and composable geoms
 [`stat_changepoint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/stat_changepoint.md)),
 and a unified dispatcher
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
-that reaches fifty methods.
+that reaches 51 methods.
 
 **Detection engines.**
 [`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
 dispatches to the methods in
 [`cpt_methods()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_methods.md),
-across nine families:
+across ten families:
 
 - **Penalised/optimal:** PELT, BinSeg, SegNeigh, AMOC (changepoint);
   FPOP (fpop); fast binary segmentation (binsegRcpp); the CROPS penalty
@@ -69,6 +69,9 @@ across nine families:
 - **Classical single-change tests:** Pettitt, Buishand and SNHT (trend),
   Taylor's analyzer (ChangePointTaylor).
 
+- **Epidemic changes and anomalies:** collective and point anomalies
+  against a baseline, for one series or many (anomaly's CAPA).
+
 **What surrounds the detectors.** Every detector returns a `ggcpt`
 object with a stable `tibble(cp, cp_value)` contract, optionally
 carrying a time index, engine confidence intervals, a fitted signal,
@@ -98,14 +101,25 @@ significance regions and diagnostics. Around that:
 
 - **Inference:**
   [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md)
-  (four provenances, one contract),
+  (five provenances, one contract, including distribution-free conformal
+  sets) and
+  [`cpt_confint_coverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint_coverage.md),
   [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md),
-  [`cpt_regions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_regions.md).
+  [`cpt_regions()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_regions.md),
+  [`cpt_attribute()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md)
+  (which coordinates changed),
+  [`cpt_screen()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md)
+  (which of many series changed).
+
+- **What would have happened, and how:**
+  [`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md),
+  [`cpt_abruptness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_abruptness.md).
 
 - **Choosing K:**
   [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
   (BIC, Zhang-Siegmund mBIC, AIC, CROPS elbow, cross-validation,
   stability),
+  [`cpt_k_weights()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md),
   [`cpt_crops()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_crops.md),
   [`cpt_penalty()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_penalty.md).
 
@@ -137,7 +151,8 @@ significance regions and diagnostics. Around that:
   [`cpt_load_tcpd()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_load_tcpd.md).
 
 - **Streaming:**
-  [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md),
+  [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  (e-detector, CUSUM and EWMA control charts, cpm, ocd),
   [`cpt_update()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_update.md),
   [`alarms()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/alarms.md),
   [`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md),
@@ -199,7 +214,14 @@ The entry points, by group:
 - **Inference and selection:**
   [`cpt_confint()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint.md),
   [`cpt_test()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_test.md),
-  [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md).
+  [`cpt_attribute()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md),
+  [`cpt_screen()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md),
+  [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md),
+  [`cpt_k_weights()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md).
+
+- **What if:**
+  [`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md),
+  [`cpt_abruptness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_abruptness.md).
 
 - **Choosing and combining methods:**
   [`cpt_consensus()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_consensus.md),

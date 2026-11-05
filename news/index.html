@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul></li>
 <li class="active nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -49,10 +51,62 @@
     </div>
 
     <div class="section level2">
-<h2 class="pkg-version" data-toc-text="development version" id="ggchangepoint-development-version">ggchangepoint (development version)<a class="anchor" aria-label="anchor" href="#ggchangepoint-development-version"></a></h2>
+<h2 class="pkg-version" data-toc-text="0.7.0" id="ggchangepoint-070">ggchangepoint 0.7.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-070"></a></h2>
+<p>The inferential release. A detection says where a series changed; the questions that follow are which coordinates changed, how sure the location is without a model, what the series would have done without the change, whether the change was abrupt at all, and which of many series changed. Each of those now has a function, and each function that makes a statistical promise ships with the measurement of that promise (<code>cpt_calibration</code>). <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> reaches 51 wired methods with CAPA, the first engine for changes that return to a baseline. 0.6.0 was tagged on GitHub and never released to CRAN, so this release carries its changes too (the 0.6.0 section below).</p>
+<div class="section level3">
+<h3 id="changes-to-results-0-7-0">Changes to results<a class="anchor" aria-label="anchor" href="#changes-to-results-0-7-0"></a></h3>
+<ul><li>
+<code>cpt_confint(method = "auto")</code> prefers the new conformal set to the bootstrap for a result whose engine supplies no interval of its own and whose change is one between exchangeable segments (a change in mean, variance, both, or distribution). The bootstrap stays the route for everything else and remains available by name. Measured at level 0.95 on a 200-point series (300 replicates per cell): for a jump of one noise standard deviation the conformal set covered 0.970 at a mean width of 18.6 where the bootstrap covered 0.926 at 25.8; for a jump of three, 0.960 at 0.5 against 0.973 at 2.0.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="which-coordinates-changed-0-7-0">Which coordinates changed<a class="anchor" aria-label="anchor" href="#which-coordinates-changed-0-7-0"></a></h3>
+<ul><li>New <code><a href="../reference/cpt_attribute.html">cpt_attribute()</a></code>: for each changepoint of a multivariate result, the coordinates certified to have changed, each typed <code>"location"</code> or <code>"scale"</code>. It implements ARM (attribution by rank maxima, Peng et al. 2026): every coordinate is scored by the maximum over all splits of its window of a Wilcoxon and a Mood rank statistic, so no detector, however it located the change, can make an unchanged coordinate look changed. Family-wise error by a Westfall-Young joint permutation (<code>control = "fwer"</code>), by Holm (<code>"holm"</code>), or the false discovery rate under any dependence by Benjamini-Yekutieli (<code>"fdr"</code>). With a location taken from an aggregate CUSUM, ARM’s family-wise error over ten coordinates was 0.067 at a nominal 0.1, where testing each coordinate at the detected location reached 0.18. <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> draws the coordinate-by-changepoint map with the certified cells outlined, also reachable as <code>autoplot(fit, type = "attribution")</code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="distribution-free-confidence-sets-0-7-0">Distribution-free confidence sets<a class="anchor" aria-label="anchor" href="#distribution-free-confidence-sets-0-7-0"></a></h3>
+<ul><li>
+<code>cpt_confint(method = "conformal")</code>: CONCH (Hore and Ramdas 2026), a confidence set for each changepoint’s location with finite-sample coverage that needs only exchangeable observations within each segment. Every candidate split of the window is tested by permuting within each side of it, with a likelihood-ratio score matched to what changed (mean, variance, both, or a rank score for a distribution) and summed over coordinates for a multivariate result. It re-runs no detector, so it serves registered methods and results built with <code><a href="../reference/as_ggcpt.html">as_ggcpt()</a></code>. The set need not be contiguous: <code>set_size</code> counts it, and each candidate’s p-value is attached as the <code>"profile"</code> attribute.</li>
+<li>New <code><a href="../reference/cpt_confint_coverage.html">cpt_confint_coverage()</a></code>: a Monte Carlo study of how often each route covers the true location and how wide it is, for your series length, jump and noise, with <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code>.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="epidemic-changes-and-anomalies-0-7-0">Epidemic changes and anomalies<a class="anchor" aria-label="anchor" href="#epidemic-changes-and-anomalies-0-7-0"></a></h3>
+<ul><li>New method <code>capa</code> (<code><a href="../reference/capa_wrapper.html">capa_wrapper()</a></code>, from the <code>anomaly</code> package): stretches that depart from a baseline and return to it (collective anomalies) and single outliers (point anomalies), for one series or many. The anomaly boundaries are the changepoints, so every tool works unchanged; the anomalies are in the <code>regions</code> slot, typed <code>"collective"</code> or <code>"point"</code>, with the affected coordinates of a multivariate series. <code><a href="https://rdrr.io/r/base/print.html" class="external-link">print()</a></code> lists them as anomalous windows and <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> shades the collective ones and rings the points.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="what-would-have-happened-0-7-0">What would have happened<a class="anchor" aria-label="anchor" href="#what-would-have-happened-0-7-0"></a></h3>
+<ul><li>New <code><a href="../reference/cpt_counterfactual.html">cpt_counterfactual()</a></code>: the segment before each change carried forward over the segment after it with its own model (its level, its line for a change in slope, its coefficients on the new covariates for a formula fit), with a prediction band, and the effect observation by observation: the interrupted-time-series exhibit. <code><a href="https://generics.r-lib.org/reference/glance.html" class="external-link">glance()</a></code> gives the mean and cumulative effect; <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> and <code>autoplot(fit, type = "counterfactual")</code> draw it.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="was-the-change-abrupt-0-7-0">Was the change abrupt?<a class="anchor" aria-label="anchor" href="#was-the-change-abrupt-0-7-0"></a></h3>
+<ul><li>New <code><a href="../reference/cpt_abruptness.html">cpt_abruptness()</a></code>: at every changepoint of a change in mean, a step against a linear ramp of estimated width, with an interval for the width and a verdict. On true steps the step was rejected in 1.0 to 5.2 per cent of fits at level 0.95; a ramp of 2 standard deviations over 30 observations was called gradual in 53 per cent of fits at n = 300.</li>
+<li>
+<code><a href="../reference/cpt_simulate.html">cpt_simulate()</a></code> gains <code>transition</code>, a gradual change in level over a given number of observations, so power analysis can ask how a jump detector places a change that took time.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="control-charts-0-7-0">Control charts<a class="anchor" aria-label="anchor" href="#control-charts-0-7-0"></a></h3>
+<ul><li>
+<code><a href="../reference/cpt_monitor.html">cpt_monitor()</a></code> and <code><a href="../reference/cpt_replay.html">cpt_replay()</a></code> gain <code>method = "cusum"</code> (a two-sided tabular CUSUM with reference value <code>k</code>) and <code>method = "ewma"</code> (smoothing <code>lambda</code>), with limits solved for the in-control average run length <code>arl0</code> by the Markov-chain approximation. The chain reproduces the published tables (a CUSUM with <code>k = 0.5</code> and h = 4 or 5 runs 168 and 465 in control); through the monitor, the first alarm on in-control data came after 99.4 (CUSUM) and 99.8 (EWMA) observations on average at <code>arl0 = 100</code>. <code>limit</code> sets the limit directly.</li>
+<li>Every monitor now records its statistic at every observation (<code>$trace</code>), and <code>autoplot(monitor, plot_type = "control_chart")</code> draws it against its limits with the alarms flagged.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="many-series-and-uncertainty-about-k-0-7-0">Many series, and uncertainty about K<a class="anchor" aria-label="anchor" href="#many-series-and-uncertainty-about-k-0-7-0"></a></h3>
+<ul><li>New <code><a href="../reference/cpt_screen.html">cpt_screen()</a></code>: one p-value per series for a change anywhere, adjusted across the panel (Benjamini-Hochberg by default, or Benjamini-Yekutieli, Holm or none), ordered by evidence, and optionally segmented where it flagged. Pettitt’s test is the default because its tail errs on the safe side: on panels of 100 series of 120 observations the false discovery rate was 0.030 with it and 0.065 with the CUSUM, for the same power.</li>
+<li>New <code><a href="../reference/cpt_k_weights.html">cpt_k_weights()</a></code>: the criterion curve of <code><a href="../reference/cpt_select.html">cpt_select()</a></code> as weights over the number of changepoints (Akaike weights, or BIC’s approximate posterior probabilities), the smallest set of K holding 95% of the weight, and the model-averaged probability that each location is a changepoint.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="measured-not-asserted-0-7-0">Measured, not asserted<a class="anchor" aria-label="anchor" href="#measured-not-asserted-0-7-0"></a></h3>
+<ul><li>
+<code>cpt_calibration</code> gains six rows: the conformal set’s coverage, ARM’s family-wise error, the CUSUM and EWMA run lengths, the screen’s false discovery rate, and the abruptness check’s size.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="smaller-changes-0-7-0">Smaller changes<a class="anchor" aria-label="anchor" href="#smaller-changes-0-7-0"></a></h3>
 <ul><li>
 <code><a href="../reference/mcp_wrapper.html">mcp_wrapper()</a></code> works with mcp 0.4.0, which renamed the columns of <code><a href="https://rdrr.io/r/base/summary.html" class="external-link">summary()</a></code> and <code><a href="https://rdrr.io/r/stats/fitted.values.html" class="external-link">fitted()</a></code>: the changepoints, their intervals and the fitted signal had all come back empty (<a href="https://github.com/lindeloev" class="external-link">@lindeloev</a>, <a href="https://github.com/PursuitOfDataScience/ggchangepoint/issues/16" class="external-link">#16</a>). It also passes <code>adapt</code> on as <code>warmup</code>, the name mcp 0.4.0 takes, and reads the posterior draws without tripping mcp’s new deprecation warning for <code>fit$mcmc_post</code>.</li>
+<li>
+<code><a href="https://ggplot2.tidyverse.org/reference/autoplot.html" class="external-link">autoplot()</a></code> marks point-valued regions on the series instead of drawing a band of zero width.</li>
+<li>The 0.6.0 signatures join the 0.5.0 ones in the stability test: every argument keeps its name and position.</li>
 </ul></div>
+</div>
     <div class="section level2">
 <h2 class="pkg-version" data-toc-text="0.6.0" id="ggchangepoint-060">ggchangepoint 0.6.0<a class="anchor" aria-label="anchor" href="#ggchangepoint-060"></a></h2>
 <p>The stabilisation release. It settles the contract before 1.0 freezes it (classed conditions, versioned results, a JSON schema, real <code>ggproto</code> layers, a changepoint convention verified across every engine), connects what already existed (families the engines could fit but nobody could ask for, a formula interface the regression engines had and <code><a href="../reference/cpt_detect.html">cpt_detect()</a></code> could not reach), and replaces the package’s hand-written claims about its engines with measurements that ship as data.</p>
@@ -643,7 +697,7 @@ as_ggcpt(c(50, 50), x)   -&gt;  1 changepoint at 50   (deduplicated)</code></pre
 <div class="section level4">
 <h4 id="testing-0-5-0">Testing<a class="anchor" aria-label="anchor" href="#testing-0-5-0"></a></h4>
 <ul><li>
-<strong>The tests CRAN runs now fit its time budget.</strong> The suite took 587s of win-builder’s 17-minute check of the first 0.5.0 submission, against a budget of about ten minutes for the whole check. Every test that took 0.2s or more under CRAN conditions, 201 of them, now starts with <code>skip_on_cran()</code>, and so does every test that runs <code>stepR</code>: its Monte Carlo critical values are recomputed in every check, because R.cache keeps out of the user’s cache under <code>R CMD check</code>, and once <code>tcltk</code> is loaded a fresh simulation costs 32s instead of 5s. The test step of <code>R CMD check</code> went from a median of 440s to 29s here, over six paired, interleaved runs (15.1 times faster, 95% CI 14.0 to 15.5, slowest pair 13.4). The skipped tests still run wherever <code>NOT_CRAN</code> is <code>"true"</code>: on every CI runner, on every push, and under <code>devtools::test()</code>.</li>
+<strong>The tests CRAN runs now fit its time budget.</strong> The suite took 587s of win-builder’s 17-minute check of the first 0.5.0 submission, against a budget of about ten minutes for the whole check. Every test that took 0.2s or more under CRAN conditions, 201 of them, now starts with <code>skip_on_cran()</code>, and so does every test that runs <code>stepR</code>: its Monte Carlo critical values are recomputed in every check, because R.cache keeps out of the user’s cache under <code>R CMD check</code>, and once <code>tcltk</code> is loaded a fresh simulation costs 32s instead of 5s. The test step of <code>R CMD check</code> went from a median of 440s to 29s here, over six paired, interleaved runs (15.1 times faster, 95% CI 14.0 to 15.5, slowest pair 13.4). The skipped tests still run wherever <code>NOT_CRAN</code> is <code>"true"</code>: on every CI runner, on every push, and under <code><a href="https://devtools.r-lib.org/reference/test.html" class="external-link">devtools::test()</a></code>.</li>
 <li>
 <strong>Eleven vignette chunks generated their data without seeding it</strong>, so their rendered output was a function of how much randomness every chunk above them happened to consume, and several of those chunks are conditional on an engine being installed, which means the vignette’s numbers and figures already differed between machines with different optional packages. Scoping the <code>seed</code> argument (above) changed them again. Each of the eleven now seeds itself, in <code>vignettes/ggchangepoint.Rmd</code>, <code>vignettes/monitoring.Rmd</code> and <code>vignettes/supervised.Rmd</code>, so a rebuilt vignette is a function of the vignette. No prose claim depended on the old values.</li>
 <li>

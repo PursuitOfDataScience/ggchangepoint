@@ -47,6 +47,12 @@ knitr::kable(show[, c("call", "kind", "nominal", "realised", "mcse",
 | cpt_test(cpt_detect(x, method = “amoc”, penalty = “None”)) | size | 5.0% | 54.6% | 1.1% | 1899 |
 | cpt_monitor(“cpm”, arl0 = 500) | run length | 500 | 548 | 27 | 400 |
 | cpt_monitor(“edetector”, baseline = b, alpha = 0.01) | run length | 100 | 186 | 11 | 400 |
+| cpt_confint(cpt_detect(x), method = “conformal”) | coverage | 95.0% | 97.0% | 0.5% | 1000 |
+| cpt_attribute(fit, alpha = 0.05) | size | 5.0% | 3.1% | 0.5% | 1000 |
+| cpt_monitor(“cusum”, arl0 = 500) | run length | 500 | 495 | 25 | 400 |
+| cpt_monitor(“ewma”, arl0 = 500) | run length | 500 | 531 | 28 | 400 |
+| cpt_screen(panel) | false discovery_rate | 5.0% | 2.9% | 0.2% | 400 |
+| cpt_abruptness(cpt_detect(x)) | size | 5.0% | 1.8% | 0.3% | 2000 |
 
 ## Reading it
 

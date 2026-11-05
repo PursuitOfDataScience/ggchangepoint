@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -34,6 +34,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul></li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
       </ul><ul class="navbar-nav"><li class="nav-item"><a class="external-link nav-link" href="https://github.com/PursuitOfDataScience/ggchangepoint" aria-label="GitHub repository"><span class="fa fa-github fa-lg"></span></a></li>
@@ -63,9 +65,9 @@ integration via <code><a href="https://ggplot2.tidyverse.org/reference/autoplot.
 (<code><a href="geom_changepoint.html">geom_changepoint()</a></code>, <code><a href="geom_cpt_segment.html">geom_cpt_segment()</a></code>,
 <code><a href="geom_cpt_ci.html">geom_cpt_ci()</a></code>, <code><a href="geom_cpt_region.html">geom_cpt_region()</a></code>, <code><a href="geom_cpt_label.html">geom_cpt_label()</a></code>,
 <code><a href="geom_cpt_event.html">geom_cpt_event()</a></code>, <code><a href="stat_changepoint.html">stat_changepoint()</a></code>), and a unified
-dispatcher <code><a href="cpt_detect.html">cpt_detect()</a></code> that reaches fifty methods.</p>
+dispatcher <code><a href="cpt_detect.html">cpt_detect()</a></code> that reaches 51 methods.</p>
 <p><strong>Detection engines.</strong> <code><a href="cpt_detect.html">cpt_detect()</a></code> dispatches to the methods in
-<code><a href="cpt_methods.html">cpt_methods()</a></code>, across nine families:</p><ul><li><p><strong>Penalised/optimal:</strong> PELT, BinSeg, SegNeigh, AMOC
+<code><a href="cpt_methods.html">cpt_methods()</a></code>, across ten families:</p><ul><li><p><strong>Penalised/optimal:</strong> PELT, BinSeg, SegNeigh, AMOC
     (<span class="pkg">changepoint</span>); FPOP (<span class="pkg">fpop</span>); fast binary segmentation
     (<span class="pkg">binsegRcpp</span>); the CROPS penalty path (<code><a href="cpt_crops.html">cpt_crops()</a></code>);
     fastcpd (<span class="pkg">fastcpd</span>, incl. AR/ARMA/GARCH); change-in-slope via
@@ -99,6 +101,9 @@ dispatcher <code><a href="cpt_detect.html">cpt_detect()</a></code> that reaches 
     breaks (<span class="pkg">bfast</span>).</p></li>
 <li><p><strong>Classical single-change tests:</strong> Pettitt, Buishand and
     SNHT (<span class="pkg">trend</span>), Taylor's analyzer (<span class="pkg">ChangePointTaylor</span>).</p></li>
+<li><p><strong>Epidemic changes and anomalies:</strong> collective and point
+    anomalies against a baseline, for one series or many (<span class="pkg">anomaly</span>'s
+    CAPA).</p></li>
 </ul><p><strong>What surrounds the detectors.</strong> Every detector returns a <code>ggcpt</code>
 object with a stable <code>tibble(cp, cp_value)</code> contract, optionally
 carrying a time index, engine confidence intervals, a fitted signal,
@@ -112,11 +117,16 @@ significance regions and diagnostics. Around that:</p><ul><li><p><strong>What to
     <code><a href="cpt_null_power.html">cpt_null_power()</a></code>.</p></li>
 <li><p><strong>Should I believe it:</strong> <code><a href="cpt_assumptions.html">cpt_assumptions()</a></code>,
     <code><a href="cpt_gof.html">cpt_gof()</a></code>, <code><a href="cpt_robustness.html">cpt_robustness()</a></code>, <code><a href="cpt_verify.html">cpt_verify()</a></code>.</p></li>
-<li><p><strong>Inference:</strong> <code><a href="cpt_confint.html">cpt_confint()</a></code> (four provenances, one
-    contract), <code><a href="cpt_test.html">cpt_test()</a></code>, <code><a href="cpt_regions.html">cpt_regions()</a></code>.</p></li>
+<li><p><strong>Inference:</strong> <code><a href="cpt_confint.html">cpt_confint()</a></code> (five provenances, one
+    contract, including distribution-free conformal sets) and
+    <code><a href="cpt_confint_coverage.html">cpt_confint_coverage()</a></code>, <code><a href="cpt_test.html">cpt_test()</a></code>, <code><a href="cpt_regions.html">cpt_regions()</a></code>,
+    <code><a href="cpt_attribute.html">cpt_attribute()</a></code> (which coordinates changed), <code><a href="cpt_screen.html">cpt_screen()</a></code>
+    (which of many series changed).</p></li>
+<li><p><strong>What would have happened, and how:</strong>
+    <code><a href="cpt_counterfactual.html">cpt_counterfactual()</a></code>, <code><a href="cpt_abruptness.html">cpt_abruptness()</a></code>.</p></li>
 <li><p><strong>Choosing K:</strong> <code><a href="cpt_select.html">cpt_select()</a></code> (BIC, Zhang-Siegmund
     mBIC, AIC, CROPS elbow, cross-validation, stability),
-    <code><a href="cpt_crops.html">cpt_crops()</a></code>, <code><a href="cpt_penalty.html">cpt_penalty()</a></code>.</p></li>
+    <code><a href="cpt_k_weights.html">cpt_k_weights()</a></code>, <code><a href="cpt_crops.html">cpt_crops()</a></code>, <code><a href="cpt_penalty.html">cpt_penalty()</a></code>.</p></li>
 <li><p><strong>Diagnostics:</strong> <code><a href="cpt_influence.html">cpt_influence()</a></code>, <code><a href="cpt_leverage.html">cpt_leverage()</a></code>,
     <code><a href="cpt_sensitivity.html">cpt_sensitivity()</a></code>, <code><a href="cpt_stability.html">cpt_stability()</a></code>,
     <code><a href="cpt_statistic.html">cpt_statistic()</a></code>, <code><a href="cpt_solution_path.html">cpt_solution_path()</a></code>,
@@ -129,7 +139,8 @@ significance regions and diagnostics. Around that:</p><ul><li><p><strong>What to
 <li><p><strong>Evaluation:</strong> <code><a href="cpt_metrics.html">cpt_metrics()</a></code>,
     <code><a href="cpt_metrics_annotated.html">cpt_metrics_annotated()</a></code>, <code><a href="cpt_benchmark.html">cpt_benchmark()</a></code>,
     <code><a href="cpt_datasets.html">cpt_datasets()</a></code>, <code><a href="cpt_load_tcpd.html">cpt_load_tcpd()</a></code>.</p></li>
-<li><p><strong>Streaming:</strong> <code><a href="cpt_monitor.html">cpt_monitor()</a></code>, <code><a href="cpt_update.html">cpt_update()</a></code>,
+<li><p><strong>Streaming:</strong> <code><a href="cpt_monitor.html">cpt_monitor()</a></code> (e-detector, CUSUM and
+    EWMA control charts, <span class="pkg">cpm</span>, <span class="pkg">ocd</span>), <code><a href="cpt_update.html">cpt_update()</a></code>,
     <code><a href="alarms.html">alarms()</a></code>, <code><a href="cpt_replay.html">cpt_replay()</a></code>, <code><a href="cpt_delay.html">cpt_delay()</a></code>.</p></li>
 <li><p><strong>Study design:</strong> <code><a href="cpt_simulate.html">cpt_simulate()</a></code>, <code><a href="cpt_power.html">cpt_power()</a></code>,
     <code><a href="cpt_min_detectable.html">cpt_min_detectable()</a></code>, <code><a href="cpt_scenarios.html">cpt_scenarios()</a></code>.</p></li>
@@ -159,7 +170,11 @@ significance regions and diagnostics. Around that:</p><ul><li><p><strong>What to
 <li><p><strong>Visualise:</strong> <code><a href="autoplot.ggcpt.html">autoplot.ggcpt()</a></code>,
       <code><a href="ggcptplot.html">ggcptplot()</a></code>, <code><a href="ggcpt_compare.html">ggcpt_compare()</a></code>.</p></li>
 <li><p><strong>Inference and selection:</strong> <code><a href="cpt_confint.html">cpt_confint()</a></code>,
-      <code><a href="cpt_test.html">cpt_test()</a></code>, <code><a href="cpt_select.html">cpt_select()</a></code>.</p></li>
+      <code><a href="cpt_test.html">cpt_test()</a></code>, <code><a href="cpt_attribute.html">cpt_attribute()</a></code>,
+      <code><a href="cpt_screen.html">cpt_screen()</a></code>, <code><a href="cpt_select.html">cpt_select()</a></code>,
+      <code><a href="cpt_k_weights.html">cpt_k_weights()</a></code>.</p></li>
+<li><p><strong>What if:</strong> <code><a href="cpt_counterfactual.html">cpt_counterfactual()</a></code>,
+      <code><a href="cpt_abruptness.html">cpt_abruptness()</a></code>.</p></li>
 <li><p><strong>Choosing and combining methods:</strong>
       <code><a href="cpt_consensus.html">cpt_consensus()</a></code>, <code><a href="cpt_recommend.html">cpt_recommend()</a></code>,
       <code><a href="cpt_benchmark.html">cpt_benchmark()</a></code>.</p></li>

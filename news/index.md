@@ -1,6 +1,157 @@
 # Changelog
 
-## ggchangepoint (development version)
+## ggchangepoint 0.7.0
+
+The inferential release. A detection says where a series changed; the
+questions that follow are which coordinates changed, how sure the
+location is without a model, what the series would have done without the
+change, whether the change was abrupt at all, and which of many series
+changed. Each of those now has a function, and each function that makes
+a statistical promise ships with the measurement of that promise
+(`cpt_calibration`).
+[`cpt_detect()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_detect.md)
+reaches 51 wired methods with CAPA, the first engine for changes that
+return to a baseline. 0.6.0 was tagged on GitHub and never released to
+CRAN, so this release carries its changes too (the 0.6.0 section below).
+
+### Changes to results
+
+- `cpt_confint(method = "auto")` prefers the new conformal set to the
+  bootstrap for a result whose engine supplies no interval of its own
+  and whose change is one between exchangeable segments (a change in
+  mean, variance, both, or distribution). The bootstrap stays the route
+  for everything else and remains available by name. Measured at level
+  0.95 on a 200-point series (300 replicates per cell): for a jump of
+  one noise standard deviation the conformal set covered 0.970 at a mean
+  width of 18.6 where the bootstrap covered 0.926 at 25.8; for a jump of
+  three, 0.960 at 0.5 against 0.973 at 2.0.
+
+### Which coordinates changed
+
+- New
+  [`cpt_attribute()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md):
+  for each changepoint of a multivariate result, the coordinates
+  certified to have changed, each typed `"location"` or `"scale"`. It
+  implements ARM (attribution by rank maxima, Peng et al. 2026): every
+  coordinate is scored by the maximum over all splits of its window of a
+  Wilcoxon and a Mood rank statistic, so no detector, however it located
+  the change, can make an unchanged coordinate look changed. Family-wise
+  error by a Westfall-Young joint permutation (`control = "fwer"`), by
+  Holm (`"holm"`), or the false discovery rate under any dependence by
+  Benjamini-Yekutieli (`"fdr"`). With a location taken from an aggregate
+  CUSUM, ARM’s family-wise error over ten coordinates was 0.067 at a
+  nominal 0.1, where testing each coordinate at the detected location
+  reached 0.18.
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  draws the coordinate-by-changepoint map with the certified cells
+  outlined, also reachable as `autoplot(fit, type = "attribution")`.
+
+### Distribution-free confidence sets
+
+- `cpt_confint(method = "conformal")`: CONCH (Hore and Ramdas 2026), a
+  confidence set for each changepoint’s location with finite-sample
+  coverage that needs only exchangeable observations within each
+  segment. Every candidate split of the window is tested by permuting
+  within each side of it, with a likelihood-ratio score matched to what
+  changed (mean, variance, both, or a rank score for a distribution) and
+  summed over coordinates for a multivariate result. It re-runs no
+  detector, so it serves registered methods and results built with
+  [`as_ggcpt()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/as_ggcpt.md).
+  The set need not be contiguous: `set_size` counts it, and each
+  candidate’s p-value is attached as the `"profile"` attribute.
+- New
+  [`cpt_confint_coverage()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_confint_coverage.md):
+  a Monte Carlo study of how often each route covers the true location
+  and how wide it is, for your series length, jump and noise, with
+  [`print()`](https://rdrr.io/r/base/print.html) and
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html).
+
+### Epidemic changes and anomalies
+
+- New method `capa`
+  ([`capa_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/capa_wrapper.md),
+  from the `anomaly` package): stretches that depart from a baseline and
+  return to it (collective anomalies) and single outliers (point
+  anomalies), for one series or many. The anomaly boundaries are the
+  changepoints, so every tool works unchanged; the anomalies are in the
+  `regions` slot, typed `"collective"` or `"point"`, with the affected
+  coordinates of a multivariate series.
+  [`print()`](https://rdrr.io/r/base/print.html) lists them as anomalous
+  windows and
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  shades the collective ones and rings the points.
+
+### What would have happened
+
+- New
+  [`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md):
+  the segment before each change carried forward over the segment after
+  it with its own model (its level, its line for a change in slope, its
+  coefficients on the new covariates for a formula fit), with a
+  prediction band, and the effect observation by observation: the
+  interrupted-time-series exhibit.
+  [`glance()`](https://generics.r-lib.org/reference/glance.html) gives
+  the mean and cumulative effect;
+  [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  and `autoplot(fit, type = "counterfactual")` draw it.
+
+### Was the change abrupt?
+
+- New
+  [`cpt_abruptness()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_abruptness.md):
+  at every changepoint of a change in mean, a step against a linear ramp
+  of estimated width, with an interval for the width and a verdict. On
+  true steps the step was rejected in 1.0 to 5.2 per cent of fits at
+  level 0.95; a ramp of 2 standard deviations over 30 observations was
+  called gradual in 53 per cent of fits at n = 300.
+- [`cpt_simulate()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_simulate.md)
+  gains `transition`, a gradual change in level over a given number of
+  observations, so power analysis can ask how a jump detector places a
+  change that took time.
+
+### Control charts
+
+- [`cpt_monitor()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_monitor.md)
+  and
+  [`cpt_replay()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_replay.md)
+  gain `method = "cusum"` (a two-sided tabular CUSUM with reference
+  value `k`) and `method = "ewma"` (smoothing `lambda`), with limits
+  solved for the in-control average run length `arl0` by the
+  Markov-chain approximation. The chain reproduces the published tables
+  (a CUSUM with `k = 0.5` and h = 4 or 5 runs 168 and 465 in control);
+  through the monitor, the first alarm on in-control data came after
+  99.4 (CUSUM) and 99.8 (EWMA) observations on average at `arl0 = 100`.
+  `limit` sets the limit directly.
+- Every monitor now records its statistic at every observation
+  (`$trace`), and `autoplot(monitor, plot_type = "control_chart")` draws
+  it against its limits with the alarms flagged.
+
+### Many series, and uncertainty about K
+
+- New
+  [`cpt_screen()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_screen.md):
+  one p-value per series for a change anywhere, adjusted across the
+  panel (Benjamini-Hochberg by default, or Benjamini-Yekutieli, Holm or
+  none), ordered by evidence, and optionally segmented where it flagged.
+  Pettitt’s test is the default because its tail errs on the safe side:
+  on panels of 100 series of 120 observations the false discovery rate
+  was 0.030 with it and 0.065 with the CUSUM, for the same power.
+- New
+  [`cpt_k_weights()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_k_weights.md):
+  the criterion curve of
+  [`cpt_select()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_select.md)
+  as weights over the number of changepoints (Akaike weights, or BIC’s
+  approximate posterior probabilities), the smallest set of K holding
+  95% of the weight, and the model-averaged probability that each
+  location is a changepoint.
+
+### Measured, not asserted
+
+- `cpt_calibration` gains six rows: the conformal set’s coverage, ARM’s
+  family-wise error, the CUSUM and EWMA run lengths, the screen’s false
+  discovery rate, and the abruptness check’s size.
+
+### Smaller changes
 
 - [`mcp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/mcp_wrapper.md)
   works with mcp 0.4.0, which renamed the columns of
@@ -12,6 +163,11 @@
   It also passes `adapt` on as `warmup`, the name mcp 0.4.0 takes, and
   reads the posterior draws without tripping mcp’s new deprecation
   warning for `fit$mcmc_post`.
+- [`autoplot()`](https://ggplot2.tidyverse.org/reference/autoplot.html)
+  marks point-valued regions on the series instead of drawing a band of
+  zero width.
+- The 0.6.0 signatures join the 0.5.0 ones in the stability test: every
+  argument keeps its name and position.
 
 ## ggchangepoint 0.6.0
 
@@ -2088,7 +2244,7 @@ every argument its engine accepts.
   paired, interleaved runs (15.1 times faster, 95% CI 14.0 to 15.5,
   slowest pair 13.4). The skipped tests still run wherever `NOT_CRAN` is
   `"true"`: on every CI runner, on every push, and under
-  `devtools::test()`.
+  [`devtools::test()`](https://devtools.r-lib.org/reference/test.html).
 - **Eleven vignette chunks generated their data without seeding it**, so
   their rendered output was a function of how much randomness every
   chunk above them happened to consume, and several of those chunks are

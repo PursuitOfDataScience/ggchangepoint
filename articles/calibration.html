@@ -20,7 +20,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">ggchangepoint</a>
 
-    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.6.0</small>
+    <small class="nav-text text-muted me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="">0.7.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -51,6 +51,8 @@
     <li><a class="dropdown-item" href="../articles/calibration.html">Calibration</a></li>
     <li><a class="dropdown-item" href="../articles/benchmarks.html">Benchmarks: runtime, false alarms and coverage</a></li>
     <li><a class="dropdown-item" href="../articles/stability.html">Stability, deprecation and the contract</a></li>
+    <li><a class="dropdown-item" href="../articles/control-charts.html">Control charts are changepoint detectors</a></li>
+    <li><a class="dropdown-item" href="../articles/beyond-detection.html">Beyond the location: which, how sure, and what if</a></li>
   </ul>
 </li>
 <li class="nav-item"><a class="nav-link" href="../news/index.html">News</a></li>
@@ -109,12 +111,12 @@ its Monte Carlo standard error. The table ships with the package as
 <span>                           <span class="st">"MC s.e."</span>, <span class="st">"Replicates"</span><span class="op">)</span><span class="op">)</span></span></code></pre></div>
 <table class="table">
 <colgroup>
-<col width="54%">
-<col width="10%">
-<col width="8%">
-<col width="9%">
+<col width="50%">
+<col width="17%">
 <col width="7%">
-<col width="10%">
+<col width="8%">
+<col width="6%">
+<col width="9%">
 </colgroup>
 <thead><tr class="header">
 <th align="left">Call</th>
@@ -246,6 +248,54 @@ its Monte Carlo standard error. The table ships with the package as
 <td align="left">186</td>
 <td align="left">11</td>
 <td align="right">400</td>
+</tr>
+<tr class="even">
+<td align="left">cpt_confint(cpt_detect(x), method = “conformal”)</td>
+<td align="left">coverage</td>
+<td align="left">95.0%</td>
+<td align="left">97.0%</td>
+<td align="left">0.5%</td>
+<td align="right">1000</td>
+</tr>
+<tr class="odd">
+<td align="left">cpt_attribute(fit, alpha = 0.05)</td>
+<td align="left">size</td>
+<td align="left">5.0%</td>
+<td align="left">3.1%</td>
+<td align="left">0.5%</td>
+<td align="right">1000</td>
+</tr>
+<tr class="even">
+<td align="left">cpt_monitor(“cusum”, arl0 = 500)</td>
+<td align="left">run length</td>
+<td align="left">500</td>
+<td align="left">495</td>
+<td align="left">25</td>
+<td align="right">400</td>
+</tr>
+<tr class="odd">
+<td align="left">cpt_monitor(“ewma”, arl0 = 500)</td>
+<td align="left">run length</td>
+<td align="left">500</td>
+<td align="left">531</td>
+<td align="left">28</td>
+<td align="right">400</td>
+</tr>
+<tr class="even">
+<td align="left">cpt_screen(panel)</td>
+<td align="left">false discovery_rate</td>
+<td align="left">5.0%</td>
+<td align="left">2.9%</td>
+<td align="left">0.2%</td>
+<td align="right">400</td>
+</tr>
+<tr class="odd">
+<td align="left">cpt_abruptness(cpt_detect(x))</td>
+<td align="left">size</td>
+<td align="left">5.0%</td>
+<td align="left">1.8%</td>
+<td align="left">0.3%</td>
+<td align="right">2000</td>
 </tr>
 </tbody>
 </table>

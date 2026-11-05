@@ -635,7 +635,7 @@ of **ggchangepoint**’s toolkit follows three principles. First, *a
 common representation makes comparison trivial*: because every engine
 returns the same `ggcpt` contract in the same location convention,
 [`ggcpt_compare()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_compare.md)
-and the metrics module work for all 50 wired methods without special
+and the metrics module work for all 51 wired methods without special
 cases. Second, *metrics must agree with their pictures*:
 [`ggcpt_eval()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/ggcpt_eval.md)
 and
@@ -648,7 +648,7 @@ trusted, and all three render directly with **ggplot2** (Wickham 2016).
 
 One warning belongs next to all of this. Running several methods and
 reporting the one that found a change, as if it were the only one run,
-is a garden of forking paths, and fifty methods behind one call make it
+is a garden of forking paths, and 51 methods behind one call make it
 easier here than anywhere else. A method chosen for its answer carries
 no valid p-value, and neither does a test at its changepoints: choose
 the method before looking at the series

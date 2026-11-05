@@ -25,7 +25,8 @@ autoplot(
   show_line = TRUE,
   index = NULL,
   labels = NULL,
-  type = c("series", "statistic", "path", "scale_space", "diagnostics"),
+  type = c("series", "statistic", "path", "scale_space", "diagnostics", "counterfactual",
+    "attribution"),
   ...
 )
 ```
@@ -67,13 +68,15 @@ autoplot(
 
 - show_regions:
 
-  Logical. Whether to shade the significance regions an interval-valued
-  method returns (the `regions` slot; currently
-  [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)).
-  Each band is an interval that contains at least one changepoint at the
-  stated global level; it is not a confidence interval around a point
-  estimate. Defaults to `TRUE` when the result carries regions, and is
-  ignored otherwise.
+  Logical. Whether to draw the `regions` slot: the significance regions
+  of
+  [`nsp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/nsp_wrapper.md)
+  (each band contains at least one changepoint at the stated global
+  level; it is not a confidence interval around a point estimate) or the
+  anomalies of
+  [`capa_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/capa_wrapper.md)
+  (collective anomalies shaded, point anomalies ringed). Defaults to
+  `TRUE` when the result carries regions, and is ignored otherwise.
 
 - cptline_alpha:
 
@@ -136,7 +139,12 @@ autoplot(
   segment (the Gaussian cost) and the spread of each segment (a constant
   variance);
   [`cpt_gof()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_gof.md)
-  gives the same checks as numbers.
+  gives the same checks as numbers. `"counterfactual"` draws the series
+  against the segment before each change carried forward
+  ([`cpt_counterfactual()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_counterfactual.md)),
+  and `"attribution"` the coordinates certified to have changed at each
+  changepoint of a multivariate result
+  ([`cpt_attribute()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_attribute.md)).
 
 - ...:
 

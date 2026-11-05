@@ -47,7 +47,7 @@ summary(cpt_detect(c(rnorm(60), rnorm(60, 3)), method = "pelt"))
 #>   CP convention:      left
 #>   Series length:      120
 #>   Penalty:            MBIC
-#>   Runtime (seconds):  0.021
+#>   Runtime (seconds):  0.006
 #> 
 #> Segments:
 #> # A tibble: 2 × 5

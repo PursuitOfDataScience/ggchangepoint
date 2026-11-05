@@ -93,7 +93,7 @@ cpt_detect(b, method = "smuce", family = "binomial")$changepoints
 #> 1   151        0      137      162
 ```
 
-Measured across the engines, Gaussian costs raise about 247 times as
+Measured across the engines, Gaussian costs raise about 156 times as
 many false positives on Bernoulli data as on Gaussian data
 (`cpt_data_types`).
 
@@ -169,7 +169,7 @@ article has the measured size of each.
 
 ## 7. The method chosen after seeing the answer
 
-Fifty methods behind one call make it easy to run ten and report the one
+With 51 methods behind one call it is easy to run ten and report the one
 that found a change. A method chosen for its answer carries no valid
 p-value, and agreement between methods is not a correction: they share
 engines, costs and assumptions.

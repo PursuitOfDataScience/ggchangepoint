@@ -1,6 +1,6 @@
 # Extending ggchangepoint
 
-This package wraps fifty detectors. It will never wrap all of them, and
+This package wraps 51 detectors. It will never wrap all of them, and
 some of the most interesting ones it *cannot* wrap: `changeforest`
 (Londschien et al. 2023) is on conda-forge only, `ChangepointInference`
 (Jewell et al. 2022) is on GitHub only, `gfpop` and `cpss` were removed
@@ -316,7 +316,7 @@ tab <- cpt_methods()
 table(status = tab$status, installed = tab$installed, useNA = "ifany")
 #>            installed
 #> status      TRUE <NA>
-#>   available   50    0
+#>   available   51    0
 #>   planned      0    5
 ```
 

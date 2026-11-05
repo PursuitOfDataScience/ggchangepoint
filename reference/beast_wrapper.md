@@ -59,6 +59,7 @@ Other changepoint engines:
 [`bfast_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bfast_wrapper.md),
 [`binsegrcpp_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/binsegrcpp_wrapper.md),
 [`bocpd_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/bocpd_wrapper.md),
+[`capa_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/capa_wrapper.md),
 [`cpm_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpm_wrapper.md),
 [`cpop_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpop_wrapper.md),
 [`cpt_wrapper()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_wrapper.md),
@@ -110,5 +111,5 @@ if (!inherits(res, "try-error")) res$changepoints
 #> # A tibble: 1 × 3
 #>      cp cp_value posterior_prob
 #>   <int>    <dbl>          <dbl>
-#> 1    60   -0.671          1.000
+#> 1    60   -0.671              1
 ```

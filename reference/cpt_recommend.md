@@ -198,7 +198,7 @@ cpt_recommend(noise = "autocorrelated")
 #>    why: handles change_in = "mean"; measured under autocorrelated noise
 #>    caveat: 1.5 spurious changepoints per series measured under autocorrelated noise; check the fit with cpt_assumptions()
 #> 
-#> (31 further candidate(s); the full table is the return value.)
+#> (32 further candidate(s); the full table is the return value.)
 #> 
 #> Cite the method you use with cpt_cite(). Cross-check the choice with
 #> cpt_robustness() and cpt_assumptions().
@@ -221,7 +221,7 @@ cpt_recommend(data_type = "counts", n_expected = 2)
 #>    measured: 2 of 2 changes found, 0 spurious per series
 #>    why: handles change_in = "mean"; its best setting under iid noise is family = "hsmuce"; fits a poisson cost
 #> 
-#> (31 further candidate(s); the full table is the return value.)
+#> (32 further candidate(s); the full table is the return value.)
 #> 
 #> Cite the method you use with cpt_cite(). Cross-check the choice with
 #> cpt_robustness() and cpt_assumptions().

@@ -1,6 +1,6 @@
 # Benchmarks: Runtime, False Alarms and Coverage
 
-Fifty methods share one interface in this package, which makes it easy
+All 51 methods share one interface in this package, which makes it easy
 to swap one for another and easy to forget that they do not cost the
 same thing. This article answers three questions a reader choosing a
 method has, from the measurements that ship with the package:
@@ -53,6 +53,7 @@ knitr::kable(wide, row.names = FALSE,
 | fpop        | 0.01    | 0.01    | 0.06    | 0.83  |
 | pelt        | 0.01    | 0.01    | 0.07    | 1.01  |
 | pilliat     | 0.01    | 0.02    | 0.12    | 1.56  |
+| capa        | 0.14    | 0.15    | 0.36    | 3.22  |
 | fastcpd     | 0.01    | 0.06    | 0.44    | 4.01  |
 | decafs      | 0.09    | 0.15    | 0.63    | 7.04  |
 | esac        | 0.01    | 0.08    | 1.28    | 12.71 |
@@ -98,7 +99,7 @@ knitr::kable(wide, row.names = FALSE,
 
 Seconds per fit (blank: not attempted) {.table}
 
-15 methods fit a million points inside the cap. The pruned
+16 methods fit a million points inside the cap. The pruned
 optimal-partitioning family and the single-change test are fast enough
 that length is not a consideration; the random-interval searches cost
 more because they fit many sub-intervals by construction, which is also
@@ -143,6 +144,7 @@ knitr::kable(wide_ns[order(wide_ns$method), ], row.names = FALSE,
 | binsegrcpp  | 0.00 (50) | 0.00 (10) | 0.00 (6) |
 | bocpd       | 0.00 (50) |           |          |
 | buishand    | 0.08 (50) |           |          |
+| capa        | 0.08 (50) | 0.20 (10) | 0.00 (6) |
 | cpm         | 0.34 (50) | 0.40 (10) |          |
 | cpop        | 0.00 (50) |           |          |
 | decafs      | 0.00 (50) | 0.00 (10) | 0.00 (6) |
@@ -207,12 +209,13 @@ The calibration article has the measured coverage of each provenance of
 
 subset(cpt_calibration, kind == "coverage")[, c("call", "nominal",
                                                  "realised", "mcse")]
-#> # A tibble: 3 × 4
+#> # A tibble: 4 × 4
 #>   call                                                 nominal realised   mcse
 #>   <chr>                                                  <dbl>    <dbl>  <dbl>
 #> 1 "cpt_detect(x, method = \"strucchange\")"               0.95    0.953 0.0047
 #> 2 "cpt_detect(x, method = \"smuce\", alpha = 0.05)"       0.95    1     0.0005
 #> 3 "cpt_confint(cpt_detect(x), method = \"bootstrap\")"    0.95    0.968 0.0056
+#> 4 "cpt_confint(cpt_detect(x), method = \"conformal\")"    0.95    0.97  0.0054
 ```
 
 Two provenances are not in it yet. **NSP’s regions** hold a *global*

@@ -65,7 +65,7 @@ Other measurement tables:
 ``` r
 ar <- subset(cpt_noise_benchmark, regime == "ar1")
 ar[order(ar$fp), c("call", "hits", "fp")]
-#> # A tibble: 42 × 3
+#> # A tibble: 43 × 3
 #>    call                                                    hits    fp
 #>    <chr>                                                  <dbl> <dbl>
 #>  1 "cpt_detect(x, method = \"fastcpd\", family = \"ar\")"   0.2   0  
@@ -78,5 +78,5 @@ ar[order(ar$fp), c("call", "hits", "fp")]
 #>  8 "cpt_detect(x, method = \"amoc\")"                       0.6   0.4
 #>  9 "cpt_detect(x, method = \"envcpt\")"                     0.4   0.4
 #> 10 "cpt_detect(x, method = \"snht\")"                       0.6   0.4
-#> # ℹ 32 more rows
+#> # ℹ 33 more rows
 ```

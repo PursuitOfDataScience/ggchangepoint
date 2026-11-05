@@ -1,8 +1,8 @@
 # Choosing a Method: a Decision Tree and a Cheatsheet
 
-“Which of these fifty do I want?” is the first question every new user
-has. This page answers it three ways: a tree to walk, a cheatsheet to
-scan, and
+“Which of these 51 do I want?” is the first question every new user has.
+This page answers it three ways: a tree to walk, a cheatsheet to scan,
+and
 [`cpt_recommend()`](https://pursuitofdatascience.github.io/ggchangepoint/reference/cpt_recommend.md),
 which answers from the same measurements in code. Every list below is
 computed from
@@ -14,7 +14,7 @@ when the page is built, so it cannot drift from the registry.
 Pick the method from what you know about the problem, before you see
 what each method says about your series. A method chosen because it
 found a change carries no valid p-value, and that selection is the
-easiest mistake to make with fifty methods behind one call.
+easiest mistake to make with 51 methods behind one call.
 
 ## The tree
 
@@ -41,7 +41,7 @@ easiest mistake to make with fifty methods behind one call.
 
 ## A change in mean
 
-37 methods detect a change in mean. Which of them depends on three
+38 methods detect a change in mean. Which of them depends on three
 things.
 
 **How long is the series?** The univariate ones measured to fit a
@@ -52,20 +52,21 @@ things.
 long <- subset(wired, max_n >= 1e6 & univariate &
                  method %in% supports("mean"))
 long[order(long$method), c("method", "engine", "cost", "scale_invariant")]
-#> # A tibble: 11 × 4
+#> # A tibble: 12 × 4
 #>    method     engine      cost  scale_invariant
 #>    <chr>      <chr>       <chr> <lgl>          
 #>  1 amoc       changepoint fast  FALSE          
 #>  2 binsegrcpp binsegRcpp  fast  TRUE           
-#>  3 decafs     DeCAFS      fast  TRUE           
-#>  4 fastcpd    fastcpd     fast  TRUE           
-#>  5 fpop       fpop        fast  FALSE          
-#>  6 idetect    IDetect     fast  TRUE           
-#>  7 mosum      mosum       fast  TRUE           
-#>  8 not        not         fast  TRUE           
-#>  9 pelt       changepoint fast  FALSE          
-#> 10 tguh       breakfast   fast  TRUE           
-#> 11 wbs        wbs         fast  TRUE
+#>  3 capa       anomaly     fast  TRUE           
+#>  4 decafs     DeCAFS      fast  TRUE           
+#>  5 fastcpd    fastcpd     fast  TRUE           
+#>  6 fpop       fpop        fast  FALSE          
+#>  7 idetect    IDetect     fast  TRUE           
+#>  8 mosum      mosum       fast  TRUE           
+#>  9 not        not         fast  TRUE           
+#> 10 pelt       changepoint fast  FALSE          
+#> 11 tguh       breakfast   fast  TRUE           
+#> 12 wbs        wbs         fast  TRUE
 ```
 
 **Do you need to say where it could be?** Methods returning a location
@@ -179,7 +180,7 @@ cpt_recommend(noise = "autocorrelated", n = 5000, n_expected = 2)
 #>    measured: 0.2 of 2 changes found, 0 spurious per series
 #>    why: handles change_in = "mean"; its best setting under autocorrelated noise is family = "ar"; measured under autocorrelated noise; fast at this length
 #> 
-#> (31 further candidate(s); the full table is the return value.)
+#> (32 further candidate(s); the full table is the return value.)
 #> 
 #> Cite the method you use with cpt_cite(). Cross-check the choice with
 #> cpt_robustness() and cpt_assumptions().
