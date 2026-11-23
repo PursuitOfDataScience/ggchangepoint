@@ -2,6 +2,8 @@
 
 ## ggchangepoint 0.7.0
 
+CRAN release: 2026-11-05
+
 The inferential release. A detection says where a series changed; the
 questions that follow are which coordinates changed, how sure the
 location is without a model, what the series would have done without the
@@ -2244,7 +2246,7 @@ every argument its engine accepts.
   paired, interleaved runs (15.1 times faster, 95% CI 14.0 to 15.5,
   slowest pair 13.4). The skipped tests still run wherever `NOT_CRAN` is
   `"true"`: on every CI runner, on every push, and under
-  [`devtools::test()`](https://devtools.r-lib.org/reference/test.html).
+  `devtools::test()`.
 - **Eleven vignette chunks generated their data without seeding it**, so
   their rendered output was a function of how much randomness every
   chunk above them happened to consume, and several of those chunks are
